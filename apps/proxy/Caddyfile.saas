@@ -1,0 +1,147 @@
+# Proxy BERSAMA untuk mode SaaS multi-penyewa.
+#
+# 🔶 BELUM PERNAH DIJALANKAN. Kerangka, bukan berkas yang sudah terbukti.
+#
+# ============================================================================
+# BEDANYA DENGAN Caddyfile.ce
+# ============================================================================
+#
+# `Caddyfile.ce` melayani SATU instalasi: snippetnya mematok `api:8000` dan
+# `live:3000`, dan ada tepat satu blok situs. Di SaaS, tiap pelanggan punya
+# `api` sendiri di container yang berbeda, jadi hulu itu harus jadi ARGUMEN.
+#
+# Yang TIDAK berubah dan memang sengaja dibagi: `web`, `admin`, `space`,
+# `plane-minio`, dan LiveKit. Ketiga frontend itu berkas statis yang menurunkan
+# alamat API dari hostname peramban, jadi satu salinan melayani semua penyewa.
+#
+# ============================================================================
+# SATU BERKAS PER PELANGGAN, BUKAN SATU BERKAS RAKSASA
+# ============================================================================
+#
+# `import /etc/caddy/tenants/*.caddy` di bawah membaca satu berkas per
+# pelanggan. Provisioning menulis berkasnya lalu memuat ulang Caddy; mencabut
+# pelanggan cukup menghapus berkasnya.
+#
+# Alternatifnya menyunting satu berkas besar dengan sed setiap kali ada
+# pelanggan baru, dan berkas config yang disunting mesin adalah berkas yang
+# suatu saat rusak di tengah lalu menjatuhkan SELURUH penyewa sekaligus, bukan
+# satu.
+#
+# ⚠️ `caddy reload` memvalidasi seluruh config SEBELUM menerapkannya. Jadi satu
+# berkas penyewa yang rusak membuat reload GAGAL dan Caddy tetap menjalankan
+# config lamanya. Itu perilaku yang benar, tapi artinya provisioning harus
+# memeriksa hasil reload; kalau tidak, pelanggan baru diam-diam tidak pernah
+# aktif sementara semuanya tampak berhasil.
+
+(tenant_proxy) {
+	request_body {
+		max_size {$FILE_SIZE_LIMIT}
+	}
+
+	encode zstd gzip
+
+	# Alasan lengkap tiap baris header ada di apps/proxy/Caddyfile.ce; sengaja
+	# tidak disalin ke sini supaya keduanya tidak berbeda pelan-pelan.
+	header {
+		>Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# --- Dibagi bersama seluruh penyewa -------------------------------------
+	redir /spaces /spaces/ permanent
+	reverse_proxy /spaces/* space:3000
+
+	redir /god-mode /god-mode/ permanent
+	reverse_proxy /god-mode/* admin:3000
+
+	reverse_proxy /rtc {$LIVEKIT_UPSTREAM:host.docker.internal:7880}
+	reverse_proxy /rtc/* {$LIVEKIT_UPSTREAM:host.docker.internal:7880}
+
+	reverse_proxy /{$BUCKET_NAME}/* plane-minio:9000
+	reverse_proxy /{$BUCKET_NAME} plane-minio:9000
+
+	# --- Milik penyewa ini saja ---------------------------------------------
+	#
+	# {args[0]} = hulu api penyewa,  mis. acme-api-1:8000
+	# {args[1]} = hulu live penyewa, mis. acme-live-1:3000
+	#
+	# `lb_try_duration` ada karena container `api` dibuat ulang tiap deploy dan
+	# tanpa ini permintaan yang datang di tengah deploy dijawab 502. Aman untuk
+	# POST: Caddy hanya mengulang kalau SAMBUNGANNYA gagal dibuat, jadi
+	# permintaannya belum pernah terkirim.
+	reverse_proxy /live/* {args[1]}
+
+	reverse_proxy /api/* {args[0]} {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /auth/* {args[0]} {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	# Tawaran kode sumber AGPL-3.0 pasal 13. DUA pola, karena `/source/*` tidak
+	# cocok dengan `/source` tanpa garis miring, dan bentuk tanpa garis miring
+	# itu yang biasa diketik orang.
+	reverse_proxy /source {args[0]} {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /source/* {args[0]} {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /static/* {args[0]} {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /* web:3000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+}
+
+{
+	{$CERT_EMAIL}
+	acme_ca {$CERT_ACME_CA:https://acme-v02.api.letsencrypt.org/directory}
+	{$CERT_ACME_DNS}
+	servers {
+		max_header_size 25MB
+		client_ip_headers X-Forwarded-For X-Real-IP
+		trusted_proxies static {$TRUSTED_PROXIES:0.0.0.0/0}
+	}
+}
+
+# ============================================================================
+# BLOK CADANGAN, DAN KENAPA IA WAJIB ADA
+# ============================================================================
+#
+# Caddy MENOLAK SELURUH CONFIG kalau tidak ada satu pun blok situs. Tanpa blok
+# ini, `/etc/caddy/tenants/` yang masih kosong membuat proxy gagal menyala,
+# dan itu terjadi persis pada keadaan paling awal: sebelum penyewa PERTAMA
+# disiapkan. Akibatnya `tenant-up.sh` tidak akan pernah bisa dijalankan, karena
+# ia menuntut container proxy sudah berjalan. Ayam dan telur.
+#
+# `:80` di Caddy mencocokkan host APA PUN di port 80, dan blok bernama seperti
+# `acme.nomaden.id` selalu menang karena Caddy memilih yang paling spesifik.
+# Jadi blok ini hanya menjawab nama yang belum punya penyewa.
+#
+# Sengaja 404 dengan kalimat yang menyebutkan sebabnya, bukan halaman kosong
+# atau galat sambungan: subdomain yang salah ketik dan subdomain yang belum
+# selesai disiapkan menghasilkan gejala yang persis sama, dan membedakan
+# keduanya lewat tebakan memakan waktu orang.
+:80 {
+	respond "Tidak ada penyewa di alamat ini. Kalau ini seharusnya sudah ada, subdomainnya belum selesai disiapkan." 404
+}
+
+# Satu berkas per pelanggan, ditulis `paradise/bin/tenant-up.sh`.
+#
+# Panel pemilik TIDAK punya perlakuan khusus di sini: ia disiapkan lewat jalur
+# yang sama persis seperti penyewa lain, hanya dengan `ENABLE_CONTROL_PLANE=1`
+# di berkas envnya. Satu jalur untuk semua mengalahkan satu jalur plus satu
+# pengecualian yang cuma dijalankan sekali seumur hidup lalu dilupakan.
+import /etc/caddy/tenants/*.caddy

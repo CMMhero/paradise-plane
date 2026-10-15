@@ -1,0 +1,178 @@
+# Tumpukan BERSAMA mode SaaS multi-penyewa: proxy, frontend, penyimpanan, media.
+#
+# 🔶 BELUM PERNAH DIJALANKAN. Kerangka, bukan berkas yang sudah terbukti.
+#
+# ============================================================================
+# INI YANG HARUS MENYALA LEBIH DULU
+# ============================================================================
+#
+# `docker-compose-tenant.yml` menumpang jaringan `nomaden_saas` sebagai
+# `external: true`, dan `paradise/bin/tenant-up.sh` menolak jalan kalau jaringan
+# itu atau container proxynya belum ada. Berkas inilah yang membuat keduanya.
+#
+#   docker compose -p nomaden -f docker-compose-shared.yml up -d
+#
+# Nama proyeknya `nomaden`, dan itu bukan pilihan bebas: `tenant-up.sh`
+# mencari container bernama `nomaden-proxy-1`. Ganti nama proyeknya berarti
+# harus ikut mengganti PROXY_CONTAINER di skrip itu.
+#
+# ============================================================================
+# KENAPA DELAPAN LAYANAN INI DIBAGI
+# ============================================================================
+#
+# Tidak satu pun memegang data satu penyewa tertentu:
+#
+#   web, admin, space   berkas statis. Alamat API diturunkan dari hostname
+#                       peramban, jadi satu salinan melayani semua subdomain
+#   proxy               memang tugasnya melayani banyak nama sekaligus
+#   plane-minio         satu klaster, satu bucket per penyewa
+#   livekit, coturn     relai media, tidak menyentuh database siapa pun
+#   gotenberg           konversi Office ke PDF, tanpa keadaan sama sekali
+#
+# Yang memegang data ada di docker-compose-tenant.yml, satu tumpukan per
+# penyewa. Rinciannya beserta angkanya di paradise/KAPASITAS-SAAS.md.
+#
+# ⚠️ `plane-minio` dibagi, jadi ISOLASI BERKAS antar penyewa datang dari bucket
+# dan kredensial yang berbeda, BUKAN dari proses yang terpisah. Kalau nanti
+# isolasi penyimpanan juga dituntut pelanggan, bentuknya bukan mengubah berkas
+# ini melainkan memberi penyewa itu klaster MinIO sendiri.
+
+services:
+  # --- Proxy: satu-satunya yang menghadap internet ---------------------------
+  proxy:
+    # Image, bukan `build:`, sama seperti docker-compose-tenant.yml. VPS SaaS
+    # tidak perlu menyimpan seluruh pohon sumber hanya untuk menyalakan proxy,
+    # dan dua berkas yang satu membangun sementara satunya menarik adalah dua
+    # berkas yang suatu saat menjalankan versi yang berbeda.
+    #
+    # Caddyfile.saas ditumpangkan lewat volume di bawah, jadi image bawaan yang
+    # membawa Caddyfile.ve tetap bisa dipakai apa adanya.
+    image: ${SAAS_IMAGE_PROXY:-ghcr.io/nomax-studio-indonesia/plane-proxy:latest}
+    restart: always
+    # `host.docker.internal` tidak ada di Linux tanpa baris ini, dan proxy
+    # membutuhkannya untuk menjangkau LiveKit yang berjalan di jaringan host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - ${LISTEN_HTTP_PORT:-80}:80
+      - ${LISTEN_HTTPS_PORT:-443}:443
+    environment:
+      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
+      BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
+      # Berbeda dari mode satu instalasi: di sini TIDAK ada SITE_ADDRESS sama
+      # sekali. Caddyfile.saas punya satu blok cadangan `:80` yang selalu ada,
+      # dan blok situs sungguhan datang dari satu berkas per penyewa di
+      # /etc/caddy/tenants/. Menambahkan SITE_ADDRESS di sini justru akan
+      # membuat blok kedua yang bentrok dengan cadangan itu.
+      CERT_EMAIL: ${CERT_EMAIL:-}
+      CERT_ACME_DNS: ${CERT_ACME_DNS:-}
+      CERT_ACME_CA: ${CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+    volumes:
+      # Config SaaS menggantikan Caddyfile.ce bawaan image. Ia meng-glob
+      # /etc/caddy/tenants/*.caddy, jadi direktori itu WAJIB ada dan ter-mount.
+      - ./apps/proxy/Caddyfile.saas:/etc/caddy/Caddyfile:ro
+      # Direktori blok situs penyewa, ditulis `tenant-up.sh` di host.
+      # ⚠️ Direktorinya harus SUDAH ADA sebelum `up -d`. Kalau belum, Docker
+      # membuatnya sebagai direktori kosong milik root, dan itu memang yang
+      # diinginkan di sini, tapi pastikan `tenant-up.sh` memakai path yang sama
+      # (CADDY_TENANT_DIR, bawaannya /srv/caddy/tenants).
+      - ${CADDY_TENANT_DIR:-/srv/caddy/tenants}:/etc/caddy/tenants
+      - ${ACMEDNS_CREDENTIALS_FILE:-./paradise/acmedns.json}:/etc/caddy/acmedns.json:ro
+      # TANPA volume ini, tiap kali proxy dibuat ulang Caddy kehilangan
+      # sertifikatnya dan meminta yang baru. Let's Encrypt membatasi 5
+      # sertifikat duplikat per minggu, dan di SaaS batas itu dibagi SELURUH
+      # subdomain penyewa sekaligus. Sudah pernah menjatuhkan HTTPS dua kali
+      # dalam satu hari di mode satu instalasi; di sini akibatnya lebih luas.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - admin
+      - space
+
+  # --- Frontend statis, dibagi seluruh penyewa -------------------------------
+  web:
+    image: ${SAAS_IMAGE_WEB:-ghcr.io/nomax-studio-indonesia/plane-frontend:latest}
+    restart: always
+
+  admin:
+    image: ${SAAS_IMAGE_ADMIN:-ghcr.io/nomax-studio-indonesia/plane-admin:latest}
+    restart: always
+
+  space:
+    image: ${SAAS_IMAGE_SPACE:-ghcr.io/nomax-studio-indonesia/plane-space:latest}
+    restart: always
+
+  # --- Penyimpanan objek, satu bucket per penyewa ----------------------------
+  plane-minio:
+    image: minio/minio
+    restart: always
+    command: server /export --console-address ":9090"
+    volumes:
+      - uploads:/export
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+
+  # --- Konversi Office ke PDF untuk Wiki -------------------------------------
+  #
+  # Tanpa keadaan sama sekali, jadi satu salinan melayani semua penyewa.
+  # TIDAK dipublikasikan ke luar: hanya `api` tiap penyewa yang memanggilnya
+  # lewat jaringan internal. Jangan pernah memetakan portnya ke host.
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: always
+    command:
+      - gotenberg
+      - --chromium-disable-javascript=true
+      - --api-timeout=180s
+
+  # --- Media panggilan dan rapat ---------------------------------------------
+  #
+  # `network_mode: host` WAJIB untuk keduanya: media memakai rentang port
+  # dinamis, dan memetakannya lewat bridge Docker membuat alamat yang
+  # diiklankan tidak cocok dengan yang benar-benar bisa dihubungi. Prosesnya
+  # hidup, portnya terbuka, tapi relainya tidak pernah dipakai.
+  #
+  # ⚠️ `network_mode: host` berarti keduanya TIDAK ikut jaringan `nomaden_saas`.
+  # Karena itu proxy menjangkaunya lewat `host.docker.internal`, dan itulah
+  # alasan `extra_hosts` di atas ada.
+  livekit:
+    image: livekit/livekit-server:v1.13.5
+    restart: always
+    network_mode: host
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./paradise/livekit.yaml:/etc/livekit.yaml:ro
+    environment:
+      LIVEKIT_KEYS: ${LIVEKIT_KEYS}
+
+  coturn:
+    image: coturn/coturn:4.6.2-alpine
+    restart: always
+    network_mode: host
+    command:
+      - --listening-port=3478
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${TURN_REALM:-nomaden.id}
+      - --min-port=49160
+      - --max-port=49200
+      - --no-multicast-peers
+      - --no-cli
+      - --no-tlsv1
+      - --no-tlsv1_1
+
+# Jaringan yang ditumpangi seluruh tumpukan penyewa. Dibuat DI SINI, dan
+# `docker-compose-tenant.yml` menyebutnya `external: true` supaya ia menumpang
+# alih-alih membuat jaringannya sendiri. Proxy harus bisa menjangkau `api` tiap
+# penyewa, dan jaringan terpisah per penyewa membuat itu mustahil.
+networks:
+  default:
+    name: nomaden_saas
+
+volumes:
+  uploads:
+  caddy_data:
+  caddy_config:

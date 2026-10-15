@@ -1,0 +1,43 @@
+# Overlay: pakai image hasil CI (GHCR) alih-alih build di server.
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && ... up -d
+# Dipakai otomatis oleh paradise/bin/deploy.sh, jangan dipanggil sendirian.
+#
+# Service di bawah tetap punya blok build: dari file dasar (compose tidak bisa
+# menghapus key lewat overlay). Itu tidak masalah: `pull` mengambil image dari
+# GHCR dan `up` memakai image lokal yang sudah ada tanpa build ulang.
+#
+# Rollback: set APP_RELEASE=<git-sha> di .env lalu jalankan deploy.sh lagi.
+#
+# GHCR_OWNER: namespace pemilik paket di GHCR, wajib huruf kecil, dan WAJIB
+# diisi. Paket GHCR dimiliki oleh namespace AKUN, bukan oleh repo, jadi
+# memindahkan repo ke akun atau organisasi lain TIDAK memindahkan image-nya.
+#
+# Sengaja TANPA nilai bawaan. Bawaan yang basi membuat server menarik image
+# dari namespace milik akun lain tanpa ada yang sadar, dan gagalnya senyap.
+# Kalau kosong, compose berhenti dan pesannya menyebut nama variabel ini.
+#
+# Saat memindahkan namespace, urutannya: bangun dulu image di namespace baru,
+# pastikan tag `latest` sudah ada di sana, `docker login ghcr.io` di server
+# dengan token yang berhak membacanya, BARU ubah GHCR_OWNER. Terbalik berarti
+# `docker compose pull` gagal dan deploy berhenti. Aplikasinya tidak ikut mati,
+# deploy.sh memakai `set -e` sehingga ia berhenti sebelum menyentuh container
+# yang sedang melayani, tapi rilisnya batal.
+services:
+  web:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-frontend:${APP_RELEASE:-latest}
+  admin:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-admin:${APP_RELEASE:-latest}
+  space:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-space:${APP_RELEASE:-latest}
+  live:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-live:${APP_RELEASE:-latest}
+  proxy:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-proxy:${APP_RELEASE:-latest}
+  api:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-backend:${APP_RELEASE:-latest}
+  worker:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-backend:${APP_RELEASE:-latest}
+  beat-worker:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-backend:${APP_RELEASE:-latest}
+  migrator:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-backend:${APP_RELEASE:-latest}

@@ -1,0 +1,312 @@
+services:
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile.web
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: always
+    depends_on:
+      - api
+
+  admin:
+    container_name: admin
+    build:
+      context: .
+      dockerfile: ./apps/admin/Dockerfile.admin
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: always
+    depends_on:
+      - api
+      - web
+
+  space:
+    container_name: space
+    build:
+      context: .
+      dockerfile: ./apps/space/Dockerfile.space
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: always
+    depends_on:
+      - api
+      - web
+
+  api:
+    container_name: api
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.api
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: always
+    command: ./bin/docker-entrypoint-api.sh
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - plane-db
+      - plane-redis
+
+  worker:
+    container_name: bgworker
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.api
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: always
+    command: ./bin/docker-entrypoint-worker.sh
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+
+  beat-worker:
+    container_name: beatworker
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.api
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: always
+    command: ./bin/docker-entrypoint-beat.sh
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+
+  migrator:
+    container_name: plane-migrator
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.api
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: no
+    command: ./bin/docker-entrypoint-migrator.sh
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - plane-db
+      - plane-redis
+
+  live:
+    container_name: plane-live
+    build:
+      context: .
+      dockerfile: ./apps/live/Dockerfile.live
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: always
+    # src/env.ts memvalidasi env dengan zod lalu process.exit(1) kalau gagal.
+    # API_BASE_URL & LIVE_SERVER_SECRET_KEY wajib; tanpa keduanya container
+    # restart-loop tanpa henti. Sengaja disebut satu per satu, bukan env_file:
+    # live tidak perlu tahu password Postgres/RabbitMQ.
+    environment:
+      API_BASE_URL: ${API_BASE_URL:-http://api:8000}
+      LIVE_SERVER_SECRET_KEY: ${LIVE_SERVER_SECRET_KEY}
+      LIVE_BASE_PATH: ${LIVE_BASE_PATH:-/live}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      REDIS_URL: ${REDIS_URL:-redis://plane-redis:6379/}
+
+  plane-db:
+    container_name: plane-db
+    image: postgres:15.7-alpine
+    restart: always
+    command: postgres -c 'max_connections=1000'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+
+  plane-redis:
+    container_name: plane-redis
+    image: valkey/valkey:7.2.11-alpine
+    restart: always
+    volumes:
+      - redisdata:/data
+
+  # Server media panggilan suara & video.
+  #
+  # LiveKit adalah SFU: kedua peramban menyambung KE SERVER, lalu server yang
+  # meneruskan media. Itu sengaja menggantikan sambungan peer ke peer, yang
+  # menuntut kedua KOMPUTER bisa saling menghubungi langsung. Banyak jaringan
+  # kantor tidak mengizinkan itu, dan tidak ada yang bisa diperbaiki dari sisi
+  # kode untuk melawannya. Jalur komputer ke server sudah pasti terbuka, karena
+  # aplikasinya sendiri berjalan lewat jalur itu.
+  #
+  # `network_mode: host` WAJIB, alasan yang sama dengan coturn: media memakai
+  # rentang port dinamis, dan memetakannya lewat bridge Docker membuat alamat
+  # yang diiklankan tidak cocok dengan yang benar-benar bisa dihubungi.
+  livekit:
+    container_name: livekit
+    # v1.9.1 belum punya jalur `/rtc/v1` yang dipakai klien 2.x, sehingga klien
+    # harus mundur ke `/rtc` dan kehilangan satu putaran tiap memulai panggilan.
+    image: livekit/livekit-server:v1.13.5
+    restart: always
+    network_mode: host
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./paradise/livekit.yaml:/etc/livekit.yaml:ro
+    environment:
+      # Format "kunci: rahasia". Dibaca dari .env supaya tidak masuk git.
+      LIVEKIT_KEYS: ${LIVEKIT_KEYS}
+
+  # Relai media untuk panggilan suara & video.
+  #
+  # Infrastruktur, bukan aplikasi tambahan: tanpa UI, tanpa akun, tanpa basis
+  # data. Ia hanya meneruskan paket saat dua peramban tidak bisa saling
+  # menjangkau langsung, yang persis terjadi di jaringan kantor dengan isolasi
+  # antar-klien. Tanpa ini, panggilan diam total tanpa error di mana pun.
+  #
+  # `network_mode: host` DISENGAJA. TURN mengalokasikan port relai dinamis, dan
+  # memetakannya lewat jaringan bridge Docker membuat alamat yang diiklankan
+  # tidak cocok dengan yang benar-benar bisa dihubungi. Ini jebakan TURN paling
+  # umum: prosesnya hidup, portnya terbuka, tapi relainya tidak pernah dipakai.
+  coturn:
+    container_name: coturn
+    image: coturn/coturn:4.6.2-alpine
+    restart: always
+    network_mode: host
+    command:
+      - --listening-port=3478
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${TURN_REALM:-paradiseperkasa.com}
+      # Rentang port relai dibatasi supaya bisa dibuka di firewall kantor tanpa
+      # membuka seluruh rentang efemeral.
+      - --min-port=49160
+      - --max-port=49200
+      # Relai hanya untuk lalu lintas panggilan kita. Tanpa penolakan ini, TURN
+      # yang terbuka bisa dipakai orang lain untuk merelai apa pun.
+      - --no-multicast-peers
+      - --no-cli
+      - --no-tlsv1
+      - --no-tlsv1_1
+
+  plane-mq:
+    container_name: plane-mq
+    image: rabbitmq:3.13.6-management-alpine
+    restart: always
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Konversi Materi Wiki ke PDF.
+  #
+  # Word, Excel, dan PowerPoint tidak bisa dibuka peramban mana pun. Gotenberg
+  # (MIT) membungkus LibreOffice headless di balik satu rute HTTP, jadi berkas
+  # Office diubah jadi PDF lalu dibaca lewat penampil PDF yang sudah terbukti
+  # jalan. Dipilih daripada memasang tiga pustaka perender di sisi peramban
+  # karena satu mekanisme mengalahkan tiga, dan untuk PowerPoint memang tidak
+  # ada pustaka klien yang layak.
+  #
+  # TIDAK dipublikasikan ke luar: hanya `api` yang memanggilnya, lewat jaringan
+  # internal compose. Jangan pernah memetakan portnya ke host.
+  gotenberg:
+    container_name: gotenberg
+    image: gotenberg/gotenberg:8
+    restart: always
+    command:
+      - gotenberg
+      # Chromium tidak dipakai sama sekali di sini, cuma LibreOffice. Mematikan
+      # rutenya memperkecil permukaan serang sekaligus pemakaian memori.
+      - --chromium-disable-javascript=true
+      - --api-timeout=180s
+
+  plane-minio:
+    container_name: plane-minio
+    image: minio/minio
+    restart: always
+    command: server /export --console-address ":9090"
+    volumes:
+      - uploads:/export
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+
+  # Comment this if you already have a reverse proxy running
+  proxy:
+    # `host.docker.internal` tidak ada di Linux tanpa baris ini, dan proxy
+    # membutuhkannya untuk menjangkau LiveKit yang berjalan di jaringan host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    container_name: proxy
+    build:
+      context: ./apps/proxy
+      dockerfile: Dockerfile.ce
+    restart: always
+    ports:
+      - ${LISTEN_HTTP_PORT}:80
+      - ${LISTEN_HTTPS_PORT}:443
+    # Caddyfile.ce berisi blok `{$SITE_ADDRESS} { import plane_proxy }`. Kalau
+    # SITE_ADDRESS kosong, blok itu jadi tanpa kunci dan Caddy menolak SELURUH
+    # config ("server block without any key ... must be first") -> restart-loop.
+    # Default :80 supaya variabel yang lupa diisi tidak mengulang bug ini.
+    environment:
+      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
+      BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      CERT_EMAIL: ${CERT_EMAIL:-}
+      # Caddyfile.ce memakai {$CERT_ACME_DNS} dan {$CERT_ACME_CA}, tapi keduanya
+      # tidak pernah diteruskan ke sini. Akibatnya tantangan DNS-01 mustahil
+      # dipakai: Caddy jatuh ke HTTP-01, yang selalu gagal di server ini karena
+      # ada di balik NAT dan tidak bisa dijangkau Let's Encrypt dari luar.
+      CERT_ACME_DNS: ${CERT_ACME_DNS:-}
+      CERT_ACME_CA: ${CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+    volumes:
+      # Kredensial acme-dns untuk tantangan DNS-01, dipakai kalau CERT_ACME_DNS
+      # menunjuk ke `acme_dns acmedns /etc/caddy/acmedns.json`.
+      #
+      # ⚠️ Berkas ini WAJIB SUDAH ADA sebelum `up -d`. Kalau belum, Docker
+      # membuat DIREKTORI kosong bernama sama di tempatnya, lalu Caddy gagal
+      # dengan pesan soal JSON yang tidak terbaca, bukan soal berkas yang
+      # hilang. Sebabnya jadi jauh dari gejalanya.
+      # Pulihkan dengan `rm -rf` direktori itu lalu buat berkasnya.
+      - ${ACMEDNS_CREDENTIALS_FILE:-./paradise/acmedns.json}:/etc/caddy/acmedns.json:ro
+      # Penyimpanan sertifikat Caddy. TANPA volume ini, setiap kali container
+      # proxy dibuat ulang Caddy kehilangan sertifikatnya dan meminta yang baru
+      # ke Let's Encrypt.
+      #
+      # Itu bukan sekadar boros: Let's Encrypt membatasi 5 sertifikat duplikat
+      # per minggu untuk kumpulan domain yang sama. Deploy keenam dalam sepekan
+      # akan ditolak, HTTPS mati untuk semua orang, dan pesan galatnya menunjuk
+      # ke rate limit, bukan ke volume yang hilang. Sudah terjadi dua kali dalam
+      # satu hari pada 12 Agt 2026 sebelum ketahuan lewat smoke test.
+      - caddy_data:/data
+      # Menyimpan autosave.json. Bukan soal rate limit, tapi tanpa ini Caddy
+      # membangun ulang seluruh state-nya tiap start.
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+      - space
+      - admin
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+  rabbitmq_data:
+  # Sertifikat TLS dan state Caddy. Harus bertahan melewati pembuatan ulang
+  # container, kalau tidak setiap deploy membakar satu jatah sertifikat
+  # Let's Encrypt dari lima per minggu.
+  caddy_data:
+  caddy_config:
