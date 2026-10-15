@@ -1,0 +1,133 @@
+# CI kantor: build 6 image dari kode kustom -> push ke GHCR.
+# Deploy TIDAK otomatis. Di server jalankan `paradise/bin/deploy.sh` saat mau rilis.
+#
+# Sekali seumur hidup setelah run pertama: buka halaman `/pkgs` milik repo ini
+# di GitHub -> tiap package -> Package settings -> Change visibility -> Public.
+# Package GHCR default-nya private walaupun repo-nya public, dan server gagal
+# `pull` kalau masih private.
+name: paradise-build
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths-ignore:
+      - "paradise/**"
+      - "**/*.md"
+
+concurrency:
+  group: paradise-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tentukan namespace GHCR dari pemilik repo
+        # Sebelumnya ini di-hardcode ke satu namespace tetap di blok env.
+        #
+        # Paket GHCR dimiliki oleh NAMESPACE AKUN, bukan oleh repo, dan
+        # `secrets.GITHUB_TOKEN` sebuah repo hanya berhak menulis ke namespace
+        # pemilik repo itu sendiri. Jadi begitu repo dipindahkan ke akun atau
+        # organisasi lain, seluruh build gagal 403 saat push, dan pesannya tidak
+        # menyebut sebab sebenarnya sama sekali.
+        #
+        # Sekarang namespace-nya mengikuti pemilik repo, jadi pemindahan repo
+        # dan fork tidak perlu menyunting berkas apa pun. GHCR menolak huruf
+        # besar, karena itu `,,` yang mengecilkan seluruh hurufnya.
+        #
+        # ⚠️ DUA variabel, dan keduanya wajib, karena ada DUA jalur yang menyusun
+        # nama image dan keduanya harus sepakat:
+        #
+        #   GHCR_OWNER  dibaca `docker buildx bake` lewat field `image:` di
+        #               docker-compose.ghcr.yml. INI yang menentukan ke mana
+        #               image benar-benar didorong.
+        #   REGISTRY    dipakai langkah `imagetools create` di bawah untuk
+        #               menggeser tag `latest`.
+        #
+        # Menyetel salah satunya saja membuat build mendorong ke satu namespace
+        # lalu menggeser tag di namespace lain. Sudah kejadian 26 Agt 2026:
+        # REGISTRY sudah benar `ghcr.io/ptnomaxstudio-blip`, tapi compose jatuh
+        # ke nilai bawaan lamanya dan build gagal dengan
+        # `denied: permission_denied` saat mendorong ke namespace yang salah.
+        run: |
+          echo "GHCR_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+          echo "REGISTRY=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - name: Validasi compose + overlay GHCR
+        run: |
+          # Keduanya gitignored, jadi tidak pernah ada di checkout CI. Tanpa ini
+          # `config` gagal: docker-compose.yml menunjuk env_file ./apps/api/.env
+          # di 4 service. Isinya tidak dipakai, compose cuma butuh filenya ada.
+          cp .env.example .env
+          cp .env.example apps/api/.env
+          docker compose -f docker-compose.yml config -q
+          docker compose -f docker-compose.yml -f docker-compose.ghcr.yml config -q
+          # Guard: service baru yang punya build: tapi lupa ditambah ke overlay akan
+          # diam-diam ter-build dari source di server. Gagalkan di sini.
+          missing=$(docker compose -f docker-compose.yml -f docker-compose.ghcr.yml config --format json \
+            | python3 -c "import json,sys; s=json.load(sys.stdin)['services']; print(' '.join(n for n,v in s.items() if 'build' in v and not v.get('image','').startswith('ghcr.io')))")
+          if [ -n "$missing" ]; then
+            echo "Service tanpa image GHCR di docker-compose.ghcr.yml: $missing"
+            exit 1
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Bake membaca compose yang sama dengan yang dipakai server, jadi context dan
+      # nama image hanya ditulis di satu tempat (docker-compose.ghcr.yml).
+      #
+      # JANGAN pakai deployments/cli/community/build.yml di sini: context-nya
+      # ../../ padahal filenya tiga tingkat di bawah root, dan bake meresolusi
+      # context relatif ke direktori kerja, jadi tidak pernah menunjuk root repo.
+      #
+      # Keenam target disebut eksplisit: worker/beat-worker/migrator memakai image
+      # backend yang sama, tanpa ini image itu ter-build 4x.
+      #
+      # ponytail: tanpa cache layer, build ~25 menit, dan menit Actions gratis untuk
+      # repo public. Tambahkan cache-from/to type=gha kalau waktunya mulai mengganggu.
+      # AGPL-3.0 pasal 13 mewajibkan setiap pengguna yang mengakses lewat jaringan
+      # ditawari Corresponding Source dari versi yang SEDANG BERJALAN. Karena itu
+      # arsipnya dibuat dari commit yang sedang di-build, bukan dari cabang
+      # terbaru: tawaran yang isinya beda versi bukan tawaran yang sah.
+      #
+      # `git archive` hanya memuat berkas TERLACAK, jadi .env, node_modules, dan
+      # .git tidak pernah ikut. Tidak ada rahasia yang bocor lewat jalur ini.
+      #
+      # Hasilnya masuk ke konteks build apps/api dan disalin Dockerfile.api ke
+      # dalam image backend. Ukurannya sekitar 30 MB, jadi tidak perlu
+      # penyimpanan objek terpisah.
+      #
+      # checkout@v4 bawaannya fetch-depth 1, dan itu CUKUP: `git archive HEAD`
+      # hanya butuh pohon commit ini, bukan riwayatnya.
+      - name: Siapkan arsip Corresponding Source (AGPL pasal 13)
+        run: |
+          git archive --format=tar.gz --prefix="source-${{ github.sha }}/" -o apps/api/plane/agpl-source/corresponding-source.tar.gz HEAD
+          ls -lh apps/api/plane/agpl-source/corresponding-source.tar.gz
+
+      - name: Build & push (tag = commit sha)
+        env:
+          APP_RELEASE: ${{ github.sha }}
+        run: |
+          docker buildx bake -f docker-compose.yml -f docker-compose.ghcr.yml --push \
+            web admin space live api proxy
+
+      # Manifest copy, bukan rebuild, hitungan detik.
+      - name: Geser tag `latest` ke build ini
+        run: |
+          for img in frontend space admin live backend proxy; do
+            docker buildx imagetools create \
+              -t "$REGISTRY/plane-$img:latest" \
+              "$REGISTRY/plane-$img:${{ github.sha }}"
+          done
