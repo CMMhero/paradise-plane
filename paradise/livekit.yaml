@@ -1,0 +1,38 @@
+# Konfigurasi LiveKit untuk Paradise Task Tracker.
+#
+# LiveKit dipakai sebagai SFU panggilan: kedua peramban menyambung KE SERVER,
+# lalu server meneruskan media. Ini sengaja menggantikan sambungan peer ke peer
+# yang menuntut kedua komputer bisa saling menghubungi langsung, syarat yang
+# tidak dipenuhi jaringan kantor ini.
+#
+# TANPA REDIS, dan itu disengaja. Redis hanya dibutuhkan LiveKit untuk berbagi
+# keadaan antar-node. Kita satu node. Menyambungkannya berarti mempublikasikan
+# port Redis aplikasi ke host hanya untuk sesuatu yang tidak dipakai.
+
+port: 7880
+
+rtc:
+  # Port media. Harus terbuka di firewall server, kalau tidak LiveKit hidup
+  # normal tapi media tidak pernah mengalir, dan gejalanya sama persis dengan
+  # tidak memasangnya sama sekali.
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50200
+
+  # ⚠️ HARUS false. Server ini di balik NAT: IP antarmukanya 128.159.110.5 tapi
+  # egress-nya 146.196.96.5. Kalau LiveKit disuruh menemukan "IP publik" sendiri,
+  # ia mengiklankan 146.196.96.5, alamat yang TIDAK BISA dihubungi dari dalam
+  # kantor. Panggilan lalu gagal tanpa satu pun pesan yang menunjuk ke sini.
+  use_external_ip: false
+
+  # Alamat yang diiklankan ke peramban. Sama dengan yang dipakai karyawan untuk
+  # membuka aplikasinya, jadi dijamin terjangkau.
+  node_ip: 128.159.110.5
+
+# Kunci API dibaca dari env `LIVEKIT_KEYS` (format "kunci: rahasia") supaya
+# tidak pernah masuk git.
+keys: {}
+
+logging:
+  level: info
+  json: false
