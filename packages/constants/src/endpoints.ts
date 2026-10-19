@@ -1,0 +1,36 @@
+/**
+ * Copyright (c) 2023-present Plane Software, Inc. and contributors
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * See the LICENSE file for details.
+ */
+
+export const API_BASE_URL = process.env.VITE_API_BASE_URL || "";
+export const API_BASE_PATH = process.env.VITE_API_BASE_PATH || "";
+export const API_URL = encodeURI(`${API_BASE_URL}${API_BASE_PATH}`);
+// God Mode Admin App Base Url
+export const ADMIN_BASE_URL = process.env.VITE_ADMIN_BASE_URL || "";
+export const ADMIN_BASE_PATH = process.env.VITE_ADMIN_BASE_PATH || "";
+export const GOD_MODE_URL = encodeURI(`${ADMIN_BASE_URL}${ADMIN_BASE_PATH}`);
+// Publish App Base Url
+export const SPACE_BASE_URL = process.env.VITE_SPACE_BASE_URL || "";
+export const SPACE_BASE_PATH = process.env.VITE_SPACE_BASE_PATH || "";
+export const SITES_URL = encodeURI(`${SPACE_BASE_URL}${SPACE_BASE_PATH}`);
+// Live App Base Url
+export const LIVE_BASE_URL = process.env.VITE_LIVE_BASE_URL || "";
+export const LIVE_BASE_PATH = process.env.VITE_LIVE_BASE_PATH || "";
+export const LIVE_URL = encodeURI(`${LIVE_BASE_URL}${LIVE_BASE_PATH}`);
+// Web App Base Url
+export const WEB_BASE_URL = process.env.VITE_WEB_BASE_URL || "";
+export const WEB_BASE_PATH = process.env.VITE_WEB_BASE_PATH || "";
+export const WEB_URL = encodeURI(`${WEB_BASE_URL}${WEB_BASE_PATH}`);
+// Situs produk. Default upstream `https://plane.so` DIBUANG: ini alat internal
+// kantor, bukan produk vendor.
+export const WEBSITE_URL = process.env.VITE_WEBSITE_URL || "";
+// Email dukungan. Default upstream `support@plane.so` DIBUANG, ia muncul di
+// pesan nyata "User account deactivated. Please contact <email>" di web, space,
+// DAN admin, jadi karyawan yang akunnya dinonaktifkan akan mengemail vendor yang
+// tidak melayani kita. Sengaja TIDAK diganti alamat karangan: pemanggilnya sudah
+// menulis `SUPPORT_EMAIL ? SUPPORT_EMAIL : "administrator"`, dan disuruh
+// menghubungi administrator lebih benar daripada mengirim aduan ke ruang hampa.
+// Isi lewat VITE_SUPPORT_EMAIL kalau IT sudah punya alamat resmi.
+export const SUPPORT_EMAIL = process.env.VITE_SUPPORT_EMAIL || "";

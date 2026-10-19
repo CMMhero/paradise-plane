@@ -1,0 +1,176 @@
+node_modules
+.next
+.yarn
+
+### NextJS ###
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+dist/
+out/
+build/
+.react-router/
+
+# Misc
+.DS_Store
+*.pem
+.history
+tsconfig.tsbuildinfo
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+apps/live/live-dev.log
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# Turborepo
+.turbo
+
+## Django ##
+venv
+.venv
+*.pyc
+staticfiles
+mediafiles
+.env
+.DS_Store
+# Keluaran log runtime Django. DIBATASI ke path-nya sendiri, jangan `logs/`
+# telanjang: pola tanpa slash depan cocok di KEDALAMAN MANA PUN, dan itu ikut
+# menelan `apps/admin/app/(all)/(dashboard)/logs/`, direktori SUMBER halaman
+# jejak audit di God Mode. Akibatnya `logs/page.tsx` tidak pernah ter-commit,
+# tidak pernah muncul di `git status` (berkas ter-ignore memang disembunyikan),
+# lokal selalu jalan, dan CI selalu gagal karena berkasnya tidak ada di
+# checkout. `paradise-build` merah 5 hari karena ini. → BUG-07
+/apps/api/plane/logs/
+# Log deploy dari paradise/bin/deploy-lepas.sh, hidup di server. Diawali slash
+# dengan alasan yang sama seperti di atas: pola telanjang cocok di kedalaman
+# mana pun dan akan menelan direktori sumber bernama logs/.
+/logs/
+htmlcov/
+.coverage
+
+node_modules/
+assets/dist/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+package-lock.json
+.vscode
+
+# Sentry
+.sentryclirc
+
+# lock files
+package-lock.json
+
+
+
+.secrets
+tmp/
+
+## packages
+dist
+.temp/
+deploy/selfhost/plane-app/
+
+## Storybook
+*storybook.log
+output.css
+
+dev-editor
+# Redis
+*.rdb
+*.rdb.gz
+
+storybook-static
+
+build/
+.react-router/
+
+build/
+.react-router/
+temp/
+scripts/
+!packages/i18n/scripts/
+
+# i18n auto-generated types (regenerated on every build)
+packages/i18n/src/types/keys.generated.ts
+
+# Local security notes (not for version control)
+/security/
+
+# Paradise Task Tracker: artefak operasional kantor (jangan commit)
+/backups/
+*.sql
+*.sql.gz
+*.dump
+paradise/.env
+.env.paradise
+
+# Kredensial karyawan - jangan pernah commit
+DAFTAR_AKUN_KARYAWAN.md
+
+# Daftar akun UJI lintas divisi, memuat kata sandi dalam bentuk terbaca.
+# Alasannya sama dengan DAFTAR_AKUN_KARYAWAN.md di atas: berkas ini harus aman
+# ikut tersalin ke klon mana pun, bukan cuma di laptop ini. Dijangkarkan dengan
+# "/" supaya pola ini tidak menelan berkas lain bernama sama di kedalaman mana
+# pun (pelajaran BUG-07: pola telanjang seperti `logs/` pernah menelan direktori
+# SUMBER).
+/test-accounts.md
+
+# Backup env (berisi secret) & log lokal
+*.env.bak
+.env.bak
+paradise/*.log
+
+# Vault Obsidian catatan pribadi (knowledge base proyek)
+/PP_TaskMgr/
+
+# Paket migrasi ke server (dump DB + env produksi berisi secret)
+/migrasi/
+
+# Kredensial acme-dns (DNS-01). Dibuat per-server, jangan pernah di-commit.
+paradise/acmedns.json
+
+# Arsip Corresponding Source AGPL-3.0 pasal 13, dibuat CI saat build.
+apps/api/plane/agpl-source/corresponding-source.tar.gz
+
+# Berkas rahasia per pelanggan hasil `manage.py provision_tenant`. Isinya sandi
+# database, SECRET_KEY, dan rahasia denyut ke bidang kendali, semuanya dalam
+# bentuk terbaca. Satu commit yang membawanya masuk berarti rahasia itu ada di
+# riwayat git selamanya, dan riwayat git repo ini sudah pernah dicermin ke tempat
+# lain. Diuji oleh test_berkasnya_tidak_pernah_ikut_ter_commit.
+tenants/
+*.tenant.env
+
+# Local session cookie jar (never commit secrets)
+staf.jar

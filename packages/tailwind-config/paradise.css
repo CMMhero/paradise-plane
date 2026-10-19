@@ -1,0 +1,219 @@
+/**
+ * Copyright (c) 2023-present Plane Software, Inc. and contributors
+ * Kustomisasi Paradise Task Tracker: lapisan adaptif
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * See the LICENSE file for details.
+ *
+ * KENAPA BERKAS TERPISAH, BUKAN DITULIS DI index.css
+ *
+ * Repo ini di-vendor dari makeplane/plane dan masih disinkronkan. Tiap baris
+ * yang kita selipkan ke berkas upstream jadi tagihan yang dibayar berulang di
+ * SETIAP sync. Dengan berkas sendiri, jejak kita di upstream tinggal SATU baris
+ * `@import` di index.css, dan seluruh isinya di sini tidak akan pernah
+ * bertabrakan dengan perubahan mereka.
+ *
+ * Aturan di sini sengaja TIDAK dibungkus `@layer`. CSS tanpa layer selalu
+ * mengalahkan CSS berlayer, berapa pun specificity-nya, dan utilitas Tailwind
+ * hidup di dalam `@layer utilities`. Jadi timpaan di bawah ini pasti menang
+ * tanpa perlu satu pun `!important`.
+ */
+
+/* ==========================================================================
+   1. Tinggi layar yang mengikuti ruang yang BENAR-BENAR terlihat
+   ==========================================================================
+
+   `100vh` di peramban HP ikut menghitung bilah alamat yang menyusut saat
+   digulir. Akibatnya isi halaman selalu lebih tinggi dari yang terlihat, dan
+   baris paling bawah terdorong keluar layar. Di halaman yang menaruh tombol
+   aksi di bawah, tombol itu tidak bisa disentuh sama sekali.
+
+   `100dvh` mengikuti tinggi yang sungguh terlihat saat itu juga.
+
+   Ditimpa dari sini, bukan disapu satu per satu, karena `h-screen` dan
+   `min-h-screen` dipakai 45 kali dan hampir semuanya di berkas upstream.
+   Satu aturan di sini menyelesaikan semuanya sekaligus, dengan nol biaya sync.
+
+   Di desktop `dvh` sama persis dengan `vh` karena tidak ada bilah yang
+   menyusut, jadi tidak ada yang berubah di sana. */
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh;
+  }
+
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+
+  .max-h-screen {
+    max-height: 100dvh;
+  }
+}
+
+/* ==========================================================================
+   2. Target sentuh yang bisa kena jari
+   ==========================================================================
+
+   Ambang 44px berasal dari panduan Apple dan WCAG 2.2 (SC 2.5.8 meminta 24px
+   sebagai batas minimum mutlak, 44px adalah angka yang benar-benar nyaman).
+   Tombol pembuka sidebar di aplikasi ini `size-7`, yaitu 28px.
+
+   Yang diperbesar HANYA area sentuhnya lewat pseudo-element, BUKAN ukuran
+   tombolnya. Membesarkan tombolnya akan mengubah tata letak di desktop, dan
+   yang kita mau justru sebaliknya: tampilan tetap sama persis, jarinya saja
+   yang lebih mudah kena.
+
+   Hanya berlaku di perangkat berpenunjuk kasar. Pemakai tetikus tidak butuh
+   ini dan area tak terlihat yang melebar bisa mencuri klik dari tetangganya. */
+@media (pointer: coarse) {
+  [data-sentuh-lega] {
+    position: relative;
+  }
+
+  [data-sentuh-lega]::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ==========================================================================
+   3. Area aman poni layar: TIDAK ADA, dan itu disengaja
+   ==========================================================================
+
+   Utilitas `pad-aman-*` sempat ditulis di sini lalu DIHAPUS lagi tanpa pernah
+   dipakai. Alasannya: `env(safe-area-inset-*)` hanya berisi nilai bukan-nol
+   kalau meta viewport memakai `viewport-fit=cover`, dan aplikasi ini tidak
+   memakainya (`app/root.tsx` cuma `width=device-width, initial-scale=1`).
+   Tanpa itu peramban sudah menahan isi halaman di dalam area aman sendiri,
+   jadi utilitasnya selalu menghitung nol dan tidak berbuat apa pun.
+
+   Menyalakan `viewport-fit=cover` bukan pekerjaan satu baris: ia melebarkan
+   halaman sampai ke bawah poni dan bilah gestur, lalu SETIAP permukaan yang
+   menempel di tepi harus diberi padding aman satu per satu. Kalau nanti memang
+   diputuskan, itu pekerjaan tersendiri, bukan utilitas yang menganggur di sini
+   menunggu dipakai. */
+
+/* ==========================================================================
+   3b. Penanda bahwa sebuah panel masih bisa digulir ke samping
+   ==========================================================================
+
+   Tabel lebar di layar sempit memang bisa digulir mendatar, tapi tanpa tanda
+   apa pun orang tidak tahu masih ada kolom di kanan. Ia menyimpulkan datanya
+   memang cuma segitu, dan itu kesimpulan yang salah tanpa gejala.
+
+   Bayangannya muncul HANYA di sisi yang masih menyimpan isi, dan hilang sendiri
+   begitu mentok. Triknya `background-attachment`: dua lapis `local` ikut
+   bergulir bersama isi dan menutupi dua lapis `scroll` yang diam di tepi. Tidak
+   ada JavaScript, tidak ada pendengar peristiwa gulir, dan tetap benar walau
+   digulir dengan roda tetikus, jari, atau papan ketik.
+
+   `--warna-dasar-gulir` boleh ditimpa pemakainya kalau permukaannya bukan
+   `layer-1`, misalnya kartu di atas `layer-3`. */
+@utility gulir-berpenanda {
+  --warna-dasar-gulir: var(--background-color-layer-1);
+  background:
+    linear-gradient(to right, var(--warna-dasar-gulir) 30%, transparent) left center / 36px 100% no-repeat local,
+    linear-gradient(to left, var(--warna-dasar-gulir) 30%, transparent) right center / 36px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 16%), transparent) left center / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 16%), transparent) right center / 12px 100% no-repeat scroll;
+}
+
+/* ==========================================================================
+   4. Gerak yang menghormati permintaan pengguna
+   ==========================================================================
+
+   Bukan sekadar sopan santun: gerak yang tidak diminta bisa memicu pusing dan
+   mual pada sebagian orang (vestibular disorder). Sistem operasi sudah punya
+   saklarnya, aplikasi tinggal mendengarkan.
+
+   Transisi tidak dimatikan total melainkan dipangkas jadi hampir seketika,
+   karena mematikannya sepenuhnya membuat sebagian komponen yang menunggu
+   peristiwa `transitionend` menggantung selamanya. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   5. Angka yang berbaris lurus
+   ==========================================================================
+
+   Di huruf proporsional, angka 1 lebih sempit dari 8, jadi kolom angka terlihat
+   bergoyang dan sulit dibandingkan sekilas. `tabular-nums` menyamakan lebarnya.
+   Ditempelkan ke sel tabel dan ke apa pun yang ditandai, bukan ke seluruh
+   halaman, karena teks biasa justru lebih enak dibaca dengan angka proporsional. */
+td,
+th,
+[data-angka] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   6. Fokus papan ketik yang terlihat
+   ==========================================================================
+
+   `:focus-visible` hanya menyala saat orang benar-benar bernavigasi dengan
+   papan ketik, jadi pemakai tetikus tidak akan melihat cincin ini sama sekali.
+   Tanpa ini, orang yang berpindah dengan Tab tidak tahu sedang berada di mana.
+
+   KENAPA ADA PENGECUALIAN. Di aplikasi ini ada 170 elemen ber-`outline-none`.
+   Sebanyak 43 di antaranya TIDAK punya pengganti apa pun, jadi fokus papan
+   ketiknya memang tidak terlihat sama sekali sebelum aturan ini ada, dan mereka
+   justru alasan utama aturan ini dibuat. Tapi sekitar delapan sudah menggambar
+   cincinnya sendiri lewat `focus:ring-*`; buat mereka, aturan ini cuma menambah
+   cincin KEDUA di luar cincin yang sudah ada.
+
+   `:where()` dipakai supaya pengecualian ini tidak menaikkan specificity, jadi
+   komponen mana pun tetap bisa menimpanya dengan kelasnya sendiri.
+
+   Permukaan editor tidak perlu disebut di sini: `editor.css` memakai
+   `outline: none !important`, yang tetap menang atas aturan ini. */
+:focus-visible:not(:where([class*="focus:ring-"], [class*="focus-visible:ring-"], [class*="ring-offset"])) {
+  outline: 2px solid var(--border-color-accent-strong, currentColor);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   7. Tema "kontras tinggi" yang sebenarnya menaikkan kontras TEKS
+   ==========================================================================
+
+   Aplikasi ini punya empat tema, dan dua di antaranya bernama `light-contrast`
+   dan `dark-contrast`. Namanya menjanjikan kontras tinggi, tapi blok definisinya
+   di variables.css HANYA berisi warna border: 17 token di versi terang, 14 di
+   versi gelap, dan NOL token teks di keduanya. Jadi buat pembaca, tema kontras
+   tinggi sama persis dengan tema biasa. Itu terbukti dua kali: dari membaca
+   sumbernya, dan dari mengukur halaman yang sama di keempat tema (terang dan
+   terang-kontras menghasilkan 42 kegagalan yang identik).
+
+   Sementara itu teks tersier dan placeholder di tema terang cuma 3,69:1 terhadap
+   latar putih, di bawah ambang WCAG AA 4,5:1 untuk teks 13px. Yang kena bukan
+   teks hiasan: label bagian "Workspace" dan seluruh item navigasi sidebar yang
+   tidak sedang aktif, plus semua cap waktu "19 days ago".
+
+   Diperbaiki dengan menggeser dua token itu SATU ANAK TANGGA menjauh dari latar
+   pada skala neutral yang memang sudah ada. Tidak ada warna baru yang dikarang,
+   dan hanya berlaku bagi orang yang SENGAJA memilih tema kontras tinggi, jadi
+   tampilan mayoritas karyawan tidak berubah sama sekali.
+
+   Tema biasa sengaja TIDAK disentuh: menggelapkan teks tersier di sana mengubah
+   tampilan semua orang, dan itu keputusan desain milik pemilik produk, bukan
+   perbaikan aksesibilitas yang bisa saya ambil sendiri. */
+[data-theme="light-contrast"] {
+  --txt-tertiary: var(--neutral-1100);
+  --txt-placeholder: var(--neutral-1000);
+}
+
+[data-theme="dark-contrast"] {
+  --txt-tertiary: var(--neutral-1100);
+  --txt-placeholder: var(--neutral-1000);
+}
