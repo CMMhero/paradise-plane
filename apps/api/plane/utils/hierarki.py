@@ -1,0 +1,830 @@
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# Kustomisasi Paradise Task Tracker: resolver & gerbang hierarki
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+"""Satu tempat untuk menjawab "siapa atasannya siapa" dan "boleh atau tidak menugaskan".
+
+Rancangan + pertanyaan yang BELUM dijawab user: `.herdr/hierarki-desain.md`.
+
+## Kenapa satu modul, bukan logika yang disalin ke tiap pemanggil
+
+[[Jebakan & Pelajaran]] prinsip #1: kalau ada dua jalur ke sumber daya yang sama,
+keduanya wajib sepakat. Penugasan punya **12 titik tulis** (daftarnya di rancangan §4),
+dan satu serializer melayani lima di antaranya. Definisi "boleh menugaskan" yang
+bercabang dua adalah cara paling rapi untuk membuat satu jalur bilang boleh dan jalur
+lain bilang tidak — dan user kehilangan pekerjaannya tanpa peringatan.
+
+## Kenapa aktornya diambil dari `crum`, bukan dari parameter wajib
+
+`BaseModel.save()` sudah memakai `crum.get_current_user()` (`plane/db/models/base.py`),
+jadi thread-local itu sudah menjadi sumber aktor untuk `created_by`/`updated_by` di
+seluruh aplikasi. Memakainya di sini berarti **tidak perlu** menambahkan `request` ke
+`context` serializer di lima pemanggil — dan tiap baris yang tidak ditambahkan ke berkas
+upstream adalah divergensi yang tidak perlu dibayar di setiap upstream sync.
+
+Batasnya harus disebut: kalau `crum` tidak menyetel user (mis. dijalankan dari Celery),
+aktornya `None`, dan gerbangnya **menolak** (gagal ke arah aman, prinsip #3).
+"""
+
+# Python imports
+import os
+
+# Module imports
+from plane.db.models import (
+    JabatanOrganisasi,
+    PengawasanDivisi,
+    ProjectMember,
+    TINGKAT_DIREKTUR,
+    TINGKAT_MANAGER,
+    TINGKAT_MEMBER,
+    TINGKAT_SUPERVISOR,
+)
+
+__all__ = [
+    "gerbang_aktif",
+    "peta_tingkat",
+    "tingkat_anggota",
+    "divisi_anggota",
+    "divisi_diawasi",
+    "struktur_aktif",
+    "penempatan",
+    "project_departemen",
+    "project_divisi",
+    "jangkauan_hierarki",
+    "calon_penyetuju",
+    "galat_penugasan",
+    "galat_ubah_tugas",
+    "periksa_penugasan",
+    "aktor_dari_context",
+    "catat_persetujuan",
+    "butuh_persetujuan",
+    "status_persetujuan_tugas",
+    "BUTUH_PERSETUJUAN",
+    "TANPA_ATASAN",
+]
+
+# Nilai balik `periksa_penugasan` untuk keadaan yang BUKAN "boleh" dan BUKAN "ditolak".
+# Dipakai antrean persetujuan; sengaja string supaya tidak menambah kelas baru.
+BUTUH_PERSETUJUAN = "butuh-persetujuan"
+TANPA_ATASAN = "tanpa-atasan"
+
+# Nama variabel lingkungan katup darurat. Default MATI: dengan ini mati, perilaku
+# 88 user TIDAK berubah satu pun.
+FLAG_GERBANG = "HIERARKI_GERBANG_TUGAS"
+
+# Periksa "member yang dia bawahi" (tingkat penerima HARUS lebih rendah)?
+#
+# Dinyalakan 2026-10-15 sesudah user menjawab: "manager it bawahi supervisor dan member
+# it" -- jadi arah penugasan hanya boleh ke bawah. Sebelumnya sakelar ini mati karena
+# jawabannya belum ada, dan menebaknya akan memblokir pekerjaan seluruh kantor.
+PERIKSA_TINGKAT_PENERIMA = True
+
+
+def gerbang_aktif():
+    """Katup darurat. Dibaca saat dipanggil, bukan saat modul diimpor.
+
+    Dibaca per panggilan supaya bisa dinyalakan/dimatikan tanpa membuat ulang container
+    (jebakan A2: `docker compose restart` tidak membaca ulang `env_file`, jadi mengubah
+    nilai ini WAJIB `up -d`).
+    """
+    return os.environ.get(FLAG_GERBANG, "0") == "1"
+
+
+# --------------------------------------------------------------------------
+# Resolver — semuanya baca-saja
+# --------------------------------------------------------------------------
+
+
+def aktor_dari_context(context):
+    """Ambil pelaku dari `context` serializer, dengan cadangan `crum`.
+
+    Urutannya penting dan bukan gaya-gayaan:
+
+    1. `context["actor"]` — jalur utama. Sengaja EKSPLISIT, bukan mengandalkan
+       thread-local. Alasannya ditemukan saat menguji: `crum` membaca `request.user`
+       dari objek request DJANGO, sedangkan autentikasi DRF (termasuk **API token**)
+       memasang user di request DRF yang dibungkus setelahnya. Di bawah autentikasi
+       token, `crum` mengembalikan AnonymousUser — dan gerbang yang membaca AnonymousUser
+       akan menolak SEMUA penugasan tanpa satu pun error yang menjelaskan kenapa.
+       Di test harness hal yang sama terjadi dengan `force_authenticate`, jadi tanpa
+       jalur eksplisit ini gerbangnya tidak bisa diuji sama sekali.
+    2. `crum` — cadangan untuk pemanggil yang belum diberi `actor`, supaya jalur yang
+       terlewat tetap berperilaku benar di produksi alih-alih menolak semuanya.
+
+    None dikembalikan apa adanya; pemanggil yang memutuskan (gerbang menolak).
+    """
+    if context:
+        actor = context.get("actor")
+        if actor is not None and not getattr(actor, "is_anonymous", False):
+            return actor
+
+    from crum import get_current_user  # noqa: PLC0415
+
+    actor = get_current_user()
+    if actor is None or getattr(actor, "is_anonymous", False):
+        return None
+    return actor
+
+
+def peta_tingkat(workspace_id):
+    """{user_id: tingkat} untuk seluruh workspace, satu query.
+
+    Dipakai resolver yang perlu membandingkan banyak orang sekaligus (mis. mencari
+    calon penyetuju). Sengaja tidak difilter `is_active`: orang yang akunnya
+    dinonaktifkan tetap punya jabatan, dan barisnya tetap diperlukan untuk membaca
+    riwayat.
+    """
+    return dict(
+        JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list("member_id", "tingkat")
+    )
+
+
+def tingkat_anggota(user_id, workspace_id):
+    """Tingkat satu orang, atau None kalau jenjangnya BELUM DIISI.
+
+    None bukan 0 dan bukan TINGKAT_MEMBER. Perbedaan ini yang membuat "datanya kurang"
+    tidak pernah diam-diam berubah arti jadi "dia staf".
+    """
+    if user_id is None:
+        return None
+    baris = (
+        JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
+        .values_list("tingkat", flat=True)
+        .first()
+    )
+    return baris
+
+
+def divisi_anggota(user_id, workspace_id):
+    """Set id project tempat orang ini benar-benar anggota (keanggotaan hidup)."""
+    if user_id is None:
+        return set()
+    return set(
+        ProjectMember.objects.filter(
+            workspace_id=workspace_id,
+            member_id=user_id,
+            is_active=True,
+            deleted_at__isnull=True,
+        ).values_list("project_id", flat=True)
+    )
+
+
+def struktur_aktif(workspace_id):
+    """True kalau workspace ini sudah memakai struktur divisi -> departemen (KEP-29).
+
+    Sakelarnya DATA, bukan env: selama belum ada satu pun `Divisi`, seluruh resolver
+    jatuh ke perilaku lama (jangkauan = keanggotaan project), jadi 88 orang tidak
+    berubah apa-apa sampai struktur benar-benar diisi di God Mode.
+    """
+    from plane.db.models import Divisi  # noqa: PLC0415
+
+    return Divisi.objects.filter(workspace_id=workspace_id).exists()
+
+
+def penempatan(user_id, workspace_id):
+    """(tingkat, departemen_id, divisi_id) satu orang, atau None kalau jenjangnya belum diisi."""
+    if user_id is None:
+        return None
+    return (
+        JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
+        .values_list("tingkat", "departemen_id", "divisi_id")
+        .first()
+    )
+
+
+def project_departemen(departemen_id):
+    """Set id project hidup milik satu departemen."""
+    from plane.db.models import DepartemenProject  # noqa: PLC0415
+
+    if departemen_id is None:
+        return set()
+    return set(
+        DepartemenProject.objects.filter(departemen_id=departemen_id, project__deleted_at__isnull=True).values_list(
+            "project_id", flat=True
+        )
+    )
+
+
+def project_divisi(divisi_id):
+    """Set id project hidup di semua departemen satu divisi."""
+    from plane.db.models import DepartemenProject  # noqa: PLC0415
+
+    if divisi_id is None:
+        return set()
+    return set(
+        DepartemenProject.objects.filter(
+            departemen__divisi_id=divisi_id,
+            departemen__deleted_at__isnull=True,
+            project__deleted_at__isnull=True,
+        ).values_list("project_id", flat=True)
+    )
+
+
+def _semua_project(workspace_id):
+    from plane.db.models import Project  # noqa: PLC0415 — hindari impor melingkar
+
+    return set(Project.objects.filter(workspace_id=workspace_id, deleted_at__isnull=True).values_list("id", flat=True))
+
+
+def jangkauan_hierarki(user_id, workspace_id):
+    """{project_id: role} yang WAJIB dimiliki orang ini menurut hierarki (KEP-29).
+
+    Ini sisi LIHAT, bukan sisi wewenang (itu `divisi_diawasi`):
+
+        direktur   -> semua project, role 20
+        manager    -> semua project di divisinya, role 20
+        supervisor -> project departemennya, role 20
+        staf       -> project departemennya, role 15 (lihat semua, edit hanya
+                      tugas miliknya: `galat_ubah_tugas`)
+
+    Kosong kalau struktur belum aktif atau jenjangnya belum diisi.
+    """
+    if user_id is None or not struktur_aktif(workspace_id):
+        return {}
+    baris = penempatan(user_id, workspace_id)
+    if baris is None:
+        return {}
+    tingkat, departemen_id, divisi_id = baris
+    if tingkat >= TINGKAT_DIREKTUR:
+        return {pid: 20 for pid in _semua_project(workspace_id)}
+    if tingkat >= TINGKAT_MANAGER:
+        return {pid: 20 for pid in project_divisi(divisi_id)}
+    role = 20 if tingkat >= TINGKAT_SUPERVISOR else 15
+    return {pid: role for pid in project_departemen(departemen_id)}
+
+
+def divisi_diawasi(user_id, workspace_id):
+    """Set id project yang diawasi orang ini ("divisi yang dia bawahi").
+
+    Dengan struktur aktif (KEP-29) jawabannya datang dari hierarki, BUKAN dari
+    keanggotaan project: supervisor = project departemennya, manager = project
+    divisinya, direktur = semua (dibatasi baris `PengawasanDivisi` kalau ada).
+    Keanggotaan project eksplisit memberi akses kolaborasi, tidak memberi wewenang.
+
+    Tanpa struktur, perilaku lama di bawah ini yang berlaku.
+
+    Dua sumber, dan urutannya penting:
+
+    1. **Baris eksplisit** di `PengawasanDivisi`. Untuk **direktur**, baris ini
+       MEMBATASI: kosong = semua divisi, terisi = hanya divisi yang ditulis.
+       Untuk supervisor/manager, baris ini tidak menambah kewenangan lintas divisi
+       (keputusan user: "tidak cross divisi kecuali direktur").
+    2. **Rumus jenjang**, kalau tidak ada baris sama sekali:
+         direktur   -> semua divisi di workspace
+         manager    -> divisi tempat ia memang anggota
+         supervisor -> divisi tempat ia memang anggota
+       Tanpa rumus ini, sistem BUNTU sebelum ada yang mengisi tabel: direktur tidak bisa
+       apa-apa, padahal kata user "direktur bisa create task cross divisi manapun
+       karena tingkat teratas".
+
+    Kosong dikembalikan apa adanya (bukan buntu) kalau orangnya bukan siapa-siapa.
+    """
+    if user_id is None:
+        return set()
+
+    eksplisit = set(
+        PengawasanDivisi.objects.filter(workspace_id=workspace_id, member_id=user_id).values_list(
+            "project_id", flat=True
+        )
+    )
+    baris = penempatan(user_id, workspace_id)
+    tingkat = baris[0] if baris else None
+
+    if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
+        # Direktur: semua divisi, KECUALI kalau ada baris eksplisit -- di situ ia
+        # dibatasi ke divisi yang ditulis (mis. direktur operasional hanya 12 divisi).
+        if eksplisit:
+            return eksplisit
+        return _semua_project(workspace_id)
+
+    if tingkat is None:
+        return set()
+
+    if struktur_aktif(workspace_id):
+        _, departemen_id, divisi_id = baris
+        if tingkat >= TINGKAT_MANAGER:
+            return project_divisi(divisi_id)
+        if tingkat >= TINGKAT_SUPERVISOR:
+            return project_departemen(departemen_id)
+        return set()
+
+    # Supervisor DAN manager: HANYA divisi tempat ia memang anggota.
+    #
+    # Keputusan user 2026-10-15: "tidak cross divisi kecuali direktur" dan "manager it
+    # bawahi supervisor dan member it". Baris `PengawasanDivisi` karena itu TIDAK
+    # menambah kewenangan lintas divisi bagi mereka -- dan itu memang maksudnya: satu
+    # baris salah isi (atau warisan) tidak boleh memberi kewenangan yang tidak diminta,
+    # terlebih kegagalannya akan senyap.
+    if tingkat >= TINGKAT_SUPERVISOR:
+        return divisi_anggota(user_id, workspace_id)
+
+    return set()
+
+
+def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None):
+    """Orang-orang yang boleh menyetujui penugasan di project ini.
+
+    Aturannya (rancangan §5.4): tingkat **lebih tinggi** dari pembuat DAN mengawasi
+    divisi tempat tugas itu berada. Sengaja BUKAN "atasan langsung": tabel jenjang +
+    pengawasan tidak bisa menjawab siapa atasan langsung siapa, dan menebaknya berarti
+    memilih garis komando yang tidak pernah ada di data.
+
+    `tingkat_pembuat=None` berarti jenjang pembuat belum diisi. Dalam keadaan itu
+    SEMUA orang yang mengawasi divisi itu dianggap calon penyetuju — lebih baik
+    daripada tidak ada seorang pun, karena yang terakhir itu membuat penugasan
+    menggantung tanpa jalan keluar.
+    """
+    if project_id is None:
+        return []
+
+    peta = peta_tingkat(workspace_id)
+    kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
+    if tingkat_pembuat is not None:
+        kandidat = [uid for uid in kandidat if peta[uid] > tingkat_pembuat]
+
+    hasil = []
+    for uid in kandidat:
+        if project_id in divisi_diawasi(uid, workspace_id):
+            hasil.append(uid)
+    return sorted(hasil, key=lambda uid: -peta[uid])
+
+
+# --------------------------------------------------------------------------
+# Gerbang penugasan
+# --------------------------------------------------------------------------
+
+
+def _pesan_tolak(tingkat, nama_divisi):
+    if tingkat is None:
+        return (
+            "Jenjang Anda belum diisi, jadi untuk sementara Anda hanya boleh "
+            "menugaskan pekerjaan kepada diri sendiri. Hubungi IT untuk mengisi jenjang Anda."
+        )
+    if tingkat < TINGKAT_SUPERVISOR:
+        return (
+            "Anggota hanya boleh menugaskan pekerjaan kepada diri sendiri. "
+            f"Divisi {nama_divisi} berada di luar divisi yang Anda awasi."
+        )
+    return f"Divisi {nama_divisi} berada di luar divisi yang Anda awasi."
+
+
+def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
+    """Periksa satu penugasan. Kembalikan pesan galat, atau None kalau boleh.
+
+    Sengaja mengembalikan pesan, bukan melempar: pemanggilnya serializer DRF (yang
+    perlu `ValidationError`), skrip, dan tes — dan tiap pemanggil perlu bentuk galat
+    yang berbeda. Yang TIDAK boleh berbeda adalah keputusannya.
+
+    `abaikan_katup=True` dipakai census dan tes: keduanya harus bisa menjawab "apa yang
+    AKAN terjadi kalau katupnya dinyalakan" tanpa benar-benar menyalakannya untuk 88
+    orang. Tanpa ini, census cuma bisa melaporkan "gerbang mati, tidak ada yang terjadi".
+
+    Urutan pemeriksaan penting: gerbang mati diperiksa paling depan, supaya dengan
+    katup tertutup fungsi ini tidak menyentuh database sama sekali.
+    """
+    if not abaikan_katup and not gerbang_aktif():
+        return None
+
+    # Tugas tanpa penerima tidak pernah butuh persetujuan: approval melekat pada
+    # PENUGASAN, bukan pada pembuatan tugas (kata user: "hanya bisa assign diri sendiri,
+    # dan harus di approve").
+    assignee_ids = [a for a in (assignee_ids or []) if a is not None]
+    if not assignee_ids:
+        return None
+
+    # Aktor tidak diketahui -> gagal ke arah aman (prinsip #3).
+    if actor is None:
+        return "Pelaku penugasan tidak diketahui, jadi penugasan ini tidak dapat diverifikasi."
+
+    from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
+    if is_super_admin(actor):
+        # Super Admin mengurus sistem dan sudah punya akses ke seluruh project (B1).
+        # Catatannya: kewenangan ini di luar tangga divisi, jadi ia tidak diperiksa
+        # terhadap divisi apa pun. Pertanyaan #7 menanyakan apakah ini yang diinginkan.
+        return None
+
+    dari_id = {getattr(actor, "id", None)}
+    if set(assignee_ids) <= dari_id:
+        # Assign diri sendiri SELALU boleh. Yang BELUM dibangun adalah antrean
+        # persetujuannya (arti "approve" belum diputuskan — pertanyaan #5), jadi
+        # sengaja tidak ada efek samping di sini.
+        return None
+
+    from plane.db.models import Project  # noqa: PLC0415
+
+    project = Project.objects.filter(pk=project_id, deleted_at__isnull=True).first()
+    if project is None:
+        return "Project tujuan tidak ditemukan."
+
+    workspace_id = project.workspace_id
+
+    # Batas KEP-02: orang luar divisi memang tidak boleh menugaskan ke dalamnya.
+    # Jalur REST sudah menolaknya lebih dulu; ini pertahanan kedua supaya jalur yang
+    # tidak lewat REST (mis. skrip) tidak berbeda pendapat.
+    if project_id not in divisi_anggota(actor.id, workspace_id):
+        return f"Anda bukan anggota divisi {project.identifier}, jadi tidak dapat menugaskan pekerjaan di sana."
+
+    tingkat = tingkat_anggota(actor.id, workspace_id)
+
+    if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
+        # "direktur bisa create task cross divisi manapun karena tingkat teratas".
+        return None
+
+    if project_id in divisi_diawasi(actor.id, workspace_id):
+        if PERIKSA_TINGKAT_PENERIMA:
+            peta = peta_tingkat(workspace_id)
+            for uid in assignee_ids:
+                if uid in dari_id:
+                    continue
+                lain = peta.get(uid)
+                if lain is not None and lain >= (tingkat or TINGKAT_MEMBER):
+                    return (
+                        "Penerima tugas berada pada jenjang yang sama atau lebih tinggi "
+                        "dari Anda, jadi ia bukan bawahan yang dapat Anda tugaskan."
+                    )
+        return None
+
+    return _pesan_tolak(tingkat, project.identifier)
+
+
+def _bawahan_ids(actor_id, workspace_id, project_id):
+    """Id bawahan actor di divisi ini: diawasi actor + bukan setingkat/lebih tinggi.
+
+    Dua sumber, dan keduanya: (a) tingkat lebih rendah, (b) jenjang BELUM DIISI
+    tapi anggota divisi ini. (b) karena "belum diisi" BUKAN "bukan bawahan":
+    gerbang `galat_penugasan` memang mengizinkan atasan menugaskan ke mereka
+    (hanya menolak penerima yang JELAS setingkat/lebih tinggi), jadi
+    menyembunyikannya dari dropdown berarti dropdown berbohong tentang apa
+    yang server izinkan. Pengecualian: actor sendiri, dan anggota di divisi
+    yang tidak diawasi actor.
+    """
+    if actor_id is None:
+        return set()
+    peta = peta_tingkat(workspace_id)
+    tingkat_actor = peta.get(actor_id)
+    if tingkat_actor is None or tingkat_actor < TINGKAT_SUPERVISOR:
+        return set()
+    # Normalisasi ke string: pemanggil dari URL (kwargs) membawa UUID sebagai
+    # string, pemanggil dari serializer membawa objek UUID — tanpa ini
+    # perbandingan `in` selalu gagal dan atasan tidak pernah punya bawahan
+    # (bug kedua 2026-10-16; ditemukan karena tes unit lolos tapi endpoint tidak).
+    target = str(project_id)
+    bawahan = set()
+    diawasi_actor = {str(p) for p in divisi_diawasi(actor_id, workspace_id)}
+    if target not in diawasi_actor:
+        return set()
+    # `diawasi_actor` hanya berisi project workspace ini (resolver memfilter
+    # workspace_id), jadi lolos dari cek di atas berarti project-nya valid —
+    # tidak perlu fetch Project tambahan.
+    for uid, tingkat in peta.items():
+        if (
+            uid != actor_id
+            and tingkat < tingkat_actor
+            and target in {str(p) for p in divisi_anggota(uid, workspace_id)}
+        ):
+            # Syarat DUA arah yang benar: penerima (a) tingkatnya di bawah
+            # actor, (b) ANGGOTA divisi ini, (c) divisi ini diawasi actor
+            # (diperiksa sekali di atas). Sebelumnya (b) salah memeriksa
+            # "divisi yang DIAWASI bawahan" — member tidak mengawasi apa pun,
+            # jadi member tidak pernah muncul sebagai bawahan (bug 2026-10-16).
+            bawahan.add(uid)
+    # Anggota divisi ini yang jenjangnya BELUM DIISI: bukan atasan (tidak ada
+    # di peta), bukan actor, dan hanya kalau actornya supervisor+ di divisi
+    # yang dia awasi (diperiksa di atas). Lihat docstring kenapa termasuk.
+    anggota = set(
+        ProjectMember.objects.filter(
+            workspace_id=workspace_id, project_id=project_id, is_active=True, deleted_at__isnull=True
+        ).values_list("member_id", flat=True)
+    )
+    for uid in anggota:
+        if uid != actor_id and uid not in peta:
+            bawahan.add(uid)
+    return bawahan
+
+
+PESAN_TERKUNCI = (
+    "Tugas ini masih menunggu persetujuan atasan, jadi dikunci: belum bisa diubah, "
+    "dipindah status, atau dikerjakan sampai disetujui."
+)
+
+# Detik sesudah pengajuan di mana PEMOHON masih boleh menyentuh sub-sumber
+# tugasnya (cycle, module, lampiran, tautan). Alasannya: modal create mengirim
+# panggilan susulan tepat sesudah tugas dibuat (`addIssueToCycle`,
+# `changeModulesInIssue`, unggah lampiran), dan tanpa jendela ini staf gagal
+# membuat tugas yang ada cycle/lampirannya.
+# ponytail: jendela waktu tetap; ganti dengan "lampiran ikut payload create"
+# kalau 120 detik ternyata kurang di jaringan lambat.
+MASA_SUSUN_DETIK = 120
+
+
+def galat_terkunci(issue_ids, actor, masa_susun=False):
+    """Pesan galat kalau salah satu tugas masih MENUNGGU persetujuan, atau None.
+
+    Keputusan user 2026-10-20: tugas staf yang menunggu persetujuan bukan cuma
+    berlabel, tapi TERKUNCI -- tidak bisa diubah, dipindah status, dihapus,
+    diarsip, atau dikerjakan siapa pun sampai disetujui. Atasan pun tidak
+    menyuntingnya: ia memutuskan lewat setujui/tolak. Tugas yang dibuat
+    supervisor/manager/direktur tidak pernah punya baris menunggu, jadi tidak
+    pernah terkunci.
+
+    - Gerbang mati -> tidak ada kunci (katup darurat melepas semuanya).
+    - Super Admin -> lolos (B1, jalan keluar IT).
+    - `masa_susun=True` -> pemohon lolos selama `MASA_SUSUN_DETIK` sesudah
+      pengajuan (hanya dipakai penjaga sub-sumber, bukan PATCH tugasnya).
+    """
+    if not gerbang_aktif():
+        return None
+    ids = [i for i in (issue_ids or []) if i]
+    if not ids:
+        return None
+    if actor is not None:
+        from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
+        if is_super_admin(actor):
+            return None
+
+    from datetime import timedelta  # noqa: PLC0415
+
+    from django.utils import timezone  # noqa: PLC0415
+    from plane.db.models import PersetujuanPenugasan, STATUS_PERSETUJUAN_MENUNGGU  # noqa: PLC0415
+
+    menunggu = PersetujuanPenugasan.objects.filter(issue_id__in=ids, status=STATUS_PERSETUJUAN_MENUNGGU)
+    if masa_susun and actor is not None:
+        batas = timezone.now() - timedelta(seconds=MASA_SUSUN_DETIK)
+        menunggu = menunggu.exclude(pemohon_id=actor.id, created_at__gte=batas)
+    return PESAN_TERKUNCI if menunggu.exists() else None
+
+
+# Segmen URL yang TETAP terbuka saat tugas terkunci: percakapan, bukan pekerjaan.
+# Atasan perlu bisa bertanya "maksudnya apa?" sebelum menyetujui.
+_JALUR_LOLOS_KUNCI = ("/comments/", "/reactions/", "/issue-subscribers/", "/subscribe/")
+_KUNCI_ISI = ("issues", "issue_ids", "sub_issue_ids")
+
+
+def _uuid_saja(nilai):
+    import uuid  # noqa: PLC0415
+
+    hasil = []
+    for v in nilai if isinstance(nilai, (list, tuple)) else [nilai]:
+        if isinstance(v, dict):
+            v = v.get("id") or v.get("issue")
+        try:
+            hasil.append(uuid.UUID(str(v)))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    return hasil
+
+
+def tugas_disentuh_request(request, kwargs):
+    """Id tugas (sub-sumber) yang disentuh request tulis: `issue_id` di URL + isi body.
+
+    `pk` TIDAK di sini: di rute tugas ia adalah tugasnya sendiri, dan itu tidak
+    mendapat masa susun (lihat `KunciPersetujuanMixin.initial`).
+    """
+    ids = _uuid_saja(kwargs.get("issue_id"))
+    data = getattr(request, "data", None)
+    if hasattr(data, "get"):
+        for kunci in _KUNCI_ISI:
+            if kunci in data:
+                ids += _uuid_saja(data.get(kunci))
+        if isinstance(data.get("updates"), list):  # issue-dates bulk
+            ids += _uuid_saja(data.get("updates"))
+    return ids
+
+
+class KunciPersetujuanMixin:
+    """Satu penjaga di base view untuk SEMUA jalur tulis yang menyentuh tugas.
+
+    Kenapa di base view, bukan di tiap endpoint: tugas punya belasan pintu tulis
+    (PATCH, arsip, hapus massal, cycle, module, sub-issue, relasi, tautan,
+    lampiran, worklog, issue-dates, API token). Penjaga per endpoint pasti ada
+    yang terlewat; satu penjaga di `initial()` tidak bisa terlewat.
+
+    `pk` ikut diperiksa walau di banyak rute ia bukan id tugas: id UUID tidak
+    bertabrakan, jadi pk komentar/tautan tidak akan pernah cocok dengan baris
+    persetujuan -- biayanya satu query ber-indeks per request tulis.
+    """
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        if request.method in ("GET", "HEAD", "OPTIONS") or not gerbang_aktif():
+            return
+        if any(seg in request.path for seg in _JALUR_LOLOS_KUNCI) or "persetujuan-penugasan" in request.path:
+            return
+        actor = request.user if getattr(request.user, "is_authenticated", False) else None
+        galat = galat_terkunci(_uuid_saja(kwargs.get("pk")), actor) or galat_terkunci(
+            tugas_disentuh_request(request, kwargs), actor, masa_susun=True
+        )
+        if galat:
+            from rest_framework.exceptions import PermissionDenied  # noqa: PLC0415
+
+            # Kunci `error`, sama dengan galat 403 lain di app ini (toast klien membacanya).
+            raise PermissionDenied({"error": galat})
+
+
+def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, abaikan_katup=False):
+    """Bolehkah actor mengubah tugas ini? Kembalikan pesan galat atau None.
+
+    Keputusan user: member hanya boleh mengerjakan tugas yang di-assign ke
+    dirinya; supervisor/manager/direktur boleh mengubah tugas bawahannya
+    (siapa pun yang tingkatnya lebih rendah di divisi yang dia awasi).
+
+    - Super Admin: selalu boleh (B1).
+    - Supervisor+: boleh kalau ia pembuat/assignee tugas ini, ATAU assignee-nya
+      termasuk bawahannya.
+    - Member (dan jenjang belum diisi): hanya kalau ia assignee tugas ini.
+    - `mengubah_assignee=True`: DITOLAK untuk semua orang KECUALI atasan yang
+      berwenang menugaskan ulang (supervisor+ atas bawahannya, direktur di
+      mana pun ia anggota). Member tidak bisa mengubah assignee SAMA SEKALI —
+      bahkan miliknya sendiri (auto-assign saat create sudah menanganinya).
+    """
+    if not abaikan_katup and not gerbang_aktif():
+        return None
+    if actor is None:
+        return "Pelaku perubahan tidak diketahui, jadi perubahan ini tidak dapat diverifikasi."
+    if issue is None:
+        return None
+
+    from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
+    if is_super_admin(actor):
+        return None
+
+    galat_kunci = galat_terkunci([issue.id], actor)
+    if galat_kunci:
+        return galat_kunci
+
+    from plane.db.models import Project  # noqa: PLC0415
+
+    project = Project.objects.filter(pk=project_id, deleted_at__isnull=True).first()
+    if project is None:
+        return "Project tujuan tidak ditemukan."
+    workspace_id = project.workspace_id
+    tingkat = tingkat_anggota(actor.id, workspace_id)
+
+    assignee_ids = set(issue.issue_assignee.values_list("assignee_id", flat=True))
+    saya_terlibat = actor.id in assignee_ids or issue.created_by_id == actor.id
+
+    if mengubah_assignee:
+        # Kewenangan menugaskan ulang = kewenangan `galat_penugasan` (siapa boleh
+        # menugaskan ke siapa). Pemeriksaan NILAI barunya ada di serializer
+        # validate() yang jalan sesudah gate ini — di sini hanya dipastikan
+        # yang menyentuh assignee memang bukan staf terkunci. Supervisor+ dan
+        # direktur lolos dari gate ini, lalu nilai barunya tetap diperiksa di
+        # sana (atasan tidak bisa assign ke orang setingkat/lebih tinggi, dan
+        # tidak bisa di luar divisinya).
+        if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
+            return None
+        return (
+            "Penugasan tugas ini dikunci. Minta atasan Anda untuk mengubahnya "
+            "kalau memang perlu dipindahkan."
+        )
+
+    # Bukan assignee: staf tidak boleh menyentuh tugas orang lain.
+    if saya_terlibat:
+        return None
+    if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
+        if assignee_ids <= _bawahan_ids(actor.id, workspace_id, project_id):
+            return None
+        # Atasan di divisi yang sama tapi tugasnya milik orang setingkat/lebih
+        # tinggi: tetap ditolak, supaya supervisor tidak saling mengedit.
+        if project_id in divisi_diawasi(actor.id, workspace_id):
+            return (
+                "Tugas ini dipegang orang yang bukan bawahan Anda, "
+                "jadi Anda tidak dapat mengubahnya."
+            )
+    nama = getattr(project, "identifier", "") or "divisi ini"
+    return f"Anda tidak terlibat di tugas ini ({nama}), jadi tidak dapat mengubahnya."
+
+
+def periksa_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
+    """Versi yang bisa dibaca pemanggil non-serializer.
+
+    Kembalikan salah satu dari: None (boleh) · BUTUH_PERSETUJUAN · TANPA_ATASAN ·
+    pesan galat (ditolak). Belum dipakai irisan pertama — ini tempat antrean
+    persetujuan akan masuk, dan sengaja ditulis sekarang supaya keputusannya ada di
+    SATU tempat, bukan di view.
+    """
+    galat = galat_penugasan(project_id, assignee_ids, actor=actor, abaikan_katup=abaikan_katup)
+    if galat:
+        return galat
+    if (not abaikan_katup and not gerbang_aktif()) or actor is None:
+        return None
+
+    from plane.db.models import Project  # noqa: PLC0415
+
+    project = Project.objects.filter(pk=project_id).first()
+    if project is None:
+        return None
+
+    diterima = [a for a in (assignee_ids or []) if a is not None]
+    if not diterima:
+        return None  # tugas tanpa penerima: tidak ada penugasan yang perlu disetujui
+
+    workspace_id = project.workspace_id
+    tingkat = tingkat_anggota(actor.id, workspace_id)
+
+    # Kalau sampai di sini, `galat_penugasan` sudah menyatakan "boleh". Yang tersisa
+    # adalah pertanyaan KEDUA: bolehnya langsung, atau menunggu persetujuan?
+    #
+    # Kata user: "normal member bisa create task, tapi hanya bisa assign diri sendiri,
+    # dan harus di approve oleh orang yang satu tingkat diatas atau lebih." Jadi
+    # - assign diri sendiri oleh member  -> BUTUH PERSETUJUAN (di sinilah letaknya)
+    # - assign diri sendiri oleh supervisor+ -> langsung
+    # - menugaskan orang lain -> hanya supervisor+ di divisi yang diawasi, dan
+    #   `galat_penugasan` sudah memutuskannya, jadi di sini langsung.
+    hanya_diri = {getattr(actor, "id", None)} == set(diterima)
+    if not hanya_diri or (tingkat is not None and tingkat >= TINGKAT_SUPERVISOR):
+        return None
+
+    if calon_penyetuju(workspace_id, project_id, tingkat_pembuat=tingkat):
+        return BUTUH_PERSETUJUAN
+    # Tidak ada seorang pun yang bisa menyetujui. BUKAN "ditolak": tugasnya tetap boleh
+    # dibuat -- kalau ditolak, kekosongan data organisasi berubah jadi larangan bekerja --
+    # tapi hasilnya WAJIB berlabel supaya tidak menggantung tanpa ada yang tahu.
+    #
+    # Keputusan user 2026-10-15 untuk keadaan ini: "buat atasan dan assign jabatan",
+    # yaitu ditutup dari sisi DATA lewat God Mode, bukan dengan memblokir orangnya.
+    return TANPA_ATASAN
+
+
+def butuh_persetujuan(actor, project_id, assignee_ids):
+    """True hanya untuk kasus yang user sebut: **member** menugaskan ke DIRINYA sendiri.
+
+    Keputusan user 2026-10-15: "approval dari atasan pembuat (khusus yang jabatan member
+    saja)". Jadi supervisor/manager/direktur -- walau menugaskan ke dirinya sendiri --
+    tidak menghasilkan permintaan persetujuan. Dan karena member memang hanya boleh
+    menugaskan ke dirinya sendiri, keadaan itu satu-satunya yang perlu disetujui.
+    """
+    if actor is None:
+        return False
+    diterima = [a for a in (assignee_ids or []) if a is not None]
+    if not diterima or set(diterima) != {getattr(actor, "id", None)}:
+        return False
+
+    from plane.db.models import Project  # noqa: PLC0415
+
+    project = Project.objects.filter(pk=project_id).first()
+    if project is None:
+        return False
+
+    tingkat = tingkat_anggota(actor.id, project.workspace_id)
+    return tingkat is None or tingkat < TINGKAT_SUPERVISOR
+
+
+def catat_persetujuan(issue, actor=None):
+    """Buat baris persetujuan kalau penugasan ini memang butuh persetujuan.
+
+    Dipanggil SESUDAH tugasnya tersimpan, dari `create()`/`update()` serializer -- jadi
+    ia berjalan di semua jalur yang memakai serializer itu, bukan cuma di satu view.
+
+    Mengembalikan barisnya, atau None. Aman dipanggil berkali-kali: kalau sudah ada baris
+    menunggu untuk tugas itu, ia tidak membuat yang kedua (dan constraint parsial di
+    model menutupnya juga kalau ada balapan).
+    """
+    if issue is None or not gerbang_aktif():
+        return None
+    if actor is None:
+        return None
+
+    penerima_ids = list(issue.issue_assignee.values_list("assignee_id", flat=True))
+    if not butuh_persetujuan(actor, issue.project_id, penerima_ids):
+        return None
+
+    from plane.db.models import PersetujuanPenugasan, STATUS_PERSETUJUAN_MENUNGGU  # noqa: PLC0415
+
+    sudah = PersetujuanPenugasan.objects.filter(issue_id=issue.id, status=STATUS_PERSETUJUAN_MENUNGGU).first()
+    if sudah:
+        return sudah
+
+    return PersetujuanPenugasan.objects.create(
+        workspace_id=issue.workspace_id,
+        project_id=issue.project_id,
+        issue_id=issue.id,
+        pemohon=actor,
+        penerima=actor,
+    )
+
+
+def status_persetujuan_tugas(issue_id):
+    """Status persetujuan terakhir sebuah tugas: menunggu/disetujui/ditolak/None.
+
+    Dibaca dari baris `PersetujuanPenugasan` TERBARU (keputusan final menutup
+    baris menunggu, jadi yang terbaru adalah kebenaran saat ini). None =
+    tidak pernah butuh persetujuan (tugas atasan, atau gerbang mati saat dibuat).
+    Dipakai serializer read supaya kartu & sidebar bisa menampilkan badge
+    tanpa request tambahan per baris.
+    """
+    if issue_id is None:
+        return None
+    from plane.db.models import PersetujuanPenugasan  # noqa: PLC0415
+
+    baris = (
+        PersetujuanPenugasan.objects.filter(issue_id=issue_id)
+        .order_by("-created_at")
+        .values_list("status", flat=True)
+        .first()
+    )
+    return baris
