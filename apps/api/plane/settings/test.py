@@ -10,7 +10,13 @@ import os
 # lingkungan yang dibaca `common.py` saat diimpor, jadi menyetelnya HARUS terjadi
 # sebelum baris impor di bawah. Kalau ia hanya menyala di produksi pemilik,
 # satu-satunya tempat kodenya pernah dijalankan adalah produksi itu sendiri.
-os.environ.setdefault("ENABLE_CONTROL_PLANE", "1")
+#
+# Ditulis TEGAS, bukan setdefault: berkas .env yang dipakai compose (contohnya
+# menonaktifkan bidang kendali, yang benar untuk instance pelanggan) ikut masuk
+# ke lingkungan container uji dan setdefault kalah darinya -- akibatnya
+# `plane.control` tidak terpasang dan seluruh uji penagihan gagal saat import.
+# Uji SELALU butuh bidang kendali menyala, di mesin mana pun dijalankannya.
+os.environ["ENABLE_CONTROL_PLANE"] = "1"
 
 from .common import *  # noqa
 
