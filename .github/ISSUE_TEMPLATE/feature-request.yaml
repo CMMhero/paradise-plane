@@ -1,0 +1,53 @@
+name: Permintaan fitur
+description: Usulan sesuatu yang belum ada
+title: "[fitur]: "
+labels: [fitur]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Usulan yang menyebut MASALAHNYA lebih berguna daripada yang langsung
+        menyebut solusinya. Sering kali ada jalan lain yang lebih murah untuk
+        masalah yang sama.
+
+  - type: checkboxes
+    attributes:
+      label: Sudah dicek dulu
+      options:
+        - label: Saya sudah mencari issue yang serupa dan belum ada
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Masalah yang mau diselesaikan
+      description: Apa yang sekarang sulit, lambat, atau tidak mungkin dikerjakan.
+      placeholder: |
+        Setiap awal bulan saya harus menyalin ulang rekap jam kerja satu per satu
+        ke Excel, dan itu memakan dua jam.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Usulan
+      description: Kalau sudah terbayang bentuknya, tulis di sini. Boleh kosong kalau belum.
+
+  - type: dropdown
+    id: siapa
+    attributes:
+      label: Siapa yang terbantu
+      options:
+        - Satu divisi saja
+        - Beberapa divisi
+        - Semua karyawan
+        - Hanya admin atau Super Admin
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Yang sekarang dilakukan sebagai gantinya
+      description: |
+        Cara kerja darurat yang dipakai sekarang, misalnya spreadsheet terpisah,
+        grup WhatsApp, atau dikerjakan manual. Ini yang menunjukkan seberapa
+        mendesak permintaannya.

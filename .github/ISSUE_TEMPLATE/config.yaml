@@ -1,0 +1,8 @@
+# Issue kosong dimatikan supaya setiap laporan lewat template, dan bagian yang
+# menentukan (langkah untuk mengulang, di mana kejadiannya, peran akunnya) tidak
+# lagi bergantung pada apakah pelapor ingat menuliskannya.
+blank_issues_enabled: false
+
+# Tautan bantuan upstream Plane (support@plane.so dan forumnya) sengaja dibuang.
+# Ini repo internal, dan mengarahkan orang ke meja bantuan vendor lain hanya
+# membuang waktu mereka.

@@ -1,0 +1,162 @@
+# Tumpukan SATU PELANGGAN pada mode SaaS multi-penyewa.
+#
+# 🔶 BELUM PERNAH DIJALANKAN. Berkas ini diturunkan secara mekanis dari
+# docker-compose.yml dan disiapkan supaya provisioning tidak dimulai dari layar
+# kosong saat VPS SaaS akhirnya ada. Anggap sebagai kerangka yang WAJIB
+# diverifikasi sekali dengan satu pelanggan uji, bukan sebagai berkas yang
+# sudah terbukti.
+#
+# ============================================================================
+# APA YANG ADA DI SINI DAN APA YANG TIDAK
+# ============================================================================
+#
+# Hanya layanan yang MEMEGANG DATA satu pelanggan. Sisanya dibagi bersama dan
+# hidup di docker-compose-shared.yml. Rinciannya beserta angkanya ada di
+# paradise/KAPASITAS-SAAS.md.
+#
+#   di sini (per pelanggan)  plane-db, plane-redis, plane-mq,
+#                            api, worker, beat-worker, migrator, live
+#   dibagi bersama           web, admin, space, proxy, plane-minio,
+#                            livekit, coturn, gotenberg
+#
+# ============================================================================
+# TIGA HAL YANG SENGAJA BERBEDA DARI docker-compose.yml
+# ============================================================================
+#
+# 1. TIDAK ADA `container_name` sama sekali.
+#    Di berkas aslinya tiap layanan mematoknya (`api`, `bgworker`, `plane-db`).
+#    Nama container harus unik di seluruh host, jadi pelanggan kedua akan
+#    langsung gagal dengan "name is already in use". Tanpa `container_name`,
+#    Docker memberi nama `<proyek>-api-1`, dan nama proyek itulah yang
+#    membedakan pelanggan.
+#
+# 2. TIDAK ADA `ports` sama sekali.
+#    Tidak ada satu pun layanan di sini yang boleh dijangkau langsung dari
+#    luar. Semua lalu lintas masuk lewat proxy bersama, yang mengarahkan
+#    berdasarkan subdomain.
+#
+# 3. Nama volume TIDAK diberi awalan manual.
+#    Docker Compose sudah memberinya awalan nama proyek, jadi `pgdata` milik
+#    pelanggan `acme` menjadi `acme_pgdata`. Menambahkan awalan sendiri di sini
+#    akan menghasilkan `acme_acme_pgdata`.
+#
+# ============================================================================
+# CARA MENJALANKAN
+# ============================================================================
+#
+#   docker compose -p acme -f docker-compose-tenant.yml \
+#       --env-file /srv/tenants/acme.env up -d
+#
+# Nama proyek (`-p acme`) adalah pengenal pelanggan, dan HARUS sama dengan
+# subdomainnya. Caddy mengarahkan ke `acme-api-1` berdasarkan nama itu, jadi
+# nama proyek yang meleset menghasilkan 502 yang penyebabnya jauh dari
+# gejalanya. Skrip `paradise/bin/tenant-up.sh` menjaga keduanya tetap sama.
+
+services:
+  plane-db:
+    image: postgres:15.7-alpine
+    restart: always
+    command: postgres -c 'max_connections=200'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - ${TENANT_ENV_FILE:-./.env}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+
+  plane-redis:
+    image: valkey/valkey:7.2.11-alpine
+    restart: always
+    volumes:
+      - redisdata:/data
+
+  plane-mq:
+    image: rabbitmq:3.13.6-management-alpine
+    restart: always
+    env_file:
+      - ${TENANT_ENV_FILE:-./.env}
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  migrator:
+    image: ${TENANT_IMAGE_BACKEND:-ghcr.io/nomax-studio-indonesia/plane-backend:latest}
+    restart: "no"
+    command: ./bin/docker-entrypoint-migrator.sh
+    env_file:
+      - ${TENANT_ENV_FILE:-./.env}
+    depends_on:
+      - plane-db
+      - plane-redis
+
+  api:
+    image: ${TENANT_IMAGE_BACKEND:-ghcr.io/nomax-studio-indonesia/plane-backend:latest}
+    restart: always
+    command: ./bin/docker-entrypoint-api.sh
+    env_file:
+      - ${TENANT_ENV_FILE:-./.env}
+    depends_on:
+      - plane-db
+      - plane-redis
+      - migrator
+
+  worker:
+    image: ${TENANT_IMAGE_BACKEND:-ghcr.io/nomax-studio-indonesia/plane-backend:latest}
+    restart: always
+    command: ./bin/docker-entrypoint-worker.sh
+    env_file:
+      - ${TENANT_ENV_FILE:-./.env}
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+
+  beat-worker:
+    image: ${TENANT_IMAGE_BACKEND:-ghcr.io/nomax-studio-indonesia/plane-backend:latest}
+    restart: always
+    command: ./bin/docker-entrypoint-beat.sh
+    env_file:
+      - ${TENANT_ENV_FILE:-./.env}
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+
+  live:
+    image: ${TENANT_IMAGE_LIVE:-ghcr.io/nomax-studio-indonesia/plane-live:latest}
+    restart: always
+    # Sengaja disebut satu per satu, bukan env_file: `live` tidak perlu tahu
+    # sandi Postgres maupun RabbitMQ. `src/env.ts` memvalidasinya dengan zod
+    # lalu process.exit(1) kalau gagal, jadi yang kurang berujung restart-loop
+    # tanpa henti, bukan galat yang terbaca.
+    environment:
+      API_BASE_URL: http://api:8000
+      LIVE_SERVER_SECRET_KEY: ${LIVE_SERVER_SECRET_KEY}
+      LIVE_BASE_PATH: ${LIVE_BASE_PATH:-/live}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      REDIS_URL: redis://plane-redis:6379/
+
+# Jaringan bersama, dibuat sekali oleh tumpukan bersama. `external: true`
+# supaya tiap pelanggan MENUMPANG jaringan itu, bukan membuat jaringannya
+# sendiri; proxy bersama harus bisa menjangkau `api` tiap pelanggan, dan
+# jaringan terpisah per pelanggan membuat itu mustahil.
+#
+# ⚠️ Isolasi antar pelanggan karena itu TIDAK datang dari jaringan Docker.
+# Ia datang dari database terpisah dan kredensial terpisah. Kalau nanti
+# isolasi jaringan juga diinginkan, bentuknya bukan mengubah baris ini
+# melainkan memberi tiap pelanggan proxy sendiri.
+networks:
+  default:
+    name: nomaden_saas
+    external: true
+
+volumes:
+  pgdata:
+  redisdata:
+  rabbitmq_data:

@@ -1,0 +1,107 @@
+name: Laporan bug
+description: Ada yang rusak atau berperilaku tidak semestinya
+title: "[bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Laporan yang bisa diulang jauh lebih cepat diperbaiki daripada laporan
+        yang cuma menyebut "error". Bagian **Langkah untuk mengulang** yang
+        paling menentukan.
+
+  - type: checkboxes
+    attributes:
+      label: Sudah dicek dulu
+      options:
+        - label: Saya sudah mencari issue yang serupa dan belum ada
+          required: true
+        - label: Ini bukan masalah setup lokal yang sudah dijawab di bagian "Kalau tidak jalan" di README
+          required: false
+
+  - type: textarea
+    attributes:
+      label: Apa yang terjadi
+      description: Apa yang kamu lihat, dan apa yang seharusnya terjadi.
+      placeholder: |
+        Saat saya <X>, yang muncul <Y>.
+        Yang saya harapkan <Z>.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Langkah untuk mengulang
+      description: Urutan persis dari layar awal sampai masalahnya muncul.
+      placeholder: |
+        1. Masuk sebagai staf divisi Marketing
+        2. Buka project X, tab Work Items
+        3. Klik tombol ...
+        4. Muncul pesan ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lingkungan
+    attributes:
+      label: Di mana kejadiannya
+      options:
+        - Produksi, server kantor
+        - Lokal, lingkungan pengembangan
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bagian
+    attributes:
+      label: Bagian aplikasi
+      options:
+        - Work item, project, cycle, module
+        - Wiki dan Materi
+        - Chat, panggilan, atau rapat
+        - Dashboard divisi dan laporan
+        - Pencatatan jam kerja
+        - Kalender dan pengingat tenggat
+        - God Mode, pengaturan instance
+        - Masuk, keluar, atau hak akses
+        - Lainnya atau belum jelas
+    validations:
+      required: true
+
+  - type: dropdown
+    id: peran
+    attributes:
+      label: Peran akun yang mengalaminya
+      options:
+        - Staf
+        - Admin project
+        - Super Admin
+        - Beberapa peran sekaligus
+    validations:
+      required: true
+
+  - type: dropdown
+    id: peramban
+    attributes:
+      label: Peramban
+      options:
+        - Google Chrome
+        - Microsoft Edge
+        - Mozilla Firefox
+        - Safari
+        - Lainnya
+        - Tidak relevan, ini masalah server
+
+  - type: textarea
+    attributes:
+      label: Bukti
+      description: |
+        Tangkapan layar, pesan error dari konsol peramban (F12 lalu tab Console),
+        atau potongan log. Tempel apa adanya, jangan diringkas.
+      render: shell
+
+  - type: input
+    attributes:
+      label: Sejak kapan
+      description: Kalau tahu, sebutkan sejak versi atau tanggal berapa mulai terjadi.
+      placeholder: mulai terasa sejak Senin 24 Agt, sebelumnya normal

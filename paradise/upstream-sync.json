@@ -1,0 +1,86 @@
+{
+  "_catatan": "Ditulis oleh paradise/bin/upstream-sync.sh. Jangan tebak isinya dari nama tag di README atau ingatan — baseline yang salah membuat sync berikutnya menerapkan patch yang sudah ada, atau melewatkan yang belum. Kejadian: vault sempat mencatat baseline v0.24.0, aslinya commit 7fbf14a6cb.",
+  "upstream": {
+    "remote": "https://github.com/makeplane/plane.git",
+    "branch_rilis": "preview",
+    "pola_tag": "v*"
+  },
+  "baseline": {
+    "commit": "v1.4.0-rc2",
+    "sha": "ff4bf5d64c",
+    "tanggal": "2026-07-29",
+    "diterapkan_pada": "2026-07-31",
+    "commit_kita": "dc87c95f4a",
+    "_catatan": "Sync ke TAG RILIS, bukan ujung preview. preview berisi kerjaan setengah jadi; tag sudah lewat QA mereka."
+  },
+  "sebelumnya": {
+    "commit": "7fbf14a6cb",
+    "tanggal": "2026-07-01",
+    "_catatan": "Titik vendoring awal. Repo ini disalin, bukan di-fork, jadi tidak ada leluhur bersama — git merge menolak, harus patch tiga arah."
+  },
+  "lewati": [
+    {
+      "commit": "8ef78bf0c1",
+      "judul": "refactor: store and components consolidation to core",
+      "alasan": "Menghapus seluruh apps/web/ce/ (249 berkas jadi nol) dan memindahkannya ke core. Lapisan itu tempat Time Tracking, Custom Properties, dan perbaikan sidebar kita hidup — semuanya mengisi stub yang upstream sediakan. Mengambilnya menghapus antarmuka tiga fitur kita sementara backend-nya tetap jalan, dan pemanggilnya ikut hilang, jadi tidak ada yang gagal dengan berisik.",
+      "tindak_lanjut": "Pindah ke struktur core/ adalah porting, bukan merge. Kerjakan terpisah, jangan dibarengkan dengan patch keamanan."
+    }
+  ],
+  "tolak_selamanya": [
+    {
+      "berkas": "apps/web/core/components/instance/edition-badge.tsx",
+      "alasan": "Upstream berkala memasang lagi modal ajakan upgrade ke paket berbayar. Debranding (KEP-14) membuangnya dengan sengaja. Setiap sync, ambil versi kita."
+    }
+  ],
+  "harus_selamat": {
+    "_catatan": "Diperiksa oleh `upstream-sync.sh verify`. Kalau salah satu hilang setelah sync, patch memakan kustomisasi kita.",
+    "berkas": [
+      "apps/api/plane/db/superadmin.py",
+      "apps/web/core/components/account/auth-forms/forgot-password.tsx",
+      "apps/web/core/components/account/auth-forms/reset-password.tsx",
+      "apps/web/core/components/account/auth-forms/set-password.tsx",
+      "apps/api/plane/utils/trash.py",
+      "apps/api/plane/app/views/paradise_trash.py",
+      "apps/api/plane/license/api/views/audit_log.py",
+      "apps/api/plane/license/api/views/trash.py",
+      "apps/api/plane/license/api/views/member.py",
+      "apps/admin/app/(all)/(dashboard)/logs/page.tsx",
+      "apps/admin/app/(all)/(dashboard)/trash/page.tsx",
+      "apps/admin/app/(all)/(dashboard)/members/page.tsx",
+      "packages/services/src/instance/audit-log.service.ts",
+      "packages/services/src/instance/trash.service.ts",
+      "packages/services/src/instance/member.service.ts",
+      "apps/api/plane/db/models/login_activity.py",
+      "apps/api/plane/middleware/last_active.py",
+      "apps/api/plane/bgtasks/login_activity_retention.py",
+      "apps/api/plane/license/api/views/activity.py",
+      "apps/admin/app/(all)/(dashboard)/activity/page.tsx",
+      "apps/admin/app/(all)/(dashboard)/activity/grafik-harian.tsx",
+      "apps/admin/app/(all)/(dashboard)/activity/constants.ts",
+      "apps/admin/app/(all)/(dashboard)/members/session-cell.tsx",
+      "packages/services/src/instance/activity.service.ts",
+      "packages/hooks/src/use-platform-os.tsx",
+      "packages/tailwind-config/paradise.css",
+      "apps/web/core/components/sidebar/resizable-sidebar.tsx",
+      "apps/web/core/components/navigation/top-nav-power-k.tsx",
+      "apps/web/core/components/core/sidebar/sidebar-menu-hamburger-toggle.tsx",
+      "apps/web/core/components/issues/peek-overview/view.tsx",
+      "packages/propel/src/dialog/root.tsx",
+      "packages/constants/src/workspace.ts",
+      "apps/web/core/components/workspace/sidebar/sidebar-menu-items.tsx",
+      "apps/web/core/components/workspace/sidebar/projects-list.tsx",
+      "apps/api/bin/docker-entrypoint-api.sh",
+      "apps/web/nginx/nginx.conf",
+      "apps/web/core/components/core/page-title.tsx",
+      "apps/web/app/(all)/settings/profile/[profileTabId]/page.tsx",
+      "apps/proxy/Caddyfile.ce",
+      "apps/api/plane/app/views/external/base.py",
+      "apps/api/plane/app/views/project/base.py",
+      "apps/api/tests/test_unsplash_endpoint.py",
+      "apps/web/core/services/api.service.ts",
+      "apps/web/core/components/core/image-picker-popover.tsx",
+      "apps/web/helpers/cover-image.helper.ts"
+    ],
+    "folder_tanpa_penghapusan": ["apps/web/ce"]
+  }
+}
