@@ -63,6 +63,12 @@ class ProjectTrashEndpoint(BaseAPIView):
                 {"error": "Barang tidak ada di tong sampah project ini."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        from plane.utils.hierarki import galat_terkunci, gerbang_aktif  # noqa: PLC0415
+
+        if gerbang_aktif():
+            kunci = galat_terkunci([obj.pk], request.user)
+            if kunci:
+                return Response({"error": kunci}, status=status.HTTP_403_FORBIDDEN)
         if not _boleh_tindak_sampah(request.user, obj, slug, project_id):
             return Response(
                 {"error": "Hanya pembuat, penerima, atau atasannya yang boleh memulihkan barang ini."},
@@ -83,6 +89,12 @@ class ProjectTrashEndpoint(BaseAPIView):
                 {"error": "Barang tidak ada di tong sampah project ini."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        from plane.utils.hierarki import galat_terkunci, gerbang_aktif  # noqa: PLC0415
+
+        if gerbang_aktif():
+            kunci = galat_terkunci([obj.pk], request.user)
+            if kunci:
+                return Response({"error": kunci}, status=status.HTTP_403_FORBIDDEN)
         if not _boleh_tindak_sampah(request.user, obj, slug, project_id):
             return Response(
                 {"error": "Hanya pembuat, penerima, atau atasannya yang boleh membuang barang ini."},

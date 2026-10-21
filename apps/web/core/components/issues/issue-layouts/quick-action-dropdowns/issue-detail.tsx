@@ -89,7 +89,9 @@ export const WorkItemDetailQuickActions = observer(function WorkItemDetailQuickA
   // Aturan TEGAS khusus Arsip/Hapus: tombolnya HILANG kalau assignee-nya bukan
   // saya/bawahan saya (atau saya bukan pembuatnya). Cermin `bisa_hapus_tugas`
   // server; fail-closed saat wewenang belum dimuat.
-  const bolehHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const aturanHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const bolehHapus = aturanHapus.boleh;
+  const nonaktifTerkunci = aturanHapus.terkunci;
   const isArchivingAllowed = !issue.archived_at && isEditingAllowed && bolehHapus;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
   const isRestoringAllowed = !!issue.archived_at && isEditingAllowed && bolehHapus;
@@ -149,6 +151,7 @@ export const WorkItemDetailQuickActions = observer(function WorkItemDetailQuickA
     isArchivingAllowed,
     isRestoringAllowed,
     isDeletingAllowed,
+    nonaktifTerkunci,
     isInArchivableGroup,
     setIssueToEdit,
     setCreateUpdateIssueModal: customEditAction,

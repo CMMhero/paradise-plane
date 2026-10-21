@@ -62,6 +62,8 @@ export interface MenuItemFactoryProps {
   isArchivingAllowed?: boolean;
   isDeletingAllowed: boolean;
   isRestoringAllowed?: boolean;
+  /** Tugas terkunci menunggu persetujuan: Arsip/Hapus/Pulihkan tampil tapi nonaktif. */
+  nonaktifTerkunci?: boolean;
   isInArchivableGroup?: boolean;
   issueTypeDetail?: { is_active?: boolean };
   // Action handlers
@@ -151,6 +153,7 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     isArchivingAllowed = false,
     isDeletingAllowed,
     isRestoringAllowed = false,
+    nonaktifTerkunci = false,
     isInArchivableGroup = false,
     issueTypeDetail,
     setIssueToEdit,
@@ -164,6 +167,11 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
   // Tanpa akses ubah: tombol tulis HILANG (bukan error). Salin/menduplikat =
   // menulis juga (membuat tugas baru dari isi ini), jadi ikut hilang.
   const bisaTulis = isEditingAllowed && bolehUbahTugas;
+
+  // Tugas menunggu persetujuan: tombol destruktif TAMPIL tapi nonaktif, dengan
+  // alasan yang jelas -- pengguna perlu tahu KENAPA tidak bisa, bukan menebak.
+  // Super Admin tidak pernah terkunci (lolos di server), jadi tidak ikut.
+  const alasanTerkunci = nonaktifTerkunci ? "Menunggu persetujuan atasan" : undefined;
 
   const createEditMenuItem = (customEditAction?: () => void): TContextMenuItem => ({
     key: "edit",
@@ -236,7 +244,8 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     className: "items-start",
     iconClassName: "mt-1",
     action: () => handleOptionalAction(setArchiveIssueModal, "Archive", true),
-    disabled: !isInArchivableGroup,
+    disabled: !isInArchivableGroup || nonaktifTerkunci,
+    description: nonaktifTerkunci ? alasanTerkunci : isInArchivableGroup ? undefined : t("issue.archive.description"),
     shouldRender: isArchivingAllowed,
   });
 
@@ -245,6 +254,8 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     title: "Restore",
     icon: ArchiveRestoreIcon,
     action: actionHandlers.handleIssueRestore,
+    disabled: nonaktifTerkunci,
+    description: alasanTerkunci,
     shouldRender: isRestoringAllowed,
   });
 
@@ -255,6 +266,8 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     action: () => {
       setDeleteIssueModal(true);
     },
+    disabled: nonaktifTerkunci,
+    description: alasanTerkunci,
     shouldRender: isDeletingAllowed,
   });
 

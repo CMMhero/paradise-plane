@@ -70,7 +70,9 @@ export const ProjectIssueQuickActions = observer(function ProjectIssueQuickActio
   // Aturan TEGAS khusus Arsip/Hapus: tombolnya HILANG kalau assignee-nya bukan
   // saya/bawahan saya (atau saya bukan pembuatnya). Cermin `bisa_hapus_tugas`
   // server; fail-closed saat wewenang belum dimuat.
-  const bolehHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const aturanHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const bolehHapus = aturanHapus.boleh;
+  const nonaktifTerkunci = aturanHapus.terkunci;
   const isArchivingAllowed = handleArchive && isEditingAllowed && bolehHapus;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
   const { idSaya } = useAturanTugas();
@@ -100,6 +102,7 @@ export const ProjectIssueQuickActions = observer(function ProjectIssueQuickActio
     bolehUbahTugas: bolehUbah,
     isArchivingAllowed,
     isDeletingAllowed,
+    nonaktifTerkunci,
     isInArchivableGroup,
     setIssueToEdit,
     setCreateUpdateIssueModal,

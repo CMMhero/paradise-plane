@@ -197,19 +197,21 @@ export const useBolehHapus = (
   workspaceSlug: string | undefined,
   projectId: string | null | undefined,
   issue: { assignee_ids?: string[] | null; created_by?: string } | undefined | null
-): boolean => {
+): { boleh: boolean; terkunci: boolean } => {
   const { data: currentUser } = useUser();
   const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>
     userService.currentUserInstanceAdminStatus()
   );
   const { userIds: kuasaIds, memuat } = useBisaDitugaskan(workspaceSlug, projectId);
-  if (memuat && !statusAdmin?.is_instance_admin) return false;
-  if (statusAdmin?.is_instance_admin) return true;
+  const adalahSuperAdmin = !!statusAdmin?.is_instance_admin;
+  if (memuat && !adalahSuperAdmin) return { boleh: false, terkunci: false };
+  if (adalahSuperAdmin) return { boleh: true, terkunci: false };
   const idSaya = currentUser?.id;
-  if (!issue || !idSaya) return false;
-  if (issue.created_by === idSaya) return true;
+  const terkunci = terkunciPersetujuan(issue);
+  if (!issue || !idSaya) return { boleh: false, terkunci };
+  if (issue.created_by === idSaya) return { boleh: true, terkunci };
   const assignees = issue.assignee_ids ?? [];
-  if (assignees.length === 0) return kuasaIds.length > 1;
+  if (assignees.length === 0) return { boleh: kuasaIds.length > 1, terkunci };
   const kuasa = new Set(kuasaIds);
-  return assignees.some((id) => kuasa.has(id));
+  return { boleh: assignees.some((id) => kuasa.has(id)), terkunci };
 };

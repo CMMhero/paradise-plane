@@ -788,6 +788,16 @@ class IssueViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, pk=None):
         issue = Issue.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+        # Kunci dulu, baru kepemilikan: kalau tugasnya menunggu persetujuan,
+        # alasan penolakan BUKAN "bukan milikmu" melainkan kuncinya. Tanpa ini
+        # pembuatnya sendiri pun mendapat pesan yang salah saat mencoba
+        # menghapus tugasnya yang masih menunggu.
+        from plane.utils.hierarki import galat_terkunci, gerbang_aktif  # noqa: PLC0415
+
+        if gerbang_aktif():
+            kunci = galat_terkunci([pk], request.user)
+            if kunci:
+                return Response({"error": kunci}, status=status.HTTP_403_FORBIDDEN)
         if not bisa_hapus_tugas(request.user, issue, slug, project_id):
             return Response(
                 {"error": "Tugas ini hanya bisa dihapus oleh pemiliknya atau atasannya."},

@@ -506,7 +506,7 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
 
 PESAN_TERKUNCI = (
     "Tugas ini masih menunggu persetujuan atasan, jadi dikunci: belum bisa diubah, "
-    "dipindah status, atau dikerjakan sampai disetujui."
+    "dipindah status, diarsipkan, dihapus, atau dikerjakan sampai disetujui."
 )
 
 # Detik sesudah pengajuan di mana PEMOHON masih boleh menyentuh sub-sumber

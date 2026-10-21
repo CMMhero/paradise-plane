@@ -52,7 +52,9 @@ export const ArchivedIssueQuickActions = observer(function ArchivedIssueQuickAct
   // Aturan TEGAS khusus Arsip/Hapus/Pulihkan: tombolnya HILANG kalau
   // assignee-nya bukan saya/bawahan saya (atau saya bukan pembuatnya).
   // Cermin `bisa_hapus_tugas` server; fail-closed saat wewenang belum dimuat.
-  const bolehHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const aturanHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const bolehHapus = aturanHapus.boleh;
+  const nonaktifTerkunci = aturanHapus.terkunci;
 
   // Menu items and modals using helper
   const menuItemProps: MenuItemFactoryProps = {
@@ -63,6 +65,7 @@ export const ArchivedIssueQuickActions = observer(function ArchivedIssueQuickAct
     // Lihat komentar di atas: Hapus/Pulihkan tidak pernah longgar dari Arsip.
     isDeletingAllowed: isEditingAllowed && bolehHapus,
     isRestoringAllowed: !!isRestoringAllowed && bolehHapus,
+    nonaktifTerkunci,
     setIssueToEdit: () => {},
     setCreateUpdateIssueModal: () => {},
     setDeleteIssueModal,
