@@ -41,3 +41,5 @@ services:
     image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-backend:${APP_RELEASE:-latest}
   migrator:
     image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-backend:${APP_RELEASE:-latest}
+  plane-minio:
+    image: ghcr.io/${GHCR_OWNER:?wajib diisi di .env, tidak ada nilai bawaan}/plane-minio:${APP_RELEASE:-latest}

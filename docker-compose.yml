@@ -233,6 +233,11 @@ services:
 
   plane-minio:
     container_name: plane-minio
+    build:
+      context: .
+      dockerfile: ./apps/minio/Dockerfile.minio
+      args:
+        DOCKER_BUILDKIT: 1
     image: minio/minio
     restart: always
     command: server /export --console-address ":9090"

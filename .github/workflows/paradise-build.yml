@@ -92,8 +92,10 @@ jobs:
       # ../../ padahal filenya tiga tingkat di bawah root, dan bake meresolusi
       # context relatif ke direktori kerja, jadi tidak pernah menunjuk root repo.
       #
-      # Keenam target disebut eksplisit: worker/beat-worker/migrator memakai image
-      # backend yang sama, tanpa ini image itu ter-build 4x.
+      # Ketujuh target disebut eksplisit: worker/beat-worker/migrator memakai image
+      # backend yang sama, tanpa ini image itu ter-build 4x. plane-minio dibangun
+      # dari source (Dockerfile.minio) karena registry publik MinIO sudah tidak
+      # bisa ditarik tanpa login.
       #
       # ponytail: tanpa cache layer, build ~25 menit, dan menit Actions gratis untuk
       # repo public. Tambahkan cache-from/to type=gha kalau waktunya mulai mengganggu.
@@ -121,12 +123,12 @@ jobs:
           APP_RELEASE: ${{ github.sha }}
         run: |
           docker buildx bake -f docker-compose.yml -f docker-compose.ghcr.yml --push \
-            web admin space live api proxy
+            web admin space live api proxy plane-minio
 
       # Manifest copy, bukan rebuild, hitungan detik.
       - name: Geser tag `latest` ke build ini
         run: |
-          for img in frontend space admin live backend proxy; do
+          for img in frontend space admin live backend proxy minio; do
             docker buildx imagetools create \
               -t "$REGISTRY/plane-$img:latest" \
               "$REGISTRY/plane-$img:${{ github.sha }}"

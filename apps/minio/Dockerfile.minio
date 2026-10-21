@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+# MinIO object storage, built from source and pushed to GHCR like the rest.
+#
+# KENAPA. Upstream menghapus minio/minio dari Docker Hub (Sept 2026, repo
+# "object not found"), salinan quay.io butuh login, dan dl.min.io mengembalikan
+# 410 untuk semua biner lama. Tidak ada registry publik yang bisa ditarik tanpa
+# kredensial, jadi kita membangun sendiri rilis yang SAMA PERSIS dengan yang
+# sedang melayani produksi — tanpa migrasi format data apa pun.
+#
+# Rilis dipin (bukan latest): metadata MinIO berubah antar rilis dan downgrade
+# tidak didukung. Menaikkan versi berarti menguji baca/tulis dulu, bukan
+# mengganti satu baris compose.
+ARG MINIO_RELEASE=RELEASE.2025-09-07T16-13-09Z
+
+FROM golang:1.24-bookworm AS build
+ARG MINIO_RELEASE
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+# Shallow clone TETAP membawa tag-nya, jadi `git describe` untuk stempel versi
+# (gen-ldflags.go) tetap jalan.
+RUN git clone --depth 1 --branch "${MINIO_RELEASE}" https://github.com/minio/minio.git .
+# Setara `make build` tanpa checks/build-debugging: checks hanya memverifikasi
+# toolchain, build-debugging membangun perkakas debug terpisah yang tidak ikut
+# ke produksi. UI konsol ikut dari modul Go minio/console, tanpa Node.
+RUN CGO_ENABLED=0 go build -tags kqueue -trimpath \
+      --ldflags "$(go run buildscripts/gen-ldflags.go)" \
+      -o /out/minio . \
+ && /out/minio --version
+
+FROM debian:bookworm-slim
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /out/minio /usr/bin/minio
+RUN chmod +x /usr/bin/minio
+EXPOSE 9000 9090
+ENTRYPOINT ["/usr/bin/minio"]
