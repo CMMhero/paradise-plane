@@ -1,0 +1,14 @@
+# Paradise Task Tracker adalah alat kerja internal PT Paradise Perkasa.
+# Tidak ada satu halaman pun di sini yang ditujukan untuk mesin pencari.
+#
+# Berkas ini WAJIB berada di apps/web/public/, bukan di apps/space/. Perayap
+# hanya membaca robots.txt di akar domain, dan yang melayani akar domain adalah
+# apps/web (lihat `reverse_proxy /* web:3000` di apps/proxy/Caddyfile.ce).
+#
+# Sebelum berkas ini ada, permintaan ke /robots.txt jatuh ke `try_files` milik
+# nginx dan dijawab index.html dengan kode 200. Jadi perayap mengira ia
+# menemukan robots.txt yang sah, gagal mengurainya karena isinya HTML, lalu
+# menyimpulkan seluruh situs boleh dirayapi.
+
+User-agent: *
+Disallow: /
