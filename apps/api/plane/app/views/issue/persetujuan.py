@@ -223,11 +223,17 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         hasil = []
         for baris in dasar:
             penyetuju = calon_penyetuju(baris.workspace_id, baris.project_id)
+            # Super Admin boleh memutuskan sebagai jalan keluar (B1) -- sama seperti
+            # kunci persetujuan yang meloloskan Super Admin. Tanpa ini, antrean yang
+            # belum punya atasan terdaftar (struktur divisi masih diisi) menggantung
+            # tanpa ada seorang pun yang bisa memutusnya, termasuk IT sendiri.
+            # Routing tetap milik hierarki: daftar penyetuju di bawah tidak berubah.
+            boleh = (request.user.id in penyetuju or is_super_admin(request.user)) and baris.status == STATUS_PERSETUJUAN_MENUNGGU
             hasil.append(
                 _serial(
                     baris,
                     "pemohon" if baris.pemohon_id == request.user.id else "penyetuju",
-                    request.user.id in penyetuju and baris.status == STATUS_PERSETUJUAN_MENUNGGU,
+                    boleh,
                 )
             )
 
@@ -263,9 +269,12 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             return Response({"error": f"Permintaan ini sudah {baris.status}."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Diperiksa ULANG di sini, bukan dipercaya dari daftar: kewenangan bisa berubah
-        # antara menampilkan daftar dan menekan tombol.
+        # antara menampilkan daftar dan menekan tombol. Super Admin lolos sebagai
+        # jalan keluar (B1), cermin pengecualian yang sama di kunci persetujuan.
+        from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
         penyetuju = calon_penyetuju(baris.workspace_id, baris.project_id)
-        if request.user.id not in penyetuju:
+        if request.user.id not in penyetuju and not is_super_admin(request.user):
             return Response(
                 {"error": "Anda bukan atasan pembuat di divisi ini, jadi tidak dapat memutuskan."},
                 status=status.HTTP_403_FORBIDDEN,
