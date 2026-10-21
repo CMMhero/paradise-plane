@@ -1,0 +1,193 @@
+(plane_proxy) {
+	request_body {
+		max_size {$FILE_SIZE_LIMIT}
+	}
+
+	# ------------------------------------------------------------------------
+	# MAMPATKAN JAWABAN. Sebelum ini TIDAK ADA kompresi di lapisan mana pun:
+	# tidak di Caddy, tidak di nginx `web`, tidak di Django. Diukur langsung ke
+	# produksi, `Content-Length` sebuah bundel JS tetap 322.538 byte baik saat
+	# klien meminta gzip maupun brotli, dan header `Content-Encoding` tidak
+	# pernah muncul.
+	#
+	# Akibatnya membuka aplikasi menuntut unduhan sekitar 2,4 MB mentah. Di
+	# kantor dengan kabel itu tidak terasa; di HP lewat 4G itu bedanya beberapa
+	# detik menatap layar kosong.
+	#
+	# Ditaruh DI SINI, bukan di nginx `web`, karena Caddy satu-satunya lapisan
+	# yang dilewati SEMUA: web, api, space, admin, live. Satu baris di sini
+	# menutupi semuanya, termasuk jawaban JSON API yang juga tidak dimampatkan.
+	#
+	# `zstd` lebih dulu, `gzip` sebagai cadangan. Caddy memilih berdasarkan
+	# `Accept-Encoding` klien, jadi peramban lama tetap dapat gzip. Brotli tidak
+	# dipakai karena Caddy v2 memang tidak menyediakan encoder-nya.
+	#
+	# TIDAK PERLU menyaring tipe berkas sendiri. `encode` bawaan Caddy sudah
+	# hanya memampatkan tipe yang layak (text/*, json, javascript, wasm, svg)
+	# dan melewati yang sudah termampat seperti PNG dan woff2. Memampatkan ulang
+	# gambar cuma membakar CPU dan justru bisa memperbesar hasilnya.
+	# ------------------------------------------------------------------------
+	encode zstd gzip
+
+	# ------------------------------------------------------------------------
+	# HEADER KEAMANAN untuk SEMUA jalur.
+	#
+	# KENAPA DI SINI. nginx `web` dan `admin` sudah memasang miliknya sendiri,
+	# tapi `space` TIDAK punya nginx sama sekali: ia dilayani `react-router-serve`
+	# (Node). Berkas `apps/space/nginx/nginx.conf` yang ada di repo TIDAK DIPAKAI
+	# SIAPA PUN, tidak satu Dockerfile pun menyalinnya. Menyetel header di sana
+	# tidak berpengaruh apa-apa; jangan buang waktu ke situ.
+	#
+	# Terukur 20 Agt 2026 dari luar: `/` dan `/god-mode/` membawa HSTS, sedangkan
+	# `/spaces/` menjawab TANPA HSTS sama sekali.
+	#
+	# Itu penting karena HSTS bersifat per-HOST, bukan per-jalur. Orang yang
+	# pertama kali masuk lewat tautan publik `/spaces/...` berawalan http:// tidak
+	# pernah tersemat, sehingga kunjungan http berikutnya masih bisa disadap di
+	# jaringan kantor - persis risiko yang membuat HTTPS dipasang sejak awal.
+	# Satu baris di sini menutup jalur terakhir itu, sekalian `/api`, MinIO, dan
+	# `/live`.
+	#
+	# `>` pada HSTS berarti "ganti nilai yang ada, dan lakukan SESUDAH jawaban
+	# hulu selesai disalin". Tanpa awalan itu Caddy MENAMBAH, bukan mengganti,
+	# dan nginx `web` maupun `admin` sudah mengirim HSTS sendiri. Diuji hidup
+	# sebelum dikirim: tanpa `>` keluar DUA baris Strict-Transport-Security
+	# sekaligus, dengan `>` tepat satu. Ini kebalikan dari yang tertulis di
+	# dokumentasi kalau dibaca sekilas, jadi jangan "rapikan" awalan ini.
+	#
+	# `?` pada Referrer-Policy berarti "isi HANYA kalau belum ada". Django sudah
+	# mengirim `same-origin` yang LEBIH ketat untuk jawaban API, dan menimpanya
+	# justru akan melonggarkan. Peramban modern memang sudah memakai nilai ini
+	# sebagai bawaan; menuliskannya membuat kebijakannya tersurat, bukan
+	# bergantung pada bawaan yang bisa berbeda antar peramban.
+	#
+	# 🔴 X-Frame-Options SENGAJA TIDAK dipasang di sini, dan itu bukan kelalaian.
+	# Pratinjau lampiran PDF dan teks memakai <iframe> seasal-usul ke MinIO, lihat
+	# `packages/editor/src/core/extensions/custom-file/components/node-view.tsx`.
+	# `DENY` global akan mematikan pratinjau itu. Pembingkaian dari situs lain
+	# sudah ditolak tanpa itu: nginx `web` dan `admin` mengirim `DENY` untuk
+	# halaman aplikasi, dan `/spaces/` dapat `SAMEORIGIN` dari react-router-serve.
+	# ------------------------------------------------------------------------
+	header {
+		>Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+  redir /spaces /spaces/ permanent
+	reverse_proxy /spaces/* space:3000
+
+  redir /god-mode /god-mode/ permanent
+	reverse_proxy /god-mode/* admin:3000
+	
+	reverse_proxy /live/* live:3000
+
+	# Sinyal LiveKit (panggilan suara, video, dan konferensi).
+	#
+	# WAJIB lewat sini, tidak bisa langsung ke port 7880. Halaman dilayani lewat
+	# HTTPS, dan peramban MEMBLOKIR WebSocket `ws://` dari halaman HTTPS sebagai
+	# mixed content. Sambungannya ditolak sebelum satu paket pun terkirim, dan
+	# pesannya hanya muncul di konsol peramban. Lewat sini ia jadi `wss://` dengan
+	# sertifikat yang sudah ada.
+	#
+	# Prefiksnya `/rtc` tanpa dipotong, karena itu memang jalur milik LiveKit dan
+	# aplikasi kita tidak memakainya. Dengan begitu tidak ada penulisan ulang URL
+	# yang bisa meleset.
+	#
+	# ⚠️ Ini HANYA jalur sinyal. Media tetap langsung ke port 7881/UDP dan tidak
+	# lewat proxy; aturan mixed content tidak berlaku untuk media WebRTC.
+	# DUA pola, dan keduanya WAJIB. `/rtc/*` TIDAK cocok dengan `/rtc` polos.
+	# Klien LiveKit mencoba `/rtc/v1` lebih dulu lalu MUNDUR ke `/rtc` untuk
+	# server versi lama; tanpa pola kedua, permintaan mundur itu jatuh ke
+	# aplikasi web dan soketnya gagal tanpa sebab yang jelas dari sisi server.
+	reverse_proxy /rtc {$LIVEKIT_UPSTREAM:host.docker.internal:7880}
+	reverse_proxy /rtc/* {$LIVEKIT_UPSTREAM:host.docker.internal:7880}
+
+	# ------------------------------------------------------------------------
+	# TAHAN permintaan saat `api` sedang dibuat ulang, jangan langsung 502.
+	#
+	# MASALAHNYA. Setiap deploy membuat ulang container `api`. Selama ia belum
+	# mendengarkan, proxy tidak punya tujuan dan menjawab 502 untuk SEMUA
+	# permintaan. Pada 19 Agt 2026 seorang pemakai kena persis itu: 502 di semua
+	# endpoint, simpanan tema gagal, dan React melempar error hidrasi.
+	#
+	# `lb_try_duration` membuat Caddy MENUNGGU dan mencoba lagi alih-alih
+	# menyerah. Karena start `api` sekarang sekitar 7 detik, permintaan yang
+	# datang di tengah deploy cuma terasa lambat sebentar, bukan gagal.
+	#
+	# AMAN UNTUK POST/PATCH, dan ini yang membuat pendekatan ini bisa dipakai:
+	# Caddy hanya mengulang kalau SAMBUNGANNYA gagal dibuat, yaitu saat
+	# containernya memang mati. Permintaannya belum pernah terkirim, jadi tidak
+	# mungkin terkirim dua kali dan tidak ada data yang terduplikasi.
+	#
+	# SENGAJA TANPA `fail_duration`. Dengan satu upstream, menandainya "tidak
+	# sehat" justru membuat SEMUA permintaan gagal seketika, kebalikan dari yang
+	# kita mau di sini.
+	#
+	# 30 detik dipilih sebagai batas atas: cukup panjang untuk menutupi deploy
+	# (7 detik) dengan margin lebar, tapi tetap menyerah kalau `api` benar-benar
+	# mati berkepanjangan, supaya gangguan sungguhan tidak tersamar jadi
+	# "aplikasi lemot" yang tidak ada yang melaporkan.
+	#
+	# LiveKit di atas SENGAJA tidak diberi ini: itu jalur WebSocket, dan jabat
+	# tangan yang menggantung 30 detik lebih buruk daripada gagal cepat.
+	# ------------------------------------------------------------------------
+	reverse_proxy /api/* api:8000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /auth/* api:8000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	# Tawaran kode sumber yang diwajibkan AGPL-3.0 pasal 13, dilayani Django di
+	# plane/web/urls.py. Tanpa aturan ini `/source/` jatuh ke `reverse_proxy /*`
+	# di bawah, lalu dijawab halaman 404 React alih-alih arsipnya.
+	#
+	# DUA pola, alasannya sama seperti /rtc di atas: `/source/*` cocok dengan
+	# `/source/` tapi TIDAK dengan `/source` tanpa garis miring. Bentuk tanpa
+	# garis miring itu yang biasa diketik orang, dan Django akan mengalihkannya
+	# lewat APPEND_SLASH, tapi hanya kalau permintaannya sampai ke Django.
+	reverse_proxy /source api:8000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /source/* api:8000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /static/* api:8000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+
+	reverse_proxy /{$BUCKET_NAME}/* plane-minio:9000
+	reverse_proxy /{$BUCKET_NAME} plane-minio:9000
+
+	# Alasan yang sama seperti `api` di atas: `web` juga dibuat ulang tiap deploy.
+	# Ia jauh lebih cepat hidup (nginx, sekitar satu detik), tapi tanpa ini satu
+	# detik itu tetap berarti halaman gagal dimuat bagi yang kebetulan menekan
+	# tombol saat itu.
+	reverse_proxy /* web:3000 {
+		lb_try_duration 30s
+		lb_try_interval 250ms
+	}
+}
+
+{
+	{$CERT_EMAIL}
+	acme_ca {$CERT_ACME_CA:https://acme-v02.api.letsencrypt.org/directory} 
+	{$CERT_ACME_DNS}
+	servers {
+		max_header_size 25MB
+		client_ip_headers X-Forwarded-For X-Real-IP
+		trusted_proxies static {$TRUSTED_PROXIES:0.0.0.0/0}
+	}
+}
+
+{$SITE_ADDRESS} {
+	import plane_proxy
+}
