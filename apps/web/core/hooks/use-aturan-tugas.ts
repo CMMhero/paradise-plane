@@ -177,3 +177,39 @@ export const useAturanTugas = () => {
     idSaya: currentUser?.id ?? null,
   };
 };
+
+/**
+ * Bolehkan menu Arsip/Hapus untuk tugas ini? Aturan TEGAS khusus tindakan
+ * destruktif: tombolnya HILANG kalau tidak boleh (bukan error sesudah klik).
+ *
+ * - Wewenang belum dimuat -> sembunyi (fail-closed; kebalikan dari
+ *   bolehUbahTugas yang terbuka dulu supaya formulir tidak berkedip).
+ * - Super Admin -> selalu boleh.
+ * - Sisanya: pembuatnya, atau ada assignee yang masuk daftar kuasa saya
+ *   (diri sendiri + bawahan; direktur melihat semua anggota).
+ * - Tanpa assignee: hanya pembuat, atau yang kuasanya lebih dari diri
+ *   sendiri (mencerminkan "himpunan kosong subset dari apa pun" di server).
+ *
+ * Ini cerminan `bisa_hapus_tugas` server untuk KASUS HAPUS/ARSIP. Sengaja
+ * terpisah dari `bolehUbahTugas` (aturan ubah lebih longgar untuk atasan).
+ */
+export const useBolehHapus = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined,
+  issue: { assignee_ids?: string[] | null; created_by?: string } | undefined | null
+): boolean => {
+  const { data: currentUser } = useUser();
+  const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>
+    userService.currentUserInstanceAdminStatus()
+  );
+  const { userIds: kuasaIds, memuat } = useBisaDitugaskan(workspaceSlug, projectId);
+  if (memuat && !statusAdmin?.is_instance_admin) return false;
+  if (statusAdmin?.is_instance_admin) return true;
+  const idSaya = currentUser?.id;
+  if (!issue || !idSaya) return false;
+  if (issue.created_by === idSaya) return true;
+  const assignees = issue.assignee_ids ?? [];
+  if (assignees.length === 0) return kuasaIds.length > 1;
+  const kuasa = new Set(kuasaIds);
+  return assignees.some((id) => kuasa.has(id));
+};

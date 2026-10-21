@@ -19,7 +19,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserPermissions } from "@/hooks/store/user";
-import { bolehUbahTugas, useAturanTugas, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { bolehUbahTugas, useAturanTugas, useBolehHapus, useTingkatSaya } from "@/hooks/use-aturan-tugas";
 // plane-web imports
 import { DuplicateWorkItemModal } from "@/plane-web/components/issues/issue-layouts/quick-action-dropdowns/duplicate-modal";
 // helper
@@ -67,16 +67,20 @@ export const ProjectIssueQuickActions = observer(function ProjectIssueQuickActio
       workspaceSlug?.toString(),
       issue.project_id ?? undefined
     ) && !readOnly;
-  const isArchivingAllowed = handleArchive && isEditingAllowed;
+  // Aturan TEGAS khusus Arsip/Hapus: tombolnya HILANG kalau assignee-nya bukan
+  // saya/bawahan saya (atau saya bukan pembuatnya). Cermin `bisa_hapus_tugas`
+  // server; fail-closed saat wewenang belum dimuat.
+  const bolehHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const isArchivingAllowed = handleArchive && isEditingAllowed && bolehHapus;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
-  const { bisaHapusTugas, idSaya } = useAturanTugas();
+  const { idSaya } = useAturanTugas();
   const tingkatSaya = useTingkatSaya(workspaceSlug?.toString(), issue.project_id);
   // KEP-25: tombol Edit/copy di kartu HILANG kalau saya tak boleh ubah tugas
   // ini (staf bukan-assignee). Server tetap pemegang keputusan.
   const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
 
   // Tugas hanya bisa dihapus oleh pembuatnya, admin project, atau Super Admin.
-  const isDeletingAllowed = isEditingAllowed && bisaHapusTugas(issue, issue.project_id ?? undefined, tingkatSaya);
+  const isDeletingAllowed = isEditingAllowed && bolehHapus;
   const duplicateIssuePayload = omit(
     {
       ...issue,

@@ -19,7 +19,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserPermissions } from "@/hooks/store/user";
-import { bolehUbahTugas, useAturanTugas, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { bolehUbahTugas, useAturanTugas, useBolehHapus, useTingkatSaya } from "@/hooks/use-aturan-tugas";
 // plane-web components
 import { DuplicateWorkItemModal } from "@/plane-web/components/issues/issue-layouts/quick-action-dropdowns";
 // types
@@ -62,18 +62,18 @@ export const CycleIssueQuickActions = observer(function CycleIssueQuickActions(p
   // auth
   const isEditingAllowed =
     allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT) && !readOnly;
-  const isArchivingAllowed = handleArchive && isEditingAllowed;
+  // Aturan TEGAS khusus Arsip/Hapus: tombolnya HILANG kalau assignee-nya bukan
+  // saya/bawahan saya (atau saya bukan pembuatnya). Cermin `bisa_hapus_tugas`
+  // server; fail-closed saat wewenang belum dimuat.
+  const bolehHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const isArchivingAllowed = handleArchive && isEditingAllowed && bolehHapus;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
-  const { bisaHapusTugas, idSaya } = useAturanTugas();
+  const { idSaya } = useAturanTugas();
   const tingkatSaya = useTingkatSaya(workspaceSlug?.toString(), issue.project_id);
   const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
 
-  // Kustomisasi Paradise: tugas hanya bisa dihapus oleh
-  // yang membuatnya, admin project, atau Super Admin. Dulu baris ini berbunyi
-  // `isDeletingAllowed = isEditingAllowed`, jadi tombol Hapus muncul untuk
-  // SEMUA anggota lalu ditolak 403 oleh server. Tombol yang selalu gagal
-  // adalah cara tercepat membuat orang berhenti percaya pada aplikasinya.
-  const isDeletingAllowed = isEditingAllowed && bisaHapusTugas(issue, issue.project_id ?? undefined, tingkatSaya);
+  // Lihat komentar di atas: Hapus tidak pernah longgar dari Arsip.
+  const isDeletingAllowed = isEditingAllowed && bolehHapus;
 
   const activeLayout = `${issuesFilter.issueFilters?.displayFilters?.layout} layout`;
 

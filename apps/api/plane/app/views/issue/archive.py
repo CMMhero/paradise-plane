@@ -336,8 +336,14 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
         issues = Issue.objects.filter(workspace__slug=slug, project_id=project_id, pk__in=issue_ids).select_related(
             "state"
         )
+        # Saring dulu pakai aturan kepemilikan yang sama seperti hapus satuan:
+        # staf hanya boleh mengarsipkan tugasnya sendiri atau bawahannya. Tanpa
+        # ini, arsip massal adalah pintu samping bulk delete yang sudah dijaga.
+        semua = list(issues)
+        boleh = [i for i in semua if bisa_hapus_tugas(request.user, i, slug, project_id)]
+        dilewati = len(semua) - len(boleh)
         bulk_archive_issues = []
-        for issue in issues:
+        for issue in boleh:
             if issue.state.group not in ["completed", "cancelled"]:
                 return Response(
                     {
@@ -361,4 +367,10 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
             bulk_archive_issues.append(issue)
         Issue.objects.bulk_update(bulk_archive_issues, ["archived_at"])
 
-        return Response({"archived_at": str(timezone.now().date())}, status=status.HTTP_200_OK)
+        pesan = f"{len(boleh)} tugas diarsipkan"
+        if dilewati:
+            pesan += f", {dilewati} dilewati karena bukan milik Anda atau bawahan Anda"
+        return Response(
+            {"archived_at": str(timezone.now().date()), "skipped": dilewati, "message": pesan},
+            status=status.HTTP_200_OK,
+        )

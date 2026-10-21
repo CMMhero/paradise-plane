@@ -17,7 +17,7 @@ import { cn } from "@plane/utils";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
-import { bolehUbahTugas, useAturanTugas, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { bolehUbahTugas, useAturanTugas, useBolehHapus, useTingkatSaya } from "@/hooks/use-aturan-tugas";
 // plane-web components
 import { DuplicateWorkItemModal } from "@/plane-web/components/issues/issue-layouts/quick-action-dropdowns";
 // helper
@@ -55,7 +55,11 @@ export const AllIssueQuickActions = observer(function AllIssueQuickActions(props
   const isEditingAllowed = !readOnly;
   const projectIdentifier = getProjectIdentifierById(issue?.project_id);
   // auth
-  const isArchivingAllowed = handleArchive && isEditingAllowed;
+  // Aturan TEGAS khusus Arsip/Hapus: tombolnya HILANG kalau assignee-nya bukan
+  // saya/bawahan saya (atau saya bukan pembuatnya). Cermin `bisa_hapus_tugas`
+  // server; fail-closed saat wewenang belum dimuat.
+  const bolehHapus = useBolehHapus(workspaceSlug?.toString(), issue.project_id, issue);
+  const isArchivingAllowed = handleArchive && isEditingAllowed && bolehHapus;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
 
   const duplicateIssuePayload = omit(
@@ -67,10 +71,10 @@ export const AllIssueQuickActions = observer(function AllIssueQuickActions(props
     ["id"]
   );
 
-  const { bisaHapusTugas, idSaya } = useAturanTugas();
+  const { idSaya } = useAturanTugas();
   const tingkatSaya = useTingkatSaya(workspaceSlug?.toString(), issue.project_id);
   const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
-  const isDeletingAllowed = isEditingAllowed && bisaHapusTugas(issue, issue.project_id ?? undefined, tingkatSaya);
+  const isDeletingAllowed = isEditingAllowed && bolehHapus;
 
   // Menu items and modals using helper
   const menuItemProps: MenuItemFactoryProps = {
@@ -81,11 +85,9 @@ export const AllIssueQuickActions = observer(function AllIssueQuickActions(props
     isEditingAllowed,
     bolehUbahTugas: bolehUbah,
     isArchivingAllowed,
-    // Kustomisasi Paradise: tugas hanya bisa dihapus oleh
-    // yang membuatnya, admin project, atau Super Admin. Dulu baris ini berbunyi
-    // `isDeletingAllowed = isEditingAllowed`, jadi tombol Hapus muncul untuk
-    // SEMUA anggota lalu ditolak 403 oleh server. Tombol yang selalu gagal
-    // adalah cara tercepat membuat orang berhenti percaya pada aplikasinya.
+    // Arsip/Hapus hanya muncul kalau assignee-nya saya/bawahan saya (atau saya
+    // pembuatnya). Dulu memakai aturan ubah yang longgar, jadi tombol Hapus
+    // muncul untuk SEMUA anggota lalu ditolak 403 oleh server.
     isDeletingAllowed,
     isInArchivableGroup,
     setIssueToEdit,
