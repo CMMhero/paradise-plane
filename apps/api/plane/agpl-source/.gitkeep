@@ -1,0 +1,9 @@
+Direktori ini SENGAJA ada meski kosong di git.
+
+Dockerfile.api menyalinnya tanpa syarat. Kalau direktorinya tidak ada, COPY
+gagal dan seluruh build backend ikut gagal, termasuk build lokal yang tidak
+pernah menjalankan langkah CI pembuat arsip.
+
+CI mengisi direktori ini dengan corresponding-source.tar.gz sesaat sebelum
+docker buildx bake, lihat .github/workflows/paradise-build.yml. Arsipnya
+gitignored dan tidak boleh ikut ter-commit.
