@@ -13,7 +13,22 @@ from rest_framework.response import Response
 # Module imports
 from . import BaseAPIView
 from plane.app.permissions import allow_permission, ROLE
+from plane.db.models import Issue
+from plane.utils.task_access import bisa_hapus_tugas
 from plane.utils.trash import ambil, buang_permanen, kumpulkan, pulihkan
+
+
+def _boleh_tindak_sampah(user, obj, slug, project_id):
+    """Aturan kepemilikan untuk isi tong sampah, SAMA dengan ubah/hapus.
+
+    Tong sampah project boleh DILIHAT semua admin project, tapi menindak (pulihkan
+    atau buang permanen) work item milik orang lain sama saja menghapusnya: hanya
+    pembuat, penerima, atau atasannya yang boleh -- persis `bisa_hapus_tugas`.
+    Tipe selain work item tetap ikut aturan admin project seperti semula.
+    """
+    if isinstance(obj, Issue) and not bisa_hapus_tugas(user, obj, slug, project_id):
+        return False
+    return True
 
 
 class ProjectTrashEndpoint(BaseAPIView):
@@ -48,6 +63,11 @@ class ProjectTrashEndpoint(BaseAPIView):
                 {"error": "Barang tidak ada di tong sampah project ini."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        if not _boleh_tindak_sampah(request.user, obj, slug, project_id):
+            return Response(
+                {"error": "Hanya pembuat, penerima, atau atasannya yang boleh memulihkan barang ini."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         jumlah = pulihkan(obj)
         return Response(
             {"message": "Dipulihkan.", "restored_count": jumlah},
@@ -62,6 +82,11 @@ class ProjectTrashEndpoint(BaseAPIView):
             return Response(
                 {"error": "Barang tidak ada di tong sampah project ini."},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+        if not _boleh_tindak_sampah(request.user, obj, slug, project_id):
+            return Response(
+                {"error": "Hanya pembuat, penerima, atau atasannya yang boleh membuang barang ini."},
+                status=status.HTTP_403_FORBIDDEN,
             )
         buang_permanen(obj)
         return Response(status=status.HTTP_204_NO_CONTENT)
