@@ -120,10 +120,12 @@ class IssueCreateSerializer(BaseSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        assignee_ids = self.initial_data.get("assignee_ids")
-        data["assignee_ids"] = assignee_ids if assignee_ids else []
-        label_ids = self.initial_data.get("label_ids")
-        data["label_ids"] = label_ids if label_ids else []
+        # Kebenaran dari database, BUKAN gema request: `initial_data` kosong pada
+        # PATCH tanpa assignee (dan pada GET selalu kosong), sehingga gema lama
+        # menimpa daftar asli dengan [] dan store frontend mengira tugas ini
+        # tidak punya assignee. Relasi sudah tersimpan saat respons dibuat.
+        data["assignee_ids"] = [str(a.assignee_id) for a in instance.issue_assignee.all()]
+        data["label_ids"] = [str(lb.label_id) for lb in instance.label_issue.all()]
         return data
 
     def validate(self, attrs):
@@ -891,8 +893,8 @@ class IssueSerializer(DynamicBaseSerializer):
     module_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
 
     # Many to many
-    label_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
-    assignee_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
+    label_ids = serializers.SerializerMethodField()
+    assignee_ids = serializers.SerializerMethodField()
 
     # Count items
     sub_issues_count = serializers.IntegerField(read_only=True)
@@ -909,6 +911,16 @@ class IssueSerializer(DynamicBaseSerializer):
         from plane.utils.hierarki import status_persetujuan_tugas  # noqa: PLC0415
 
         return status_persetujuan_tugas(getattr(obj, "id", None))
+
+    def get_assignee_ids(self, obj):
+        # Dibaca dari relasi, bukan dari request: bare ListField membaca atribut
+        # `assignee_ids` yang tidak ada di model sehingga selalu None di GET,
+        # dan store frontend menimpa daftar asli dengan kosong (pengguna yang
+        # jelas-jelas assignee ditolak membuka tugasnya sendiri).
+        return [str(a.assignee_id) for a in obj.issue_assignee.all()]
+
+    def get_label_ids(self, obj):
+        return [str(lb.label_id) for lb in obj.label_issue.all()]
 
     class Meta:
         model = Issue

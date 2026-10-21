@@ -227,7 +227,10 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
   const { idSaya } = useAturanTugas();
   const tingkatSaya = useTingkatSaya(workspaceSlug, projectId);
   const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
-  const terlibat = !!issue && !!currentUser?.id && (issue.assignee_ids ?? []).includes(currentUser.id);
+  const terlibat =
+    !!issue &&
+    !!currentUser?.id &&
+    ((issue.assignee_ids ?? []).includes(currentUser.id) || issue.created_by === currentUser.id);
   const bolehBuka = hanyaStaf(tingkatSaya) ? terlibat : true;
   const isEditable =
     bolehUbah &&
