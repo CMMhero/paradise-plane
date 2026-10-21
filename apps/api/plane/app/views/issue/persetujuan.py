@@ -195,6 +195,8 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
     permission_classes = [ProjectEntityPermission]
 
     def get(self, request, slug, project_id):
+        from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
         sudut = request.query_params.get("peran")
         if sudut not in (None, "pemohon", "penyetuju"):
             return Response({"error": "peran harus 'pemohon' atau 'penyetuju'."}, status=status.HTTP_400_BAD_REQUEST)
