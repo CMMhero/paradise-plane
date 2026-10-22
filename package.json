@@ -1,6 +1,6 @@
 {
   "name": "paradise-task-tracker",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "Paradise Task Tracker: deployment internal kantor berbasis Plane CE (AGPL-3.0)",
   "license": "AGPL-3.0",

@@ -6,6 +6,34 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-10-22
+
+### Notifikasi persetujuan (inbox + email)
+
+- **Tiga pemicu baru.** Pengajuan (baru & ulang) → inbox + email ke atasan yang
+  boleh memutuskan; keputusan (setujui/tolak, alasan ikut) → inbox + email ke
+  pemohon. Penugasan ke saya & status berubah tetap lewat jalur lama (sudah
+  jalan — assignee otomatis jadi subscriber + saklar `property_change`).
+- **Bahasa email mengikuti penerima** (`Profile.language`, id/en); templat
+  `emails/notifications/approval.html` baru.
+- **Saklar baru** `approval` di `UserNotificationPreference` (default hidup)
+  + toggle di Profil → Notifikasi; inbox selalu ditulis, saklar hanya email.
+- Tanpa SMTP, baris ditandai selesai (tidak macet antrean).
+
+### Versi 1.5.0
+
+- **Naik versi 1.4.0 → 1.5.0** di 20 `package.json` workspace (fitur baru sejak
+  14 Okt: antrean persetujuan, God Mode member & organisasi, filter tunggu
+  persetujuan).
+- **i18n untuk semua string fitur baru.** Web memakai kunci `issue.approval.*`
+  (52 kunci, 19 locale sinkron); tanggal mengikuti bahasa aktif. God Mode
+  memakai kamus bertipe `apps/admin/app/i18n/godmode.ts` + toggle ID/EN.
+- **Konfirmasi Super Admin tanpa passphrase.** Pemberian memakai ketik-ulang
+  "jadikan superadmin" / "make superadmin" (divalidasi server); env
+  `SUPER_ADMIN_GRANT_PASSPHRASE` dihapus.
+- **Rapi design system:** token `danger-subtle`/`warning-subtle` ganti hardcode
+  `red-500`/`amber-500`, `aria-pressed`/`aria-label` di kontrol approval.
+
 ## 2026-07-31
 
 ### Branding
