@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { EPillSize, EPillVariant, Pill } from "@plane/propel/pill";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -42,6 +43,7 @@ const pesanGagal = (err: unknown, fallback: string): string => {
 
 export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: TApprovalSidebarProps) {
   const { workspaceSlug, projectId, issueId } = props;
+  const { t } = useTranslation();
   const [baris, setBaris] = useState<TPersetujuanPenugasan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [alasan, setAlasan] = useState("");
@@ -85,7 +87,7 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
   const putuskan = async (aksi: "setujui" | "tolak") => {
     setGagal(null);
     if (aksi === "tolak" && !alasan.trim()) {
-      setGagal("Alasan penolakan wajib diisi supaya pemohon tahu apa yang harus diperbaiki.");
+      setGagal(t("issue.approval.modal.reason_required"));
       return;
     }
     setIsWorking(true);
@@ -95,45 +97,52 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
       await muat();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: aksi === "setujui" ? "Disetujui" : "Ditolak",
-        message: aksi === "setujui" ? "Penugasan disetujui." : "Penugasan ditolak dengan alasan.",
+        title: aksi === "setujui" ? t("issue.approval.toast.approved_title") : t("issue.approval.toast.rejected_title"),
+        message:
+          aksi === "setujui"
+            ? t("issue.approval.toast.approved_message")
+            : t("issue.approval.toast.rejected_message"),
       });
     } catch (err) {
-      const pesan = pesanGagal(err, "Gagal menyimpan keputusan.");
+      const pesan = pesanGagal(err, t("issue.approval.toast.save_failed_message"));
       setGagal(pesan);
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal menyimpan", message: pesan });
+      setToast({ type: TOAST_TYPE.ERROR, title: t("issue.approval.toast.save_failed_title"), message: pesan });
     } finally {
       setIsWorking(false);
     }
   };
 
   if (baris.status === "disetujui") {
+    const label = t("issue.approval.sidebar.approved");
     return (
-      <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS}>
-        <CheckCircle2 className="size-3 shrink-0" />
-        Penugasan disetujui
+      <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS} title={label}>
+        <CheckCircle2 className="size-3 shrink-0" aria-hidden />
+        {label}
       </Pill>
     );
   }
 
   if (baris.status === "ditolak") {
+    const label = baris.alasan
+      ? t("issue.approval.queue.rejection_reason", { reason: baris.alasan })
+      : t("issue.approval.sidebar.rejected");
     return (
-      <Pill variant={EPillVariant.ERROR} size={EPillSize.XS}>
-        <XCircle className="size-3 shrink-0" />
-        Penugasan ditolak{baris.alasan ? `: ${baris.alasan}` : ""}
+      <Pill variant={EPillVariant.ERROR} size={EPillSize.XS} title={label}>
+        <XCircle className="size-3 shrink-0" aria-hidden />
+        {label}
       </Pill>
     );
   }
 
+  const menunggu = t("issue.approval.sidebar.waiting");
   return (
     <div className="flex w-full flex-col gap-2">
-      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS}>
-        <Clock className="size-3 shrink-0" />
-        Menunggu persetujuan atasan
+      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS} title={menunggu}>
+        <Clock className="size-3 shrink-0" aria-hidden />
+        {menunggu}
       </Pill>
       <span className="text-[11px] text-tertiary">
-        Diajukan oleh {baris.pemohon.nama ?? baris.pemohon.email ?? "—"}. Tugas ini terkunci: belum bisa diubah,
-        dipindah status, atau dikerjakan sampai disetujui. Komentar tetap bisa.
+        {t("issue.approval.sidebar.locked_note", { name: baris.pemohon.nama ?? baris.pemohon.email ?? "—" })}
       </span>
       {baris.boleh_saya_putuskan && (
         <div className="flex flex-col gap-1.5">
@@ -142,18 +151,21 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
             rows={2}
             maxLength={2000}
             onChange={(e) => setAlasan(e.target.value)}
-            placeholder="Alasan (wajib kalau menolak)"
+            placeholder={t("issue.approval.sidebar.reason_placeholder")}
+            aria-label={t("issue.approval.sidebar.reason_placeholder")}
             className={inputClass}
           />
           {gagal && (
-            <p className="border-red-500/30 bg-red-500/5 text-xs text-red-600 rounded border px-2 py-1">{gagal}</p>
+            <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+              {gagal}
+            </p>
           )}
           <div className="flex items-center gap-1.5">
             <Button variant="primary" size="sm" loading={isWorking} onClick={() => void putuskan("setujui")}>
-              Setujui
+              {t("issue.approval.actions.approve")}
             </Button>
             <Button variant="error-outline" size="sm" loading={isWorking} onClick={() => void putuskan("tolak")}>
-              Tolak
+              {t("issue.approval.actions.reject")}
             </Button>
           </div>
         </div>

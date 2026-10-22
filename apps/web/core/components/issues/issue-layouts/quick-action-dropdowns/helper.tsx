@@ -171,7 +171,7 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
   // Tugas menunggu persetujuan: tombol destruktif TAMPIL tapi nonaktif, dengan
   // alasan yang jelas -- pengguna perlu tahu KENAPA tidak bisa, bukan menebak.
   // Super Admin tidak pernah terkunci (lolos di server), jadi tidak ikut.
-  const alasanTerkunci = nonaktifTerkunci ? "Menunggu persetujuan atasan" : undefined;
+  const alasanTerkunci = nonaktifTerkunci ? t("issue.approval.menu.locked_description") : undefined;
 
   const createEditMenuItem = (customEditAction?: () => void): TContextMenuItem => ({
     key: "edit",
@@ -239,7 +239,6 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
   const createArchiveMenuItem = (): TContextMenuItem => ({
     key: "archive",
     title: t("common.actions.archive"),
-    description: isInArchivableGroup ? undefined : t("issue.archive.description"),
     icon: ArchiveIcon,
     className: "items-start",
     iconClassName: "mt-1",

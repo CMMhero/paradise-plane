@@ -116,6 +116,8 @@
   "comments_description": "Birisi iş öğesine yorum yaptığında bildir.",
   "mentions": "Bahsetmeler",
   "mentions_description": "Yalnızca birisi yorumlarda veya açıklamada beni etiketlediğinde bildir.",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "Eski şifre",
   "general_settings": "Genel ayarlar",
   "sign_out": "Çıkış yap",

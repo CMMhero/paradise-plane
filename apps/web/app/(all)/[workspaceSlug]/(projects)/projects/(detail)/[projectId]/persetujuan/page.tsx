@@ -12,17 +12,20 @@
 
 import { observer } from "mobx-react";
 import { useParams } from "react-router";
+// plane imports
+import { useTranslation } from "@plane/i18n";
 // components
 import { PageHead } from "@/components/core/page-title";
 import { AntreanPersetujuan } from "@/components/issues/approval-queue";
 
 function PersetujuanDivisiPage() {
+  const { t } = useTranslation();
   const { workspaceSlug, projectId } = useParams();
   if (!workspaceSlug || !projectId) return <></>;
 
   return (
     <div className="h-full w-full overflow-y-auto px-6 py-5">
-      <PageHead title="Persetujuan" />
+      <PageHead title={t("sidebar.persetujuan")} />
       <AntreanPersetujuan workspaceSlug={workspaceSlug} projectId={projectId} />
     </div>
   );

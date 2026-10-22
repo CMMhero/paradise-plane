@@ -116,6 +116,8 @@
   "comments_description": "Notificarme cuando alguien deje un comentario en el elemento de trabajo",
   "mentions": "Menciones",
   "mentions_description": "Notificarme solo cuando alguien me mencione en los comentarios o descripción",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "Contraseña anterior",
   "general_settings": "Configuración general",
   "sign_out": "Cerrar sesión",

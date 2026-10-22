@@ -116,6 +116,8 @@
   "comments_description": "誰かが作業項目にコメントを残したときに通知します",
   "mentions": "メンション",
   "mentions_description": "誰かがコメントや説明で自分をメンションしたときのみ通知します",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "現在のパスワード",
   "general_settings": "一般設定",
   "sign_out": "サインアウト",

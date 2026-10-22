@@ -174,6 +174,82 @@
         "message": "Impossibile archiviare l'elemento di lavoro. Per favore, riprova."
       }
     },
+    "approval": {
+      "badge": {
+        "pending": "Awaiting approval",
+        "rejected": "Rejected — needs revision",
+        "approved": "Approved"
+      },
+      "filter": {
+        "pending_only": "Pending approval",
+        "show_pending_title": "Show only work items awaiting approval",
+        "show_all_title": "Show all work items"
+      },
+      "menu": {
+        "approve": "Approve",
+        "reject": "Reject…",
+        "locked_description": "Awaiting manager approval"
+      },
+      "modal": {
+        "reject_title": "Reject this work item?",
+        "reject_description": "The work item returns to the requester draft. Write the reason so they know what to fix.",
+        "reason_placeholder": "Rejection reason (required)",
+        "reason_required": "A rejection reason is required so the requester knows what to fix."
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "resubmit": "Resubmit",
+        "reload": "Reload",
+        "retry": "Try again",
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "toast": {
+        "approved_title": "Approved",
+        "approved_message": "Work item approved and no longer locked.",
+        "rejected_title": "Rejected",
+        "rejected_message": "Work item returned to the requester draft.",
+        "resubmitted_title": "Resubmitted",
+        "resubmitted_message": "Work item {number} is back in the manager queue.",
+        "save_failed_title": "Could not save",
+        "save_failed_message": "Could not save the decision.",
+        "resubmit_failed_message": "Could not resubmit."
+      },
+      "queue": {
+        "description": "Staff can only assign work to themselves, and each assignment waits for a manager in their division (supervisor, manager, or director). Rejected work returns to the requester draft — this list is what marks the status.",
+        "needs_decision": "Needs my decision",
+        "my_requests": "My requests",
+        "all_my_divisions": "All my divisions",
+        "not_member": "You are not a member of any division in this workspace yet. Ask an admin to add you to your division first.",
+        "gate_off": "The approval gate on the server is off, so this queue is empty not because nothing is waiting — no assignment has been recorded yet. Switch the gate on first (after the ladder is filled via God Mode), then reload.",
+        "load_failed": "Could not load the approval queue. Try reloading the page.",
+        "empty_decision_title": "Nothing awaiting a decision",
+        "empty_decision_description": "When staff in your division assign work to themselves, it shows up here.",
+        "empty_mine_title": "No requests yet",
+        "empty_mine_description": "Work you create for yourself shows up here with its approval status.",
+        "resubmit_hint": "This work item is back in your private draft (off the board). Fix it per the feedback above, then resubmit.",
+        "rejection_reason": "Rejection reason: {reason}",
+        "no_approver": "No manager in this division yet — the ladder needs filling via God Mode.",
+        "row_division": "Division {divisi}",
+        "row_submitted": "submitted by {name} · {date}",
+        "row_decided": "decided {date}",
+        "untitled": "Untitled"
+      },
+      "sidebar": {
+        "waiting": "Awaiting manager approval",
+        "locked_note": "Submitted by {name}. This work item is locked: it cannot be edited, moved, or worked on until approved. Comments are still allowed.",
+        "approved": "Assignment approved",
+        "rejected": "Assignment rejected",
+        "reason_placeholder": "Reason (required to reject)",
+        "reason_optional_placeholder": "Reason (required to reject, optional to approve)"
+      },
+      "inbox": {
+        "submitted": "requested approval",
+        "approved": "approved your request",
+        "rejected": "rejected your request"
+      }
+    },
     "restore": {
       "success": {
         "title": "Ripristino riuscito",

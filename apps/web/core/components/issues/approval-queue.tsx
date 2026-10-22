@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { AlertTriangle, CheckCircle2, Clock, Inbox, Send, XCircle } from "lucide-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
@@ -43,31 +44,39 @@ const pesanGagal = (err: unknown, fallback: string): string => {
   return typeof pesan === "string" && pesan.length > 0 ? pesan : fallback;
 };
 
-const formatTanggal = (nilai: string | null): string => {
+const formatTanggal = (nilai: string | null, locale: string): string => {
   if (!nilai) return "—";
   const tanggal = new Date(nilai);
   if (Number.isNaN(tanggal.getTime())) return "—";
-  return tanggal.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+  try {
+    return tanggal.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
+  } catch {
+    return tanggal.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+  }
 };
 
 function Badge({ status }: { status: TStatusPersetujuan }) {
+  const { t } = useTranslation();
   if (status === "menunggu") {
+    const label = t("issue.approval.badge.pending");
     return (
-      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS}>
-        Menunggu persetujuan
+      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS} title={label}>
+        {label}
       </Pill>
     );
   }
   if (status === "ditolak") {
+    const label = t("issue.approval.sidebar.rejected");
     return (
-      <Pill variant={EPillVariant.ERROR} size={EPillSize.XS}>
-        Ditolak
+      <Pill variant={EPillVariant.ERROR} size={EPillSize.XS} title={label}>
+        {label}
       </Pill>
     );
   }
+  const label = t("issue.approval.badge.approved");
   return (
-    <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS}>
-      Disetujui
+    <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS} title={label}>
+      {label}
     </Pill>
   );
 }
@@ -84,6 +93,7 @@ function KartuKeputusan({
   projectId: string;
   onSelesai: () => void;
 }) {
+  const { t } = useTranslation();
   const [alasan, setAlasan] = useState("");
   const [isWorking, setIsWorking] = useState(false);
   const [gagal, setGagal] = useState<string | null>(null);
@@ -92,7 +102,7 @@ function KartuKeputusan({
   const putuskan = async (aksi: "setujui" | "tolak") => {
     setGagal(null);
     if (aksi === "tolak" && !alasan.trim()) {
-      setGagal("Alasan penolakan wajib diisi supaya pemohon tahu apa yang harus diperbaiki.");
+      setGagal(t("issue.approval.modal.reason_required"));
       return;
     }
     setIsWorking(true);
@@ -102,18 +112,18 @@ function KartuKeputusan({
       onSelesai();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: aksi === "setujui" ? "Disetujui" : "Ditolak",
+        title: aksi === "setujui" ? t("issue.approval.toast.approved_title") : t("issue.approval.toast.rejected_title"),
         message:
           aksi === "setujui"
-            ? `Tugas ${baris.tugas.nomor ?? ""} disetujui.`
-            : `Tugas ${baris.tugas.nomor ?? ""} kembali ke draft pemohon.`,
+            ? t("issue.approval.toast.approved_message")
+            : t("issue.approval.toast.rejected_message"),
       });
     } catch (err) {
       // Pesan dari API ditampilkan apa adanya (mis. "Anda bukan atasan pembuat
       // di divisi ini") — kegagalan senyap adalah kelas bug termahal di sini.
-      const pesan = pesanGagal(err, "Gagal menyimpan keputusan.");
+      const pesan = pesanGagal(err, t("issue.approval.toast.save_failed_message"));
       setGagal(pesan);
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal menyimpan", message: pesan });
+      setToast({ type: TOAST_TYPE.ERROR, title: t("issue.approval.toast.save_failed_title"), message: pesan });
     } finally {
       setIsWorking(false);
     }
@@ -128,28 +138,33 @@ function KartuKeputusan({
         rows={2}
         maxLength={2000}
         onChange={(e) => setAlasan(e.target.value)}
-        placeholder="Alasan (wajib kalau menolak, opsional kalau menyetujui)"
+        placeholder={t("issue.approval.sidebar.reason_optional_placeholder")}
+        aria-label={t("issue.approval.sidebar.reason_optional_placeholder")}
         className={inputClass}
       />
-      {gagal && <p className="border-red-500/30 bg-red-500/5 text-xs text-red-600 rounded border px-2 py-1">{gagal}</p>}
+      {gagal && (
+        <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+          {gagal}
+        </p>
+      )}
       <div className="flex items-center gap-2">
         <Button
           variant="primary"
           size="sm"
           loading={isWorking}
           onClick={() => void putuskan("setujui")}
-          prependIcon={<CheckCircle2 className="size-3.5" />}
+          prependIcon={<CheckCircle2 className="size-3.5" aria-hidden />}
         >
-          Setujui
+          {t("issue.approval.actions.approve")}
         </Button>
         <Button
           variant="error-outline"
           size="sm"
           loading={isWorking}
           onClick={() => void putuskan("tolak")}
-          prependIcon={<XCircle className="size-3.5" />}
+          prependIcon={<XCircle className="size-3.5" aria-hidden />}
         >
-          Tolak
+          {t("issue.approval.actions.reject")}
         </Button>
       </div>
     </div>
@@ -164,6 +179,7 @@ function TombolAjukanUlang({
   workspaceSlug: string;
   onSelesai: () => void;
 }) {
+  const { t } = useTranslation();
   const [isWorking, setIsWorking] = useState(false);
   const [gagal, setGagal] = useState<string | null>(null);
   const setelStatus = useSetelStatusPersetujuan();
@@ -177,13 +193,13 @@ function TombolAjukanUlang({
       onSelesai();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Diajukan ulang",
-        message: `Tugas ${baris.tugas.nomor ?? ""} kembali ke antrean atasan.`,
+        title: t("issue.approval.toast.resubmitted_title"),
+        message: t("issue.approval.toast.resubmitted_message", { number: baris.tugas.nomor ?? "" }),
       });
     } catch (err) {
-      const pesan = pesanGagal(err, "Gagal mengajukan ulang.");
+      const pesan = pesanGagal(err, t("issue.approval.toast.resubmit_failed_message"));
       setGagal(pesan);
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal mengajukan", message: pesan });
+      setToast({ type: TOAST_TYPE.ERROR, title: t("issue.approval.toast.save_failed_title"), message: pesan });
     } finally {
       setIsWorking(false);
     }
@@ -191,19 +207,21 @@ function TombolAjukanUlang({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-[11px] text-tertiary">
-        Tugas ini kembali ke draft pribadimu (tidak di papan). Perbaiki dulu sesuai alasan di atas, lalu ajukan ulang.
-      </p>
-      {gagal && <p className="border-red-500/30 bg-red-500/5 text-xs text-red-600 rounded border px-2 py-1">{gagal}</p>}
+      <p className="text-[11px] text-tertiary">{t("issue.approval.queue.resubmit_hint")}</p>
+      {gagal && (
+        <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+          {gagal}
+        </p>
+      )}
       <div>
         <Button
           variant="secondary"
           size="sm"
           loading={isWorking}
           onClick={() => void ajukan()}
-          prependIcon={<Send className="size-3.5" />}
+          prependIcon={<Send className="size-3.5" aria-hidden />}
         >
-          Ajukan ulang
+          {t("issue.approval.actions.resubmit")}
         </Button>
       </div>
     </div>
@@ -217,6 +235,8 @@ export type TAntreanPersetujuanProps = {
 };
 
 export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TAntreanPersetujuanProps) {
+  const { t, currentLocale } = useTranslation();
+  const locale = currentLocale || "en";
   const { workspaceSlug, projectId: projectTetap } = props;
   const { joinedProjectIds, getProjectById } = useProject();
   // sudut: antrean yang perlu SAYA putuskan vs pengajuan SAYA sendiri
@@ -269,11 +289,11 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
       });
       setBaris([...semua.filter((b) => b.status === "menunggu"), ...semua.filter((b) => b.status !== "menunggu")]);
     } catch (err) {
-      setGagalMuat(pesanGagal(err, "Gagal memuat antrean persetujuan. Coba muat ulang halaman."));
+      setGagalMuat(pesanGagal(err, t("issue.approval.queue.load_failed")));
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceSlug, projectTetap, divisiSaya, sudut, divisiDipilih, getProjectById]);
+  }, [workspaceSlug, projectTetap, divisiSaya, sudut, divisiDipilih, getProjectById, t]);
 
   useEffect(() => {
     void muatSemua();
@@ -286,16 +306,10 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <p className="text-xs text-tertiary">
-        Staf hanya bisa menugaskan pekerjaan ke dirinya sendiri, dan penugasan itu menunggu persetujuan atasan di
-        divisinya (supervisor, manager, atau direktur). Tugas yang ditolak kembali ke draft pemohon — yang menandai
-        statusnya adalah daftar ini.
-      </p>
+      <p className="text-xs text-tertiary">{t("issue.approval.queue.description")}</p>
 
       {!projectTetap && divisiSaya.length === 0 ? (
-        <p className="text-sm text-tertiary">
-          Kamu belum menjadi anggota divisi mana pun di workspace ini. Minta admin menambahkanmu ke divisimu dulu.
-        </p>
+        <p className="text-sm text-tertiary">{t("issue.approval.queue.not_member")}</p>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">
@@ -303,21 +317,28 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
               <button
                 type="button"
                 onClick={() => setSudut("penyetuju")}
+                aria-pressed={sudut === "penyetuju"}
                 className={`text-xs rounded px-2.5 py-1 font-medium ${sudut === "penyetuju" ? "bg-layer-3 text-primary" : "text-tertiary"}`}
               >
-                Perlu saya putuskan ({sudut === "penyetuju" ? menunggu.length : "…"})
+                {t("issue.approval.queue.needs_decision")} ({sudut === "penyetuju" ? menunggu.length : "…"})
               </button>
               <button
                 type="button"
                 onClick={() => setSudut("pemohon")}
+                aria-pressed={sudut === "pemohon"}
                 className={`text-xs rounded px-2.5 py-1 font-medium ${sudut === "pemohon" ? "bg-layer-3 text-primary" : "text-tertiary"}`}
               >
-                Pengajuan saya
+                {t("issue.approval.queue.my_requests")}
               </button>
             </div>
             {!projectTetap && sudut === "penyetuju" && (
-              <select value={divisiDipilih} onChange={(e) => setDivisiDipilih(e.target.value)} className={inputClass}>
-                <option value="">Semua divisi saya</option>
+              <select
+                value={divisiDipilih}
+                onChange={(e) => setDivisiDipilih(e.target.value)}
+                aria-label={t("issue.approval.queue.all_my_divisions")}
+                className={inputClass}
+              >
+                <option value="">{t("issue.approval.queue.all_my_divisions")}</option>
                 {divisiSaya.map((divisi) => (
                   <option key={divisi.id} value={divisi.id}>
                     {divisi.name} ({divisi.identifier})
@@ -326,28 +347,24 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
               </select>
             )}
             <Button variant="secondary" size="sm" onClick={() => void muatSemua()}>
-              Muat ulang
+              {t("issue.approval.actions.reload")}
             </Button>
           </div>
 
           {gerbangMati && (
             <div className="text-xs flex items-start gap-2 rounded-md border border-subtle bg-layer-1 px-3 py-2 text-secondary">
-              <Inbox className="mt-0.5 size-4 shrink-0 text-tertiary" />
-              <span>
-                Gerbang persetujuan di server sedang <span className="font-medium">mati</span>, jadi antrean ini kosong
-                bukan karena tidak ada yang menunggu — belum ada penugasan yang dicatat. Nyalakan gerbangnya dulu
-                (setelah jenjang diisi lewat God Mode), lalu muat ulang.
-              </span>
+              <Inbox className="mt-0.5 size-4 shrink-0 text-tertiary" aria-hidden />
+              <span>{t("issue.approval.queue.gate_off")}</span>
             </div>
           )}
 
           {gagalMuat ? (
-            <div className="border-red-500/30 bg-red-500/5 text-xs text-red-600 flex items-start gap-2 rounded-md border px-3 py-2">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div className="border-danger-subtle bg-danger-subtle text-danger-primary flex items-start gap-2 rounded-md border px-3 py-2 text-xs">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <div className="flex flex-col gap-1">
                 <span>{gagalMuat}</span>
                 <Button variant="secondary" size="sm" onClick={() => void muatSemua()} className="self-start">
-                  Coba lagi
+                  {t("issue.approval.actions.retry")}
                 </Button>
               </div>
             </div>
@@ -360,11 +377,15 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
           ) : baris.length === 0 ? (
             <EmptyStateCompact
               assetKey="intake"
-              title={sudut === "penyetuju" ? "Tidak ada yang menunggu keputusan" : "Belum ada pengajuan"}
+              title={
+                sudut === "penyetuju"
+                  ? t("issue.approval.queue.empty_decision_title")
+                  : t("issue.approval.queue.empty_mine_title")
+              }
               description={
                 sudut === "penyetuju"
-                  ? "Kalau staf divisimu menugaskan pekerjaan ke dirinya sendiri, barisnya muncul di sini."
-                  : "Tugas yang kamu buat untuk dirimu sendiri muncul di sini beserta status persetujuannya."
+                  ? t("issue.approval.queue.empty_decision_description")
+                  : t("issue.approval.queue.empty_mine_description")
               }
             />
           ) : (
@@ -374,17 +395,22 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge status={item.status} />
                     <span className="text-xs font-medium text-primary">
-                      {item.tugas.nomor ?? "—"} · {item.tugas.judul ?? "(tanpa judul)"}
+                      {item.tugas.nomor ?? "—"} · {item.tugas.judul ?? t("issue.approval.queue.untitled")}
                     </span>
                   </div>
                   <p className="text-[11px] text-tertiary">
-                    {projectTetap ? null : <>Divisi {item.divisi} · </>}diajukan oleh{" "}
-                    {item.pemohon.nama ?? item.pemohon.email ?? "—"} · {formatTanggal(item.created_at)}
-                    {item.status !== "menunggu" && <> · diputuskan {formatTanggal(item.diputuskan_pada)}</>}
+                    {projectTetap ? null : <>{t("issue.approval.queue.row_division", { divisi: item.divisi })} · </>}
+                    {t("issue.approval.queue.row_submitted", {
+                      name: item.pemohon.nama ?? item.pemohon.email ?? "—",
+                      date: formatTanggal(item.created_at, locale),
+                    })}
+                    {item.status !== "menunggu" && (
+                      <> · {t("issue.approval.queue.row_decided", { date: formatTanggal(item.diputuskan_pada, locale) })}</>
+                    )}
                   </p>
                   {item.status === "ditolak" && item.alasan && (
-                    <p className="border-red-500/30 bg-red-500/5 text-xs text-red-600 rounded border px-2 py-1">
-                      Alasan penolakan: {item.alasan}
+                    <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+                      {t("issue.approval.queue.rejection_reason", { reason: item.alasan })}
                     </p>
                   )}
                   {item.status === "ditolak" && item.peran_saya === "pemohon" && (
@@ -392,8 +418,7 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
                   )}
                   {item.status === "menunggu" && item.penyetuju_di_divisi.length === 0 && (
                     <p className="flex items-center gap-1 text-[11px] text-tertiary">
-                      <Clock className="size-3.5" /> Belum ada atasan di divisi ini — jenjangnya perlu diisi lewat God
-                      Mode.
+                      <Clock className="size-3.5" aria-hidden /> {t("issue.approval.queue.no_approver")}
                     </p>
                   )}
                   {item.status === "menunggu" && (

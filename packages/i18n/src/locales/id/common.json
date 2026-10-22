@@ -116,6 +116,8 @@
   "comments_description": "Beri tahu saya ketika seseorang meninggalkan komentar pada item kerja",
   "mentions": "Sebutkan",
   "mentions_description": "Beri tahu saya hanya ketika seseorang menyebut saya dalam komentar atau deskripsi",
+  "approval_decisions": "Keputusan persetujuan",
+  "approval_decisions_description": "Beri tahu saya lewat email saat ada pengajuan menunggu keputusan saya atau pengajuan saya diputuskan.",
   "old_password": "Kata sandi lama",
   "general_settings": "Pengaturan umum",
   "sign_out": "Keluar",

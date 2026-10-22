@@ -174,6 +174,82 @@
         "message": "Item kerja tidak dapat diarsipkan. Silakan coba lagi."
       }
     },
+    "approval": {
+      "badge": {
+        "pending": "Menunggu persetujuan",
+        "rejected": "Ditolak — perlu revisi",
+        "approved": "Disetujui"
+      },
+      "filter": {
+        "pending_only": "Tunggu persetujuan",
+        "show_pending_title": "Hanya tampilkan yang menunggu persetujuan",
+        "show_all_title": "Tampilkan semua tugas"
+      },
+      "menu": {
+        "approve": "Setujui",
+        "reject": "Tolak…",
+        "locked_description": "Menunggu persetujuan atasan"
+      },
+      "modal": {
+        "reject_title": "Tolak tugas ini?",
+        "reject_description": "Tugas kembali ke draft pemohon. Tulis alasannya supaya ia tahu apa yang harus diperbaiki.",
+        "reason_placeholder": "Alasan penolakan (wajib)",
+        "reason_required": "Alasan penolakan wajib diisi supaya pemohon tahu apa yang harus diperbaiki."
+      },
+      "actions": {
+        "approve": "Setujui",
+        "reject": "Tolak",
+        "resubmit": "Ajukan ulang",
+        "reload": "Muat ulang",
+        "retry": "Coba lagi",
+        "cancel": "Batal",
+        "save": "Simpan"
+      },
+      "toast": {
+        "approved_title": "Disetujui",
+        "approved_message": "Tugas disetujui dan tidak lagi terkunci.",
+        "rejected_title": "Ditolak",
+        "rejected_message": "Tugas kembali ke draft pemohon.",
+        "resubmitted_title": "Diajukan ulang",
+        "resubmitted_message": "Tugas {number} kembali ke antrean atasan.",
+        "save_failed_title": "Gagal menyimpan",
+        "save_failed_message": "Gagal menyimpan keputusan.",
+        "resubmit_failed_message": "Gagal mengajukan ulang."
+      },
+      "queue": {
+        "description": "Staf hanya bisa menugaskan pekerjaan ke dirinya sendiri, dan penugasan itu menunggu persetujuan atasan di divisinya (supervisor, manager, atau direktur). Tugas yang ditolak kembali ke draft pemohon — yang menandai statusnya adalah daftar ini.",
+        "needs_decision": "Perlu saya putuskan",
+        "my_requests": "Pengajuan saya",
+        "all_my_divisions": "Semua divisi saya",
+        "not_member": "Kamu belum menjadi anggota divisi mana pun di workspace ini. Minta admin menambahkanmu ke divisimu dulu.",
+        "gate_off": "Gerbang persetujuan di server sedang mati, jadi antrean ini kosong bukan karena tidak ada yang menunggu — belum ada penugasan yang dicatat. Nyalakan gerbangnya dulu (setelah jenjang diisi lewat God Mode), lalu muat ulang.",
+        "load_failed": "Gagal memuat antrean persetujuan. Coba muat ulang halaman.",
+        "empty_decision_title": "Tidak ada yang menunggu keputusan",
+        "empty_decision_description": "Kalau staf divisimu menugaskan pekerjaan ke dirinya sendiri, barisnya muncul di sini.",
+        "empty_mine_title": "Belum ada pengajuan",
+        "empty_mine_description": "Tugas yang kamu buat untuk dirimu sendiri muncul di sini beserta status persetujuannya.",
+        "resubmit_hint": "Tugas ini kembali ke draft pribadimu (tidak di papan). Perbaiki dulu sesuai alasan di atas, lalu ajukan ulang.",
+        "rejection_reason": "Alasan penolakan: {reason}",
+        "no_approver": "Belum ada atasan di divisi ini — jenjangnya perlu diisi lewat God Mode.",
+        "row_division": "Divisi {divisi}",
+        "row_submitted": "diajukan oleh {name} · {date}",
+        "row_decided": "diputuskan {date}",
+        "untitled": "Tanpa judul"
+      },
+      "sidebar": {
+        "waiting": "Menunggu persetujuan atasan",
+        "locked_note": "Diajukan oleh {name}. Tugas ini terkunci: belum bisa diubah, dipindah status, atau dikerjakan sampai disetujui. Komentar tetap bisa.",
+        "approved": "Penugasan disetujui",
+        "rejected": "Penugasan ditolak",
+        "reason_placeholder": "Alasan (wajib kalau menolak)",
+        "reason_optional_placeholder": "Alasan (wajib kalau menolak, opsional kalau menyetujui)"
+      },
+      "inbox": {
+        "submitted": "meminta persetujuan",
+        "approved": "menyetujui pengajuanmu",
+        "rejected": "menolak pengajuanmu"
+      }
+    },
     "restore": {
       "success": {
         "title": "Sukses memulihkan",

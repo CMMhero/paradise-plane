@@ -12,32 +12,37 @@
 
 import { observer } from "mobx-react";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 import { EPillSize, EPillVariant, Pill } from "@plane/propel/pill";
 import type { TIssue } from "@plane/types";
 
 export const ApprovalCardBadge = observer(function ApprovalCardBadge({ issue }: { issue: TIssue }) {
+  const { t } = useTranslation();
   const status = issue.approval_status ?? null;
   if (status === "menunggu") {
+    const label = t("issue.approval.badge.pending");
     return (
-      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS}>
-        <Clock className="size-3 shrink-0" />
-        Menunggu persetujuan
+      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS} title={label}>
+        <Clock className="size-3 shrink-0" aria-hidden />
+        {label}
       </Pill>
     );
   }
   if (status === "ditolak") {
+    const label = t("issue.approval.badge.rejected");
     return (
-      <Pill variant={EPillVariant.ERROR} size={EPillSize.XS}>
-        <XCircle className="size-3 shrink-0" />
-        Ditolak — perlu revisi
+      <Pill variant={EPillVariant.ERROR} size={EPillSize.XS} title={label}>
+        <XCircle className="size-3 shrink-0" aria-hidden />
+        {label}
       </Pill>
     );
   }
   if (status === "disetujui") {
+    const label = t("issue.approval.badge.approved");
     return (
-      <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS}>
-        <CheckCircle2 className="size-3 shrink-0" />
-        Disetujui
+      <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS} title={label}>
+        <CheckCircle2 className="size-3 shrink-0" aria-hidden />
+        {label}
       </Pill>
     );
   }

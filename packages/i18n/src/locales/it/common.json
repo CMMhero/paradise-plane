@@ -116,6 +116,8 @@
   "comments_description": "Avvisami quando qualcuno lascia un commento sull'elemento di lavoro",
   "mentions": "Menzioni",
   "mentions_description": "Avvisami solo quando qualcuno mi menziona nei commenti o nella descrizione",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "Vecchia password",
   "general_settings": "Impostazioni generali",
   "sign_out": "Esci",

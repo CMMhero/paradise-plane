@@ -10,26 +10,34 @@
  */
 
 import { observer } from "mobx-react";
-import { Clock } from "lucide-react";
+import { Check, Clock } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 import { cn } from "@plane/utils";
 import { useApprovalFilter } from "./approval-filter-context";
 
 export const ApprovalFilterToggle = observer(function ApprovalFilterToggle() {
+  const { t } = useTranslation();
   const { hanyaMenunggu, toggle } = useApprovalFilter();
+  const label = t("issue.approval.filter.pending_only");
   return (
     <button
       type="button"
       onClick={toggle}
-      title={hanyaMenunggu ? "Tampilkan semua tugas" : "Hanya tampilkan yang menunggu persetujuan"}
+      aria-pressed={hanyaMenunggu}
+      title={hanyaMenunggu ? t("issue.approval.filter.show_all_title") : t("issue.approval.filter.show_pending_title")}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
         hanyaMenunggu
-          ? "border-amber-500/50 bg-amber-500/10 text-amber-600"
+          ? "border-warning-subtle bg-warning-subtle text-warning-primary"
           : "border-subtle bg-layer-1 text-tertiary hover:text-secondary"
       )}
     >
-      <Clock className="size-3 shrink-0" />
-      {hanyaMenunggu ? "Tunggu persetujuan ✓" : "Tunggu persetujuan"}
+      {hanyaMenunggu ? (
+        <Check className="size-3 shrink-0" aria-hidden />
+      ) : (
+        <Clock className="size-3 shrink-0" aria-hidden />
+      )}
+      {label}
     </button>
   );
 });

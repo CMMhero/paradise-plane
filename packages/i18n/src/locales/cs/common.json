@@ -116,6 +116,8 @@
   "comments_description": "Upozornit mě, když někdo přidá komentář k pracovní položce",
   "mentions": "Zmínky",
   "mentions_description": "Upozornit mě pouze, když mě někdo zmíní v komentářích nebo popisu",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "Staré heslo",
   "general_settings": "Obecná nastavení",
   "sign_out": "Odhlásit se",

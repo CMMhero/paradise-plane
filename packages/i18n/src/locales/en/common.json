@@ -116,6 +116,8 @@
   "comments_description": "Notify me when someone leaves a comment on the work item",
   "mentions": "Mentions",
   "mentions_description": "Notify me only when someone mentions me in the comments or description",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "Old password",
   "general_settings": "General settings",
   "sign_out": "Sign out",

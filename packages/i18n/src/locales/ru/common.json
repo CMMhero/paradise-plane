@@ -116,6 +116,8 @@
   "comments_description": "Уведомлять при добавлении комментариев к рабочему элементу",
   "mentions": "Упоминания",
   "mentions_description": "Уведомлять только при упоминании меня в комментариях или описании",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "Старый пароль",
   "general_settings": "Общие настройки",
   "sign_out": "Выйти",

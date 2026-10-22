@@ -196,7 +196,7 @@ export const useAturanTugas = () => {
 export const useBolehHapus = (
   workspaceSlug: string | undefined,
   projectId: string | null | undefined,
-  issue: { assignee_ids?: string[] | null; created_by?: string } | undefined | null
+  issue: { assignee_ids?: string[] | null; created_by?: string; approval_status?: string | null } | undefined | null
 ): { boleh: boolean; terkunci: boolean } => {
   const { data: currentUser } = useUser();
   const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>

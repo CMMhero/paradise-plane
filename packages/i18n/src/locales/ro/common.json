@@ -116,6 +116,8 @@
   "comments_description": "Notifică-mă când cineva lasă un comentariu la o activitate",
   "mentions": "Mențiuni",
   "mentions_description": "Notifică-mă doar când cineva mă menționează în comentarii sau descriere",
+  "approval_decisions": "Approval decisions",
+  "approval_decisions_description": "Notify me by email when an approval request needs my decision or my request is decided.",
   "old_password": "Parolă veche",
   "general_settings": "Setări generale",
   "sign_out": "Deconectează-te",

@@ -8,6 +8,7 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Stamp } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 // ui
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
@@ -17,6 +18,7 @@ import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/com
 
 export const PersetujuanDivisiHeader = observer(function PersetujuanDivisiHeader() {
   // router
+  const { t } = useTranslation();
   const { workspaceSlug, projectId } = useParams();
 
   return (
@@ -28,7 +30,7 @@ export const PersetujuanDivisiHeader = observer(function PersetujuanDivisiHeader
             <Breadcrumbs.Item
               component={
                 <BreadcrumbLink
-                  label="Persetujuan"
+                  label={t("sidebar.persetujuan")}
                   href={`/${workspaceSlug}/projects/${projectId}/persetujuan/`}
                   icon={<Stamp className="h-4 w-4 text-tertiary" />}
                   isLast

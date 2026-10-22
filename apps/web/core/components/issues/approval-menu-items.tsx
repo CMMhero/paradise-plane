@@ -15,6 +15,7 @@ import { useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import useSWR from "swr";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssue } from "@plane/types";
@@ -33,6 +34,7 @@ const pesanGagal = (err: unknown, fallback: string): string => {
 };
 
 export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIssue) => {
+  const { t } = useTranslation();
   const setelStatus = useSetelStatusPersetujuan();
   const [modalTolak, setModalTolak] = useState(false);
   const [alasan, setAlasan] = useState("");
@@ -60,11 +62,18 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
       setAlasan("");
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: aksi === "setujui" ? "Disetujui" : "Ditolak",
-        message: aksi === "setujui" ? "Tugas disetujui dan tidak lagi terkunci." : "Tugas kembali ke draft pemohon.",
+        title: aksi === "setujui" ? t("issue.approval.toast.approved_title") : t("issue.approval.toast.rejected_title"),
+        message:
+          aksi === "setujui"
+            ? t("issue.approval.toast.approved_message")
+            : t("issue.approval.toast.rejected_message"),
       });
     } catch (err) {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal menyimpan", message: pesanGagal(err, "Gagal menyimpan keputusan.") });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("issue.approval.toast.save_failed_title"),
+        message: pesanGagal(err, t("issue.approval.toast.save_failed_message")),
+      });
     } finally {
       setIsWorking(false);
     }
@@ -73,14 +82,14 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
   const menuItems: TContextMenuItem[] = [
     {
       key: "setujui",
-      title: "Setujui",
+      title: t("issue.approval.menu.approve"),
       icon: CheckCircle2,
       action: () => void putuskan("setujui"),
       shouldRender: bolehPutuskan,
     },
     {
       key: "tolak",
-      title: "Tolak…",
+      title: t("issue.approval.menu.reject"),
       icon: XCircle,
       action: () => setModalTolak(true),
       shouldRender: bolehPutuskan,
@@ -95,21 +104,20 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
       width={EModalWidth.LG}
     >
       <div className="flex flex-col gap-3 px-5 py-4">
-        <h3 className="text-18 font-medium">Tolak tugas ini?</h3>
-        <p className="text-13 text-secondary">
-          Tugas kembali ke draft pemohon. Tulis alasannya supaya ia tahu apa yang harus diperbaiki.
-        </p>
+        <h3 className="text-18 font-medium">{t("issue.approval.modal.reject_title")}</h3>
+        <p className="text-13 text-secondary">{t("issue.approval.modal.reject_description")}</p>
         <textarea
           value={alasan}
           rows={3}
           maxLength={2000}
           onChange={(e) => setAlasan(e.target.value)}
-          placeholder="Alasan penolakan (wajib)"
+          placeholder={t("issue.approval.modal.reason_placeholder")}
+          aria-label={t("issue.approval.modal.reason_placeholder")}
           className="rounded border border-subtle bg-layer-1 px-2 py-1 text-13 outline-none focus:border-accent"
         />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" size="lg" onClick={() => setModalTolak(false)}>
-            Batal
+            {t("issue.approval.actions.cancel")}
           </Button>
           <Button
             variant="error-fill"
@@ -118,7 +126,7 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
             disabled={!alasan.trim()}
             onClick={() => void putuskan("tolak")}
           >
-            Tolak
+            {t("issue.approval.actions.reject")}
           </Button>
         </div>
       </div>
