@@ -40,6 +40,7 @@ def register_audit_models():
         PengawasanDivisi,
         Project,
         ProjectMember,
+        SupervisorDepartemen,
         WorkspaceMember,
     )
 
@@ -58,6 +59,7 @@ def register_audit_models():
     auditlog.register(Divisi)
     auditlog.register(Departemen)
     auditlog.register(DepartemenProject)
+    auditlog.register(SupervisorDepartemen)
 
     # Konten inti, metadata saja, bukan isi editor
     auditlog.register(Issue, exclude_fields=_ISSUE_BODY)

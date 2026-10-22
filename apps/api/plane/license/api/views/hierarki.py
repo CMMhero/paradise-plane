@@ -43,6 +43,7 @@ from plane.db.models import (
     PengawasanDivisi,
     Project,
     ProjectMember,
+    SupervisorDepartemen,
     TINGKAT_CHOICES,
     TINGKAT_NAMA,
     TINGKAT_SUPERVISOR,
@@ -71,6 +72,50 @@ _AKUN_UJI = {"tester@paradiseperkasa.com"}
 # patut dicurigai sebagai warisan, bukan penunjukan. 5 dipilih karena admin divisi
 # yang sah memimpin 1–2 divisi (terukur: maksimum 2 di luar warisan).
 _AMBANG_ADMIN_LINTAS = 5
+
+
+def _ganti_departemen_tambahan(workspace, user, ingin):
+    """Jadikan `ingin` tepat himpunan departemen tambahan supervisor ini (KEP-32).
+
+    Penempatan UTAMA (`JabatanOrganisasi.departemen`) tidak disimpan di sini walau
+    ikut dikirim — ia implisit tercakup jangkauan. Hanya untuk tingkat supervisor:
+    staf/manager/direktur tidak memakai jalur ini, dan baris yatim mereka dibersihkan.
+    Dipanggil di dalam `tunda_sinkron()` + transaksi pemanggil.
+    """
+    utama = (
+        JabatanOrganisasi.objects.filter(workspace=workspace, member=user)
+        .values_list("departemen_id", flat=True)
+        .first()
+    )
+    tingkat = (
+        JabatanOrganisasi.objects.filter(workspace=workspace, member=user)
+        .values_list("tingkat", flat=True)
+        .first()
+    )
+    if tingkat != TINGKAT_SUPERVISOR:
+        ingin = set()
+    ingin = {str(d) for d in ingin} - ({str(utama)} if utama else set())
+    sekarang = {
+        str(did)
+        for did in SupervisorDepartemen.objects.filter(workspace=workspace, member=user).values_list(
+            "departemen_id", flat=True
+        )
+    }
+    for did in sekarang - ingin:
+        obj = SupervisorDepartemen.objects.filter(
+            workspace=workspace, member=user, departemen_id=did
+        ).first()
+        if obj:
+            obj.delete()
+    for did in ingin - sekarang:
+        lama = SupervisorDepartemen.all_objects.filter(
+            workspace=workspace, member=user, departemen_id=did
+        ).first()
+        if lama is None:
+            SupervisorDepartemen.objects.create(workspace=workspace, member=user, departemen_id=did)
+        else:
+            lama.deleted_at = None
+            lama.save(update_fields=["deleted_at", "updated_at"])
 
 
 class InstanceHierarkiEndpoint(BaseAPIView):
@@ -118,6 +163,13 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             if pid in projects:
                 divisi_orang.setdefault(uid, set()).add(projects[pid])
 
+        # Departemen tambahan per supervisor (KEP-32): utama + tambahan, utama dulu.
+        tambahan = {}
+        for uid, dep_id in SupervisorDepartemen.objects.filter(workspace=workspace).values_list(
+            "member_id", "departemen_id"
+        ):
+            tambahan.setdefault(uid, set()).add(str(dep_id))
+
         pengawasan = {}
         for pid, uid in PengawasanDivisi.objects.filter(workspace=workspace).values_list("project_id", "member_id"):
             if pid in projects:
@@ -147,6 +199,8 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     punya_atasan = True
                     break
 
+            utama = str(tempat[uid][0]) if tempat.get(uid, (None,))[0] else None
+            ekstra = sorted(tambahan.get(uid, set()) - ({utama} if utama else set()))
             baris.append(
                 {
                     "id": str(uid),
@@ -161,8 +215,10 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     "divisi": sorted(divisi),
                     "divisi_diawasi": sorted(pengawasan.get(uid, set())),
                     # Penempatan KEP-29 (id record, bukan project). None = belum ditempatkan.
-                    "departemen_id": str(tempat[uid][0]) if tempat.get(uid, (None,))[0] else None,
+                    "departemen_id": utama,
                     "divisi_id": str(tempat[uid][1]) if tempat.get(uid, (None, None))[1] else None,
+                    # KEP-32: semua departemen dalam jangkauan (utama dulu, lalu tambahan).
+                    "departemen_ids": ([utama] if utama else []) + ekstra,
                     "punya_atasan": punya_atasan,
                 }
             )
@@ -263,6 +319,8 @@ class InstanceHierarkiEndpoint(BaseAPIView):
           "sumber": "...",                    # opsional, default "manual"
           "catatan": "...",                   # opsional
           "pengawasan": ["<project_id>", ...] # opsional: MENGGANTI seluruh baris pengawasan
+          "departemen_ids": ["<dep_id>", ...] # opsional (KEP-32): MENGGANTI departemen
+                                                 # TAMBAHAN supervisor; hanya tingkat 20
         }
         ```
 
@@ -330,75 +388,119 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                 return Response({"error": f"{label} tidak ditemukan di workspace ini."}, status=400)
             penempatan[kunci] = nilai or None
 
-        with transaction.atomic():
-            # `all_objects` + hidupkan kembali, BUKAN get_or_create dengan manager
-            # bawaan: manager bawaan menyaring baris ber-deleted_at, jadi ia akan
-            # membuat baris BARU untuk pasangan yang pernah dicabut dan menabrak
-            # constraint unik -- jebakan A21, yang di proyek ini sudah pernah
-            # memakan satu sesi penuh.
-            baris = JabatanOrganisasi.all_objects.filter(workspace=workspace, member=user).first()
-            if tingkat is None:
-                if baris is not None and baris.deleted_at is None:
-                    baris.delete()  # soft delete: riwayat SIAPA mencabut tetap ada
-            elif tingkat != "tidak-diubah" or penempatan:
-                if tingkat == "tidak-diubah" and (baris is None or baris.deleted_at is not None):
-                    return Response({"error": "Isi jenjangnya dulu sebelum menempatkan orang ini."}, status=400)
-                if baris is None:
-                    JabatanOrganisasi.objects.create(
-                        workspace=workspace,
-                        member=user,
-                        tingkat=tingkat,
-                        sumber=(request.data.get("sumber") or "manual"),
-                        catatan=(request.data.get("catatan") or ""),
-                        **penempatan,
-                    )
-                else:
-                    # Satu save = satu sinkron jangkauan (signal `plane.db.jangkauan`).
-                    if baris.deleted_at is not None:
-                        # Jenjang yang dihidupkan lagi TIDAK membawa penempatan lamanya:
-                        # akses ke departemen lama tidak boleh kembali tanpa diminta.
-                        baris.departemen_id = None
-                        baris.divisi_id = None
-                    baris.deleted_at = None
-                    if tingkat != "tidak-diubah":
-                        baris.tingkat = tingkat
-                        baris.sumber = request.data.get("sumber") or baris.sumber
-                        baris.catatan = request.data.get("catatan") or ""
-                    for kunci, nilai in penempatan.items():
-                        setattr(baris, kunci, nilai)
-                    baris.save(
-                        update_fields=[
-                            "deleted_at",
-                            "tingkat",
-                            "sumber",
-                            "catatan",
-                            "departemen",
-                            "divisi",
-                            "updated_at",
-                        ]
-                    )
+        # --- departemen tambahan supervisor (KEP-32) ---------------------
+        # Daftar PENGGANTI (bukan tambah-satu): supaya "cabut dari IT-AI" cukup
+        # kirim daftar tanpa IT-AI. Kunci tidak dikirim = jangan sentuh.
+        tambahan_ids = "tidak-diubah"
+        if "departemen_ids" in request.data:
+            diminta = request.data.get("departemen_ids") or []
+            if not isinstance(diminta, list):
+                return Response({"error": "departemen_ids harus daftar id departemen."}, status=400)
+            sah_dep = {
+                str(did)
+                for did in Departemen.objects.filter(workspace=workspace).values_list("id", flat=True)
+            }
+            asing_dep = [str(d) for d in diminta if str(d) not in sah_dep]
+            if asing_dep:
+                return Response(
+                    {"error": f"Departemen tidak dikenal di workspace ini: {', '.join(asing_dep)}."}, status=400
+                )
+            tambahan_ids = {str(d) for d in diminta}
 
-            if pengawasan is not None:
-                sekarang = {
-                    str(pid)
-                    for pid in PengawasanDivisi.objects.filter(workspace=workspace, member=user).values_list(
-                        "project_id", flat=True
-                    )
-                }
-                ingin = {str(pid) for pid in pengawasan}
-                for pid in sekarang - ingin:
-                    obj = PengawasanDivisi.objects.filter(workspace=workspace, member=user, project_id=pid).first()
-                    if obj:
-                        obj.delete()
-                for pid in ingin - sekarang:
-                    lama = PengawasanDivisi.all_objects.filter(
-                        workspace=workspace, member=user, project_id=pid
-                    ).first()
-                    if lama is None:
-                        PengawasanDivisi.objects.create(workspace=workspace, member=user, project_id=pid)
+        # Validasi awal: departemen tambahan hanya untuk supervisor. Tanpa ini,
+        # staf yang dikirimi daftar diam-diam tidak mendapat apa-apa (helper
+        # membersihkan) -- kegagalan senyap yang membingungkan pengirim God Mode.
+        if tambahan_ids != "tidak-diubah" and tambahan_ids:
+            if tingkat != "tidak-diubah":
+                tingkat_efektif = tingkat
+            else:
+                tingkat_efektif = (
+                    JabatanOrganisasi.objects.filter(workspace=workspace, member=user)
+                    .values_list("tingkat", flat=True)
+                    .first()
+                )
+            if tingkat_efektif != TINGKAT_SUPERVISOR:
+                return Response(
+                    {"error": "Hanya supervisor yang boleh memegang departemen tambahan."}, status=400
+                )
+
+        with transaction.atomic():
+            from plane.db.jangkauan import sinkronkan_satu, tunda_sinkron  # noqa: PLC0415
+
+            with tunda_sinkron():
+                # `all_objects` + hidupkan kembali, BUKAN get_or_create dengan manager
+                # bawaan: manager bawaan menyaring baris ber-deleted_at, jadi ia akan
+                # membuat baris BARU untuk pasangan yang pernah dicabut dan menabrak
+                # constraint unik -- jebakan A21, yang di proyek ini sudah pernah
+                # memakan satu sesi penuh.
+                baris = JabatanOrganisasi.all_objects.filter(workspace=workspace, member=user).first()
+                if tingkat is None:
+                    if baris is not None and baris.deleted_at is None:
+                        baris.delete()  # soft delete: riwayat SIAPA mencabut tetap ada
+                elif tingkat != "tidak-diubah" or penempatan:
+                    if tingkat == "tidak-diubah" and (baris is None or baris.deleted_at is not None):
+                        return Response({"error": "Isi jenjangnya dulu sebelum menempatkan orang ini."}, status=400)
+                    if baris is None:
+                        JabatanOrganisasi.objects.create(
+                            workspace=workspace,
+                            member=user,
+                            tingkat=tingkat,
+                            sumber=(request.data.get("sumber") or "manual"),
+                            catatan=(request.data.get("catatan") or ""),
+                            **penempatan,
+                        )
                     else:
-                        lama.deleted_at = None
-                        lama.save(update_fields=["deleted_at", "updated_at"])
+                        # Satu save = satu sinkron jangkauan (signal `plane.db.jangkauan`).
+                        if baris.deleted_at is not None:
+                            # Jenjang yang dihidupkan lagi TIDAK membawa penempatan lamanya:
+                            # akses ke departemen lama tidak boleh kembali tanpa diminta.
+                            baris.departemen_id = None
+                            baris.divisi_id = None
+                        baris.deleted_at = None
+                        if tingkat != "tidak-diubah":
+                            baris.tingkat = tingkat
+                            baris.sumber = request.data.get("sumber") or baris.sumber
+                            baris.catatan = request.data.get("catatan") or ""
+                        for kunci, nilai in penempatan.items():
+                            setattr(baris, kunci, nilai)
+                        baris.save(
+                            update_fields=[
+                                "deleted_at",
+                                "tingkat",
+                                "sumber",
+                                "catatan",
+                                "departemen",
+                                "divisi",
+                                "updated_at",
+                            ]
+                        )
+
+                if pengawasan is not None:
+                    sekarang = {
+                        str(pid)
+                        for pid in PengawasanDivisi.objects.filter(workspace=workspace, member=user).values_list(
+                            "project_id", flat=True
+                        )
+                    }
+                    ingin = {str(pid) for pid in pengawasan}
+                    for pid in sekarang - ingin:
+                        obj = PengawasanDivisi.objects.filter(workspace=workspace, member=user, project_id=pid).first()
+                        if obj:
+                            obj.delete()
+                    for pid in ingin - sekarang:
+                        lama = PengawasanDivisi.all_objects.filter(
+                            workspace=workspace, member=user, project_id=pid
+                        ).first()
+                        if lama is None:
+                            PengawasanDivisi.objects.create(workspace=workspace, member=user, project_id=pid)
+                        else:
+                            lama.deleted_at = None
+                            lama.save(update_fields=["deleted_at", "updated_at"])
+
+                if tambahan_ids != "tidak-diubah":
+                    _ganti_departemen_tambahan(workspace, user, tambahan_ids)
+
+            sinkronkan_satu(workspace.id, user.id)
 
         sekarang = (
             JabatanOrganisasi.objects.filter(workspace=workspace, member=user)
@@ -406,6 +508,14 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             .first()
         )
         tingkat_sekarang, departemen_sekarang, divisi_sekarang = sekarang or (None, None, None)
+        utama_skr = str(departemen_sekarang) if departemen_sekarang else None
+        ekstra_skr = sorted(
+            str(did)
+            for did in SupervisorDepartemen.objects.filter(workspace=workspace, member=user).values_list(
+                "departemen_id", flat=True
+            )
+            if str(did) != utama_skr
+        )
         return Response(
             {
                 "member": {
@@ -413,8 +523,9 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     "email": user.email,
                     "nama": user.display_name,
                     "tingkat": tingkat_sekarang,
-                    "departemen_id": str(departemen_sekarang) if departemen_sekarang else None,
+                    "departemen_id": utama_skr,
                     "divisi_id": str(divisi_sekarang) if divisi_sekarang else None,
+                    "departemen_ids": ([utama_skr] if utama_skr else []) + ekstra_skr,
                     "tingkat_nama": TINGKAT_NAMA.get(tingkat_sekarang) if tingkat_sekarang is not None else None,
                     "pengawasan": sorted(
                         str(pid)

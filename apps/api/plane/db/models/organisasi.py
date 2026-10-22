@@ -138,3 +138,40 @@ class AksesHierarki(BaseModel):
 
     def __str__(self):
         return f"{self.member_id} lewat hierarki di {self.project_id}"
+
+
+class SupervisorDepartemen(BaseModel):
+    """Departemen TAMBAHAN yang diawasi seorang supervisor (KEP-32).
+
+    Satu supervisor boleh memegang beberapa departemen — mis. Fran Olnsen membawahi
+    IT-SAP (utama) sekaligus IT-AI (tambahan). Penempatan utama tetap di
+    `JabatanOrganisasi.departemen`; baris di sini MENAMBAH jangkauan, bukan memindahkan.
+
+    Jangkauan supervisor = project departemen utama + project tiap baris tambahan ini
+    (`jangkauan_hierarki`, `divisi_diawasi`). Hanya untuk tingkat supervisor: staf tidak
+    punya wewenang lintas departemen, manager/direktur sudah tercakup divisinya.
+    """
+
+    workspace = models.ForeignKey("db.Workspace", related_name="supervisor_departemen", on_delete=models.CASCADE)
+    departemen = models.ForeignKey(Departemen, related_name="supervisor_tambahan", on_delete=models.CASCADE)
+    member = models.ForeignKey("db.User", related_name="supervisor_departemen", on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ["member", "departemen", "deleted_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["member", "departemen"],
+                condition=Q(deleted_at__isnull=True),
+                name="supervisor_dep_unique_aktif",
+            )
+        ]
+        verbose_name = "Supervisor Departemen"
+        verbose_name_plural = "Supervisor Departemen"
+        db_table = "organisasi_supervisor_departemen"
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["workspace", "member"], name="supdep_ws_member_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.member_id} awasi tambahan {self.departemen_id}"

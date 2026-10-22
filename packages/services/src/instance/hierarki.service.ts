@@ -39,6 +39,8 @@ export type TAnggotaHierarki = {
   /** Penempatan KEP-29 (id record). Staf/supervisor: departemen; manager: divisi. */
   departemen_id?: string | null;
   divisi_id?: string | null;
+  /** KEP-32: semua departemen dalam jangkauan (utama dulu, lalu tambahan supervisor). */
+  departemen_ids?: string[];
 };
 
 export type TPilihanDepartemen = { id: string; kode: string; nama: string; divisi_id: string };
@@ -53,6 +55,8 @@ export type TSetJabatan = {
   pengawasan?: string[];
   departemen_id?: string | null;
   divisi_id?: string | null;
+  /** KEP-32: MENGGANTI departemen tambahan supervisor (tidak dikirim = jangan sentuh). */
+  departemen_ids?: string[];
 };
 
 export type TProjectOrganisasi = { id: string; identifier: string; name: string };
@@ -63,6 +67,8 @@ export type TOrangOrganisasi = {
   email: string;
   tingkat: number;
   tingkat_nama: string | null;
+  /** KEP-32: true = supervisor tambahan (mengawasi tanpa ditempatkan di sini). */
+  tambahan?: boolean;
 };
 export type TDepartemenOrganisasi = {
   id: string;

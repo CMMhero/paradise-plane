@@ -14,17 +14,21 @@
 # C1 sengaja menunda project yang pemiliknya belum jelas. Audit sesudah C1
 # (nama project + daftar anggotanya) memastikan pemetaan ini:
 #   INVQC -> SCM-STC   (dua-duanya anak Stock Control; payungnya satu divisi)
-#   SMADM -> SM-ADM    (Admin Sales; project-nya harfiah begitu)
-#   SMCOO -> SM-COO    (Sales Coordinator; project-nya harfiah begitu)
-#   SMIND -> SM-IND    (Sales - Independent; project-nya harfiah begitu)
+#   SMADM/SMCOO/SMIND -> DINEUTRALKAN (KEP-32): departemen SM-ADM/SM-COO/SM-IND tidak
+#             ada di kanon user; projectnya dibiarkan legacy, departemennya dihapus D4.
+#             Jangan memetakan ulang ke SM-ADM dkk tanpa keputusan user.
 #   BME   -> HRGA-GA  (Building Maintenance = urusan General Affairs)
 #   ITSAP -> IT-SAP   (projectnya DIBUAT skrip ini; umbrella IT tak bisa dipecah)
 #   ITAI  -> IT-AI    (idem; supervisor AI belum ada -> Manager IT + direktur)
-# Departemen SM-ADM/SM-COO/SM-IND dibuat baru di bawah divisi SM (belum ada).
+# Departemen SM-ADM/SM-COO/SM-IND DULU dibuat di sini, DINEUTRALKAN (KEP-32):
+# kanon user tidak memuatnya, D4 menghapusnya, daftarnya dikosongkan supaya
+# skrip ini aman dijalankan ulang sesudah D4.
 # Supervisor ketiganya BELUM diketahui -> tetap kosong, diisi manual di God Mode;
 # sampai ada, penyetujuan naik ke Manager SM + direktur (otomatis).
 #
 # Yang SENGAJA tidak disentuh (keputusan, bukan kelupaan):
+#   SMADM/SMCOO/SMIND : DINEUTRALKAN (KEP-32) -- tidak ada departemennya di kanon;
+#             projectnya dibiarkan legacy, jangan dipetakan ulang tanpa keputusan user.
 #   BE      : project temporer ("Revisi SOP ... 2026"), bukan unit tetap.
 #   TENDER/PRICING/MGMT : pemilik lintas divisi/tidak jelas; salah taruh =
 #             approver dan akses yang salah. Superadmin + direktur meng-cover.
@@ -67,16 +71,15 @@ CATATAN = "Migrasi D3 2026-10-22"
 
 ws = Workspace.objects.get(slug="pt-paradise-perkasa")
 
-# (kode, nama, kode divisi induk). Hanya yang diputuskan di atas.
-DEPT_BARU = [
-    ("SM-ADM", "Admin Sales", "SM"),
-    ("SM-COO", "Sales Coordinator", "SM"),
-    ("SM-IND", "Sales - Independent", "SM"),
-]
+# (kode, nama, kode divisi induk). KOSONG: kanon user 2026-10-22 (KEP-32) hanya punya
+# 15 departemen; SM-ADM/SM-COO/SM-IND buatan D3 dihapus D4 dan TIDAK boleh dibuat lagi.
+# Project SMADM/SMCOO/SMIND yang sudah telanjur ada dibiarkan tanpa departemen (legacy)
+# sampai diputuskan manual di God Mode.
+DEPT_BARU = []
 
-# Peta C1 (16) + tambahan D3 (7: INVQC, SMADM, SMCOO, SMIND, BME + ITSAP/ITAI
-# yang projectnya DIBUAT skrip ini karena belum ada). Disalin agar skrip
-# berdiri sendiri.
+# Peta C1 (16) + tambahan D3 (4: INVQC, BME + ITSAP/ITAI yang projectnya DIBUAT
+# skrip ini karena belum ada). SMADM/SMCOO/SMIND tidak dipetakan (KEP-32,
+# lihat atas). Disalin agar skrip berdiri sendiri.
 PROJECT_DEPT = {
     "APAR": "FIN-FIN",
     "ACC": "FIN-ACC",
@@ -95,9 +98,6 @@ PROJECT_DEPT = {
     "SMT2": "SM-T2",
     "MKT": "SM-MKT",
     "INVQC": "SCM-STC",
-    "SMADM": "SM-ADM",
-    "SMCOO": "SM-COO",
-    "SMIND": "SM-IND",
     "BME": "HRGA-GA",
     "ITSAP": "IT-SAP",
     "ITAI": "IT-AI",

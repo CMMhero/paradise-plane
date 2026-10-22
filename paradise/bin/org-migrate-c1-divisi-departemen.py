@@ -111,7 +111,7 @@ PROJECT_DEPT = {
     "MKT": "SM-MKT",
     # Sengaja TIDAK dipetakan (tampil sebagai project lama di God Mode):
     # FIN/SALES/HRGA/INVQC/IT (payung, nasibnya menunggu keputusan),
-    # SMCOO/SMIND/SMADM (menunggu diputuskan masuk tim mana),
+    # SMCOO/SMIND/SMADM (KEP-32: tidak jadi departemen; projectnya legacy, lihat D4),
     # MGMT/TENDER/BE/BME (lintas divisi / unit kerja, bukan departemen Dadap),
     # WHMDN/WHBPN (cabang Medan/Balikpapan, di luar struktur Dadap).
 }
@@ -206,7 +206,8 @@ with transaction.atomic():
                 penempatan.append((email_manajer, TINGKAT_MANAGER, kode, None, f"Manager {kode}"))
         # Satu orang menempati satu sel: skema hanya punya satu FK departemen
         # per orang. Duplikat (mis. Fran membawahi dua departemen IT) diisi ke
-        # departemen PERTAMA, sisanya dilaporkan sebagai tanpa supervisor.
+        # departemen PERTAMA; departemen KEDUA diberikan D4 sebagai departemen
+        # tambahan supervisor (KEP-32, tabel SupervisorDepartemen).
         terlihat = set()
         for kode, _nama, _div, email_spv in DEPARTEMEN:
             if email_spv in terlihat:

@@ -290,6 +290,10 @@ const id = {
     dept_of: "Departemen {dept} · divisi {div}",
     div_of: "Divisi {div}",
     no_placement: "Belum ditempatkan",
+    extra_supervisors: "Supervisor tambahan",
+    extra_supervisor_hint: "Mengawasi departemen ini tanpa ditempatkan di sini (mis. membawahi dua departemen).",
+    extra_badge: "tambahan",
+    remove_extra: "Cabut {name} dari {dept}",
   },
 };
 
@@ -541,6 +545,10 @@ const en = {
     dept_of: "{dept} dept · {div} div",
     div_of: "{div} division",
     no_placement: "Not placed",
+    extra_supervisors: "Additional supervisors",
+    extra_supervisor_hint: "Supervises this department without being placed here (e.g. heads two departments).",
+    extra_badge: "extra",
+    remove_extra: "Remove {name} from {dept}",
   },
 } satisfies TGodmodeStrings;
 

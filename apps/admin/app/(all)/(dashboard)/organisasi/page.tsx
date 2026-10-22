@@ -113,6 +113,15 @@ export default function OrganisasiPage() {
         setToast({ type: TOAST_TYPE.ERROR, title: s.org.failed, message: pesanGagal(err, s.org.save_failed_message) });
       }
     },
+    setelEkstra: async (orangId: string, departemenIds: string[]) => {
+      try {
+        await hierarkiService.setel({ member_id: orangId, departemen_ids: departemenIds });
+        await Promise.all([mutate(), mutateHierarki()]);
+        setToast({ type: TOAST_TYPE.SUCCESS, title: s.org.department_saved });
+      } catch (err) {
+        setToast({ type: TOAST_TYPE.ERROR, title: s.org.failed, message: pesanGagal(err, s.org.save_failed_message) });
+      }
+    },
   };
 
   const semuaProject = data

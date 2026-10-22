@@ -25,7 +25,7 @@ import threading
 from contextlib import contextmanager
 
 # Django imports
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 _lokal = threading.local()
@@ -113,6 +113,20 @@ def sinkronkan_workspace(workspace_id):
 @receiver(post_save, sender="db.JabatanOrganisasi")
 def jabatan_berubah(sender, instance, **kwargs):
     """Jenjang/penempatan berubah (atau dicabut lewat soft delete) -> sinkron orangnya."""
+    if not _ditunda():
+        sinkronkan_satu(instance.workspace_id, instance.member_id)
+
+
+@receiver(post_save, sender="db.SupervisorDepartemen")
+def supervisor_tambahan_berubah(sender, instance, created, **kwargs):
+    """Departemen tambahan supervisor berubah -> sinkron orangnya (KEP-32)."""
+    if not _ditunda():
+        sinkronkan_satu(instance.workspace_id, instance.member_id)
+
+
+@receiver(post_delete, sender="db.SupervisorDepartemen")
+def supervisor_tambahan_hapus(sender, instance, **kwargs):
+    """Baris tambahan dihapus permanen (hard delete) -> sinkron orangnya."""
     if not _ditunda():
         sinkronkan_satu(instance.workspace_id, instance.member_id)
 

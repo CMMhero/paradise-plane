@@ -109,7 +109,7 @@ from .hierarki import (
     TINGKAT_NAMA,
     TINGKAT_SUPERVISOR,
 )
-from .organisasi import AksesHierarki, Departemen, DepartemenProject, Divisi
+from .organisasi import AksesHierarki, Departemen, DepartemenProject, Divisi, SupervisorDepartemen
 
 from .recent_visit import UserRecentVisit
 

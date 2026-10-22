@@ -49,6 +49,8 @@ __all__ = [
     "divisi_diawasi",
     "struktur_aktif",
     "penempatan",
+    "departemen_tambahan_ids",
+    "semua_departemen_ids",
     "project_departemen",
     "project_divisi",
     "jangkauan_hierarki",
@@ -206,6 +208,31 @@ def project_departemen(departemen_id):
     )
 
 
+def departemen_tambahan_ids(user_id, workspace_id):
+    """Id departemen TAMBAHAN yang diawasi supervisor ini (KEP-32).
+
+    Penempatan utama (`JabatanOrganisasi.departemen`) TIDAK termasuk di sini —
+    pemanggil yang butuh "semua" memakai `semua_departemen_ids`. Kosong untuk
+    staf/manager/direktur: mereka tidak memakai jalur ini.
+    """
+    if user_id is None:
+        return set()
+    from plane.db.models import SupervisorDepartemen  # noqa: PLC0415
+
+    return set(
+        SupervisorDepartemen.objects.filter(
+            workspace_id=workspace_id, member_id=user_id, departemen__deleted_at__isnull=True
+        ).values_list("departemen_id", flat=True)
+    )
+
+
+def semua_departemen_ids(user_id, workspace_id):
+    """Id SEMUA departemen dalam jangkauan supervisor ini: utama + tambahan (KEP-32)."""
+    baris = penempatan(user_id, workspace_id)
+    utama = {baris[1]} if baris and baris[1] else set()
+    return utama | departemen_tambahan_ids(user_id, workspace_id)
+
+
 def project_divisi(divisi_id):
     """Set id project hidup di semua departemen satu divisi."""
     from plane.db.models import DepartemenProject  # noqa: PLC0415
@@ -234,7 +261,7 @@ def jangkauan_hierarki(user_id, workspace_id):
 
         direktur   -> semua project, role 20
         manager    -> semua project di divisinya, role 20
-        supervisor -> project departemennya, role 20
+        supervisor -> project departemennya (utama + tambahan, KEP-32), role 20
         staf       -> project departemennya, role 15 (lihat semua, edit hanya
                       tugas miliknya: `galat_ubah_tugas`)
 
@@ -251,6 +278,12 @@ def jangkauan_hierarki(user_id, workspace_id):
     if tingkat >= TINGKAT_MANAGER:
         return {pid: 20 for pid in project_divisi(divisi_id)}
     role = 20 if tingkat >= TINGKAT_SUPERVISOR else 15
+    if tingkat >= TINGKAT_SUPERVISOR:
+        # Supervisor boleh memegang beberapa departemen (KEP-32): utama + tambahan.
+        pids = set()
+        for dep_id in semua_departemen_ids(user_id, workspace_id):
+            pids |= project_departemen(dep_id)
+        return {pid: role for pid in pids}
     return {pid: role for pid in project_departemen(departemen_id)}
 
 
@@ -258,9 +291,10 @@ def divisi_diawasi(user_id, workspace_id):
     """Set id project yang diawasi orang ini ("divisi yang dia bawahi").
 
     Dengan struktur aktif (KEP-29) jawabannya datang dari hierarki, BUKAN dari
-    keanggotaan project: supervisor = project departemennya, manager = project
-    divisinya, direktur = semua (dibatasi baris `PengawasanDivisi` kalau ada).
-    Keanggotaan project eksplisit memberi akses kolaborasi, tidak memberi wewenang.
+    keanggotaan project: supervisor = project departemennya (utama + tambahan,
+    KEP-32), manager = project divisinya, direktur = semua (dibatasi baris
+    `PengawasanDivisi` kalau ada). Keanggotaan project eksplisit memberi akses
+    kolaborasi, tidak memberi wewenang.
 
     Tanpa struktur, perilaku lama di bawah ini yang berlaku.
 
@@ -306,7 +340,10 @@ def divisi_diawasi(user_id, workspace_id):
         if tingkat >= TINGKAT_MANAGER:
             return project_divisi(divisi_id)
         if tingkat >= TINGKAT_SUPERVISOR:
-            return project_departemen(departemen_id)
+            pids = set()
+            for dep_id in semua_departemen_ids(user_id, workspace_id):
+                pids |= project_departemen(dep_id)
+            return pids
         return set()
 
     # Supervisor DAN manager: HANYA divisi tempat ia memang anggota.

@@ -41,6 +41,8 @@ export type TAksiOrganisasi = {
     orang: TAnggotaHierarki,
     tujuan: { departemen_id?: string | null; divisi_id?: string | null }
   ) => Promise<void>;
+  /** KEP-32: ganti daftar departemen tambahan seorang supervisor (MENGGANTI, bukan tambah-satu). */
+  setelEkstra: (orangId: string, departemenIds: string[]) => Promise<void>;
   /** Naik/turun jenjang tanpa memindahkan penempatan (mis. staf <-> supervisor). */
   ubahTingkat: (orang: TAnggotaHierarki, tingkat: number) => Promise<void>;
 };
@@ -280,24 +282,28 @@ function ChipOrang({
   email,
   tingkat,
   tingkatNama,
+  tambahan = false,
   onNaik,
   onTurun,
   onCabut,
   labelNaik,
   labelTurun,
+  labelCabut,
 }: {
   id: string;
   nama: string;
   email: string;
   tingkat: number;
   tingkatNama: string | null;
+  tambahan?: boolean;
   onNaik?: () => Promise<void>;
   onTurun?: () => Promise<void>;
   onCabut: (id: string) => void;
   labelNaik: string;
   labelTurun: string;
+  labelCabut: string;
 }) {
-  const { s, fill } = useGodmodeStrings();
+  const { s } = useGodmodeStrings();
   const [sibuk, setSibuk] = useState(false);
   const klik = async (fn?: () => Promise<void>) => {
     if (!fn) return;
@@ -315,6 +321,7 @@ function ChipOrang({
     >
       <span className="truncate font-medium">{nama}</span>
       <LencanaTingkat tingkat={tingkat} nama={tingkatNama} />
+      {tambahan && <span className="text-10 text-tertiary">· {s.org.extra_badge}</span>}
       {onNaik && (
         <button
           type="button"
@@ -341,8 +348,8 @@ function ChipOrang({
       )}
       <button
         type="button"
-        aria-label={fill(s.org.remove_person, { name: nama })}
-        title={fill(s.org.remove_person, { name: nama })}
+        aria-label={labelCabut}
+        title={labelCabut}
         className="rounded p-0.5 text-tertiary hover:text-danger-primary"
         onClick={() => onCabut(id)}
       >
@@ -367,6 +374,7 @@ function DaftarOrang({
   namaDepartemen,
   namaDivisi,
   saringGlobal = "",
+  labelCabut,
 }: {
   judul: string;
   isi: TOrangOrganisasi[];
@@ -381,8 +389,10 @@ function DaftarOrang({
   namaDepartemen: Record<string, string>;
   namaDivisi: Record<string, string>;
   saringGlobal?: string;
+  /** Label tombol cabut per orang (default: Keluarkan {name}). */
+  labelCabut?: (nama: string) => string;
 }) {
-  const { s } = useGodmodeStrings();
+  const { s, fill } = useGodmodeStrings();
   const [terbuka, setTerbuka] = useState(false);
   const q = saringGlobal.trim().toLowerCase();
   const cocokGlobal = (o: TOrangOrganisasi) => !q || `${o.nama} ${o.email}`.toLowerCase().includes(q);
@@ -403,9 +413,11 @@ function DaftarOrang({
       email={o.email}
       tingkat={o.tingkat}
       tingkatNama={o.tingkat_nama}
+      tambahan={o.tambahan}
       onCabut={onCabut}
       labelNaik={s.org.make_supervisor}
       labelTurun={s.org.make_staff}
+      labelCabut={labelCabut ? labelCabut(o.nama) : fill(s.org.remove_person, { name: o.nama })}
       onNaik={
         onNaik
           ? async () => {
@@ -848,6 +860,27 @@ export function KartuDepartemen({
   const calon = orang.filter(
     (o) => o.is_active && (o.tingkat === null || o.tingkat < TINGKAT_MANAGER) && !sudah.has(o.id)
   );
+  // KEP-32: anggota utama vs supervisor tambahan (mengawasi tanpa ditempatkan di sini).
+  const utama = dep.anggota.filter((a) => !a.tambahan);
+  const ekstra = dep.anggota.filter((a) => a.tambahan);
+  // Calon tambahan = supervisor yang sudah ditempatkan di departemen LAIN dan belum
+  // mengawasi departemen ini. Manager/direktur tidak masuk: jangkauan mereka lebih luas.
+  const calonEkstra = orang.filter(
+    (o) =>
+      o.is_active &&
+      o.tingkat === TINGKAT_SUPERVISOR &&
+      o.departemen_id &&
+      o.departemen_id !== dep.id &&
+      !(o.departemen_ids ?? []).includes(dep.id)
+  );
+  const tambahEkstra = async (o: TAnggotaHierarki) => {
+    await aksi.setelEkstra(o.id, [...(o.departemen_ids ?? []), dep.id]);
+  };
+  const cabutEkstra = async (id: string) => {
+    const penuh = cariOrang(id);
+    const ids = (penuh?.departemen_ids ?? []).filter((d) => d !== dep.id);
+    await aksi.setelEkstra(id, ids);
+  };
 
   const cariOrang = (id: string): TAnggotaHierarki | undefined => orang.find((x) => x.id === id);
 
@@ -887,7 +920,7 @@ export function KartuDepartemen({
 
       <DaftarOrang
         judul={s.org.members}
-        isi={dep.anggota}
+        isi={utama}
         calon={calon}
         kelompokkan
         onNaik={naik}
@@ -903,6 +936,23 @@ export function KartuDepartemen({
           if (o) await aksi.tempatkan(o, { departemen_id: null });
         }}
         kosong={s.org.no_members}
+        namaDepartemen={namaDepartemen}
+        namaDivisi={namaDivisi}
+        saringGlobal={cariGlobal}
+      />
+
+      <DaftarOrang
+        judul={s.org.extra_supervisors}
+        isi={ekstra}
+        calon={calonEkstra}
+        labelCalon={(o) => {
+          const asal = labelPenempatan(o, namaDepartemen, namaDivisi);
+          return `${o.tingkat_nama ?? ""}${asal}`;
+        }}
+        onTambah={tambahEkstra}
+        onCabut={cabutEkstra}
+        kosong={s.org.extra_supervisor_hint}
+        labelCabut={(nama) => fill(s.org.remove_extra, { name: nama, dept: dep.nama })}
         namaDepartemen={namaDepartemen}
         namaDivisi={namaDivisi}
         saringGlobal={cariGlobal}

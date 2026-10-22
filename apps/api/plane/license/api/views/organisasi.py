@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-"""Struktur divisi -> departemen -> project dari God Mode (KEP-29).
+"""Struktur divisi -> departemen -> project dari God Mode (KEP-29, KEP-32).
 
     GET    /api/instances/organisasi/                         pohon lengkap
     POST   /api/instances/organisasi/divisi/                  {kode, nama}
@@ -15,10 +15,19 @@
 
 Penempatan orang (departemen / divisi manager) ditulis lewat
 `POST /api/instances/hierarki/`, di baris jenjangnya, bukan di sini.
+Departemen tambahan supervisor (KEP-32) juga lewat sana (`departemen_ids`).
 
-Hapus DITOLAK selama masih ada isinya (departemen di divisi, project atau orang di
-departemen). Kaskade diam-diam akan mencabut akses puluhan orang dari satu klik.
+KEP-32: satu departemen tepat satu project. Membuat departemen langsung membuat
+atau mengadopsi project-nya (identifier = kode tanpa strip, mis. FIN-FIN ->
+FINFIN); menaruh project kedua DITOLAK (400). Hapus departemen yang projectnya
+masih punya tugas DITOLAK (409); project kosong ikut diarsipkan.
+
+Hapus DITOLAK selama masih ada orangnya (utama maupun tambahan). Kaskade diam-diam
+akan mencabut akses puluhan orang dari satu klik.
 """
+
+# Python imports
+import re
 
 # Django imports
 from django.db import transaction
@@ -33,13 +42,16 @@ from plane.db.models import (
     Departemen,
     DepartemenProject,
     Divisi,
+    Issue,
     JabatanOrganisasi,
     Project,
     ProjectMember,
+    SupervisorDepartemen,
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_NAMA,
+    TINGKAT_SUPERVISOR,
     Workspace,
 )
 from plane.license.api.views.base import BaseAPIView
@@ -62,6 +74,90 @@ def _kode_nama(data, wajib):
     if nama is not None and not nama:
         return None, None, "nama wajib diisi."
     return kode, nama, None
+
+
+def _identifier_dari_kode(kode):
+    """Identifier project dari kode departemen (KEP-32).
+
+    Identifier project melarang `-` (dan sederet karakter lain), jadi strip
+    penghubung dibuang: `FIN-FIN` -> `FINFIN`. Maksimal 12 karakter mengikuti
+    kolom `Project.identifier`; kode yang lebih panjang wajib dipadatkan manual.
+    Kembalikan (identifier, galat).
+    """
+    ident = (kode or "").replace("-", "").replace(" ", "").upper()
+    if not ident:
+        return None, "kode tidak menyisakan identifier project yang sah."
+    if len(ident) > 12:
+        return None, f"kode {kode} terlalu panjang untuk identifier project (maks 12 huruf tanpa strip)."
+    if re.match(Project.FORBIDDEN_IDENTIFIER_CHARS_PATTERN, ident):
+        return None, f"kode {kode} mengandung karakter yang dilarang di identifier project."
+    return ident, None
+
+
+def _adopsi_atau_buat_project(dep, actor, workspace):
+    """Pastikan departemen baru punya tepat satu project (KEP-32: project ikut departemen).
+
+    Kalau project ber-identifier sama sudah ada dan belum berdepartemen -> dipetakan
+    (adopsi, bukan digandakan). Kalau belum ada -> dibuat lewat serializer yang sama
+    dengan flow "project baru" di UI (validasi + state bawaan sama), pembuatnya jadi
+    admin, lalu dipetakan. Melempar ValueError berisi pesan siap tampil kalau gagal;
+    pemanggil membungkus semuanya dalam satu transaksi dengan pembuatan departemennya.
+    """
+    from plane.app.permissions import ROLE  # noqa: PLC0415
+    from plane.app.serializers import ProjectSerializer  # noqa: PLC0415
+    from plane.db.membership import jadikan_anggota_project  # noqa: PLC0415
+    from plane.db.models import DEFAULT_STATES, State  # noqa: PLC0415
+
+    ident, galat = _identifier_dari_kode(dep.kode)
+    if galat:
+        raise ValueError(galat)
+
+    semua = list(Project.all_objects.filter(workspace=workspace, identifier=ident))
+    aktif = next((p for p in semua if p.deleted_at is None), None)
+    if aktif is not None:
+        pemetaan = DepartemenProject.objects.filter(project=aktif).first()
+        if pemetaan is not None:
+            raise ValueError(f"Project {ident} sudah milik departemen {pemetaan.departemen.kode}.")
+        DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=aktif)
+        jadikan_anggota_project(aktif.pk, actor.id, ROLE.ADMIN.value, workspace_id=workspace.id)
+        return aktif
+
+    if semua:
+        raise ValueError(
+            f"Identifier {ident} dipakai project arsip/terhapus. Buka arsipnya dulu atau pakai kode lain."
+        )
+
+    ser = ProjectSerializer(
+        data={
+            "name": dep.nama,
+            "identifier": ident,
+            "description": f"Ruang kerja {dep.kode} {dep.nama} (dibuat otomatis dari departemen).",
+            "created_by": str(actor.id),
+        },
+        context={"workspace_id": str(workspace.id)},
+    )
+    if not ser.is_valid():
+        raise ValueError(f"Project untuk {dep.kode} gagal dibuat: {dict(ser.errors)}.")
+    project = ser.save()
+    Project.objects.filter(pk=project.pk).update(created_by=actor)
+    jadikan_anggota_project(project.pk, actor.id, ROLE.ADMIN.value, workspace_id=workspace.id)
+    State.objects.bulk_create(
+        [
+            State(
+                name=state["name"],
+                color=state["color"],
+                project=project,
+                sequence=state["sequence"],
+                workspace=workspace,
+                group=state["group"],
+                default=state.get("default", False),
+                created_by=actor,
+            )
+            for state in DEFAULT_STATES
+        ]
+    )
+    DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=project)
+    return project
 
 
 def pohon_organisasi(workspace):
@@ -95,6 +191,37 @@ def pohon_organisasi(workspace):
                 manager_div.setdefault(j.divisi_id, []).append(baris)
         elif j.departemen_id:
             orang_dep.setdefault(j.departemen_id, []).append(baris)
+
+    # Supervisor TAMBAHAN (KEP-32): tampil di tiap departemen yang dia awasi, supaya
+    # kartu departemen jujur tentang siapa yang bisa menyetujui di sana.
+    tambahan = {}
+    for member_id, dep_id in SupervisorDepartemen.objects.filter(workspace=workspace).values_list(
+        "member_id", "departemen_id"
+    ):
+        tambahan.setdefault(member_id, set()).add(dep_id)
+    if tambahan:
+        jabatan = {
+            j.member_id: j
+            for j in JabatanOrganisasi.objects.filter(workspace=workspace, member_id__in=tambahan.keys()).select_related(
+                "member"
+            )
+        }
+        for member_id, dep_ids in tambahan.items():
+            j = jabatan.get(member_id)
+            if j is None or j.tingkat < TINGKAT_SUPERVISOR or j.tingkat >= TINGKAT_MANAGER:
+                continue  # yatim/tingkat tak berlaku: jangkauan mengabaikannya juga
+            baris = {
+                "id": str(j.member_id),
+                "nama": j.member.display_name or j.member.email,
+                "email": j.member.email,
+                "tingkat": j.tingkat,
+                "tingkat_nama": TINGKAT_NAMA.get(j.tingkat),
+                "tambahan": True,
+            }
+            for dep_id in dep_ids:
+                sudah = {a["id"] for a in orang_dep.get(dep_id, [])}
+                if baris["id"] not in sudah:
+                    orang_dep.setdefault(dep_id, []).append(baris)
 
     def _project(p):
         return {"id": str(p.id), "identifier": p.identifier, "name": p.name}
@@ -190,7 +317,15 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             return Response({"error": galat}, status=400)
         if Departemen.objects.filter(workspace=workspace, kode=kode).exists():
             return Response({"error": f"Kode departemen {kode} sudah dipakai."}, status=400)
-        Departemen.objects.create(workspace=workspace, divisi=divisi, kode=kode, nama=nama)
+        # KEP-32: project mengikuti departemen. Pembuatan + pemetaan project-nya satu
+        # transaksi dengan departemennya: gagal di project = tidak ada yang tertulis.
+        try:
+            with transaction.atomic(), tunda_sinkron():
+                dep = Departemen.objects.create(workspace=workspace, divisi=divisi, kode=kode, nama=nama)
+                _adopsi_atau_buat_project(dep, request.user, workspace)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
+        sinkronkan_workspace(workspace.id)
         return Response(pohon_organisasi(workspace), status=201)
 
     def patch(self, request, pk):
@@ -214,6 +349,14 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             diminta = request.data.get("project_ids")
             if not isinstance(diminta, list):
                 return Response({"error": "project_ids harus daftar id project."}, status=400)
+            if len(diminta) > 1:
+                # KEP-32: satu departemen tepat satu project. Project lama yang
+                # digabung (payung) diarsipkan dulu lewat skrip D4/pengaturan
+                # project, bukan ditumpuk di sini.
+                return Response(
+                    {"error": "Satu departemen tepat satu project. Arsipkan dulu project yang tidak dipakai."},
+                    status=400,
+                )
             sah = {
                 str(pid)
                 for pid in Project.objects.filter(workspace_id=dep.workspace_id, deleted_at__isnull=True).values_list(
@@ -241,12 +384,36 @@ class InstanceDepartemenEndpoint(BaseAPIView):
         dep = Departemen.objects.filter(pk=pk).first()
         if dep is None:
             return Response({"error": "Departemen tidak ditemukan."}, status=404)
-        if DepartemenProject.objects.filter(departemen=dep).exists():
-            return Response({"error": "Pindahkan project departemen ini dulu."}, status=409)
         if JabatanOrganisasi.objects.filter(departemen=dep).exists():
             return Response({"error": "Masih ada orang yang ditempatkan di departemen ini."}, status=409)
+        if SupervisorDepartemen.objects.filter(departemen=dep).exists():
+            return Response({"error": "Masih ada supervisor tambahan di departemen ini."}, status=409)
+        # KEP-32: hapus departemen ikut mengarsipkan project-nya yang kosong —
+        # project tanpa tugas tidak ada yang kehilangan apa-apa. Project yang masih
+        # punya tugas TETAP ditolak: isinya harus dipindahkan manual dulu.
+        from django.utils import timezone  # noqa: PLC0415
+
+        for baris in DepartemenProject.objects.filter(departemen=dep).select_related("project"):
+            terbuka = Issue.objects.filter(
+                project=baris.project, deleted_at__isnull=True, archived_at__isnull=True
+            ).count()
+            if terbuka:
+                return Response(
+                    {
+                        "error": f"Project {baris.project.identifier} masih punya {terbuka} tugas. "
+                        "Pindahkan dulu tugasnya sebelum menghapus departemen ini."
+                    },
+                    status=409,
+                )
         workspace = dep.workspace
-        dep.delete()
+        with transaction.atomic(), tunda_sinkron():
+            for baris in DepartemenProject.objects.filter(departemen=dep):
+                Project.objects.filter(pk=baris.project_id, archived_at__isnull=True).update(
+                    archived_at=timezone.now()
+                )
+                baris.delete(soft=False)
+            dep.delete()
+        sinkronkan_workspace(workspace.id)
         return Response(pohon_organisasi(workspace))
 
 
