@@ -12,12 +12,14 @@
 #
 # KENAPA ADA SKRIP INI (bukan bagian C1/D1):
 # C1 sengaja menunda project yang pemiliknya belum jelas. Audit sesudah C1
-# (nama project + daftar anggotanya) memastikan lima pemetaan ini:
+# (nama project + daftar anggotanya) memastikan pemetaan ini:
 #   INVQC -> SCM-STC   (dua-duanya anak Stock Control; payungnya satu divisi)
 #   SMADM -> SM-ADM    (Admin Sales; project-nya harfiah begitu)
 #   SMCOO -> SM-COO    (Sales Coordinator; project-nya harfiah begitu)
 #   SMIND -> SM-IND    (Sales - Independent; project-nya harfiah begitu)
-#   BME   -> HRGA-GA   (Building Maintenance = urusan General Affairs)
+#   BME   -> HRGA-GA  (Building Maintenance = urusan General Affairs)
+#   ITSAP -> IT-SAP   (projectnya DIBUAT skrip ini; umbrella IT tak bisa dipecah)
+#   ITAI  -> IT-AI    (idem; supervisor AI belum ada -> Manager IT + direktur)
 # Departemen SM-ADM/SM-COO/SM-IND dibuat baru di bawah divisi SM (belum ada).
 # Supervisor ketiganya BELUM diketahui -> tetap kosong, diisi manual di God Mode;
 # sampai ada, penyetujuan naik ke Manager SM + direktur (otomatis).
@@ -40,7 +42,10 @@ import re
 
 from django.db import transaction
 
+from plane.app.permissions import ROLE
+from plane.app.serializers import ProjectSerializer
 from plane.db.jangkauan import sinkronkan_workspace, tandai_otomatis, tunda_sinkron
+from plane.db.membership import jadikan_anggota_project
 from plane.db.models import (
     Departemen,
     DepartemenProject,
@@ -48,6 +53,8 @@ from plane.db.models import (
     JabatanOrganisasi,
     Project,
     ProjectMember,
+    State,
+    DEFAULT_STATES,
     User,
     Workspace,
     WorkspaceMember,
@@ -67,7 +74,9 @@ DEPT_BARU = [
     ("SM-IND", "Sales - Independent", "SM"),
 ]
 
-# Peta C1 (16) + tambahan D3 (5). Disalin agar skrip berdiri sendiri.
+# Peta C1 (16) + tambahan D3 (7: INVQC, SMADM, SMCOO, SMIND, BME + ITSAP/ITAI
+# yang projectnya DIBUAT skrip ini karena belum ada). Disalin agar skrip
+# berdiri sendiri.
 PROJECT_DEPT = {
     "APAR": "FIN-FIN",
     "ACC": "FIN-ACC",
@@ -90,6 +99,8 @@ PROJECT_DEPT = {
     "SMCOO": "SM-COO",
     "SMIND": "SM-IND",
     "BME": "HRGA-GA",
+    "ITSAP": "IT-SAP",
+    "ITAI": "IT-AI",
 }
 
 PREFIX_DEPT = {
@@ -133,7 +144,7 @@ for _kode, _nama, kodiv in DEPT_BARU:
 
 dept = {d.kode: d for d in Departemen.objects.filter(workspace=ws)}
 proj_ident = {str(p["id"]): p["identifier"] for p in Project.objects.filter(workspace=ws, deleted_at__isnull=True).values("id", "identifier")}
-n_divisi = n_dept = n_petakan = n_jabatan = n_adopsi = n_lewat = 0
+n_divisi = n_dept = n_proyek = n_petakan = n_jabatan = n_adopsi = n_lewat = 0
 dilewati = []
 
 with transaction.atomic():
@@ -149,8 +160,71 @@ with transaction.atomic():
             d = Departemen.objects.create(workspace=ws, divisi=divisi[kodiv], kode=kode, nama=nama)
             dept[kode] = d
 
+        print("\n1b) Project tim IT (buat kalau belum ada)")
+        # Umbrella IT tidak bisa dipetakan (dipakai dua departemen). Sebagai gantinya
+        # dua project kerja dibuat dari NOL -- tanpa migrasi issue lama: 195 issue
+        # terbuka di payung tetap di sana (direktur meng-cover), kerja baru jalan
+        # di project yang benar. Identik dengan flow "project baru" di UI
+        # (serializer yang sama = validasi yang sama + state bawaan + pembuat/lead
+        # jadi admin). Idempotent: ident sudah ada -> lewati (dipakai untuk
+        # pemetaan kalau masih hidup, diteruskan kalau terarsip).
+        PROYEK_BARU = [
+            # (identifier, nama, deskripsi, email_pembuat, email_lead_atau_None)
+            ("ITSAP", "SAP Support",
+             "Ruang kerja tim SAP Support (dibuat skrip migrasi D3).",
+             "suarno.radin@paradiseperkasa.com", "it.dev@itechmandiri.com"),
+            ("ITAI", "IT AI & Infrastructure",
+             "Ruang kerja tim AI & Infrastruktur (dibuat skrip migrasi D3).",
+             "suarno.radin@paradiseperkasa.com", None),
+        ]
+        for ident, nama, deskripsi, email_pembuat, email_lead in PROYEK_BARU:
+            ada = Project.all_objects.filter(workspace=ws, identifier=ident).first()
+            if ada:
+                print("   ada  %s (%s)%s" % (ident, ada.name, " [TERARSIP]" if ada.deleted_at else ""))
+                continue
+            pembuat = User.objects.filter(email=email_pembuat, is_active=True).first()
+            lead = User.objects.filter(email=email_lead, is_active=True).first() if email_lead else None
+            if not pembuat:
+                print("   ! lewat %s: pembuat %s tidak ada" % (ident, email_pembuat))
+                continue
+            if email_lead and not lead:
+                print("   ! lewat %s: lead %s tidak ada" % (ident, email_lead))
+                continue
+            data = {"name": nama, "identifier": ident, "description": deskripsi,
+                    "created_by": str(pembuat.id)}
+            if lead:
+                data["project_lead"] = str(lead.id)
+            ser = ProjectSerializer(data=data, context={"workspace_id": str(ws.id)})
+            if not ser.is_valid():
+                print("   ! lewat %s: validasi gagal %s" % (ident, dict(ser.errors)))
+                continue
+            print("   BUAT %s %s (pembuat %s%s)" % (
+                ident, nama, email_pembuat, ("; lead " + email_lead) if email_lead else ""))
+            n_proyek += 1
+            p = ser.save()
+            Project.objects.filter(pk=p.pk).update(created_by=pembuat)
+            jadikan_anggota_project(p.pk, pembuat.id, ROLE.ADMIN.value)
+            if lead and lead.id != pembuat.id:
+                jadikan_anggota_project(p.pk, lead.id, ROLE.ADMIN.value)
+            State.objects.bulk_create(
+                [
+                    State(
+                        name=state["name"],
+                        color=state["color"],
+                        project=p,
+                        sequence=state["sequence"],
+                        workspace=ws,
+                        group=state["group"],
+                        default=state.get("default", False),
+                        created_by=pembuat,
+                    )
+                    for state in DEFAULT_STATES
+                ]
+            )
+
         print("\n2) Pemetaan project tambahan")
         proj = {p.identifier: p for p in Project.objects.filter(workspace=ws, deleted_at__isnull=True)}
+
         for ident, kode_dep in sorted(PROJECT_DEPT.items()):
             if ident in (
                 "APAR", "ACC", "INV", "QC", "LOGI", "PROC", "SHIP", "WH178",
@@ -252,8 +326,8 @@ with transaction.atomic():
                             tandai_otomatis(ws.id, pid, uid)
 
         print()
-        print("  departemen: %d · pemetaan: %d · ditempatkan: %d · adopsi: %d · dilewati: %d" % (
-            n_dept, n_petakan, n_jabatan, n_adopsi, n_lewat))
+        print("  departemen: %d - project: %d - pemetaan: %d - ditempatkan: %d - adopsi: %d - dilewati: %d" % (
+            n_dept, n_proyek, n_petakan, n_jabatan, n_adopsi, n_lewat))
 
         if APPLY:
             print("  Sinkron workspace (jangkauan -> keanggotaan):")
