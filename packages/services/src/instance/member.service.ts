@@ -54,11 +54,13 @@ export type TMemberUpdate = {
   is_active?: boolean;
   is_super_admin?: boolean;
   /**
-   * Frasa konfirmasi, WAJIB saat `is_super_admin: true`. Diperiksa server
-   * terhadap `SUPER_ADMIN_GRANT_PASSPHRASE` (`apps/api/.env`), tidak ada
-   * salinannya di sisi klien, jadi tidak ada yang bisa dibaca dari bundle.
+   * Konfirmasi ketik-ulang, WAJIB saat `is_super_admin: true`:
+   * "jadikan superadmin" atau "make superadmin" (server menormalisasi
+   * huruf/spasi). Ini BUKAN rahasia — ini bukti niat eksplisit supaya
+   * pemberian tidak bisa terjadi karena salah klik. Nilai yang diketik
+   * pengguna dikirim apa adanya; tombol kirim aktif hanya kalau cocok.
    */
-  grant_passphrase?: string;
+  grant_confirm?: string;
 };
 
 /** Balasan `PATCH`: member sesudah diubah + berapa sesi yang ikut diakhiri. */

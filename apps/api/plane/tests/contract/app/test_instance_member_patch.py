@@ -14,7 +14,6 @@ patah tidak menimbulkan error apa pun:
 """
 
 import pytest
-from django.test import override_settings
 from django.utils import timezone
 from rest_framework.test import APIRequestFactory, force_authenticate
 
@@ -210,50 +209,53 @@ def test_nama_kosong_ditolak(admin, target):
     assert target.display_name == "Budi Santoso"
 
 
-# --- Gerbang frasa untuk MEMBERI Super Admin -------------------------------
+# --- Gerbang konfirmasi ketik untuk MEMBERI Super Admin ----------------------
 #
-# Frasanya dari environment, bukan source, repo ini publik. `override_settings`
-# di sini menirukan `SUPER_ADMIN_GRANT_PASSPHRASE` di `apps/api/.env`.
+# Keputusan user 2026-10-22: bukan lagi passphrase dari environment
+# (`SUPER_ADMIN_GRANT_PASSPHRASE` sudah dihapus), melainkan frasa yang DIKETIK
+# pemanggil: "jadikan superadmin" atau "make superadmin" (normalisasi
+# huruf/spasi, jadi caps-lock tidak menggagalkan yang sah). Yang diperiksa
+# adalah niat eksplisit — mengetik tidak bisa terjadi karena salah klik.
 
-FRASA = "Frasa Uji Yang Panjang"
 
-
-@override_settings(SUPER_ADMIN_GRANT_PASSPHRASE=FRASA)
-def test_beri_super_admin_dengan_frasa_benar(admin, target):
-    res = _patch(admin, target.pk, {"is_super_admin": True, "grant_passphrase": FRASA})
+def test_beri_super_admin_dengan_konfirmasi_benar(admin, target):
+    res = _patch(admin, target.pk, {"is_super_admin": True, "grant_confirm": "jadikan superadmin"})
 
     assert res.status_code == 200
     assert res.data["is_super_admin"] is True
     assert InstanceAdmin.objects.filter(user=target).exists()
 
 
-@override_settings(SUPER_ADMIN_GRANT_PASSPHRASE=FRASA)
-def test_frasa_salah_menolak_dan_TIDAK_mengangkat(admin, target):
-    res = _patch(admin, target.pk, {"is_super_admin": True, "grant_passphrase": "salah"})
+def test_beri_super_admin_dengan_konfirmasi_inggris(admin, target):
+    res = _patch(admin, target.pk, {"is_super_admin": True, "grant_confirm": "make superadmin"})
+
+    assert res.status_code == 200
+    assert InstanceAdmin.objects.filter(user=target).exists()
+
+
+def test_konfirmasi_tidak_rupawan_tetap_lolos(admin, target):
+    """Normalisasi: caps + spasi ganda dari ketikan manusia tetap sah."""
+    res = _patch(admin, target.pk, {"is_super_admin": True, "grant_confirm": "  JADIKAN   SuperAdmin "})
+
+    assert res.status_code == 200
+    assert InstanceAdmin.objects.filter(user=target).exists()
+
+
+def test_konfirmasi_salah_menolak_dan_TIDAK_mengangkat(admin, target):
+    res = _patch(admin, target.pk, {"is_super_admin": True, "grant_confirm": "salah"})
 
     assert res.status_code == 403
     assert not InstanceAdmin.objects.filter(user=target).exists()
 
 
-@override_settings(SUPER_ADMIN_GRANT_PASSPHRASE=FRASA)
-def test_frasa_tidak_dikirim_sama_sekali_ditolak(admin, target):
+def test_konfirmasi_tidak_dikirim_sama_sekali_ditolak(admin, target):
     res = _patch(admin, target.pk, {"is_super_admin": True})
 
     assert res.status_code == 403
     assert not InstanceAdmin.objects.filter(user=target).exists()
 
 
-@override_settings(SUPER_ADMIN_GRANT_PASSPHRASE="")
-def test_frasa_belum_diatur_di_server_menolak(admin, target):
-    """Gagal-tertutup: lebih baik menolak daripada diam-diam melewati gerbang."""
-    res = _patch(admin, target.pk, {"is_super_admin": True, "grant_passphrase": "apa pun"})
-
-    assert res.status_code == 400
-    assert not InstanceAdmin.objects.filter(user=target).exists()
-
-
-@override_settings(SUPER_ADMIN_GRANT_PASSPHRASE=FRASA)
-def test_frasa_salah_TIDAK_ikut_menyimpan_kolom_lain(admin, target):
+def test_konfirmasi_salah_TIDAK_ikut_menyimpan_kolom_lain(admin, target):
     """Gerbang harus diperiksa SEBELUM kolom apa pun disentuh.
 
     Kalau diperiksa di belakang, permintaan gabungan ini akan menyimpan password
@@ -265,7 +267,7 @@ def test_frasa_salah_TIDAK_ikut_menyimpan_kolom_lain(admin, target):
         target.pk,
         {
             "is_super_admin": True,
-            "grant_passphrase": "salah",
+            "grant_confirm": "salah",
             "display_name": "Nama Seharusnya Tidak Tersimpan",
             "password": "passwordbaru999",
         },
@@ -273,17 +275,16 @@ def test_frasa_salah_TIDAK_ikut_menyimpan_kolom_lain(admin, target):
 
     assert res.status_code == 403
     target.refresh_from_db()
-    assert target.display_name == "Budi Santoso", "nama tidak boleh tersimpan saat frasa salah"
-    assert target.check_password("passwordlama"), "password tidak boleh berubah saat frasa salah"
+    assert target.display_name == "Budi Santoso", "nama tidak boleh tersimpan saat konfirmasi salah"
+    assert target.check_password("passwordlama"), "password tidak boleh berubah saat konfirmasi salah"
     assert not InstanceAdmin.objects.filter(user=target).exists()
 
 
-@override_settings(SUPER_ADMIN_GRANT_PASSPHRASE=FRASA)
-def test_mencabut_TIDAK_perlu_frasa(admin, target):
-    """Frasa hanya untuk MEMBERI. Mencabut sudah punya penjaganya sendiri
+def test_mencabut_TIDAK_perlu_konfirmasi(admin, target):
+    """Konfirmasi hanya untuk MEMBERI. Mencabut sudah punya penjaganya sendiri
     (tidak bisa mencabut diri sendiri, dan Super Admin terakhir tidak bisa
-    dicabut), meminta frasa di sini hanya menghalangi pencabutan darurat."""
-    _patch(admin, target.pk, {"is_super_admin": True, "grant_passphrase": FRASA})
+    dicabut), meminta konfirmasi di sini hanya menghalangi pencabutan darurat."""
+    _patch(admin, target.pk, {"is_super_admin": True, "grant_confirm": "jadikan superadmin"})
     assert InstanceAdmin.objects.filter(user=target).exists()
 
     res = _patch(admin, target.pk, {"is_super_admin": False})
@@ -320,9 +321,8 @@ def test_hapus_tanpa_konfirmasi_benar_ditolak(admin, target):
 
 
 
-@override_settings(SUPER_ADMIN_GRANT_PASSPHRASE=FRASA)
 def test_hapus_super_admin_kedua_lolos_menyisakan_satu(admin, target):
-    _patch(admin, target.pk, {"is_super_admin": True, "grant_passphrase": FRASA})
+    _patch(admin, target.pk, {"is_super_admin": True, "grant_confirm": "jadikan superadmin"})
     assert InstanceAdmin.objects.count() == 2
 
     res = _hapus(admin, target.pk, {"konfirmasi": "Budi Santoso"})

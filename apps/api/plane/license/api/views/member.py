@@ -3,11 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-# Python imports
-from hmac import compare_digest
-
 # Django imports
-from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Q
 
@@ -51,28 +47,31 @@ def _pecah_nama(nama):
     return bagian[0], " ".join(bagian[1:]) if len(bagian) > 1 else ""
 
 
-def _tolak_frasa(request):
-    """Periksa frasa konfirmasi untuk MEMBERI Super Admin.
+# Frasa konfirmasi ketik-ulang untuk MEMBERI Super Admin (keputusan user
+# 2026-10-22, menggantikan passphrase `SUPER_ADMIN_GRANT_PASSPHRASE`).
+# Keduanya diterima apa pun bahasa UI pemanggil: yang diperiksa BUKAN bahasa,
+# melainkan niat eksplisit — mengetik frasa tidak bisa terjadi karena salah
+# klik. Normalisasi (huruf kecil, spasi tunggal) supaya "JADIKAN  SUPERADMIN"
+# yang sah tidak ditolak karena caps-lock atau spasi ganda.
+_KONFIRMASI_GRANT = frozenset({"jadikan superadmin", "make superadmin"})
+
+
+def _normalisasi_konfirmasi(nilai):
+    return " ".join(str(nilai or "").casefold().split())
+
+
+def _tolak_tanpa_konfirmasi_ketik(request):
+    """Periksa konfirmasi ketik-ulang untuk MEMBERI Super Admin.
 
     Balikkan `Response` kalau ditolak, `None` kalau lolos.
 
     Punya God Mode saja tidak cukup: status Super Admin membuka akses ke SELURUH
-    project sekaligus, jadi aksi itu minta konfirmasi sekali lagi. Frasanya dari
-    environment (`apps/api/.env`, gitignored); kalau kosong, defaultnya harfiah
-    "konfirmasi" (keputusan user 2026-10-19). Nilai default tertulis di kode —
-    dan itu disadari: repo ini butuh frasa yang bisa dipakai tanpa setup.
+    project sekaligus, jadi aksi itu minta konfirmasi sekali lagi — berupa
+    frasa yang DIKETIK pemanggil, bukan rahasia bersama dari environment.
     """
-    frasa_benar = settings.SUPER_ADMIN_GRANT_PASSPHRASE
-    if not frasa_benar:
-        # Keputusan user 2026-10-19: frasa defaultnya harfiah "konfirmasi".
-        # Env masih menang kalau diisi — ganti di apps/api/.env + recreate
-        # (bukan restart) untuk memakai frasa sendiri.
-        frasa_benar = "konfirmasi"
-    # karakter pertama yang beda, dan selisih waktu itu bisa dipakai menebak
-    # frasanya huruf demi huruf.
-    if not compare_digest(str(request.data.get("grant_passphrase") or ""), frasa_benar):
+    if _normalisasi_konfirmasi(request.data.get("grant_confirm")) not in _KONFIRMASI_GRANT:
         return Response(
-            {"error": "Frasa konfirmasi salah. Super Admin tidak diberikan."},
+            {"error": "Ketik 'jadikan superadmin' persis untuk memberi Super Admin."},
             status=status.HTTP_403_FORBIDDEN,
         )
     return None
@@ -333,12 +332,12 @@ class InstanceMemberEndpoint(BaseAPIView):
         if not u:
             return Response({"error": "Akun tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Gerbang frasa diperiksa DI DEPAN, sebelum satu kolom pun disentuh.
+        # Gerbang konfirmasi diperiksa DI DEPAN, sebelum satu kolom pun disentuh.
         # Kalau di belakang, permintaan gabungan (ubah password + beri Super
-        # Admin) dengan frasa salah akan menyimpan passwordnya lalu membalas
+        # Admin) dengan konfirmasi salah akan menyimpan passwordnya lalu membalas
         # 403, balasan yang bagi pemanggilnya berarti "tidak terjadi apa-apa".
         if request.data.get("is_super_admin"):
-            ditolak = _tolak_frasa(request)
+            ditolak = _tolak_tanpa_konfirmasi_ketik(request)
             if ditolak is not None:
                 return ditolak
 

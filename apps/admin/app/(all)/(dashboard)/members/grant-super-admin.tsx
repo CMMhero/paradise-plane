@@ -12,6 +12,7 @@ import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { InstanceMemberService, type TInstanceMember } from "@plane/services";
 // local
+import { cocokKonfirmasiGrant, useGodmodeStrings } from "@/app/i18n/godmode";
 import { inputClass } from "./constants";
 
 const memberService = new InstanceMemberService();
@@ -23,28 +24,31 @@ type Props = {
 };
 
 /* Memberi Super Admin bukan aksi satu klik: statusnya memberi akses ke SELURUH
-   project sekaligus, termasuk project yang belum dibuat. Frasanya diperiksa di
-   server terhadap `SUPER_ADMIN_GRANT_PASSPHRASE`, tidak ada salinannya di sisi
-   klien, jadi tidak ada yang bisa dibaca dari bundle browser. */
+   project sekaligus, termasuk project yang belum dibuat. Konfirmasinya berupa
+   frasa yang DIKETIK (diperiksa server), bukan rahasia bersama — mengetik
+   tidak bisa terjadi karena salah klik. */
 export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
+  const { s, fill } = useGodmodeStrings();
   const [frasa, setFrasa] = useState("");
   const [sibuk, setSibuk] = useState(false);
+  const frasaCocok = cocokKonfirmasiGrant(frasa);
 
   const handleKonfirmasi = async () => {
+    if (!cocokKonfirmasiGrant(frasa)) return;
     setSibuk(true);
     try {
-      await memberService.update(member.id, { is_super_admin: true, grant_passphrase: frasa });
+      await memberService.update(member.id, { is_super_admin: true, grant_confirm: frasa });
       setFrasa("");
       await onSelesai();
       onTutup();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Super Admin diberikan",
-        message: `${member.display_name} sekarang mengakses semua project, termasuk yang dibuat nanti.`,
+        title: s.grant.granted,
+        message: fill(s.grant.granted_message, { name: member.display_name }),
       });
     } catch (err) {
-      const message = (err as { error?: string })?.error ?? "Tidak bisa memberi Super Admin.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Ditolak", message });
+      const message = (err as { error?: string })?.error ?? s.grant.failed;
+      setToast({ type: TOAST_TYPE.ERROR, title: s.grant.denied, message });
       setFrasa("");
     } finally {
       setSibuk(false);
@@ -54,12 +58,16 @@ export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
   return (
     <div className="space-y-3 border-t border-subtle bg-warning-subtle/40 p-4">
       <div className="flex items-start gap-2">
-        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning-primary" />
+        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning-primary" aria-hidden />
         <div className="space-y-1">
-          <p className="text-body-sm-regular font-medium text-primary">Jadikan {member.display_name} Super Admin?</p>
+          <p className="text-body-sm-regular font-medium text-primary">
+            {fill(s.grant.title, { name: member.display_name })}
+          </p>
+          <p className="text-11 text-secondary">{s.grant.description}</p>
           <p className="text-11 text-secondary">
-            Dia akan mengakses <strong>seluruh project</strong>, termasuk yang dibuat setelah ini, tanpa muncul di
-            daftar anggota mana pun. Masukkan frasa konfirmasi untuk melanjutkan.
+            {fill(s.grant.confirm_instruction, { phrase: s.grant.confirm_phrase }).split(s.grant.confirm_phrase)[0]}
+            <code className="font-mono rounded bg-layer-2 px-1 py-0.5 text-primary">{s.grant.confirm_phrase}</code>
+            {fill(s.grant.confirm_instruction, { phrase: s.grant.confirm_phrase }).split(s.grant.confirm_phrase)[1]}
           </p>
         </div>
       </div>
@@ -67,19 +75,22 @@ export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <input
           className={`${inputClass} min-w-[240px]`}
-          type="password"
-          placeholder="Frasa konfirmasi"
+          type="text"
+          autoComplete="off"
+          placeholder={s.grant.confirm_phrase}
+          aria-label={s.grant.confirm_phrase}
+          aria-invalid={frasa.length > 0 && !frasaCocok}
           value={frasa}
           onChange={(e) => setFrasa(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && frasa && !sibuk) handleKonfirmasi();
+            if (e.key === "Enter" && frasaCocok && !sibuk) handleKonfirmasi();
           }}
         />
-        <Button variant="primary" size="sm" disabled={sibuk || !frasa} onClick={handleKonfirmasi}>
-          Beri Super Admin
+        <Button variant="primary" size="sm" disabled={sibuk || !frasaCocok} onClick={handleKonfirmasi}>
+          {s.grant.confirm}
         </Button>
         <Button variant="secondary" size="sm" disabled={sibuk} onClick={onTutup}>
-          Batal
+          {s.grant.cancel}
         </Button>
       </div>
     </div>
