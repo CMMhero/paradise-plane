@@ -6,6 +6,7 @@
 
 import type { ReactNode } from "react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import type { TNotification } from "@plane/types";
 import {
   convertMinutesToHoursMinutesString,
@@ -41,6 +42,16 @@ export type TNotificationContentHandler = (data: TNotificationFieldData) => TNot
 export type TNotificationContentMap = {
   [key: string]: TNotificationContentHandler;
 };
+
+// Kustomisasi Paradise: baris persetujuan (`field: "approval"`) dirender
+// di sini, bukan lewat map — teksnya mengikuti bahasa penonton (hook i18n),
+// bukan bahasa penerima saat baris dibuat. `verb`: submitted/approved/rejected.
+function ApprovalNotificationAction({ verb }: { verb: string | undefined }) {
+  const { t } = useTranslation();
+  if (verb === "approved") return <>{t("issue.approval.inbox.approved")}</>;
+  if (verb === "rejected") return <>{t("issue.approval.inbox.rejected")}</>;
+  return <>{t("issue.approval.inbox.submitted")}</>;
+}
 
 // Base notification content map for core fields
 export const BASE_NOTIFICATION_CONTENT_MAP: TNotificationContentMap = {
@@ -177,6 +188,20 @@ export function NotificationContent({
       {triggeredBy?.is_bot ? triggeredBy.first_name : triggeredBy?.display_name}{" "}
     </span>
   );
+
+  // Persetujuan: aksi terjemahan + tanpa value/connector (label tugas sudah
+  // tampil di baris bawah kartu). Alasan penolakan ada di email, bukan di sini.
+  if (notificationField === "approval") {
+    return (
+      <>
+        {renderTriggerName()}
+        <span className="text-tertiary">
+          <ApprovalNotificationAction verb={verb} />
+        </span>
+        {"."}
+      </>
+    );
+  }
 
   // Get content details from map
   const contentDetails = getNotificationContentDetails(fieldData, renderCommentBox);

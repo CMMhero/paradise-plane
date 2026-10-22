@@ -48,6 +48,13 @@ def stack_email_notification():
     # get all email notifications
     email_notifications = EmailNotificationLog.objects.filter(processed_at__isnull=True).order_by("receiver").values()
 
+    # Kustomisasi Paradise: baris persetujuan (`entity="approval"`) dikirim
+    # lewat tugas khusus di bawah — templat dan bahasanya sendiri, satu email
+    # per baris. Dikeluarkan dari digest umum supaya tidak terkirim ganda.
+    for baris in [n for n in email_notifications if (n.get("entity") or "") == "approval"]:
+        send_approval_email_notification.delay(email_log_id=str(baris.get("id")))
+    email_notifications = [n for n in email_notifications if (n.get("entity") or "") != "approval"]
+
     # Create the below format for each of the issues
     # {"issue_id" : { "actor_id1": [ { data }, { data } ], "actor_id2": [ { data }, { data } ] }}
 
@@ -304,3 +311,154 @@ def send_email_notification(issue_id, notification_data, receiver_id, email_noti
         log_exception(e)
         release_lock(lock_id=lock_id)
         return
+
+
+# ---------------------------------------------------------------------------
+# Kustomisasi Paradise: email persetujuan (satu email per baris antrean).
+#
+# Bahasa mengikuti preferensi penerima (`User.language`), bukan bahasa
+# pengirim: manajer berbahasa Inggris dan staf berbahasa Indonesia menerima
+# teks masing-masing. String ada di bawah (id/en), bukan di templat, supaya
+# templatnya satu dan logikanya tidak bercabang di HTML.
+# ---------------------------------------------------------------------------
+
+_STRINGS_APPROVAL_ID = {
+    "subject_diajukan": "Perlu persetujuan: {label} {judul}",
+    "subject_disetujui": "Disetujui: {label} {judul}",
+    "subject_ditolak": "Ditolak: {label} {judul}",
+    "heading_diajukan": "Permintaan persetujuan baru",
+    "heading_disetujui": "Pengajuanmu disetujui",
+    "heading_ditolak": "Pengajuanmu ditolak",
+    "intro_diajukan": "{aktor} meminta persetujuan untuk tugas ini. Buka antrean untuk menyetujui atau menolak.",
+    "intro_disetujui": "{aktor} menyetujui tugas ini. Tugas tidak lagi terkunci.",
+    "intro_ditolak": "{aktor} menolak tugas ini dengan alasan di bawah. Tugas kembali ke draft pribadimu.",
+    "alasan_label": "Alasan penolakan",
+    "cta_diajukan": "Buka antrean persetujuan",
+    "cta_diputuskan": "Lihat tugas",
+    "kaki": "Kamu menerima email ini karena kamu terlibat dalam persetujuan tugas ini. Atur email persetujuan di Profil → Notifikasi.",
+}
+
+_STRINGS_APPROVAL_EN = {
+    "subject_diajukan": "Approval needed: {label} {judul}",
+    "subject_disetujui": "Approved: {label} {judul}",
+    "subject_ditolak": "Rejected: {label} {judul}",
+    "heading_diajukan": "New approval request",
+    "heading_disetujui": "Your request was approved",
+    "heading_ditolak": "Your request was rejected",
+    "intro_diajukan": "{aktor} requested approval for this work item. Open the queue to approve or reject.",
+    "intro_disetujui": "{aktor} approved this work item. It is no longer locked.",
+    "intro_ditolak": "{aktor} rejected this work item with the reason below. It is back in your private draft.",
+    "alasan_label": "Rejection reason",
+    "cta_diajukan": "Open approval queue",
+    "cta_diputuskan": "View work item",
+    "kaki": "You received this email because you are involved in this work item approval. Manage approval emails in Profile → Notifications.",
+}
+
+
+@shared_task
+def send_approval_email_notification(email_log_id):
+    """Kirim satu email persetujuan untuk satu baris `EmailNotificationLog`."""
+    from plane.utils.notifikasi_persetujuan import bahasa_penerima
+
+    lock_id = f"send_approval_email_{email_log_id}"
+    try:
+        if not acquire_lock(lock_id=lock_id):
+            logging.getLogger("plane.worker").info("Duplicate approval email skipping")
+            return
+        try:
+            baris = (
+                EmailNotificationLog.objects.select_related("receiver", "triggered_by")
+                .filter(pk=email_log_id, processed_at__isnull=True)
+                .first()
+            )
+            if baris is None:
+                return
+            receiver = baris.receiver
+            aktor = baris.triggered_by
+            data = baris.data or {}
+            info = data.get("issue", {})
+            aktivitas = data.get("issue_activity", {})
+            issue = Issue.objects.select_related("project", "project__workspace").filter(pk=info.get("id")).first()
+            if issue is None:
+                EmailNotificationLog.objects.filter(pk=baris.pk).update(processed_at=timezone.now())
+                return
+
+            bahasa = bahasa_penerima(receiver)
+            s = _STRINGS_APPROVAL_ID if bahasa == "id" else _STRINGS_APPROVAL_EN
+            label = f"{issue.project.identifier}-{issue.sequence_id}"
+            verb = str(aktivitas.get("verb") or "submitted")
+            kunci = "diajukan" if verb == "submitted" else ("disetujui" if verb == "approved" else "ditolak")
+            nama_aktor = (
+                getattr(aktor, "display_name", None) or getattr(aktor, "email", None) or "—"
+            )
+            import os
+
+            from django.conf import settings
+
+            dasar = (settings.APP_BASE_URL or os.environ.get("WEB_URL") or "").rstrip("/")
+            slug = issue.project.workspace.slug
+            url_tugas = f"{dasar}/{slug}/projects/{issue.project.id}/issues/{issue.id}"
+            url_antrean = f"{dasar}/{slug}/projects/{issue.project.id}/persetujuan"
+            context = {
+                "s": s,
+                "heading": s[f"heading_{kunci}"],
+                "intro": s[f"intro_{kunci}"].format(aktor=nama_aktor),
+                "subject": s[f"subject_{kunci}"].format(label=label, judul=issue.name),
+                "label": label,
+                "judul": issue.name,
+                "alasan": str(aktivitas.get("issue_comment") or ""),
+                "tampilkan_alasan": kunci == "ditolak",
+                "cta_label": s["cta_diajukan"] if verb == "submitted" else s["cta_diputuskan"],
+                "cta_url": url_antrean if verb == "submitted" else url_tugas,
+                "url_tugas": url_tugas,
+                "kaki": s["kaki"],
+            }
+            subject = context["subject"]
+            html_content = render_to_string("emails/notifications/approval.html", context)
+            text_content = generate_plain_text_from_html(html_content)
+
+            (
+                EMAIL_HOST,
+                EMAIL_HOST_USER,
+                EMAIL_HOST_PASSWORD,
+                EMAIL_PORT,
+                EMAIL_USE_TLS,
+                EMAIL_USE_SSL,
+                EMAIL_FROM,
+            ) = get_email_configuration()
+            if not EMAIL_HOST:
+                # Tanpa SMTP, menahan baris berarti mengulanginya tiap 5 menit
+                # selamanya. Tandai selesai supaya antrean tidak macet; email
+                # memang tidak bisa dikirim tanpa pengirim yang dikonfigurasi.
+                EmailNotificationLog.objects.filter(pk=baris.pk).update(processed_at=timezone.now())
+                logging.getLogger("plane.worker").warning("Approval email skipped: SMTP not configured")
+                return
+            connection = get_connection(
+                host=EMAIL_HOST,
+                port=int(EMAIL_PORT),
+                username=EMAIL_HOST_USER,
+                password=EMAIL_HOST_PASSWORD,
+                use_tls=str(EMAIL_USE_TLS) == "1",
+                use_ssl=str(EMAIL_USE_SSL) == "1",
+            )
+            msg = EmailMultiAlternatives(
+                subject=remove_unwanted_characters(subject),
+                body=text_content,
+                from_email=EMAIL_FROM,
+                to=[receiver.email],
+                connection=connection,
+            )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+            logging.getLogger("plane.worker").info("Approval email sent successfully")
+            EmailNotificationLog.objects.filter(pk=baris.pk).update(
+                processed_at=timezone.now(), sent_at=timezone.now()
+            )
+        finally:
+            release_lock(lock_id=lock_id)
+    except Exception as e:
+        log_exception(e)
+        try:
+            release_lock(lock_id=lock_id)
+        except Exception:  # noqa: BLE001
+            pass

@@ -162,6 +162,26 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
           />
         }
       />
+      <SettingsControlItem
+        title={t("approval_decisions")}
+        description={t("approval_decisions_description")}
+        control={
+          <Controller
+            control={control}
+            name="approval"
+            render={({ field: { value, onChange } }) => (
+              <ToggleSwitch
+                value={value}
+                onChange={(newValue) => {
+                  onChange(newValue);
+                  handleSettingChange("approval", newValue);
+                }}
+                size="sm"
+              />
+            )}
+          />
+        }
+      />
     </div>
   );
 });

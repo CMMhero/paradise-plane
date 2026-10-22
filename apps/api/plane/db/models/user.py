@@ -309,4 +309,5 @@ def create_user_notification(sender, instance, created, **kwargs):
             comment=True,
             mention=True,
             issue_completed=True,
+            approval=True,
         )

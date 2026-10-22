@@ -75,6 +75,7 @@ def get_default_preference():
         "state": {"email": True},
         "comment": {"email": True},
         "mentions": {"email": True},
+        "approval": {"email": True},
     }
 
 
@@ -106,6 +107,9 @@ class UserNotificationPreference(BaseModel):
     comment = models.BooleanField(default=True)
     mention = models.BooleanField(default=True)
     issue_completed = models.BooleanField(default=True)
+    # Kustomisasi Paradise: persetujuan penugasan (diajukan/diputuskan).
+    # Inbox selalu ditulis; saklar ini hanya mengatur EMAIL-nya.
+    approval = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "UserNotificationPreference"

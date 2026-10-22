@@ -187,6 +187,8 @@ export interface IUserEmailNotificationSettings {
   comment: boolean;
   mention: boolean;
   issue_completed: boolean;
+  /** Kustomisasi Paradise: email pengajuan & keputusan persetujuan. */
+  approval: boolean;
 }
 
 export type TProfileViews = "assigned" | "created" | "subscribed";

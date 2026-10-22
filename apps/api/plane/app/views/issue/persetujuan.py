@@ -298,6 +298,9 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         baris.diputuskan_pada = timezone.now()
         baris.alasan = alasan
         baris.save(update_fields=["status", "diputuskan_oleh", "diputuskan_pada", "alasan", "updated_at"])
+        from plane.utils.notifikasi_persetujuan import beritahu_diputuskan  # noqa: PLC0415
+
+        beritahu_diputuskan(baris, aksi)
 
         if aksi == "tolak" and baris.issue_id:
             # Keputusan user 2026-10-16 (menggantikan 2026-10-15): tugas yang
@@ -369,4 +372,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             pemohon=request.user,
             penerima=request.user,
         )
+        from plane.utils.notifikasi_persetujuan import beritahu_diajukan  # noqa: PLC0415
+
+        beritahu_diajukan(baru, issue=issue)
         return Response(_serial(baru, "pemohon", False))

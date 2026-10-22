@@ -799,13 +799,20 @@ def catat_persetujuan(issue, actor=None):
     if sudah:
         return sudah
 
-    return PersetujuanPenugasan.objects.create(
+    baris = PersetujuanPenugasan.objects.create(
         workspace_id=issue.workspace_id,
         project_id=issue.project_id,
         issue_id=issue.id,
         pemohon=actor,
         penerima=actor,
     )
+    # Inbox + email ke atasan yang boleh memutuskan (KEP-30 lanjutan).
+    # Menelan galat sendiri di dalam — pengajuan tidak boleh gagal hanya
+    # karena pemberitahuannya gagal.
+    from plane.utils.notifikasi_persetujuan import beritahu_diajukan  # noqa: PLC0415
+
+    beritahu_diajukan(baris, issue=issue)
+    return baris
 
 
 def status_persetujuan_tugas(issue_id):
