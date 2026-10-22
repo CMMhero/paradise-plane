@@ -173,8 +173,8 @@ with transaction.atomic():
             ("ITSAP", "SAP Support",
              "Ruang kerja tim SAP Support (dibuat skrip migrasi D3).",
              "suarno.radin@paradiseperkasa.com", "it.dev@itechmandiri.com"),
-            ("ITAI", "IT AI & Infrastructure",
-             "Ruang kerja tim AI & Infrastruktur (dibuat skrip migrasi D3).",
+            ("ITAI", "IT AI dan Infrastruktur",
+             "Ruang kerja tim AI dan Infrastruktur (dibuat skrip migrasi D3).",
              "suarno.radin@paradiseperkasa.com", None),
         ]
         for ident, nama, deskripsi, email_pembuat, email_lead in PROYEK_BARU:
