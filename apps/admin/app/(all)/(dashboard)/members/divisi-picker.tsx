@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: pemilih divisi multi God Mode 
+ * Kustomisasi Paradise Task Tracker: pemilih divisi multi God Mode
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
@@ -15,6 +15,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 // local
+import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { inputClass } from "./constants";
 
 type Props = {
@@ -28,7 +29,9 @@ type Props = {
   disabled?: boolean;
 };
 
-export function DivisiPicker({ opsi, dipilih, onUbah, nama = {}, placeholder = "Pilih…", disabled = false }: Props) {
+export function DivisiPicker({ opsi, dipilih, onUbah, nama = {}, placeholder, disabled = false }: Props) {
+  const { s, fill } = useGodmodeStrings();
+  const labelKosong = placeholder ?? s.picker.default_placeholder;
   const [terbuka, setTerbuka] = useState(false);
   const [cari, setCari] = useState("");
   const wadah = useRef<HTMLDivElement | null>(null);
@@ -58,10 +61,10 @@ export function DivisiPicker({ opsi, dipilih, onUbah, nama = {}, placeholder = "
 
   const ringkas =
     dipilih.length === 0
-      ? placeholder
+      ? labelKosong
       : dipilih.length <= 2
         ? dipilih.map(label).join(", ")
-        : `${dipilih.length} divisi dipilih`;
+        : fill(s.picker.chosen_count, { n: dipilih.length });
 
   return (
     <div ref={wadah} className="relative">
@@ -81,6 +84,8 @@ export function DivisiPicker({ opsi, dipilih, onUbah, nama = {}, placeholder = "
             <input
               // eslint-disable-next-line jsx-a11y/no-autofocus -- panel dibuka lewat klik eksplisit; fokus langsung ke cari menghemat satu Tab per buka
               autoFocus
+              aria-label={s.picker.search_placeholder}
+              placeholder={s.picker.search_placeholder}
               className={`${inputClass} w-full`}
               value={cari}
               onChange={(e) => setCari(e.target.value)}
@@ -88,15 +93,15 @@ export function DivisiPicker({ opsi, dipilih, onUbah, nama = {}, placeholder = "
           </div>
           <div className="flex items-center justify-between border-b border-subtle px-3 py-1.5">
             <button type="button" onClick={() => onUbah([...opsi])} className="text-11 font-medium text-accent-primary">
-              Pilih semua
+              {s.picker.select_all}
             </button>
             <button type="button" onClick={() => onUbah([])} className="text-11 font-medium text-secondary">
-              Bersihkan
+              {s.picker.clear}
             </button>
           </div>
           <div className="max-h-44 overflow-y-auto p-1">
             {saring.length === 0 ? (
-              <p className="px-2 py-3 text-center text-11 text-tertiary">Tidak ada divisi yang cocok.</p>
+              <p className="px-2 py-3 text-center text-11 text-tertiary">{s.picker.empty}</p>
             ) : (
               saring.map((d) => (
                 <label

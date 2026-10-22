@@ -38,7 +38,8 @@ import {
   type TPilihanDivisi,
 } from "@plane/services";
 // local
-import { inputClass, PERAN, PERAN_DEFAULT } from "./constants";
+import { cocokKonfirmasiGrant, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
+import { inputClass, PERAN_DEFAULT } from "./constants";
 import { DivisiPicker } from "./divisi-picker";
 
 const memberService = new InstanceMemberService();
@@ -47,11 +48,11 @@ const divisiService = new InstanceDivisiMemberService();
 const workspaceService = new InstanceWorkspaceService();
 
 /** Nilai dikirim ke backend. Tanpa "belum diisi": jabatan kosong = staf. */
-const PILIHAN_TINGKAT: { value: string; label: string }[] = [
-  { value: String(TINGKAT_MEMBER), label: "Member (staf)" },
-  { value: String(TINGKAT_SUPERVISOR), label: "Supervisor" },
-  { value: String(TINGKAT_MANAGER), label: "Manager" },
-  { value: String(TINGKAT_DIREKTUR), label: "Direktur" },
+const pilihanTingkat = (s: TGodmodeStrings): { value: string; label: string }[] => [
+  { value: String(TINGKAT_MEMBER), label: s.editor.position_member },
+  { value: String(TINGKAT_SUPERVISOR), label: s.editor.position_supervisor },
+  { value: String(TINGKAT_MANAGER), label: s.editor.position_manager },
+  { value: String(TINGKAT_DIREKTUR), label: s.editor.position_director },
 ];
 
 /** Peran project dari jabatan. Bukan pilihan — turunan aturan. */
@@ -85,7 +86,7 @@ type Props = {
   namaDivisi?: Record<string, string>;
   onSelesai: () => Promise<unknown>;
   onTutup: () => void;
-  /** Cabut Super Admin (PATCH false). Grant ditangani internal (butuh frasa). */
+  /** Cabut Super Admin (PATCH false). Grant ditangani internal (butuh konfirmasi ketik). */
   onCabutSuperAdmin: () => void;
   sibukSuperAdmin?: boolean;
 };
@@ -103,6 +104,8 @@ export function MemberEditor({
   onCabutSuperAdmin,
   sibukSuperAdmin = false,
 }: Props) {
+  const { s, fill } = useGodmodeStrings();
+  const opsiTingkat = pilihanTingkat(s);
   // --- data akun (dari EditMember) ---
   const [nama, setNama] = useState(member.display_name);
   const [email, setEmail] = useState(member.email);
@@ -122,24 +125,26 @@ export function MemberEditor({
   const [frasa, setFrasa] = useState("");
   const [sibukGrant, setSibukGrant] = useState(false);
 
-  // Grant Super Admin butuh frasa konfirmasi (diperiksa server, tak ada di
-  // bundle). Revoke lewat prop dari halaman (PATCH false, tanpa frasa).
+  // Grant Super Admin butuh konfirmasi KETIK (diperiksa server; kedua frasa
+  // diterima). Revoke lewat prop dari halaman (PATCH false, tanpa konfirmasi).
+  const frasaCocok = cocokKonfirmasiGrant(frasa);
   const handleGrant = async () => {
+    if (!cocokKonfirmasiGrant(frasa)) return;
     setSibukGrant(true);
     try {
-      await memberService.update(member.id, { is_super_admin: true, grant_passphrase: frasa });
+      await memberService.update(member.id, { is_super_admin: true, grant_confirm: frasa });
       setFrasa("");
       await onSelesai();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Super Admin diberikan",
-        message: `${member.display_name} sekarang mengakses semua project.`,
+        title: s.editor.superadmin_granted,
+        message: fill(s.editor.superadmin_granted_message, { name: member.display_name }),
       });
     } catch (err) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Ditolak",
-        message: pesanGagal(err, "Tidak bisa memberi Super Admin."),
+        title: s.editor.grant_denied,
+        message: pesanGagal(err, s.editor.grant_failed),
       });
       setFrasa("");
     } finally {
@@ -159,12 +164,13 @@ export function MemberEditor({
     if (peran !== member.workspace_role) patch.workspace_role = peran;
     if (wsSlug && wsSlug !== member.workspace_slug) patch.workspace_slug = wsSlug;
     if (password) patch.password = password;
-    // Frasa yang sudah diketik ikut tombol Simpan, bukan hanya tombol "Beri
+    // Konfirmasi yang sudah diketik ikut tombol Simpan, bukan hanya tombol "Beri
     // Super Admin": dulu Simpan mengabaikannya lalu menutup panel seolah sukses.
-    // Frasa salah = 403 di depan, tak satu kolom pun tersimpan (gerbang backend).
-    if (frasa && !member.is_super_admin) {
+    // Tanpa konfirmasi yang cocok = 403 di depan, tak satu kolom pun tersimpan
+    // (gerbang backend).
+    if (frasaCocok && !member.is_super_admin) {
       patch.is_super_admin = true;
-      patch.grant_passphrase = frasa;
+      patch.grant_confirm = frasa;
     }
     if (Object.keys(patch).length === 0) return 0;
     const hasil = await memberService.update(member.id, patch);
@@ -210,18 +216,28 @@ export function MemberEditor({
       }
       await onSelesai();
       onTutup();
-      const label = PILIHAN_TINGKAT.find((p) => p.value === tingkat)?.label ?? tingkat;
+      const label = opsiTingkat.find((p) => p.value === tingkat)?.label ?? tingkat;
+      const namaTampil = nama.trim() || member.display_name;
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Tersimpan",
+        title: s.editor.saved_ok,
         message: sesiBerakhir
-          ? `${nama.trim() || member.display_name}: ${label}, ${divisi.length} divisi, ${sesiBerakhir} sesi diakhiri.`
-          : `${nama.trim() || member.display_name}: ${label}, ${divisi.length} divisi.`,
+          ? fill(s.editor.saved_message_sessions, {
+              name: namaTampil,
+              jabatan: label,
+              n: divisi.length,
+              sesi: sesiBerakhir,
+            })
+          : fill(s.editor.saved_message, { name: namaTampil, jabatan: label, n: divisi.length }),
       });
     } catch (err) {
       // Berhenti di panggilan pertama yang gagal: tidak ada keadaan setengah
       // jadi yang diam-diam (pola lama: jabatan tersimpan, divisi 403).
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal menyimpan", message: pesanGagal(err, "Tidak bisa menyimpan.") });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: s.editor.save_failed,
+        message: pesanGagal(err, s.editor.save_failed_message),
+      });
     } finally {
       setSibuk(false);
     }
@@ -240,12 +256,12 @@ export function MemberEditor({
       <div className="w-full space-y-3">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-1">
-            <span className="block text-11 text-secondary">Nama</span>
+            <span className="block text-11 text-secondary">{s.editor.name}</span>
             <input className={`${inputClass} w-full`} value={nama} onChange={(e) => setNama(e.target.value)} />
           </label>
 
           <label className="space-y-1">
-            <span className="block text-11 text-secondary">Email (identitas login)</span>
+            <span className="block text-11 text-secondary">{s.editor.email}</span>
             <input
               className={`${inputClass} w-full`}
               type="email"
@@ -255,46 +271,44 @@ export function MemberEditor({
           </label>
 
           <div className="space-y-1">
-            <span className="block text-11 text-secondary">Workspace</span>
+            <span className="block text-11 text-secondary">{s.editor.workspace}</span>
             <PemilihWorkspace nilai={wsSlug} onUbah={setWsSlug} />
           </div>
 
           <label className="space-y-1">
-            <span className="block text-11 text-secondary">Hak akses workspace</span>
+            <span className="block text-11 text-secondary">{s.editor.workspace_role}</span>
             <select className={`${inputClass} w-full`} value={peran} onChange={(e) => setPeran(Number(e.target.value))}>
-              {Object.entries(PERAN).map(([nilai, label]) => (
-                <option key={nilai} value={nilai}>
-                  {label}
-                </option>
-              ))}
+              <option value={20}>{s.members.role_admin}</option>
+              <option value={15}>{s.members.role_member}</option>
+              <option value={5}>{s.members.role_guest}</option>
             </select>
           </label>
 
           <label className="space-y-1">
-            <span className="block text-11 text-secondary">Password baru</span>
+            <span className="block text-11 text-secondary">{s.editor.new_password}</span>
             <input
               className={`${inputClass} w-full`}
               type="password"
               autoComplete="new-password"
-              placeholder="kosongkan = tidak diubah"
+              placeholder={s.editor.password_hint}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </label>
         </div>
 
-        {passwordTerlaluPendek && <p className="text-danger text-11">Password minimal 8 karakter.</p>}
+        {passwordTerlaluPendek && <p className="text-danger text-11">{s.editor.password_too_short}</p>}
 
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="space-y-1">
-            <span className="block text-11 text-secondary">Jabatan</span>
+            <span className="block text-11 text-secondary">{s.editor.position}</span>
             <select
               className={`${inputClass} w-full`}
               value={tingkat}
               onChange={(e) => setTingkat(e.target.value)}
               disabled={hierarki === undefined}
             >
-              {PILIHAN_TINGKAT.map((p) => (
+              {opsiTingkat.map((p) => (
                 <option key={p.value} value={p.value}>
                   {p.label}
                 </option>
@@ -317,24 +331,18 @@ export function MemberEditor({
           <div className={strukturAktif ? "space-y-1 sm:col-span-3" : "space-y-1 sm:col-span-2"}>
             <span className="block text-11 text-secondary">
               {strukturAktif
-                ? `Project tambahan, pengecualian eksplisit (${divisi.length})`
-                : `Divisi (${divisi.length})`}
+                ? fill(s.editor.extra_projects, { n: divisi.length })
+                : fill(s.editor.divisions, { n: divisi.length })}
             </span>
             {hierarki === undefined ? (
-              <p className="text-11 text-secondary">Bukan anggota workspace — jabatan dan divisi tak bisa diatur.</p>
+              <p className="text-11 text-secondary">{s.editor.not_workspace_member}</p>
             ) : (
               <>
-                <DivisiPicker
-                  opsi={daftarDivisi}
-                  dipilih={divisi}
-                  onUbah={setDivisi}
-                  nama={namaDivisi}
-                  placeholder="Pilih divisi…"
-                />
+                <DivisiPicker opsi={daftarDivisi} dipilih={divisi} onUbah={setDivisi} nama={namaDivisi} />
                 {(masuk.length > 0 || keluar.length > 0) && (
                   <p className="text-11 text-secondary">
-                    {masuk.length > 0 && `Masuk: ${masuk.join(", ")}. `}
-                    {keluar.length > 0 && `Keluar: ${keluar.join(", ")}.`}
+                    {masuk.length > 0 && `${fill(s.editor.joined, { list: masuk.join(", ") })} `}
+                    {keluar.length > 0 && fill(s.editor.left, { list: keluar.join(", ") })}
                   </p>
                 )}
               </>
@@ -344,54 +352,61 @@ export function MemberEditor({
 
         {tampilAwasi && (
           <div className="space-y-1">
-            <span className="block text-11 text-secondary">Divisi yang dia bawahi (pengawasan)</span>
+            <span className="block text-11 text-secondary">{s.editor.supervised}</span>
             <DivisiPicker
               opsi={opsiAwasi}
               dipilih={awasi}
               onUbah={setAwasi}
               nama={namaDivisi}
-              placeholder="Ikut rumus (kosong)"
+              placeholder={s.editor.supervised_empty}
             />
-            <p className="text-11 text-secondary">
-              Kosong = ikut rumus (direktur semua divisi; lainnya divisinya sendiri). Centang = menang atas rumus.
-            </p>
+            <p className="text-11 text-secondary">{s.editor.supervised_note}</p>
           </div>
         )}
 
-        <p className="text-11 text-secondary">
-          Mengubah <strong>password</strong> atau <strong>email</strong> mengakhiri semua sesi orang itu, dia harus
-          masuk lagi. Manager/supervisor otomatis jadi Admin di divisinya; member jadi Member biasa. Password barunya
-          sampaikan langsung; SMTP belum jalan, tidak ada email yang terkirim.
-        </p>
+        <p className="text-11 text-secondary">{s.editor.password_note}</p>
 
         {member.is_super_admin ? (
           <div className="border-warning-primary/30 flex flex-wrap items-center gap-2 rounded border bg-warning-subtle/20 px-3 py-2">
-            <ShieldCheck className="size-4 shrink-0 text-warning-primary" />
-            <span className="text-11 font-medium text-primary">Super Admin — akses seluruh project.</span>
+            <ShieldCheck className="size-4 shrink-0 text-warning-primary" aria-hidden />
+            <span className="text-11 font-medium text-primary">{s.editor.superadmin_badge}</span>
             <Button variant="secondary" size="sm" disabled={sibukSuperAdmin} onClick={onCabutSuperAdmin}>
-              Cabut
+              {s.editor.revoke}
             </Button>
           </div>
         ) : (
           <div className="space-y-1.5 rounded border border-subtle px-3 py-2">
-            <span className="block text-11 font-medium text-secondary">Jadikan Super Admin</span>
-            <span className="block text-11 text-tertiary">
-              Akses seluruh project termasuk yang dibuat nanti. Perlu frasa konfirmasi.
-            </span>
+            <span className="block text-11 font-medium text-secondary">{s.editor.make_superadmin}</span>
+            <span className="block text-11 text-tertiary">{s.editor.make_superadmin_note}</span>
+            <p className="text-11 text-secondary">
+              {
+                fill(s.editor.confirm_instruction, { phrase: s.editor.confirm_phrase }).split(
+                  s.editor.confirm_phrase
+                )[0]
+              }
+              <code className="font-mono rounded bg-layer-2 px-1 py-0.5 text-primary">{s.editor.confirm_phrase}</code>
+              {
+                fill(s.editor.confirm_instruction, { phrase: s.editor.confirm_phrase }).split(
+                  s.editor.confirm_phrase
+                )[1]
+              }
+            </p>
             <div className="flex flex-wrap items-center gap-2">
               <input
                 className={`${inputClass} min-w-[200px] flex-1`}
-                type="password"
+                type="text"
                 autoComplete="off"
-                placeholder="Frasa konfirmasi"
+                placeholder={s.editor.confirm_phrase}
+                aria-label={s.editor.confirm_phrase}
+                aria-invalid={frasa.length > 0 && !frasaCocok}
                 value={frasa}
                 onChange={(e) => setFrasa(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && frasa && !sibukGrant) handleGrant();
+                  if (e.key === "Enter" && frasaCocok && !sibukGrant) handleGrant();
                 }}
               />
-              <Button variant="primary" size="sm" disabled={sibukGrant || !frasa} onClick={handleGrant}>
-                Beri Super Admin
+              <Button variant="primary" size="sm" disabled={sibukGrant || !frasaCocok} onClick={handleGrant}>
+                {s.editor.grant_superadmin}
               </Button>
             </div>
           </div>
@@ -399,10 +414,10 @@ export function MemberEditor({
 
         <div className="flex gap-2">
           <Button variant="primary" size="sm" disabled={sibuk || passwordTerlaluPendek} onClick={handleSimpan}>
-            Simpan
+            {s.editor.save}
           </Button>
           <Button variant="secondary" size="sm" disabled={sibuk} onClick={onTutup}>
-            Batal
+            {s.editor.cancel}
           </Button>
         </div>
 
@@ -434,35 +449,36 @@ function Penempatan({
   pilihanDepartemen: TPilihanDepartemen[];
   pilihanDivisi: TPilihanDivisi[];
 }) {
+  const { s } = useGodmodeStrings();
   if (tingkat >= TINGKAT_DIREKTUR) {
     return (
       <div className="space-y-1 sm:col-span-2">
-        <span className="block text-11 text-secondary">Penempatan</span>
-        <p className="text-11 text-secondary">Direktur menjangkau seluruh perusahaan, tidak perlu ditempatkan.</p>
+        <span className="block text-11 text-secondary">{s.editor.placement}</span>
+        <p className="text-11 text-secondary">{s.editor.director_note}</p>
       </div>
     );
   }
   if (tingkat >= TINGKAT_MANAGER) {
     return (
       <label className="space-y-1 sm:col-span-2">
-        <span className="block text-11 text-secondary">Divisi yang dipimpin</span>
+        <span className="block text-11 text-secondary">{s.editor.led_division}</span>
         <select className={`${inputClass} w-full`} value={divisiId} onChange={(e) => onDivisi(e.target.value)}>
-          <option value="">— Belum ditempatkan —</option>
+          <option value="">{s.editor.not_placed}</option>
           {pilihanDivisi.map((v) => (
             <option key={v.id} value={v.id}>
               {v.nama} ({v.kode})
             </option>
           ))}
         </select>
-        <span className="block text-11 text-tertiary">Manager melihat semua departemen di divisi ini.</span>
+        <span className="block text-11 text-tertiary">{s.editor.manager_note}</span>
       </label>
     );
   }
   return (
     <label className="space-y-1 sm:col-span-2">
-      <span className="block text-11 text-secondary">Departemen</span>
+      <span className="block text-11 text-secondary">{s.editor.department}</span>
       <select className={`${inputClass} w-full`} value={departemenId} onChange={(e) => onDepartemen(e.target.value)}>
-        <option value="">— Belum ditempatkan —</option>
+        <option value="">{s.editor.not_placed}</option>
         {pilihanDivisi.map((v) => (
           <optgroup key={v.id} label={v.nama}>
             {pilihanDepartemen
@@ -476,9 +492,7 @@ function Penempatan({
         ))}
       </select>
       <span className="block text-11 text-tertiary">
-        {tingkat >= TINGKAT_SUPERVISOR
-          ? "Supervisor melihat dan mengelola project departemen ini."
-          : "Staf melihat semua project departemen ini, mengubah hanya tugas miliknya."}
+        {tingkat >= TINGKAT_SUPERVISOR ? s.editor.supervisor_note : s.editor.staff_note}
       </span>
     </label>
   );
@@ -493,6 +507,7 @@ function ZonaHapus({
   onSelesai: () => Promise<unknown>;
   onTutup: () => void;
 }) {
+  const { s, fill } = useGodmodeStrings();
   const [terbuka, setTerbuka] = useState(false);
   const [ketikan, setKetikan] = useState("");
   const [sibuk, setSibuk] = useState(false);
@@ -507,14 +522,17 @@ function ZonaHapus({
       onTutup();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Akun dihapus",
-        message: `${member.display_name} dinonaktifkan dan identitasnya digosok (${hasil.sessions_ended ?? 0} sesi diakhiri). Riwayat tetap utuh.`,
+        title: s.editor.account_deleted,
+        message: fill(s.editor.account_deleted_message, {
+          name: member.display_name,
+          sesi: hasil.sessions_ended ?? 0,
+        }),
       });
     } catch (err) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Gagal menghapus",
-        message: pesanGagal(err, "Tidak bisa menghapus akun."),
+        title: s.editor.delete_failed,
+        message: pesanGagal(err, s.editor.delete_failed_message),
       });
     } finally {
       setSibuk(false);
@@ -525,22 +543,25 @@ function ZonaHapus({
     <div className="rounded border border-danger-subtle px-3 py-2">
       {!terbuka ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Trash2 className="size-4 shrink-0 text-danger-primary" />
-          <span className="text-11 font-medium text-primary">Hapus akun ini</span>
-          <span className="text-11 text-tertiary">Nonaktif + gosok identitas. Riwayat tetap utuh.</span>
+          <Trash2 className="size-4 shrink-0 text-danger-primary" aria-hidden />
+          <span className="text-11 font-medium text-primary">{s.editor.delete_zone}</span>
+          <span className="text-11 text-tertiary">{s.editor.delete_zone_note}</span>
           <Button variant="error-outline" size="sm" onClick={() => setTerbuka(true)}>
-            Hapus…
+            {s.editor.delete_open}
           </Button>
         </div>
       ) : (
         <div className="space-y-1.5">
           <p className="text-11 font-medium text-primary">
-            Ketik <strong>{member.display_name}</strong> persis untuk mengonfirmasi. Tidak bisa dibatalkan.
+            {fill(s.editor.delete_confirm, { name: member.display_name }).split(member.display_name)[0]}
+            <strong>{member.display_name}</strong>
+            {fill(s.editor.delete_confirm, { name: member.display_name }).split(member.display_name)[1]}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <input
               className={`${inputClass} min-w-[200px] flex-1`}
               placeholder={member.display_name}
+              aria-label={member.display_name}
               value={ketikan}
               onChange={(e) => setKetikan(e.target.value)}
               onKeyDown={(e) => {
@@ -548,7 +569,7 @@ function ZonaHapus({
               }}
             />
             <Button variant="error-fill" size="sm" disabled={sibuk || !cocok} onClick={handleHapus}>
-              Hapus permanen
+              {s.editor.delete_now}
             </Button>
             <Button
               variant="secondary"
@@ -559,7 +580,7 @@ function ZonaHapus({
                 setKetikan("");
               }}
             >
-              Batal
+              {s.editor.cancel}
             </Button>
           </div>
         </div>
@@ -569,6 +590,7 @@ function ZonaHapus({
 }
 
 function PemilihWorkspace({ nilai, onUbah }: { nilai: string; onUbah: (slug: string) => void }) {
+  const { s } = useGodmodeStrings();
   const [daftar, setDaftar] = useState<{ slug: string; name: string }[]>([]);
   useEffect(() => {
     let hidup = true;
@@ -585,8 +607,13 @@ function PemilihWorkspace({ nilai, onUbah }: { nilai: string; onUbah: (slug: str
   }, []);
   if (daftar.length <= 1) return null;
   return (
-    <select className={`${inputClass} w-full`} value={nilai} onChange={(e) => onUbah(e.target.value)}>
-      {nilai === "" && <option value="">— Bukan anggota workspace —</option>}
+    <select
+      className={`${inputClass} w-full`}
+      value={nilai}
+      aria-label={s.editor.workspace}
+      onChange={(e) => onUbah(e.target.value)}
+    >
+      {nilai === "" && <option value="">{s.editor.workspace_none}</option>}
       {daftar.map((w) => (
         <option key={w.slug} value={w.slug}>
           {w.name}

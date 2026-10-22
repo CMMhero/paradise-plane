@@ -16,6 +16,7 @@ import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { InstanceOrganisasiService, TINGKAT_DIREKTUR, type TProjectOrganisasi } from "@plane/services";
 // local
+import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { inputClass } from "../members/constants";
 
 const layanan = new InstanceOrganisasiService();
@@ -33,6 +34,7 @@ type Props = {
 };
 
 export function BarisProjectLama({ project, semuaDivisi, onJadikan }: Props) {
+  const { s } = useGodmodeStrings();
   const [terbuka, setTerbuka] = useState(false);
 
   return (
@@ -47,7 +49,7 @@ export function BarisProjectLama({ project, semuaDivisi, onJadikan }: Props) {
           disabled={semuaDivisi.length === 0}
           onClick={() => setTerbuka((t) => !t)}
         >
-          {terbuka ? "Tutup" : "Jadikan departemen…"}
+          {terbuka ? s.org.legacy_close : s.org.legacy_convert}
         </Button>
       </div>
       {terbuka && <FormJadikan project={project} semuaDivisi={semuaDivisi} onJadikan={onJadikan} />}
@@ -56,6 +58,7 @@ export function BarisProjectLama({ project, semuaDivisi, onJadikan }: Props) {
 }
 
 function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
+  const { s, fill } = useGodmodeStrings();
   const { data } = useSWR(`ANGGOTA_PROJECT_LAMA_${project.id}`, () => layanan.anggotaProject(project.id));
   const [divisiId, setDivisiId] = useState(semuaDivisi[0]?.id ?? "");
   const [kode, setKode] = useState(project.identifier);
@@ -79,11 +82,12 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
         <select
           className={`${inputClass} min-w-[160px]`}
           value={divisiId}
+          aria-label={s.org.division_of}
           onChange={(e) => setDivisiId(e.target.value)}
         >
           {semuaDivisi.map((v) => (
             <option key={v.id} value={v.id}>
-              Divisi: {v.nama}
+              {s.org.division_of}: {v.nama}
             </option>
           ))}
         </select>
@@ -96,10 +100,10 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
       </div>
 
       <span className="block text-11 text-secondary">
-        Bawa anggota project ini ke departemen ({terpilih.size} dari {bisa.length})
+        {fill(s.org.legacy_bring, { a: terpilih.size, b: bisa.length })}
       </span>
       {!data ? (
-        <p className="text-11 text-tertiary">Memuat anggota…</p>
+        <p className="text-11 text-tertiary">{s.org.legacy_loading}</p>
       ) : (
         <div className="grid gap-1 sm:grid-cols-2">
           {data.anggota.map((a) => (
@@ -115,12 +119,10 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
                 onChange={() => ganti(a.id)}
               />
               <span className="truncate">
-                {a.nama} · {a.tingkat_nama ?? "belum berjenjang, jadi Staf"}
+                {a.nama} · {a.tingkat_nama ?? s.org.legacy_unleveled}
                 {!a.bisa_ditempatkan &&
-                  ((a.tingkat ?? 0) >= TINGKAT_DIREKTUR
-                    ? " (menjangkau seluruh perusahaan)"
-                    : " (ditempatkan lewat divisi)")}
-                {a.bisa_ditempatkan && a.departemen && ` · pindah dari ${a.departemen}`}
+                  ((a.tingkat ?? 0) >= TINGKAT_DIREKTUR ? s.org.legacy_director_reach : s.org.legacy_division_placed)}
+                {a.bisa_ditempatkan && a.departemen && ` · ${fill(s.org.moved_from_bare, { from: a.departemen })}`}
               </span>
             </label>
           ))}
@@ -144,11 +146,9 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
             setSibuk(false);
           }}
         >
-          Jadikan departemen
+          {s.org.legacy_make}
         </Button>
-        <span className="text-11 text-tertiary">
-          Yang tidak dicentang tetap anggota project sebagai pengecualian, tanpa penempatan.
-        </span>
+        <span className="text-11 text-tertiary">{s.org.legacy_kept_note}</span>
       </div>
     </div>
   );

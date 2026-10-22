@@ -12,7 +12,9 @@
 export const inputClass =
   "rounded border border-subtle bg-layer-1 px-2 py-1.5 text-body-sm-regular text-primary outline-none focus:border-accent-primary";
 
-/** Nilai `WorkspaceMember.role` di backend (`ROLE_CHOICES`). */
+/** Nilai `WorkspaceMember.role` di backend (`ROLE_CHOICES`).
+ * Label tampil TIDAK dari sini — pakai kamus God Mode
+ * (`s.members.role_admin / role_member / role_guest`) supaya mengikuti bahasa aktif. */
 export const PERAN: Record<number, string> = { 20: "Admin", 15: "Member", 5: "Guest" };
 
 /** Dipakai kalau akun belum jadi anggota workspace (`workspace_role: null`). */

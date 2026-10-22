@@ -10,6 +10,8 @@ import { LogOut } from "lucide-react";
 // plane imports
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { InstanceActivityService } from "@plane/services";
+// local
+import { useGodmodeStrings } from "@/app/i18n/godmode";
 
 const activityService = new InstanceActivityService();
 
@@ -30,35 +32,36 @@ type Props = {
  * menutup laptop, jadi "masih login" bukan bukti seseorang ada di depan layar.
  */
 export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendiri, onSelesai }: Props) {
+  const { s, fill } = useGodmodeStrings();
   const [sibuk, setSibuk] = useState(false);
 
   const status = sedangMemakai
-    ? { warna: "bg-green-600", label: "Sedang memakai", judul: "Ada request dalam beberapa menit terakhir" }
+    ? { warna: "bg-success-primary", label: s.session.active, judul: s.session.active_hint }
     : masihLogin
-      ? { warna: "bg-amber-600", label: "Masih login", judul: "Sesi masih hidup, tapi tidak ada aktivitas terbaru" }
-      : { warna: "bg-placeholder", label: "Keluar", judul: "Tidak ada sesi hidup" };
+      ? { warna: "bg-warning-primary", label: s.session.idle, judul: s.session.idle_hint }
+      : { warna: "bg-placeholder", label: s.session.out, judul: s.session.out_hint };
 
   // Hanya logout paksa. Menonaktifkan akun sudah punya kontrolnya sendiri di
   // kolom "Aktif", dan backend-nya memang sekalian memutus sesi
   // (`member.py` patch is_active -> _akhiri_sesi). Menaruh dua jalan ke hasil
   // yang sama di satu baris hanya membuat orang ragu harus menekan yang mana.
   const kick = async () => {
-    if (!window.confirm(`Putuskan semua sesi ${nama}? Dia akan diminta login lagi.`)) return;
+    if (!window.confirm(fill(s.session.kick_confirm, { name: nama }))) return;
 
     setSibuk(true);
     try {
       const hasil = await activityService.kick(userId);
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Sesi diputus",
-        message: `${hasil.sesi_diputus} sesi ${nama} diakhiri.`,
+        title: s.session.kicked,
+        message: fill(s.session.kicked_message, { n: hasil.sesi_diputus, name: nama }),
       });
       onSelesai();
     } catch (err) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Gagal",
-        message: (err as { error?: string })?.error ?? "Tidak bisa memutus sesi.",
+        title: s.session.failed,
+        message: (err as { error?: string })?.error ?? s.session.kick_failed,
       });
     } finally {
       setSibuk(false);
@@ -77,9 +80,9 @@ export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendi
           type="button"
           disabled={sibuk}
           onClick={() => kick()}
-          className="hover:text-red-600 rounded p-1 text-secondary hover:bg-layer-1 disabled:opacity-40"
-          title="Putuskan sesi, dia harus login lagi"
-          aria-label={`Putuskan sesi ${nama}`}
+          className="rounded p-1 text-secondary hover:bg-layer-1 hover:text-danger-primary disabled:opacity-40"
+          title={s.session.kick_hint}
+          aria-label={fill(s.session.kick_label, { name: nama })}
         >
           <LogOut className="size-4" />
         </button>
