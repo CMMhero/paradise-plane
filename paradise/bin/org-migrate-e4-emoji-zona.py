@@ -34,7 +34,7 @@ EMOJI = {
     "ANNEALINGF": "\U0001F525",  # Annealing Furnace
     "FIN": "\U0001F4B0",  # Finance
     "GA": "\U0001F3E2",  # General Affairs
-    "HR": "\U0001F9D1\u200D\u0001F4BC",  # Human Resources
+    "HR": "🧑‍💼",  # Human Resources
     "INV": "\U0001F4E6",  # Stock Control
     "ITAI": "\U0001F916",  # IT AI dan Infrastruktur
     "ITSAP": "\U0001F5A5\uFE0F",  # IT SAP Support Project
