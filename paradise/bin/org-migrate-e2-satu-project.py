@@ -28,13 +28,16 @@ from django.utils import timezone
 from plane.db.jangkauan import sinkronkan_workspace, tunda_sinkron
 from plane.db.membership import jadikan_anggota_project
 from plane.db.models import (
+    Departemen,
     DepartemenProject,
     Issue,
+    JabatanOrganisasi,
     Project,
     ProjectMember,
     State,
     Workspace,
 )
+from plane.db.models.hierarki import TINGKAT_MANAGER
 
 APPLY = os.environ.get("ORG_APPLY") == "1"
 
@@ -59,6 +62,7 @@ with transaction.atomic():
                 project=p, deleted_at__isnull=True, archived_at__isnull=True).count()
 
         def pensiunkan(ident, alasan):
+            global n_pensiun
             p = proj.get(ident)
             if p is None or p.deleted_at:
                 print("   -    %s sudah pensiun/dilewati" % ident)
@@ -127,6 +131,30 @@ with transaction.atomic():
         pensiunkan("OPR", "kosong, fungsi GA")
         pensiunkan("BME", "kosong sesudah pindah, fungsi GA")
 
+        print("\n2b) Sales legacy: SMADM/SMCOO/SMIND + departemen non-kanon")
+        # Kanon user: SM-T1/SM-T2/SM-MKT. Tiga pecahan admin/koordinator/
+        # independen tidak ada di kanon, kosong, tanpa anggota -> pensiunkan
+        # projectnya dan hapus departemennya (lembut, bisa dikembalikan).
+        pensiunkan("SMADM", "kosong, di luar kanon")
+        pensiunkan("SMCOO", "kosong, di luar kanon")
+        pensiunkan("SMIND", "kosong, di luar kanon")
+        for kode in ("SM-ADM", "SM-COO", "SM-IND"):
+            d = Departemen.objects.filter(
+                workspace=ws, kode=kode, deleted_at__isnull=True).first()
+            if d is None:
+                print("   -    dept %s sudah tidak ada" % kode)
+                continue
+            berpenghuni = JabatanOrganisasi.objects.filter(
+                workspace=ws, departemen=d, deleted_at__isnull=True).count()
+            if berpenghuni:
+                print("   !    dept %s masih berisi %d penempatan: TIDAK dihapus" % (
+                    kode, berpenghuni))
+                continue
+            print("   x    dept %s dihapus (kosong, di luar kanon)" % kode)
+            if APPLY:
+                Departemen.objects.filter(pk=d.pk).update(
+                    deleted_at=timezone.now())
+
         print("\n3) Verifikasi 1:1 (project aktif tak-terarsip per departemen)")
         semua_ok = True
         for d in sorted(ws.departemen_organisasi.filter(
@@ -141,6 +169,31 @@ with transaction.atomic():
             print("   %s %-9s %d: %s" % (
                 tandai, d.kode, len(ada), ",".join(p.identifier for p in ada)))
         print("   1:1 %s" % ("TERPENUHI" if semua_ok else "BELUM (lihat LEBIH)"))
+
+        print("\n3b) Manager divisi vs kanon user (laporan)")
+        from plane.db.models import User
+        for nama, kodiv in (
+                ("lita komalasari", "FIN"), ("suarno radin", "IT"),
+                ("yan tandi raru", "SCM"), ("anthony", "SM")):
+            kunci = nama.split()[0]
+            calon = list(User.objects.filter(is_active=True))
+            cocok = [u for u in calon
+                     if kunci in (u.email or "").lower()
+                     or kunci in (u.first_name or "").lower()
+                     or kunci in (u.display_name or "").lower()]
+            if len(cocok) != 1:
+                print("   ??   %-16s calon: %s" % (
+                    nama, ", ".join(u.email for u in cocok) or "-"))
+                continue
+            u = cocok[0]
+            j = JabatanOrganisasi.objects.filter(
+                workspace=ws, member=u, deleted_at__isnull=True).first()
+            sudah = (j is not None and j.tingkat == TINGKAT_MANAGER
+                     and j.divisi is not None and j.divisi.kode == kodiv)
+            print("   %s %-16s %s (tingkat=%s divisi=%s)" % (
+                "OK  " if sudah else "CEK  ", nama, u.email,
+                j.tingkat if j else "-",
+                j.divisi.kode if j and j.divisi else "-"))
 
         if APPLY:
             print("\n4) Sinkron workspace")
