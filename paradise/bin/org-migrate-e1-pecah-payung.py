@@ -75,7 +75,7 @@ OVERRIDE = {
     ("INVQC", 1): "HAPUS",  # "iii"
 }
 
-HAPUS_TEST = {(k, v) for k, v in OVERRIDE.items() if v == "HAPUS"}
+HAPUS_TEST = {k for k, v in OVERRIDE.items() if v == "HAPUS"}
 PINDAH_MANUAL = {k: v for k, v in OVERRIDE.items() if v != "HAPUS"}
 
 MODUL_SAP = {"IT SAP - FICO", "IT SAP - MM", "IT SAP - SD", "IT SAP - QM", "IT SAP - WM"}
@@ -359,10 +359,10 @@ with transaction.atomic():
                     Issue.objects.filter(pk=i.pk).update(deleted_at=timezone.now())
 
         print("\n4) Modul: bangun ulang per project tujuan")
+        rencana_modul = {}
         for mi in ModuleIssue.objects.filter(
                 issue__project=it, deleted_at__isnull=True).select_related("module"):
             issue = mi.issue
-            # Issue sudah pindah -> cari di project barunya.
             if APPLY:
                 baru = Issue.objects.filter(pk=issue.pk).first()
             else:
@@ -375,29 +375,38 @@ with transaction.atomic():
                 t = target_of.get(str(issue.id))
                 tujuan_issue = t if t in ("ITSAP", "ITAI") else None
             if tujuan_issue is None:
-                print("   -    modul %s: IT-%d tidak pindah, tautan diputus" % (
-                    mi.module.name, issue.sequence_id))
-                if APPLY:
-                    ModuleIssue.objects.filter(pk=mi.pk).update(deleted_at=timezone.now())
+                # Tautan milik tugas arsip/hapus/tertahan: JANGAN disentuh.
                 continue
+            rencana_modul.setdefault((mi.module.name, tujuan_issue), []).append(
+                (issue.sequence_id, mi))
+        for (nama_mod, tujuan_issue), daftar in sorted(rencana_modul.items()):
+            print("   %s %s <- %d tugas" % (
+                "+" if APPLY else "rencana", nama_mod, len(daftar)))
+            n_modul += len(daftar)
             if APPLY:
-                mod_baru, _ = Module.objects.get_or_create(
-                    project=proj[tujuan_issue], name=mi.module.name,
-                    defaults={"workspace": ws, "description": mi.module.description or "",
-                              "start_date": mi.module.start_date,
-                              "target_date": mi.module.target_date,
-                              "status": mi.module.status, "lead": mi.module.lead,
-                              "view_props": mi.module.view_props or {}})
-                for mm in ModuleMember.objects.filter(
-                        module=mi.module, deleted_at__isnull=True):
-                    ModuleMember.objects.get_or_create(module=mod_baru, member=mm.member)
-                ModuleIssue.objects.filter(pk=mi.pk).update(deleted_at=timezone.now())
-                ModuleIssue.objects.get_or_create(module=mod_baru, issue=baru)
-                n_modul += 1
-            else:
-                n_modul += 1
-        if not APPLY:
-            print("   (rencana: salin modul + taut ulang %d tautan)" % n_modul)
+                mod_baru, dibuat = Module.objects.get_or_create(
+                    project=proj[tujuan_issue], name=nama_mod,
+                    defaults={"workspace": ws})
+                if dibuat:
+                    asal = Module.objects.filter(
+                        project=it, name=nama_mod, deleted_at__isnull=True).first()
+                    if asal is not None:
+                        Module.objects.filter(pk=mod_baru.pk).update(
+                            description=asal.description or "",
+                            start_date=asal.start_date, target_date=asal.target_date,
+                            status=asal.status, lead=asal.lead,
+                            view_props=asal.view_props or {})
+                        for mm in ModuleMember.objects.filter(
+                                module=asal, deleted_at__isnull=True):
+                            ModuleMember.objects.get_or_create(
+                                module=mod_baru, member=mm.member)
+                for _seq, mi in daftar:
+                    baru_issue = Issue.objects.filter(pk=mi.issue_id).first()
+                    ModuleIssue.objects.filter(pk=mi.pk).update(
+                        deleted_at=timezone.now())
+                    if baru_issue is not None:
+                        ModuleIssue.objects.get_or_create(
+                            module=mod_baru, issue=baru_issue)
 
         print("\n5) Bereskan payung kosong + FIN")
         for ident in ("IT", "HRGA", "INVQC", "SALES"):
