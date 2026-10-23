@@ -392,8 +392,8 @@ with transaction.atomic():
             rencana_modul.setdefault((mi.module.name, tujuan_issue), []).append(
                 (issue.sequence_id, mi))
         for (nama_mod, tujuan_issue), daftar in sorted(rencana_modul.items()):
-            print("   %s %s <- %d tugas" % (
-                "+" if APPLY else "rencana", nama_mod, len(daftar)))
+            print("   %s modul %-18s -> %-5s <- %d tugas" % (
+                "+" if APPLY else "rencana", nama_mod, tujuan_issue, len(daftar)))
             n_modul += len(daftar)
             if APPLY:
                 mod_baru, dibuat = Module.objects.get_or_create(
