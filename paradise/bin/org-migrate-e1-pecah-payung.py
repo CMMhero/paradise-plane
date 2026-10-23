@@ -146,30 +146,41 @@ with transaction.atomic():
         ]
         for ident, nama, deskripsi, email_pembuat, email_lead in BARU:
             ada = Project.all_objects.filter(workspace=ws, identifier=ident).first()
-            if ada:
-                print("   ada  %s (%s)%s" % (ident, ada.name, " [TERARSIP]" if ada.deleted_at else ""))
+            if ada is not None and ada.deleted_at is None:
+                print("   ada  %s (%s)%s" % (ident, ada.name, " [TERARSIP]" if ada.archived_at else ""))
                 proj[ident] = ada
                 continue
+            if ada is not None:
+                print("   HIDUPKAN %s (%s, tadinya terhapus)" % (ident, ada.name))
+            else:
+                print("   BUAT %s %s" % (ident, nama))
             pembuat = User.objects.filter(email=email_pembuat, is_active=True).first()
             lead = User.objects.filter(email=email_lead, is_active=True).first()
-            data = {"name": nama, "identifier": ident, "description": deskripsi,
-                    "created_by": str(pembuat.id), "project_lead": str(lead.id)}
-            ser = ProjectSerializer(data=data, context={"workspace_id": str(ws.id)})
-            if not ser.is_valid():
-                print("   ! lewat %s: validasi gagal %s" % (ident, dict(ser.errors)))
+            if not APPLY:
                 continue
-            print("   BUAT %s %s" % (ident, nama))
-            if APPLY:
+            if ada is not None:
+                # Pernah dibuat lalu dihapus: hidupkan lagi. State/anggota lama
+                # yang masih ada dipakai lagi; yang hilang dilengkapi di bawah.
+                Project.objects.filter(pk=ada.pk).update(
+                    deleted_at=None, archived_at=None)
+                p = Project.objects.get(pk=ada.pk)
+            else:
+                data = {"name": nama, "identifier": ident, "description": deskripsi,
+                        "created_by": str(pembuat.id), "project_lead": str(lead.id)}
+                ser = ProjectSerializer(data=data, context={"workspace_id": str(ws.id)})
+                if not ser.is_valid():
+                    print("   ! lewat %s: validasi gagal %s" % (ident, dict(ser.errors)))
+                    continue
                 p = ser.save()
                 Project.objects.filter(pk=p.pk).update(created_by=pembuat)
-                jadikan_anggota_project(p.pk, pembuat.id, ROLE.ADMIN.value, workspace_id=ws.id)
-                jadikan_anggota_project(p.pk, lead.id, ROLE.ADMIN.value, workspace_id=ws.id)
+            jadikan_anggota_project(p.pk, pembuat.id, ROLE.ADMIN.value, workspace_id=ws.id)
+            jadikan_anggota_project(p.pk, lead.id, ROLE.ADMIN.value, workspace_id=ws.id)
+            if not State.objects.filter(
+                    project=p, deleted_at__isnull=True).exists():
                 State.objects.bulk_create(
                     [State(project=p, workspace=ws, created_by=pembuat, **s) for s in DEFAULT_STATES]
                 )
-                proj[ident] = Project.objects.get(pk=p.pk)
-            else:
-                n_pindah += 0
+            proj[ident] = Project.objects.get(pk=p.pk)
 
         print("\n1b) Pemetaan project baru ke departemen")
         dept = {d.kode: d for d in Departemen.objects.filter(workspace=ws, deleted_at__isnull=True)}
@@ -289,9 +300,10 @@ with transaction.atomic():
             # Konflik modul vs orang dilaporkan (modul menang, kecuali Development).
             if m1 in MODUL_SAP or m1 in MODUL_AI:
                 t_orang = rute_it(i, "")
-                if t_orang not in ("LEWATI",) and (
-                        (m1 in MODUL_SAP and t_orang != "ITSAP") or
-                        (m1 in MODUL_AI and t_orang != "ITAI")):
+                if (("IT", i.sequence_id) not in OVERRIDE
+                        and t_orang not in ("LEWATI",)
+                        and ((m1 in MODUL_SAP and t_orang != "ITSAP") or
+                             (m1 in MODUL_AI and t_orang != "ITAI"))):
                     print("   !    IT-%d konflik modul %s vs orang %s: ikut modul" % (
                         i.sequence_id, m1, t_orang))
             target_of[str(i.id)] = t
