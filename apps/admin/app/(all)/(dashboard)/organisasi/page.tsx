@@ -127,7 +127,8 @@ export default function OrganisasiPage() {
   const semuaProject = data
     ? [...data.divisi.flatMap((v) => v.departemen.flatMap((d) => d.projects)), ...data.tanpa_departemen]
     : [];
-  const namaProject = Object.fromEntries(semuaProject.map((p) => [p.id, `${p.identifier} · ${p.name}`]));
+  // 2026-10-24: project hanya nama, tanpa kode identifier.
+  const namaProject = Object.fromEntries(semuaProject.map((p) => [p.id, p.name]));
   const namaDivisi = Object.fromEntries((data?.divisi ?? []).map((v) => [v.id, v.nama]));
   const namaDepartemen = Object.fromEntries(
     (data?.divisi ?? []).flatMap((v) => v.departemen.map((d) => [d.id, `${d.kode} ${d.nama}`]))

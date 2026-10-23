@@ -56,7 +56,7 @@ print("E4, emoji + zona waktu project   " + ("[TERAPKAN]" if APPLY else "[UJI KE
 print("=" * 70)
 print("zona workspace: %s (bawaan project baru mengikuti ini)" % ws.timezone)
 
-n_emoji = n_zona = 0
+n_emoji = n_zona = n_logo = 0
 
 with transaction.atomic():
     hidup = list(Project.objects.filter(
@@ -74,6 +74,19 @@ with transaction.atomic():
         if APPLY:
             Project.objects.filter(pk=p.pk).update(emoji=mau)
 
+    print("\n2b) Logo project <- emoji (yang tampil di sidebar/dropdown)")
+    for p in sorted(hidup, key=lambda x: x.identifier):
+        if not p.emoji:
+            continue
+        logo = p.logo_props or {}
+        if logo.get("in_use") == "emoji" and (logo.get("emoji") or {}).get("value") == p.emoji:
+            continue
+        print("   %s   %s logo <- %s" % ("+" if APPLY else "rencana", p.identifier, p.emoji))
+        n_logo += 1
+        if APPLY:
+            Project.objects.filter(pk=p.pk).update(
+                logo_props={"in_use": "emoji", "emoji": {"value": p.emoji}})
+
     print("\n2) Zona waktu -> %s" % ZONA)
     for p in sorted(hidup, key=lambda x: x.identifier):
         if p.timezone == ZONA:
@@ -87,7 +100,7 @@ with transaction.atomic():
         transaction.set_rollback(True)
 
 print("-" * 70)
-print("  emoji: %d - zona waktu: %d" % (n_emoji, n_zona))
+print("  emoji: %d - logo: %d - zona waktu: %d" % (n_emoji, n_logo, n_zona))
 if not APPLY:
     print("  UJI KERING, transaksi dibatalkan, tidak ada yang ditulis.")
     print("  Jalankan dengan ORG_APPLY=1 untuk menerapkan.")
