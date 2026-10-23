@@ -75,17 +75,20 @@ with transaction.atomic():
             Project.objects.filter(pk=p.pk).update(emoji=mau)
 
     print("\n2b) Logo project <- emoji (yang tampil di sidebar/dropdown)")
+    print("   (Logo menyimpan desimal codepoint dash-pisah ala emoji picker,")
+    print("   mis. 💰 -> '128176'. Karakter mentah tidak dirender komponen Logo.)")
     for p in sorted(hidup, key=lambda x: x.identifier):
         if not p.emoji:
             continue
+        desimal = "-".join(str(ord(c)) for c in p.emoji)
         logo = p.logo_props or {}
-        if logo.get("in_use") == "emoji" and (logo.get("emoji") or {}).get("value") == p.emoji:
+        if logo.get("in_use") == "emoji" and (logo.get("emoji") or {}).get("value") == desimal:
             continue
-        print("   %s   %s logo <- %s" % ("+" if APPLY else "rencana", p.identifier, p.emoji))
+        print("   %s   %s logo <- %s (%s)" % ("+" if APPLY else "rencana", p.identifier, p.emoji, desimal))
         n_logo += 1
         if APPLY:
             Project.objects.filter(pk=p.pk).update(
-                logo_props={"in_use": "emoji", "emoji": {"value": p.emoji}})
+                logo_props={"in_use": "emoji", "emoji": {"value": desimal}})
 
     print("\n2) Zona waktu -> %s" % ZONA)
     for p in sorted(hidup, key=lambda x: x.identifier):
