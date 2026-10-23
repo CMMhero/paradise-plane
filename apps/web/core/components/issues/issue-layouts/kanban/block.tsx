@@ -34,7 +34,6 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 import { ApprovalCardBadge } from "@/components/issues/approval-card-badge";
-import { terkunciPersetujuan } from "@/hooks/use-aturan-tugas";
 // Kustomisasi Paradise: filter tunggu-persetujuan.
 import { lolosFilterApproval, useApprovalFilter } from "@/components/issues/approval-filter-context";
 import { IssueStats } from "@/plane-web/components/issues/issue-layouts/issue-stats";
@@ -193,8 +192,7 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
   const [isDraggingOverBlock, setIsDraggingOverBlock] = useState(false);
   const [isCurrentBlockDragging, setIsCurrentBlockDragging] = useState(false);
 
-  // Menunggu persetujuan = terkunci: tidak bisa digeser kolom/status maupun disunting.
-  const canEditIssueProperties = canEditProperties(issue?.project_id ?? undefined) && !terkunciPersetujuan(issue);
+  const canEditIssueProperties = canEditProperties(issue?.project_id ?? undefined);
   const isDragAllowed = canDragIssuesInCurrentGrouping && !issue?.tempId && canEditIssueProperties;
   // Kustomisasi Paradise: filter lokal tunggu-persetujuan (KEP-25). Provider
   // dipasang di root papan; di luar papan (contoh: pratinjau) context default

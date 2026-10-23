@@ -22,7 +22,7 @@ import type { TIssue } from "@plane/types";
 import type { TContextMenuItem } from "@plane/ui";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // hooks
-import { terkunciPersetujuan, useSetelStatusPersetujuan } from "@/hooks/use-aturan-tugas";
+import { useSetelStatusPersetujuan } from "@/hooks/use-aturan-tugas";
 // services
 import { PersetujuanService } from "@/services/persetujuan.service";
 
@@ -40,8 +40,10 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
   const [alasan, setAlasan] = useState("");
   const [isWorking, setIsWorking] = useState(false);
 
+  // Antrean tampil selama statusnya menunggu (bukan kunci: tugasnya bebas
+  // dipindah/diubah; yang dijaga server hanya MASUK status selesai).
   const kunci =
-    workspaceSlug && issue.project_id && terkunciPersetujuan(issue)
+    workspaceSlug && issue.project_id && issue?.approval_status === "menunggu"
       ? `PERSETUJUAN_TUGAS:${workspaceSlug}:${issue.id}`
       : null;
   const { data: baris, mutate } = useSWR(kunci, () =>

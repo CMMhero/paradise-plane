@@ -56,6 +56,7 @@ __all__ = [
     "jangkauan_hierarki",
     "calon_penyetuju",
     "galat_penugasan",
+    "galat_selesai_tugas",
     "galat_ubah_tugas",
     "periksa_penugasan",
     "aktor_dari_context",
@@ -549,124 +550,65 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
     return bawahan
 
 
-PESAN_TERKUNCI = (
-    "Tugas ini masih menunggu persetujuan atasan, jadi dikunci: belum bisa diubah, "
-    "dipindah status, diarsipkan, dihapus, atau dikerjakan sampai disetujui."
-)
+def galat_selesai_tugas(project_id, actor, state_baru, issue=None, penerima_ids=None):
+    """Bolehkah tugas ini MASUK status selesai? Kembalikan pesan galat atau None.
 
-# Detik sesudah pengajuan di mana PEMOHON masih boleh menyentuh sub-sumber
-# tugasnya (cycle, module, lampiran, tautan). Alasannya: modal create mengirim
-# panggilan susulan tepat sesudah tugas dibuat (`addIssueToCycle`,
-# `changeModulesInIssue`, unggah lampiran), dan tanpa jendela ini staf gagal
-# membuat tugas yang ada cycle/lampirannya.
-# ponytail: jendela waktu tetap; ganti dengan "lampiran ikut payload create"
-# kalau 120 detik ternyata kurang di jaringan lambat.
-MASA_SUSUN_DETIK = 120
+    Keputusan user 2026-10-24: persetujuan hanya di gerbang selesai. Sebelum itu
+    tugas bebas dipindah/diubah/dihapus/diarsipkan -- tidak ada lagi kunci.
+    Tugas yang memang butuh persetujuan (member menugaskan ke dirinya sendiri:
+    `butuh_persetujuan`) hanya boleh selesai kalau baris persetujuannya sudah
+    DISETUJUI; menunggu/ditolak/tanpa-baris = ditolak dengan pesan yang
+    mengarahkan (bukan "dilarang" tanpa jalan keluar).
 
-
-def galat_terkunci(issue_ids, actor, masa_susun=False):
-    """Pesan galat kalau salah satu tugas masih MENUNGGU persetujuan, atau None.
-
-    Keputusan user 2026-10-20: tugas staf yang menunggu persetujuan bukan cuma
-    berlabel, tapi TERKUNCI -- tidak bisa diubah, dipindah status, dihapus,
-    diarsip, atau dikerjakan siapa pun sampai disetujui. Atasan pun tidak
-    menyuntingnya: ia memutuskan lewat setujui/tolak. Tugas yang dibuat
-    supervisor/manager/direktur tidak pernah punya baris menunggu, jadi tidak
-    pernah terkunci.
-
-    - Gerbang mati -> tidak ada kunci (katup darurat melepas semuanya).
-    - Super Admin -> lolos (B1, jalan keluar IT).
-    - `masa_susun=True` -> pemohon lolos selama `MASA_SUSUN_DETIK` sesudah
-      pengajuan (hanya dipakai penjaga sub-sumber, bukan PATCH tugasnya).
+    Berlaku saat create (tugas langsung-done) maupun update (pindah status).
+    Tanpa baris persetujuan = gagal-tertutup: tugas yang butuh persetujuan tidak
+    boleh lolos hanya karena barisnya hilang.
     """
-    if not gerbang_aktif():
+    if not gerbang_aktif() or actor is None or state_baru is None:
         return None
-    ids = [i for i in (issue_ids or []) if i]
-    if not ids:
-        return None
-    if actor is not None:
-        from plane.db.superadmin import is_super_admin  # noqa: PLC0415
-
-        if is_super_admin(actor):
-            return None
-
-    from datetime import timedelta  # noqa: PLC0415
-
-    from django.utils import timezone  # noqa: PLC0415
-    from plane.db.models import PersetujuanPenugasan, STATUS_PERSETUJUAN_MENUNGGU  # noqa: PLC0415
-
-    menunggu = PersetujuanPenugasan.objects.filter(issue_id__in=ids, status=STATUS_PERSETUJUAN_MENUNGGU)
-    if masa_susun and actor is not None:
-        batas = timezone.now() - timedelta(seconds=MASA_SUSUN_DETIK)
-        menunggu = menunggu.exclude(pemohon_id=actor.id, created_at__gte=batas)
-    return PESAN_TERKUNCI if menunggu.exists() else None
-
-
-# Segmen URL yang TETAP terbuka saat tugas terkunci: percakapan, bukan pekerjaan.
-# Atasan perlu bisa bertanya "maksudnya apa?" sebelum menyetujui.
-_JALUR_LOLOS_KUNCI = ("/comments/", "/reactions/", "/issue-subscribers/", "/subscribe/")
-_KUNCI_ISI = ("issues", "issue_ids", "sub_issue_ids")
-
-
-def _uuid_saja(nilai):
-    import uuid  # noqa: PLC0415
-
-    hasil = []
-    for v in nilai if isinstance(nilai, (list, tuple)) else [nilai]:
-        if isinstance(v, dict):
-            v = v.get("id") or v.get("issue")
+    group = getattr(state_baru, "group", None)
+    if group is None:
         try:
-            hasil.append(uuid.UUID(str(v)))
-        except (TypeError, ValueError, AttributeError):
-            continue
-    return hasil
+            from plane.db.models import State  # noqa: PLC0415
 
+            group = State.objects.filter(pk=state_baru).values_list("group", flat=True).first()
+        except Exception:  # noqa: BLE001 -- state tak dikenal: bukan urusan gerbang ini
+            return None
+    if group != "completed":
+        return None
 
-def tugas_disentuh_request(request, kwargs):
-    """Id tugas (sub-sumber) yang disentuh request tulis: `issue_id` di URL + isi body.
+    from plane.db.superadmin import is_super_admin  # noqa: PLC0415
 
-    `pk` TIDAK di sini: di rute tugas ia adalah tugasnya sendiri, dan itu tidak
-    mendapat masa susun (lihat `KunciPersetujuanMixin.initial`).
-    """
-    ids = _uuid_saja(kwargs.get("issue_id"))
-    data = getattr(request, "data", None)
-    if hasattr(data, "get"):
-        for kunci in _KUNCI_ISI:
-            if kunci in data:
-                ids += _uuid_saja(data.get(kunci))
-        if isinstance(data.get("updates"), list):  # issue-dates bulk
-            ids += _uuid_saja(data.get("updates"))
-    return ids
+    if is_super_admin(actor):
+        return None
 
-
-class KunciPersetujuanMixin:
-    """Satu penjaga di base view untuk SEMUA jalur tulis yang menyentuh tugas.
-
-    Kenapa di base view, bukan di tiap endpoint: tugas punya belasan pintu tulis
-    (PATCH, arsip, hapus massal, cycle, module, sub-issue, relasi, tautan,
-    lampiran, worklog, issue-dates, API token). Penjaga per endpoint pasti ada
-    yang terlewat; satu penjaga di `initial()` tidak bisa terlewat.
-
-    `pk` ikut diperiksa walau di banyak rute ia bukan id tugas: id UUID tidak
-    bertabrakan, jadi pk komentar/tautan tidak akan pernah cocok dengan baris
-    persetujuan -- biayanya satu query ber-indeks per request tulis.
-    """
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        if request.method in ("GET", "HEAD", "OPTIONS") or not gerbang_aktif():
-            return
-        if any(seg in request.path for seg in _JALUR_LOLOS_KUNCI) or "persetujuan-penugasan" in request.path:
-            return
-        actor = request.user if getattr(request.user, "is_authenticated", False) else None
-        galat = galat_terkunci(_uuid_saja(kwargs.get("pk")), actor) or galat_terkunci(
-            tugas_disentuh_request(request, kwargs), actor, masa_susun=True
+    if penerima_ids is None and issue is not None:
+        penerima_ids = list(issue.issue_assignee.values_list("assignee_id", flat=True))
+    if not butuh_persetujuan(actor, project_id, penerima_ids or []):
+        return None
+    if issue is None or getattr(issue, "pk", None) is None:
+        # Baru dibuat langsung-done: belum mungkin ada baris persetujuan.
+        # Buat dulu sebagai belum-selesai, minta persetujuan, baru selesaikan.
+        return (
+            "Tugas ini baru boleh selesai setelah disetujui atasan. Buat dulu "
+            "sebagai belum selesai -- pengajuan persetujuannya dibuat otomatis."
         )
-        if galat:
-            from rest_framework.exceptions import PermissionDenied  # noqa: PLC0415
+    status_terakhir = status_persetujuan_tugas(issue.id)
+    if status_terakhir == "disetujui":
+        return None
+    if status_terakhir == "ditolak":
+        return (
+            "Atasan menolak penyelesaian tugas ini. Minta arahan atasan Anda "
+            "sebelum menyelesaikannya."
+        )
+    return (
+        "Tugas ini baru boleh selesai setelah disetujui atasan. "
+        "Pengajuan persetujuan Anda sedang menunggu keputusan."
+    )
 
-            # Kunci `error`, sama dengan galat 403 lain di app ini (toast klien membacanya).
-            raise PermissionDenied({"error": galat})
+# (Dihapus 2026-10-24: tidak ada lagi kunci tulis. Persetujuan hanya di
+# gerbang selesai -- `galat_selesai_tugas` di atas. Lihat riwayat git untuk
+# `galat_terkunci` / `KunciPersetujuanMixin` / masa susun.)
 
 
 def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, abaikan_katup=False):
@@ -696,10 +638,6 @@ def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, aba
 
     if is_super_admin(actor):
         return None
-
-    galat_kunci = galat_terkunci([issue.id], actor)
-    if galat_kunci:
-        return galat_kunci
 
     from plane.db.models import Project  # noqa: PLC0415
 

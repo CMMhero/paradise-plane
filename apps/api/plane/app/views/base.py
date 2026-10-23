@@ -28,8 +28,6 @@ from rest_framework.viewsets import ModelViewSet
 from plane.authentication.session import BaseSessionAuthentication
 from plane.utils.exception_logger import log_exception
 from plane.utils.paginator import BasePaginator
-# Kustomisasi Paradise: tugas staf yang menunggu persetujuan terkunci untuk semua jalur tulis
-from plane.utils.hierarki import KunciPersetujuanMixin
 from plane.utils.core.mixins import ReadReplicaControlMixin
 
 
@@ -47,7 +45,7 @@ class TimezoneMixin:
             timezone.deactivate()
 
 
-class BaseViewSet(KunciPersetujuanMixin, TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
+class BaseViewSet(TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
     model = None
 
     permission_classes = [IsAuthenticated]
@@ -148,7 +146,7 @@ class BaseViewSet(KunciPersetujuanMixin, TimezoneMixin, ReadReplicaControlMixin,
         return expand if expand else None
 
 
-class BaseAPIView(KunciPersetujuanMixin, TimezoneMixin, ReadReplicaControlMixin, APIView, BasePaginator):
+class BaseAPIView(TimezoneMixin, ReadReplicaControlMixin, APIView, BasePaginator):
     permission_classes = [IsAuthenticated]
 
     filter_backends = (DjangoFilterBackend, SearchFilter)

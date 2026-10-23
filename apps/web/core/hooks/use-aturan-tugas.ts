@@ -73,12 +73,11 @@ export const useTingkatSaya = (workspaceSlug: string | undefined, projectId: str
 export const stafSaja = (tingkat: number | null): boolean => tingkat != null && tingkat < TINGKAT_SUPERVISOR;
 
 /**
- * Tugas staf yang MENUNGGU persetujuan terkunci untuk semua orang (cermin
- * `galat_terkunci()` server): tidak bisa diubah, dipindah status, dihapus,
- * atau diarsip sampai disetujui. Komentar tetap terbuka.
+ * Menunggu persetujuan TIDAK lagi mengunci (keputusan user 2026-10-24:
+ * persetujuan hanya di gerbang selesai). Tugas bebas dipindah/diubah/dihapus
+ * sebelum disetujui; yang diblokir server (`galat_selesai_tugas`) hanyalah
+ * MASUK status selesai tanpa persetujuan yang disetujui.
  */
-export const terkunciPersetujuan = (issue: { approval_status?: string | null } | undefined | null): boolean =>
-  issue?.approval_status === "menunggu";
 
 /**
  * Samakan `approval_status` tugas di store sesudah keputusan (setujui/tolak/
@@ -107,7 +106,6 @@ export const bolehUbahTugas = (
   tingkatSaya: number | null
 ): boolean => {
   if (!issue) return false;
-  if (terkunciPersetujuan(issue)) return false;
   if (tingkatSaya == null) return true;
   if (tingkatSaya >= TINGKAT_SUPERVISOR) return true;
   if (!idSaya) return false;
@@ -165,7 +163,6 @@ export const useAturanTugas = () => {
      */
     bisaHapusTugas: (issue: TIssue | undefined | null, projectId?: string, tingkatSaya: number | null = null) => {
       if (adalahSuperAdmin) return true;
-      if (terkunciPersetujuan(issue)) return false;
       if (tingkatSaya != null) return bolehUbahTugas(issue, currentUser?.id ?? null, tingkatSaya);
       return (
         adalahPembuat(issue) ||
@@ -192,6 +189,9 @@ export const useAturanTugas = () => {
  *
  * Ini cerminan `bisa_hapus_tugas` server untuk KASUS HAPUS/ARSIP. Sengaja
  * terpisah dari `bolehUbahTugas` (aturan ubah lebih longgar untuk atasan).
+ *
+ * `terkunci` selalu False sejak 2026-10-24 (tidak ada lagi kunci menunggu;
+ * dipertahankan di bentuk balik supaya 6 pemanggil dropdown tak perlu diubah).
  */
 export const useBolehHapus = (
   workspaceSlug: string | undefined,
@@ -207,11 +207,10 @@ export const useBolehHapus = (
   if (memuat && !adalahSuperAdmin) return { boleh: false, terkunci: false };
   if (adalahSuperAdmin) return { boleh: true, terkunci: false };
   const idSaya = currentUser?.id;
-  const terkunci = terkunciPersetujuan(issue);
-  if (!issue || !idSaya) return { boleh: false, terkunci };
-  if (issue.created_by === idSaya) return { boleh: true, terkunci };
+  if (!issue || !idSaya) return { boleh: false, terkunci: false };
+  if (issue.created_by === idSaya) return { boleh: true, terkunci: false };
   const assignees = issue.assignee_ids ?? [];
-  if (assignees.length === 0) return { boleh: kuasaIds.length > 1, terkunci };
+  if (assignees.length === 0) return { boleh: kuasaIds.length > 1, terkunci: false };
   const kuasa = new Set(kuasaIds);
-  return { boleh: assignees.some((id) => kuasa.has(id)), terkunci };
+  return { boleh: assignees.some((id) => kuasa.has(id)), terkunci: false };
 };

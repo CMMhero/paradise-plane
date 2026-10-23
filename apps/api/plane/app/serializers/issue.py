@@ -228,6 +228,32 @@ class IssueCreateSerializer(BaseSerializer):
         if galat:
             raise serializers.ValidationError({"assignee_ids": galat})
 
+        # Gerbang selesai (keputusan user 2026-10-24): persetujuan hanya ditagih
+        # saat tugas MASUK status selesai, bukan saat dibuat/diubah/dihapus.
+        # Berlaku untuk create langsung-done maupun pindah status.
+        if gerbang_aktif() and (attrs.get("state") is not None or self.instance is None):
+            from plane.utils.hierarki import galat_selesai_tugas  # noqa: PLC0415
+
+            if self.instance is not None:
+                penerima = attrs.get("assignee_ids")
+                if penerima is None:
+                    penerima = list(
+                        self.instance.issue_assignee.values_list("assignee_id", flat=True)
+                    )
+                tugas_lama = self.instance
+            else:
+                penerima = attrs.get("assignee_ids") or []
+                tugas_lama = None
+            galat_selesai = galat_selesai_tugas(
+                self.context.get("project_id"),
+                _actor,
+                attrs.get("state"),
+                issue=tugas_lama,
+                penerima_ids=penerima,
+            )
+            if galat_selesai:
+                raise serializers.ValidationError({"state": galat_selesai})
+
         # Validate labels are from project
         if attrs.get("label_ids"):
             label_ids = [label.id for label in attrs["label_ids"]]

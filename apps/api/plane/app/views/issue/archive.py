@@ -261,13 +261,7 @@ class IssueArchiveViewSet(BaseViewSet):
         # menyembunyikannya dari SEMUA papan, jadi efeknya bagi orang lain sama
         # saja dengan menghapus. Tanpa penjaga ini, aturan hapus cuma menutup
         # pintu depan dan meninggalkan pintu samping terbuka.
-        # Kunci dulu, baru kepemilikan: pesan galat harus menyebut penantiannya.
-        from plane.utils.hierarki import galat_terkunci, gerbang_aktif  # noqa: PLC0415
-
-        if gerbang_aktif():
-            kunci = galat_terkunci([pk], request.user)
-            if kunci:
-                return Response({"error": kunci}, status=status.HTTP_403_FORBIDDEN)
+        # (2026-10-24: tanpa kunci menunggu -- persetujuan hanya di gerbang selesai.)
         if not bisa_hapus_tugas(request.user, issue, slug, project_id):
             return Response(
                 {
@@ -306,14 +300,6 @@ class IssueArchiveViewSet(BaseViewSet):
         )
         # Dijaga sama dengan arsip. Kalau memulihkan dibiarkan bebas, siapa pun
         # bisa mengembalikan tugas yang sengaja dipensiunkan pembuatnya.
-        # Kunci dulu, baru kepemilikan (lihat archive): pesan galat harus
-        # menyebut penantiannya.
-        from plane.utils.hierarki import galat_terkunci, gerbang_aktif  # noqa: PLC0415
-
-        if gerbang_aktif():
-            kunci = galat_terkunci([pk], request.user)
-            if kunci:
-                return Response({"error": kunci}, status=status.HTTP_403_FORBIDDEN)
         if not bisa_hapus_tugas(request.user, issue, slug, project_id):
             return Response(
                 {

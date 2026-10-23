@@ -27,7 +27,6 @@ from plane.api.rate_limit import ApiKeyRateThrottle
 from plane.utils.exception_logger import log_exception
 from plane.utils.paginator import BasePaginator
 # Kustomisasi Paradise: tugas staf yang menunggu persetujuan terkunci untuk semua jalur tulis
-from plane.utils.hierarki import KunciPersetujuanMixin
 from plane.utils.core.mixins import ReadReplicaControlMixin
 
 
@@ -48,7 +47,7 @@ class TimezoneMixin:
             timezone.deactivate()
 
 
-class BaseAPIView(KunciPersetujuanMixin, TimezoneMixin, GenericAPIView, ReadReplicaControlMixin, BasePaginator):
+class BaseAPIView(TimezoneMixin, GenericAPIView, ReadReplicaControlMixin, BasePaginator):
     authentication_classes = [APIKeyAuthentication]
 
     permission_classes = [IsAuthenticated]
@@ -153,7 +152,7 @@ class BaseAPIView(KunciPersetujuanMixin, TimezoneMixin, GenericAPIView, ReadRepl
         return expand if expand else None
 
 
-class BaseViewSet(KunciPersetujuanMixin, TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
+class BaseViewSet(TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
     model = None
 
     authentication_classes = [APIKeyAuthentication]

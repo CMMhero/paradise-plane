@@ -18,7 +18,6 @@ import { EIssueServiceType, EIssuesStoreType } from "@plane/types";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
-import { terkunciPersetujuan } from "@/hooks/use-aturan-tugas";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useWorkItemProperties } from "@/hooks/use-issue-properties";
 // local imports
@@ -229,14 +228,12 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
   if (!peekIssue?.workspaceSlug || !peekIssue?.projectId || !peekIssue?.issueId) return <></>;
 
   // Check if issue is editable, based on user role
-  // Kustomisasi Paradise: tugas staf yang menunggu persetujuan terkunci.
-  const isEditable =
-    allowPermissions(
-      [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-      EUserPermissionsLevel.PROJECT,
-      peekIssue?.workspaceSlug,
-      peekIssue?.projectId
-    ) && !terkunciPersetujuan(getIssueById(peekIssue.issueId));
+  const isEditable = allowPermissions(
+    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+    EUserPermissionsLevel.PROJECT,
+    peekIssue?.workspaceSlug,
+    peekIssue?.projectId
+  );
 
   return (
     <IssueView
