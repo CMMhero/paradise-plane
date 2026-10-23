@@ -724,7 +724,7 @@ class ProjectAssetEndpoint(BaseAPIView):
         ):
             return Response(
                 {
-                    "error": "Hanya pengunggahnya, kepala divisi pemilik folder, "
+                    "error": "Hanya pengunggahnya, admin/kepala/SPV divisi pemilik folder, "
                     "atau Super Admin yang boleh menghapus materi ini."
                 },
                 status=status.HTTP_403_FORBIDDEN,

@@ -143,7 +143,7 @@ export function KelolaFolder({
     <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XXL}>
       <div className="space-y-6 p-6">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Kelola {adalahDivisi ? "divisi" : "topik"}</h2>
+          <h2 className="text-lg font-semibold text-primary">Kelola divisi</h2>
           <p className="mt-1 text-12 text-tertiary">
             Perubahan di sini langsung berlaku untuk semua orang yang membuka Wiki.
           </p>
@@ -220,7 +220,7 @@ export function KelolaFolder({
                 </div>
                 <p className="text-11 text-tertiary">
                   Membaca tetap terbuka untuk semua orang. Yang diatur di sini hanya siapa yang boleh menaruh materi
-                  baru. Materi yang sudah ada tetap hanya bisa diubah atau dihapus pengunggahnya, kepala divisi
+                  baru. Materi yang sudah ada hanya bisa diubah atau dihapus pengunggahnya, admin/kepala/SPV divisi
                   pengelola, atau Super Admin.
                 </p>
               </div>
@@ -257,7 +257,7 @@ export function KelolaFolder({
           ) : (
             <Button variant="error-outline" size="sm" onClick={() => setKonfirmasiHapus(true)}>
               <Trash2 className="size-3.5" />
-              Hapus {adalahDivisi ? "divisi" : "topik"} ini
+              Hapus divisi ini
             </Button>
           )}
         </div>

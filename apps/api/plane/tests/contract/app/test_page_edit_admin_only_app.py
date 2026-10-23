@@ -23,6 +23,7 @@ Matriks yang dikunci di sini (project non-governance):
 import uuid
 
 import pytest
+from django.utils import timezone
 from rest_framework import status
 
 from plane.db.models import Page, Project, ProjectMember, ProjectPage, User
@@ -112,7 +113,7 @@ class TestWikiDefaultHanyaAdminBolehUbah:
             instance_name="uji",
             instance_id=f"uji-wiki-{uuid.uuid4().hex[:8]}",
             current_version="uji",
-            last_checked_at="2026-10-24T00:00:00Z",
+            last_checked_at=timezone.now(),
         )
         super_admin = User.objects.create(email=f"sa_{uuid.uuid4().hex[:8]}@uji.id", username="sa-wiki")
         InstanceAdmin.objects.create(instance=instance, user=super_admin, role=20)

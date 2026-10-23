@@ -5,7 +5,6 @@
 from plane.db.models import ProjectMember, Page
 from plane.app.permissions import ROLE
 from plane.utils.wiki_access import (
-    can_edit_wiki_page,
     can_manage_wiki_page,
     has_foreign_descendants,
     is_division_lead,
@@ -114,16 +113,19 @@ class ProjectPagePermission(BasePermission):
 
         # --- Membuat halaman baru -------------------------------------------
         if not page_id:
-            parent_id = request.data.get("parent")
-            if not parent_id:
-                # Folder Divisi = tingkat teratas, dan folder teratas tanpa baris
-                # WikiFolderAccess terkunci untuk semua orang. Jadi membuatnya
-                # harus disertai pemberian pemilik, dan itu pekerjaan admin.
-                return role == ADMIN
-            parent = Page.objects.filter(id=parent_id, workspace__slug=slug).first()
-            if parent is None:
-                return False
-            return can_edit_wiki_page(user, parent)
+            if request.data.get("parent"):
+                # Struktur Wiki disederhanakan (keputusan user 2026-10-24):
+                # hanya folder divisi, tanpa sub-topik. Materi ditaruh langsung
+                # di folder divisinya.
+                raise PermissionDenied(
+                    "Tidak ada lagi sub-topik: materi ditaruh langsung di folder divisi."
+                )
+            # Folder Divisi = tingkat teratas, dan folder teratas tanpa baris
+            # WikiFolderAccess terkunci untuk semua orang. Jadi membuatnya
+            # harus disertai pemberian pemilik, dan itu pekerjaan admin.
+            # (Folder divisi sendiri dibuat otomatis per Divisi; ini hanya
+            # untuk folder khusus seperti General.)
+            return role == ADMIN
 
         # --- Mengubah halaman yang sudah ada --------------------------------
         page = Page.objects.filter(id=page_id, workspace__slug=slug).first()

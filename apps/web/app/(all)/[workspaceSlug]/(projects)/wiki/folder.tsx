@@ -7,7 +7,7 @@
 
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { ArrowLeft, FolderPlus, Lock, Pencil, Settings2, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Lock, Pencil, Settings2, Trash2, Upload } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
@@ -15,16 +15,14 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { getPageName, renderFormattedDate } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
-import { GridKartu, KartuFolder, KartuKerangka, KartuMateri } from "@/components/wiki/kartu";
+import { GridKartu, KartuMateri } from "@/components/wiki/kartu";
 // services
-import { ProjectPageService } from "@/services/page";
 import { WikiMaterialService } from "@/services/wiki_material.service";
 // local imports
 import { GantiNamaMateri } from "./ganti-nama";
 import { KelolaFolder } from "./kelola";
 // local imports
 import {
-  anakDari,
   divisiDari,
   halamanDenganId,
   halamanTerlihat,
@@ -36,7 +34,6 @@ import {
   useProjectWiki,
 } from "./data";
 
-const layananHalaman = new ProjectPageService();
 const layananMateri = new WikiMaterialService();
 
 /**
@@ -55,7 +52,6 @@ function WikiFolderPage() {
   const { halaman, sedangMemuat, muatUlang } = usePohonWiki(slug, projectId);
   const { izin, muatUlangIzin } = useIzinWiki(slug, projectId);
   const berkasRef = useRef<HTMLInputElement>(null);
-  const [sedangMembuat, setSedangMembuat] = useState(false);
   const [sedangUnggah, setSedangUnggah] = useState(false);
   const [kelolaTerbuka, setKelolaTerbuka] = useState(false);
   const [materiDiganti, setMateriDiganti] = useState<{ id: string; title: string; name: string } | null>(null);
@@ -63,7 +59,6 @@ function WikiFolderPage() {
 
   const terlihat = halamanTerlihat(halaman);
   const folder = halamanDenganId(terlihat, idFolder);
-  const subFolder = anakDari(terlihat, idFolder);
   const divisi = divisiDari(terlihat, folder?.id);
   const izinDivisi = izinFolderDari(izin, divisi?.id);
 
@@ -78,27 +73,6 @@ function WikiFolderPage() {
   // Boleh mengurus folder ini. Jawabannya datang dari server, bukan dihitung
   // ulang di sini, supaya aturan izinnya tidak pernah bercabang dua.
   const bolehKelola = !!folder?.id && !!izin?.manageable_page_ids?.includes(folder.id);
-
-  const buatTopik = async () => {
-    if (!projectId || sedangMembuat) return;
-    setSedangMembuat(true);
-    try {
-      await layananHalaman.create(slug, projectId, {
-        name: "Topik baru",
-        parent: idFolder,
-        access: folder?.access,
-      });
-      await muatUlang();
-    } catch (error) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "Gagal",
-        message: (error as { error?: string })?.error || "Topik baru gagal dibuat.",
-      });
-    } finally {
-      setSedangMembuat(false);
-    }
-  };
 
   const unggah = async (files: FileList | null) => {
     if (!projectId || !files?.length) return;
@@ -168,7 +142,6 @@ function WikiFolderPage() {
     );
 
   const judul = getPageName(folder?.name);
-  const adalahDivisi = folder ? !folder.parent : true;
 
   return (
     <>
@@ -201,51 +174,6 @@ function WikiFolderPage() {
         </div>
 
         <div className="flex-1 space-y-8 px-page-x py-6">
-          {(subFolder.length > 0 || adalahDivisi) && (
-            <section>
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="flex items-baseline gap-2">
-                  <h2 className="text-15 font-semibold text-primary">Daftar Topik</h2>
-                  <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
-                    {subFolder.length} topik
-                  </span>
-                </div>
-                {bolehUnggah && (
-                  <Button variant="secondary" size="sm" onClick={buatTopik} loading={sedangMembuat}>
-                    <FolderPlus className="size-3.5" />
-                    Topik baru
-                  </Button>
-                )}
-              </div>
-
-              {sedangMemuat && subFolder.length === 0 ? (
-                <GridKartu>
-                  {[0, 1, 2, 3].map((i) => (
-                    <KartuKerangka key={i} />
-                  ))}
-                </GridKartu>
-              ) : subFolder.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-subtle px-6 py-10 text-center text-12 text-tertiary">
-                  Belum ada topik di sini. Materi boleh ditaruh langsung di bawah.
-                </p>
-              ) : (
-                <GridKartu>
-                  {subFolder.map((t) => (
-                    <KartuFolder
-                      key={t.id}
-                      to={`/${slug}/wiki/${t.id}`}
-                      judul={getPageName(t.name)}
-                      logoProps={t.logo_props}
-                      keterangan={`Diperbarui ${renderFormattedDate(t.updated_at)}`}
-                      jumlahAnak={anakDari(terlihat, t.id).length}
-                      satuanAnak="Sub-topik"
-                    />
-                  ))}
-                </GridKartu>
-              )}
-            </section>
-          )}
-
           <section>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">

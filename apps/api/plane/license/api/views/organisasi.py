@@ -65,6 +65,23 @@ def _workspace_utama():
     return Workspace.objects.filter(deleted_at__isnull=True).order_by("created_at").first()
 
 
+def _sinkron_wiki(workspace, actor):
+    """Folder Wiki mengikuti Divisi (keputusan user 2026-10-24).
+
+    Gagalnya sinkron Wiki tidak boleh menggagalkan tulis organisasi yang
+    sudah committed: struktur orang lebih penting daripada folder. Galatnya
+    dicatat lewat log, dan foldernya bisa dikejar manual/sync berikutnya.
+    """
+    try:
+        from plane.utils.wiki_access import pastikan_folder_divisi  # noqa: PLC0415
+
+        pastikan_folder_divisi(workspace, actor=actor)
+    except Exception as exc:  # noqa: BLE001 -- lihat docstring kenapa ditelan
+        from plane.utils.exception_logger import log_exception  # noqa: PLC0415
+
+        log_exception(exc)
+
+
 def _kode_nama(data, wajib):
     """(kode, nama, galat). Kode dinormalkan ke huruf besar tanpa spasi tepi."""
     kode = (data.get("kode") or "").strip().upper() if "kode" in data or wajib else None
@@ -252,6 +269,7 @@ class InstanceDivisiEndpoint(BaseAPIView):
         if Divisi.objects.filter(workspace=workspace, kode=kode).exists():
             return Response({"error": f"Kode divisi {kode} sudah dipakai."}, status=400)
         Divisi.objects.create(workspace=workspace, kode=kode, nama=nama)
+        _sinkron_wiki(workspace, request.user)
         return Response(pohon_organisasi(workspace), status=201)
 
     def patch(self, request, pk):
@@ -263,9 +281,15 @@ class InstanceDivisiEndpoint(BaseAPIView):
             return Response({"error": galat}, status=400)
         if kode and Divisi.objects.filter(workspace_id=divisi.workspace_id, kode=kode).exclude(pk=pk).exists():
             return Response({"error": f"Kode divisi {kode} sudah dipakai."}, status=400)
+        nama_lama = divisi.nama
         divisi.kode = kode or divisi.kode
         divisi.nama = nama or divisi.nama
         divisi.save(update_fields=["kode", "nama", "updated_at"])
+        if nama_lama != divisi.nama:
+            from plane.utils.wiki_access import selaraskan_nama_folder_divisi  # noqa: PLC0415
+
+            selaraskan_nama_folder_divisi(divisi.workspace, nama_lama, divisi.nama)
+        _sinkron_wiki(divisi.workspace, request.user)
         return Response(pohon_organisasi(divisi.workspace))
 
     def delete(self, request, pk):
@@ -303,6 +327,7 @@ class InstanceDepartemenEndpoint(BaseAPIView):
         except ValueError as e:
             return Response({"error": str(e)}, status=400)
         sinkronkan_workspace(workspace.id)
+        _sinkron_wiki(workspace, request.user)
         return Response(pohon_organisasi(workspace), status=201)
 
     def patch(self, request, pk):
@@ -365,6 +390,7 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             if project_ids is not None:
                 _ganti_project(dep, project_ids)
         sinkronkan_workspace(dep.workspace_id)
+        _sinkron_wiki(dep.workspace, request.user)
         return Response(pohon_organisasi(dep.workspace))
 
     def delete(self, request, pk):
@@ -399,6 +425,7 @@ class InstanceDepartemenEndpoint(BaseAPIView):
                 baris.delete(soft=False)
             dep.delete()
         sinkronkan_workspace(workspace.id)
+        _sinkron_wiki(workspace, request.user)
         return Response(pohon_organisasi(workspace))
 
 
@@ -525,6 +552,7 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
                 tandai_otomatis(workspace.id, project.id, uid)
                 ditempatkan.append(uid)
         sinkronkan_workspace(workspace.id)
+        _sinkron_wiki(workspace, request.user)
         return Response(
             {"pohon": pohon_organisasi(workspace), "ditempatkan": len(ditempatkan), "dilewati": len(dilewati)},
             status=201,

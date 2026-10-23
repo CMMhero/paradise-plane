@@ -76,7 +76,7 @@ function WikiMateriPage() {
               className="inline-flex items-center gap-1.5 text-12 text-tertiary transition-colors hover:text-secondary"
             >
               <ArrowLeft className="size-3.5" />
-              Kembali ke topiknya
+              Kembali ke divisinya
             </Link>
             <h1 className="text-2xl mt-2 truncate font-semibold tracking-tight text-primary">{data.title}</h1>
             <p className="mt-1 text-12 text-tertiary">
