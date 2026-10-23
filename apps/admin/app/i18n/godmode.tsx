@@ -488,7 +488,7 @@ const en = {
     move_division_other: "another division",
     remove_person: "Remove {name}",
     projects: "Projects ({n})",
-    project_picker: "Select projects…",
+    project_picker: "Select project…",
     save_projects: "Save projects",
     projects_moved_note: "Projects already in another department move here; people's access follows.",
     edit_label: "Edit {kind} {name}",
