@@ -112,21 +112,10 @@ def sinkronkan_workspace(workspace_id):
 
 @receiver(post_save, sender="db.JabatanOrganisasi")
 def jabatan_berubah(sender, instance, **kwargs):
-    """Jenjang/penempatan berubah (atau dicabut lewat soft delete) -> sinkron orangnya."""
-    if not _ditunda():
-        sinkronkan_satu(instance.workspace_id, instance.member_id)
+    """Jenjang/penempatan berubah (atau dicabut lewat soft delete) -> sinkron orangnya.
 
-
-@receiver(post_save, sender="db.SupervisorDepartemen")
-def supervisor_tambahan_berubah(sender, instance, created, **kwargs):
-    """Departemen tambahan supervisor berubah -> sinkron orangnya (KEP-32)."""
-    if not _ditunda():
-        sinkronkan_satu(instance.workspace_id, instance.member_id)
-
-
-@receiver(post_delete, sender="db.SupervisorDepartemen")
-def supervisor_tambahan_hapus(sender, instance, **kwargs):
-    """Baris tambahan dihapus permanen (hard delete) -> sinkron orangnya."""
+    Satu baris jabatan = satu departemen (supervisor multi-departemen punya
+    beberapa baris); tiap baris yang berubah memicu sinkron ulang orang itu."""
     if not _ditunda():
         sinkronkan_satu(instance.workspace_id, instance.member_id)
 

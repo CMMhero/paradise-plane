@@ -7,8 +7,10 @@
 
 Bentuk uji (dua divisi, tiga departemen, empat project):
 
-    SALES  -> SMT1 (P1, P1B) · SMT2 (P2)
+    SALES  -> SMT1 (P1) · SMT2 (P2)
     HRGA   -> HR   (P3)
+
+P1B warisan tak-terpetakan (bekas payung, bukan milik siapa-siapa).
 
 Kontrol negatif yang dikunci:
 
@@ -106,7 +108,9 @@ def org(db, workspace, create_user):
     o.smt1 = Departemen.objects.create(workspace=workspace, divisi=o.sales, kode="SMT1", nama="Sales Team 1")
     o.smt2 = Departemen.objects.create(workspace=workspace, divisi=o.sales, kode="SMT2", nama="Sales Team 2")
     o.hr = Departemen.objects.create(workspace=workspace, divisi=o.hrga, kode="HR", nama="Human Resources")
-    for dep, p in ((o.smt1, o.p1), (o.smt1, o.p1b), (o.smt2, o.p2), (o.hr, o.p3)):
+    # 1:1 (0146, keputusan user 2026-10-23): satu departemen tepat satu project.
+    # P1B sengaja TAK dipetakan: ia warisan payung untuk menguji jalur tak-terpetakan.
+    for dep, p in ((o.smt1, o.p1), (o.smt2, o.p2), (o.hr, o.p3)):
         DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=p)
 
     o.manager = _user("mgr", workspace)
@@ -176,20 +180,20 @@ class TestStrukturKosong:
 class TestJangkauanLihat:
     @pytest.mark.django_db
     def test_staf_melihat_semua_project_departemennya_saja(self, org):
-        assert _aktif(org.staf1, org.p1) and _aktif(org.staf1, org.p1b)
+        assert _aktif(org.staf1, org.p1)
         assert _role(org.staf1, org.p1) == 15
         assert not _aktif(org.staf1, org.p2)
         assert not _aktif(org.staf1, org.p3)
 
     @pytest.mark.django_db
     def test_supervisor_hanya_departemennya(self, org):
-        assert _aktif(org.sup1, org.p1) and _aktif(org.sup1, org.p1b)
+        assert _aktif(org.sup1, org.p1)
         assert _role(org.sup1, org.p1) == 20
         assert not _aktif(org.sup1, org.p2)
 
     @pytest.mark.django_db
     def test_manager_semua_departemen_di_divisinya_tidak_divisi_lain(self, org):
-        for p in (org.p1, org.p1b, org.p2):
+        for p in (org.p1, org.p2):
             assert _aktif(org.manager, p) and _role(org.manager, p) == 20
         assert not _aktif(org.manager, org.p3)
 
@@ -204,8 +208,13 @@ class TestJangkauanLihat:
 
     @pytest.mark.django_db
     def test_project_baru_di_departemen_langsung_terjangkau(self, org, create_user):
-        baru = Project.objects.create(name="SMT2 Ops", identifier="P2B", workspace=org.ws, created_by=create_user)
-        DepartemenProject.objects.create(workspace=org.ws, departemen=org.smt2, project=baru)
+        # 1:1: project baru untuk departemen baru (bukan project kedua di smt2).
+        smt3 = Departemen.objects.create(workspace=org.ws, divisi=org.sales, kode="SMT3", nama="Sales Team 3")
+        baris = JabatanOrganisasi.objects.get(member=org.staf2)
+        baris.departemen = smt3
+        baris.save()
+        baru = Project.objects.create(name="SMT3 Board", identifier="P3B", workspace=org.ws, created_by=create_user)
+        DepartemenProject.objects.create(workspace=org.ws, departemen=smt3, project=baru)
         assert _aktif(org.staf2, baru) and _aktif(org.manager, baru)
         assert not _aktif(org.staf1, baru)
 
@@ -219,8 +228,8 @@ class TestJangkauanLihat:
 class TestWewenang:
     @pytest.mark.django_db
     def test_divisi_diawasi_per_jenjang(self, org):
-        assert divisi_diawasi(org.manager.id, org.ws.id) == {org.p1.id, org.p1b.id, org.p2.id}
-        assert divisi_diawasi(org.sup1.id, org.ws.id) == {org.p1.id, org.p1b.id}
+        assert divisi_diawasi(org.manager.id, org.ws.id) == {org.p1.id, org.p2.id}
+        assert divisi_diawasi(org.sup1.id, org.ws.id) == {org.p1.id}
         assert divisi_diawasi(org.staf1.id, org.ws.id) == set()
 
     @pytest.mark.django_db
@@ -253,10 +262,10 @@ class TestWewenang:
     @pytest.mark.django_db
     def test_staf_melihat_tugas_rekan_tapi_tidak_bisa_mengubahnya(self, org, monkeypatch):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        tugas = Issue.objects.create(workspace=org.ws, project=org.p1b, name="Milik rekan", created_by=org.staf1b)
-        IssueAssignee.objects.create(issue=tugas, assignee=org.staf1b, project=org.p1b, workspace=org.ws)
+        tugas = Issue.objects.create(workspace=org.ws, project=org.p1, name="Milik rekan", created_by=org.staf1b)
+        IssueAssignee.objects.create(issue=tugas, assignee=org.staf1b, project=org.p1, workspace=org.ws)
         client = _klien(org.staf1)
-        url = URL_ISSUE_DETAIL.format(slug=org.ws.slug, project_id=org.p1b.id, issue_id=tugas.id)
+        url = URL_ISSUE_DETAIL.format(slug=org.ws.slug, project_id=org.p1.id, issue_id=tugas.id)
         assert client.get(url).status_code == status.HTTP_200_OK
         assert client.patch(url, {"priority": "urgent"}, format="json").status_code == status.HTTP_403_FORBIDDEN
 
@@ -273,7 +282,7 @@ class TestPerubahanPenempatan:
         baris = JabatanOrganisasi.objects.get(member=org.staf1)
         baris.departemen = org.smt2
         baris.save()
-        assert not _aktif(org.staf1, org.p1) and not _aktif(org.staf1, org.p1b)
+        assert not _aktif(org.staf1, org.p1)
         assert _aktif(org.staf1, org.p2)
 
     @pytest.mark.django_db
@@ -385,19 +394,21 @@ class TestGodModeOrganisasi:
 
     @pytest.mark.django_db
     def test_project_pindah_departemen_lewat_god_mode(self, org, super_admin):
-        """Tukar isi smt1 (p1+p1b warisan -> p1b saja): p1 jadi legacy, akses menyesuaikan."""
+        """Pindah project antar departemen: p2 (milik smt2) dipindah ke smt1.
+
+        smt2 jadi tanpa project (transien, diperbaiki lewat adopsi), akses menyesuaikan."""
         r = _god(
-            InstanceDepartemenEndpoint, "patch", super_admin, {"project_ids": [str(org.p1b.id)]}, pk=org.smt1.id
+            InstanceDepartemenEndpoint, "patch", super_admin, {"project_ids": [str(org.p2.id)]}, pk=org.smt1.id
         )
         assert r.status_code == status.HTTP_200_OK, r.data
-        assert DepartemenProject.objects.get(project=org.p1b).departemen_id == org.smt1.id
+        assert DepartemenProject.objects.get(project=org.p2).departemen_id == org.smt1.id
         assert not DepartemenProject.objects.filter(project=org.p1).exists()
-        assert not _aktif(org.staf1, org.p1) and _aktif(org.staf1, org.p1b)
+        assert not _aktif(org.staf1, org.p1) and _aktif(org.staf1, org.p2)
 
     @pytest.mark.django_db
     def test_departemen_menolak_project_kedua(self, org, super_admin):
         """KEP-32: satu departemen tepat satu project. Project kedua DITOLAK (400)."""
-        # smt1 sudah memegang p1 (dan p1b warisan model-level). Menambah lewat API ditolak.
+        # smt1 sudah memegang p1. Menambah p2 (milik smt2) lewat API ditolak.
         r = _god(
             InstanceDepartemenEndpoint,
             "patch",
@@ -407,6 +418,15 @@ class TestGodModeOrganisasi:
         )
         assert r.status_code == status.HTTP_400_BAD_REQUEST
         assert DepartemenProject.objects.get(project=org.p2).departemen_id == org.smt2.id
+
+    @pytest.mark.django_db
+    def test_departemen_menolak_project_kedua_lewat_db(self, org):
+        """0146: penegakan di database, bukan cuma validasi endpoint."""
+        from django.db import IntegrityError, transaction
+
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                DepartemenProject.objects.create(workspace=org.ws, departemen=org.smt1, project=org.p2)
 
 
 # --------------------------------------------------------------------------
@@ -431,7 +451,7 @@ class TestStrukturSidebar:
         assert [v["kode"] for v in data["divisi"]] == ["SALES"]
         departemen = data["divisi"][0]["departemen"]
         assert [d["kode"] for d in departemen] == ["SMT1"]
-        assert set(departemen[0]["project_ids"]) == {str(org.p1.id), str(org.p1b.id)}
+        assert set(departemen[0]["project_ids"]) == {str(org.p1.id)}
 
     @pytest.mark.django_db
     def test_manager_melihat_semua_departemen_divisinya(self, org):
@@ -451,7 +471,7 @@ class TestGantiKeanggotaanTidakMengalahkanHierarki:
         force_authenticate(request, user=super_admin)
         r = InstanceDivisiAnggotaEndpoint.as_view()(request)
         assert r.status_code == status.HTTP_200_OK, r.data
-        assert _aktif(org.staf1, org.p1) and _aktif(org.staf1, org.p1b)
+        assert _aktif(org.staf1, org.p1)
 
 
 @pytest.mark.contract
@@ -602,23 +622,25 @@ class TestDepartemenSatuProject:
 
 @pytest.mark.contract
 class TestSupervisorMultiDepartemen:
-    """KEP-32: satu supervisor boleh mengawasi beberapa departemen."""
+    """2026-10-23: supervisor ditempatkan di beberapa departemen (satu baris
+    jabatan per departemen, tanpa konsep utama/tambahan)."""
 
     @pytest.mark.django_db
     def test_supervisor_melihat_dua_departemen(self, org):
-        from plane.db.models import SupervisorDepartemen
         from plane.utils.hierarki import divisi_diawasi, jangkauan_hierarki
 
-        SupervisorDepartemen.objects.create(workspace=org.ws, member=org.sup1, departemen=org.smt2)
+        JabatanOrganisasi.objects.create(
+            workspace=org.ws, member=org.sup1, tingkat=TINGKAT_SUPERVISOR, departemen=org.smt2
+        )
         assert org.p2.id in jangkauan_hierarki(org.sup1.id, org.ws.id)
         assert org.p2.id in divisi_diawasi(org.sup1.id, org.ws.id)
         assert org.p3.id not in divisi_diawasi(org.sup1.id, org.ws.id)
-        # Sinkron signal memberi keanggotaan project departemen tambahan.
+        # Sinkron signal memberi keanggotaan project departemen kedua.
         assert _aktif(org.sup1, org.p2) and _role(org.sup1, org.p2) == 20
         assert not _aktif(org.staf1, org.p2)  # staf tidak ikut melebar
 
     @pytest.mark.django_db
-    def test_setel_dan_cabut_ekstra_lewat_god_mode(self, org, super_admin):
+    def test_setel_dan_cabut_multi_lewat_god_mode(self, org, super_admin):
         from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
 
         def _setel(data):
@@ -626,24 +648,30 @@ class TestSupervisorMultiDepartemen:
             force_authenticate(request, user=super_admin)
             return InstanceHierarkiEndpoint.as_view()(request)
 
-        r = _setel({"member_id": str(org.sup1.id), "departemen_ids": [str(org.smt2.id)]})
+        # departemen_ids = pengganti penuh: kirim lengkap, bukan tambah-satu.
+        r = _setel({"member_id": str(org.sup1.id), "departemen_ids": [str(org.smt1.id), str(org.smt2.id)]})
         assert r.status_code == status.HTTP_200_OK, r.data
         assert set(r.data["member"]["departemen_ids"]) == {str(org.smt1.id), str(org.smt2.id)}
         assert _aktif(org.sup1, org.p2)
 
-        r = _setel({"member_id": str(org.sup1.id), "departemen_ids": []})
+        r = _setel({"member_id": str(org.sup1.id), "departemen_ids": [str(org.smt1.id)]})
         assert r.status_code == status.HTTP_200_OK, r.data
         assert r.data["member"]["departemen_ids"] == [str(org.smt1.id)]
         assert not _aktif(org.sup1, org.p2)
         assert _aktif(org.sup1, org.p1)
 
+        r = _setel({"member_id": str(org.sup1.id), "departemen_ids": []})
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert r.data["member"]["departemen_ids"] == []
+        assert not _aktif(org.sup1, org.p1)
+
     @pytest.mark.django_db
-    def test_staf_tidak_bisa_diberi_ekstra(self, org, super_admin):
+    def test_multi_departemen_hanya_supervisor(self, org, super_admin):
         from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
 
         request = APIRequestFactory().post(
             "/api/instances/hierarki/",
-            {"member_id": str(org.staf1.id), "departemen_ids": [str(org.smt2.id)]},
+            {"member_id": str(org.staf1.id), "departemen_ids": [str(org.smt1.id), str(org.smt2.id)]},
             format="json",
         )
         force_authenticate(request, user=super_admin)
@@ -651,13 +679,29 @@ class TestSupervisorMultiDepartemen:
         assert r.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.django_db
-    def test_ekstra_tampil_di_pohon_sebagai_tambahan(self, org, super_admin):
-        from plane.db.models import SupervisorDepartemen
+    def test_turun_jenjang_dengan_multi_departemen_ditolak(self, org, super_admin):
+        from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
 
-        SupervisorDepartemen.objects.create(workspace=org.ws, member=org.sup1, departemen=org.smt2)
+        JabatanOrganisasi.objects.create(
+            workspace=org.ws, member=org.sup1, tingkat=TINGKAT_SUPERVISOR, departemen=org.smt2
+        )
+        request = APIRequestFactory().post(
+            "/api/instances/hierarki/",
+            {"member_id": str(org.sup1.id), "tingkat": TINGKAT_MEMBER},
+            format="json",
+        )
+        force_authenticate(request, user=super_admin)
+        r = InstanceHierarkiEndpoint.as_view()(request)
+        assert r.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.django_db
+    def test_multi_tampil_di_pohon_tanpa_flag_tambahan(self, org, super_admin):
+        JabatanOrganisasi.objects.create(
+            workspace=org.ws, member=org.sup1, tingkat=TINGKAT_SUPERVISOR, departemen=org.smt2
+        )
         r = _god(InstanceOrganisasiEndpoint, "get", super_admin)
         assert r.status_code == status.HTTP_200_OK
         sales = next(v for v in r.data["divisi"] if v["kode"] == "SALES")
         smt2 = next(d for d in sales["departemen"] if d["kode"] == "SMT2")
         sup = next(a for a in smt2["anggota"] if a["id"] == str(org.sup1.id))
-        assert sup["tambahan"] is True
+        assert "tambahan" not in sup

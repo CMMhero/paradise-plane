@@ -48,9 +48,9 @@ __all__ = [
     "divisi_anggota",
     "divisi_diawasi",
     "struktur_aktif",
-    "penempatan",
-    "departemen_tambahan_ids",
+    "penempatan_semua",
     "semua_departemen_ids",
+    "semua_divisi_ids",
     "project_departemen",
     "project_divisi",
     "jangkauan_hierarki",
@@ -136,10 +136,17 @@ def peta_tingkat(workspace_id):
     calon penyetuju). Sengaja tidak difilter `is_active`: orang yang akunnya
     dinonaktifkan tetap punya jabatan, dan barisnya tetap diperlukan untuk membaca
     riwayat.
+
+    Satu orang bisa punya beberapa baris (supervisor multi-departemen): yang dipakai
+    adalah TERTINGGI. Tingkat menentukan WEWENANG, departemen menentukan CAKUPAN.
     """
-    return dict(
-        JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list("member_id", "tingkat")
-    )
+    peta = {}
+    for uid, tingkat in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
+        "member_id", "tingkat"
+    ):
+        if uid not in peta or tingkat > peta[uid]:
+            peta[uid] = tingkat
+    return peta
 
 
 def tingkat_anggota(user_id, workspace_id):
@@ -147,15 +154,18 @@ def tingkat_anggota(user_id, workspace_id):
 
     None bukan 0 dan bukan TINGKAT_MEMBER. Perbedaan ini yang membuat "datanya kurang"
     tidak pernah diam-diam berubah arti jadi "dia staf".
+
+    Multi-baris (supervisor dua departemen) menyimpan tingkat yang sama di tiap
+    baris; MAX di sini pengaman kalau datanya sempat miring, bukan fitur.
     """
     if user_id is None:
         return None
-    baris = (
+    return (
         JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
+        .order_by("-tingkat")
         .values_list("tingkat", flat=True)
         .first()
     )
-    return baris
 
 
 def divisi_anggota(user_id, workspace_id):
@@ -184,14 +194,18 @@ def struktur_aktif(workspace_id):
     return Divisi.objects.filter(workspace_id=workspace_id).exists()
 
 
-def penempatan(user_id, workspace_id):
-    """(tingkat, departemen_id, divisi_id) satu orang, atau None kalau jenjangnya belum diisi."""
+def penempatan_semua(user_id, workspace_id):
+    """Semua baris penempatan satu orang: [(tingkat, departemen_id, divisi_id)].
+
+    Supervisor multi-departemen punya satu baris per departemen (keputusan user
+    2026-10-23: tidak ada lagi "utama" vs "tambahan"). Kosong = jenjang belum diisi.
+    """
     if user_id is None:
-        return None
-    return (
+        return []
+    return list(
         JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
+        .order_by("-tingkat", "departemen_id", "divisi_id")
         .values_list("tingkat", "departemen_id", "divisi_id")
-        .first()
     )
 
 
@@ -208,29 +222,14 @@ def project_departemen(departemen_id):
     )
 
 
-def departemen_tambahan_ids(user_id, workspace_id):
-    """Id departemen TAMBAHAN yang diawasi supervisor ini (KEP-32).
-
-    Penempatan utama (`JabatanOrganisasi.departemen`) TIDAK termasuk di sini —
-    pemanggil yang butuh "semua" memakai `semua_departemen_ids`. Kosong untuk
-    staf/manager/direktur: mereka tidak memakai jalur ini.
-    """
-    if user_id is None:
-        return set()
-    from plane.db.models import SupervisorDepartemen  # noqa: PLC0415
-
-    return set(
-        SupervisorDepartemen.objects.filter(
-            workspace_id=workspace_id, member_id=user_id, departemen__deleted_at__isnull=True
-        ).values_list("departemen_id", flat=True)
-    )
-
-
 def semua_departemen_ids(user_id, workspace_id):
-    """Id SEMUA departemen dalam jangkauan supervisor ini: utama + tambahan (KEP-32)."""
-    baris = penempatan(user_id, workspace_id)
-    utama = {baris[1]} if baris and baris[1] else set()
-    return utama | departemen_tambahan_ids(user_id, workspace_id)
+    """Id SEMUA departemen tempat orang ini ditempatkan (gabungan semua barisnya)."""
+    return {dept for _, dept, _ in penempatan_semua(user_id, workspace_id) if dept}
+
+
+def semua_divisi_ids(user_id, workspace_id):
+    """Id SEMUA divisi tempat orang ini ditempatkan (gabungan semua barisnya)."""
+    return {div for _, _, div in penempatan_semua(user_id, workspace_id) if div}
 
 
 def project_divisi(divisi_id):
@@ -260,8 +259,8 @@ def jangkauan_hierarki(user_id, workspace_id):
     Ini sisi LIHAT, bukan sisi wewenang (itu `divisi_diawasi`):
 
         direktur   -> semua project, role 20
-        manager    -> semua project di divisinya, role 20
-        supervisor -> project departemennya (utama + tambahan, KEP-32), role 20
+        manager    -> semua project di divisinya (semua baris divisinya), role 20
+        supervisor -> project SEMUA departemennya, role 20
         staf       -> project departemennya, role 15 (lihat semua, edit hanya
                       tugas miliknya: `galat_ubah_tugas`)
 
@@ -269,32 +268,39 @@ def jangkauan_hierarki(user_id, workspace_id):
     """
     if user_id is None or not struktur_aktif(workspace_id):
         return {}
-    baris = penempatan(user_id, workspace_id)
-    if baris is None:
+    baris = penempatan_semua(user_id, workspace_id)
+    if not baris:
         return {}
-    tingkat, departemen_id, divisi_id = baris
+    tingkat = max(t for t, _, _ in baris)
     if tingkat >= TINGKAT_DIREKTUR:
         return {pid: 20 for pid in _semua_project(workspace_id)}
     if tingkat >= TINGKAT_MANAGER:
-        return {pid: 20 for pid in project_divisi(divisi_id)}
+        pids = set()
+        for div_id in semua_divisi_ids(user_id, workspace_id):
+            pids |= project_divisi(div_id)
+        return {pid: 20 for pid in pids}
     role = 20 if tingkat >= TINGKAT_SUPERVISOR else 15
     if tingkat >= TINGKAT_SUPERVISOR:
-        # Supervisor boleh memegang beberapa departemen (KEP-32): utama + tambahan.
+        # Supervisor boleh ditempatkan di beberapa departemen (2026-10-23):
+        # satu baris jabatan per departemen, jangkauan = gabungan semuanya.
         pids = set()
         for dep_id in semua_departemen_ids(user_id, workspace_id):
             pids |= project_departemen(dep_id)
         return {pid: role for pid in pids}
-    return {pid: role for pid in project_departemen(departemen_id)}
+    pids = set()
+    for dep_id in semua_departemen_ids(user_id, workspace_id):
+        pids |= project_departemen(dep_id)
+    return {pid: role for pid in pids}
 
 
 def divisi_diawasi(user_id, workspace_id):
     """Set id project yang diawasi orang ini ("divisi yang dia bawahi").
 
     Dengan struktur aktif (KEP-29) jawabannya datang dari hierarki, BUKAN dari
-    keanggotaan project: supervisor = project departemennya (utama + tambahan,
-    KEP-32), manager = project divisinya, direktur = semua (dibatasi baris
-    `PengawasanDivisi` kalau ada). Keanggotaan project eksplisit memberi akses
-    kolaborasi, tidak memberi wewenang.
+    keanggotaan project: supervisor = project SEMUA departemennya, manager =
+    project divisinya, direktur = semua (dibatasi baris `PengawasanDivisi` kalau
+    ada). Keanggotaan project eksplisit memberi akses kolaborasi, tidak memberi
+    wewenang.
 
     Tanpa struktur, perilaku lama di bawah ini yang berlaku.
 
@@ -322,8 +328,8 @@ def divisi_diawasi(user_id, workspace_id):
             "project_id", flat=True
         )
     )
-    baris = penempatan(user_id, workspace_id)
-    tingkat = baris[0] if baris else None
+    baris = penempatan_semua(user_id, workspace_id)
+    tingkat = max((t for t, _, _ in baris), default=None)
 
     if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
         # Direktur: semua divisi, KECUALI kalau ada baris eksplisit -- di situ ia
@@ -336,9 +342,11 @@ def divisi_diawasi(user_id, workspace_id):
         return set()
 
     if struktur_aktif(workspace_id):
-        _, departemen_id, divisi_id = baris
         if tingkat >= TINGKAT_MANAGER:
-            return project_divisi(divisi_id)
+            pids = set()
+            for div_id in semua_divisi_ids(user_id, workspace_id):
+                pids |= project_divisi(div_id)
+            return pids
         if tingkat >= TINGKAT_SUPERVISOR:
             pids = set()
             for dep_id in semua_departemen_ids(user_id, workspace_id):

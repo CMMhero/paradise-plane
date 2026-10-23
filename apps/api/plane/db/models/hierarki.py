@@ -67,7 +67,12 @@ SUMBER_MANUAL = "manual"
 
 
 class JabatanOrganisasi(BaseModel):
-    """Jenjang satu orang di satu workspace. Satu orang satu baris.
+    """Jenjang satu orang di satu workspace. Satu orang BISA punya beberapa baris.
+
+    Keputusan user 2026-10-23: supervisor boleh DITEMPATKAN di lebih dari satu
+    departemen (mis. Fran spv IT-AI sekaligus spv IT-SAP) -- satu baris per
+    departemen, tanpa konsep "utama" vs "tambahan" (tabel SupervisorDepartemen
+    dihapus di 0146). Jangkauan = gabungan semua barisnya.
 
     Jabatan adalah atribut ORANG, bukan atribut keanggotaan project: ia tidak ikut
     berubah saat orangnya pindah divisi. Karena itu tabelnya di level workspace,
@@ -85,8 +90,9 @@ class JabatanOrganisasi(BaseModel):
     sumber = models.CharField(max_length=64, default=SUMBER_MANUAL)
     catatan = models.TextField(blank=True, default="")
     # Penempatan (KEP-29), satu sumber kebenaran jangkauan:
-    #   staf/supervisor -> `departemen` · manager -> `divisi` (ditetapkan eksplisit,
-    #   TIDAK ditebak dari keanggotaan departemen) · direktur -> keduanya kosong.
+    #   staf/supervisor -> `departemen` (boleh BANYAK baris untuk supervisor) .
+    #   manager -> `divisi` (ditetapkan eksplisit, TIDAK ditebak dari keanggotaan
+    #   departemen) · direktur -> keduanya kosong.
     departemen = models.ForeignKey(
         "db.Departemen", related_name="penempatan", null=True, blank=True, on_delete=models.SET_NULL
     )
@@ -97,17 +103,30 @@ class JabatanOrganisasi(BaseModel):
     class Meta:
         # unique_together menyertakan deleted_at mengikuti pola model kustom kita
         # (WikiGovernedProject, WikiFolderAccess, SuperAdminTerlihatDiProject).
-        unique_together = ["workspace", "member", "deleted_at"]
-        # ...tapi unique_together SAJA tidak cukup: di Postgres, NULL tidak sama dengan
-        # NULL, jadi dua baris ber-deleted_at NULL tetap bisa masuk dan orangnya akan
-        # punya DUA jenjang sekaligus. Resolusinya lalu bergantung urutan baris — gagal
-        # senyap. Constraint parsial di bawah yang benar-benar menutupnya.
+        # NULL dianggap berbeda di Postgres, jadi ini dokumentasi; penegak yang
+        # sebenarnya adalah tiga constraint parsial di bawah (satu per pola isi).
+        unique_together = ["workspace", "member", "departemen", "divisi", "deleted_at"]
         constraints = [
+            # Satu baris per (orang, departemen): supervisor dua departemen = dua baris.
+            models.UniqueConstraint(
+                fields=["workspace", "member", "departemen"],
+                condition=Q(deleted_at__isnull=True),
+                name="jabatan_organisasi_unique_dept_aktif",
+            ),
+            # Satu baris per (orang, divisi): manager dua divisi = dua baris.
+            models.UniqueConstraint(
+                fields=["workspace", "member", "divisi"],
+                condition=Q(deleted_at__isnull=True),
+                name="jabatan_organisasi_unique_divisi_aktif",
+            ),
+            # Tanpa tempat (direktur): tetap satu baris per orang.
             models.UniqueConstraint(
                 fields=["workspace", "member"],
-                condition=Q(deleted_at__isnull=True),
-                name="jabatan_organisasi_unique_aktif",
-            )
+                condition=Q(deleted_at__isnull=True)
+                & Q(departemen__isnull=True)
+                & Q(divisi__isnull=True),
+                name="jabatan_organisasi_unique_tanpa_tempat_aktif",
+            ),
         ]
         verbose_name = "Jabatan Organisasi"
         verbose_name_plural = "Jabatan Organisasi"

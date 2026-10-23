@@ -231,6 +231,40 @@ class TestJabatanOrganisasi:
                 )
 
     @pytest.mark.django_db
+    def test_multi_departemen_diperbolehkan_untuk_orang_yang_sama(self, workspace, staf_a):
+        """2026-10-23: satu orang boleh punya dua baris beda departemen.
+
+        Constraint parsial hanya melarang duplikat (orang, departemen) yang sama."""
+        from plane.db.models import Departemen, Divisi
+
+        div = Divisi.objects.create(workspace=workspace, kode="D", nama="Div")
+        a = Departemen.objects.create(workspace=workspace, divisi=div, kode="A", nama="A")
+        b = Departemen.objects.create(workspace=workspace, divisi=div, kode="B", nama="B")
+        JabatanOrganisasi.objects.create(
+            workspace=workspace, member=staf_a, tingkat=TINGKAT_SUPERVISOR, departemen=a
+        )
+        JabatanOrganisasi.objects.create(
+            workspace=workspace, member=staf_a, tingkat=TINGKAT_SUPERVISOR, departemen=b
+        )
+        assert JabatanOrganisasi.objects.filter(workspace=workspace, member=staf_a).count() == 2
+
+    @pytest.mark.django_db
+    def test_departemen_sama_dua_kali_DITOLAK(self, workspace, staf_a):
+        """Duplikat (orang, departemen) yang sama tetap ditolak."""
+        from plane.db.models import Departemen, Divisi
+
+        div = Divisi.objects.create(workspace=workspace, kode="D", nama="Div")
+        a = Departemen.objects.create(workspace=workspace, divisi=div, kode="A", nama="A")
+        JabatanOrganisasi.objects.create(
+            workspace=workspace, member=staf_a, tingkat=TINGKAT_SUPERVISOR, departemen=a
+        )
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                JabatanOrganisasi.objects.create(
+                    workspace=workspace, member=staf_a, tingkat=TINGKAT_MEMBER, departemen=a
+                )
+
+    @pytest.mark.django_db
     def test_jenjang_bisa_dipasang_lagi_sesudah_dicabut(self, workspace, staf_a):
         """Jebakan A21: manager bawaan menyaring baris ber-deleted_at.
 

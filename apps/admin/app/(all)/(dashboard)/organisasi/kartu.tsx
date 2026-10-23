@@ -29,7 +29,6 @@ import {
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { inputClass } from "../members/constants";
-import { DivisiPicker } from "../members/divisi-picker";
 
 export type TAksiOrganisasi = {
   ubahDivisi: (id: string, kode: string, nama: string) => Promise<void>;
@@ -851,18 +850,23 @@ export function KartuDepartemen({
   cariGlobal?: string;
 }) {
   const { s, fill } = useGodmodeStrings();
-  const awal = dep.projects.map((p) => p.id);
-  const [dipilih, setDipilih] = useState<string[]>(awal);
-  const berubah = dipilih.length !== awal.length || dipilih.some((id) => !awal.includes(id));
+  // Satu departemen tepat satu project (2026-10-23, ditegakkan juga di database):
+  // pemilih tunggal, bukan multi. Daftar kosong = lepas project (transien).
+  const awal = dep.projects[0]?.id ?? "";
+  const [dipilih, setDipilih] = useState<string>(awal);
+  const berubah = dipilih !== awal;
   const sudah = new Set(dep.anggota.map((a) => a.id));
   // Staf, supervisor, dan jenjang belum diisi (disimpan sebagai staf). Manager &
   // direktur tidak ditempatkan di departemen.
   const calon = orang.filter(
     (o) => o.is_active && (o.tingkat === null || o.tingkat < TINGKAT_MANAGER) && !sudah.has(o.id)
   );
-  // KEP-32: anggota utama vs supervisor tambahan (mengawasi tanpa ditempatkan di sini).
-  const utama = dep.anggota.filter((a) => !a.tambahan);
-  const ekstra = dep.anggota.filter((a) => a.tambahan);
+  // Satu orang bisa ditempatkan di beberapa departemen (satu baris jabatan per
+  // departemen, 2026-10-23): anggota = semua baris di departemen ini, ekstra =
+  // yang multi-departemen (perlu `orang` dari hierarki untuk menghitungnya).
+  const jmlDept = new Map((orang ?? []).map((o) => [o.id, (o.departemen_ids ?? []).length]));
+  const utama = dep.anggota.filter((a) => (jmlDept.get(a.id) ?? 1) <= 1);
+  const ekstra = dep.anggota.filter((a) => (jmlDept.get(a.id) ?? 0) > 1);
   // Calon tambahan = supervisor yang sudah ditempatkan di departemen LAIN dan belum
   // mengawasi departemen ini. Manager/direktur tidak masuk: jangkauan mereka lebih luas.
   const calonEkstra = orang.filter(
@@ -930,10 +934,24 @@ export function KartuDepartemen({
           const asal = labelPenempatan(o, namaDepartemen, namaDivisi);
           return `${jenjang}${asal}`;
         }}
-        onTambah={(o) => aksi.tempatkan(o, { departemen_id: dep.id })}
+        onTambah={(o) => {
+          // "Tambah" = gabung: yang sudah ditempatkan di departemen lain tetap
+          // memegang departemen lamanya (supervisor multi-departemen); pindah
+          // murni dilakukan lewat cabut di kartu lama + tambah di kartu baru.
+          const penuh = cariOrang(o.id) ?? o;
+          const ids = penuh.departemen_ids ?? [];
+          if (ids.length > 0) return aksi.setelEkstra(o.id, [...ids, dep.id]);
+          return aksi.tempatkan(o, { departemen_id: dep.id });
+        }}
         onCabut={async (id) => {
-          const o = cariOrang(id);
-          if (o) await aksi.tempatkan(o, { departemen_id: null });
+          // Cabut dari kartu ini saja: kirim himpunan minus departemen ini.
+          // Untuk satu-satunya departemen hasilnya daftar kosong = keluar.
+          const penuh = cariOrang(id);
+          if (!penuh) return;
+          await aksi.setelEkstra(
+            id,
+            (penuh.departemen_ids ?? []).filter((d) => d !== dep.id)
+          );
         }}
         kosong={s.org.no_members}
         namaDepartemen={namaDepartemen}
@@ -960,16 +978,22 @@ export function KartuDepartemen({
 
       <div className="space-y-1.5">
         <span className="block text-11 text-secondary">{fill(s.org.projects, { n: dep.projects.length })}</span>
-        <DivisiPicker
-          opsi={opsiProject}
-          dipilih={dipilih}
-          onUbah={setDipilih}
-          nama={namaProject}
-          placeholder={s.org.project_picker}
-        />
+        <select
+          aria-label={s.org.project_picker}
+          className={`${inputClass} w-full py-1 text-12`}
+          value={dipilih}
+          onChange={(e) => setDipilih(e.target.value)}
+        >
+          <option value="">{s.org.project_picker}</option>
+          {opsiProject.map((id) => (
+            <option key={id} value={id}>
+              {namaProject[id] ?? id}
+            </option>
+          ))}
+        </select>
         {berubah && (
           <div className="flex items-center gap-2">
-            <Button variant="primary" size="sm" onClick={() => aksi.simpanProject(dep.id, dipilih)}>
+            <Button variant="primary" size="sm" onClick={() => aksi.simpanProject(dep.id, dipilih ? [dipilih] : [])}>
               {s.org.save_projects}
             </Button>
             <span className="text-11 text-tertiary">{s.org.projects_moved_note}</span>

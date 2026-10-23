@@ -15,12 +15,15 @@
 
 Penempatan orang (departemen / divisi manager) ditulis lewat
 `POST /api/instances/hierarki/`, di baris jenjangnya, bukan di sini.
-Departemen tambahan supervisor (KEP-32) juga lewat sana (`departemen_ids`).
+Himpunan departemen seseorang (supervisor boleh banyak) juga lewat sana
+(`departemen_ids` = pengganti penuh; `departemen_id` tunggal ditolak kalau
+orangnya sudah multi-departemen).
 
 KEP-32: satu departemen tepat satu project. Membuat departemen langsung membuat
 atau mengadopsi project-nya (identifier = kode tanpa strip, mis. FIN-FIN ->
-FINFIN); menaruh project kedua DITOLAK (400). Hapus departemen yang projectnya
-masih punya tugas DITOLAK (409); project kosong ikut diarsipkan.
+FINFIN); menaruh project kedua DITOLAK (400, plus constraint database 0146).
+Hapus departemen yang projectnya masih punya tugas DITOLAK (409); project kosong
+ikut diarsipkan.
 
 Hapus DITOLAK selama masih ada orangnya (utama maupun tambahan). Kaskade diam-diam
 akan mencabut akses puluhan orang dari satu klik.
@@ -46,7 +49,6 @@ from plane.db.models import (
     JabatanOrganisasi,
     Project,
     ProjectMember,
-    SupervisorDepartemen,
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
@@ -192,36 +194,9 @@ def pohon_organisasi(workspace):
         elif j.departemen_id:
             orang_dep.setdefault(j.departemen_id, []).append(baris)
 
-    # Supervisor TAMBAHAN (KEP-32): tampil di tiap departemen yang dia awasi, supaya
-    # kartu departemen jujur tentang siapa yang bisa menyetujui di sana.
-    tambahan = {}
-    for member_id, dep_id in SupervisorDepartemen.objects.filter(workspace=workspace).values_list(
-        "member_id", "departemen_id"
-    ):
-        tambahan.setdefault(member_id, set()).add(dep_id)
-    if tambahan:
-        jabatan = {
-            j.member_id: j
-            for j in JabatanOrganisasi.objects.filter(workspace=workspace, member_id__in=tambahan.keys()).select_related(
-                "member"
-            )
-        }
-        for member_id, dep_ids in tambahan.items():
-            j = jabatan.get(member_id)
-            if j is None or j.tingkat < TINGKAT_SUPERVISOR or j.tingkat >= TINGKAT_MANAGER:
-                continue  # yatim/tingkat tak berlaku: jangkauan mengabaikannya juga
-            baris = {
-                "id": str(j.member_id),
-                "nama": j.member.display_name or j.member.email,
-                "email": j.member.email,
-                "tingkat": j.tingkat,
-                "tingkat_nama": TINGKAT_NAMA.get(j.tingkat),
-                "tambahan": True,
-            }
-            for dep_id in dep_ids:
-                sudah = {a["id"] for a in orang_dep.get(dep_id, [])}
-                if baris["id"] not in sudah:
-                    orang_dep.setdefault(dep_id, []).append(baris)
+    # Multi-departemen (2026-10-23): supervisor yang ditempatkan di dua departemen
+    # punya satu baris jabatan per departemen, jadi loop `orang_dep` di atas sudah
+    # menampilkannya di tiap departemennya -- tanpa konsep "tambahan" lagi.
 
     def _project(p):
         return {"id": str(p.id), "identifier": p.identifier, "name": p.name}
@@ -386,8 +361,6 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             return Response({"error": "Departemen tidak ditemukan."}, status=404)
         if JabatanOrganisasi.objects.filter(departemen=dep).exists():
             return Response({"error": "Masih ada orang yang ditempatkan di departemen ini."}, status=409)
-        if SupervisorDepartemen.objects.filter(departemen=dep).exists():
-            return Response({"error": "Masih ada supervisor tambahan di departemen ini."}, status=409)
         # KEP-32: hapus departemen ikut mengarsipkan project-nya yang kosong —
         # project tanpa tugas tidak ada yang kehilangan apa-apa. Project yang masih
         # punya tugas TETAP ditolak: isinya harus dipindahkan manual dulu.
