@@ -420,6 +420,15 @@ class TestGodModeOrganisasi:
         assert DepartemenProject.objects.get(project=org.p2).departemen_id == org.smt2.id
 
     @pytest.mark.django_db
+    def test_project_arsip_tidak_bisa_dipetakan(self, org, super_admin):
+        Project.objects.filter(pk=org.p1b.pk).update(archived_at=timezone.now())
+        r = _god(
+            InstanceDepartemenEndpoint, "patch", super_admin, {"project_ids": [str(org.p1b.id)]}, pk=org.smt1.id
+        )
+        assert r.status_code == status.HTTP_400_BAD_REQUEST
+        assert DepartemenProject.objects.get(project=org.p1).departemen_id == org.smt1.id
+
+    @pytest.mark.django_db
     def test_departemen_menolak_project_kedua_lewat_db(self, org):
         """0146: penegakan di database, bukan cuma validasi endpoint."""
         from django.db import IntegrityError, transaction

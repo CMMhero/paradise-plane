@@ -115,7 +115,7 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
         raise ValueError(galat)
 
     semua = list(Project.all_objects.filter(workspace=workspace, identifier=ident))
-    aktif = next((p for p in semua if p.deleted_at is None), None)
+    aktif = next((p for p in semua if p.deleted_at is None and p.archived_at is None), None)
     if aktif is not None:
         pemetaan = DepartemenProject.objects.filter(project=aktif).first()
         if pemetaan is not None:
@@ -128,6 +128,8 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
         raise ValueError(
             f"Identifier {ident} dipakai project arsip/terhapus. Buka arsipnya dulu atau pakai kode lain."
         )
+    # NOTE: project arsip tidak bisa diadopsi diam-diam -- selain membingungkan,
+    # pemetaannya akan menempati slot 1:1 departemen padahal projectnya tidak hidup.
 
     ser = ProjectSerializer(
         data={
@@ -341,6 +343,16 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             asing = [str(pid) for pid in diminta if str(pid) not in sah]
             if asing:
                 return Response({"error": f"Project tidak dikenal: {', '.join(asing)}."}, status=400)
+            arsip = [
+                str(p.identifier)
+                for p in Project.objects.filter(workspace_id=dep.workspace_id, pk__in=diminta)
+                if p.archived_at is not None
+            ]
+            if arsip:
+                return Response(
+                    {"error": f"Project arsip tidak bisa dipetakan ({', '.join(arsip)}): buka arsipnya dulu."},
+                    status=400,
+                )
             project_ids = {str(pid) for pid in diminta}
 
         # Satu sinkron di akhir, bukan satu per baris pemetaan.
@@ -463,6 +475,8 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
         ).first()
         if project is None:
             return Response({"error": "Project tidak ditemukan."}, status=400)
+        if project.archived_at is not None:
+            return Response({"error": "Project arsip tidak bisa dijadikan departemen: buka arsipnya dulu."}, status=400)
         if DepartemenProject.objects.filter(project=project).exists():
             return Response({"error": f"{project.identifier} sudah punya departemen."}, status=400)
         divisi = Divisi.objects.filter(workspace=workspace, pk=request.data.get("divisi_id")).first()

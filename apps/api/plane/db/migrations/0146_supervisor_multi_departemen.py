@@ -18,6 +18,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
+import django.utils.timezone
 
 
 def salin_tambahan_ke_jabatan(apps, schema_editor):
@@ -52,6 +53,21 @@ def salin_tambahan_ke_jabatan(apps, schema_editor):
 def buang_salinan(apps, schema_editor):
     JabatanOrganisasi = apps.get_model("db", "JabatanOrganisasi")
     JabatanOrganisasi.objects.filter(sumber="migrasi-0146").delete()
+
+
+def bersihkan_pemetaan_arsip(apps, schema_editor):
+    DepartemenProject = apps.get_model("db", "DepartemenProject")
+    Project = apps.get_model("db", "Project")
+    mati = Project.objects.filter(deleted_at__isnull=False) | Project.objects.filter(
+        archived_at__isnull=False
+    )
+    DepartemenProject.objects.filter(
+        deleted_at__isnull=True, project__in=mati
+    ).update(deleted_at=django.utils.timezone.now())
+
+
+def biarkan_apa_adanya(apps, schema_editor):
+    pass
 
 
 class Migration(migrations.Migration):
@@ -99,6 +115,9 @@ class Migration(migrations.Migration):
         migrations.DeleteModel(
             name='SupervisorDepartemen',
         ),
+        # Payung arsip E1 pemetaannya masih aktif -> bersihkan dulu, kalau tidak
+        # constraint 1:1 di bawah gagal (departemen terhitung memegang dua project).
+        migrations.RunPython(bersihkan_pemetaan_arsip, biarkan_apa_adanya),
         migrations.AddConstraint(
             model_name='departemenproject',
             constraint=models.UniqueConstraint(
