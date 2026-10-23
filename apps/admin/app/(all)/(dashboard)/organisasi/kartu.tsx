@@ -79,9 +79,13 @@ export function LencanaTingkat({ tingkat, nama }: { tingkat: number | null; nama
 function labelPenempatan(
   o: TAnggotaHierarki,
   namaDepartemen: Record<string, string>,
-  namaDivisi: Record<string, string>
+  namaDivisi: Record<string, string>,
+  // s/fill dioper dari komponen, BUKAN lewat hook di sini: fungsi ini dipanggil
+  // di dalam .map() yang panjangnya berubah saat mengetik, dan hook di dalam
+  // loop merusak urutan hook React ("something went wrong" tiap hasil berubah).
+  s: ReturnType<typeof useGodmodeStrings>["s"],
+  fill: ReturnType<typeof useGodmodeStrings>["fill"]
 ): string {
-  const { s, fill } = useGodmodeStrings();
   if (o.departemen_id && namaDepartemen[o.departemen_id])
     return fill(s.org.moved_from, { from: namaDepartemen[o.departemen_id] });
   if (o.divisi_id && namaDivisi[o.divisi_id]) return fill(s.org.moved_from, { from: namaDivisi[o.divisi_id] });
@@ -931,7 +935,7 @@ export function KartuDepartemen({
         onTurun={turun}
         labelCalon={(o) => {
           const jenjang = o.tingkat === null ? s.org.not_yet_leveled : (o.tingkat_nama ?? "");
-          const asal = labelPenempatan(o, namaDepartemen, namaDivisi);
+          const asal = labelPenempatan(o, namaDepartemen, namaDivisi, s, fill);
           return `${jenjang}${asal}`;
         }}
         onTambah={(o) => {
@@ -964,7 +968,7 @@ export function KartuDepartemen({
         isi={ekstra}
         calon={calonEkstra}
         labelCalon={(o) => {
-          const asal = labelPenempatan(o, namaDepartemen, namaDivisi);
+          const asal = labelPenempatan(o, namaDepartemen, namaDivisi, s, fill);
           return `${o.tingkat_nama ?? ""}${asal}`;
         }}
         onTambah={tambahEkstra}
