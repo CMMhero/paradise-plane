@@ -161,7 +161,9 @@ with transaction.atomic():
             if ada is not None:
                 # Pernah dibuat lalu dihapus: hidupkan lagi. State/anggota lama
                 # yang masih ada dipakai lagi; yang hilang dilengkapi di bawah.
-                Project.objects.filter(pk=ada.pk).update(
+                # Pakai all_objects: manager biasa tidak melihat baris terhapus
+                # sehingga update() lewat sana tidak kena apa-apa.
+                Project.all_objects.filter(pk=ada.pk).update(
                     deleted_at=None, archived_at=None)
                 p = Project.objects.get(pk=ada.pk)
             else:
