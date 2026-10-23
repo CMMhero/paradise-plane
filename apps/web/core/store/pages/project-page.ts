@@ -102,14 +102,12 @@ export class ProjectPage extends BasePage implements TProjectPage {
 
   /**
    * @description returns true if the current logged in user can edit the page
+   * Kustomisasi Paradise: hanya admin project (atau Super Admin, yang selalu
+   * berbaris role admin) yang boleh mengubah Wiki. Member boleh baca + tambah.
    */
   get canCurrentUserEditPage() {
     const highestRole = this.getHighestRoleAcrossProjects();
-    const isPagePublic = this.access === EPageAccess.PUBLIC;
-    return (
-      (isPagePublic && !!highestRole && highestRole >= EUserPermissions.MEMBER) ||
-      (!isPagePublic && this.isCurrentUserOwner)
-    );
+    return highestRole === EUserPermissions.ADMIN;
   }
 
   /**
@@ -125,7 +123,7 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get canCurrentUserLockPage() {
     const highestRole = this.getHighestRoleAcrossProjects();
-    return this.isCurrentUserOwner || highestRole === EUserPermissions.ADMIN;
+    return highestRole === EUserPermissions.ADMIN;
   }
 
   /**
@@ -133,7 +131,7 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get canCurrentUserChangeAccess() {
     const highestRole = this.getHighestRoleAcrossProjects();
-    return this.isCurrentUserOwner || highestRole === EUserPermissions.ADMIN;
+    return highestRole === EUserPermissions.ADMIN;
   }
 
   /**
@@ -141,7 +139,7 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get canCurrentUserArchivePage() {
     const highestRole = this.getHighestRoleAcrossProjects();
-    return this.isCurrentUserOwner || highestRole === EUserPermissions.ADMIN;
+    return highestRole === EUserPermissions.ADMIN;
   }
 
   /**
@@ -149,7 +147,7 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get canCurrentUserDeletePage() {
     const highestRole = this.getHighestRoleAcrossProjects();
-    return this.isCurrentUserOwner || highestRole === EUserPermissions.ADMIN;
+    return highestRole === EUserPermissions.ADMIN;
   }
 
   /**
@@ -165,7 +163,7 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get canCurrentUserMovePage() {
     const highestRole = this.getHighestRoleAcrossProjects();
-    return this.isCurrentUserOwner || highestRole === EUserPermissions.ADMIN;
+    return highestRole === EUserPermissions.ADMIN;
   }
 
   /**
@@ -173,14 +171,10 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get isContentEditable() {
     const highestRole = this.getHighestRoleAcrossProjects();
-    const isOwner = this.isCurrentUserOwner;
-    const isPublic = this.access === EPageAccess.PUBLIC;
     const isArchived = this.archived_at;
     const isLocked = this.is_locked;
 
-    return (
-      !isArchived && !isLocked && (isOwner || (isPublic && !!highestRole && highestRole >= EUserPermissions.MEMBER))
-    );
+    return !isArchived && !isLocked && highestRole === EUserPermissions.ADMIN;
   }
 
   getRedirectionLink = computedFn(() => {

@@ -37,6 +37,13 @@ class ProjectPagePermission(BasePermission):
         if request.user.is_anonymous:
             return False
 
+        # Super Admin instance lolos di semua project Wiki, termasuk yang ia
+        # tidak beranggotakan (keputusan user 2026-10-24: kelola Wiki hanya
+        # admin/superadmin). Tanpa ini Super Admin tanpa baris ProjectMember
+        # ditolak `_check_access_and_get_role` di bawah.
+        if is_super_admin(request.user):
+            return True
+
         user_id = request.user.id
         slug = view.kwargs.get("slug")
         page_id = view.kwargs.get("page_id")
@@ -77,7 +84,7 @@ class ProjectPagePermission(BasePermission):
                 return self._has_private_page_action_access(request, slug, page, project_id)
 
         # Handle public page access
-        return self._has_public_page_action_access(request, role)
+        return self._has_public_page_action_access(request, role, view)
 
     def _has_wiki_governed_access(self, request, view, slug, project_id, page_id, role):
         """Izin halaman di Wiki ber-ACL folder.
@@ -189,14 +196,23 @@ class ProjectPagePermission(BasePermission):
         # Base implementation: only owner can access private pages
         return False
 
-    def _check_project_action_access(self, request, role):
-        method = request.method
+    def _check_project_action_access(self, request, role, view):
+        """Izin aksi Wiki jalur DEFAULT (project tanpa governance folder).
 
-        # Only admins can create (POST) pages
+        Keputusan user 2026-10-24: yang boleh MENGUBAH/mengelola Wiki hanya
+        admin project atau Super Admin (lolos di `has_permission`). Member
+        boleh membaca dan MENAMBAH halaman ke projectnya, tidak lebih.
+        """
+        method = request.method
+        action = getattr(view, "action", None)
+
         if method == "POST":
-            if role in [ADMIN, MEMBER]:
-                return True
-            return False
+            # Halaman baru, duplikat (salinan baru), dan favorit: member boleh.
+            # POST lain atas halaman yang SUDAH ada (arsip, kunci, ubah akses)
+            # adalah kelola -> admin saja.
+            if action in ("create", None):
+                return role in [ADMIN, MEMBER]
+            return role == ADMIN
 
         # Safe methods (GET, HEAD, OPTIONS) allowed for all active roles
         if method in SAFE_METHODS:
@@ -204,11 +220,10 @@ class ProjectPagePermission(BasePermission):
                 return True
             return False
 
-        # PUT/PATCH: Admins and members can update
+        # PUT/PATCH: hanya admin yang boleh mengubah isi/judul/deskripsi.
+        # Dulu admin + member; member kini baca + tambah saja.
         if method in ["PUT", "PATCH"]:
-            if role in [ADMIN, MEMBER]:
-                return True
-            return False
+            return role == ADMIN
 
         # DELETE: Only admins can delete
         if method == "DELETE":
@@ -219,12 +234,12 @@ class ProjectPagePermission(BasePermission):
         # Deny by default
         return False
 
-    def _has_public_page_action_access(self, request, role):
+    def _has_public_page_action_access(self, request, role, view):
         """
         Check if the user has permission to access a public page
         and can perform operations on the page.
         """
-        project_member_exists = self._check_project_action_access(request, role)
+        project_member_exists = self._check_project_action_access(request, role, view)
         if not project_member_exists:
             return False
         return True
