@@ -75,6 +75,9 @@ with transaction.atomic():
             Project.objects.filter(pk=p.pk).update(emoji=mau)
 
     print("\n2b) Logo project <- emoji (yang tampil di sidebar/dropdown)")
+    # Baca ulang: seksi 1 di atas mungkin baru saja memperbaiki emoji.
+    hidup = list(Project.objects.filter(
+        workspace=ws, deleted_at__isnull=True, archived_at__isnull=True))
     print("   (Logo menyimpan desimal codepoint dash-pisah ala emoji picker,")
     print("   mis. 💰 -> '128176'. Karakter mentah tidak dirender komponen Logo.)")
     for p in sorted(hidup, key=lambda x: x.identifier):
