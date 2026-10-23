@@ -254,7 +254,8 @@ with transaction.atomic():
                         defaults={"workspace": ws, "color": lab.color or "",
                                   "parent": bantu})
                     IssueLabel.objects.filter(pk=il.pk).update(deleted_at=timezone.now())
-                    IssueLabel.objects.create(issue=issue, label=baru)
+                    IssueLabel.objects.create(
+                        issue=issue, label=baru, project=p_tujuan, workspace=ws)
             # Anggota: pembuat + assignee aktif jadi anggota eksplisit tujuan.
             siapa = {issue.created_by_id} | set(
                 IssueAssignee.objects.filter(
@@ -423,14 +424,16 @@ with transaction.atomic():
                         for mm in ModuleMember.objects.filter(
                                 module=asal, deleted_at__isnull=True):
                             ModuleMember.objects.get_or_create(
-                                module=mod_baru, member=mm.member)
+                                module=mod_baru, member=mm.member,
+                                project=mod_baru.project, workspace=ws)
                 for _seq, mi in daftar:
                     baru_issue = Issue.objects.filter(pk=mi.issue_id).first()
                     ModuleIssue.objects.filter(pk=mi.pk).update(
                         deleted_at=timezone.now())
                     if baru_issue is not None:
                         ModuleIssue.objects.get_or_create(
-                            module=mod_baru, issue=baru_issue)
+                            module=mod_baru, issue=baru_issue,
+                            project=mod_baru.project, workspace=ws)
 
         print("\n5) Bereskan payung kosong + FIN")
         for ident in ("IT", "HRGA", "INVQC", "SALES"):
