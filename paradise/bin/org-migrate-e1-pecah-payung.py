@@ -177,11 +177,21 @@ with transaction.atomic():
                 Project.objects.filter(pk=p.pk).update(created_by=pembuat)
             jadikan_anggota_project(p.pk, pembuat.id, ROLE.ADMIN.value, workspace_id=ws.id)
             jadikan_anggota_project(p.pk, lead.id, ROLE.ADMIN.value, workspace_id=ws.id)
-            if not State.objects.filter(
-                    project=p, deleted_at__isnull=True).exists():
-                State.objects.bulk_create(
-                    [State(project=p, workspace=ws, created_by=pembuat, **s) for s in DEFAULT_STATES]
-                )
+            # State: lengkapi yang hilang saja. Manager biasa menyembunyikan
+            # grup Triage + baris terhapus, jadi periksa per nama via all_objects
+            # (kalau tidak, bulk_create menabrak state Triage yang masih hidup).
+            for s in DEFAULT_STATES:
+                if State.all_objects.filter(
+                        project=p, name=s["name"],
+                        deleted_at__isnull=True).first() is not None:
+                    continue
+                lama = State.all_objects.filter(
+                    project=p, name=s["name"]).first()
+                if lama is not None:
+                    State.all_objects.filter(pk=lama.pk).update(deleted_at=None)
+                else:
+                    State.objects.create(
+                        project=p, workspace=ws, created_by=pembuat, **s)
             proj[ident] = Project.objects.get(pk=p.pk)
 
         print("\n1b) Pemetaan project baru ke departemen")
