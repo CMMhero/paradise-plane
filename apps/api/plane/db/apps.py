@@ -27,3 +27,6 @@ class DbConfig(AppConfig):
         # Jangkauan hierarki (KEP-29): penempatan divisi/departemen menjadi
         # keanggotaan project otomatis, dan dicabut saat penempatannya berubah.
         from plane.db import jangkauan as _jangkauan_signal  # noqa: F401
+
+        # Anggota workspace baru otomatis anggota Wiki (keputusan user 2026-10-26).
+        from plane.db import wiki_default as _wiki_default_signal  # noqa: F401

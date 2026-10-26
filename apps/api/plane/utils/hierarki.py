@@ -169,6 +169,17 @@ def tingkat_anggota(user_id, workspace_id):
     )
 
 
+def tingkat_efektif(user_id, workspace_id):
+    """Tingkat dengan bawaan staf: jabatan belum diisi dihitung MEMBER.
+
+    Keputusan user 2026-10-26. `tingkat_anggota` tetap mengembalikan None untuk
+    "belum diisi" (God Mode & laporan butuh pembedanya); fungsi ini untuk
+    keputusan wewenang yang cukup tahu "setidaknya staf".
+    """
+    tingkat = tingkat_anggota(user_id, workspace_id)
+    return TINGKAT_MEMBER if tingkat is None else tingkat
+
+
 def divisi_anggota(user_id, workspace_id):
     """Set id project tempat orang ini benar-benar anggota (keanggotaan hidup)."""
     if user_id is None:
@@ -466,6 +477,11 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 
     workspace_id = project.workspace_id
 
+    # Kolaborasi staf: boleh menambah rekan setingkat di departemen yang sama,
+    # tapi dirinya sendiri WAJIB tetap ada (staf hanya membuat tugasnya sendiri).
+    if _adalah_staf(actor.id, workspace_id):
+        return _galat_kolaborasi_staf(actor.id, workspace_id, project_id, assignee_ids)
+
     # Batas KEP-02: orang luar divisi memang tidak boleh menugaskan ke dalamnya.
     # Jalur REST sudah menolaknya lebih dulu; ini pertahanan kedua supaya jalur yang
     # tidak lewat REST (mis. skrip) tidak berbeda pendapat.
@@ -493,6 +509,59 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
         return None
 
     return _pesan_tolak(tingkat, project.identifier)
+
+
+def _adalah_staf(user_id, workspace_id):
+    tingkat = tingkat_anggota(user_id, workspace_id)
+    return tingkat is None or tingkat < TINGKAT_SUPERVISOR
+
+
+def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
+    """Aturan staf: diri sendiri wajib ada; rekan = staf setingkat di departemen yang sama.
+
+    Tanpa jabatan = staf (keputusan user 2026-10-26), jadi dua orang yang belum
+    diisi jabatannya dihitung setingkat. Syarat departemen yang sama tetap berlaku.
+    """
+    if actor_id not in assignee_ids:
+        return "Staf tidak dapat melepas dirinya sendiri dari tugas yang ia buat."
+    rekan = set(assignee_ids) - {actor_id}
+    if not rekan:
+        return None
+    tingkat = tingkat_efektif(actor_id, workspace_id)
+    peta = peta_tingkat(workspace_id)
+    dept_saya = semua_departemen_ids(actor_id, workspace_id)
+    for uid in rekan:
+        if peta.get(uid, TINGKAT_MEMBER) != tingkat:
+            return "Staf hanya boleh mengajak rekan yang jabatannya sama."
+        if not (dept_saya & semua_departemen_ids(uid, workspace_id)):
+            return "Rekan harus berada di departemen yang sama dengan Anda."
+        if project_id not in divisi_anggota(uid, workspace_id):
+            return "Rekan harus anggota project ini."
+    return None
+
+
+def rekan_staf_ids(actor_id, workspace_id, project_id):
+    """Id rekan yang boleh diajak staf: setingkat, satu departemen, anggota project ini."""
+    tingkat = tingkat_efektif(actor_id, workspace_id)
+    if tingkat >= TINGKAT_SUPERVISOR:
+        return set()
+    dept_saya = semua_departemen_ids(actor_id, workspace_id)
+    if not dept_saya:
+        return set()
+    peta = peta_tingkat(workspace_id)
+    # Kandidat = yang ditempatkan di departemen yang sama (tanpa jabatan = staf).
+    kandidat = set(
+        JabatanOrganisasi.objects.filter(workspace_id=workspace_id, departemen_id__in=dept_saya).values_list(
+            "member_id", flat=True
+        )
+    )
+    return {
+        uid
+        for uid in kandidat
+        if uid != actor_id
+        and peta.get(uid, TINGKAT_MEMBER) == tingkat
+        and project_id in divisi_anggota(uid, workspace_id)
+    }
 
 
 def _bawahan_ids(actor_id, workspace_id, project_id):
@@ -718,8 +787,8 @@ def periksa_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False)
     # - assign diri sendiri oleh supervisor+ -> langsung
     # - menugaskan orang lain -> hanya supervisor+ di divisi yang diawasi, dan
     #   `galat_penugasan` sudah memutuskannya, jadi di sini langsung.
-    hanya_diri = {getattr(actor, "id", None)} == set(diterima)
-    if not hanya_diri or (tingkat is not None and tingkat >= TINGKAT_SUPERVISOR):
+    # Staf boleh juga mengajak rekan (kolaborasi); tetap butuh persetujuan.
+    if not butuh_persetujuan(actor, project_id, diterima):
         return None
 
     if calon_penyetuju(workspace_id, project_id, tingkat_pembuat=tingkat):
@@ -744,7 +813,9 @@ def butuh_persetujuan(actor, project_id, assignee_ids):
     if actor is None:
         return False
     diterima = [a for a in (assignee_ids or []) if a is not None]
-    if not diterima or set(diterima) != {getattr(actor, "id", None)}:
+    # Staf yang ikut jadi assignee (sendiri atau bersama rekan) = butuh persetujuan.
+    # Siapa saja rekan yang sah sudah diputuskan `galat_penugasan`.
+    if getattr(actor, "id", None) not in diterima:
         return False
 
     from plane.db.models import Project  # noqa: PLC0415
@@ -753,8 +824,7 @@ def butuh_persetujuan(actor, project_id, assignee_ids):
     if project is None:
         return False
 
-    tingkat = tingkat_anggota(actor.id, project.workspace_id)
-    return tingkat is None or tingkat < TINGKAT_SUPERVISOR
+    return _adalah_staf(actor.id, project.workspace_id)
 
 
 def catat_persetujuan(issue, actor=None):

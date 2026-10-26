@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: antrean persetujuan penugasan 
+ * Kustomisasi Paradise Task Tracker: antrean persetujuan penugasan
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -55,10 +55,11 @@ export type TAksiPersetujuan = "setujui" | "tolak" | "ajukan-ulang";
 
 // Balasan `bisa-ditugaskan/`: siapa boleh masuk dropdown assignee saya.
 // mode "diri-sendiri" = staf (satu user: diri sendiri, auto-select).
+// mode "rekan" = staf dengan rekan setingkat sedepartemen (diri wajib ikut).
 // mode "bawahan" = atasan (diri + bawahan). mode "semua" = direktur/Super
 // Admin atau gerbang mati (seluruh anggota project).
 export type TBisaDitugaskan = {
-  mode: "diri-sendiri" | "bawahan" | "semua";
+  mode: "diri-sendiri" | "rekan" | "bawahan" | "semua";
   tingkat_saya: number | null;
   users?: { id: string; nama: string | null; email: string | null }[];
   user_ids?: string[];

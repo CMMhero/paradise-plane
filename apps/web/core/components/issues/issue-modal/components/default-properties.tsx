@@ -141,16 +141,19 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
               memberIds={opsiAssignee}
               value={stafSaja ? (value?.length > 0 ? value : idSaya ? [idSaya] : value) : value}
               onChange={(assigneeIds) => {
-                // Staf: kunci ke diri sendiri — pilihan lain langsung dikembalikan.
-                onChange(stafSaja && idSaya ? [idSaya] : assigneeIds);
+                // Staf: dirinya wajib tetap ada; rekan setingkat boleh ditambah
+                // (daftar sudah disaring server). Tanpa rekan = kunci ke diri sendiri.
+                onChange(stafSaja && idSaya ? Array.from(new Set([idSaya, ...assigneeIds])) : assigneeIds);
                 handleFormChange();
               }}
               buttonVariant={value?.length > 0 ? "transparent-without-text" : "border-with-text"}
               buttonClassName={value?.length > 0 ? "hover:bg-transparent" : ""}
-              placeholder={stafSaja ? "Ditugaskan ke saya — menunggu persetujuan atasan" : t("assignees")}
+              placeholder={
+                stafSaja ? "Ditugaskan ke saya (bisa ajak rekan) — menunggu persetujuan atasan" : t("assignees")
+              }
               multiple
               tabIndex={getIndex("assignee_ids")}
-              hanyaDiriSendiri={stafSaja ? idSaya : null}
+              hanyaDiriSendiri={stafSaja && daftarBoleh.mode !== "rekan" ? idSaya : null}
             />
           </div>
         )}

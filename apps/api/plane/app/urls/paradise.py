@@ -14,6 +14,7 @@ from plane.app.views.issue.cross_division import (
     PermintaanLintasDivisiEndpoint,
     RingkasanLintasDivisiEndpoint,
 )
+from plane.app.views.penempatan_saya import PenempatanSayaEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
 from plane.app.views.workspace.organisasi import StrukturOrganisasiEndpoint
 from plane.app.views import (
@@ -192,6 +193,11 @@ urlpatterns = [
         "workspaces/<str:slug>/cross-division/permintaan/",
         PermintaanLintasDivisiEndpoint.as_view(),
         name="cross-division-permintaan",
+    ),
+    path(
+        "workspaces/<str:slug>/penempatan-saya/",
+        PenempatanSayaEndpoint.as_view(),
+        name="penempatan-saya",
     ),
     # Antrean persetujuan penugasan. Baris menunggu tugasnya TETAP muncul (keputusan user
     # 2026-10-15), jadi endpoint ini yang menjadi indikatornya. Literal

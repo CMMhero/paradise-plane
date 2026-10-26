@@ -180,11 +180,20 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     ],
                 }
             )
+        from plane.utils.hierarki import rekan_staf_ids  # noqa: PLC0415
+
+        boleh = {saya} | rekan_staf_ids(saya, project.workspace_id, project.id)
+        users = {u.id: u for u in User.objects.filter(id__in=boleh)}
         return Response(
             {
-                "mode": "diri-sendiri",
+                # "diri-sendiri" dipertahankan saat tak ada rekan: klien lama tetap benar.
+                "mode": "rekan" if len(boleh) > 1 else "diri-sendiri",
                 "tingkat_saya": tingkat,
-                "users": [{"id": str(saya), "nama": request.user.display_name, "email": request.user.email}],
+                "users": [
+                    {"id": str(uid), "nama": users[uid].display_name, "email": users[uid].email}
+                    for uid in sorted(boleh, key=lambda u: (u != saya, str(u)))
+                    if uid in users
+                ],
             }
         )
 

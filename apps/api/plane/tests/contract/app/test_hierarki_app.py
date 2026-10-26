@@ -547,11 +547,54 @@ class TestGerbangPenugasan:
     ):
         """Beda yang mudah keliru: "orang lain" bukan "menunggu persetujuan".
 
-        Aturan user membatasi anggota pada DIRINYA SENDIRI, jadi menugaskan rekan
-        sejawat bukan sesuatu yang perlu disetujui -- ia memang tidak diizinkan.
+        Menugaskan rekan TANPA menyertakan diri sendiri tidak diizinkan: staf hanya
+        membuat tugasnya sendiri, rekan hanya boleh DITAMBAH di samping dirinya.
         """
         putusan = periksa_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a, abaikan_katup=True)
         assert putusan not in (None, BUTUH_PERSETUJUAN, TANPA_ATASAN), f"dapat: {putusan!r}"
+
+    @pytest.fixture
+    def satu_departemen(self, workspace, staf_a, staf_a2, jenjang):
+        from plane.db.models import Departemen, Divisi  # noqa: PLC0415
+
+        divisi = Divisi.objects.create(workspace=workspace, kode="D1", nama="Divisi 1")
+        dept = Departemen.objects.create(workspace=workspace, divisi=divisi, kode="DP1", nama="Dept 1")
+        JabatanOrganisasi.objects.filter(workspace=workspace, member__in=[staf_a, staf_a2]).update(
+            departemen=dept, divisi=divisi
+        )
+        return dept
+
+    @pytest.mark.django_db
+    def test_staf_boleh_ajak_rekan_setingkat_sedepartemen_dan_butuh_persetujuan(
+        self, workspace, staf_a, staf_a2, divisi_a, satu_departemen
+    ):
+        ids = [staf_a.id, staf_a2.id]
+        assert periksa_penugasan(divisi_a.id, ids, actor=staf_a, abaikan_katup=True) == BUTUH_PERSETUJUAN
+
+    @pytest.mark.django_db
+    def test_staf_tidak_boleh_melepas_dirinya_dari_tugasnya(
+        self, workspace, staf_a, staf_a2, divisi_a, satu_departemen
+    ):
+        galat = galat_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a, abaikan_katup=True)
+        assert galat and "melepas dirinya" in galat
+
+    @pytest.mark.django_db
+    def test_staf_tidak_boleh_ajak_atasan_atau_beda_departemen(
+        self, workspace, staf_a, bos_divisi_a, divisi_a, satu_departemen
+    ):
+        # atasan: bukan setingkat
+        assert galat_penugasan(divisi_a.id, [staf_a.id, bos_divisi_a.id], actor=staf_a, abaikan_katup=True)
+        # keluar departemen: lepas penempatan rekan
+        orang_lain = _buat_user("stafx", workspace)
+        JabatanOrganisasi.objects.create(workspace=workspace, member=orang_lain, tingkat=TINGKAT_MEMBER)
+        ProjectMember.objects.create(project=divisi_a, member=orang_lain, workspace=workspace, role=15)
+        assert galat_penugasan(divisi_a.id, [staf_a.id, orang_lain.id], actor=staf_a, abaikan_katup=True)
+
+    @pytest.mark.django_db
+    def test_supervisor_boleh_menugaskan_bawahan_tanpa_dirinya(
+        self, workspace, bos_divisi_a, staf_a, divisi_a, jenjang
+    ):
+        assert galat_penugasan(divisi_a.id, [staf_a.id], actor=bos_divisi_a, abaikan_katup=True) is None
 
 
 # --------------------------------------------------------------------------
@@ -1817,3 +1860,66 @@ class TestPersetujuanSaatSelesai:
         assert tutup.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
             tutup, "data", None
         )
+
+
+# --------------------------------------------------------------------------
+# 7. Pilih departemen sendiri + bawaan staf + otomatis masuk Wiki (2026-10-26)
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.contract
+class TestPenempatanMandiriDanWiki:
+    @pytest.fixture
+    def struktur(self, workspace):
+        from plane.db.models import Departemen, Divisi  # noqa: PLC0415
+
+        divisi = Divisi.objects.create(workspace=workspace, kode="D9", nama="Divisi 9")
+        return Departemen.objects.create(workspace=workspace, divisi=divisi, kode="DP9", nama="Dept 9")
+
+    @pytest.mark.django_db
+    def test_belum_ditempatkan_perlu_pilih_lalu_jadi_staf(self, workspace, staf_a, struktur):
+        from plane.app.views.penempatan_saya import perlu_pilih_departemen  # noqa: PLC0415
+
+        assert perlu_pilih_departemen(staf_a, workspace.id) is True
+        response = _klien(staf_a).post(
+            f"/api/workspaces/{workspace.slug}/penempatan-saya/", {"departemen_id": str(struktur.id)}, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
+        baris = JabatanOrganisasi.objects.get(workspace=workspace, member=staf_a)
+        assert (baris.tingkat, baris.departemen_id) == (TINGKAT_MEMBER, struktur.id)
+        assert perlu_pilih_departemen(staf_a, workspace.id) is False
+
+    @pytest.mark.django_db
+    def test_sudah_ditempatkan_tidak_bisa_pindah_sendiri(self, workspace, staf_a, struktur, jenjang):
+        JabatanOrganisasi.objects.filter(workspace=workspace, member=staf_a).update(departemen=struktur)
+        response = _klien(staf_a).post(
+            f"/api/workspaces/{workspace.slug}/penempatan-saya/", {"departemen_id": str(struktur.id)}, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.django_db
+    def test_direktur_tanpa_tempat_tidak_diminta_memilih(self, workspace, direktur, struktur, jenjang):
+        from plane.app.views.penempatan_saya import perlu_pilih_departemen  # noqa: PLC0415
+
+        assert perlu_pilih_departemen(direktur, workspace.id) is False
+
+    @pytest.mark.django_db
+    def test_tanpa_jabatan_dihitung_staf_untuk_kolaborasi(self, workspace, staf_a, staf_a2, divisi_a, struktur):
+        from plane.utils.hierarki import tingkat_efektif  # noqa: PLC0415
+
+        assert tingkat_efektif(staf_a.id, workspace.id) == TINGKAT_MEMBER
+        for u in (staf_a, staf_a2):
+            JabatanOrganisasi.objects.create(workspace=workspace, member=u, tingkat=TINGKAT_MEMBER, departemen=struktur)
+        assert galat_penugasan(divisi_a.id, [staf_a.id, staf_a2.id], actor=staf_a, abaikan_katup=True) is None
+
+    @pytest.mark.django_db
+    def test_anggota_workspace_baru_dan_lama_masuk_wiki(self, workspace, bos_divisi_a):
+        from plane.db.wiki_default import gabungkan_semua_ke_wiki  # noqa: PLC0415
+
+        wiki = Project.objects.create(name="Wiki", identifier="WIKI", workspace=workspace, created_by=bos_divisi_a)
+        baru = _buat_user("baru", workspace)  # signal: anggota workspace baru
+        assert ProjectMember.objects.filter(project=wiki, member=baru, is_active=True, role=15).exists()
+        # lama: dihapus dari Wiki lalu di-backfill; role admin yang sudah ada tidak diturunkan
+        ProjectMember.objects.filter(project=wiki, member=baru).update(is_active=False)
+        assert gabungkan_semua_ke_wiki(workspace.id) >= 1
+        assert ProjectMember.objects.filter(project=wiki, member=baru, is_active=True).exists()
