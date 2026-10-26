@@ -143,7 +143,7 @@ function WikiBerandaPage() {
                       terbuka={izinFolder?.is_general}
                       keterangan={
                         izinFolder?.is_general
-                          ? "Terbuka untuk semua karyawan"
+                          ? "Terbuka dibaca semua karyawan"
                           : pemilik
                             ? `Dikelola ${pemilik}`
                             : "Belum ada divisi pengelola"

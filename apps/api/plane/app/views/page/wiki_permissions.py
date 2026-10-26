@@ -11,9 +11,8 @@ from rest_framework.response import Response
 from ..base import BaseAPIView
 from plane.app.permissions import allow_permission, ROLE
 from plane.db.models import Page, Project, ProjectMember, WikiFolderAccess
-from plane.utils.wiki_access import is_super_admin, is_wiki_governed
+from plane.utils.wiki_access import is_super_admin, is_wiki_admin, is_wiki_governed
 
-_ROLE_ADMIN = ROLE.ADMIN.value
 
 
 class WikiPermissionsEndpoint(BaseAPIView):
@@ -56,29 +55,21 @@ class WikiPermissionsEndpoint(BaseAPIView):
             owners.setdefault(folder_id, set()).add(division_id)
             label[division_id] = {"id": str(division_id), "identifier": identifier, "name": name}
 
-        # Satu query untuk seluruh keanggotaan aktif si pemakai, bukan satu per
-        # folder. Di 83 anggota dan 10 folder bedanya belum terasa; di angka
-        # berapa pun, sepuluh query untuk pertanyaan yang sama tetap salah.
-        memberships = dict(
-            ProjectMember.objects.filter(
-                member=user, is_active=True, deleted_at__isnull=True
-            ).values_list("project_id", "role")
-        )
-
         super_admin = is_super_admin(user)
-        project_admin = memberships.get(project_id) == _ROLE_ADMIN
+        # Hak tulis Wiki = admin workspace atau Super Admin saja (2026-10-26).
+        wiki_admin = is_wiki_admin(user, workspace_slug=slug)
+        project_admin = wiki_admin
 
         payload = []
         for folder_id in folders:
             division_ids = owners.get(folder_id, set())
-            roles = [memberships[d] for d in division_ids if d in memberships]
             payload.append(
                 {
                     "id": str(folder_id),
                     # Boleh menaruh Topik/Materi baru di dalam folder ini.
-                    "can_upload": bool(roles) or super_admin,
+                    "can_upload": wiki_admin,
                     # Boleh membereskan materi orang lain di folder ini.
-                    "is_lead": any(r == _ROLE_ADMIN for r in roles),
+                    "is_lead": wiki_admin,
                     # Folder "General": pemiliknya project Wiki itu sendiri,
                     # jadi seluruh anggota Wiki boleh mengunggah ke sini.
                     "is_general": project_id in division_ids,
@@ -104,7 +95,6 @@ class WikiPermissionsEndpoint(BaseAPIView):
         #
         # Aturannya sama persis dengan halaman: pengunggahnya, kepala divisi
         # pemilik folder teratas, atau Super Admin.
-        folder_lead = {f["id"] for f in payload if f["is_lead"]}
         semua = Page.objects.filter(
             projects=project_id, workspace__slug=slug, deleted_at__isnull=True
         ).values_list("id", "parent_id", "owned_by_id")
@@ -122,7 +112,7 @@ class WikiPermissionsEndpoint(BaseAPIView):
         manageable = [
             str(pid)
             for pid, _, owner in semua
-            if super_admin or owner == user.id or str(teratas(pid)) in folder_lead
+            if wiki_admin
         ]
 
         return Response(

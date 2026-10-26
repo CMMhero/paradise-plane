@@ -8,7 +8,7 @@ Kontrak struktur Wiki yang disederhanakan (keputusan user 2026-10-24):
 
     - hanya folder divisi, tanpa sub-topik (buat halaman ber-parent -> 403),
     - materi ditaruh langsung di folder divisinya,
-    - hapus materi: pengunggah, admin/kepala divisi, SPV divisi, atau Super Admin,
+    - ubah/hapus/unggah Wiki: HANYA admin workspace atau Super Admin (2026-10-26),
     - folder divisi dibuat otomatis per Divisi (`pastikan_folder_divisi`).
 """
 
@@ -110,10 +110,10 @@ class TestWikiTanpaSubTopik:
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     @pytest.mark.django_db
-    def test_pengunggah_boleh_hapus_materinya(self, workspace, siap):
+    def test_pengunggah_biasa_TIDAK_boleh_hapus_materinya_lagi(self, workspace, siap):
         _, _, pengunggah, _, wiki_p, _, _, materi = siap
         res = _klien(pengunggah).delete(self._url_hapus_materi(workspace, wiki_p.id, materi.id))
-        assert res.status_code == status.HTTP_204_NO_CONTENT
+        assert res.status_code == status.HTTP_403_FORBIDDEN
 
     @pytest.mark.django_db
     def test_anggota_biasa_tidak_boleh_hapus_materi_orang(self, workspace, siap):
@@ -122,10 +122,32 @@ class TestWikiTanpaSubTopik:
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     @pytest.mark.django_db
-    def test_spv_divisi_boleh_hapus_materi_anggota(self, workspace, siap):
+    def test_spv_divisi_TIDAK_boleh_hapus_materi_anggota_lagi(self, workspace, siap):
         _, _, _, spv, wiki_p, _, _, materi = siap
         res = _klien(spv).delete(self._url_hapus_materi(workspace, wiki_p.id, materi.id))
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+    @pytest.mark.django_db
+    def test_admin_workspace_boleh_hapus_materi(self, workspace, siap):
+        _, _, _, _, wiki_p, _, _, materi = siap
+        admin_ws = _user("adminws", workspace)
+        WorkspaceMember.objects.filter(workspace=workspace, member=admin_ws).update(role=20)
+        _anggota(workspace, wiki_p, admin_ws, 15)
+        res = _klien(admin_ws).delete(self._url_hapus_materi(workspace, wiki_p.id, materi.id))
         assert res.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.django_db
+    def test_folder_general_terbuka_dibaca_tapi_hanya_admin_boleh_unggah(self, workspace, siap):
+        """General (pemilik = project Wiki sendiri) tidak lagi memberi hak tulis ke semua anggota."""
+        from plane.utils.wiki_access import can_edit_wiki_page, is_wiki_admin  # noqa: PLC0415
+
+        admin, anggota, _, _, wiki_p, _, folder, _ = siap
+        WikiFolderAccess.objects.create(workspace=workspace, project=wiki_p, folder=folder, division=wiki_p)
+        assert can_edit_wiki_page(anggota, folder) is False
+        assert is_wiki_admin(anggota, workspace_id=workspace.id) is False
+        admin_ws = _user("adminws2", workspace)
+        WorkspaceMember.objects.filter(workspace=workspace, member=admin_ws).update(role=20)
+        assert can_edit_wiki_page(admin_ws, folder) is True
 
 
 @pytest.mark.contract

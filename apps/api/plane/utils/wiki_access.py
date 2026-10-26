@@ -46,28 +46,13 @@ def owning_division_ids(folder):
 
 
 def can_edit_wiki_page(user, page):
-    """True kalau `user` boleh MENGEDIT `page` di Wiki ber-ACL.
+    """True kalau `user` boleh MENGEDIT/mengunggah ke `page` di Wiki ber-ACL.
 
-    Aturan: user harus anggota aktif salah satu divisi pemilik folder top-level.
-    Folder tanpa pemilik → False (hanya admin, ditangani di lapisan izin).
-    Tidak memakai kepemilikan halaman individual: hak edit murni per-divisi.
+    Sejak 2026-10-26 hanya Super Admin atau admin workspace. Kepemilikan folder
+    per-divisi (`WikiFolderAccess`) kini hanya mengatur NAMA penanggung jawab
+    yang tampil, bukan hak tulis.
     """
-    from plane.db.models import ProjectMember
-
-    if user is None or getattr(user, "is_anonymous", True):
-        return False
-
-    folder = top_level_folder(page)
-    division_ids = owning_division_ids(folder)
-    if not division_ids:
-        return False
-
-    return ProjectMember.objects.filter(
-        member=user,
-        project_id__in=division_ids,
-        is_active=True,
-        deleted_at__isnull=True,
-    ).exists()
+    return is_wiki_admin(user, workspace_id=page.workspace_id)
 
 
 # --- Hak KELOLA (sunting, arsip, hapus, kunci) atas materi yang SUDAH ada -----
@@ -103,6 +88,33 @@ def is_super_admin(user):
     return _asli(user)
 
 
+_WORKSPACE_ADMIN = 20
+
+
+def is_wiki_admin(user, workspace_id=None, workspace_slug=None):
+    """Satu-satunya yang boleh MENGUBAH/mengelola Wiki: Super Admin atau admin workspace.
+
+    Keputusan user 2026-10-26: walaupun Wiki (termasuk folder General) terbuka
+    dibaca semua orang, hak ubah/kelola/unggah hanya admin workspace atau Super
+    Admin. Pengunggah, kepala divisi, dan admin project Wiki yang bukan admin
+    workspace TIDAK lagi punya hak tulis.
+    """
+    from plane.db.models import WorkspaceMember
+
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+    if is_super_admin(user):
+        return True
+    filters = {"member": user, "role": _WORKSPACE_ADMIN, "is_active": True, "deleted_at__isnull": True}
+    if workspace_id is not None:
+        filters["workspace_id"] = workspace_id
+    elif workspace_slug is not None:
+        filters["workspace__slug"] = workspace_slug
+    else:
+        return False
+    return WorkspaceMember.objects.filter(**filters).exists()
+
+
 def is_division_lead(user, page):
     """True kalau `user` Admin (role 20) di salah satu divisi pemilik folder teratas."""
     from plane.db.models import ProjectMember
@@ -125,13 +137,7 @@ def is_division_lead(user, page):
 
 def can_manage_wiki_page(user, page):
     """True kalau `user` boleh menyunting, mengarsip, atau menghapus `page`."""
-    if user is None or getattr(user, "is_anonymous", True):
-        return False
-    if page.owned_by_id == user.id:
-        return True
-    if is_super_admin(user):
-        return True
-    return is_division_lead(user, page)
+    return is_wiki_admin(user, workspace_id=page.workspace_id)
 
 
 def has_foreign_descendants(page, user, max_depth=_MAX_DEPTH):
@@ -197,36 +203,10 @@ def is_division_supervisor(user, division_ids, workspace_id):
 def can_manage_wiki_material(user, asset):
     """True kalau `user` boleh mengubah atau menghapus sebuah Materi Wiki.
 
-    Keputusan user 2026-10-24: hapus hanya boleh pengunggahnya, admin/kepala
-    divisi (role 20 di divisi pemilik), SPV divisi (berpangkat supervisor+ dan
-    anggota divisi pemilik), atau Super Admin. Sumber pemiliknya beda dari
-    halaman: `created_by` pada berkasnya, bukan `owned_by` pada halaman.
-
-    Materi yang tidak menempel ke halaman mana pun tidak bisa dinilai terhadap
-    folder mana pun, jadi ia hanya boleh disentuh pengunggahnya atau Super
-    Admin. Itu keadaan yang seharusnya tidak pernah terjadi, tapi kalau terjadi
-    jawabannya harus menutup, bukan membuka.
+    Sejak 2026-10-26 hanya Super Admin atau admin workspace; pengunggah asli
+    tidak lagi otomatis berhak.
     """
-    if user is None or getattr(user, "is_anonymous", True):
-        return False
-    if asset.created_by_id == user.id:
-        return True
-    if is_super_admin(user):
-        return True
-    if asset.page_id is None:
-        return False
-
-    from plane.db.models import Page
-
-    page = Page.objects.filter(id=asset.page_id).first()
-    if page is None:
-        return False
-    if is_division_lead(user, page):
-        return True
-    # SPV divisi pemilik (keputusan user 2026-10-24): berpangkat supervisor+
-    # dan anggota divisi pemilik folder teratas materi ini.
-    folder = top_level_folder(page)
-    return is_division_supervisor(user, owning_division_ids(folder), asset.workspace_id)
+    return is_wiki_admin(user, workspace_id=asset.workspace_id)
 
 
 def pastikan_folder_divisi(workspace, actor=None):

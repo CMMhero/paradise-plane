@@ -227,11 +227,11 @@ export function KelolaFolder({
             ) : (
               <p className="rounded-md border border-subtle px-3 py-2 text-12 text-tertiary">
                 {izinFolder?.is_general
-                  ? "Terbuka untuk semua karyawan."
+                  ? "Terbuka dibaca semua karyawan."
                   : izinFolder?.divisions.length
                     ? `Dikelola ${izinFolder.divisions.map((d) => d.name).join(", ")}.`
                     : "Belum ada divisi pengelola, jadi folder ini terkunci."}{" "}
-                Hanya admin project Wiki dan Super Admin yang bisa mengubahnya.
+                Hanya admin workspace dan Super Admin yang bisa mengubahnya.
               </p>
             )}
           </div>

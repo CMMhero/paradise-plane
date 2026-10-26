@@ -205,8 +205,7 @@ class WikiFolderEndpoint(BaseAPIView):
         if not can_manage_wiki_page(request.user, page):
             return Response(
                 {
-                    "error": "Hanya pembuatnya, kepala divisi pemilik folder, "
-                    "atau Super Admin yang boleh mengubah folder ini."
+                    "error": "Hanya admin workspace atau Super Admin yang boleh mengubah folder ini."
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )

@@ -9,6 +9,7 @@ from plane.utils.wiki_access import (
     has_foreign_descendants,
     is_division_lead,
     is_super_admin,
+    is_wiki_admin,
     is_wiki_governed,
 )
 
@@ -93,7 +94,7 @@ class ProjectPagePermission(BasePermission):
 
             baca            semua anggota project Wiki
             unggah baru     anggota aktif divisi pemilik folder teratas
-            kelola yang ada pengunggahnya, kepala divisi pemilik, atau Super Admin
+            unggah / kelola hanya admin workspace atau Super Admin (2026-10-26)
 
         Perhatikan admin project Wiki TIDAK lagi otomatis lolos untuk hak ketiga.
         Yang dimaksud "super admin" oleh pemilik instance adalah Super Admin
@@ -125,7 +126,7 @@ class ProjectPagePermission(BasePermission):
             # harus disertai pemberian pemilik, dan itu pekerjaan admin.
             # (Folder divisi sendiri dibuat otomatis per Divisi; ini hanya
             # untuk folder khusus seperti General.)
-            return role == ADMIN
+            return is_wiki_admin(user, workspace_slug=slug)
 
         # --- Mengubah halaman yang sudah ada --------------------------------
         page = Page.objects.filter(id=page_id, workspace__slug=slug).first()
@@ -134,8 +135,7 @@ class ProjectPagePermission(BasePermission):
 
         if not can_manage_wiki_page(user, page):
             raise PermissionDenied(
-                "Hanya pengunggahnya, kepala divisi pemilik folder, atau Super Admin "
-                "yang boleh mengubah materi ini."
+                "Hanya admin workspace atau Super Admin yang boleh mengubah Wiki."
             )
 
         # Tiga penjaga struktur di bawah ini menutup lubang yang tidak tertutup

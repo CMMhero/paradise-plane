@@ -633,14 +633,8 @@ class ProjectAssetEndpoint(BaseAPIView):
             and is_wiki_governed(project_id)
         ):
             page = Page.objects.filter(id=entity_identifier, workspace__slug=slug).first()
-            is_admin = ProjectMember.objects.filter(
-                member=request.user,
-                project_id=project_id,
-                role=ROLE.ADMIN.value,
-                is_active=True,
-                deleted_at__isnull=True,
-            ).exists()
-            if not (is_admin or (page and can_edit_wiki_page(request.user, page))):
+            # Hanya admin workspace / Super Admin (keputusan user 2026-10-26).
+            if not (page and can_edit_wiki_page(request.user, page)):
                 return Response(
                     {"error": "Anda tidak berhak mengunggah ke folder ini.", "status": False},
                     status=status.HTTP_403_FORBIDDEN,

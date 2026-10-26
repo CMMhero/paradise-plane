@@ -166,7 +166,7 @@ function WikiFolderPage() {
           </div>
           <p className="mt-1 text-13 text-tertiary">
             {izinDivisi?.is_general
-              ? "Folder terbuka. Semua karyawan boleh menaruh materi di sini."
+              ? "Folder terbuka untuk dibaca semua karyawan. Hanya admin workspace yang bisa menambah atau mengubah materi."
               : izinDivisi?.divisions.length
                 ? `Dikelola ${izinDivisi.divisions.map((d) => d.name).join(", ")}`
                 : "Belum ada divisi pengelola"}
