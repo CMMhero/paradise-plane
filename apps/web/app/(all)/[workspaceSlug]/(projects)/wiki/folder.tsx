@@ -7,7 +7,7 @@
 
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { ArrowLeft, Lock, Pencil, Settings2, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Lock, Pencil, Plus, Settings2, Trash2, Upload } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
@@ -15,7 +15,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { getPageName, renderFormattedDate } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
-import { GridKartu, KartuMateri } from "@/components/wiki/kartu";
+import { GridKartu, KartuFolder, KartuMateri } from "@/components/wiki/kartu";
 // services
 import { WikiMaterialService } from "@/services/wiki_material.service";
 // local imports
@@ -53,6 +53,7 @@ function WikiFolderPage() {
   const { izin, muatUlangIzin } = useIzinWiki(slug, projectId);
   const berkasRef = useRef<HTMLInputElement>(null);
   const [sedangUnggah, setSedangUnggah] = useState(false);
+  const [sedangMembuatSub, setSedangMembuatSub] = useState(false);
   const [kelolaTerbuka, setKelolaTerbuka] = useState(false);
   const [materiDiganti, setMateriDiganti] = useState<{ id: string; title: string; name: string } | null>(null);
   const navigate = useNavigate();
@@ -108,6 +109,27 @@ function WikiFolderPage() {
     if (berkasRef.current) berkasRef.current.value = "";
   };
 
+  const buatSubtopik = async () => {
+    if (!projectId || !idFolder || sedangMembuatSub) return;
+    setSedangMembuatSub(true);
+    try {
+      await layananHalaman.create(slug, projectId, { name: "Topik baru", parent: idFolder });
+      await muatUlang();
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "Sub-topik dibuat",
+        message: "Ganti namanya lewat menu Kelola folder induk.",
+      });
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Gagal",
+        message: (error as { error?: string })?.error || "Topik baru gagal dibuat.",
+      });
+    } finally {
+      setSedangMembuatSub(false);
+    }
+  };
   const hapus = async (assetId: string, judul: string) => {
     if (!projectId) return;
     try {
@@ -163,6 +185,12 @@ function WikiFolderPage() {
                 Kelola
               </Button>
             )}
+            {bolehKelola && (
+              <Button variant="primary" size="sm" onClick={() => void buatSubtopik()} loading={sedangMembuatSub}>
+                <Plus className="size-3.5" />
+                Sub-topik
+              </Button>
+            )}
           </div>
           <p className="mt-1 text-13 text-tertiary">
             {izinDivisi?.is_general
@@ -174,6 +202,28 @@ function WikiFolderPage() {
         </div>
 
         <div className="flex-1 space-y-8 px-page-x py-6">
+          {anakDari(terlihat, idFolder).length > 0 && (
+            <section>
+              <div className="mb-4 flex items-baseline gap-2">
+                <h2 className="text-15 font-semibold text-primary">Sub-topik</h2>
+                <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
+                  {anakDari(terlihat, idFolder).length} topik
+                </span>
+              </div>
+              <GridKartu>
+                {anakDari(terlihat, idFolder).map((s) => (
+                  <KartuFolder
+                    key={s.id}
+                    to={`/${slug}/wiki/${s.id}`}
+                    judul={getPageName(s.name)}
+                    logoProps={s.logo_props}
+                    jumlahAnak={anakDari(terlihat, s.id).length}
+                    satuanAnak="Materi"
+                  />
+                ))}
+              </GridKartu>
+            </section>
+          )}
           <section>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">

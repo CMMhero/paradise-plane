@@ -149,7 +149,7 @@ function WikiBerandaPage() {
                             : "Belum ada divisi pengelola"
                       }
                       jumlahAnak={anakDari(terlihat, d.id).length}
-                      satuanAnak="Topik"
+                      satuanAnak="Materi"
                     />
                   );
                 })}
