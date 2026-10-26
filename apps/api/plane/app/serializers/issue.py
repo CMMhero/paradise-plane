@@ -243,7 +243,16 @@ class IssueCreateSerializer(BaseSerializer):
                     penerima = list(self.instance.issue_assignee.values_list("assignee_id", flat=True))
             else:
                 penerima = attrs.get("assignee_ids") or []
-            if selesai_perlu_persetujuan(self.context.get("project_id"), _actor, attrs["state"], penerima):
+            # Tugas yang SUDAH selesai tidak diajukan ulang hanya karena status
+            # selesainya ikut terkirim lagi (keputusan user 2026-10-26).
+            sudah_selesai = bool(
+                self.instance is not None
+                and self.instance.state_id
+                and getattr(self.instance.state, "group", None) == "completed"
+            )
+            if selesai_perlu_persetujuan(
+                self.context.get("project_id"), _actor, attrs["state"], penerima, sudah_selesai=sudah_selesai
+            ):
                 attrs.pop("state")
                 self._tahan_selesai = True
 

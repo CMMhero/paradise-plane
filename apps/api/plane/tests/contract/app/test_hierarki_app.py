@@ -1859,3 +1859,51 @@ class TestPenempatanMandiriDanWiki:
         ProjectMember.objects.filter(project=wiki, member=baru).update(is_active=False)
         assert gabungkan_semua_ke_wiki(workspace.id) >= 1
         assert ProjectMember.objects.filter(project=wiki, member=baru, is_active=True).exists()
+
+
+# --------------------------------------------------------------------------
+# 8. Persetujuan selesai: jenjang yang menentukan, bukan peran sistem (2026-10-26)
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.contract
+class TestPersetujuanBerdasarkanJenjang:
+    @pytest.mark.django_db
+    def test_super_admin_berjenjang_staf_tetap_butuh_persetujuan(
+        self, workspace, super_admin, bos_divisi_a, divisi_a, jenjang, monkeypatch
+    ):
+        from types import SimpleNamespace  # noqa: PLC0415
+
+        from plane.utils.hierarki import selesai_perlu_persetujuan  # noqa: PLC0415
+
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        JabatanOrganisasi.objects.create(workspace=workspace, member=super_admin, tingkat=TINGKAT_MEMBER)
+        selesai = SimpleNamespace(group="completed")
+        sedang = SimpleNamespace(group="started")
+        assert selesai_perlu_persetujuan(divisi_a.id, super_admin, selesai, [super_admin.id]) is True
+        # bukan perpindahan ke selesai -> tidak diajukan
+        assert selesai_perlu_persetujuan(divisi_a.id, super_admin, sedang, [super_admin.id]) is False
+        # tugas yang sudah selesai tidak diajukan ulang
+        assert selesai_perlu_persetujuan(divisi_a.id, super_admin, selesai, [super_admin.id], sudah_selesai=True) is False
+        # atasan menyelesaikan langsung
+        assert selesai_perlu_persetujuan(divisi_a.id, bos_divisi_a, selesai, [bos_divisi_a.id]) is False
+
+    @pytest.mark.django_db
+    def test_yang_boleh_memutuskan_hanya_atasan_sah(
+        self, workspace, super_admin, bos_divisi_a, divisi_a, jenjang
+    ):
+        from plane.utils.hierarki import boleh_memutuskan  # noqa: PLC0415
+
+        JabatanOrganisasi.objects.create(workspace=workspace, member=super_admin, tingkat=TINGKAT_MEMBER)
+        assert boleh_memutuskan(bos_divisi_a, workspace.id, divisi_a.id) is True
+        # Super Admin berjenjang staf bukan atasan: tidak boleh menyetujui staf lain.
+        assert boleh_memutuskan(super_admin, workspace.id, divisi_a.id) is False
+
+    @pytest.mark.django_db
+    def test_super_admin_jalan_keluar_hanya_kalau_divisi_tanpa_atasan(
+        self, workspace, super_admin, bos_divisi_a, direktur, divisi_a, jenjang
+    ):
+        from plane.utils.hierarki import boleh_memutuskan  # noqa: PLC0415
+
+        JabatanOrganisasi.objects.filter(workspace=workspace, member__in=[bos_divisi_a, direktur]).delete()
+        assert boleh_memutuskan(super_admin, workspace.id, divisi_a.id) is True

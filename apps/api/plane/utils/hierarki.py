@@ -57,6 +57,7 @@ __all__ = [
     "calon_penyetuju",
     "galat_penugasan",
     "selesai_perlu_persetujuan",
+    "boleh_memutuskan",
     "galat_ubah_tugas",
     "periksa_penugasan",
     "aktor_dari_context",
@@ -619,7 +620,7 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
     return bawahan
 
 
-def selesai_perlu_persetujuan(project_id, actor, state_baru, penerima_ids):
+def selesai_perlu_persetujuan(project_id, actor, state_baru, penerima_ids, sudah_selesai=False):
     """True kalau perpindahan ke status selesai ini harus DITAHAN untuk persetujuan.
 
     Keputusan user 2026-10-26 (menggantikan 2026-10-24): persetujuan TIDAK
@@ -632,8 +633,13 @@ def selesai_perlu_persetujuan(project_id, actor, state_baru, penerima_ids):
     Berlaku saat create (langsung-done) maupun update (pindah status). Persetujuan
     lama TIDAK dipakai ulang: setujui sendiri yang memindahkan tugas ke selesai,
     jadi tugas yang dibuka lalu diselesaikan lagi diajukan lagi.
+
+    Keputusan user 2026-10-26: yang menentukan adalah JENJANG, bukan peran sistem.
+    Super Admin / admin workspace yang berjenjang staf tetap butuh persetujuan
+    atasannya ("saya tetap staf"). Dan tugas yang SUDAH selesai (`sudah_selesai`)
+    tidak diajukan lagi hanya karena status selesainya dikirim ulang.
     """
-    if not gerbang_aktif() or actor is None or state_baru is None:
+    if not gerbang_aktif() or actor is None or state_baru is None or sudah_selesai:
         return False
     group = getattr(state_baru, "group", None)
     if group is None:
@@ -642,12 +648,25 @@ def selesai_perlu_persetujuan(project_id, actor, state_baru, penerima_ids):
         group = State.objects.filter(pk=state_baru).values_list("group", flat=True).first()
     if group != "completed":
         return False
+    return butuh_persetujuan(actor, project_id, penerima_ids or [])
 
+
+def boleh_memutuskan(user, workspace_id, project_id):
+    """Bolehkah `user` menyetujui/menolak pengajuan di project ini?
+
+    Hanya atasan yang sah (`calon_penyetuju`: jenjang lebih tinggi dan mengawasi
+    divisinya). Super Admin hanya jalan keluar kalau divisi itu SAMA SEKALI tidak
+    punya atasan, supaya pengajuan tidak menggantung selamanya. Super Admin yang
+    berjenjang staf tidak bisa menyetujui staf lain "atas nama atasan".
+    """
+    penyetuju = calon_penyetuju(workspace_id, project_id)
+    if user.id in penyetuju:
+        return True
+    if penyetuju:
+        return False
     from plane.db.superadmin import is_super_admin  # noqa: PLC0415
 
-    if is_super_admin(actor):
-        return False
-    return butuh_persetujuan(actor, project_id, penerima_ids or [])
+    return is_super_admin(user)
 
 # (Dihapus 2026-10-24: tidak ada lagi kunci tulis. Persetujuan hanya di
 # gerbang selesai -- `selesai_perlu_persetujuan` di atas. Lihat riwayat git untuk
