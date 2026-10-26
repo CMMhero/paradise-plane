@@ -89,12 +89,13 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.deadline_reminder_task.kirim_pengingat_tenggat",
         "schedule": crontab(hour=1, minute=0),
     },
-    # Paradise: satu email ringkasan harian per orang (hari ini, 7 hari ke
-    # depan, terlambat). Lima menit sesudah pengingat supaya keduanya tidak
-    # berebut koneksi SMTP.
+    # Paradise: satu email ringkasan harian per orang yang MENYALAKANNYA
+    # (hari ini, 7 hari ke depan, terlambat). Senin-Jumat 08.30 Jakarta.
+    # Celery berjalan di UTC (CELERY_TIMEZONE = TIME_ZONE = "UTC"), jadi 08.30 WIB
+    # = 01.30 UTC. Tanggalnya sama di kedua zona, jadi day_of_week tetap benar.
     "ringkasan-harian": {
         "task": "plane.bgtasks.daily_digest_task.kirim_ringkasan_harian",
-        "schedule": crontab(hour=1, minute=5),
+        "schedule": crontab(hour=1, minute=30, day_of_week="mon-fri"),
     },
     # Paradise: dorong tenggat ke Google Calendar tiap
     # orang yang menyambungkan akunnya.

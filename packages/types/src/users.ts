@@ -189,6 +189,8 @@ export interface IUserEmailNotificationSettings {
   issue_completed: boolean;
   /** Kustomisasi Paradise: email pengajuan & keputusan persetujuan. */
   approval: boolean;
+  /** Kustomisasi Paradise: ringkasan tugas harian lewat email (opt-in, bawaan mati). */
+  daily_digest: boolean;
 }
 
 export type TProfileViews = "assigned" | "created" | "subscribed";

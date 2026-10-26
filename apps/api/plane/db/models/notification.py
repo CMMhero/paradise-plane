@@ -110,6 +110,10 @@ class UserNotificationPreference(BaseModel):
     # Kustomisasi Paradise: persetujuan penugasan (diajukan/diputuskan).
     # Inbox selalu ditulis; saklar ini hanya mengatur EMAIL-nya.
     approval = models.BooleanField(default=True)
+    # Kustomisasi Paradise: ringkasan tugas harian lewat email (hari ini, 7 hari
+    # ke depan, terlambat). MATI secara bawaan; orang menyalakannya sendiri dari
+    # Profil -> Notifikasi (keputusan user 2026-10-26).
+    daily_digest = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "UserNotificationPreference"

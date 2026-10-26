@@ -11,8 +11,11 @@ ini satu email berisi semuanya, jadi orang yang punya banyak tugas tidak
 kebanjiran. Yang dihitung hanya tugas yang DI-ASSIGN ke penerima, bukan yang
 ia buat: ringkasan ini daftar kerja, bukan daftar pantauan.
 
-Memakai saklar `ENABLE_DEADLINE_REMINDER` yang sama dengan pengingat tenggat:
-keduanya email massal ke seluruh karyawan, dan menyalakannya harus sadar.
+OPT-IN per orang (keputusan user 2026-10-26): hanya yang menyalakan
+`UserNotificationPreference.daily_digest` di Profil -> Notifikasi yang dikirimi,
+dan bawaannya MATI. Karena persetujuannya sudah per orang, saklar global
+`ENABLE_DEADLINE_REMINDER` (untuk pengingat tenggat massal) tidak dipakai di sini.
+Jadwal: Senin-Jumat 08.30 Jakarta (lihat beat_schedule di plane/celery.py).
 
 ponytail: tidak ada tabel pencatat "sudah terkirim hari ini". Beat memicu sekali
 sehari; kalau task dijalankan manual dua kali, orang menerima dua email. Tambah
@@ -29,8 +32,8 @@ from django.utils import timezone
 from django.utils.html import escape
 
 from plane.bgtasks.deadline_reminder_email import KANTOR, PRODUK, _base_url
-from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI, _aktif
-from plane.db.models import IssueAssignee
+from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI
+from plane.db.models import IssueAssignee, UserNotificationPreference
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.exception_logger import log_exception
 
@@ -141,6 +144,9 @@ def _tugas_per_orang(hari_ini):
             issue__project__archived_at__isnull=True,
             assignee__is_active=True,
             assignee__is_bot=False,
+            # Subquery, bukan join ke tabel preferensi: join menggandakan baris
+            # (dan tugas di email) kalau satu orang punya beberapa baris preferensi.
+            assignee_id__in=UserNotificationPreference.objects.filter(daily_digest=True).values("user_id"),
         )
         .exclude(issue__state__group__in=GRUP_SELESAI)
         .select_related("issue__project", "issue__workspace", "assignee")
@@ -154,10 +160,6 @@ def _tugas_per_orang(hari_ini):
 @shared_task
 def kirim_ringkasan_harian():
     """Dijalankan sekali sehari. Lihat beat_schedule di plane/celery.py."""
-    if not _aktif():
-        logger.info("Ringkasan harian dilewati: ENABLE_DEADLINE_REMINDER belum diset ke 1")
-        return {"aktif": False}
-
     hari_ini = timezone.localtime(timezone.now()).date()
     host, user, pwd, port, use_tls, use_ssl, efrom = get_email_configuration()
     koneksi = get_connection(
