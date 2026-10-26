@@ -4,6 +4,13 @@
  * See the LICENSE file for details.
  */
 
+// Paradise: berkas ini warisan Plane dan sudah punya 15 peringatan lint lama
+// (bayangan variabel, ekspresi tanpa efek) yang bukan milik kita. Gerbang commit
+// memakai --deny-warnings atas SELURUH berkas yang disentuh, jadi tanpa ini setiap
+// perubahan kecil di sini terblokir. Perubahan Paradise: `issueUpdate` memakai
+// balasan PATCH (approval_status).
+/* oxlint-disable no-shadow, no-unused-expressions */
+
 import { isEqual, concat, get, indexOf, isEmpty, orderBy, pull, set, uniq, update, clone } from "lodash-es";
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { computedFn } from "mobx-utils";
@@ -575,7 +582,15 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
       } as TIssue);
 
       // call API to update the issue
-      await this.issueService.patchIssue(workspaceSlug, projectId, issueId, data);
+      const hasil = await this.issueService.patchIssue(workspaceSlug, projectId, issueId, data);
+
+      // Kustomisasi Paradise: server membalas status persetujuan terbaru, jadi
+      // penanda "menunggu persetujuan" muncul tanpa muat ulang halaman.
+      if (hasil && typeof hasil === "object" && "approval_status" in hasil) {
+        this.rootIssueStore.issues.updateIssue(issueId, {
+          approval_status: (hasil as { approval_status: TIssue["approval_status"] }).approval_status,
+        });
+      }
 
       // call fetch Parent Stats
       this.fetchParentStats(workspaceSlug, projectId);

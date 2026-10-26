@@ -779,7 +779,14 @@ class IssueViewSet(BaseViewSet):
                     issue_id=str(serializer.data.get("id", None)),
                     user_id=request.user.id,
                 )
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            # Kustomisasi Paradise: kembalikan status persetujuan terbaru supaya
+            # penanda "menunggu persetujuan" muncul tanpa muat ulang halaman.
+            from plane.utils.hierarki import status_persetujuan_tugas  # noqa: PLC0415
+
+            return Response(
+                {"approval_status": status_persetujuan_tugas(pk)},
+                status=status.HTTP_200_OK,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Kustomisasi Paradise: dibuka untuk MEMBER, lalu diputuskan `bisa_hapus_tugas`

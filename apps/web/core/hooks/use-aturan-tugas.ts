@@ -134,6 +134,29 @@ export const useBisaDitugaskan = (
   return { mode: data.mode, userIds: ids, memuat: false };
 };
 
+/**
+ * Pilihan dropdown assignee untuk tugas YANG SUDAH ADA (sidebar detail, peek).
+ *
+ * `memberIds` = daftar dari server (diri + bawahan/rekan/semua) digabung
+ * dengan assignee yang sudah ada, supaya yang sudah ditunjuk tetap terlihat.
+ * `rapikan` untuk staf: assignee lama tidak bisa dilepas (hanya menambah rekan),
+ * jadi pilihan yang membuangnya dikembalikan alih-alih ditolak server.
+ */
+export const useOpsiAssignee = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined,
+  assigneeIds: string[] | null | undefined
+): { memberIds: string[] | undefined; rapikan: (val: string[]) => string[] } => {
+  const daftar = useBisaDitugaskan(workspaceSlug, projectId);
+  const tingkat = useTingkatSaya(workspaceSlug, projectId);
+  const staf = stafSaja(tingkat);
+  const lama = assigneeIds ?? [];
+  return {
+    memberIds: daftar.memuat ? undefined : Array.from(new Set([...daftar.userIds, ...lama])),
+    rapikan: (val) => (staf ? Array.from(new Set([...lama, ...val])) : val),
+  };
+};
+
 export const useAturanTugas = () => {
   const { data: currentUser } = useUser();
   const { allowPermissions } = useUserPermissions();
@@ -145,8 +168,8 @@ export const useAturanTugas = () => {
     userService.currentUserInstanceAdminStatus()
   );
 
-  const adalahPembuat =
-    (issue: TIssue | undefined | null) => !!issue && !!currentUser?.id && issue.created_by === currentUser.id;
+  const adalahPembuat = (issue: TIssue | undefined | null) =>
+    !!issue && !!currentUser?.id && issue.created_by === currentUser.id;
 
   // Super Admin instance. Di aplikasi web namanya `is_instance_admin`, dan itu
   // orang yang sama dengan yang dijawab `super_admin_user_ids()` di server.

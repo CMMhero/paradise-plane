@@ -1907,3 +1907,49 @@ class TestPersetujuanBerdasarkanJenjang:
 
         JabatanOrganisasi.objects.filter(workspace=workspace, member__in=[bos_divisi_a, direktur]).delete()
         assert boleh_memutuskan(super_admin, workspace.id, divisi_a.id) is True
+
+
+@pytest.mark.contract
+class TestStafMenambahRekanKeTugasYangAda:
+    @pytest.fixture
+    def tugas(self, workspace, staf_a, staf_a2, divisi_a, jenjang):
+        from plane.db.models import Departemen, Divisi  # noqa: PLC0415
+
+        divisi = Divisi.objects.create(workspace=workspace, kode="D7", nama="Divisi 7")
+        dept = Departemen.objects.create(workspace=workspace, divisi=divisi, kode="DP7", nama="Dept 7")
+        JabatanOrganisasi.objects.filter(workspace=workspace, member__in=[staf_a, staf_a2]).update(
+            departemen=dept, divisi=divisi
+        )
+        issue = Issue.objects.create(workspace=workspace, project=divisi_a, name="Tugas bersama", created_by=staf_a)
+        IssueAssignee.objects.create(issue=issue, assignee=staf_a, project=divisi_a, workspace=workspace)
+        return issue
+
+    @pytest.mark.django_db
+    def test_staf_boleh_menambah_rekan_setingkat_sedepartemen(self, workspace, staf_a, staf_a2, divisi_a, tugas):
+        from plane.utils.hierarki import galat_tambah_rekan  # noqa: PLC0415
+
+        assert galat_tambah_rekan(divisi_a.id, tugas, [staf_a.id, staf_a2.id], staf_a) is None
+
+    @pytest.mark.django_db
+    def test_staf_tidak_boleh_melepas_assignee_yang_ada(self, workspace, staf_a, staf_a2, divisi_a, tugas):
+        from plane.utils.hierarki import galat_tambah_rekan  # noqa: PLC0415
+
+        galat = galat_tambah_rekan(divisi_a.id, tugas, [staf_a2.id], staf_a)
+        assert galat and "menambah rekan" in galat
+
+    @pytest.mark.django_db
+    def test_staf_tidak_boleh_menambah_atasan(self, workspace, staf_a, bos_divisi_a, divisi_a, tugas):
+        from plane.utils.hierarki import galat_tambah_rekan  # noqa: PLC0415
+
+        assert galat_tambah_rekan(divisi_a.id, tugas, [staf_a.id, bos_divisi_a.id], staf_a)
+
+    @pytest.mark.django_db
+    def test_gerbang_membuka_pengubahan_assignee_untuk_staf_terlibat(
+        self, workspace, staf_a, staf_a2, divisi_a, tugas
+    ):
+        from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
+
+        # staf yang terlibat lolos gerbang (serializer yang memeriksa nilainya)
+        assert galat_ubah_tugas(divisi_a.id, tugas, actor=staf_a, mengubah_assignee=True, abaikan_katup=True) is None
+        # staf yang tidak terlibat tetap ditolak
+        assert galat_ubah_tugas(divisi_a.id, tugas, actor=staf_a2, mengubah_assignee=True, abaikan_katup=True)

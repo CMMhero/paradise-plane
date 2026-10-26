@@ -76,6 +76,11 @@ class PersetujuanPenugasan(BaseModel):
     # Wajib diisi saat menolak (dijaga di view): penolakan tanpa alasan memaksa orang
     # menebak, dan tebakan atas alasan orang lain adalah cara termurah kehilangan kepercayaan.
     alasan = models.TextField(blank=True, default="")
+    # Status tugas SEBELUM staf menggesernya ke selesai. Tugas tetap berstatus selesai
+    # selama menunggu; kalau atasan menolak, tugas dikembalikan ke status ini.
+    state_sebelumnya = models.ForeignKey(
+        "db.State", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
     class Meta:
         verbose_name = "Persetujuan Penugasan"

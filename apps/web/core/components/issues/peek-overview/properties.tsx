@@ -37,6 +37,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
+import { useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { IssueParentSelectRoot } from "@/plane-web/components/issues/issue-details/parent-select-root";
 import { DateAlert } from "@/plane-web/components/issues/issue-details/sidebar/date-alert";
 import { TransferHopInfo } from "@/plane-web/components/issues/issue-details/sidebar/transfer-hop-info";
@@ -66,6 +67,8 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
   const { getUserDetails } = useMember();
   // derived values
   const issue = getIssueById(issueId);
+  // Pilihan assignee: diri + rekan/bawahan menurut server (staf bisa menambah rekan).
+  const opsiAssignee = useOpsiAssignee(workspaceSlug, projectId, issue?.assignee_ids);
   if (!issue) return <></>;
   const createdByDetails = getUserDetails(issue?.created_by);
   const projectDetails = getProjectById(issue.project_id);
@@ -100,8 +103,11 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
         <SidebarPropertyListItem icon={MembersPropertyIcon} label={t("common.assignees")}>
           <MemberDropdown
             value={issue?.assignee_ids ?? undefined}
-            onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { assignee_ids: val })}
+            onChange={(val) =>
+              issueOperations.update(workspaceSlug, projectId, issueId, { assignee_ids: opsiAssignee.rapikan(val) })
+            }
             disabled={disabled}
+            memberIds={opsiAssignee.memberIds}
             projectId={projectId}
             placeholder={t("issue.add.assignee")}
             multiple

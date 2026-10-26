@@ -58,6 +58,8 @@ __all__ = [
     "galat_penugasan",
     "selesai_perlu_persetujuan",
     "boleh_memutuskan",
+    "galat_tambah_rekan",
+    "batalkan_pengajuan_menunggu",
     "galat_ubah_tugas",
     "periksa_penugasan",
     "aktor_dari_context",
@@ -722,6 +724,11 @@ def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, aba
         # tidak bisa di luar divisinya).
         if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
             return None
+        if saya_terlibat:
+            # Staf yang terlibat boleh MENAMBAH rekan setingkat sedepartemen
+            # (kolaborasi). Hanya penambahan: `galat_tambah_rekan` di serializer
+            # menolak pelepasan siapa pun dan memeriksa rekan barunya.
+            return None
         return (
             "Penugasan tugas ini dikunci. Minta atasan Anda untuk mengubahnya "
             "kalau memang perlu dipindahkan."
@@ -820,7 +827,7 @@ def butuh_persetujuan(actor, project_id, assignee_ids):
     return _adalah_staf(actor.id, project.workspace_id)
 
 
-def catat_persetujuan(issue, actor=None):
+def catat_persetujuan(issue, actor=None, state_sebelumnya_id=None):
     """Buat baris persetujuan kalau penugasan ini memang butuh persetujuan.
 
     Dipanggil SESUDAH tugasnya tersimpan, dari `create()`/`update()` serializer -- jadi
@@ -851,6 +858,7 @@ def catat_persetujuan(issue, actor=None):
         issue_id=issue.id,
         pemohon=actor,
         penerima=actor,
+        state_sebelumnya_id=state_sebelumnya_id,
     )
     # Inbox + email ke atasan yang boleh memutuskan (KEP-30 lanjutan).
     # Menelan galat sendiri di dalam — pengajuan tidak boleh gagal hanya
@@ -859,6 +867,40 @@ def catat_persetujuan(issue, actor=None):
 
     beritahu_diajukan(baris, issue=issue)
     return baris
+
+
+def galat_tambah_rekan(project_id, issue, assignee_ids_baru, actor):
+    """Staf menambah rekan ke tugas yang SUDAH ada. Kembalikan pesan galat atau None.
+
+    Aturan (keputusan user 2026-10-26): hanya penambahan. Siapa pun yang sudah jadi
+    assignee tidak boleh dilepas, dan dirinya sendiri wajib tetap ada. Rekan baru
+    harus setingkat, sedepartemen, dan anggota project (`_galat_kolaborasi_staf`).
+    Assignee lama tidak diperiksa ulang: bisa saja ditunjuk atasan.
+    """
+    from plane.db.models import Project  # noqa: PLC0415
+
+    project = Project.objects.filter(pk=project_id, deleted_at__isnull=True).first()
+    if project is None:
+        return "Project tujuan tidak ditemukan."
+    baru = {a for a in (assignee_ids_baru or []) if a is not None}
+    lama = set(issue.issue_assignee.values_list("assignee_id", flat=True))
+    if not lama <= baru:
+        return "Staf hanya boleh menambah rekan, tidak boleh melepas assignee yang sudah ada."
+    ditambah = baru - lama
+    if not ditambah:
+        return None
+    return _galat_kolaborasi_staf(actor.id, project.workspace_id, project_id, [actor.id, *ditambah])
+
+
+def batalkan_pengajuan_menunggu(issue_id):
+    """Cabut pengajuan yang masih menunggu (soft delete). Jumlah baris yang dicabut."""
+    from plane.db.models import PersetujuanPenugasan, STATUS_PERSETUJUAN_MENUNGGU  # noqa: PLC0415
+
+    jumlah = 0
+    for baris in PersetujuanPenugasan.objects.filter(issue_id=issue_id, status=STATUS_PERSETUJUAN_MENUNGGU):
+        baris.delete()
+        jumlah += 1
+    return jumlah
 
 
 def status_persetujuan_tugas(issue_id):

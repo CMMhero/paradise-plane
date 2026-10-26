@@ -271,3 +271,64 @@ class TestKirimEmailPersetujuan:
         log.refresh_from_db()
         assert log.processed_at is not None
         assert log.sent_at is None
+
+
+@pytest.mark.contract
+class TestSelesaiMenungguTetapSelesai:
+    """Keputusan user 2026-10-26: selama menunggu tugas TETAP selesai, hanya ditandai."""
+
+    @pytest.mark.django_db
+    def test_tugas_tetap_selesai_dan_ditandai_menunggu(self, workspace, staf, bos, divisi, monkeypatch):
+        issue = _ajukan(staf, workspace, divisi, monkeypatch)
+        issue.refresh_from_db()
+        assert issue.state.group == "completed"
+        assert PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").count() == 1
+
+    @pytest.mark.django_db
+    def test_patch_membalas_status_persetujuan_tanpa_muat_ulang(self, workspace, staf, bos, divisi, monkeypatch):
+        from plane.db.models import State
+
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        res = _klien(staf).post(
+            URL_ISSUES.format(slug=workspace.slug, project_id=divisi.id),
+            {"name": "Tugas indikator", "assignee_ids": [str(staf.id)]},
+            format="json",
+        )
+        selesai = State.objects.filter(project=divisi, group="completed").first()
+        if selesai is None:
+            selesai = State.objects.create(
+                project=divisi, workspace=workspace, name="Done", color="#000", sequence=1, group="completed"
+            )
+        patch = _klien(staf).patch(
+            URL_ISSUES.format(slug=workspace.slug, project_id=divisi.id) + res.json()["id"] + "/",
+            {"state": str(selesai.id)},
+            format="json",
+        )
+        assert patch.status_code == status.HTTP_200_OK, getattr(patch, "data", None)
+        assert patch.json() == {"approval_status": "menunggu"}
+
+    @pytest.mark.django_db
+    def test_tolak_mengembalikan_tugas_dari_selesai(self, workspace, staf, bos, divisi, monkeypatch):
+        issue = _ajukan(staf, workspace, divisi, monkeypatch)
+        baris = PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").first()
+        res = _klien(bos).post(
+            URL_PUTUSKAN.format(slug=workspace.slug, project_id=divisi.id, pk=baris.id),
+            {"aksi": "tolak", "alasan": "Belum lengkap"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_200_OK, getattr(res, "data", None)
+        issue.refresh_from_db()
+        assert issue.state is None or issue.state.group != "completed"
+
+    @pytest.mark.django_db
+    def test_setujui_membiarkan_tugas_selesai(self, workspace, staf, bos, divisi, monkeypatch):
+        issue = _ajukan(staf, workspace, divisi, monkeypatch)
+        baris = PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").first()
+        res = _klien(bos).post(
+            URL_PUTUSKAN.format(slug=workspace.slug, project_id=divisi.id, pk=baris.id),
+            {"aksi": "setujui"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_200_OK, getattr(res, "data", None)
+        issue.refresh_from_db()
+        assert issue.state.group == "completed"

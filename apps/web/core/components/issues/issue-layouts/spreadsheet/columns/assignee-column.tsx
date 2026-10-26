@@ -12,7 +12,7 @@ import type { TIssue } from "@plane/types";
 // components
 import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
 // hooks
-import { useBisaDitugaskan } from "@/hooks/use-aturan-tugas";
+import { useBisaDitugaskan, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 
 type Props = {
   issue: TIssue;
@@ -29,6 +29,8 @@ export const SpreadsheetAssigneeColumn = observer(function SpreadsheetAssigneeCo
   // tetap bisa dibuka, server yang menolak).
   const daftarBoleh = useBisaDitugaskan(workspaceSlug?.toString(), issue?.project_id);
   const diriSendiri = !daftarBoleh.memuat && daftarBoleh.mode === "diri-sendiri";
+  // Union dengan assignee yang sudah ada; staf hanya boleh menambah rekan.
+  const opsi = useOpsiAssignee(workspaceSlug?.toString(), issue?.project_id, issue?.assignee_ids);
   return (
     <div className="h-11 border-b-[0.5px] border-subtle">
       <MemberDropdown
@@ -36,7 +38,7 @@ export const SpreadsheetAssigneeColumn = observer(function SpreadsheetAssigneeCo
         onChange={(data) => {
           onChange(
             issue,
-            { assignee_ids: data },
+            { assignee_ids: opsi.rapikan(data) },
             {
               changed_property: "assignees",
               change_details: data,
@@ -45,7 +47,7 @@ export const SpreadsheetAssigneeColumn = observer(function SpreadsheetAssigneeCo
         }}
         projectId={issue?.project_id ?? undefined}
         disabled={disabled}
-        memberIds={daftarBoleh.memuat ? undefined : daftarBoleh.userIds}
+        memberIds={opsi.memberIds}
         placeholder={diriSendiri ? "Hanya diri sendiri" : "Assignees"}
         multiple
         buttonVariant={

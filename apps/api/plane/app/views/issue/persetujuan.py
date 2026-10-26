@@ -99,6 +99,29 @@ def _serial(baris, peran, boleh_memutuskan):
     }
 
 
+def _pindahkan_tugas(aktor, issue, tujuan):
+    """Ganti status tugas dan catat aktivitasnya atas nama `aktor`."""
+    import json  # noqa: PLC0415
+
+    from django.core.serializers.json import DjangoJSONEncoder  # noqa: PLC0415
+
+    from plane.bgtasks.issue_activities_task import issue_activity  # noqa: PLC0415
+
+    lama = issue.state_id
+    issue.state = tujuan
+    issue.save(update_fields=["state", "completed_at", "updated_at"])
+    issue_activity.delay(
+        type="issue.activity.updated",
+        requested_data=json.dumps({"state_id": str(tujuan.id)}, cls=DjangoJSONEncoder),
+        current_instance=json.dumps({"state_id": str(lama)}, cls=DjangoJSONEncoder),
+        actor_id=str(aktor.id),
+        issue_id=str(issue.id),
+        project_id=str(issue.project_id),
+        epoch=int(timezone.now().timestamp()),
+        notification=True,
+    )
+
+
 class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
     """`GET` siapa saja yang boleh saya assign di project ini.
 
@@ -309,43 +332,49 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         if aksi == "setujui" and baris.issue_id:
             self._selesaikan_tugas(request, baris)
 
-        # Ditolak = tugas TETAP di status semula dan tetap terlihat (keputusan
-        # user 2026-10-26: persetujuan hanya untuk gerbang selesai, jadi tugas
-        # tidak pernah disembunyikan). Staf mengerjakan lagi, atau mengajukan
-        # ulang lewat aksi `ajukan-ulang`.
+        # Ditolak = tugas dikembalikan ke status sebelum diajukan (keputusan user
+        # 2026-10-26: selama menunggu tugas tetap berstatus selesai, jadi
+        # penolakanlah yang mencabut status selesainya). Tugas tetap terlihat;
+        # staf mengerjakan lagi, atau mengajukan ulang lewat `ajukan-ulang`.
+        if aksi == "tolak" and baris.issue_id:
+            self._kembalikan_tugas(request, baris)
         return Response(_serial(baris, "penyetuju", False))
 
     def _selesaikan_tugas(self, request, baris):
         """Pindahkan tugas ke status selesai setelah atasan menyetujui.
 
-        Staf tidak bisa memindahkannya sendiri (ditahan serializer), jadi
-        keputusan setujui-lah yang menyelesaikan tugasnya. Status tujuan:
-        status `completed` pertama di project (urut sequence).
+        Tugas biasanya SUDAH berstatus selesai selagi menunggu (hanya ditandai);
+        ini memastikannya kalau ada yang memindahkannya keluar di tengah jalan.
+        Status tujuan: status `completed` pertama di project (urut sequence).
         """
-        import json  # noqa: PLC0415
-
-        from django.core.serializers.json import DjangoJSONEncoder  # noqa: PLC0415
-
-        from plane.bgtasks.issue_activities_task import issue_activity  # noqa: PLC0415
         from plane.db.models import Issue, State  # noqa: PLC0415
 
         issue = Issue.objects.filter(pk=baris.issue_id).first()
         selesai = State.objects.filter(project_id=baris.project_id, group="completed").order_by("sequence").first()
         if issue is None or selesai is None or issue.state_id == selesai.id:
             return
-        lama = issue.state_id
-        issue.state = selesai
-        issue.save(update_fields=["state", "completed_at", "updated_at"])
-        issue_activity.delay(
-            type="issue.activity.updated",
-            requested_data=json.dumps({"state_id": str(selesai.id)}, cls=DjangoJSONEncoder),
-            current_instance=json.dumps({"state_id": str(lama)}, cls=DjangoJSONEncoder),
-            actor_id=str(request.user.id),
-            issue_id=str(issue.id),
-            project_id=str(issue.project_id),
-            epoch=int(timezone.now().timestamp()),
-            notification=True,
-        )
+        _pindahkan_tugas(request.user, issue, selesai)
+
+    def _kembalikan_tugas(self, request, baris):
+        """Tolak: kembalikan tugas dari selesai ke status sebelum diajukan.
+
+        Status asal disimpan di `state_sebelumnya`. Kalau kosong (tugas dibuat
+        langsung selesai) atau statusnya sudah dihapus, jatuh ke status bawaan
+        project, lalu status non-selesai pertama. Tugas yang sudah dipindahkan
+        keluar dari selesai oleh orang lain dibiarkan.
+        """
+        from plane.db.models import Issue, State  # noqa: PLC0415
+
+        issue = Issue.objects.filter(pk=baris.issue_id).select_related("state").first()
+        if issue is None or issue.state is None or issue.state.group != "completed":
+            return
+        tujuan = State.objects.filter(pk=baris.state_sebelumnya_id).exclude(group="completed").first()
+        if tujuan is None:
+            dasar = State.objects.filter(project_id=baris.project_id).exclude(group__in=["completed", "cancelled"])
+            tujuan = dasar.filter(default=True).first() or dasar.order_by("sequence").first()
+        if tujuan is None:
+            return
+        _pindahkan_tugas(request.user, issue, tujuan)
 
     @transaction.atomic
     def ajukan_ulang(self, request, slug, project_id, pk=None):
@@ -394,12 +423,20 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         issue.is_draft = False
         issue.save(update_fields=["is_draft", "updated_at"])
+        # Diajukan ulang = tugas kembali berstatus selesai, ditandai menunggu.
+        from plane.db.models import State as _State  # noqa: PLC0415
+
+        sebelum = issue.state_id
+        selesai = _State.objects.filter(project_id=baris.project_id, group="completed").order_by("sequence").first()
+        if selesai is not None and issue.state_id != selesai.id:
+            _pindahkan_tugas(request.user, issue, selesai)
         baru = Baris.objects.create(
             workspace_id=baris.workspace_id,
             project_id=baris.project_id,
             issue_id=baris.issue_id,
             pemohon=request.user,
             penerima=request.user,
+            state_sebelumnya_id=sebelum,
         )
         from plane.utils.notifikasi_persetujuan import beritahu_diajukan  # noqa: PLC0415
 
