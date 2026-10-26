@@ -240,12 +240,7 @@ class IssueSerializer(BaseSerializer):
             except IntegrityError:
                 pass
 
-        # Indikator + antrean persetujuan. Sama dengan serializer app: satu tempat untuk
-        # semua jalur yang memakai serializer ini (Public API v1).
-        from plane.utils.hierarki import aktor_dari_context, catat_persetujuan  # noqa: PLC0415
-
-        catat_persetujuan(issue, actor=aktor_dari_context(self.context))
-
+        # Membuat tugas tidak butuh persetujuan (2026-10-26); hanya gerbang selesai.
         return issue
 
     def update(self, instance, validated_data):

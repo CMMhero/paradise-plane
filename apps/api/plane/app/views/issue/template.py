@@ -96,9 +96,6 @@ class IssueTemplateApplyEndpoint(BaseAPIView):
                 # Tugas tanpa penerima tidak butuh persetujuan, jadi staf tetap
                 # bisa bekerja — yang hilang cuma penugasan otomatisnya.
                 pass
-        from plane.utils.hierarki import catat_persetujuan  # noqa: PLC0415
-
-        catat_persetujuan(issue, actor=request.user)
         return Response(IssueSerializer(issue).data, status=status.HTTP_201_CREATED)
 
 

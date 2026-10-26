@@ -311,21 +311,46 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         beritahu_diputuskan(baris, aksi)
 
-        if aksi == "tolak" and baris.issue_id:
-            # Keputusan user 2026-10-16 (menggantikan 2026-10-15): tugas yang
-            # ditolak KEMBALI ke draft tak-terlihat (`is_draft=True` sudah
-            # dikecualikan semua queryset papan), bukan tetap muncul. Staf
-            # mengajukan ulang dari tab "Pengajuan saya" (aksi `ajukan-ulang`).
-            # Assignee SENGAJA tidak dicabut: jejak siapa mengerjakan apa tetap
-            # ada, dan pengajuan-ulang tidak perlu menebak penerimanya.
-            from plane.db.models import Issue  # noqa: PLC0415
+        if aksi == "setujui" and baris.issue_id:
+            self._selesaikan_tugas(request, baris)
 
-            Issue.objects.filter(pk=baris.issue_id).update(is_draft=True)
-
-        # Ditolak TIDAK menghapus tugasnya — hanya disembunyikan dari papan
-        # (lihat di atas). Dihapus berarti pekerjaan yang sudah dimulai hilang
-        # tanpa jejak.
+        # Ditolak = tugas TETAP di status semula dan tetap terlihat (keputusan
+        # user 2026-10-26: persetujuan hanya untuk gerbang selesai, jadi tugas
+        # tidak pernah disembunyikan). Staf mengerjakan lagi, atau mengajukan
+        # ulang lewat aksi `ajukan-ulang`.
         return Response(_serial(baris, "penyetuju", False))
+
+    def _selesaikan_tugas(self, request, baris):
+        """Pindahkan tugas ke status selesai setelah atasan menyetujui.
+
+        Staf tidak bisa memindahkannya sendiri (ditahan serializer), jadi
+        keputusan setujui-lah yang menyelesaikan tugasnya. Status tujuan:
+        status `completed` pertama di project (urut sequence).
+        """
+        import json  # noqa: PLC0415
+
+        from django.core.serializers.json import DjangoJSONEncoder  # noqa: PLC0415
+
+        from plane.bgtasks.issue_activities_task import issue_activity  # noqa: PLC0415
+        from plane.db.models import Issue, State  # noqa: PLC0415
+
+        issue = Issue.objects.filter(pk=baris.issue_id).first()
+        selesai = State.objects.filter(project_id=baris.project_id, group="completed").order_by("sequence").first()
+        if issue is None or selesai is None or issue.state_id == selesai.id:
+            return
+        lama = issue.state_id
+        issue.state = selesai
+        issue.save(update_fields=["state", "completed_at", "updated_at"])
+        issue_activity.delay(
+            type="issue.activity.updated",
+            requested_data=json.dumps({"state_id": str(selesai.id)}, cls=DjangoJSONEncoder),
+            current_instance=json.dumps({"state_id": str(lama)}, cls=DjangoJSONEncoder),
+            actor_id=str(request.user.id),
+            issue_id=str(issue.id),
+            project_id=str(issue.project_id),
+            epoch=int(timezone.now().timestamp()),
+            notification=True,
+        )
 
     @transaction.atomic
     def ajukan_ulang(self, request, slug, project_id, pk=None):

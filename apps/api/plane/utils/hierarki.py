@@ -56,7 +56,7 @@ __all__ = [
     "jangkauan_hierarki",
     "calon_penyetuju",
     "galat_penugasan",
-    "galat_selesai_tugas",
+    "selesai_perlu_persetujuan",
     "galat_ubah_tugas",
     "periksa_penugasan",
     "aktor_dari_context",
@@ -619,64 +619,38 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
     return bawahan
 
 
-def galat_selesai_tugas(project_id, actor, state_baru, issue=None, penerima_ids=None):
-    """Bolehkah tugas ini MASUK status selesai? Kembalikan pesan galat atau None.
+def selesai_perlu_persetujuan(project_id, actor, state_baru, penerima_ids):
+    """True kalau perpindahan ke status selesai ini harus DITAHAN untuk persetujuan.
 
-    Keputusan user 2026-10-24: persetujuan hanya di gerbang selesai. Sebelum itu
-    tugas bebas dipindah/diubah/dihapus/diarsipkan -- tidak ada lagi kunci.
-    Tugas yang memang butuh persetujuan (member menugaskan ke dirinya sendiri:
-    `butuh_persetujuan`) hanya boleh selesai kalau baris persetujuannya sudah
-    DISETUJUI; menunggu/ditolak/tanpa-baris = ditolak dengan pesan yang
-    mengarahkan (bukan "dilarang" tanpa jalan keluar).
+    Keputusan user 2026-10-26 (menggantikan 2026-10-24): persetujuan TIDAK
+    diminta saat tugas dibuat. Ia baru muncul saat assignee staf menggeser
+    progres ke selesai. Perpindahan itu tidak ditolak, tapi ditahan: tugas tetap
+    di status semula, pengajuan dibuat (`catat_persetujuan`), dan atasan yang
+    menyelesaikannya lewat setujui. Supervisor/manager/direktur/Super Admin
+    menyelesaikan langsung (`butuh_persetujuan` hanya benar untuk staf).
 
-    Berlaku saat create (tugas langsung-done) maupun update (pindah status).
-    Tanpa baris persetujuan = gagal-tertutup: tugas yang butuh persetujuan tidak
-    boleh lolos hanya karena barisnya hilang.
+    Berlaku saat create (langsung-done) maupun update (pindah status). Persetujuan
+    lama TIDAK dipakai ulang: setujui sendiri yang memindahkan tugas ke selesai,
+    jadi tugas yang dibuka lalu diselesaikan lagi diajukan lagi.
     """
     if not gerbang_aktif() or actor is None or state_baru is None:
-        return None
+        return False
     group = getattr(state_baru, "group", None)
     if group is None:
-        try:
-            from plane.db.models import State  # noqa: PLC0415
+        from plane.db.models import State  # noqa: PLC0415
 
-            group = State.objects.filter(pk=state_baru).values_list("group", flat=True).first()
-        except Exception:  # noqa: BLE001 -- state tak dikenal: bukan urusan gerbang ini
-            return None
+        group = State.objects.filter(pk=state_baru).values_list("group", flat=True).first()
     if group != "completed":
-        return None
+        return False
 
     from plane.db.superadmin import is_super_admin  # noqa: PLC0415
 
     if is_super_admin(actor):
-        return None
-
-    if penerima_ids is None and issue is not None:
-        penerima_ids = list(issue.issue_assignee.values_list("assignee_id", flat=True))
-    if not butuh_persetujuan(actor, project_id, penerima_ids or []):
-        return None
-    if issue is None or getattr(issue, "pk", None) is None:
-        # Baru dibuat langsung-done: belum mungkin ada baris persetujuan.
-        # Buat dulu sebagai belum-selesai, minta persetujuan, baru selesaikan.
-        return (
-            "Tugas ini baru boleh selesai setelah disetujui atasan. Buat dulu "
-            "sebagai belum selesai -- pengajuan persetujuannya dibuat otomatis."
-        )
-    status_terakhir = status_persetujuan_tugas(issue.id)
-    if status_terakhir == "disetujui":
-        return None
-    if status_terakhir == "ditolak":
-        return (
-            "Atasan menolak penyelesaian tugas ini. Minta arahan atasan Anda "
-            "sebelum menyelesaikannya."
-        )
-    return (
-        "Tugas ini baru boleh selesai setelah disetujui atasan. "
-        "Pengajuan persetujuan Anda sedang menunggu keputusan."
-    )
+        return False
+    return butuh_persetujuan(actor, project_id, penerima_ids or [])
 
 # (Dihapus 2026-10-24: tidak ada lagi kunci tulis. Persetujuan hanya di
-# gerbang selesai -- `galat_selesai_tugas` di atas. Lihat riwayat git untuk
+# gerbang selesai -- `selesai_perlu_persetujuan` di atas. Lihat riwayat git untuk
 # `galat_terkunci` / `KunciPersetujuanMixin` / masa susun.)
 
 

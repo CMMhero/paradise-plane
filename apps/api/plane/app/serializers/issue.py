@@ -228,31 +228,24 @@ class IssueCreateSerializer(BaseSerializer):
         if galat:
             raise serializers.ValidationError({"assignee_ids": galat})
 
-        # Gerbang selesai (keputusan user 2026-10-24): persetujuan hanya ditagih
-        # saat tugas MASUK status selesai, bukan saat dibuat/diubah/dihapus.
-        # Berlaku untuk create langsung-done maupun pindah status.
-        if gerbang_aktif() and (attrs.get("state") is not None or self.instance is None):
-            from plane.utils.hierarki import galat_selesai_tugas  # noqa: PLC0415
+        # Gerbang selesai (keputusan user 2026-10-26): persetujuan TIDAK diminta
+        # saat tugas dibuat. Ia muncul saat assignee staf menggeser progres ke
+        # selesai: perpindahan itu ditahan (state dibuang dari perubahan, tugas
+        # tetap di status semula) dan pengajuan dibuat di create()/update().
+        # Atasan menyelesaikan lewat setujui, bukan lewat serializer ini.
+        self._tahan_selesai = False
+        if gerbang_aktif() and attrs.get("state") is not None:
+            from plane.utils.hierarki import selesai_perlu_persetujuan  # noqa: PLC0415
 
             if self.instance is not None:
                 penerima = attrs.get("assignee_ids")
                 if penerima is None:
-                    penerima = list(
-                        self.instance.issue_assignee.values_list("assignee_id", flat=True)
-                    )
-                tugas_lama = self.instance
+                    penerima = list(self.instance.issue_assignee.values_list("assignee_id", flat=True))
             else:
                 penerima = attrs.get("assignee_ids") or []
-                tugas_lama = None
-            galat_selesai = galat_selesai_tugas(
-                self.context.get("project_id"),
-                _actor,
-                attrs.get("state"),
-                issue=tugas_lama,
-                penerima_ids=penerima,
-            )
-            if galat_selesai:
-                raise serializers.ValidationError({"state": galat_selesai})
+            if selesai_perlu_persetujuan(self.context.get("project_id"), _actor, attrs["state"], penerima):
+                attrs.pop("state")
+                self._tahan_selesai = True
 
         # Validate labels are from project
         if attrs.get("label_ids"):
@@ -377,14 +370,12 @@ class IssueCreateSerializer(BaseSerializer):
             except IntegrityError:
                 pass
 
-        # Indikator + antrean persetujuan (keputusan user 2026-10-15): tugasnya TETAP
-        # dibuat dan tetap muncul, tapi kalau yang menugaskan seorang member (menugaskan
-        # ke dirinya sendiri), dibuatkan baris "menunggu persetujuan". Ditaruh di
-        # create/update serializer -- bukan di view -- supaya semua jalur yang memakai
-        # serializer ini (web, intake, draft) ikut tercakup, bukan cuma satu pintu.
-        from plane.utils.hierarki import aktor_dari_context, catat_persetujuan  # noqa: PLC0415
+        # Pengajuan hanya kalau staf membuat tugas langsung berstatus selesai
+        # (ditahan di validate()). Membuat tugas biasa TIDAK butuh persetujuan.
+        if getattr(self, "_tahan_selesai", False):
+            from plane.utils.hierarki import aktor_dari_context, catat_persetujuan  # noqa: PLC0415
 
-        catat_persetujuan(issue, actor=aktor_dari_context(self.context))
+            catat_persetujuan(issue, actor=aktor_dari_context(self.context))
 
         return issue
 
@@ -442,11 +433,14 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
-        # Persetujuan SENGAJA tidak dicatat di update(): staf tidak bisa mengubah
-        # assignee (ditolak validate), jadi update tidak pernah membuat penugasan
-        # baru. Dulu dipanggil di sini, dan setiap suntingan staf atas tugas yang
-        # SUDAH disetujui membuka antrean (dan kunci) baru.
-        return super().update(instance, validated_data)
+        tugas = super().update(instance, validated_data)
+        # Staf menggeser progres ke selesai: statusnya ditahan di validate(),
+        # pengajuan ke atasan dibuat di sini (idempoten: satu baris menunggu).
+        if getattr(self, "_tahan_selesai", False):
+            from plane.utils.hierarki import aktor_dari_context, catat_persetujuan  # noqa: PLC0415
+
+            catat_persetujuan(tugas, actor=aktor_dari_context(self.context))
+        return tugas
 
 
 class IssueActivitySerializer(BaseSerializer):

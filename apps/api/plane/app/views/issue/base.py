@@ -1236,6 +1236,16 @@ class IssueBulkUpdateDateEndpoint(BaseAPIView):
 
             start_date = update.get("start_date")
             target_date = update.get("target_date")
+            # Tenggat hanya boleh digeser pembuat tugas / Super Admin (sama dengan PATCH).
+            # Seret di Gantt/kalender lewat endpoint ini, jadi tanpa cek ini aturannya bocor.
+            if tenggat_diubah(issue, update) and not bisa_ganti_tenggat(request.user, issue):
+                return Response(
+                    {
+                        "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
+                        "atau Super Admin. Hubungi pembuatnya kalau tanggalnya perlu digeser."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             validate_dates = self.validate_dates(issue.start_date, issue.target_date, start_date, target_date)
             if not validate_dates:
                 return Response(

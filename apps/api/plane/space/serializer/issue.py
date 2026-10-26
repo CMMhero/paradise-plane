@@ -369,13 +369,7 @@ class IssueCreateSerializer(BaseSerializer):
                 batch_size=10,
             )
 
-        # Indikator + antrean persetujuan (keputusan user 2026-10-15). Sama dengan
-        # serializer app: satu tempat untuk semua jalur yang memakai serializer ini
-        # (papan publik / DeployBoard).
-        from plane.utils.hierarki import aktor_dari_context, catat_persetujuan  # noqa: PLC0415
-
-        catat_persetujuan(issue, actor=aktor_dari_context(self.context))
-
+        # Membuat tugas tidak butuh persetujuan (2026-10-26); hanya gerbang selesai.
         return issue
 
     def update(self, instance, validated_data):

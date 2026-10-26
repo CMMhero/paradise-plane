@@ -105,7 +105,9 @@ def _klien(user):
 
 
 def _ajukan(staf, workspace, divisi, monkeypatch):
-    """Staf membuat tugas untuk dirinya sendiri → baris menunggu lahir."""
+    """Staf membuat tugas untuk dirinya lalu menggesernya ke selesai → baris menunggu lahir."""
+    from plane.db.models import DEFAULT_STATES, State
+
     monkeypatch.setenv(FLAG_GERBANG, "1")
     res = _klien(staf).post(
         URL_ISSUES.format(slug=workspace.slug, project_id=divisi.id),
@@ -113,6 +115,21 @@ def _ajukan(staf, workspace, divisi, monkeypatch):
         format="json",
     )
     assert res.status_code == status.HTTP_201_CREATED, getattr(res, "data", None)
+    selesai = None
+    for d in DEFAULT_STATES:
+        st, _ = State.objects.get_or_create(
+            project=divisi,
+            workspace=workspace,
+            name=d["name"],
+            defaults={"color": d["color"], "sequence": d["sequence"], "group": d["group"], "default": d.get("default", False)},
+        )
+        if st.group == "completed" and selesai is None:
+            selesai = st
+    _klien(staf).patch(
+        URL_ISSUES.format(slug=workspace.slug, project_id=divisi.id) + res.json()["id"] + "/",
+        {"state": str(selesai.id)},
+        format="json",
+    )
     return Issue.objects.get(pk=res.json()["id"])
 
 

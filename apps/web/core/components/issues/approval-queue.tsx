@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: antrean persetujuan per divisi 
+ * Kustomisasi Paradise Task Tracker: antrean persetujuan per divisi
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
@@ -15,7 +15,7 @@
  * keduanya tidak berbeda pendapat tentang bentuk antrean.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { AlertTriangle, CheckCircle2, Clock, Inbox, Send, XCircle } from "lucide-react";
 // plane imports
@@ -114,9 +114,7 @@ function KartuKeputusan({
         type: TOAST_TYPE.SUCCESS,
         title: aksi === "setujui" ? t("issue.approval.toast.approved_title") : t("issue.approval.toast.rejected_title"),
         message:
-          aksi === "setujui"
-            ? t("issue.approval.toast.approved_message")
-            : t("issue.approval.toast.rejected_message"),
+          aksi === "setujui" ? t("issue.approval.toast.approved_message") : t("issue.approval.toast.rejected_message"),
       });
     } catch (err) {
       // Pesan dari API ditampilkan apa adanya (mis. "Anda bukan atasan pembuat
@@ -143,7 +141,7 @@ function KartuKeputusan({
         className={inputClass}
       />
       {gagal && (
-        <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+        <p className="text-xs rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-danger-primary">
           {gagal}
         </p>
       )}
@@ -209,7 +207,7 @@ function TombolAjukanUlang({
     <div className="flex flex-col gap-1.5">
       <p className="text-[11px] text-tertiary">{t("issue.approval.queue.resubmit_hint")}</p>
       {gagal && (
-        <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+        <p className="text-xs rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-danger-primary">
           {gagal}
         </p>
       )}
@@ -256,14 +254,24 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
     return daftar;
   }, [joinedProjectIds, getProjectById]);
 
+  // Kunci muat ulang HANYA nilai yang stabil. `t`, `getProjectById`, dan
+  // `divisiSaya` (array baru tiap render karena `joinedProjectIds` adalah
+  // getter) dulu masuk dependensi `muatSemua`, jadi efek memuat ulang tanpa
+  // henti: skeleton berkedip dan daftar tak pernah menetap. Nilai terbarunya
+  // dibaca lewat ref; perubahan DAFTAR divisi ditangkap `kunciDivisi` (string).
+  const terbaru = useRef({ t, getProjectById, divisiSaya });
+  terbaru.current = { t, getProjectById, divisiSaya };
+  const kunciDivisi = divisiSaya.map((d) => d.id).join(",");
+
   const muatSemua = useCallback(async () => {
     if (!workspaceSlug) return;
+    const { t: tt, getProjectById: ambilProject, divisiSaya: daftarDivisi } = terbaru.current;
     // Tab per divisi: tepat satu panggilan. Halaman lama: satu per divisi.
     const aktif = projectTetap
       ? [projectTetap]
       : sudut === "penyetuju" && divisiDipilih
         ? [divisiDipilih]
-        : divisiSaya.map((d) => d.id);
+        : daftarDivisi.map((d) => d.id);
     if (aktif.length === 0) {
       setIsLoading(false);
       return;
@@ -282,18 +290,19 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
       // kalau riwayat perlu "terbaru dulu", itu `order_by` di endpoint).
       const semua: TBarisAntrean[] = respons.flatMap((res, i) => {
         const pid = aktif[i];
-        const nama = getProjectById(pid)?.name ?? pid;
+        const nama = ambilProject(pid)?.name ?? pid;
         // `Object.assign`, bukan spread: aturan `no-map-spread` (copy-on-write
         // tetap terjaga — respons axios tidak dimutasi).
         return (res?.hasil ?? []).map((item) => Object.assign({}, item, { divisi: nama, projectId: pid }));
       });
       setBaris([...semua.filter((b) => b.status === "menunggu"), ...semua.filter((b) => b.status !== "menunggu")]);
     } catch (err) {
-      setGagalMuat(pesanGagal(err, t("issue.approval.queue.load_failed")));
+      setGagalMuat(pesanGagal(err, tt("issue.approval.queue.load_failed")));
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceSlug, projectTetap, divisiSaya, sudut, divisiDipilih, getProjectById, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `kunciDivisi` mewakili daftar divisi
+  }, [workspaceSlug, projectTetap, sudut, divisiDipilih, kunciDivisi]);
 
   useEffect(() => {
     void muatSemua();
@@ -359,7 +368,7 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
           )}
 
           {gagalMuat ? (
-            <div className="border-danger-subtle bg-danger-subtle text-danger-primary flex items-start gap-2 rounded-md border px-3 py-2 text-xs">
+            <div className="text-xs flex items-start gap-2 rounded-md border border-danger-subtle bg-danger-subtle px-3 py-2 text-danger-primary">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <div className="flex flex-col gap-1">
                 <span>{gagalMuat}</span>
@@ -405,11 +414,14 @@ export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TA
                       date: formatTanggal(item.created_at, locale),
                     })}
                     {item.status !== "menunggu" && (
-                      <> · {t("issue.approval.queue.row_decided", { date: formatTanggal(item.diputuskan_pada, locale) })}</>
+                      <>
+                        {" "}
+                        · {t("issue.approval.queue.row_decided", { date: formatTanggal(item.diputuskan_pada, locale) })}
+                      </>
                     )}
                   </p>
                   {item.status === "ditolak" && item.alasan && (
-                    <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+                    <p className="text-xs rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-danger-primary">
                       {t("issue.approval.queue.rejection_reason", { reason: item.alasan })}
                     </p>
                   )}

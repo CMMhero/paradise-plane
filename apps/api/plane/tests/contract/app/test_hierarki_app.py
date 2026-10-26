@@ -838,7 +838,7 @@ class TestGerbangDiJalurHttp:
         assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
         issue = Issue.objects.get(pk=response.json()["id"])
         assert IssueAssignee.objects.filter(issue=issue, assignee=staf_a).exists()
-        assert PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").exists()
+        assert not PersetujuanPenugasan.objects.filter(issue=issue).exists()
 
     @pytest.mark.django_db
     def test_staf_create_tanpa_assignee_otomatis_jadi_miliknya(
@@ -855,7 +855,7 @@ class TestGerbangDiJalurHttp:
         assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
         issue = Issue.objects.get(pk=response.json()["id"])
         assert set(issue.issue_assignee.values_list("assignee_id", flat=True)) == {staf_a.id}
-        assert PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").exists()
+        assert not PersetujuanPenugasan.objects.filter(issue=issue).exists()
 
     @pytest.mark.django_db
     def test_staf_tidak_bisa_mengubah_assignee_miliknya_sendiri(
@@ -946,33 +946,59 @@ class TestGerbangDiJalurHttp:
 # --------------------------------------------------------------------------
 
 
+def _ajukan_selesai(workspace, divisi, staf):
+    """Staf membuat tugas untuk dirinya lalu menggesernya ke selesai.
+
+    Sejak 2026-10-26 pengajuan lahir di langkah kedua ini, bukan saat create.
+    Mengembalikan id tugas; barisnya: `PersetujuanPenugasan.objects.get(issue_id=...)`.
+    """
+    from plane.db.models import DEFAULT_STATES, State
+
+    selesai = None
+    for s in DEFAULT_STATES:
+        st, _ = State.objects.get_or_create(
+            project=divisi,
+            workspace=workspace,
+            name=s["name"],
+            defaults={
+                "color": s["color"],
+                "sequence": s["sequence"],
+                "group": s["group"],
+                "default": s.get("default", False),
+            },
+        )
+        if st.group == "completed" and selesai is None:
+            selesai = st
+    klien = _klien(staf)
+    issue_id = klien.post(
+        URL_ISSUES.format(slug=workspace.slug, project_id=divisi.id),
+        {"name": "Tugas saya", "assignee_ids": [str(staf.id)]},
+        format="json",
+    ).json()["id"]
+    klien.patch(
+        URL_ISSUE_DETAIL.format(slug=workspace.slug, project_id=divisi.id, issue_id=issue_id),
+        {"state": str(selesai.id)},
+        format="json",
+    )
+    return issue_id
+
+
 @pytest.mark.contract
 class TestPersetujuanPenugasan:
-    """Tugasnya TETAP muncul (tidak dipindah ke Triage), tapi berindikator.
-
-    Keputusan user: "tugas (Draft) jadi muncul tapi belum di approve dan ada indikator".
-    """
+    """Pengajuan lahir saat staf menggeser tugasnya ke selesai (2026-10-26)."""
 
     @pytest.mark.django_db
-    def test_member_assign_diri_sendiri_membuat_baris_menunggu_DAN_tugasnya_tetap_muncul(
+    def test_member_geser_ke_selesai_membuat_baris_menunggu_DAN_tugasnya_tetap_muncul(
         self, workspace, staf_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        client = _klien(staf_a)
-        response = client.post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
-        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
+        issue_id = _ajukan_selesai(workspace, divisi_a, staf_a)
 
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
         assert baris.status == "menunggu"
-        assert baris.issue_id is not None
+        assert str(baris.issue_id) == issue_id
 
-        # Ini asersi yang menjaga keputusan "tetap muncul": tugasnya harus terlihat dari
-        # `issue_objects`, yaitu daftar yang dipakai papan & daftar work item. Kalau kelak
-        # ada yang memindahkannya ke state Triage supaya "tersembunyi", asersi ini merah.
+        # Tugasnya harus terlihat dari `issue_objects` (papan & daftar work item).
         assert Issue.issue_objects.filter(pk=baris.issue_id).exists()
 
     @pytest.mark.django_db
@@ -1045,11 +1071,7 @@ class TestPersetujuanPenugasan:
         self, workspace, staf_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
 
         response = _klien(staf_a).post(
@@ -1065,11 +1087,7 @@ class TestPersetujuanPenugasan:
     ):
         """Kontrol negatif: yang menyetujui harus ATASAN, bukan rekan setingkat."""
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
 
         response = _klien(staf_a2).post(
@@ -1084,11 +1102,7 @@ class TestPersetujuanPenugasan:
         self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
 
         response = _klien(bos_divisi_a).post(
@@ -1107,11 +1121,7 @@ class TestPersetujuanPenugasan:
         self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
         url = URL_PERSETUJUAN.format(slug=workspace.slug, project_id=divisi_a.id) + f"{baris.id}/"
 
@@ -1135,12 +1145,7 @@ class TestPersetujuanPenugasan:
         """Kalau tidak dijaga, dua baris menunggu membuat penyetuju menekan yang salah."""
         monkeypatch.setenv(FLAG_GERBANG, "1")
         client = _klien(staf_a)
-        respons = client.post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
-        issue_id = respons.json()["id"]
+        issue_id = _ajukan_selesai(workspace, divisi_a, staf_a)
 
         # Menyimpan ulang tugas yang sama tidak boleh menambah baris menunggu.
         # Staf tetap tidak boleh menyentuh assignee (aturan PINDAH, bukan kunci).
@@ -1157,11 +1162,7 @@ class TestPersetujuanPenugasan:
         self, workspace, staf_a, bos_divisi_a, direktur, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
 
         sebagai_atasan = _klien(bos_divisi_a).get(
             URL_PERSETUJUAN.format(slug=workspace.slug, project_id=divisi_a.id)
@@ -1451,23 +1452,18 @@ class TestBawahanIds:
 
 
 @pytest.mark.contract
-class TestTolakKembaliKeDraft:
-    """Keputusan user 2026-10-16 (menggantikan 2026-10-15): tugas yang DITOLAK
-    kembali ke draft tak-terlihat (`is_draft=True`), bukan tetap di papan.
-    Staf mengajukan ulang dari tab "Pengajuan saya"."""
+class TestTolakTidakMenyembunyikan:
+    """Keputusan user 2026-10-26 (menggantikan 2026-10-16): penolakan hanya menolak
+    penyelesaian. Tugas tetap di status semula dan tetap terlihat (bukan draft)."""
 
     @pytest.mark.django_db
-    def test_tolak_menyembunyikan_tugas_dari_papan(
+    def test_tolak_tidak_menyembunyikan_tugas_dari_papan(
         self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
         from plane.db.models import Issue
 
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id = _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        ).json()["id"]
+        issue_id = _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
 
         tolak = _klien(bos_divisi_a).post(
@@ -1477,7 +1473,7 @@ class TestTolakKembaliKeDraft:
         )
         assert tolak.status_code == status.HTTP_200_OK, getattr(tolak, "data", None)
         assert tolak.json()["status"] == "ditolak"
-        assert Issue.objects.filter(pk=issue_id).first().is_draft is True
+        assert Issue.objects.filter(pk=issue_id).first().is_draft is False
         # Assignee tidak dicabut: jejak + pengajuan-ulang tanpa menebak.
         assert IssueAssignee.objects.filter(issue_id=issue_id, assignee=staf_a).exists()
 
@@ -1488,11 +1484,7 @@ class TestTolakKembaliKeDraft:
         from plane.db.models import Issue
 
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id = _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        ).json()["id"]
+        issue_id = _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
 
         setuju = _klien(bos_divisi_a).post(
@@ -1501,7 +1493,7 @@ class TestTolakKembaliKeDraft:
             format="json",
         )
         assert setuju.status_code == status.HTTP_200_OK
-        assert Issue.objects.filter(pk=issue_id).first().is_draft is False
+        assert Issue.objects.filter(pk=issue_id).first().state.group == "completed"
 
     @pytest.mark.django_db
     def test_pemohon_bisa_ajukan_ulang_yang_ditolak(
@@ -1510,11 +1502,7 @@ class TestTolakKembaliKeDraft:
         from plane.db.models import Issue
 
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id = _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        ).json()["id"]
+        issue_id = _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
         _klien(bos_divisi_a).post(
             URL_PERSETUJUAN.format(slug=workspace.slug, project_id=divisi_a.id) + f"{baris.id}/",
@@ -1538,11 +1526,7 @@ class TestTolakKembaliKeDraft:
         self, workspace, staf_a, staf_a2, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
         _klien(bos_divisi_a).post(
             URL_PERSETUJUAN.format(slug=workspace.slug, project_id=divisi_a.id) + f"{baris.id}/",
@@ -1562,11 +1546,7 @@ class TestTolakKembaliKeDraft:
         self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
 
         ulang = _klien(staf_a).post(
@@ -1581,11 +1561,7 @@ class TestTolakKembaliKeDraft:
         self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
+        _ajukan_selesai(workspace, divisi_a, staf_a)
         baris = PersetujuanPenugasan.objects.get(pemohon=staf_a)
 
         tolak = _klien(bos_divisi_a).post(
@@ -1637,27 +1613,38 @@ URL_TAUTAN = "/api/workspaces/{slug}/projects/{project_id}/issues/{issue_id}/iss
 
 @pytest.mark.contract
 class TestPersetujuanSaatSelesai:
-    """Keputusan user 2026-10-24: persetujuan hanya di gerbang SELESAI.
-
-    Sebelum disetujui tugas tetap bebas dipindah/diubah/dihapus/diarsipkan.
-    Yang diblokir hanyalah MASUK status selesai tanpa baris disetujui.
+    """Keputusan user 2026-10-26: persetujuan HANYA saat assignee staf menggeser
+    progres ke selesai. Membuat tugas tidak butuh persetujuan; perpindahan ke
+    selesai ditahan, atasan yang menyelesaikannya lewat setujui.
     Tugas atasan tidak pernah butuh persetujuan.
     """
 
-    def _ajukan(self, workspace, divisi_a, staf_a):
+    def _buat(self, workspace, divisi_a, staf_a):
         response = _klien(staf_a).post(
             URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
             {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
             format="json",
         )
-        issue_id = response.json()["id"]
+        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
+        return response.json()["id"]
+
+    def _ajukan(self, workspace, divisi_a, staf_a):
+        """Buat tugas lalu staf menggeser ke selesai -> ditahan + baris menunggu."""
+        issue_id = self._buat(workspace, divisi_a, staf_a)
+        _, selesai = self._state(workspace, divisi_a)
+        response = _klien(staf_a).patch(
+            self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json"
+        )
+        assert response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
+            response, "data", None
+        )
         return issue_id, PersetujuanPenugasan.objects.get(issue_id=issue_id, status="menunggu")
 
     def _detail(self, workspace, divisi_a, issue_id):
         return URL_ISSUE_DETAIL.format(slug=workspace.slug, project_id=divisi_a.id, issue_id=issue_id)
 
-    def _state(self, workspace, divisi_a, grup):
-        """Satu state tiap grup yang diminta (mulai/ Selesai)."""
+    def _state(self, workspace, divisi_a):
+        """Satu state tiap grup (mulai / selesai)."""
         from plane.db.models import DEFAULT_STATES, State
 
         siap = {}
@@ -1677,97 +1664,55 @@ class TestPersetujuanSaatSelesai:
         return siap["started"], siap["completed"]
 
     @pytest.mark.django_db
-    def test_respons_create_langsung_berstatus_menunggu(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
-        """Badge "menunggu persetujuan" harus muncul tanpa refresh: dibaca dari respons create."""
+    def test_membuat_tugas_TIDAK_membuat_persetujuan(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        response = _klien(staf_a).post(
-            URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
-            {"name": "Tugas saya", "assignee_ids": [str(staf_a.id)]},
-            format="json",
-        )
-        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
-        assert response.json().get("approval_status") == "menunggu"
+        issue_id = self._buat(workspace, divisi_a, staf_a)
+        assert not PersetujuanPenugasan.objects.filter(issue_id=issue_id).exists()
 
     @pytest.mark.django_db
-    def test_staf_bisa_mengubah_tugas_yang_menunggu(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
-        """Keputusan 2026-10-24: menunggu bukan kunci. Edit bebas, gerbangnya di selesai."""
+    def test_staf_bisa_mengubah_dan_menghapus_tanpa_persetujuan(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
         monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id, _ = self._ajukan(workspace, divisi_a, staf_a)
-        response = _klien(staf_a).patch(
-            self._detail(workspace, divisi_a, issue_id), {"priority": "urgent"}, format="json"
-        )
-        assert response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
-            response, "data", None
-        )
-        assert Issue.objects.get(pk=issue_id).priority == "urgent"
-
-    @pytest.mark.django_db
-    def test_atasan_bisa_menyunting_yang_menunggu(
-        self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
-    ):
-        monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id, _ = self._ajukan(workspace, divisi_a, staf_a)
-        response = _klien(bos_divisi_a).patch(
-            self._detail(workspace, divisi_a, issue_id), {"priority": "urgent"}, format="json"
-        )
-        assert response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
-            response, "data", None
-        )
-
-    @pytest.mark.django_db
-    def test_yang_menunggu_bisa_dihapus(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
-        monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id, _ = self._ajukan(workspace, divisi_a, staf_a)
-        response = _klien(staf_a).delete(self._detail(workspace, divisi_a, issue_id))
-        assert response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
-            response, "data", None
-        )
-        assert not Issue.objects.filter(pk=issue_id, deleted_at__isnull=True).exists()
-
-    @pytest.mark.django_db
-    def test_bisa_pindah_status_belum_selesai(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
-        monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id, _ = self._ajukan(workspace, divisi_a, staf_a)
+        issue_id = self._buat(workspace, divisi_a, staf_a)
         mulai, _ = self._state(workspace, divisi_a)
-        response = _klien(staf_a).patch(
-            self._detail(workspace, divisi_a, issue_id), {"state": str(mulai.id)}, format="json"
-        )
-        assert response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
-            response, "data", None
-        )
+        for muatan in ({"priority": "urgent"}, {"state": str(mulai.id)}):
+            response = _klien(staf_a).patch(self._detail(workspace, divisi_a, issue_id), muatan, format="json")
+            assert response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
+                response, "data", None
+            )
+        assert not PersetujuanPenugasan.objects.filter(issue_id=issue_id).exists()
+        hapus = _klien(staf_a).delete(self._detail(workspace, divisi_a, issue_id))
+        assert hapus.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT)
 
     @pytest.mark.django_db
-    def test_tidak_bisa_selesai_tanpa_persetujuan(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
+    def test_geser_ke_selesai_DITAHAN_dan_membuat_pengajuan(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        issue_id, _ = self._ajukan(workspace, divisi_a, staf_a)
+        assert Issue.objects.get(pk=issue_id).state.group != "completed"
+
+    @pytest.mark.django_db
+    def test_geser_ke_selesai_dua_kali_tetap_satu_pengajuan(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
         monkeypatch.setenv(FLAG_GERBANG, "1")
         issue_id, _ = self._ajukan(workspace, divisi_a, staf_a)
         _, selesai = self._state(workspace, divisi_a)
-        response = _klien(staf_a).patch(
-            self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json"
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST, getattr(response, "data", None)
-        assert "disetujui" in str(getattr(response, "data", ""))
+        _klien(staf_a).patch(self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json")
+        assert PersetujuanPenugasan.objects.filter(issue_id=issue_id, status="menunggu").count() == 1
 
     @pytest.mark.django_db
-    def test_bisa_selesai_setelah_disetujui(
-        self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
-    ):
+    def test_setujui_menyelesaikan_tugas(self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch):
         monkeypatch.setenv(FLAG_GERBANG, "1")
         issue_id, baris = self._ajukan(workspace, divisi_a, staf_a)
-        _klien(bos_divisi_a).post(
+        response = _klien(bos_divisi_a).post(
             URL_PERSETUJUAN.format(slug=workspace.slug, project_id=divisi_a.id) + f"{baris.id}/",
             {"aksi": "setujui"},
             format="json",
         )
-        _, selesai = self._state(workspace, divisi_a)
-        response = _klien(staf_a).patch(
-            self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json"
-        )
-        assert response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
-            response, "data", None
-        )
+        assert response.status_code == status.HTTP_200_OK, getattr(response, "data", None)
+        issue = Issue.objects.get(pk=issue_id)
+        assert issue.state.group == "completed"
+        assert issue.completed_at is not None
 
     @pytest.mark.django_db
-    def test_ditolak_tetap_tidak_bisa_selesai(
+    def test_tolak_membiarkan_tugas_di_status_semula_dan_terlihat(
         self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
@@ -1777,15 +1722,14 @@ class TestPersetujuanSaatSelesai:
             {"aksi": "tolak", "alasan": "belum rapi"},
             format="json",
         )
-        _, selesai = self._state(workspace, divisi_a)
-        response = _klien(staf_a).patch(
-            self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json"
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST, getattr(response, "data", None)
+        issue = Issue.objects.get(pk=issue_id)
+        assert issue.state.group != "completed"
+        assert issue.is_draft is False
 
     @pytest.mark.django_db
-    def test_buat_langsung_selesai_ditolak(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
-        """Create-as-done ikut gerbang: belum ada baris disetujui yang bisa dipakai."""
+    def test_buat_langsung_selesai_dibuat_belum_selesai_dengan_pengajuan(
+        self, workspace, staf_a, divisi_a, jenjang, monkeypatch
+    ):
         monkeypatch.setenv(FLAG_GERBANG, "1")
         _, selesai = self._state(workspace, divisi_a)
         response = _klien(staf_a).post(
@@ -1793,7 +1737,10 @@ class TestPersetujuanSaatSelesai:
             {"name": "Langsung selesai", "assignee_ids": [str(staf_a.id)], "state": str(selesai.id)},
             format="json",
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST, getattr(response, "data", None)
+        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
+        issue_id = response.json()["id"]
+        assert Issue.objects.get(pk=issue_id).state.group != "completed"
+        assert PersetujuanPenugasan.objects.filter(issue_id=issue_id, status="menunggu").exists()
 
     @pytest.mark.django_db
     def test_komentar_tetap_terbuka(self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch):
@@ -1808,28 +1755,9 @@ class TestPersetujuanSaatSelesai:
         assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
 
     @pytest.mark.django_db
-    def test_sesudah_disetujui_tidak_mengantre_lagi(
-        self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
-    ):
-        """Regresi: update() staf tidak boleh membuka antrean baru tiap suntingan."""
-        monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id, baris = self._ajukan(workspace, divisi_a, staf_a)
-        _klien(bos_divisi_a).post(
-            URL_PERSETUJUAN.format(slug=workspace.slug, project_id=divisi_a.id) + f"{baris.id}/",
-            {"aksi": "setujui"},
-            format="json",
-        )
-        response = _klien(staf_a).patch(
-            self._detail(workspace, divisi_a, issue_id), {"priority": "urgent"}, format="json"
-        )
-        assert response.status_code == status.HTTP_204_NO_CONTENT, getattr(response, "data", None)
-        assert not PersetujuanPenugasan.objects.filter(issue_id=issue_id, status="menunggu").exists()
-
-    @pytest.mark.django_db
-    def test_tugas_atasan_TIDAK_butuh_persetujuan(
+    def test_tugas_atasan_selesai_langsung_tanpa_persetujuan(
         self, workspace, bos_divisi_a, divisi_a, jenjang, monkeypatch
     ):
-        """Supervisor (dan ke atas) bebas sampai selesai: tak ada baris antrean."""
         monkeypatch.setenv(FLAG_GERBANG, "1")
         client = _klien(bos_divisi_a)
         response = client.post(
@@ -1837,29 +1765,37 @@ class TestPersetujuanSaatSelesai:
             {"name": "Tugas supervisor", "assignee_ids": [str(bos_divisi_a.id)]},
             format="json",
         )
-        assert response.json().get("approval_status") is None
+        issue_id = response.json()["id"]
         _, selesai = self._state(workspace, divisi_a)
         patch = client.patch(
-            self._detail(workspace, divisi_a, response.json()["id"]),
-            {"priority": "urgent", "state": str(selesai.id)},
-            format="json",
+            self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json"
         )
-        assert patch.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
-            patch, "data", None
+        assert patch.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(patch, "data", None)
+        assert Issue.objects.get(pk=issue_id).state.group == "completed"
+        assert not PersetujuanPenugasan.objects.filter(issue_id=issue_id).exists()
+
+    @pytest.mark.django_db
+    def test_atasan_menyelesaikan_tugas_staf_langsung(
+        self, workspace, staf_a, bos_divisi_a, divisi_a, jenjang, monkeypatch
+    ):
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        issue_id = self._buat(workspace, divisi_a, staf_a)
+        _, selesai = self._state(workspace, divisi_a)
+        patch = _klien(bos_divisi_a).patch(
+            self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json"
         )
+        assert patch.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(patch, "data", None)
+        assert Issue.objects.get(pk=issue_id).state.group == "completed"
 
     @pytest.mark.django_db
     def test_katup_mati_melepas_gerbang_selesai(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
-        monkeypatch.setenv(FLAG_GERBANG, "1")
-        issue_id, _ = self._ajukan(workspace, divisi_a, staf_a)
-        monkeypatch.delenv(FLAG_GERBANG)
+        issue_id = self._buat(workspace, divisi_a, staf_a)
         _, selesai = self._state(workspace, divisi_a)
         tutup = _klien(staf_a).patch(
             self._detail(workspace, divisi_a, issue_id), {"state": str(selesai.id)}, format="json"
         )
-        assert tutup.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(
-            tutup, "data", None
-        )
+        assert tutup.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT), getattr(tutup, "data", None)
+        assert Issue.objects.get(pk=issue_id).state.group == "completed"
 
 
 # --------------------------------------------------------------------------
