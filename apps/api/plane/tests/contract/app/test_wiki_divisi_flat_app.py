@@ -9,6 +9,7 @@ Kontrak struktur Wiki yang disederhanakan (keputusan user 2026-10-24):
     - hanya folder divisi, tanpa sub-topik (buat halaman ber-parent -> 403),
     - materi ditaruh langsung di folder divisinya,
     - ubah/hapus/unggah Wiki: HANYA admin workspace atau Super Admin (2026-10-26),
+    - sub-topik: dibuat admin workspace/Super Admin di bawah folder Wiki (2026-10-26),
     - folder divisi dibuat otomatis per Divisi (`pastikan_folder_divisi`).
 """
 
@@ -102,10 +103,34 @@ class TestWikiTanpaSubTopik:
         return f"/api/assets/v2/workspaces/{workspace.slug}/projects/{project_id}/{asset_id}/"
 
     @pytest.mark.django_db
-    def test_buat_sub_topik_ditolak(self, workspace, siap):
+    def test_anggota_biasa_tidak_boleh_buat_sub_topik(self, workspace, siap):
         _, anggota, _, _, wiki_p, _, folder, _ = siap
         res = _klien(anggota).post(
             self._url_buat(workspace, wiki_p.id), {"name": "Topik liar", "parent": str(folder.id)}, format="json"
+        )
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+    @pytest.mark.django_db
+    def test_admin_workspace_boleh_buat_sub_topik_di_bawah_folder_wiki(self, workspace, siap):
+        _, _, _, _, wiki_p, _, folder, _ = siap
+        admin_ws = _user("adminsub", workspace)
+        WorkspaceMember.objects.filter(workspace=workspace, member=admin_ws).update(role=20)
+        _anggota(workspace, wiki_p, admin_ws, 15)
+        res = _klien(admin_ws).post(
+            self._url_buat(workspace, wiki_p.id), {"name": "Topik baru", "parent": str(folder.id)}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED, getattr(res, "data", None)
+
+    @pytest.mark.django_db
+    def test_sub_topik_dengan_induk_halaman_project_lain_ditolak(self, workspace, siap):
+        _, _, _, _, wiki_p, div, _, _ = siap
+        admin_ws = _user("adminasing", workspace)
+        WorkspaceMember.objects.filter(workspace=workspace, member=admin_ws).update(role=20)
+        _anggota(workspace, wiki_p, admin_ws, 15)
+        asing = Page.objects.create(workspace=workspace, owned_by=admin_ws, name="Asing", access=Page.PUBLIC_ACCESS)
+        ProjectPage.objects.create(workspace=workspace, project=div, page=asing)
+        res = _klien(admin_ws).post(
+            self._url_buat(workspace, wiki_p.id), {"name": "X", "parent": str(asing.id)}, format="json"
         )
         assert res.status_code == status.HTTP_403_FORBIDDEN
 

@@ -115,12 +115,20 @@ class ProjectPagePermission(BasePermission):
         # --- Membuat halaman baru -------------------------------------------
         if not page_id:
             if request.data.get("parent"):
-                # Struktur Wiki disederhanakan (keputusan user 2026-10-24):
-                # hanya folder divisi, tanpa sub-topik. Materi ditaruh langsung
-                # di folder divisinya.
-                raise PermissionDenied(
-                    "Tidak ada lagi sub-topik: materi ditaruh langsung di folder divisi."
-                )
+                # Sub-topik (keputusan user 2026-10-26, menggantikan 2026-10-24):
+                # boleh dibuat admin workspace / Super Admin di bawah folder yang
+                # ADA di Wiki ini. Induknya diperiksa supaya halaman tidak bisa
+                # digantung di bawah halaman project lain.
+                induk = Page.objects.filter(
+                    id=request.data.get("parent"),
+                    workspace__slug=slug,
+                    project_pages__project_id=project_id,
+                    project_pages__deleted_at__isnull=True,
+                    deleted_at__isnull=True,
+                ).first()
+                if induk is None:
+                    raise PermissionDenied("Folder induk tidak ditemukan di Wiki ini.")
+                return is_wiki_admin(user, workspace_slug=slug)
             # Folder Divisi = tingkat teratas, dan folder teratas tanpa baris
             # WikiFolderAccess terkunci untuk semua orang. Jadi membuatnya
             # harus disertai pemberian pemilik, dan itu pekerjaan admin.
