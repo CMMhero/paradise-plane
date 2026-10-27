@@ -30,7 +30,7 @@ import io
 
 # Django imports
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Count, Q
 
 # Third party imports
 import requests
@@ -173,6 +173,26 @@ class WikiTopicMaterialEndpoint(BaseAPIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class WikiMaterialCountEndpoint(BaseAPIView):
+    """Jumlah materi langsung per Topik, untuk angka di kartu folder.
+
+    Sengaja cuma hitungan langsung per halaman. Menjumlahkan sub-topik
+    dikerjakan klien dari pohon halaman yang sudah dimuatnya, supaya folder yang
+    diarsipkan ikut tidak terhitung tanpa aturan kedua di sini.
+    """
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def get(self, request, slug, project_id):
+        baris = (
+            _materi_queryset(slug, project_id)
+            .exclude(page_id__isnull=True)
+            .values("page_id")
+            .annotate(jumlah=Count("id"))
+            .order_by()
+        )
+        return Response({str(b["page_id"]): b["jumlah"] for b in baris}, status=status.HTTP_200_OK)
 
 
 class WikiFolderEndpoint(BaseAPIView):

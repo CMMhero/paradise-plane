@@ -29,9 +29,11 @@ import {
   halamanDenganId,
   halamanTerlihat,
   izinFolderDari,
+  jumlahMateriDalam,
   labelTipe,
   ukuranTerbaca,
   useIzinWiki,
+  useJumlahMateriWiki,
   usePohonWiki,
   useProjectWiki,
 } from "./data";
@@ -54,6 +56,7 @@ function WikiFolderPage() {
   const { projectId } = useProjectWiki();
   const { halaman, sedangMemuat, muatUlang } = usePohonWiki(slug, projectId);
   const { izin, muatUlangIzin } = useIzinWiki(slug, projectId);
+  const { jumlahMateri, muatUlangJumlah } = useJumlahMateriWiki(slug, projectId);
   const berkasRef = useRef<HTMLInputElement>(null);
   const [sedangUnggah, setSedangUnggah] = useState(false);
   const [sedangMembuatSub, setSedangMembuatSub] = useState(false);
@@ -102,7 +105,7 @@ function WikiFolderPage() {
     }
     setSedangUnggah(false);
     if (berhasil > 0) {
-      await muatUlangMateri();
+      await Promise.all([muatUlangMateri(), muatUlangJumlah()]);
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Materi diunggah",
@@ -137,7 +140,7 @@ function WikiFolderPage() {
     if (!projectId) return;
     try {
       await layananMateri.remove(slug, projectId, assetId);
-      await muatUlangMateri();
+      await Promise.all([muatUlangMateri(), muatUlangJumlah()]);
       setToast({ type: TOAST_TYPE.SUCCESS, title: "Materi dihapus", message: judul });
     } catch (error) {
       setToast({
@@ -220,7 +223,7 @@ function WikiFolderPage() {
                     to={`/${slug}/wiki/${s.id}`}
                     judul={getPageName(s.name)}
                     logoProps={s.logo_props}
-                    jumlahAnak={anakDari(terlihat, s.id).length}
+                    jumlahAnak={jumlahMateriDalam(terlihat, jumlahMateri, s.id)}
                     satuanAnak="Materi"
                   />
                 ))}

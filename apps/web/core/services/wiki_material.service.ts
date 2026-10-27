@@ -60,6 +60,15 @@ export class WikiMaterialService extends APIService {
       });
   }
 
+  /** Jumlah materi LANGSUNG per Topik, dikunci id halaman. Sub-topik dijumlahkan klien. */
+  async fetchCounts(workspaceSlug: string, projectId: string): Promise<Record<string, number>> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki/material-counts/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
   /**
    * Satu langkah: pilih berkas, selesai.
    *

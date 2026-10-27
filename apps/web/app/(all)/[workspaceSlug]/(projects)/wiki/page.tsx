@@ -18,7 +18,16 @@ import { GridKartu, KartuFolder, KartuKerangka } from "@/components/wiki/kartu";
 // services
 import { ProjectPageService } from "@/services/page";
 // local imports
-import { anakDari, halamanTerlihat, izinFolderDari, useIzinWiki, usePohonWiki, useProjectWiki } from "./data";
+import {
+  anakDari,
+  halamanTerlihat,
+  izinFolderDari,
+  jumlahMateriDalam,
+  useIzinWiki,
+  useJumlahMateriWiki,
+  usePohonWiki,
+  useProjectWiki,
+} from "./data";
 import { PencarianWiki } from "./pencarian";
 
 const layananHalaman = new ProjectPageService();
@@ -37,6 +46,7 @@ function WikiBerandaPage() {
   const { projectId, sedangMemuat: memuatProject } = useProjectWiki();
   const { halaman, sedangMemuat, muatUlang } = usePohonWiki(slug, projectId);
   const { izin } = useIzinWiki(slug, projectId);
+  const { jumlahMateri } = useJumlahMateriWiki(slug, projectId);
   const [mencari, setMencari] = useState(false);
   const [sedangMembuat, setSedangMembuat] = useState(false);
 
@@ -148,7 +158,7 @@ function WikiBerandaPage() {
                             ? `Dikelola ${pemilik}`
                             : "Belum ada divisi pengelola"
                       }
-                      jumlahAnak={anakDari(terlihat, d.id).length}
+                      jumlahAnak={jumlahMateriDalam(terlihat, jumlahMateri, d.id)}
                       satuanAnak="Materi"
                     />
                   );
