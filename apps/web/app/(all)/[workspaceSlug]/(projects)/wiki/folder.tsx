@@ -17,12 +17,14 @@ import { getPageName, renderFormattedDate } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
 import { GridKartu, KartuFolder, KartuMateri } from "@/components/wiki/kartu";
 // services
+import { ProjectPageService } from "@/services/page";
 import { WikiMaterialService } from "@/services/wiki_material.service";
 // local imports
 import { GantiNamaMateri } from "./ganti-nama";
 import { KelolaFolder } from "./kelola";
 // local imports
 import {
+  anakDari,
   divisiDari,
   halamanDenganId,
   halamanTerlihat,
@@ -35,6 +37,7 @@ import {
 } from "./data";
 
 const layananMateri = new WikiMaterialService();
+const layananHalaman = new ProjectPageService();
 
 /**
  * Isi sebuah folder Wiki: Topik di dalamnya, lalu Materi di dalamnya.
