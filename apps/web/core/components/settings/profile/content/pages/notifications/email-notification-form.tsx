@@ -183,8 +183,8 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
         }
       />
       <SettingsControlItem
-        title="Ringkasan tugas harian"
-        description="Satu email tiap hari kerja (Senin-Jumat, 08.30 WIB) berisi tugas Anda yang jatuh tempo hari ini, 7 hari ke depan, dan yang terlambat."
+        title={t("shared_ui.daily_digest_title")}
+        description={t("shared_ui.daily_digest_description")}
         control={
           <Controller
             control={control}

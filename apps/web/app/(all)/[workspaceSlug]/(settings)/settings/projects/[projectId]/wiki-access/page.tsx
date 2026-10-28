@@ -11,6 +11,7 @@ import { useParams } from "react-router";
 import { FolderLock } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // components
 import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
@@ -24,12 +25,15 @@ import { WikiAccessService, type TWikiAccessState } from "@/services/wiki_access
 
 const wikiAccessService = new WikiAccessService();
 
-const toastError = (err: unknown, fallback: string) => {
+type TTerjemah = (key: string) => string;
+
+const toastError = (err: unknown, fallback: string, t: TTerjemah) => {
   const message = (err as { error?: string })?.error ?? fallback;
-  setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+  setToast({ type: TOAST_TYPE.ERROR, title: t("wiki_access_ui.failed"), message });
 };
 
 function WikiAccessSettingsPage() {
+  const { t } = useTranslation();
   const { workspaceSlug, projectId } = useParams();
   // store
   const { currentProjectDetails } = useProject();
@@ -40,7 +44,9 @@ function WikiAccessSettingsPage() {
   const [savingFolderId, setSavingFolderId] = useState<string | null>(null);
 
   const canAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
-  const pageTitle = currentProjectDetails?.name ? `${currentProjectDetails.name} - Akses Wiki` : undefined;
+  const pageTitle = currentProjectDetails?.name
+    ? t("wiki_access_ui.page_title", { name: currentProjectDetails.name })
+    : undefined;
 
   const fetchState = useCallback(async () => {
     if (!workspaceSlug || !projectId) return;
@@ -49,11 +55,11 @@ function WikiAccessSettingsPage() {
     } catch (err) {
       // Jangan telan diam-diam: tanpa alasan, "tidak bisa memuat" menyisakan
       // tebak-tebakan antara tidak punya izin, project salah, atau API mati.
-      toastError(err, "Tidak bisa memuat pengaturan akses Wiki.");
+      toastError(err, t("wiki_access_ui.load_failed"), t);
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceSlug, projectId]);
+  }, [workspaceSlug, projectId, t]);
 
   useEffect(() => {
     void fetchState();
@@ -66,13 +72,11 @@ function WikiAccessSettingsPage() {
       await fetchState();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Tersimpan",
-        message: next
-          ? "Akses per-folder aktif. Folder tanpa pemilik hanya bisa diedit admin project."
-          : "Akses per-folder dimatikan. Izin halaman kembali mengikuti peran project.",
+        title: t("wiki_access_ui.saved"),
+        message: next ? t("wiki_access_ui.governance_on") : t("wiki_access_ui.governance_off"),
       });
     } catch (err) {
-      toastError(err, "Gagal mengubah status akses per-folder.");
+      toastError(err, t("wiki_access_ui.toggle_failed"), t);
     }
   };
 
@@ -102,7 +106,7 @@ function WikiAccessSettingsPage() {
           : prev
       );
     } catch (err) {
-      toastError(err, "Gagal menyimpan pemilik folder.");
+      toastError(err, t("wiki_access_ui.owner_failed"), t);
     } finally {
       setSavingFolderId(null);
     }
@@ -120,24 +124,16 @@ function WikiAccessSettingsPage() {
         <div className="flex flex-col gap-1 border-b border-subtle pb-3">
           <div className="flex items-center gap-2">
             <FolderLock className="size-5 text-secondary" />
-            <h3 className="text-xl font-medium text-primary">Akses Wiki per Folder</h3>
+            <h3 className="text-xl font-medium text-primary">{t("wiki_access_ui.title")}</h3>
           </div>
-          <p className="text-sm text-tertiary">
-            Semua anggota project tetap bisa membaca seluruh Wiki. Yang diatur di sini adalah siapa yang boleh{" "}
-            <span className="font-medium text-secondary">menaruh materi baru</span>: anggota divisi pemilik folder.
-          </p>
-          <p className="text-sm text-tertiary">
-            Materi yang sudah ada hanya bisa diubah atau dihapus oleh pengunggahnya sendiri, kepala divisi pemilik
-            folder, atau Super Admin. Admin project yang bukan Super Admin{" "}
-            <span className="font-medium text-secondary">tidak</span> bisa membereskan materi orang lain. Sub-halaman
-            selalu mengikuti folder teratasnya.
-          </p>
+          <p className="text-sm text-tertiary">{t("wiki_access_ui.intro_1")}</p>
+          <p className="text-sm text-tertiary">{t("wiki_access_ui.intro_2")}</p>
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-tertiary">Memuat…</p>
+          <p className="text-sm text-tertiary">{t("chat_ui.loading")}</p>
         ) : !state ? (
-          <p className="text-sm text-tertiary">Tidak bisa memuat pengaturan akses Wiki.</p>
+          <p className="text-sm text-tertiary">{t("wiki_access_ui.load_failed")}</p>
         ) : (
           <>
             {/* Keterangan sengaja di luar <label>: kalau ikut di dalam, screen
@@ -150,17 +146,15 @@ function WikiAccessSettingsPage() {
                   onChange={(e) => void handleToggleGovernance(e.target.checked)}
                   className="size-4"
                 />
-                Aktifkan akses per folder di project ini
+                {t("wiki_access_ui.enable")}
               </label>
-              <p className="text-xs pl-6 text-tertiary">
-                Saat mati, project ini memakai izin halaman bawaan (semua member bisa mengedit).
-              </p>
+              <p className="text-xs pl-6 text-tertiary">{t("wiki_access_ui.enable_hint")}</p>
             </div>
 
             {state.is_governed && (
               <div className="flex flex-col gap-2">
                 {state.folders.length === 0 ? (
-                  <p className="text-sm text-tertiary">Belum ada folder (halaman tingkat teratas) di project ini.</p>
+                  <p className="text-sm text-tertiary">{t("wiki_access_ui.no_folders")}</p>
                 ) : (
                   state.folders.map((folder) => {
                     const owned = new Set(folder.divisions.map((d) => d.id));
@@ -170,10 +164,10 @@ function WikiAccessSettingsPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-primary">{folder.name}</span>
                           {savingFolderId === folder.id ? (
-                            <span className="text-xs text-tertiary">menyimpan…</span>
+                            <span className="text-xs text-tertiary">{t("wiki_access_ui.saving")}</span>
                           ) : (
                             owned.size === 0 && (
-                              <span className="text-xs text-tertiary">terkunci, admin project saja</span>
+                              <span className="text-xs text-tertiary">{t("wiki_access_ui.locked")}</span>
                             )
                           )}
                         </div>
@@ -194,7 +188,7 @@ function WikiAccessSettingsPage() {
                             }
                             className="size-3.5"
                           />
-                          Terbuka untuk semua karyawan (General)
+                          {t("wiki_ui.manage.open_to_all")}
                         </label>
 
                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
@@ -215,12 +209,7 @@ function WikiAccessSettingsPage() {
                             </label>
                           ))}
                         </div>
-                        {terbuka && (
-                          <p className="text-xs mt-1.5 text-tertiary">
-                            Folder terbuka, jadi centang divisi di atas tidak menambah apa-apa lagi. Hak mengubah dan
-                            menghapus tetap milik masing-masing pengunggah.
-                          </p>
-                        )}
+                        {terbuka && <p className="text-xs mt-1.5 text-tertiary">{t("wiki_access_ui.open_note")}</p>}
                       </div>
                     );
                   })

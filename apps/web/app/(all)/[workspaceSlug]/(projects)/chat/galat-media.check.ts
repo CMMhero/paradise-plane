@@ -9,7 +9,18 @@
  */
 
 import assert from "node:assert/strict";
-import { pesanGalatMedia } from "./galat-media";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { pesanGalatMedia as pesanGalatMediaAsli } from "./galat-media";
+
+// Kamus Indonesia yang sama dengan yang dibaca orang di aplikasi, bukan salinan
+// teks di berkas ini, supaya pemeriksaan ikut gagal kalau kamusnya berubah.
+const kamus = JSON.parse(readFileSync(resolve("src/locales/id/paradise.json"), "utf8"));
+const t = (key: string, params?: Record<string, unknown>): string => {
+  const nilai = key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], kamus) as string;
+  return nilai.replace(/\{(\w+)\}/g, (_, nama) => String(params?.[nama] ?? ""));
+};
+const pesanGalatMedia = (galat: unknown, aman: boolean) => pesanGalatMediaAsli(galat, aman, t);
 
 // Halaman http:// menang atas segalanya: di situ galatnya TypeError yang sama
 // sekali tidak menyebut mikrofon, jadi menebak dari nama galat akan meleset.

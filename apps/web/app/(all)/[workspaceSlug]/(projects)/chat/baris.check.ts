@@ -84,8 +84,8 @@ const sekarang = new Date("2026-08-13T10:00:00");
   const tanggal = baris.filter((b) => b.jenis === "tanggal");
   assert.equal(tanggal.length, 2, "dua pemisah tanggal");
   assert.deepEqual(
-    tanggal.map((b) => (b.jenis === "tanggal" ? b.label : "")),
-    ["Kemarin", "Hari ini"]
+    tanggal.map((b) => (b.jenis === "tanggal" ? (b.relatif ?? "") : "")),
+    ["kemarin", "hari-ini"]
   );
   const kedua = baris.filter((b) => b.jenis === "pesan")[1];
   assert.equal(kedua.jenis === "pesan" && kedua.awalKelompok, true, "ganti hari memutus kelompok");

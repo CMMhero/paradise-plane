@@ -66,9 +66,7 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
         type: TOAST_TYPE.SUCCESS,
         title: aksi === "setujui" ? t("issue.approval.toast.approved_title") : t("issue.approval.toast.rejected_title"),
         message:
-          aksi === "setujui"
-            ? t("issue.approval.toast.approved_message")
-            : t("issue.approval.toast.rejected_message"),
+          aksi === "setujui" ? t("issue.approval.toast.approved_message") : t("issue.approval.toast.rejected_message"),
       });
     } catch (err) {
       setToast({
@@ -115,7 +113,7 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
           onChange={(e) => setAlasan(e.target.value)}
           placeholder={t("issue.approval.modal.reason_placeholder")}
           aria-label={t("issue.approval.modal.reason_placeholder")}
-          className="rounded border border-subtle bg-layer-1 px-2 py-1 text-13 outline-none focus:border-accent"
+          className="focus:border-accent rounded border border-subtle bg-layer-1 px-2 py-1 text-13 outline-none"
         />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" size="lg" onClick={() => setModalTolak(false)}>

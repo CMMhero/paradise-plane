@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import useSWR from "swr";
+import { useTranslation } from "@plane/i18n";
 // components
 import { GridKartu, KartuKerangka, KartuMateri } from "@/components/wiki/kartu";
 // services
@@ -37,6 +38,7 @@ export function PencarianWiki({
   projectId: string;
   onAktif: (aktif: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const [kueri, setKueri] = useState("");
   const [tertunda, setTertunda] = useState("");
 
@@ -64,7 +66,7 @@ export function PencarianWiki({
           type="text"
           value={kueri}
           onChange={(e) => setKueri(e.target.value)}
-          placeholder="Cari materi..."
+          placeholder={t("wiki_ui.search.placeholder")}
           className="w-full rounded-full border border-subtle bg-layer-2 py-2 pr-3 pl-9 text-13 text-primary transition-colors outline-none placeholder:text-placeholder focus:border-accent-strong"
         />
       </div>
@@ -72,9 +74,9 @@ export function PencarianWiki({
       {kueri.trim().length >= 2 && (
         <div className="mt-6">
           <div className="mb-4 flex items-baseline gap-2">
-            <h2 className="text-15 font-semibold text-primary">Hasil pencarian</h2>
+            <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.search.results")}</h2>
             <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
-              {isLoading ? "mencari…" : `${hasil.length} materi`}
+              {isLoading ? t("wiki_ui.search.searching") : t("wiki_ui.folder.material_count", { count: hasil.length })}
             </span>
           </div>
 
@@ -86,10 +88,10 @@ export function PencarianWiki({
             </GridKartu>
           ) : hasil.length === 0 ? (
             <div className="rounded-lg border border-dashed border-subtle px-6 py-14 text-center">
-              <p className="text-14 font-medium text-secondary">Tidak ada materi bernama &quot;{tertunda}&quot;</p>
-              <p className="mt-1 text-12 text-tertiary">
-                Pencarian mencocokkan judul dan nama berkas, bukan isi dokumennya.
+              <p className="text-14 font-medium text-secondary">
+                {t("wiki_ui.search.no_results", { query: tertunda })}
               </p>
+              <p className="mt-1 text-12 text-tertiary">{t("wiki_ui.search.hint")}</p>
             </div>
           ) : (
             <GridKartu>
@@ -100,7 +102,7 @@ export function PencarianWiki({
                   judul={m.title}
                   keterangan={m.breadcrumb.filter(Boolean).join(" › ") || "Wiki"}
                   tipe={m.type}
-                  label={labelTipe(m.type)}
+                  label={labelTipe(m.type, t)}
                   ukuran={ukuranTerbaca(m.size)}
                 />
               ))}

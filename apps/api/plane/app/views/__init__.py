@@ -213,6 +213,7 @@ from .page.wiki_access import WikiAccessEndpoint, WikiFolderAccessEndpoint
 from .page.wiki_permissions import WikiPermissionsEndpoint
 from .page.wiki_material import (
     WikiFolderEndpoint,
+    WikiMaterialCountEndpoint,
     WikiMaterialEndpoint,
     WikiMaterialPreviewEndpoint,
     WikiMaterialSearchEndpoint,

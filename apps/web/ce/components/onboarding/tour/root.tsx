@@ -39,7 +39,7 @@ const TOUR_STEPS: {
     key: "work-items",
     title: "Plan with work items",
     description:
-      "Work item adalah satuan kerja terkecil di Paradise Task Tracker. Hampir semua konsep lain bertaut dengan work item and their properties.",
+      "Work items are the smallest unit of work in Paradise Task Tracker. Almost every other concept connects to work items and their properties.",
     image: IssuesTour,
     nextStep: "cycles",
   },

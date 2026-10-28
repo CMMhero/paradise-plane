@@ -11,6 +11,7 @@ import { useParams } from "react-router";
 import { RotateCcw, Trash2 } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { ProjectTrashService, type TTrashItem, type TTrashType } from "@plane/services";
@@ -27,21 +28,22 @@ const trashService = new ProjectTrashService();
 
 const SKELETON_ROWS = ["s1", "s2", "s3", "s4", "s5"];
 
+// `label` adalah KUNCI i18n, diterjemahkan saat dirender.
 const JENIS: { value: TTrashType | ""; label: string }[] = [
-  { value: "", label: "Semua jenis" },
-  { value: "issue", label: "Work item" },
-  { value: "page", label: "Halaman" },
-  { value: "cycle", label: "Cycle" },
-  { value: "module", label: "Module" },
+  { value: "", label: "trash_ui.all_types" },
+  { value: "issue", label: "trash_ui.type_issue" },
+  { value: "page", label: "trash_ui.type_page" },
+  { value: "cycle", label: "trash_ui.type_cycle" },
+  { value: "module", label: "trash_ui.type_module" },
 ];
 
-const toastError = (err: unknown, fallback: string) => {
+const toastError = (err: unknown, fallback: string, t: (key: string) => string) => {
   const message = (err as { error?: string })?.error ?? fallback;
-  setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+  setToast({ type: TOAST_TYPE.ERROR, title: t("trash_ui.failed"), message });
 };
 
-function formatWaktu(iso: string) {
-  return new Date(iso).toLocaleString("id-ID", {
+function formatWaktu(iso: string, lokal: string) {
+  return new Date(iso).toLocaleString(lokal, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -51,6 +53,7 @@ function formatWaktu(iso: string) {
 }
 
 function TrashSettingsPage() {
+  const { t, currentLocale } = useTranslation();
   const { workspaceSlug, projectId } = useParams();
   // store
   const { currentProjectDetails } = useProject();
@@ -63,7 +66,9 @@ function TrashSettingsPage() {
   const [sibuk, setSibuk] = useState<string | null>(null);
 
   const canAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
-  const pageTitle = currentProjectDetails?.name ? `${currentProjectDetails.name} - Tong sampah` : undefined;
+  const pageTitle = currentProjectDetails?.name
+    ? t("trash_ui.page_title", { name: currentProjectDetails.name })
+    : undefined;
 
   const muat = useCallback(async () => {
     if (!workspaceSlug || !projectId) return;
@@ -72,11 +77,11 @@ function TrashSettingsPage() {
       setItems(data.results);
       setRetensi(data.retention_days);
     } catch (err) {
-      toastError(err, "Tidak bisa memuat isi tong sampah.");
+      toastError(err, t("trash_ui.load_failed"), t);
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceSlug, projectId, jenis]);
+  }, [workspaceSlug, projectId, jenis, t]);
 
   useEffect(() => {
     void muat();
@@ -90,13 +95,16 @@ function TrashSettingsPage() {
       await muat();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Dipulihkan",
+        title: t("trash_ui.restored_title"),
         // Sebutkan jumlahnya: memulihkan satu work item ikut mengembalikan
         // komentar & tautannya, dan angka itu satu-satunya tanda hal itu terjadi.
-        message: `"${item.name}" kembali beserta ${Math.max((hasil?.restored_count ?? 1) - 1, 0)} objek terkait.`,
+        message: t("trash_ui.restored_message", {
+          name: item.name,
+          count: Math.max((hasil?.restored_count ?? 1) - 1, 0),
+        }),
       });
     } catch (err) {
-      toastError(err, "Tidak bisa memulihkan.");
+      toastError(err, t("trash_ui.restore_failed"), t);
     } finally {
       setSibuk(null);
     }
@@ -106,17 +114,19 @@ function TrashSettingsPage() {
     if (!workspaceSlug || !projectId) return;
     // Konfirmasi wajib: ini satu-satunya aksi di halaman ini yang tidak bisa
     // dibatalkan, dan tombolnya bersebelahan dengan "Pulihkan".
-    const yakin = window.confirm(
-      `Buang "${item.name}" secara permanen?\n\nTidak bisa dibatalkan, barang ini tidak akan bisa dipulihkan lagi.`
-    );
+    const yakin = window.confirm(t("trash_ui.confirm_purge", { name: item.name }));
     if (!yakin) return;
     setSibuk(item.id);
     try {
       await trashService.purge(workspaceSlug.toString(), projectId.toString(), item.type, item.id);
       await muat();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Dibuang permanen", message: `"${item.name}" sudah tidak ada.` });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("trash_ui.purged_title"),
+        message: t("trash_ui.purged_message", { name: item.name }),
+      });
     } catch (err) {
-      toastError(err, "Tidak bisa membuang permanen.");
+      toastError(err, t("trash_ui.purge_failed"), t);
     } finally {
       setSibuk(null);
     }
@@ -129,10 +139,9 @@ function TrashSettingsPage() {
       <PageHead title={pageTitle} />
       <div className="flex items-start justify-between gap-4 border-b border-subtle pb-4">
         <div>
-          <h3 className="text-xl font-medium">Tong sampah</h3>
+          <h3 className="text-xl font-medium">{t("trash_ui.title")}</h3>
           <p className="text-sm mt-1 text-secondary">
-            Barang yang dihapus mampir ke sini{retensi ? ` selama ${retensi} hari` : ""} sebelum benar-benar dibuang.
-            Kamu bisa memulihkannya atau membuangnya permanen.
+            {retensi ? t("trash_ui.description_with_days", { days: retensi }) : t("trash_ui.description")}
           </p>
         </div>
         <select
@@ -156,7 +165,7 @@ function TrashSettingsPage() {
             ))}
           </Loader>
         ) : items.length === 0 ? (
-          <p className="text-sm py-10 text-center text-secondary">Tong sampah kosong.</p>
+          <p className="text-sm py-10 text-center text-secondary">{t("trash_ui.empty")}</p>
         ) : (
           <div className="divide-y divide-subtle rounded border border-subtle">
             {items.map((item) => (
@@ -164,11 +173,14 @@ function TrashSettingsPage() {
                 <div className="min-w-0">
                   <p className="text-sm truncate font-medium text-primary">{item.name}</p>
                   <p className="text-xs mt-0.5 text-secondary">
-                    {item.type_label} · dibuang {formatWaktu(item.deleted_at)}
-                    {item.deleted_by ? ` oleh ${item.deleted_by.display_name || item.deleted_by.email}` : ""}
+                    {item.type_label} ·{" "}
+                    {t("trash_ui.deleted_at", { time: formatWaktu(item.deleted_at, currentLocale) })}
+                    {item.deleted_by
+                      ? ` ${t("trash_ui.deleted_by", { name: item.deleted_by.display_name || item.deleted_by.email })}`
+                      : ""}
                     {" · "}
                     <span className={item.days_left <= 3 ? "text-red-600 font-medium" : ""}>
-                      sisa {item.days_left} hari
+                      {t("trash_ui.days_left", { count: item.days_left })}
                     </span>
                   </p>
                 </div>
@@ -179,7 +191,7 @@ function TrashSettingsPage() {
                     disabled={sibuk === item.id}
                     onClick={() => handlePulihkan(item)}
                   >
-                    <RotateCcw className="size-3.5" /> Pulihkan
+                    <RotateCcw className="size-3.5" /> {t("trash_ui.restore")}
                   </Button>
                   <Button
                     variant="error-outline"
@@ -187,7 +199,7 @@ function TrashSettingsPage() {
                     disabled={sibuk === item.id}
                     onClick={() => handleBuang(item)}
                   >
-                    <Trash2 className="size-3.5" /> Buang permanen
+                    <Trash2 className="size-3.5" /> {t("trash_ui.purge")}
                   </Button>
                 </div>
               </div>

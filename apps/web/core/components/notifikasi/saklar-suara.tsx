@@ -6,6 +6,7 @@
  */
 
 import { Volume2, VolumeX } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 
 /**
@@ -17,14 +18,15 @@ import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
  * dan keduanya menemukan saklar yang sama.
  */
 export const SaklarSuara = ({ className = "" }: { className?: string }) => {
+  const { t } = useTranslation();
   const { nyala, setNyala } = useSuaraNotifikasi();
 
   return (
     <button
       type="button"
       onClick={() => setNyala(!nyala)}
-      aria-label={nyala ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
-      title={nyala ? "Suara notifikasi menyala" : "Suara notifikasi mati"}
+      aria-label={nyala ? t("notification_ui.sound_turn_off") : t("notification_ui.sound_turn_on")}
+      title={nyala ? t("notification_ui.sound_on") : t("notification_ui.sound_off")}
       className={`flex size-9 shrink-0 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary ${className}`}
     >
       {nyala ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}

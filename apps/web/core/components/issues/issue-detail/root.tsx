@@ -254,12 +254,9 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
         />
       ) : !bolehBuka ? (
         <div className="flex h-full w-full items-center justify-center px-9 py-5">
-          <div className="border-amber-500/30 bg-amber-500/10 text-amber-600 flex max-w-md flex-col gap-1 rounded-md border px-4 py-3 text-sm">
-            <span className="font-medium">Tugas ini bukan milikmu.</span>
-            <span className="text-xs">
-              Staf hanya bisa membuka tugas yang ditugaskan ke dirinya sendiri. Minta atasan memindahkan penugasannya
-              kalau kamu yang harus mengerjakan ini.
-            </span>
+          <div className="border-amber-500/30 bg-amber-500/10 text-amber-600 text-sm flex max-w-md flex-col gap-1 rounded-md border px-4 py-3">
+            <span className="font-medium">{t("work_item_extra_ui.not_yours_title")}</span>
+            <span className="text-xs">{t("work_item_extra_ui.not_yours_message")}</span>
           </div>
         </div>
       ) : (

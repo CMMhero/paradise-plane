@@ -41,6 +41,7 @@ import {
 import { cocokKonfirmasiGrant, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
 import { inputClass, PERAN_DEFAULT } from "./constants";
 import { DivisiPicker } from "./divisi-picker";
+import { PreferensiMember, useMemberPreferences } from "./preferensi";
 
 const memberService = new InstanceMemberService();
 const hierarkiService = new InstanceHierarkiService();
@@ -124,6 +125,7 @@ export function MemberEditor({
   const [sibuk, setSibuk] = useState(false);
   const [frasa, setFrasa] = useState("");
   const [sibukGrant, setSibukGrant] = useState(false);
+  const pref = useMemberPreferences(member.id);
 
   // Grant Super Admin butuh konfirmasi KETIK (diperiksa server; kedua frasa
   // diterima). Revoke lewat prop dari halaman (PATCH false, tanpa konfirmasi).
@@ -183,6 +185,8 @@ export function MemberEditor({
     setSibuk(true);
     try {
       const sesiBerakhir = await simpanAkun();
+      const prefBerubah = pref.perubahan();
+      if (prefBerubah) await memberService.ubahPreferensi(member.id, prefBerubah);
       if (hierarki !== undefined) {
         const tingkatBaru = Number(tingkat);
         const tingkatBerubah = tingkatBaru !== hierarki.tingkat;
@@ -363,6 +367,8 @@ export function MemberEditor({
             <p className="text-11 text-secondary">{s.editor.supervised_note}</p>
           </div>
         )}
+
+        <PreferensiMember nilai={pref.nilai} gagal={pref.gagal} onProfil={pref.ubahProfil} onNotif={pref.ubahNotif} />
 
         <p className="text-11 text-secondary">{s.editor.password_note}</p>
 

@@ -18,7 +18,27 @@
  */
 
 import assert from "node:assert/strict";
-import { ringkasNotifikasi, ringkasPercakapan, teksPolos } from "./teks";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  ringkasNotifikasi as ringkasNotifikasiAsli,
+  ringkasPercakapan as ringkasPercakapanAsli,
+  teksPolos,
+} from "./teks";
+
+// Kamus Indonesia yang sama dengan yang dibaca orang di aplikasi, bukan salinan
+// teks di berkas ini, supaya pemeriksaan ikut gagal kalau kamusnya berubah.
+// Jalankan dari packages/i18n (lihat petunjuk di atas), jadi path-nya relatif ke sana.
+const kamus = JSON.parse(readFileSync(resolve("src/locales/id/paradise.json"), "utf8"));
+const t = (key: string, params?: Record<string, unknown>): string => {
+  const nilai = key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], kamus) as string;
+  return nilai.replace(/\{(\w+)\}/g, (_, nama) => String(params?.[nama] ?? ""));
+};
+const ringkasNotifikasi = (n: Parameters<typeof ringkasNotifikasiAsli>[0]) => ringkasNotifikasiAsli(n, t);
+const ringkasPercakapan = (
+  baris: Parameters<typeof ringkasPercakapanAsli>[0],
+  nama: Parameters<typeof ringkasPercakapanAsli>[1]
+) => ringkasPercakapanAsli(baris, nama, t);
 
 // --- HTML komentar jadi teks yang bisa dibaca --------------------------------
 

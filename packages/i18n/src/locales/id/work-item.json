@@ -240,6 +240,7 @@
         "waiting": "Menunggu persetujuan atasan",
         "locked_note": "Diajukan oleh {name}. Tugas ini terkunci: belum bisa diubah, dipindah status, atau dikerjakan sampai disetujui. Komentar tetap bisa.",
         "approved": "Penugasan disetujui",
+        "approved_by": "Disetujui oleh {name}",
         "rejected": "Penugasan ditolak",
         "reason_placeholder": "Alasan (wajib kalau menolak)",
         "reason_optional_placeholder": "Alasan (wajib kalau menolak, opsional kalau menyetujui)"

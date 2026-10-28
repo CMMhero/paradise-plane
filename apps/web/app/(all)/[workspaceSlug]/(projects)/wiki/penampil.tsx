@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 import { cn } from "@plane/utils";
 // services
 import type { TPratinjauMateri } from "@/services/wiki_material.service";
@@ -32,6 +33,7 @@ const ZOOM_LANGKAH = 0.25;
  * daripada tidak menampilkannya.
  */
 export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
+  const { t } = useTranslation();
   const { kind, url, title } = pratinjau;
   const [layarPenuh, setLayarPenuh] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -111,7 +113,7 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
           <>
             <button
               type="button"
-              aria-label="Perkecil"
+              aria-label={t("wiki_ui.viewer.zoom_out")}
               onClick={() => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_LANGKAH))}
               className="grid size-8 place-items-center rounded-md border border-subtle text-secondary transition-colors hover:border-strong hover:text-primary"
             >
@@ -120,7 +122,7 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
             <span className="min-w-14 text-center text-12 text-tertiary tabular-nums">{Math.round(zoom * 100)}%</span>
             <button
               type="button"
-              aria-label="Perbesar"
+              aria-label={t("wiki_ui.viewer.zoom_in")}
               onClick={() => setZoom((z) => Math.min(ZOOM_MAKS, z + ZOOM_LANGKAH))}
               className="grid size-8 place-items-center rounded-md border border-subtle text-secondary transition-colors hover:border-strong hover:text-primary"
             >
@@ -128,7 +130,7 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
             </button>
             <button
               type="button"
-              aria-label="Kembalikan ukuran asli"
+              aria-label={t("wiki_ui.viewer.reset_zoom")}
               onClick={() => setZoom(1)}
               className="grid size-8 place-items-center rounded-md border border-subtle text-secondary transition-colors hover:border-strong hover:text-primary"
             >
@@ -138,9 +140,9 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
         ) : (
           <span className="text-11 text-tertiary">
             {kind === "pdf"
-              ? "Zoom dan cari ada di dalam penampil PDF-nya sendiri."
+              ? t("wiki_ui.viewer.pdf_hint")
               : kind === "video" || kind === "audio"
-                ? "Kontrol putar ada di pemutarnya."
+                ? t("wiki_ui.viewer.player_hint")
                 : ""}
           </span>
         )}
@@ -154,12 +156,12 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
         {layarPenuh ? (
           <>
             <Minimize2 className="size-3.5" />
-            Kembali normal
+            {t("wiki_ui.viewer.exit_fullscreen")}
           </>
         ) : (
           <>
             <Maximize2 className="size-3.5" />
-            Layar penuh
+            {t("wiki_ui.viewer.fullscreen")}
           </>
         )}
       </button>

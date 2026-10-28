@@ -5,6 +5,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { Clock, Plus, Trash2 } from "lucide-react";
@@ -24,21 +25,24 @@ type TIssueWorklogProperty = {
 
 const worklogService = new IssueWorkLogService();
 
-const formatDuration = (minutes: number): string => {
+type TTerjemah = (key: string, params?: Record<string, unknown>) => string;
+
+const formatDuration = (minutes: number, t: TTerjemah): string => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h > 0 && m > 0) return `${h}j ${m}m`;
-  if (h > 0) return `${h}j`;
-  return `${m}m`;
+  if (h > 0 && m > 0) return t("division_dashboard_ui.duration_hm", { h, m });
+  if (h > 0) return t("division_dashboard_ui.duration_h", { h });
+  return t("division_dashboard_ui.duration_m", { m });
 };
 
-const displayName = (log: TIssueWorkLog): string => {
+const displayName = (log: TIssueWorkLog, t: TTerjemah): string => {
   const d = log.logged_by_detail;
-  if (!d) return "Anggota";
-  return d.display_name || [d.first_name, d.last_name].filter(Boolean).join(" ") || "Anggota";
+  if (!d) return t("chat_ui.member");
+  return d.display_name || [d.first_name, d.last_name].filter(Boolean).join(" ") || t("chat_ui.member");
 };
 
 export const IssueWorklogProperty = observer(function IssueWorklogProperty(props: TIssueWorklogProperty) {
+  const { t } = useTranslation();
   const { workspaceSlug, projectId, issueId, disabled } = props;
   // store
   const { data: currentUser } = useUser();
@@ -71,7 +75,7 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
   const handleAdd = async () => {
     const duration = (parseInt(hours || "0", 10) || 0) * 60 + (parseInt(minutes || "0", 10) || 0);
     if (duration <= 0) {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Durasi kosong", message: "Isi jam atau menit lebih dari 0." });
+      setToast({ type: TOAST_TYPE.ERROR, title: t("worklog_ui.empty_title"), message: t("worklog_ui.empty_message") });
       return;
     }
     setIsSubmitting(true);
@@ -83,12 +87,12 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
       await fetchLogs();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Tercatat",
-        message: `Waktu ${formatDuration(duration)} ditambahkan.`,
+        title: t("worklog_ui.logged_title"),
+        message: t("worklog_ui.logged_message", { duration: formatDuration(duration, t) }),
       });
     } catch (err: unknown) {
-      const message = (err as { error?: string })?.error ?? "Gagal menyimpan catatan waktu.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+      const message = (err as { error?: string })?.error ?? t("worklog_ui.save_failed");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("worklog_ui.failed"), message });
     } finally {
       setIsSubmitting(false);
     }
@@ -98,10 +102,10 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
     try {
       await worklogService.remove(workspaceSlug, projectId, issueId, log.id);
       await fetchLogs();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Dihapus", message: "Catatan waktu dihapus." });
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("worklog_ui.deleted_title"), message: t("worklog_ui.deleted_message") });
     } catch (err: unknown) {
-      const message = (err as { error?: string })?.error ?? "Gagal menghapus.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+      const message = (err as { error?: string })?.error ?? t("worklog_ui.delete_failed");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("worklog_ui.failed"), message });
     }
   };
 
@@ -112,11 +116,11 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
       <div className="flex items-center justify-between">
         <div className="text-sm flex items-center gap-1.5 text-secondary">
           <Clock className="size-4" />
-          <span>Pelacakan Waktu</span>
+          <span>{t("worklog_ui.title")}</span>
         </div>
         {total > 0 && (
           <span className="text-xs rounded bg-layer-3 px-1.5 py-0.5 font-medium text-primary">
-            {formatDuration(total)}
+            {formatDuration(total, t)}
           </span>
         )}
       </div>
@@ -132,9 +136,9 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
               >
                 <div className="min-w-0">
                   <div className="text-xs flex items-center gap-1.5">
-                    <span className="font-medium text-primary">{formatDuration(log.duration)}</span>
+                    <span className="font-medium text-primary">{formatDuration(log.duration, t)}</span>
                     <span className="text-tertiary">·</span>
-                    <span className="truncate text-tertiary">{displayName(log)}</span>
+                    <span className="truncate text-tertiary">{displayName(log, t)}</span>
                   </div>
                   {log.description && <p className="text-xs truncate text-tertiary">{log.description}</p>}
                 </div>
@@ -143,7 +147,7 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
                     type="button"
                     onClick={() => handleDelete(log)}
                     className="opacity-0 transition group-hover:opacity-100"
-                    aria-label="Hapus catatan waktu"
+                    aria-label={t("worklog_ui.delete")}
                   >
                     <Trash2 className="hover:text-red-500 size-3.5 text-tertiary" />
                   </button>
@@ -159,7 +163,7 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
           <input
             type="number"
             min={0}
-            placeholder="jam"
+            placeholder={t("worklog_ui.hours")}
             value={hours}
             onChange={(e) => setHours(e.target.value)}
             className="text-xs focus:border-accent w-14 rounded border border-subtle bg-layer-1 px-1.5 py-1 outline-none"
@@ -168,14 +172,14 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
             type="number"
             min={0}
             max={59}
-            placeholder="menit"
+            placeholder={t("worklog_ui.minutes")}
             value={minutes}
             onChange={(e) => setMinutes(e.target.value)}
             className="text-xs focus:border-accent w-16 rounded border border-subtle bg-layer-1 px-1.5 py-1 outline-none"
           />
           <input
             type="text"
-            placeholder="keterangan (opsional)"
+            placeholder={t("worklog_ui.note_placeholder")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="text-xs focus:border-accent min-w-0 flex-1 rounded border border-subtle bg-layer-1 px-1.5 py-1 outline-none"
@@ -185,7 +189,7 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
             disabled={isSubmitting}
             onClick={handleAdd}
             className="bg-accent text-xs flex items-center gap-1 rounded px-2 py-1 font-medium text-on-color disabled:opacity-50"
-            aria-label="Tambah catatan waktu"
+            aria-label={t("worklog_ui.add")}
           >
             <Plus className="size-3.5" />
           </button>

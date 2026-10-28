@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Hash, MessageSquare, X } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 import { Avatar } from "@plane/ui";
 import { cn, getFileURL } from "@plane/utils";
 
@@ -56,6 +57,7 @@ const KartuPopup = ({
   onTutup: (id: string) => void;
   onBuka: (tautan: string) => void;
 }) => {
+  const { t } = useTranslation();
   const [terlihat, setTerlihat] = useState(false);
   const [berjalan, setBerjalan] = useState(false);
   const jam = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,7 +138,7 @@ const KartuPopup = ({
 
       <button
         type="button"
-        aria-label="Tutup pemberitahuan"
+        aria-label={t("notification_ui.dismiss")}
         onClick={tutup}
         className="absolute top-2 right-2 grid size-6 place-items-center rounded-md text-tertiary opacity-0 transition-opacity group-hover:opacity-100 hover:bg-layer-2 hover:text-primary focus-visible:opacity-100"
       >

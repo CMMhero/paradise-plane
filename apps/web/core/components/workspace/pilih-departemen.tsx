@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { useParams } from "react-router";
 import useSWR from "swr";
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // services
@@ -28,6 +29,7 @@ const sudahDitunda = (): boolean => {
  * Yang disimpan selalu jenjang staf; naik jenjang atau pindah tetap lewat admin.
  */
 export function PilihDepartemen() {
+  const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   const slug = workspaceSlug?.toString();
   const [ditunda, setDitunda] = useState(sudahDitunda);
@@ -46,10 +48,18 @@ export function PilihDepartemen() {
     try {
       await penempatanService.pilih(slug, terpilih);
       await mutate({ perlu_pilih: false, departemen: [] }, { revalidate: false });
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Departemen tersimpan", message: "Anda terdaftar sebagai staf." });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("department_picker_ui.saved_title"),
+        message: t("department_picker_ui.saved_message"),
+      });
     } catch (e) {
       const galat = (e as { error?: string } | undefined)?.error;
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal menyimpan", message: galat ?? "Coba lagi sebentar." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("department_picker_ui.save_failed"),
+        message: galat ?? t("chat_ui.try_again_shortly"),
+      });
     } finally {
       setMenyimpan(false);
     }
@@ -80,12 +90,9 @@ export function PilihDepartemen() {
       <div className="shadow-xl flex max-h-[85vh] w-full max-w-md flex-col gap-4 rounded-lg border border-subtle bg-surface-1 p-5">
         <div>
           <h2 id="pilih-departemen-judul" className="text-lg font-semibold">
-            Pilih departemen Anda
+            {t("department_picker_ui.title")}
           </h2>
-          <p className="text-sm mt-1 text-secondary">
-            Akun Anda belum ditempatkan. Pilih departemen tempat Anda bekerja; Anda terdaftar sebagai staf. Perubahan
-            jabatan atau pindah departemen dilakukan admin.
-          </p>
+          <p className="text-sm mt-1 text-secondary">{t("department_picker_ui.description")}</p>
         </div>
         <div className="flex flex-col gap-3 overflow-y-auto">
           {Object.entries(perDivisi).map(([divisi, daftar]) => (
@@ -113,10 +120,10 @@ export function PilihDepartemen() {
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={nanti} disabled={menyimpan}>
-            Nanti saja
+            {t("notification_ui.later")}
           </Button>
           <Button variant="primary" onClick={() => void simpan()} disabled={!terpilih || menyimpan}>
-            {menyimpan ? "Menyimpan…" : "Simpan"}
+            {menyimpan ? t("saving") : t("save")}
           </Button>
         </div>
       </div>

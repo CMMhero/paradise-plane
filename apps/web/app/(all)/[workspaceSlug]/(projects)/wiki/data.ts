@@ -12,6 +12,7 @@ import { useProject } from "@/hooks/store/use-project";
 // services
 import { ProjectPageService } from "@/services/page";
 import { WikiAccessService, type TWikiFolderPermission } from "@/services/wiki_access.service";
+import { WikiMaterialService } from "@/services/wiki_material.service";
 
 /**
  * Wiki berdiri sendiri, jadi datanya juga.
@@ -25,6 +26,7 @@ import { WikiAccessService, type TWikiFolderPermission } from "@/services/wiki_a
  */
 const layananHalaman = new ProjectPageService();
 const layananAkses = new WikiAccessService();
+const layananMateri = new WikiMaterialService();
 
 const IDENTIFIER_WIKI = "WIKI";
 
@@ -50,6 +52,31 @@ export const useIzinWiki = (workspaceSlug?: string, projectId?: string) => {
     { revalidateOnFocus: false }
   );
   return { izin: data, muatUlangIzin: mutate };
+};
+
+export const useJumlahMateriWiki = (workspaceSlug?: string, projectId?: string) => {
+  const { data, mutate } = useSWR(
+    workspaceSlug && projectId ? `WIKI_MATERIAL_COUNTS_${projectId}` : null,
+    workspaceSlug && projectId ? () => layananMateri.fetchCounts(workspaceSlug, projectId) : null,
+    { revalidateOnFocus: false }
+  );
+  return { jumlahMateri: data, muatUlangJumlah: mutate };
+};
+
+/**
+ * Materi di sebuah folder berikut seluruh sub-topiknya. `halaman` harus sudah
+ * disaring `halamanTerlihat`, jadi materi di folder yang diarsipkan tidak ikut.
+ */
+export const jumlahMateriDalam = (
+  halaman: TPage[],
+  jumlah: Record<string, number> | undefined,
+  folderId: string | undefined
+): number => {
+  if (!folderId || !jumlah) return 0;
+  return anakDari(halaman, folderId).reduce(
+    (total, anak) => total + jumlahMateriDalam(halaman, jumlah, anak.id),
+    jumlah[folderId] ?? 0
+  );
 };
 
 /** Halaman yang tidak diarsipkan dan tidak dihapus, yaitu yang layak ditampilkan. */
@@ -87,15 +114,16 @@ export const ukuranTerbaca = (bytes: number): string => {
 };
 
 /** Label pendek untuk tipe berkas, yang dibaca orang bukan mesin. */
-export const labelTipe = (mime: string): string => {
+export const labelTipe = (mime: string, t: (key: string) => string): string => {
   if (mime === "application/pdf") return "PDF";
-  if (mime.startsWith("image/")) return "Gambar";
-  if (mime.startsWith("video/")) return "Video";
-  if (mime.startsWith("audio/")) return "Audio";
+  if (mime.startsWith("image/")) return t("wiki_ui.file_type.image");
+  if (mime.startsWith("video/")) return t("wiki_ui.file_type.video");
+  if (mime.startsWith("audio/")) return t("wiki_ui.file_type.audio");
   if (mime.includes("wordprocessingml") || mime === "application/msword") return "Word";
   if (mime.includes("spreadsheetml") || mime === "application/vnd.ms-excel") return "Excel";
   if (mime.includes("presentationml") || mime === "application/vnd.ms-powerpoint") return "PowerPoint";
-  if (mime.startsWith("text/")) return "Teks";
-  if (mime.includes("zip") || mime.includes("compressed") || mime.includes("rar")) return "Arsip";
-  return "Berkas";
+  if (mime.startsWith("text/")) return t("wiki_ui.file_type.text");
+  if (mime.includes("zip") || mime.includes("compressed") || mime.includes("rar"))
+    return t("wiki_ui.file_type.archive");
+  return t("wiki_ui.file_type.file");
 };

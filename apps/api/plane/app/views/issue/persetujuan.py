@@ -86,6 +86,7 @@ def _serial(baris, peran, boleh_memutuskan):
         "status": baris.status,
         "alasan": baris.alasan,
         "diputuskan_oleh": str(baris.diputuskan_oleh_id) if baris.diputuskan_oleh_id else None,
+        "diputuskan_oleh_nama": baris.diputuskan_oleh.display_name if baris.diputuskan_oleh_id else None,
         "diputuskan_pada": baris.diputuskan_pada,
         "boleh_saya_putuskan": boleh_memutuskan,
         # Dihitung ULANG saat dibaca, BUKAN disimpan: begitu God Mode mengisi jenjang
@@ -237,7 +238,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         dasar = (
             PersetujuanPenugasan.objects.filter(project_id=project_id)
-            .select_related("issue", "issue__project", "pemohon")
+            .select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
         )
         # `?tugas=<issue_id>`: dipakai indikator di sidebar work item. Tanpa ini,
         # komponen itu harus mengunduh SELURUH antrean project hanya untuk menjawab
@@ -292,7 +293,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         baris = (
             PersetujuanPenugasan.objects.filter(pk=pk, project_id=project_id)
-            .select_related("issue", "issue__project", "pemohon")
+            .select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
             .first()
         )
         if baris is None:
@@ -390,7 +391,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         baris = (
             PersetujuanPenugasan.objects.filter(pk=pk, project_id=project_id)
-            .select_related("issue", "issue__project", "pemohon")
+            .select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
             .first()
         )
         if baris is None:

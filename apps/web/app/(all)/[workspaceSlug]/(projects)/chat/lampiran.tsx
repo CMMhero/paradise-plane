@@ -5,6 +5,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { FileText } from "lucide-react";
 import { API_BASE_URL } from "@plane/constants";
 import type { TLampiran } from "@/services/chat.service";
@@ -26,6 +27,7 @@ type Props = { lampiran: TLampiran[]; terang?: boolean };
  * apa.
  */
 export function DaftarLampiran({ lampiran, terang }: Props) {
+  const { t } = useTranslation();
   if (lampiran.length === 0) return null;
 
   const warnaTeks = terang ? "text-white/80" : "text-tertiary";
@@ -54,7 +56,7 @@ export function DaftarLampiran({ lampiran, terang }: Props) {
           >
             <FileText className="size-4 shrink-0" />
             <span className="min-w-0 flex-1">
-              <span className="text-xs block truncate font-medium">{l.nama || "Berkas"}</span>
+              <span className="text-xs block truncate font-medium">{l.nama || t("chat_ui.file")}</span>
               <span className={`text-xs ${warnaTeks}`}>{ukuranTerbaca(l.ukuran)}</span>
             </span>
           </a>

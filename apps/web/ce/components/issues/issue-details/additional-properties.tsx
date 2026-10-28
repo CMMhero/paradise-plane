@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { Shapes } from "lucide-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -37,6 +38,7 @@ const inputClass = "w-full rounded border border-subtle bg-layer-1 px-2 py-1 tex
 export const WorkItemAdditionalSidebarProperties = observer(function WorkItemAdditionalSidebarProperties(
   props: TWorkItemAdditionalSidebarProperties
 ) {
+  const { t } = useTranslation();
   const { workItemId, workItemTypeId, projectId, workspaceSlug, isEditable } = props;
   // store
   const { updateIssue } = useIssueDetail();
@@ -100,7 +102,11 @@ export const WorkItemAdditionalSidebarProperties = observer(function WorkItemAdd
     try {
       await updateIssue(workspaceSlug, projectId, workItemId, { type_id: typeId || null });
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message: "Tidak bisa mengubah tipe work item." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("work_item_extra_ui.failed"),
+        message: t("work_item_extra_ui.type_change_failed"),
+      });
     }
   };
 
@@ -112,12 +118,12 @@ export const WorkItemAdditionalSidebarProperties = observer(function WorkItemAdd
       });
       setValues((prev) => ({ ...prev, [prop.id]: saved }));
     } catch (err: unknown) {
-      const message = (err as { error?: string })?.error ?? "Gagal menyimpan nilai.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+      const message = (err as { error?: string })?.error ?? t("work_item_extra_ui.value_save_failed");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("work_item_extra_ui.failed"), message });
     }
   };
 
-  const selectedType = useMemo(() => types.find((t) => t.id === workItemTypeId), [types, workItemTypeId]);
+  const selectedType = useMemo(() => types.find((tipe) => tipe.id === workItemTypeId), [types, workItemTypeId]);
 
   // Project tanpa tipe terdefinisi → tidak menampilkan apa pun (fitur senyap)
   if (!isReady || types.length === 0) return <></>;
@@ -126,22 +132,22 @@ export const WorkItemAdditionalSidebarProperties = observer(function WorkItemAdd
     <div className="flex w-full flex-col gap-2 border-t border-subtle py-3">
       <div className="text-sm flex items-center gap-1.5 text-secondary">
         <Shapes className="size-4" />
-        <span>Tipe & Field Custom</span>
+        <span>{t("work_item_extra_ui.title")}</span>
       </div>
 
       {/* Selektor tipe */}
       <div className="flex items-center gap-2">
-        <span className="text-xs w-24 shrink-0 text-tertiary">Tipe</span>
+        <span className="text-xs w-24 shrink-0 text-tertiary">{t("work_item_extra_ui.type")}</span>
         <select
           value={workItemTypeId ?? ""}
           disabled={!isEditable}
           onChange={(e) => void handleTypeChange(e.target.value)}
           className={inputClass}
         >
-          <option value="">(tanpa tipe)</option>
-          {types.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
+          <option value="">{t("work_item_extra_ui.no_type")}</option>
+          {types.map((tipe) => (
+            <option key={tipe.id} value={tipe.id}>
+              {tipe.name}
             </option>
           ))}
         </select>
@@ -216,7 +222,7 @@ export const WorkItemAdditionalSidebarProperties = observer(function WorkItemAdd
                   }}
                   className={inputClass}
                 >
-                  <option value="">(pilih)</option>
+                  <option value="">{t("work_item_extra_ui.select")}</option>
                   {prop.options
                     .filter((o) => o.is_active)
                     .map((o) => (
@@ -236,7 +242,7 @@ export const WorkItemAdditionalSidebarProperties = observer(function WorkItemAdd
                   }}
                   className={inputClass}
                 >
-                  <option value="">(pilih anggota)</option>
+                  <option value="">{t("work_item_extra_ui.select_member")}</option>
                   {memberIds.map((mid) => {
                     const m = getUserDetails(mid);
                     if (!m) return null;
