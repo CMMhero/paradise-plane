@@ -37,3 +37,25 @@ Web default: http://localhost (proxy Caddy). God-mode admin: `/god-mode`.
 
 `web` · `space` · `admin` · `live` (collab) · `api` (Django) · `worker`/`beat`
 (Celery) · `proxy` (Caddy) · Postgres · Redis · RabbitMQ · MinIO.
+
+## Teks antarmuka (i18n)
+
+Semua teks yang dibaca pengguna di `apps/web` lewat `useTranslation()` dari
+`@plane/i18n`, bukan string Indonesia yang ditulis langsung di komponen.
+
+- Teks kustom Paradise ada di namespace `paradise`
+  (`packages/i18n/src/locales/<bahasa>/paradise.json`). Kuncinya dikelompokkan
+  per fitur dengan akhiran `_ui` (`wiki_ui`, `chat_ui`, `cross_division_ui`,
+  `notification_ui`, dst). Jangan memberi kunci teratas yang sama dengan nama
+  berkas namespace (`paradise`, `wiki`, ...), `sync:check` menolaknya.
+- Semua 19 locale wajib punya kunci yang sama. `id` berisi teks Indonesia,
+  `en` bahasa Inggris, sisanya sementara menyalin `en` sampai ada terjemahannya.
+- Tombol umum (Simpan, Batal, Hapus, Tutup, Cari) memakai kunci `common`
+  (`t("save")`, `t("cancel")`), jangan ditulis ulang.
+- Modul murni yang diuji lewat `*.check.ts` (`galat-media`, `baris`, `teks`)
+  tidak memanggil hook. Mereka menerima `t` sebagai argumen, dan berkas
+  `*.check.ts` meminjam kamus `id/paradise.json`. Jalankan dari `packages/i18n`.
+- God Mode (`apps/admin`) memang tidak memakai `@plane/i18n`; kamusnya sendiri di
+  `apps/admin/app/i18n/godmode.tsx`.
+
+Pemeriksaan: `pnpm --filter @plane/i18n sync:check`, lalu `pnpm --filter @plane/i18n generate:types`.
