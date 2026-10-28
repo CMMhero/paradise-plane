@@ -25,6 +25,7 @@ from plane.db.models import (
     ProjectMember,
 )
 from django.db.models import Subquery
+from plane.db.direktur import direktur_user_ids
 
 # Third Party imports
 from celery import shared_task
@@ -307,6 +308,9 @@ def notifications(
             ).values_list("assignee", flat=True)
 
             issue_subscribers = list(set(issue_subscribers) - {uuid.UUID(actor_id)})
+            # Direktur tidak diemail per kejadian (ada ringkasan harian di
+            # direktur_digest_task); inbox in-app tetap terisi.
+            direktur_ids = direktur_user_ids(project.workspace_id)
 
             for subscriber in issue_subscribers:
                 if issue.created_by_id and issue.created_by_id == subscriber:
@@ -346,6 +350,9 @@ def notifications(
                     elif preference.property_change:
                         send_email = True
                     else:
+                        send_email = False
+
+                    if subscriber in direktur_ids:
                         send_email = False
 
                     # If activity is of issue comment fetch the comment

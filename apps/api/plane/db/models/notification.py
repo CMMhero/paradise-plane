@@ -102,10 +102,12 @@ class UserNotificationPreference(BaseModel):
     )
 
     # preference fields
-    property_change = models.BooleanField(default=True)
-    state_change = models.BooleanField(default=True)
-    comment = models.BooleanField(default=True)
-    mention = models.BooleanField(default=True)
+    # Bawaan: email MATI kecuali yang penting (disetujui = approval, selesai =
+    # issue_completed). Orang menyalakan sisanya sendiri di Profil -> Notifikasi.
+    property_change = models.BooleanField(default=False)
+    state_change = models.BooleanField(default=False)
+    comment = models.BooleanField(default=False)
+    mention = models.BooleanField(default=False)
     issue_completed = models.BooleanField(default=True)
     # Kustomisasi Paradise: persetujuan penugasan (diajukan/diputuskan).
     # Inbox selalu ditulis; saklar ini hanya mengatur EMAIL-nya.

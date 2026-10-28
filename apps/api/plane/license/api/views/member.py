@@ -12,7 +12,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
-from plane.db.models import Session, User, Workspace, WorkspaceMember
+from plane.db.models import Profile, Session, User, UserNotificationPreference, Workspace, WorkspaceMember
 from plane.db.models.workspace import ROLE_CHOICES
 from plane.db.superadmin import sinkronkan_super_admin, super_admin_user_ids
 from plane.license.api.views.base import BaseAPIView
@@ -22,6 +22,25 @@ _DEFAULT_PER_PAGE = 50
 _MAX_PER_PAGE = 200
 _PANJANG_PASSWORD_MIN = 8
 _PERAN_SAH = {nilai for nilai, _ in ROLE_CHOICES}
+
+# Pengaturan pribadi yang boleh diubah Super Admin atas nama orang lain.
+# Daftar putih, bukan `fields = "__all__"`: Profile juga memuat status onboarding,
+# alamat tagihan, dan kolom lain yang bukan urusan admin.
+_BAHASA_SAH = frozenset(
+    {"en", "fr", "es", "ja", "zh-CN", "zh-TW", "ru", "it", "cs", "sk", "de", "ua", "pl", "ko", "pt-BR", "id", "ro", "vi-VN", "tr-TR"}
+)  # cermin packages/i18n/src/constants/language.ts
+_MODE_NOTIFIKASI_SAH = {nilai for nilai, _ in Profile.NotificationViewMode.choices}
+_HARI_PEKAN_SAH = {nilai for nilai, _ in Profile.START_OF_THE_WEEK_CHOICES}
+_SAKLAR_NOTIFIKASI = (
+    "property_change",
+    "state_change",
+    "comment",
+    "mention",
+    "issue_completed",
+    "approval",
+    "daily_digest",
+)
+_SAKLAR_PROFIL = ("is_smooth_cursor_enabled", "is_app_rail_docked")
 
 _URUTAN = {
     "name": "display_name",
@@ -478,3 +497,100 @@ class InstanceMemberEndpoint(BaseAPIView):
         # dikeluarkan dan harus masuk ulang, bukan dibiarkan menebak.
         hasil["sessions_ended"] = sesi_diakhiri
         return Response(hasil, status=status.HTTP_200_OK)
+
+
+def _preferensi_notifikasi(u):
+    """Baris notifikasi GLOBAL (tanpa workspace/project) milik user; dibuat kalau belum ada."""
+    pref, _ = UserNotificationPreference.objects.get_or_create(user=u, workspace=None, project=None)
+    return pref
+
+
+def _bentuk_preferensi(profil, notif):
+    return {
+        "profile": {
+            "language": profil.language,
+            "start_of_the_week": profil.start_of_the_week,
+            "notification_view_mode": profil.notification_view_mode,
+            **{k: getattr(profil, k) for k in _SAKLAR_PROFIL},
+        },
+        "notifications": {k: getattr(notif, k) for k in _SAKLAR_NOTIFIKASI},
+    }
+
+
+def _periksa_preferensi(data):
+    """Balikkan (profil_baru, notif_baru, galat). Semua dicek SEBELUM satu kolom pun ditulis."""
+    profil = data.get("profile") or {}
+    notif = data.get("notifications") or {}
+    if not isinstance(profil, dict) or not isinstance(notif, dict):
+        return None, None, "Format tidak sah."
+
+    baru_profil = {}
+    if "language" in profil:
+        if profil["language"] not in _BAHASA_SAH:
+            return None, None, "Bahasa tidak didukung."
+        baru_profil["language"] = profil["language"]
+    if "start_of_the_week" in profil:
+        # bool lolos `in` set angka (True == 1), jadi tolak eksplisit.
+        hari = profil["start_of_the_week"]
+        if isinstance(hari, bool) or hari not in _HARI_PEKAN_SAH:
+            return None, None, "Hari awal pekan tidak sah."
+        baru_profil["start_of_the_week"] = hari
+    if "notification_view_mode" in profil:
+        if profil["notification_view_mode"] not in _MODE_NOTIFIKASI_SAH:
+            return None, None, "Mode tampilan notifikasi tidak sah."
+        baru_profil["notification_view_mode"] = profil["notification_view_mode"]
+    for kolom in _SAKLAR_PROFIL:
+        if kolom in profil:
+            if not isinstance(profil[kolom], bool):
+                return None, None, f"{kolom} harus true/false."
+            baru_profil[kolom] = profil[kolom]
+
+    baru_notif = {}
+    for kolom in _SAKLAR_NOTIFIKASI:
+        if kolom in notif:
+            if not isinstance(notif[kolom], bool):
+                return None, None, f"{kolom} harus true/false."
+            baru_notif[kolom] = notif[kolom]
+    return baru_profil, baru_notif, None
+
+
+class InstanceMemberPreferenceEndpoint(BaseAPIView):
+    """Baca/ubah pengaturan pribadi satu member dari God Mode (bahasa, awal pekan,
+    mode notifikasi, saklar email notifikasi).
+
+    Hanya kolom di daftar putih di atas yang bisa disentuh. Tidak mengakhiri sesi:
+    ini preferensi tampilan, bukan kredensial.
+    """
+
+    def _user(self, pk):
+        return User.objects.filter(pk=pk, is_bot=False).first()
+
+    def get(self, request, pk):
+        u = self._user(pk)
+        if not u:
+            return Response({"error": "Akun tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        profil, _ = Profile.objects.get_or_create(user=u)
+        return Response(_bentuk_preferensi(profil, _preferensi_notifikasi(u)), status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        from django.db import transaction
+
+        u = self._user(pk)
+        if not u:
+            return Response({"error": "Akun tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        baru_profil, baru_notif, galat = _periksa_preferensi(request.data)
+        if galat:
+            return Response({"error": galat}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            profil, _ = Profile.objects.get_or_create(user=u)
+            notif = _preferensi_notifikasi(u)
+            for kolom, nilai in baru_profil.items():
+                setattr(profil, kolom, nilai)
+            for kolom, nilai in baru_notif.items():
+                setattr(notif, kolom, nilai)
+            if baru_profil:
+                profil.save(update_fields=list(baru_profil))
+            if baru_notif:
+                notif.save(update_fields=list(baru_notif))
+        return Response(_bentuk_preferensi(profil, notif), status=status.HTTP_200_OK)

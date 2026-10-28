@@ -97,6 +97,11 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.daily_digest_task.kirim_ringkasan_harian",
         "schedule": crontab(hour=1, minute=30, day_of_week="mon-fri"),
     },
+    # Paradise: ringkasan tugas selesai per divisi untuk direktur, 08.30 WIB.
+    "ringkasan-direktur": {
+        "task": "plane.bgtasks.direktur_digest_task.kirim_ringkasan_direktur",
+        "schedule": crontab(hour=1, minute=30, day_of_week="mon-fri"),
+    },
     # Paradise: dorong tenggat ke Google Calendar tiap
     # orang yang menyambungkan akunnya.
     #
