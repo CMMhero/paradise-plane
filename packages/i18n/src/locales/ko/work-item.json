@@ -240,6 +240,7 @@
         "waiting": "Awaiting manager approval",
         "locked_note": "Submitted by {name}. This work item is locked: it cannot be edited, moved, or worked on until approved. Comments are still allowed.",
         "approved": "Assignment approved",
+        "approved_by": "Approved by {name}",
         "rejected": "Assignment rejected",
         "reason_placeholder": "Reason (required to reject)",
         "reason_optional_placeholder": "Reason (required to reject, optional to approve)"

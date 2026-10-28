@@ -66,6 +66,35 @@ export type TMemberUpdate = {
 /** Balasan `PATCH`: member sesudah diubah + berapa sesi yang ikut diakhiri. */
 export type TInstanceMemberUpdated = TInstanceMember & { sessions_ended: number };
 
+/** Pengaturan pribadi yang boleh diatur Super Admin atas nama member. */
+export type TMemberPreferences = {
+  profile: {
+    /** Kode bahasa UI, mis. "en", "id". */
+    language: string;
+    /** 0 Minggu · 1 Senin · ... · 6 Sabtu. */
+    start_of_the_week: number;
+    notification_view_mode: "full" | "compact";
+    is_smooth_cursor_enabled: boolean;
+    is_app_rail_docked: boolean;
+  };
+  /** Saklar EMAIL notifikasi. Inbox di dalam aplikasi selalu ditulis. */
+  notifications: {
+    property_change: boolean;
+    state_change: boolean;
+    comment: boolean;
+    mention: boolean;
+    issue_completed: boolean;
+    approval: boolean;
+    daily_digest: boolean;
+  };
+};
+
+/** Kirim hanya yang berubah; kunci yang tidak dikirim tidak disentuh. */
+export type TMemberPreferencesUpdate = {
+  profile?: Partial<TMemberPreferences["profile"]>;
+  notifications?: Partial<TMemberPreferences["notifications"]>;
+};
+
 export type TMemberFilter = {
   search?: string;
   status?: "active" | "inactive";
@@ -114,6 +143,23 @@ export class InstanceMemberService extends APIService {
    */
   async update(id: string, data: TMemberUpdate): Promise<TInstanceMemberUpdated> {
     return this.patch(`/api/instances/members/${id}/`, data)
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data ?? e;
+      });
+  }
+
+  async preferensi(id: string): Promise<TMemberPreferences> {
+    return this.get(`/api/instances/members/${id}/preferences/`)
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data ?? e;
+      });
+  }
+
+  /** Tidak mengakhiri sesi: ini preferensi tampilan, bukan kredensial. */
+  async ubahPreferensi(id: string, data: TMemberPreferencesUpdate): Promise<TMemberPreferences> {
+    return this.patch(`/api/instances/members/${id}/preferences/`, data)
       .then((r) => r?.data)
       .catch((e) => {
         throw e?.response?.data ?? e;
