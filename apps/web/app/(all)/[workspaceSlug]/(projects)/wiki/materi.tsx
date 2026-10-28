@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { ArrowLeft, Download, Pencil } from "lucide-react";
 import { Link, useParams } from "react-router";
 import useSWR from "swr";
+import { useTranslation } from "@plane/i18n";
 import { renderFormattedDate } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
@@ -23,6 +24,7 @@ import { PenampilMateri } from "./penampil";
 const layanan = new WikiMaterialService();
 
 function WikiMateriPage() {
+  const { t } = useTranslation();
   const { workspaceSlug, assetId } = useParams();
   const slug = workspaceSlug?.toString() ?? "";
   const idMateri = assetId?.toString() ?? "";
@@ -39,15 +41,15 @@ function WikiMateriPage() {
     return (
       <div className="flex h-full w-full items-center justify-center p-8 text-center">
         <div className="max-w-md">
-          <h2 className="text-15 font-semibold text-primary">Materi ini tidak bisa dibuka</h2>
+          <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.material.cannot_open_title")}</h2>
           <p className="mt-1 text-13 text-tertiary">
-            {(error as { error?: string })?.error || "Kemungkinan ia sudah dihapus, atau kamu tidak punya akses."}
+            {(error as { error?: string })?.error || t("wiki_ui.material.cannot_open_message")}
           </p>
           <Link
             to={`/${slug}/wiki`}
             className="mt-4 inline-block rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
           >
-            Kembali ke Wiki
+            {t("wiki_ui.material.back_to_wiki")}
           </Link>
         </div>
       </div>
@@ -58,16 +60,13 @@ function WikiMateriPage() {
       <div className="flex h-full w-full flex-col gap-4 px-page-x py-8">
         <div className="h-6 w-1/3 animate-pulse rounded bg-layer-3" />
         <div className="h-[60vh] w-full animate-pulse rounded-lg bg-layer-3" />
-        <p className="text-center text-12 text-tertiary">
-          Menyiapkan materi. Berkas Word, Excel, dan PowerPoint dikonversi dulu saat pertama kali dibuka, jadi yang ini
-          bisa memakan beberapa detik.
-        </p>
+        <p className="text-center text-12 text-tertiary">{t("wiki_ui.material.preparing")}</p>
       </div>
     );
 
   return (
     <>
-      <PageHead title={`${data.title} - Wiki`} />
+      <PageHead title={t("wiki_ui.folder.page_title", { name: data.title })} />
       <div className="flex h-full w-full flex-col overflow-y-auto">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-subtle bg-surface-1 px-page-x py-6">
           <div className="min-w-0">
@@ -76,19 +75,19 @@ function WikiMateriPage() {
               className="inline-flex items-center gap-1.5 text-12 text-tertiary transition-colors hover:text-secondary"
             >
               <ArrowLeft className="size-3.5" />
-              Kembali ke divisinya
+              {t("wiki_ui.material.back_to_division")}
             </Link>
             <h1 className="text-2xl mt-2 truncate font-semibold tracking-tight text-primary">{data.title}</h1>
             <p className="mt-1 text-12 text-tertiary">
               {[
-                labelTipe(data.type),
+                labelTipe(data.type, t),
                 ukuranTerbaca(data.size),
                 data.uploaded_by?.display_name,
                 renderFormattedDate(data.created_at),
               ]
                 .filter(Boolean)
                 .join(" · ")}
-              {data.converted && " · ditampilkan sebagai PDF hasil konversi"}
+              {data.converted && ` · ${t("wiki_ui.material.shown_as_pdf")}`}
             </p>
           </div>
 
@@ -100,7 +99,7 @@ function WikiMateriPage() {
                 className="inline-flex items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
               >
                 <Pencil className="size-3.5" />
-                Ganti judul
+                {t("wiki_ui.folder.rename")}
               </button>
             )}
             <a
@@ -108,7 +107,7 @@ function WikiMateriPage() {
               className="inline-flex items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
             >
               <Download className="size-3.5" />
-              Unduh berkas asli
+              {t("wiki_ui.material.download_original")}
             </a>
           </div>
         </div>
@@ -118,11 +117,11 @@ function WikiMateriPage() {
             <PenampilMateri pratinjau={data} />
           ) : (
             <div className="rounded-lg border border-dashed border-subtle px-6 py-16 text-center">
-              <p className="text-14 font-medium text-secondary">Materi ini tidak bisa ditampilkan di peramban</p>
+              <p className="text-14 font-medium text-secondary">{t("wiki_ui.material.cannot_display_title")}</p>
               <p className="mx-auto mt-1 max-w-md text-12 text-tertiary">
                 {data.reason
-                  ? `${data.reason}. Unduh berkasnya lalu buka dengan aplikasi di komputer.`
-                  : "Tipe berkasnya memang tidak punya penampil di peramban. Unduh berkasnya lalu buka dengan aplikasi di komputer."}
+                  ? t("wiki_ui.material.cannot_display_with_reason", { reason: data.reason })
+                  : t("wiki_ui.material.cannot_display_no_viewer")}
               </p>
             </div>
           )}

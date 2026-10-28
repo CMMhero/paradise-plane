@@ -6,6 +6,7 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
@@ -45,6 +46,7 @@ export function GantiNamaMateri({
   onClose,
   onSelesai,
 }: TProps) {
+  const { t } = useTranslation();
   const [judul, setJudul] = useState(judulSekarang);
   const [sedangSimpan, setSedangSimpan] = useState(false);
 
@@ -55,13 +57,13 @@ export function GantiNamaMateri({
     try {
       await layanan.rename(workspaceSlug, projectId, materiId, bersih);
       await onSelesai();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Judul diganti", message: bersih });
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.rename.done_title"), message: bersih });
       onClose();
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Gagal",
-        message: (error as { error?: string })?.error || "Judul gagal diganti.",
+        title: t("wiki_ui.common.failed"),
+        message: (error as { error?: string })?.error || t("wiki_ui.rename.failed_message"),
       });
     } finally {
       setSedangSimpan(false);
@@ -72,11 +74,8 @@ export function GantiNamaMateri({
     <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XL}>
       <div className="space-y-4 p-6">
         <div>
-          <h2 className="text-15 font-semibold text-primary">Ganti judul materi</h2>
-          <p className="mt-1 text-12 text-tertiary">
-            Nama berkas aslinya tidak berubah: <span className="font-mono">{namaBerkas}</span>. Yang diganti hanya judul
-            yang dibaca orang di halaman daftar.
-          </p>
+          <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.rename.title")}</h2>
+          <p className="mt-1 text-12 text-tertiary">{t("wiki_ui.rename.note", { fileName: namaBerkas })}</p>
         </div>
 
         <input
@@ -96,10 +95,10 @@ export function GantiNamaMateri({
 
         <div className="flex justify-end gap-2">
           <Button variant="secondary" size="sm" onClick={onClose}>
-            Batal
+            {t("cancel")}
           </Button>
           <Button variant="primary" size="sm" onClick={simpan} loading={sedangSimpan} disabled={!judul.trim()}>
-            Simpan
+            {t("save")}
           </Button>
         </div>
       </div>

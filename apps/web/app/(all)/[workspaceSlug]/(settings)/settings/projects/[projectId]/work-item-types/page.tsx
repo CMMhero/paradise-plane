@@ -11,6 +11,7 @@ import { useParams } from "react-router";
 import { ChevronDown, ChevronRight, Plus, Shapes, Trash2 } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // components
 import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
@@ -29,20 +30,26 @@ import {
 
 const typesService = new WorkItemTypesService();
 
+// `label` adalah KUNCI i18n, diterjemahkan saat dirender.
 const FIELD_TYPES: { value: TPropertyType; label: string }[] = [
-  { value: "TEXT", label: "Teks" },
-  { value: "DECIMAL", label: "Angka" },
-  { value: "BOOLEAN", label: "Ya/Tidak" },
-  { value: "DATETIME", label: "Tanggal" },
-  { value: "OPTION", label: "Pilihan (dropdown)" },
-  { value: "MEMBER", label: "Anggota" },
+  { value: "TEXT", label: "work_item_types_ui.field_type.text" },
+  { value: "DECIMAL", label: "work_item_types_ui.field_type.number" },
+  { value: "BOOLEAN", label: "work_item_types_ui.field_type.boolean" },
+  { value: "DATETIME", label: "work_item_types_ui.field_type.date" },
+  { value: "OPTION", label: "work_item_types_ui.field_type.option" },
+  { value: "MEMBER", label: "work_item_types_ui.field_type.member" },
 ];
+
+const labelField = (nilai: TPropertyType, t: (key: string) => string): string => {
+  const label = FIELD_TYPES.find((f) => f.value === nilai)?.label;
+  return label ? t(label) : nilai;
+};
 
 const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-xs outline-none focus:border-accent";
 
-const toastError = (err: unknown, fallback: string) => {
+const toastError = (err: unknown, fallback: string, t: (key: string) => string) => {
   const message = (err as { error?: string })?.error ?? fallback;
-  setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+  setToast({ type: TOAST_TYPE.ERROR, title: t("work_item_types_ui.failed"), message });
 };
 
 type TTypeCardProps = {
@@ -53,6 +60,7 @@ type TTypeCardProps = {
 };
 
 const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, onChanged }: TTypeCardProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [properties, setProperties] = useState<TWorkItemProperty[]>([]);
   const [fieldName, setFieldName] = useState("");
@@ -85,7 +93,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
       setFieldRequired(false);
       await fetchProperties();
     } catch (err) {
-      toastError(err, "Gagal menambah field.");
+      toastError(err, t("work_item_types_ui.add_field_failed"), t);
     }
   };
 
@@ -94,7 +102,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
       await typesService.deleteProperty(workspaceSlug, projectId, type.id, propertyId);
       await fetchProperties();
     } catch (err) {
-      toastError(err, "Gagal menghapus field.");
+      toastError(err, t("work_item_types_ui.delete_field_failed"), t);
     }
   };
 
@@ -106,7 +114,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
       setOptionDrafts((prev) => ({ ...prev, [propertyId]: "" }));
       await fetchProperties();
     } catch (err) {
-      toastError(err, "Gagal menambah opsi.");
+      toastError(err, t("work_item_types_ui.add_option_failed"), t);
     }
   };
 
@@ -115,17 +123,17 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
       await typesService.deleteOption(workspaceSlug, projectId, propertyId, optionId);
       await fetchProperties();
     } catch (err) {
-      toastError(err, "Gagal menghapus opsi.");
+      toastError(err, t("work_item_types_ui.delete_option_failed"), t);
     }
   };
 
   const handleDeleteType = async () => {
-    if (!window.confirm(`Hapus tipe "${type.name}" beserta semua field-nya?`)) return;
+    if (!window.confirm(t("work_item_types_ui.confirm_delete_type", { name: type.name }))) return;
     try {
       await typesService.deleteType(workspaceSlug, projectId, type.id);
       onChanged();
     } catch (err) {
-      toastError(err, "Gagal menghapus tipe.");
+      toastError(err, t("work_item_types_ui.delete_type_failed"), t);
     }
   };
 
@@ -141,14 +149,18 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
           <span className="text-sm font-medium text-primary">{type.name}</span>
           {type.description && <span className="text-xs truncate text-tertiary">— {type.description}</span>}
         </button>
-        <button type="button" onClick={handleDeleteType} aria-label={`Hapus tipe ${type.name}`}>
+        <button
+          type="button"
+          onClick={handleDeleteType}
+          aria-label={t("work_item_types_ui.delete_type", { name: type.name })}
+        >
           <Trash2 className="hover:text-red-500 size-4 text-tertiary" />
         </button>
       </div>
 
       {isOpen && (
         <div className="flex flex-col gap-2 border-t border-subtle px-3 py-2.5">
-          {properties.length === 0 && <p className="text-xs text-tertiary">Belum ada field custom untuk tipe ini.</p>}
+          {properties.length === 0 && <p className="text-xs text-tertiary">{t("work_item_types_ui.no_fields")}</p>}
 
           {properties.map((prop) => (
             <div key={prop.id} className="rounded bg-layer-2 px-2.5 py-1.5">
@@ -156,14 +168,16 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
                 <div className="text-xs flex items-center gap-2">
                   <span className="font-medium text-primary">{prop.display_name}</span>
                   <span className="rounded bg-layer-3 px-1.5 py-0.5 text-[10px] text-secondary">
-                    {FIELD_TYPES.find((f) => f.value === prop.property_type)?.label ?? prop.property_type}
+                    {labelField(prop.property_type, t)}
                   </span>
-                  {prop.is_required && <span className="text-red-500 text-[10px]">wajib</span>}
+                  {prop.is_required && (
+                    <span className="text-red-500 text-[10px]">{t("work_item_types_ui.required")}</span>
+                  )}
                 </div>
                 <button
                   type="button"
                   onClick={() => handleDeleteField(prop.id)}
-                  aria-label={`Hapus field ${prop.display_name}`}
+                  aria-label={t("work_item_types_ui.delete_field", { name: prop.display_name })}
                 >
                   <Trash2 className="hover:text-red-500 size-3.5 text-tertiary" />
                 </button>
@@ -180,7 +194,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
                       <button
                         type="button"
                         onClick={() => handleDeleteOption(prop.id, o.id)}
-                        aria-label={`Hapus opsi ${o.name}`}
+                        aria-label={t("work_item_types_ui.delete_option", { name: o.name })}
                       >
                         <Trash2 className="hover:text-red-500 size-3 text-tertiary" />
                       </button>
@@ -188,7 +202,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
                   ))}
                   <input
                     type="text"
-                    placeholder="opsi baru…"
+                    placeholder={t("work_item_types_ui.new_option")}
                     value={optionDrafts[prop.id] ?? ""}
                     onChange={(e) => setOptionDrafts((prev) => ({ ...prev, [prop.id]: e.target.value }))}
                     onKeyDown={(e) => {
@@ -205,7 +219,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             <input
               type="text"
-              placeholder="nama field baru"
+              placeholder={t("work_item_types_ui.new_field_name")}
               value={fieldName}
               onChange={(e) => setFieldName(e.target.value)}
               className={`${inputClass} w-40`}
@@ -217,7 +231,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
             >
               {FIELD_TYPES.map((f) => (
                 <option key={f.value} value={f.value}>
-                  {f.label}
+                  {t(f.label)}
                 </option>
               ))}
             </select>
@@ -228,14 +242,14 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
                 onChange={(e) => setFieldRequired(e.target.checked)}
                 className="size-3"
               />
-              wajib
+              {t("work_item_types_ui.required")}
             </label>
             <button
               type="button"
               onClick={handleAddField}
               className="bg-accent text-xs flex items-center gap-1 rounded px-2 py-1 font-medium text-on-color"
             >
-              <Plus className="size-3.5" /> Field
+              <Plus className="size-3.5" /> {t("work_item_types_ui.field")}
             </button>
           </div>
         </div>
@@ -245,6 +259,7 @@ const TypeCard = observer(function TypeCard({ workspaceSlug, projectId, type, on
 });
 
 function WorkItemTypesSettingsPage() {
+  const { t } = useTranslation();
   const { workspaceSlug, projectId } = useParams();
   // store
   const { currentProjectDetails } = useProject();
@@ -255,7 +270,9 @@ function WorkItemTypesSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const canAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
-  const pageTitle = currentProjectDetails?.name ? `${currentProjectDetails.name} - Work Item Types` : undefined;
+  const pageTitle = currentProjectDetails?.name
+    ? t("work_item_types_ui.page_title", { name: currentProjectDetails.name })
+    : undefined;
 
   const fetchTypes = useCallback(async () => {
     if (!workspaceSlug || !projectId) return;
@@ -279,9 +296,13 @@ function WorkItemTypesSettingsPage() {
       await typesService.createType(workspaceSlug, projectId, { name: newTypeName.trim() });
       setNewTypeName("");
       await fetchTypes();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Tersimpan", message: "Tipe work item dibuat." });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("work_item_types_ui.saved"),
+        message: t("work_item_types_ui.type_created"),
+      });
     } catch (err) {
-      toastError(err, "Gagal membuat tipe.");
+      toastError(err, t("work_item_types_ui.create_type_failed"), t);
     }
   };
 
@@ -297,18 +318,16 @@ function WorkItemTypesSettingsPage() {
         <div className="flex flex-col gap-1 border-b border-subtle pb-3">
           <div className="flex items-center gap-2">
             <Shapes className="size-5 text-secondary" />
-            <h3 className="text-xl font-medium text-primary">Work Item Types</h3>
+            <h3 className="text-xl font-medium text-primary">{t("work_item_types_ui.title")}</h3>
           </div>
-          <p className="text-sm text-tertiary">
-            Definisikan tipe work item (mis. Pembelian, Komplain, Bug) dengan field custom per tipe untuk project ini.
-          </p>
+          <p className="text-sm text-tertiary">{t("work_item_types_ui.description")}</p>
         </div>
 
         {/* Form tambah tipe */}
         <div className="flex items-center gap-2">
           <input
             type="text"
-            placeholder="nama tipe baru (mis. Pembelian)"
+            placeholder={t("work_item_types_ui.new_type_placeholder")}
             value={newTypeName}
             onChange={(e) => setNewTypeName(e.target.value)}
             onKeyDown={(e) => {
@@ -321,25 +340,23 @@ function WorkItemTypesSettingsPage() {
             onClick={handleAddType}
             className="bg-accent text-xs flex items-center gap-1 rounded px-2.5 py-1 font-medium text-on-color"
           >
-            <Plus className="size-3.5" /> Tambah Tipe
+            <Plus className="size-3.5" /> {t("work_item_types_ui.add_type")}
           </button>
         </div>
 
         {/* Daftar tipe */}
         {isLoading ? (
-          <p className="text-sm text-tertiary">Memuat…</p>
+          <p className="text-sm text-tertiary">{t("chat_ui.loading")}</p>
         ) : types.length === 0 ? (
-          <p className="text-sm text-tertiary">
-            Belum ada tipe. Buat tipe pertama untuk mengaktifkan field custom di project ini.
-          </p>
+          <p className="text-sm text-tertiary">{t("work_item_types_ui.no_types")}</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {types.map((t) => (
+            {types.map((tipe) => (
               <TypeCard
-                key={t.id}
+                key={tipe.id}
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
-                type={t}
+                type={tipe}
                 onChanged={fetchTypes}
               />
             ))}

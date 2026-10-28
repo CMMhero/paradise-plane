@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
+import { useTranslation } from "@plane/i18n";
 import { useParams } from "react-router";
 import { Earth, Info, Minus, Plus } from "lucide-react";
 // plane imports
@@ -33,6 +34,7 @@ type Props = {
 };
 
 export const BlockItemAction = observer(function BlockItemAction(props: Props) {
+  const { t } = useTranslation();
   const { page, parentRef, storeType } = props;
   // states
   const [isCreatingSubPage, setIsCreatingSubPage] = useState(false);
@@ -66,7 +68,7 @@ export const BlockItemAction = observer(function BlockItemAction(props: Props) {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "Error!",
-        message: message || "Sub-halaman gagal dibuat. Coba lagi.",
+        message: message || t("shared_ui.subpage_failed"),
       });
     } finally {
       setIsCreatingSubPage(false);
@@ -97,7 +99,7 @@ export const BlockItemAction = observer(function BlockItemAction(props: Props) {
       </Tooltip>
 
       {/* tambah sub-halaman */}
-      <Tooltip tooltipContent="Tambah sub-halaman">
+      <Tooltip tooltipContent={t("shared_ui.add_subpage")}>
         <button
           type="button"
           onClick={(e) => {
@@ -109,7 +111,7 @@ export const BlockItemAction = observer(function BlockItemAction(props: Props) {
           }}
           disabled={isCreatingSubPage}
           className="grid size-5 place-items-center rounded text-tertiary transition-colors hover:bg-layer-3-hover hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Tambah sub-halaman"
+          aria-label={t("shared_ui.add_subpage")}
         >
           <Plus className="size-4" />
         </button>

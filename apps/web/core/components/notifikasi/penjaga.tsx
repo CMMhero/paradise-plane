@@ -10,6 +10,7 @@ import { Bell, X } from "lucide-react";
 import { useNavigate } from "react-router";
 import useSWR from "swr";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
@@ -62,6 +63,10 @@ type TCalon = Omit<TPopup, "id">;
  * NAIK. Dalam keadaan tenang, penjaga ini tidak menambah satu pun permintaan.
  */
 export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) {
+  // Lewat ref: efek polling tidak perlu dijalankan ulang tiap bahasa berganti.
+  const { t } = useTranslation();
+  const tRef = useRef(t);
+  tRef.current = t;
   const navigate = useNavigate();
   const { bunyikan } = useSuaraNotifikasi();
   const { getUnreadNotificationsCount } = useWorkspaceNotifications();
@@ -156,7 +161,11 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
       try {
         const baris = await chatService.getPercakapan(workspaceSlug);
         if (dibatalkan) return;
-        const ringkas = ringkasPercakapan(baris, (id) => getWorkspaceMemberDetails(id)?.member?.display_name);
+        const ringkas = ringkasPercakapan(
+          baris,
+          (id) => getWorkspaceMemberDetails(id)?.member?.display_name,
+          tRef.current
+        );
         if (!ringkas) return;
 
         const pengirim = ringkas.lawanBicara ? getWorkspaceMemberDetails(ringkas.lawanBicara)?.member : undefined;
@@ -203,7 +212,7 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
         const terbaru = halaman?.results?.[0];
         if (!terbaru) return;
 
-        const ringkas = ringkasNotifikasi(terbaru);
+        const ringkas = ringkasNotifikasi(terbaru, tRef.current);
         const pemicu = terbaru.triggered_by_details;
         tampilkan(
           {
@@ -245,6 +254,7 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
  * pemberitahuan di kanan atas, toast bawaan aplikasi di kanan bawah.
  */
 function SpandukIzin() {
+  const { t } = useTranslation();
   const { storedValue: ditutup, setValue: setDitutup } = useLocalStorage<boolean>(KUNCI_SPANDUK, false);
   const [izin, setIzin] = useState<NotificationPermission | "tidak-ada">("tidak-ada");
 
@@ -261,10 +271,8 @@ function SpandukIzin() {
           <Bell className="size-4 text-accent-primary" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-primary">Nyalakan pemberitahuan?</p>
-          <p className="text-xs mt-1 text-tertiary">
-            Supaya pesan baru dan tugas yang diberikan kepada Anda tetap terlihat walau tab ini sedang tidak dibuka.
-          </p>
+          <p className="text-sm font-medium text-primary">{t("notification_ui.enable_title")}</p>
+          <p className="text-xs mt-1 text-tertiary">{t("notification_ui.enable_message")}</p>
           <div className="mt-3 flex items-center gap-2">
             <Button
               variant="primary"
@@ -273,16 +281,16 @@ function SpandukIzin() {
                 void Notification.requestPermission().then(setIzin);
               }}
             >
-              Nyalakan
+              {t("notification_ui.enable")}
             </Button>
             <Button variant="secondary" size="sm" onClick={() => setDitutup(true)}>
-              Nanti saja
+              {t("notification_ui.later")}
             </Button>
           </div>
         </div>
         <button
           type="button"
-          aria-label="Tutup"
+          aria-label={t("close")}
           className="text-tertiary hover:text-primary"
           onClick={() => setDitutup(true)}
         >

@@ -11,6 +11,7 @@ import { useParams } from "react-router";
 import { Link2, Plus, Target, Trash2, X } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // components
 import { PageHead } from "@/components/core/page-title";
@@ -22,16 +23,18 @@ import { InitiativeService, type TInitiative, type TInitiativeStatus } from "@/s
 
 const initiativeService = new InitiativeService();
 
+// `label` adalah KUNCI i18n, diterjemahkan saat dirender.
 const STATUS: { value: TInitiativeStatus; label: string; cls: string }[] = [
-  { value: "PLANNED", label: "Direncanakan", cls: "bg-layer-3 text-secondary" },
-  { value: "ACTIVE", label: "Berjalan", cls: "bg-amber-500/10 text-amber-600" },
-  { value: "ON_HOLD", label: "Ditunda", cls: "bg-layer-3 text-tertiary" },
-  { value: "COMPLETED", label: "Selesai", cls: "bg-green-500/10 text-green-600" },
+  { value: "PLANNED", label: "initiatives_ui.status.planned", cls: "bg-layer-3 text-secondary" },
+  { value: "ACTIVE", label: "initiatives_ui.status.active", cls: "bg-amber-500/10 text-amber-600" },
+  { value: "ON_HOLD", label: "initiatives_ui.status.on_hold", cls: "bg-layer-3 text-tertiary" },
+  { value: "COMPLETED", label: "initiatives_ui.status.completed", cls: "bg-green-500/10 text-green-600" },
 ];
 
 const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-xs outline-none focus:border-accent";
 
 function InitiativesPage() {
+  const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   // store
   const { workspaceProjectIds, getProjectById } = useProject();
@@ -66,10 +69,10 @@ function InitiativesPage() {
       await initiativeService.create(workspaceSlug, { name: newName.trim() });
       setNewName("");
       await fetchInitiatives();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Tersimpan", message: "Initiative dibuat." });
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("initiatives_ui.saved"), message: t("initiatives_ui.created") });
     } catch (err) {
-      const message = (err as { error?: string })?.error ?? "Gagal membuat initiative.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+      const message = (err as { error?: string })?.error ?? t("initiatives_ui.create_failed");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("initiatives_ui.failed"), message });
     }
   };
 
@@ -79,18 +82,26 @@ function InitiativesPage() {
       await initiativeService.update(workspaceSlug, item.id, { status: statusValue });
       await fetchInitiatives();
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message: "Tidak bisa mengubah status." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("initiatives_ui.failed"),
+        message: t("initiatives_ui.status_failed"),
+      });
     }
   };
 
   const handleDelete = async (item: TInitiative) => {
     if (!workspaceSlug) return;
-    if (!window.confirm(`Hapus initiative "${item.name}"?`)) return;
+    if (!window.confirm(t("initiatives_ui.confirm_delete", { name: item.name }))) return;
     try {
       await initiativeService.remove(workspaceSlug, item.id);
       await fetchInitiatives();
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message: "Tidak bisa menghapus." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("initiatives_ui.failed"),
+        message: t("initiatives_ui.delete_failed"),
+      });
     }
   };
 
@@ -102,8 +113,8 @@ function InitiativesPage() {
       setLinkDrafts((prev) => ({ ...prev, [item.id]: "" }));
       await fetchInitiatives();
     } catch (err) {
-      const message = (err as { error?: string })?.error ?? "Gagal menautkan divisi.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+      const message = (err as { error?: string })?.error ?? t("initiatives_ui.link_failed");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("initiatives_ui.failed"), message });
     }
   };
 
@@ -113,7 +124,11 @@ function InitiativesPage() {
       await initiativeService.unlinkProject(workspaceSlug, item.id, projectId);
       await fetchInitiatives();
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message: "Tidak bisa melepas tautan." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("initiatives_ui.failed"),
+        message: t("initiatives_ui.unlink_failed"),
+      });
     }
   };
 
@@ -131,16 +146,14 @@ function InitiativesPage() {
             <Target className="size-5 text-secondary" />
             <h2 className="text-lg font-semibold text-primary">Initiatives</h2>
           </div>
-          <p className="text-sm text-tertiary">
-            Misi & objektif besar perusahaan, payungi beberapa divisi dan pantau progres gabungannya.
-          </p>
+          <p className="text-sm text-tertiary">{t("initiatives_ui.description")}</p>
         </div>
 
         {isWorkspaceAdmin && (
           <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="nama initiative baru (mis. Digitalisasi Gudang 2026)"
+              placeholder={t("initiatives_ui.name_placeholder")}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
@@ -153,15 +166,15 @@ function InitiativesPage() {
               onClick={handleCreate}
               className="bg-accent text-xs flex items-center gap-1 rounded px-2.5 py-1 font-medium text-on-color"
             >
-              <Plus className="size-3.5" /> Buat Initiative
+              <Plus className="size-3.5" /> {t("initiatives_ui.create")}
             </button>
           </div>
         )}
 
         {isLoading ? (
-          <p className="text-sm text-tertiary">Memuat…</p>
+          <p className="text-sm text-tertiary">{t("chat_ui.loading")}</p>
         ) : initiatives.length === 0 ? (
-          <p className="text-sm text-tertiary">Belum ada initiative.</p>
+          <p className="text-sm text-tertiary">{t("initiatives_ui.empty")}</p>
         ) : (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {initiatives.map((item) => {
@@ -180,17 +193,21 @@ function InitiativesPage() {
                         >
                           {STATUS.map((s) => (
                             <option key={s.value} value={s.value}>
-                              {s.label}
+                              {t(s.label)}
                             </option>
                           ))}
                         </select>
                       ) : (
                         <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${statusInfo.cls}`}>
-                          {statusInfo.label}
+                          {t(statusInfo.label)}
                         </span>
                       )}
                       {isWorkspaceAdmin && (
-                        <button type="button" onClick={() => handleDelete(item)} aria-label={`Hapus ${item.name}`}>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item)}
+                          aria-label={t("initiatives_ui.delete_named", { name: item.name })}
+                        >
                           <Trash2 className="hover:text-red-500 size-4 text-tertiary" />
                         </button>
                       )}
@@ -222,7 +239,7 @@ function InitiativesPage() {
                             <button
                               type="button"
                               onClick={() => handleUnlink(item, pid)}
-                              aria-label={`Lepas ${proj.name}`}
+                              aria-label={t("initiatives_ui.unlink_named", { name: proj.name })}
                             >
                               <X className="hover:text-red-500 size-3 text-tertiary" />
                             </button>
@@ -237,7 +254,7 @@ function InitiativesPage() {
                           onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
                           className={`${inputClass} text-[11px]`}
                         >
-                          <option value="">tautkan divisi…</option>
+                          <option value="">{t("initiatives_ui.link_placeholder")}</option>
                           {availableProjects(item).map((pid) => {
                             const proj = getProjectById(pid);
                             if (!proj) return null;
@@ -251,7 +268,7 @@ function InitiativesPage() {
                         <button
                           type="button"
                           onClick={() => handleLink(item)}
-                          aria-label="Tautkan divisi"
+                          aria-label={t("initiatives_ui.link_division")}
                           className="rounded border border-subtle p-1 text-secondary hover:bg-layer-2"
                         >
                           <Link2 className="size-3.5" />

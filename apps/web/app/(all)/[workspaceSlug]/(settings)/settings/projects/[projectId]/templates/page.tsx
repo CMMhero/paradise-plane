@@ -11,6 +11,7 @@ import { useParams } from "react-router";
 import { CalendarClock, FileStack, Play, Plus, Trash2 } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // components
 import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
@@ -29,22 +30,29 @@ import {
 
 const templatesService = new IssueTemplatesService();
 
+// `label` adalah KUNCI i18n, diterjemahkan saat dirender.
 const INTERVALS: { value: TRecurringInterval; label: string }[] = [
-  { value: "DAILY", label: "Harian" },
-  { value: "WEEKLY", label: "Mingguan" },
-  { value: "MONTHLY", label: "Bulanan" },
+  { value: "DAILY", label: "templates_ui.interval.daily" },
+  { value: "WEEKLY", label: "templates_ui.interval.weekly" },
+  { value: "MONTHLY", label: "templates_ui.interval.monthly" },
 ];
+
+const labelInterval = (nilai: TRecurringInterval, t: (key: string) => string): string => {
+  const label = INTERVALS.find((i) => i.value === nilai)?.label;
+  return label ? t(label) : nilai;
+};
 
 const PRIORITIES = ["none", "low", "medium", "high", "urgent"];
 
 const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-xs outline-none focus:border-accent";
 
-const toastError = (err: unknown, fallback: string) => {
+const toastError = (err: unknown, fallback: string, t: (key: string) => string) => {
   const message = (err as { error?: string })?.error ?? fallback;
-  setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+  setToast({ type: TOAST_TYPE.ERROR, title: t("templates_ui.failed"), message });
 };
 
 function TemplatesSettingsPage() {
+  const { t, currentLocale } = useTranslation();
   const { workspaceSlug, projectId } = useParams();
   // store
   const { currentProjectDetails } = useProject();
@@ -61,7 +69,9 @@ function TemplatesSettingsPage() {
   const [intervalDrafts, setIntervalDrafts] = useState<Record<string, TRecurringInterval>>({});
 
   const canAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
-  const pageTitle = currentProjectDetails?.name ? `${currentProjectDetails.name} - Templates` : undefined;
+  const pageTitle = currentProjectDetails?.name
+    ? t("templates_ui.page_title", { name: currentProjectDetails.name })
+    : undefined;
 
   const fetchAll = useCallback(async () => {
     if (!workspaceSlug || !projectId) return;
@@ -95,20 +105,20 @@ function TemplatesSettingsPage() {
       setTitle("");
       setPriority("none");
       await fetchAll();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Tersimpan", message: "Template dibuat." });
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("templates_ui.saved"), message: t("templates_ui.created") });
     } catch (err) {
-      toastError(err, "Gagal membuat template.");
+      toastError(err, t("templates_ui.create_failed"), t);
     }
   };
 
   const handleDeleteTemplate = async (tpl: TIssueTemplate) => {
     if (!workspaceSlug || !projectId) return;
-    if (!window.confirm(`Hapus template "${tpl.name}" beserta jadwal berulangnya?`)) return;
+    if (!window.confirm(t("templates_ui.confirm_delete", { name: tpl.name }))) return;
     try {
       await templatesService.deleteTemplate(workspaceSlug, projectId, tpl.id);
       await fetchAll();
     } catch (err) {
-      toastError(err, "Gagal menghapus template.");
+      toastError(err, t("templates_ui.delete_failed"), t);
     }
   };
 
@@ -116,9 +126,13 @@ function TemplatesSettingsPage() {
     if (!workspaceSlug || !projectId) return;
     try {
       await templatesService.applyTemplate(workspaceSlug, projectId, tpl.id);
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Dibuat", message: `Work item dari "${tpl.name}" dibuat.` });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("templates_ui.applied_title"),
+        message: t("templates_ui.applied_message", { name: tpl.name }),
+      });
     } catch (err) {
-      toastError(err, "Gagal membuat work item dari template.");
+      toastError(err, t("templates_ui.apply_failed"), t);
     }
   };
 
@@ -132,9 +146,13 @@ function TemplatesSettingsPage() {
         next_run_at: new Date().toISOString(),
       });
       await fetchAll();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Aktif", message: "Jadwal berulang dipasang." });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("templates_ui.recurring_active"),
+        message: t("templates_ui.recurring_installed"),
+      });
     } catch (err) {
-      toastError(err, "Gagal memasang jadwal berulang.");
+      toastError(err, t("templates_ui.recurring_install_failed"), t);
     }
   };
 
@@ -144,7 +162,7 @@ function TemplatesSettingsPage() {
       await templatesService.updateRecurring(workspaceSlug, projectId, rec.id, { is_active: !rec.is_active });
       await fetchAll();
     } catch (err) {
-      toastError(err, "Gagal mengubah status jadwal.");
+      toastError(err, t("templates_ui.recurring_toggle_failed"), t);
     }
   };
 
@@ -154,7 +172,7 @@ function TemplatesSettingsPage() {
       await templatesService.deleteRecurring(workspaceSlug, projectId, rec.id);
       await fetchAll();
     } catch (err) {
-      toastError(err, "Gagal menghapus jadwal.");
+      toastError(err, t("templates_ui.recurring_delete_failed"), t);
     }
   };
 
@@ -172,26 +190,23 @@ function TemplatesSettingsPage() {
         <div className="flex flex-col gap-1 border-b border-subtle pb-3">
           <div className="flex items-center gap-2">
             <FileStack className="size-5 text-secondary" />
-            <h3 className="text-xl font-medium text-primary">Templates & Recurring</h3>
+            <h3 className="text-xl font-medium text-primary">{t("templates_ui.title")}</h3>
           </div>
-          <p className="text-sm text-tertiary">
-            Template work item standar + jadwal pembuatan otomatis (harian/mingguan/bulanan) untuk pekerjaan rutin
-            divisi.
-          </p>
+          <p className="text-sm text-tertiary">{t("templates_ui.description")}</p>
         </div>
 
         {/* Form template baru */}
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="text"
-            placeholder="nama template (mis. Laporan Mingguan)"
+            placeholder={t("templates_ui.name_placeholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className={`${inputClass} w-56`}
           />
           <input
             type="text"
-            placeholder="judul work item yang dibuat"
+            placeholder={t("templates_ui.title_placeholder")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className={`${inputClass} w-64`}
@@ -199,7 +214,7 @@ function TemplatesSettingsPage() {
           <select value={priority} onChange={(e) => setPriority(e.target.value)} className={inputClass}>
             {PRIORITIES.map((p) => (
               <option key={p} value={p}>
-                prioritas: {p}
+                {t("templates_ui.priority_option", { value: p })}
               </option>
             ))}
           </select>
@@ -208,15 +223,15 @@ function TemplatesSettingsPage() {
             onClick={handleAddTemplate}
             className="bg-accent text-xs flex items-center gap-1 rounded px-2.5 py-1 font-medium text-on-color"
           >
-            <Plus className="size-3.5" /> Tambah Template
+            <Plus className="size-3.5" /> {t("templates_ui.add")}
           </button>
         </div>
 
         {/* Daftar template */}
         {isLoading ? (
-          <p className="text-sm text-tertiary">Memuat…</p>
+          <p className="text-sm text-tertiary">{t("chat_ui.loading")}</p>
         ) : templates.length === 0 ? (
-          <p className="text-sm text-tertiary">Belum ada template di project ini.</p>
+          <p className="text-sm text-tertiary">{t("templates_ui.empty")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {templates.map((tpl) => {
@@ -227,22 +242,22 @@ function TemplatesSettingsPage() {
                     <div className="min-w-0">
                       <p className="text-sm truncate font-medium text-primary">{tpl.name}</p>
                       <p className="text-xs truncate text-tertiary">
-                        judul: {tpl.title} · prioritas: {tpl.priority}
+                        {t("templates_ui.summary_line", { title: tpl.title, priority: tpl.priority })}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
                         onClick={() => handleApply(tpl)}
-                        title="Buat work item sekarang dari template ini"
+                        title={t("templates_ui.apply_now_hint")}
                         className="text-xs flex items-center gap-1 rounded border border-subtle px-2 py-1 text-secondary hover:bg-layer-2"
                       >
-                        <Play className="size-3" /> Buat sekarang
+                        <Play className="size-3" /> {t("templates_ui.apply_now")}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteTemplate(tpl)}
-                        aria-label={`Hapus template ${tpl.name}`}
+                        aria-label={t("templates_ui.delete_named", { name: tpl.name })}
                       >
                         <Trash2 className="hover:text-red-500 size-4 text-tertiary" />
                       </button>
@@ -256,13 +271,13 @@ function TemplatesSettingsPage() {
                         <div className="flex items-center gap-2">
                           <CalendarClock className="size-3.5 text-tertiary" />
                           <span className="text-secondary">
-                            {INTERVALS.find((i) => i.value === rec.interval)?.label ?? rec.interval} · berikutnya:{" "}
-                            {new Date(rec.next_run_at).toLocaleString("id-ID")}
+                            {labelInterval(rec.interval, t)} · {t("templates_ui.next")}:{" "}
+                            {new Date(rec.next_run_at).toLocaleString(currentLocale)}
                           </span>
                           <span
                             className={`rounded px-1.5 py-0.5 text-[10px] ${rec.is_active ? "bg-green-500/10 text-green-600" : "bg-layer-3 text-tertiary"}`}
                           >
-                            {rec.is_active ? "aktif" : "nonaktif"}
+                            {rec.is_active ? t("templates_ui.active") : t("templates_ui.inactive")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -271,9 +286,13 @@ function TemplatesSettingsPage() {
                             onClick={() => handleToggleRecurring(rec)}
                             className="text-xs text-secondary underline-offset-2 hover:underline"
                           >
-                            {rec.is_active ? "matikan" : "nyalakan"}
+                            {rec.is_active ? t("templates_ui.turn_off") : t("templates_ui.turn_on")}
                           </button>
-                          <button type="button" onClick={() => handleDeleteRecurring(rec)} aria-label="Hapus jadwal">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRecurring(rec)}
+                            aria-label={t("templates_ui.delete_schedule")}
+                          >
                             <Trash2 className="hover:text-red-500 size-3.5 text-tertiary" />
                           </button>
                         </div>
@@ -290,7 +309,7 @@ function TemplatesSettingsPage() {
                       >
                         {INTERVALS.map((i) => (
                           <option key={i.value} value={i.value}>
-                            {i.label}
+                            {t(i.label)}
                           </option>
                         ))}
                       </select>
@@ -299,7 +318,7 @@ function TemplatesSettingsPage() {
                         onClick={() => handleAddRecurring(tpl)}
                         className="text-xs flex items-center gap-1 rounded border border-subtle px-2 py-1 text-secondary hover:bg-layer-2"
                       >
-                        <Plus className="size-3" /> Jadwal berulang
+                        <Plus className="size-3" /> {t("templates_ui.recurring")}
                       </button>
                     </div>
                   </div>

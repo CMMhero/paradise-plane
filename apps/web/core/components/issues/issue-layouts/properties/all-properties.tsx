@@ -236,7 +236,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
         // cuma teks, bukan dropdown, jadi tidak ada apa pun yang perlu dicegah
         // merambat, dan menambahkannya justru membuatnya terlihat bisa diklik.
         <div className="h-5">
-          <Tooltip tooltipContent={`Tugas ini diberikan oleh ${pemberiTugas}`} isMobile={isMobile}>
+          <Tooltip tooltipContent={t("shared_ui.assigned_by", { name: pemberiTugas })} isMobile={isMobile}>
             <span className="inline-flex h-5 max-w-40 items-center gap-1 rounded border-[0.5px] border-subtle bg-layer-2 px-2 text-11 text-secondary">
               <UserCirclePropertyIcon className="size-3 shrink-0 text-tertiary" />
               <span className="truncate">{pemberiTugas}</span>

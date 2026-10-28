@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
+import { useTranslation } from "@plane/i18n";
 import { ChevronRightIcon } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
 // services
@@ -29,7 +30,7 @@ type TGrup = {
 };
 
 /** Gabungkan struktur dengan project yang benar-benar ada di store; sisanya ke "Lainnya". */
-function susunGrup(struktur: TStrukturOrganisasi, joinedProjectIds: string[]): TGrup[] {
+function susunGrup(struktur: TStrukturOrganisasi, joinedProjectIds: string[], namaLainnya: string): TGrup[] {
   const terpakai = new Set<string>();
   const grup: TGrup[] = struktur.divisi
     .map((divisi) => ({
@@ -51,7 +52,7 @@ function susunGrup(struktur: TStrukturOrganisasi, joinedProjectIds: string[]): T
     grup.push({
       id: "lainnya",
       kode: "",
-      nama: "Lainnya",
+      nama: namaLainnya,
       departemen: [{ id: "lainnya", kode: "", nama: "", projectIds: sisa }],
     });
   return grup;
@@ -62,8 +63,9 @@ export const SidebarProjectsGrouped = observer(function SidebarProjectsGrouped({
   joinedProjectIds,
   handleCopyText,
 }: Props) {
+  const { t } = useTranslation();
   const [tertutup, setTertutup] = useState<Set<string>>(new Set());
-  const grup = susunGrup(struktur, joinedProjectIds);
+  const grup = susunGrup(struktur, joinedProjectIds, t("other"));
 
   const toggle = (id: string) =>
     setTertutup((lama) => {

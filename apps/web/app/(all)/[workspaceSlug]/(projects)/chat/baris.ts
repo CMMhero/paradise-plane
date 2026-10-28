@@ -12,7 +12,7 @@ import type { TPesan } from "@/services/chat.service";
 const JEDA_KELOMPOK_MS = 5 * 60 * 1000;
 
 export type TBaris =
-  | { jenis: "tanggal"; kunci: string; label: string }
+  | { jenis: "tanggal"; kunci: string; label: string; relatif?: "hari-ini" | "kemarin" }
   | { jenis: "belum-dibaca"; kunci: string }
   | {
       jenis: "pesan";
@@ -31,19 +31,29 @@ const HARI_MS = 24 * 60 * 60 * 1000;
  * dan 00.10 terhitung "selisih nol hari" padahal beda tanggal. */
 const tanpaJam = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 
-const labelTanggal = (waktu: Date, hariIni: Date): string => {
+// Kata "hari ini"/"kemarin" sengaja tidak ditulis di sini: modul ini murni dan
+// tidak tahu bahasa. Yang dikembalikan penandanya, komponen yang menerjemahkan.
+const relatifDari = (waktu: Date, hariIni: Date): "hari-ini" | "kemarin" | undefined => {
   const selisih = (tanpaJam(hariIni) - tanpaJam(waktu)) / HARI_MS;
-  if (selisih === 0) return "Hari ini";
-  if (selisih === 1) return "Kemarin";
-  return waktu.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+  if (selisih === 0) return "hari-ini";
+  if (selisih === 1) return "kemarin";
+  return undefined;
 };
+
+const labelTanggal = (waktu: Date, lokal: string): string =>
+  waktu.toLocaleDateString(lokal, { day: "numeric", month: "long", year: "numeric" });
 
 /** Ubah daftar pesan mentah jadi daftar baris siap render.
  *
  * Dipisah dari komponen supaya bisa diuji tanpa merender apa pun, dan supaya
  * JSX-nya tinggal memetakan, bukan menghitung sambil menggambar.
  */
-export const susunBaris = (pesan: TPesan[], sayaId: string | undefined, sekarang = new Date()): TBaris[] => {
+export const susunBaris = (
+  pesan: TPesan[],
+  sayaId: string | undefined,
+  sekarang = new Date(),
+  lokal = "id-ID"
+): TBaris[] => {
   const baris: TBaris[] = [];
   let pembatasSudahDipasang = false;
 
@@ -54,7 +64,12 @@ export const susunBaris = (pesan: TPesan[], sayaId: string | undefined, sekarang
     const gantiHari = !waktuSebelumnya || waktuSebelumnya.toDateString() !== waktu.toDateString();
 
     if (gantiHari) {
-      baris.push({ jenis: "tanggal", kunci: `tgl-${p.id}`, label: labelTanggal(waktu, sekarang) });
+      baris.push({
+        jenis: "tanggal",
+        kunci: `tgl-${p.id}`,
+        label: labelTanggal(waktu, lokal),
+        relatif: relatifDari(waktu, sekarang),
+      });
     }
 
     // Garis "belum dibaca" hanya sekali, di pesan baru yang pertama. Beberapa

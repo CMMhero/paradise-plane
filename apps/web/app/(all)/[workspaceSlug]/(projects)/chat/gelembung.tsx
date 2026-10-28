@@ -5,6 +5,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { useState } from "react";
 import { Check, CheckCheck, CornerUpLeft, Pencil, SmilePlus, Trash2 } from "lucide-react";
 import { renderFormattedTime } from "@plane/utils";
@@ -67,6 +68,7 @@ type Props = {
 };
 
 export function Gelembung(props: Props) {
+  const { t } = useTranslation();
   const { pesan, dariSaya, awalKelompok, akhirKelompok, sayaId, namaOrang } = props;
   const [pilihReaksi, setPilihReaksi] = useState(false);
 
@@ -81,7 +83,7 @@ export function Gelembung(props: Props) {
         {pesan.balasan_ke ? (
           <div className={`mb-1.5 rounded border-l-2 pl-2 ${dariSaya ? "border-white/50" : "border-accent-primary"}`}>
             <p className={`text-xs font-medium ${redup}`}>{namaOrang(pesan.balasan_ke.pengirim)}</p>
-            <p className={`text-xs line-clamp-2 ${redup}`}>{pesan.balasan_ke.isi || "lampiran"}</p>
+            <p className={`text-xs line-clamp-2 ${redup}`}>{pesan.balasan_ke.isi || t("chat_ui.attachment")}</p>
           </div>
         ) : null}
 
@@ -91,7 +93,7 @@ export function Gelembung(props: Props) {
         {akhirKelompok || pesan.disunting ? (
           <p className={`text-xs mt-1 flex items-center gap-1 ${redup}`}>
             {renderFormattedTime(pesan.created_at)}
-            {pesan.disunting ? <span>· disunting</span> : null}
+            {pesan.disunting ? <span>· {t("chat_ui.edited")}</span> : null}
             {/* Tanda dibaca hanya untuk pesan KELUAR. Menampilkannya pada pesan
                 masuk tidak berarti apa-apa: kita jelas sudah membacanya. */}
             {dariSaya ? (
@@ -131,7 +133,7 @@ export function Gelembung(props: Props) {
         <button
           type="button"
           onClick={() => setPilihReaksi((v) => !v)}
-          aria-label="Beri reaksi"
+          aria-label={t("chat_ui.add_reaction")}
           className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
         >
           <SmilePlus className="size-3.5" />
@@ -139,7 +141,7 @@ export function Gelembung(props: Props) {
         <button
           type="button"
           onClick={() => props.onBalas?.(pesan)}
-          aria-label="Balas pesan"
+          aria-label={t("chat_ui.reply")}
           className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
         >
           <CornerUpLeft className="size-3.5" />
@@ -149,7 +151,7 @@ export function Gelembung(props: Props) {
             <button
               type="button"
               onClick={() => props.onSunting?.(pesan)}
-              aria-label="Sunting pesan"
+              aria-label={t("chat_ui.edit")}
               className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
             >
               <Pencil className="size-3.5" />
@@ -157,7 +159,7 @@ export function Gelembung(props: Props) {
             <button
               type="button"
               onClick={() => props.onHapus?.(pesan)}
-              aria-label="Hapus pesan"
+              aria-label={t("chat_ui.delete")}
               className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-danger-primary"
             >
               <Trash2 className="size-3.5" />

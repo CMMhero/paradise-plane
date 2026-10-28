@@ -38,6 +38,7 @@ export type TPersetujuanPenugasan = {
   status: TStatusPersetujuan;
   alasan: string | null;
   diputuskan_oleh: string | null;
+  diputuskan_oleh_nama: string | null;
   diputuskan_pada: string | null;
   boleh_saya_putuskan: boolean;
   penyetuju_di_divisi: TPenyetujuRingkas[];

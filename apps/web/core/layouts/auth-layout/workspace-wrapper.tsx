@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
@@ -47,6 +48,7 @@ interface IWorkspaceAuthWrapper {
 }
 
 export const WorkspaceAuthWrapper = observer(function WorkspaceAuthWrapper(props: IWorkspaceAuthWrapper) {
+  const { t } = useTranslation();
   const { children, isLoading: isParentLoading = false } = props;
   // router params
   const { workspaceSlug } = useParams();
@@ -179,7 +181,7 @@ export const WorkspaceAuthWrapper = observer(function WorkspaceAuthWrapper(props
               <img
                 src={WorkSpaceNotAvailable}
                 className="h-[220px] object-contain object-center"
-                alt="Workspace tidak ditemukan"
+                alt={t("shared_ui.workspace_not_found")}
               />
             </div>
             <h3 className="text-center text-16 font-semibold">Workspace not found</h3>

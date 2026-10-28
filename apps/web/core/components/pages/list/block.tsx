@@ -6,6 +6,7 @@
 
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
+import { useTranslation } from "@plane/i18n";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { PageIcon } from "@plane/propel/icons";
@@ -32,6 +33,7 @@ type TPageListBlock = {
 };
 
 export const PageListBlock = observer(function PageListBlock(props: TPageListBlock) {
+  const { t } = useTranslation();
   const { pageId, storeType, pageType, depth = 0 } = props;
   // refs
   const parentRef = useRef(null);
@@ -70,7 +72,9 @@ export const PageListBlock = observer(function PageListBlock(props: TPageListBlo
                   className="grid size-4 flex-shrink-0 place-items-center rounded text-tertiary hover:bg-layer-3-hover hover:text-secondary"
                   aria-expanded={isExpanded}
                   aria-label={
-                    isExpanded ? `Tutup sub-halaman ${getPageName(name)}` : `Buka sub-halaman ${getPageName(name)}`
+                    isExpanded
+                      ? t("shared_ui.collapse_subpages", { name: getPageName(name) })
+                      : t("shared_ui.expand_subpages", { name: getPageName(name) })
                   }
                 >
                   {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}

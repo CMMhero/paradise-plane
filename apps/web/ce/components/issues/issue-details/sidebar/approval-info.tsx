@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: indikator persetujuan penugasan 
+ * Kustomisasi Paradise Task Tracker: indikator persetujuan penugasan
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
@@ -99,9 +99,7 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
         type: TOAST_TYPE.SUCCESS,
         title: aksi === "setujui" ? t("issue.approval.toast.approved_title") : t("issue.approval.toast.rejected_title"),
         message:
-          aksi === "setujui"
-            ? t("issue.approval.toast.approved_message")
-            : t("issue.approval.toast.rejected_message"),
+          aksi === "setujui" ? t("issue.approval.toast.approved_message") : t("issue.approval.toast.rejected_message"),
       });
     } catch (err) {
       const pesan = pesanGagal(err, t("issue.approval.toast.save_failed_message"));
@@ -113,7 +111,9 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
   };
 
   if (baris.status === "disetujui") {
-    const label = t("issue.approval.sidebar.approved");
+    const label = baris.diputuskan_oleh_nama
+      ? t("issue.approval.sidebar.approved_by", { name: baris.diputuskan_oleh_nama })
+      : t("issue.approval.sidebar.approved");
     return (
       <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS} title={label}>
         <CheckCircle2 className="size-3 shrink-0" aria-hidden />
@@ -156,7 +156,7 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
             className={inputClass}
           />
           {gagal && (
-            <p className="border-danger-subtle bg-danger-subtle text-danger-primary rounded border px-2 py-1 text-xs">
+            <p className="text-xs rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-danger-primary">
               {gagal}
             </p>
           )}

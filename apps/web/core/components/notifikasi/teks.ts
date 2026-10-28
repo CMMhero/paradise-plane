@@ -19,6 +19,8 @@
  * beralias berkas ini bisa dijalankan langsung oleh tsx lewat `teks.check.ts`.
  */
 
+export type TTerjemah = (key: string, params?: Record<string, unknown>) => string;
+
 export type TRingkasan = {
   judul: string;
   isi: string;
@@ -94,23 +96,32 @@ export const teksPolos = (html: string | null | undefined) => {
  * berubah jadi daftar yang selalu ketinggalan. Yang terdaftar di sini adalah
  * yang benar-benar sering muncul di kantor.
  */
-const AKSI: Record<string, (a: TAktivitas) => string> = {
+const AKSI: Record<string, (a: TAktivitas, t: TTerjemah) => string> = {
   // `None` adalah tugas yang BARU DIBUAT sekaligus ditugaskan ke penerimanya.
-  None: () => "memberi Anda tugas baru",
-  assignees: (a) => (a.new_value ? "menugaskan pekerjaan ini kepada Anda" : "melepas Anda dari pekerjaan ini"),
-  comment: (a) => `berkomentar: ${teksPolos(a.new_value)}`,
-  state: (a) => `memindahkan statusnya ke ${a.new_value || "-"}`,
-  priority: (a) => `mengubah prioritasnya jadi ${a.new_value || "-"}`,
-  target_date: (a) => (a.new_value ? `menetapkan tenggat ${String(a.new_value).slice(0, 10)}` : "menghapus tenggatnya"),
-  start_date: (a) =>
-    a.new_value ? `menetapkan tanggal mulai ${String(a.new_value).slice(0, 10)}` : "menghapus tanggal mulainya",
-  labels: (a) => (a.new_value ? `menambahkan label ${a.new_value}` : "melepas sebuah label"),
-  attachment: () => "melampirkan berkas",
-  description: () => "memperbarui deskripsinya",
-  archived_at: (a) => (a.new_value === "restore" ? "memulihkan pekerjaan ini" : "mengarsipkan pekerjaan ini"),
+  None: (_a, t) => t("notification_ui.action.new_task"),
+  assignees: (a, t) => t(a.new_value ? "notification_ui.action.assigned" : "notification_ui.action.unassigned"),
+  comment: (a, t) => t("notification_ui.action.commented", { text: teksPolos(a.new_value) }),
+  state: (a, t) => t("notification_ui.action.state", { value: a.new_value || "-" }),
+  priority: (a, t) => t("notification_ui.action.priority", { value: a.new_value || "-" }),
+  target_date: (a, t) =>
+    a.new_value
+      ? t("notification_ui.action.due_set", { date: String(a.new_value).slice(0, 10) })
+      : t("notification_ui.action.due_removed"),
+  start_date: (a, t) =>
+    a.new_value
+      ? t("notification_ui.action.start_set", { date: String(a.new_value).slice(0, 10) })
+      : t("notification_ui.action.start_removed"),
+  labels: (a, t) =>
+    a.new_value
+      ? t("notification_ui.action.label_added", { label: a.new_value })
+      : t("notification_ui.action.label_removed"),
+  attachment: (_a, t) => t("notification_ui.action.attachment"),
+  description: (_a, t) => t("notification_ui.action.description"),
+  archived_at: (a, t) =>
+    t(a.new_value === "restore" ? "notification_ui.action.restored" : "notification_ui.action.archived"),
 };
 
-const kalimat = (n: TNotifikasiRingkas) => {
+const kalimat = (n: TNotifikasiRingkas, t: TTerjemah) => {
   const aktivitas = n.data?.issue_activity ?? {};
   const field = aktivitas.field ?? "";
 
@@ -119,24 +130,26 @@ const kalimat = (n: TNotifikasiRingkas) => {
   // alasan pemberitahuan ini sampai kepada Anda.
   if (n.is_mentioned_notification) {
     const kutipan = field === "comment" ? teksPolos(aktivitas.new_value) : "";
-    return kutipan ? `menyebut Anda: ${kutipan}` : "menyebut Anda";
+    return kutipan
+      ? t("notification_ui.action.mentioned_with_quote", { text: kutipan })
+      : t("notification_ui.action.mentioned");
   }
 
   const penyusun = AKSI[field];
-  if (penyusun) return penyusun(aktivitas);
-  if (!field) return "memperbarui pekerjaan ini";
-  return `memperbarui ${field.replace(/_/g, " ")}`;
+  if (penyusun) return penyusun(aktivitas, t);
+  if (!field) return t("notification_ui.action.updated");
+  return t("notification_ui.action.updated_field", { field: field.replace(/_/g, " ") });
 };
 
-export const ringkasNotifikasi = (n: TNotifikasiRingkas): TRingkasan => {
+export const ringkasNotifikasi = (n: TNotifikasiRingkas, t: TTerjemah): TRingkasan => {
   const pemicu = n.triggered_by_details;
-  const nama = (pemicu?.is_bot ? pemicu?.first_name : pemicu?.display_name) || "Seseorang";
+  const nama = (pemicu?.is_bot ? pemicu?.first_name : pemicu?.display_name) || t("notification_ui.someone");
 
   const tugas = n.data?.issue;
   const kode = tugas?.identifier && tugas?.sequence_id ? `${tugas.identifier}-${tugas.sequence_id} ` : "";
-  const judul = tugas?.name ? `${kode}${tugas.name}` : n.title || "Pemberitahuan baru";
+  const judul = tugas?.name ? `${kode}${tugas.name}` : n.title || t("notification_ui.new_notification");
 
-  return { judul: potong(judul, 90), isi: potong(`${nama} ${kalimat(n)}`, BATAS_ISI) };
+  return { judul: potong(judul, 90), isi: potong(`${nama} ${kalimat(n, t)}`, BATAS_ISI) };
 };
 
 // --- obrolan ----------------------------------------------------------------
@@ -164,7 +177,8 @@ export type TPercakapanRingkas = {
  */
 export const ringkasPercakapan = (
   baris: TPercakapanRingkas[],
-  namaOrang: (userId: string) => string | undefined
+  namaOrang: (userId: string) => string | undefined,
+  t: TTerjemah
 ): (TRingkasan & { ruangId: string; lawanBicara: string | null }) | null => {
   const belum = baris.filter((b) => b.belum_dibaca > 0 && !b.dari_saya);
   if (belum.length === 0) return null;
@@ -173,14 +187,14 @@ export const ringkasPercakapan = (
 
   const namaKanal = terbaru.nama ? `# ${terbaru.nama}` : null;
   const namaDM = terbaru.lawan_bicara ? namaOrang(terbaru.lawan_bicara) : undefined;
-  const judul = namaKanal ?? namaDM ?? "Pesan baru";
+  const judul = namaKanal ?? namaDM ?? t("notification_ui.new_message");
 
   const lain = belum.length - 1;
-  const ekor = lain > 0 ? ` (+${lain} percakapan lain)` : "";
+  const ekor = lain > 0 ? ` ${t("notification_ui.more_conversations", { count: lain })}` : "";
   // Pesannya dipotong lebih dulu supaya ekornya SELALU muat. Kalau keduanya
   // dipotong bersama, justru "(+3 percakapan lain)" yang hilang setiap kali
   // pesannya panjang, padahal itu bagian yang tidak bisa ditebak sendiri.
-  const pesan = potong(teksPolos(terbaru.isi) || "Mengirim lampiran", BATAS_ISI - ekor.length);
+  const pesan = potong(teksPolos(terbaru.isi) || t("notification_ui.sent_attachment"), BATAS_ISI - ekor.length);
 
   return {
     judul: potong(judul, 90),

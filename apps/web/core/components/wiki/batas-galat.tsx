@@ -7,6 +7,7 @@
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Link } from "react-router";
+import { useTranslation } from "@plane/i18n";
 
 type TProps = {
   children: ReactNode;
@@ -45,22 +46,25 @@ export class BatasGalatWiki extends Component<TProps, TState> {
   render() {
     if (!this.state.galat) return this.props.children;
 
-    return (
-      <div className="flex h-full w-full items-center justify-center p-8">
-        <div className="max-w-md text-center">
-          <h2 className="text-15 font-semibold text-primary">Tampilan pustaka Wiki gagal dimuat</h2>
-          <p className="mt-1 text-13 text-tertiary">
-            Isi Wiki-nya tidak apa-apa, yang gagal cuma susunan kartunya. Buka tampilan daftar untuk sementara, lalu
-            laporkan ke IT.
-          </p>
-          <Link
-            to={this.props.tautanDaftar}
-            className="mt-4 inline-block rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
-          >
-            Buka tampilan daftar
-          </Link>
-        </div>
-      </div>
-    );
+    return <TampilanGalat tautanDaftar={this.props.tautanDaftar} />;
   }
+}
+
+// Kelas tidak bisa memakai hook, jadi teksnya diambil di komponen fungsi terpisah.
+function TampilanGalat({ tautanDaftar }: { tautanDaftar: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex h-full w-full items-center justify-center p-8">
+      <div className="max-w-md text-center">
+        <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.error.title")}</h2>
+        <p className="mt-1 text-13 text-tertiary">{t("wiki_ui.error.message")}</p>
+        <Link
+          to={tautanDaftar}
+          className="mt-4 inline-block rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
+        >
+          {t("wiki_ui.error.open_list")}
+        </Link>
+      </div>
+    </div>
+  );
 }
