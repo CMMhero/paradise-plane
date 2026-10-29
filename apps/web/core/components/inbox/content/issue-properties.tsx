@@ -28,6 +28,7 @@ import { IssueLabel } from "@/components/issues/issue-detail/label";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 
 type Props = {
   workspaceSlug: string;
@@ -46,6 +47,11 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
   const router = useAppRouter();
   // store hooks
   const { currentProjectDetails } = useProject();
+  // Kustomisasi Paradise: tenggat adalah janji yang dibuat pembuat tugas, jadi hanya
+  // pembuatnya atau Super Admin yang boleh menggesernya. Pengecualian intake (masih
+  // di antrean triage): penanggung jawab intake ikut boleh. Server menegakkannya;
+  // kontrol di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
+  const { bisaGantiTenggatIntake } = useAturanTugas();
 
   const minDate = issue.start_date ? getDate(issue.start_date) : null;
   minDate?.setDate(minDate.getDate());
@@ -153,7 +159,7 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
                   })
                 }
                 minDate={minDate ?? undefined}
-                disabled={!isEditable}
+                disabled={!isEditable || !bisaGantiTenggatIntake(issue, projectId, isIntakeAccepted)}
                 buttonVariant="transparent-with-text"
                 className="group w-3/5 flex-grow"
                 buttonContainerClassName="w-full text-left"

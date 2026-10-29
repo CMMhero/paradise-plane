@@ -20,7 +20,9 @@ import { GanttChartRoot } from "@/components/gantt-chart/root";
 import { IssueGanttSidebar } from "@/components/gantt-chart/sidebar/issues/sidebar";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useTimeLineChart } from "@/hooks/use-timeline-chart";
@@ -90,22 +92,51 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
   };
 
   const isAllowed = allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
+  // Kustomisasi Paradise: menyeret/mengubah blok Gantt selalu menyertakan tenggat,
+  // jadi perubahan tenggat dari non-pembuat ditahan DI SINI dengan pesan yang jelas —
+  // bukan baru gagal 403 sesudah seretannya selesai, dan bukan diam-diam hilang.
+  const { issue: issueDetailStore } = useIssueDetail();
+  const { bisaGantiTenggat } = useAturanTugas();
+
   const updateBlockDates = useCallback(
-    (
-      updates: {
-        id: string;
-        start_date?: string;
-        target_date?: string;
-      }[]
-    ) =>
-      issues.updateIssueDates(workspaceSlug.toString(), updates, projectId.toString()).catch(() => {
+    (updates: {
+      id: string;
+      start_date?: string;
+      target_date?: string;
+    }[]) => {
+      const boleh: typeof updates = [];
+      const tertahan: typeof updates = [];
+
+      for (const update of updates) {
+        const issue = update.target_date ? issueDetailStore.getIssueById(update.id) : undefined;
+        const tenggatBaru = update.target_date ? String(update.target_date).slice(0, 10) : null;
+        const tenggatLama = issue?.target_date ? String(issue.target_date).slice(0, 10) : null;
+        // Tidak ketahuan di store -> jangan tahan di sini; server tetap penegaknya.
+        if (issue && tenggatBaru !== tenggatLama && !bisaGantiTenggat(issue)) tertahan.push(update);
+        else boleh.push(update);
+      }
+
+      if (tertahan.length > 0) {
         setToast({
           type: TOAST_TYPE.ERROR,
           title: t("toast.error"),
-          message: "Error while updating work item dates, Please try again Later",
+          message:
+            "Due date can only be changed by the person who created the work item. Other dates were not changed.",
         });
-      }),
-    [issues, projectId, workspaceSlug]
+      }
+      if (boleh.length === 0) return Promise.resolve();
+
+      return issues
+        .updateIssueDates(workspaceSlug.toString(), boleh, projectId.toString())
+        .catch(() => {
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: t("toast.error"),
+            message: "Error while updating work item dates, Please try again Later",
+          });
+        });
+    },
+    [issues, projectId, workspaceSlug, bisaGantiTenggat, issueDetailStore, t]
   );
 
   const quickAdd =

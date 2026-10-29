@@ -64,6 +64,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
@@ -111,6 +112,10 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
   const { getStateById } = useProjectState();
   const { isMobile } = usePlatformOS();
+  // Kustomisasi Paradise: tenggat adalah janji yang dibuat pembuat tugas, jadi hanya
+  // pembuatnya atau Super Admin yang boleh menggesernya. Server menegakkannya; kontrol
+  // di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
+  const { bisaGantiTenggat } = useAturanTugas();
   const projectDetails = getProjectById(issue.project_id);
 
   // router
@@ -302,7 +307,9 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
               shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group) ? "text-danger-primary" : ""
             }
             clearIconClassName="text-primary!"
-            disabled={isReadOnly}
+            // Kustomisasi Paradise: rentang tanggal menyentuh tenggat, jadi
+            // non-pembuat hanya bisa melihat rentangnya, bukan menggesernya.
+            disabled={isReadOnly || !bisaGantiTenggat(issue)}
             renderByDefault={isMobile}
             showTooltip
             renderPlaceholder={false}
@@ -353,7 +360,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             }
             clearIconClassName="text-primary!"
             optionsClassName="z-10"
-            disabled={isReadOnly}
+            disabled={isReadOnly || !bisaGantiTenggat(issue)}
             renderByDefault={isMobile}
             showTooltip
             labelClassName="text-caption-sm-regular"
