@@ -81,6 +81,25 @@ def bisa_ganti_tenggat(user, issue):
     return issue.created_by_id == user.id or is_super_admin(user)
 
 
+def bisa_ganti_tenggat_intake(user, issue, penanggung_jawab=False):
+    """Boleh mengatur Due Date selama tugasnya MASIH di antrean intake.
+
+    Keputusan user 2026-10-29: triage adalah tempat tenggat dijanjikan pertama
+    kali, jadi penanggung jawab intake (admin project / admin workspace) ikut
+    boleh mengaturnya — bukan hanya pembuat. Tanpa ini, tugas yang datang dari
+    orang lain (atau dari divisi lain, yang tersimpan dengan `created_by` NULL)
+    tidak akan pernah bisa diberi tenggat oleh siapa pun.
+
+    Pengecualian ini HANYA berlaku di pintu intake. Begitu tugas diterima ke
+    papan, berlaku kembali aturan biasa: hanya pembuatnya atau Super Admin.
+    """
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+    if penanggung_jawab:
+        return True
+    return bisa_ganti_tenggat(user, issue)
+
+
 def _tanggal(nilai):
     """Normalkan tanggal ke bentuk `YYYY-MM-DD` supaya bisa dibandingkan.
 

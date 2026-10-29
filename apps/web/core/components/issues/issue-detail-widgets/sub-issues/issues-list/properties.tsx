@@ -21,6 +21,7 @@ import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // hooks
 import { WithDisplayPropertiesHOC } from "@/components/issues/issue-layouts/properties/with-display-properties-HOC";
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 
 type Props = {
   workspaceSlug: string;
@@ -43,6 +44,10 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
   const { workspaceSlug, parentIssueId, issueId, canEdit, updateSubIssue, displayProperties, issue } = props;
   const { t } = useTranslation();
   const { getStateById } = useProjectState();
+  // Kustomisasi Paradise: tenggat adalah janji yang dibuat pembuat tugas, jadi hanya
+  // pembuatnya atau Super Admin yang boleh menggesernya. Server menegakkannya; kontrol
+  // di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
+  const { bisaGantiTenggat } = useAturanTugas();
 
   const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -151,7 +156,9 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
             mergeDates
             buttonVariant={issue.start_date || issue.target_date ? "border-with-text" : "border-without-text"}
             buttonClassName={shouldHighlight ? "text-danger-primary" : ""}
-            disabled={!canEdit}
+            // Kustomisasi Paradise: rentang tanggal menyentuh tenggat, jadi
+            // non-pembuat hanya bisa melihat rentangnya, bukan menggesernya.
+            disabled={!canEdit || !bisaGantiTenggat(issue)}
             showTooltip
             customTooltipHeading="Date Range"
             renderPlaceholder={false}
@@ -198,7 +205,7 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
             buttonClassName={shouldHighlight ? "text-danger-primary" : ""}
             clearIconClassName="text-primary"
             optionsClassName="z-30"
-            disabled={!canEdit}
+            disabled={!canEdit || !bisaGantiTenggat(issue)}
             showTooltip
           />
         </div>

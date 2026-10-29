@@ -65,6 +65,9 @@ export const useTingkatSaya = (workspaceSlug: string | undefined, projectId: str
   return data ?? -1;
 };
 
+/** Bentuk minimum yang cukup untuk menilai "apakah saya pembuatnya". */
+type PembuatTugas = { created_by?: string | null };
+
 /**
  * True kalau pembuka layar dipastikan staf (termasuk jenjang belum diisi).
  * null = belum dimuat — pemanggil memilih: kunci sementara (form create) atau
@@ -168,16 +171,24 @@ export const useAturanTugas = () => {
     userService.currentUserInstanceAdminStatus()
   );
 
-  const adalahPembuat = (issue: TIssue | undefined | null) =>
+  const adalahPembuat = (issue: PembuatTugas | undefined | null) =>
     !!issue && !!currentUser?.id && issue.created_by === currentUser.id;
 
   // Super Admin instance. Di aplikasi web namanya `is_instance_admin`, dan itu
   // orang yang sama dengan yang dijawab `super_admin_user_ids()` di server.
   const adalahSuperAdmin = !!statusAdmin?.is_instance_admin;
 
+  /**
+   * Boleh menggeser Due Date. Sengaja tidak termasuk admin project.
+   *
+   * Parameternya sengaja hanya butuh `created_by`, bukan `TIssue` utuh:
+   * beberapa layar (inbox triage) memegang objek `Partial<TIssue>`.
+   */
+  const bisaGantiTenggat = (issue: PembuatTugas | undefined | null) => adalahPembuat(issue) || adalahSuperAdmin;
+
   return {
-    /** Boleh menggeser Due Date. Sengaja tidak termasuk admin project. */
-    bisaGantiTenggat: (issue: TIssue | undefined | null) => adalahPembuat(issue) || adalahSuperAdmin,
+    /** Lihat `bisaGantiTenggat` di atas — hanya pembuat atau Super Admin. */
+    bisaGantiTenggat,
 
     /**
      * Boleh menghapus atau mengarsipkan. Jenjang sudah dimuat: sama dengan
@@ -192,6 +203,27 @@ export const useAturanTugas = () => {
         allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, undefined, projectId)
       );
     },
+
+    /**
+     * Boleh menggeser Due Date di PINTU INTAKE (antrean triage).
+     *
+     * Cerminan `bisa_ganti_tenggat_intake()` server. Keputusan user 2026-10-29:
+     * di antrean triage-lah tenggat dijanjikan pertama kali, jadi penanggung
+     * jawab intake (admin project) ikut boleh — bukan hanya pembuat. Tanpa ini,
+     * tugas yang datang dari orang lain (atau dari divisi lain, `created_by`
+     * NULL) tidak akan pernah bisa diberi tenggat oleh siapa pun.
+     *
+     * Begitu tugasnya diterima ke papan (`sudahDiterima`), pengecualian ini
+     * berhenti dan `bisaGantiTenggat` yang berlaku.
+     */
+    bisaGantiTenggatIntake: (
+      issue: PembuatTugas | undefined | null,
+      projectId: string | undefined,
+      sudahDiterima: boolean
+    ) =>
+      bisaGantiTenggat(issue) ||
+      (!sudahDiterima &&
+        allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, undefined, projectId)),
 
     /** Id user saat ini — dipakai dropdown assignee untuk mode "hanya diri sendiri". */
     idSaya: currentUser?.id ?? null,

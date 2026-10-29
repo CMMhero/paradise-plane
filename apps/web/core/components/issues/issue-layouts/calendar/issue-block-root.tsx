@@ -12,6 +12,7 @@ import { observer } from "mobx-react";
 import { useOutsideClickDetector } from "@plane/hooks";
 // components
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { HIGHLIGHT_CLASS } from "../utils";
 import { CalendarIssueBlock } from "./issue-block";
@@ -36,8 +37,13 @@ export const CalendarIssueBlockRoot = observer(function CalendarIssueBlockRoot(p
   } = useIssueDetail();
 
   const issue = getIssueById(issueId);
+  // Kustomisasi Paradise: menjatuhkan kartu di tanggal lain = menggeser tenggat,
+  // jadi hanya pembuat tugas atau Super Admin yang boleh menyeretnya. Server
+  // menegakkannya; tanpa ini seretannya selalu berakhir 403.
+  const { bisaGantiTenggat } = useAturanTugas();
 
-  const canDrag = !isDragDisabled && canEditProperties(issue?.project_id ?? undefined);
+  const canDrag =
+    !isDragDisabled && canEditProperties(issue?.project_id ?? undefined) && bisaGantiTenggat(issue ?? undefined);
 
   useEffect(() => {
     const element = issueRef.current;
