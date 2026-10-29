@@ -107,6 +107,34 @@ def test_orang_yang_diassign_tidak_boleh_menggeser_tenggat(monkeypatch):
     assert task_access.bisa_ganti_tenggat(_orang(), _tugas()) is False
 
 
+# --- ganti tenggat di pintu intake (pengecualian triage) ---------------------
+
+
+def test_penanggung_jawab_intake_boleh_mengatur_tenggat_walau_bukan_pembuat(monkeypatch):
+    # Keputusan user 2026-10-29: di antrean triase-lah tenggat dijanjikan
+    # pertama kali, jadi admin project yang menangani intake ikut boleh.
+    _pasang(monkeypatch)
+    assert task_access.bisa_ganti_tenggat_intake(_orang(), _tugas(), penanggung_jawab=True) is True
+
+
+def test_tanpa_penanggung_jawab_intake_jatuh_ke_aturan_biasa(monkeypatch):
+    _pasang(monkeypatch)
+    assert task_access.bisa_ganti_tenggat_intake(_orang(PEMBUAT), _tugas(), penanggung_jawab=False) is True
+    assert task_access.bisa_ganti_tenggat_intake(_orang(), _tugas(), penanggung_jawab=False) is False
+
+
+def test_super_admin_boleh_di_intake(monkeypatch):
+    _pasang(monkeypatch, super_admin=True)
+    assert task_access.bisa_ganti_tenggat_intake(_orang(), _tugas(), penanggung_jawab=False) is True
+
+
+def test_anonim_ditolak_di_intake_walau_ditandai_penanggung_jawab(monkeypatch):
+    # Gagal ke arah aman: penanda "penanggung jawab" tidak boleh
+    # menutupi pelaku yang tidak diketahui.
+    _pasang(monkeypatch, super_admin=True)
+    assert task_access.bisa_ganti_tenggat_intake(None, _tugas(), penanggung_jawab=True) is False
+
+
 # --- kapan sebuah permintaan dianggap MENGUBAH tenggat -----------------------
 
 

@@ -30,6 +30,7 @@ from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import Intake, IntakeIssue, Issue, Project, ProjectMember, State, StateGroup
 from plane.utils.host import base_host
 from plane.utils.content_validator import validate_html_content
+from plane.utils.task_access import bisa_ganti_tenggat_intake, tenggat_diubah
 from .base import BaseAPIView
 from plane.db.models.intake import SourceType
 from plane.utils.openapi import (
@@ -383,6 +384,24 @@ class IntakeIssueDetailAPIEndpoint(BaseAPIView):
                     "description_html": issue_data.get("description_html", issue.description_html),
                     "description_json": description_json,
                 }
+
+            # Kustomisasi Paradise: tenggat adalah janji yang dibuat pembuat tugas,
+            # jadi hanya pembuatnya atau Super Admin yang boleh menggesernya. Pintu
+            # intake kebagian pengecualian (keputusan user 2026-10-29): di antrean
+            # triage-lah tenggat dijanjikan pertama kali, jadi penanggung jawab
+            # intake (admin project) ikut boleh — bukan hanya pembuat. Setelah
+            # diterima ke papan, aturan biasa kembali berlaku.
+            penanggung_jawab = project_member.role > 15
+            if tenggat_diubah(issue, issue_data) and not bisa_ganti_tenggat_intake(
+                request.user, issue, penanggung_jawab
+            ):
+                return Response(
+                    {
+                        "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
+                        "penanggung jawab intake, atau Super Admin."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
             issue_serializer = IssueSerializer(issue, data=issue_data, partial=True)
 
