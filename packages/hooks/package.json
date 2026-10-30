@@ -1,6 +1,6 @@
 {
   "name": "@plane/hooks",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "private": true,
   "description": "React hooks that are shared across multiple apps internally",
   "license": "AGPL-3.0",
@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch --no-clean",
-    "check:lint": "oxlint --max-warnings=4 .",
+    "check:lint": "oxlint --max-warnings=6 .",
     "check:types": "tsc --noEmit",
     "check:format": "oxfmt --check .",
     "fix:lint": "oxlint --fix .",

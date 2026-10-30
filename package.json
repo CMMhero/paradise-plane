@@ -1,6 +1,6 @@
 {
   "name": "paradise-task-tracker",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Paradise Task Tracker: deployment internal kantor berbasis Plane CE (AGPL-3.0)",
   "license": "AGPL-3.0",
@@ -17,9 +17,11 @@
     "check:format": "turbo run check:format",
     "check:types": "turbo run check:types",
     "prepare": "husky",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "npx react-doctor@latest",
+    "version:bump": "node scripts/bump-version.mjs"
   },
   "devDependencies": {
+    "@shadcn/lint": "catalog:",
     "husky": "catalog:",
     "lint-staged": "catalog:",
     "oxfmt": "catalog:",

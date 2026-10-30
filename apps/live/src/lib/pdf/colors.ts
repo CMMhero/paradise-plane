@@ -148,18 +148,18 @@ export const NEUTRAL_COLORS = {
 
 // Brand colors (light theme accent)
 export const BRAND_COLORS = {
-  default: "#3f76ff", // oklch(0.4799 0.1158 242.91) - primary accent blue
-  100: "#f5f8ff",
-  200: "#e8f0ff",
-  300: "#d1e1ff",
-  400: "#b3d0ff",
-  500: "#8ab8ff",
-  600: "#5c9aff",
-  700: "#3f76ff",
-  900: "#2952b3",
-  1000: "#1e3d80",
-  1100: "#142b5c",
-  1200: "#0d1f40",
+  default: "#e40a1a", // oklch(0.58 0.2335 27.24) - merah Paradise Perkasa, lihat paradise.css
+  100: "#fff8f7",
+  200: "#fff2f0",
+  300: "#ffe5e2",
+  400: "#ffd2cc",
+  500: "#ffb6ac",
+  600: "#ff8d81",
+  700: "#ff5148",
+  900: "#c10012",
+  1000: "#9e000c",
+  1100: "#4c0003",
+  1200: "#360001",
 } as const;
 
 // Semantic text colors

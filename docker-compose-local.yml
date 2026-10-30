@@ -40,19 +40,21 @@ services:
       - "8025:8025"
 
   plane-minio:
-    image: minio/minio
+    # Dibangun dari source seperti docker-compose.yml: minio/minio sudah dihapus
+    # dari Docker Hub dan quay.io butuh login (lihat apps/minio/Dockerfile.minio).
+    # Image ini tanpa `mc`; bucket dibuat api lewat `manage.py create_bucket`.
+    build:
+      context: .
+      dockerfile: ./apps/minio/Dockerfile.minio
+    image: paradise-minio-local
     restart: unless-stopped
     networks:
       - dev_env
-    entrypoint: >
-      /bin/sh -c "
-      mkdir -p /export/${AWS_S3_BUCKET_NAME} &&
-      minio server /export --console-address ':9090' &
-      sleep 5 &&
-      mc alias set myminio http://localhost:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} &&
-      mc mb myminio/${AWS_S3_BUCKET_NAME} -p || true
-      && tail -f /dev/null
-      "
+      # `proxy` dari docker-compose.yml (proyek yang sama) hanya ada di jaringan
+      # default dan meneruskan /uploads ke `plane-minio`. Tanpa ini, menjalankan
+      # kedua berkas bersamaan membuat salah satu jalur unggah mati.
+      - default
+    command: server /export --console-address ":9090"
     volumes:
       - uploads:/export
     env_file:
