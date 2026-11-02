@@ -10,13 +10,6 @@ from plane.app.views import (
     SubIssuesEndpoint,
     IssueLinkViewSet,
     IssueWorkLogViewSet,
-    IssueTypeViewSet,
-    IssuePropertyViewSet,
-    IssuePropertyOptionViewSet,
-    IssuePropertyValueEndpoint,
-    IssueTemplateViewSet,
-    IssueTemplateApplyEndpoint,
-    RecurringIssueViewSet,
     IssueAttachmentEndpoint,
     CommentReactionViewSet,
     IssueActivityEndpoint,
@@ -130,66 +123,6 @@ urlpatterns = [
             }
         ),
         name="project-issue-links",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/",
-        IssueTypeViewSet.as_view({"get": "list", "post": "create"}),
-        name="project-issue-types",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/<uuid:pk>/",
-        IssueTypeViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
-        name="project-issue-types",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/<uuid:type_id>/properties/",
-        IssuePropertyViewSet.as_view({"get": "list", "post": "create"}),
-        name="project-issue-properties",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/<uuid:type_id>/properties/<uuid:pk>/",
-        IssuePropertyViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
-        name="project-issue-properties",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/properties/<uuid:property_id>/options/",
-        IssuePropertyOptionViewSet.as_view({"get": "list", "post": "create"}),
-        name="project-issue-property-options",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/properties/<uuid:property_id>/options/<uuid:pk>/",
-        IssuePropertyOptionViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
-        name="project-issue-property-options",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/property-values/",
-        IssuePropertyValueEndpoint.as_view(),
-        name="project-issue-property-values",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-templates/",
-        IssueTemplateViewSet.as_view({"get": "list", "post": "create"}),
-        name="project-issue-templates",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-templates/<uuid:pk>/",
-        IssueTemplateViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
-        name="project-issue-templates",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-templates/<uuid:pk>/apply/",
-        IssueTemplateApplyEndpoint.as_view(),
-        name="project-issue-template-apply",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/recurring-issues/",
-        RecurringIssueViewSet.as_view({"get": "list", "post": "create"}),
-        name="project-recurring-issues",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/recurring-issues/<uuid:pk>/",
-        RecurringIssueViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
-        name="project-recurring-issues",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/work-logs/",

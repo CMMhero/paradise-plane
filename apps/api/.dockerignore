@@ -1,0 +1,7 @@
+# Konteks build image backend (Dockerfile.api, Dockerfile.dev).
+#
+# Data demo hanya untuk lokal: berkasnya tidak boleh ikut ke image produksi,
+# supaya `manage.py seed_demo_data` memang tidak ada di server. Stack lokal tidak
+# terpengaruh karena `docker-compose-local.yml` me-mount ./apps/api ke /code.
+plane/db/management/commands/seed_demo_data.py
+plane/db/management/commands/_demo_*.py

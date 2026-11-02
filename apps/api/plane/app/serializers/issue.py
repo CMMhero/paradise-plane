@@ -264,16 +264,20 @@ class IssueCreateSerializer(BaseSerializer):
                 and self.instance.state_id
                 and getattr(self.instance.state, "group", None) == "completed"
             )
+            # Digeser keluar dari selesai selagi menunggu -> pengajuannya gugur.
+            # Dihitung SEBELUM `state` mungkin dibuang di bawah.
+            self._keluar_dari_selesai = sudah_selesai and getattr(attrs["state"], "group", None) != "completed"
             if selesai_perlu_persetujuan(
                 self.context.get("project_id"), _actor, attrs["state"], penerima, sudah_selesai=sudah_selesai
             ):
-                # Keputusan user 2026-10-26: tugas TETAP berstatus selesai, hanya
-                # ditandai menunggu persetujuan. Kalau ditolak, dikembalikan ke
-                # status sebelumnya (disimpan di baris persetujuan).
+                # KEP-55 (2 Nov 2026, menggantikan "tetap selesai" 26 Okt): staf
+                # tidak bisa memindahkan tugasnya ke selesai. Perpindahannya
+                # DITAHAN (state dibuang, tugas tetap di status semula) dan yang
+                # terjadi hanyalah pengajuan persetujuan. Atasan yang menyetujui
+                # memindahkannya ke selesai; menolak mengembalikannya ke In Progress.
                 self._ajukan_selesai = True
                 self._state_sebelumnya_id = self.instance.state_id if self.instance is not None else None
-            # Digeser keluar dari selesai selagi menunggu -> pengajuannya gugur.
-            self._keluar_dari_selesai = sudah_selesai and getattr(attrs["state"], "group", None) != "completed"
+                attrs.pop("state")
 
         # Validate labels are from project
         if attrs.get("label_ids"):
@@ -324,8 +328,11 @@ class IssueCreateSerializer(BaseSerializer):
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
 
-        # Create Issue
-        issue = Issue.objects.create(**validated_data, project_id=project_id)
+        # Create Issue. Tanggal selesai otomatis (KEP-41) ditahan kalau tugas
+        # langsung-selesai ini masih menunggu persetujuan atasan.
+        issue = Issue(**validated_data, project_id=project_id)
+        issue._tahan_tanggal_selesai = getattr(self, "_ajukan_selesai", False)
+        issue.save(force_insert=True)
 
         # Issue Audit Users
         created_by_id = issue.created_by_id
@@ -461,6 +468,9 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
+        # Selesai yang masih menunggu atasan: tanggal selesai otomatis (KEP-41)
+        # baru diisi saat disetujui, bukan sekarang.
+        instance._tahan_tanggal_selesai = getattr(self, "_ajukan_selesai", False)
         tugas = super().update(instance, validated_data)
         # Staf menggeser progres ke selesai: tugas TETAP selesai dan ditandai
         # menunggu persetujuan (idempoten: satu baris menunggu).

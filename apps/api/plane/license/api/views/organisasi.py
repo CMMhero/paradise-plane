@@ -87,11 +87,11 @@ def _kode_nama(data, wajib):
     kode = (data.get("kode") or "").strip().upper() if "kode" in data or wajib else None
     nama = (data.get("nama") or "").strip() if "nama" in data or wajib else None
     if kode is not None and not kode:
-        return None, None, "kode wajib diisi."
+        return None, None, "kode is required."
     if kode is not None and len(kode) > BATAS_KODE:
-        return None, None, f"kode maksimal {BATAS_KODE} karakter."
+        return None, None, f"kode can be at most {BATAS_KODE} characters."
     if nama is not None and not nama:
-        return None, None, "nama wajib diisi."
+        return None, None, "nama is required."
     return kode, nama, None
 
 
@@ -105,11 +105,11 @@ def _identifier_dari_kode(kode):
     """
     ident = (kode or "").replace("-", "").replace(" ", "").upper()
     if not ident:
-        return None, "kode tidak menyisakan identifier project yang sah."
+        return None, "kode does not leave a valid project identifier."
     if len(ident) > 12:
-        return None, f"kode {kode} terlalu panjang untuk identifier project (maks 12 huruf tanpa strip)."
+        return None, f"kode {kode} is too long for a project identifier (max 12 characters without dashes)."
     if re.match(Project.FORBIDDEN_IDENTIFIER_CHARS_PATTERN, ident):
-        return None, f"kode {kode} mengandung karakter yang dilarang di identifier project."
+        return None, f"kode {kode} contains characters not allowed in a project identifier."
     return ident, None
 
 
@@ -136,14 +136,14 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
     if aktif is not None:
         pemetaan = DepartemenProject.objects.filter(project=aktif).first()
         if pemetaan is not None:
-            raise ValueError(f"Project {ident} sudah milik departemen {pemetaan.departemen.kode}.")
+            raise ValueError(f"Project {ident} already belongs to department {pemetaan.departemen.kode}.")
         DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=aktif)
         jadikan_anggota_project(aktif.pk, actor.id, ROLE.ADMIN.value, workspace_id=workspace.id)
         return aktif
 
     if semua:
         raise ValueError(
-            f"Identifier {ident} dipakai project arsip/terhapus. Buka arsipnya dulu atau pakai kode lain."
+            f"Identifier {ident} is used by an archived or deleted project. Unarchive it first or use another code."
         )
     # NOTE: project arsip tidak bisa diadopsi diam-diam -- selain membingungkan,
     # pemetaannya akan menempati slot 1:1 departemen padahal projectnya tidak hidup.
@@ -158,7 +158,7 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
         context={"workspace_id": str(workspace.id)},
     )
     if not ser.is_valid():
-        raise ValueError(f"Project untuk {dep.kode} gagal dibuat: {dict(ser.errors)}.")
+        raise ValueError(f"Could not create the project for {dep.kode}: {dict(ser.errors)}.")
     project = ser.save()
     Project.objects.filter(pk=project.pk).update(created_by=actor)
     jadikan_anggota_project(project.pk, actor.id, ROLE.ADMIN.value, workspace_id=workspace.id)
@@ -254,7 +254,7 @@ class InstanceOrganisasiEndpoint(BaseAPIView):
     def get(self, request):
         workspace = _workspace_utama()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=404)
+            return Response({"error": "Workspace not found."}, status=404)
         return Response(pohon_organisasi(workspace))
 
 
@@ -262,12 +262,12 @@ class InstanceDivisiEndpoint(BaseAPIView):
     def post(self, request):
         workspace = _workspace_utama()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=404)
+            return Response({"error": "Workspace not found."}, status=404)
         kode, nama, galat = _kode_nama(request.data, wajib=True)
         if galat:
             return Response({"error": galat}, status=400)
         if Divisi.objects.filter(workspace=workspace, kode=kode).exists():
-            return Response({"error": f"Kode divisi {kode} sudah dipakai."}, status=400)
+            return Response({"error": f"Division code {kode} is already in use."}, status=400)
         Divisi.objects.create(workspace=workspace, kode=kode, nama=nama)
         _sinkron_wiki(workspace, request.user)
         return Response(pohon_organisasi(workspace), status=201)
@@ -275,12 +275,12 @@ class InstanceDivisiEndpoint(BaseAPIView):
     def patch(self, request, pk):
         divisi = Divisi.objects.filter(pk=pk).first()
         if divisi is None:
-            return Response({"error": "Divisi tidak ditemukan."}, status=404)
+            return Response({"error": "Division not found."}, status=404)
         kode, nama, galat = _kode_nama(request.data, wajib=False)
         if galat:
             return Response({"error": galat}, status=400)
         if kode and Divisi.objects.filter(workspace_id=divisi.workspace_id, kode=kode).exclude(pk=pk).exists():
-            return Response({"error": f"Kode divisi {kode} sudah dipakai."}, status=400)
+            return Response({"error": f"Division code {kode} is already in use."}, status=400)
         nama_lama = divisi.nama
         divisi.kode = kode or divisi.kode
         divisi.nama = nama or divisi.nama
@@ -295,11 +295,11 @@ class InstanceDivisiEndpoint(BaseAPIView):
     def delete(self, request, pk):
         divisi = Divisi.objects.filter(pk=pk).first()
         if divisi is None:
-            return Response({"error": "Divisi tidak ditemukan."}, status=404)
+            return Response({"error": "Division not found."}, status=404)
         if Departemen.objects.filter(divisi=divisi).exists():
-            return Response({"error": "Pindahkan atau hapus departemennya dulu."}, status=409)
+            return Response({"error": "Move or delete its departments first."}, status=409)
         if JabatanOrganisasi.objects.filter(divisi=divisi).exists():
-            return Response({"error": "Masih ada manager yang ditempatkan di divisi ini."}, status=409)
+            return Response({"error": "Managers are still placed in this division."}, status=409)
         workspace = divisi.workspace
         divisi.delete()
         return Response(pohon_organisasi(workspace))
@@ -309,15 +309,15 @@ class InstanceDepartemenEndpoint(BaseAPIView):
     def post(self, request):
         workspace = _workspace_utama()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=404)
+            return Response({"error": "Workspace not found."}, status=404)
         divisi = Divisi.objects.filter(workspace=workspace, pk=request.data.get("divisi_id")).first()
         if divisi is None:
-            return Response({"error": "Divisi tidak ditemukan."}, status=400)
+            return Response({"error": "Division not found."}, status=400)
         kode, nama, galat = _kode_nama(request.data, wajib=True)
         if galat:
             return Response({"error": galat}, status=400)
         if Departemen.objects.filter(workspace=workspace, kode=kode).exists():
-            return Response({"error": f"Kode departemen {kode} sudah dipakai."}, status=400)
+            return Response({"error": f"Department code {kode} is already in use."}, status=400)
         # KEP-32: project mengikuti departemen. Pembuatan + pemetaan project-nya satu
         # transaksi dengan departemennya: gagal di project = tidak ada yang tertulis.
         try:
@@ -333,30 +333,30 @@ class InstanceDepartemenEndpoint(BaseAPIView):
     def patch(self, request, pk):
         dep = Departemen.objects.filter(pk=pk).first()
         if dep is None:
-            return Response({"error": "Departemen tidak ditemukan."}, status=404)
+            return Response({"error": "Department not found."}, status=404)
         kode, nama, galat = _kode_nama(request.data, wajib=False)
         if galat:
             return Response({"error": galat}, status=400)
         if kode and Departemen.objects.filter(workspace_id=dep.workspace_id, kode=kode).exclude(pk=pk).exists():
-            return Response({"error": f"Kode departemen {kode} sudah dipakai."}, status=400)
+            return Response({"error": f"Department code {kode} is already in use."}, status=400)
 
         divisi = None
         if "divisi_id" in request.data:
             divisi = Divisi.objects.filter(workspace_id=dep.workspace_id, pk=request.data.get("divisi_id")).first()
             if divisi is None:
-                return Response({"error": "Divisi tidak ditemukan."}, status=400)
+                return Response({"error": "Division not found."}, status=400)
 
         project_ids = None
         if "project_ids" in request.data:
             diminta = request.data.get("project_ids")
             if not isinstance(diminta, list):
-                return Response({"error": "project_ids harus daftar id project."}, status=400)
+                return Response({"error": "project_ids must be a list of project ids."}, status=400)
             if len(diminta) > 1:
                 # KEP-32: satu departemen tepat satu project. Project lama yang
                 # digabung (payung) diarsipkan dulu lewat skrip D4/pengaturan
                 # project, bukan ditumpuk di sini.
                 return Response(
-                    {"error": "Satu departemen tepat satu project. Arsipkan dulu project yang tidak dipakai."},
+                    {"error": "Each department has exactly one project. Archive the unused project first."},
                     status=400,
                 )
             sah = {
@@ -367,7 +367,7 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             }
             asing = [str(pid) for pid in diminta if str(pid) not in sah]
             if asing:
-                return Response({"error": f"Project tidak dikenal: {', '.join(asing)}."}, status=400)
+                return Response({"error": f"Unknown projects: {', '.join(asing)}."}, status=400)
             arsip = [
                 str(p.identifier)
                 for p in Project.objects.filter(workspace_id=dep.workspace_id, pk__in=diminta)
@@ -375,7 +375,7 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             ]
             if arsip:
                 return Response(
-                    {"error": f"Project arsip tidak bisa dipetakan ({', '.join(arsip)}): buka arsipnya dulu."},
+                    {"error": f"Archived projects cannot be mapped ({', '.join(arsip)}). Unarchive them first."},
                     status=400,
                 )
             project_ids = {str(pid) for pid in diminta}
@@ -396,9 +396,9 @@ class InstanceDepartemenEndpoint(BaseAPIView):
     def delete(self, request, pk):
         dep = Departemen.objects.filter(pk=pk).first()
         if dep is None:
-            return Response({"error": "Departemen tidak ditemukan."}, status=404)
+            return Response({"error": "Department not found."}, status=404)
         if JabatanOrganisasi.objects.filter(departemen=dep).exists():
-            return Response({"error": "Masih ada orang yang ditempatkan di departemen ini."}, status=409)
+            return Response({"error": "People are still placed in this department."}, status=409)
         # KEP-32: hapus departemen ikut mengarsipkan project-nya yang kosong —
         # project tanpa tugas tidak ada yang kehilangan apa-apa. Project yang masih
         # punya tugas TETAP ditolak: isinya harus dipindahkan manual dulu.
@@ -411,8 +411,8 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             if terbuka:
                 return Response(
                     {
-                        "error": f"Project {baris.project.identifier} masih punya {terbuka} tugas. "
-                        "Pindahkan dulu tugasnya sebelum menghapus departemen ini."
+                        "error": f"Project {baris.project.identifier} still has {terbuka} work items. "
+                        "Move them before deleting this department."
                     },
                     status=409,
                 )
@@ -465,7 +465,7 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
         workspace = _workspace_utama()
         project = Project.objects.filter(workspace=workspace, pk=request.query_params.get("project_id")).first()
         if project is None:
-            return Response({"error": "Project tidak ditemukan."}, status=404)
+            return Response({"error": "Project not found."}, status=404)
         jabatan = {
             j.member_id: j
             for j in JabatanOrganisasi.objects.filter(workspace=workspace).select_related("departemen", "divisi")
@@ -496,30 +496,30 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
     def post(self, request):
         workspace = _workspace_utama()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=404)
+            return Response({"error": "Workspace not found."}, status=404)
         project = Project.objects.filter(
             workspace=workspace, pk=request.data.get("project_id"), deleted_at__isnull=True
         ).first()
         if project is None:
-            return Response({"error": "Project tidak ditemukan."}, status=400)
+            return Response({"error": "Project not found."}, status=400)
         if project.archived_at is not None:
-            return Response({"error": "Project arsip tidak bisa dijadikan departemen: buka arsipnya dulu."}, status=400)
+            return Response({"error": "An archived project cannot become a department. Unarchive it first."}, status=400)
         if DepartemenProject.objects.filter(project=project).exists():
-            return Response({"error": f"{project.identifier} sudah punya departemen."}, status=400)
+            return Response({"error": f"{project.identifier} already has a department."}, status=400)
         divisi = Divisi.objects.filter(workspace=workspace, pk=request.data.get("divisi_id")).first()
         if divisi is None:
-            return Response({"error": "Divisi tidak ditemukan."}, status=400)
+            return Response({"error": "Division not found."}, status=400)
 
         data = {"kode": request.data.get("kode") or project.identifier, "nama": request.data.get("nama") or project.name}
         kode, nama, galat = _kode_nama(data, wajib=True)
         if galat:
             return Response({"error": galat}, status=400)
         if Departemen.objects.filter(workspace=workspace, kode=kode).exists():
-            return Response({"error": f"Kode departemen {kode} sudah dipakai."}, status=400)
+            return Response({"error": f"Department code {kode} is already in use."}, status=400)
 
         diminta = request.data.get("member_ids") or []
         if not isinstance(diminta, list):
-            return Response({"error": "member_ids harus daftar id."}, status=400)
+            return Response({"error": "member_ids must be a list of ids."}, status=400)
         anggota_project = {
             str(uid)
             for uid in ProjectMember.objects.filter(project=project, is_active=True).values_list("member_id", flat=True)
@@ -527,7 +527,7 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
         asing = [str(u) for u in diminta if str(u) not in anggota_project]
         if asing:
             # Gagal-tertutup: impor ini hanya untuk orang yang MEMANG sudah di project itu.
-            return Response({"error": f"Bukan anggota aktif {project.identifier}: {', '.join(asing)}."}, status=400)
+            return Response({"error": f"Not active members of {project.identifier}: {', '.join(asing)}."}, status=400)
 
         from plane.db.jangkauan import tandai_otomatis  # noqa: PLC0415
 

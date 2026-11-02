@@ -4,7 +4,6 @@
 # See the LICENSE file for details.
 
 # Django imports
-from django.conf import settings
 
 # Third Party imports
 from rest_framework import status
@@ -12,10 +11,11 @@ from rest_framework.response import Response
 
 # Module imports
 from . import BaseAPIView
+from plane.utils.saklar_instance import TRASH_RETENTION_DAYS, setelan_angka
 from plane.app.permissions import allow_permission, ROLE
 from plane.db.models import Issue
 from plane.utils.task_access import bisa_hapus_tugas
-from plane.utils.trash import ambil, buang_permanen, kumpulkan, pulihkan
+from plane.utils.trash import TrashConflict, ambil, buang_permanen, kumpulkan, pulihkan
 
 
 def _boleh_tindak_sampah(user, obj, slug, project_id):
@@ -48,7 +48,7 @@ class ProjectTrashEndpoint(BaseAPIView):
     def get(self, request, slug, project_id):
         return Response(
             {
-                "retention_days": settings.HARD_DELETE_AFTER_DAYS,
+                "retention_days": setelan_angka(TRASH_RETENTION_DAYS),
                 "results": kumpulkan(project_id=project_id, tipe=request.GET.get("type")),
             },
             status=status.HTTP_200_OK,
@@ -57,7 +57,7 @@ class ProjectTrashEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN])
     def post(self, request, slug, project_id, trash_type, pk):
         """Pulihkan barang beserta anak-anak yang ikut terhapus bersamanya."""
-        obj, _ = ambil(trash_type, pk, project_id=project_id)
+        obj, spec = ambil(trash_type, pk, project_id=project_id)
         if not obj:
             return Response(
                 {"error": "Barang tidak ada di tong sampah project ini."},
@@ -68,7 +68,10 @@ class ProjectTrashEndpoint(BaseAPIView):
                 {"error": "Hanya pembuat, penerima, atau atasannya yang boleh memulihkan barang ini."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        jumlah = pulihkan(obj)
+        try:
+            jumlah = pulihkan(obj, spec)
+        except TrashConflict as e:
+            return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
         return Response(
             {"message": "Dipulihkan.", "restored_count": jumlah},
             status=status.HTTP_200_OK,

@@ -230,7 +230,12 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
         try:
             workspace = Workspace.objects.get(slug=slug)
 
-            serializer = ProjectCreateSerializer(data={**request.data}, context={"workspace_id": workspace.id})
+            # Kustomisasi Paradise: kolom yang tidak dikirim diisi bawaan project God Mode.
+            from plane.utils.bawaan_project import lengkapi_data_project
+
+            serializer = ProjectCreateSerializer(
+                data=lengkapi_data_project({**request.data}), context={"workspace_id": workspace.id}
+            )
 
             if serializer.is_valid():
                 with transaction.atomic():

@@ -13,8 +13,11 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.db.models import Profile, Session, User, UserNotificationPreference, Workspace, WorkspaceMember
+from plane.utils.bawaan_member import baca_bawaan, periksa_navigasi, periksa_profil, periksa_work_items
+from plane.utils.preferensi_member import baca_tampilan, ubah_navigasi, ubah_tata_letak
+from plane.utils.preferensi_email import SAKLAR_NOTIFIKASI, dikunci, saklar_efektif, terapkan_perubahan
 from plane.db.models.workspace import ROLE_CHOICES
-from plane.db.superadmin import sinkronkan_super_admin, super_admin_user_ids
+from plane.db.superadmin import angkat_super_admin, sinkronkan_super_admin, super_admin_user_ids
 from plane.license.api.views.base import BaseAPIView
 from plane.license.models import Instance, InstanceAdmin
 
@@ -23,24 +26,11 @@ _MAX_PER_PAGE = 200
 _PANJANG_PASSWORD_MIN = 8
 _PERAN_SAH = {nilai for nilai, _ in ROLE_CHOICES}
 
-# Pengaturan pribadi yang boleh diubah Super Admin atas nama orang lain.
-# Daftar putih, bukan `fields = "__all__"`: Profile juga memuat status onboarding,
-# alamat tagihan, dan kolom lain yang bukan urusan admin.
-_BAHASA_SAH = frozenset(
-    {"en", "fr", "es", "ja", "zh-CN", "zh-TW", "ru", "it", "cs", "sk", "de", "ua", "pl", "ko", "pt-BR", "id", "ro", "vi-VN", "tr-TR"}
-)  # cermin packages/i18n/src/constants/language.ts
-_MODE_NOTIFIKASI_SAH = {nilai for nilai, _ in Profile.NotificationViewMode.choices}
-_HARI_PEKAN_SAH = {nilai for nilai, _ in Profile.START_OF_THE_WEEK_CHOICES}
-_SAKLAR_NOTIFIKASI = (
-    "property_change",
-    "state_change",
-    "comment",
-    "mention",
-    "issue_completed",
-    "approval",
-    "daily_digest",
-)
-_SAKLAR_PROFIL = ("is_smooth_cursor_enabled", "is_app_rail_docked")
+# Pengaturan pribadi yang boleh diubah Super Admin atas nama orang lain:
+# daftar putih + pemeriksanya dipakai bersama bawaan member baru (KEP-44).
+_SAKLAR_NOTIFIKASI = SAKLAR_NOTIFIKASI
+# `JabatanOrganisasi.sumber` untuk jabatan yang datang dari bawaan, bukan dipilih per orang.
+SUMBER_BAWAAN_MEMBER = "bawaan-god-mode"
 
 _URUTAN = {
     "name": "display_name",
@@ -90,7 +80,7 @@ def _tolak_tanpa_konfirmasi_ketik(request):
     """
     if _normalisasi_konfirmasi(request.data.get("grant_confirm")) not in _KONFIRMASI_GRANT:
         return Response(
-            {"error": "Ketik 'jadikan superadmin' persis untuk memberi Super Admin."},
+            {"error": "Type 'make superadmin' exactly to grant Super Admin."},
             status=status.HTTP_403_FORBIDDEN,
         )
     return None
@@ -193,7 +183,10 @@ class InstanceMemberEndpoint(BaseAPIView):
     """
 
     def get(self, request):
-        qs = User.objects.filter(is_bot=False)
+        from plane.db.models import DOMAIN_AKUN_TERHAPUS
+
+        # Akun terhapus tidak lagi tampil di sini; tempatnya di Logs > Trash.
+        qs = User.objects.filter(is_bot=False).exclude(email__endswith=f"@{DOMAIN_AKUN_TERHAPUS}")
 
         cari = (request.GET.get("search") or "").strip()
         if cari:
@@ -251,35 +244,54 @@ class InstanceMemberEndpoint(BaseAPIView):
         password = request.data.get("password") or ""
 
         if not email or "@" not in email:
-            return Response({"error": "Email tidak sah."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid email."}, status=status.HTTP_400_BAD_REQUEST)
         if not nama:
-            return Response({"error": "Nama wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Name is required."}, status=status.HTTP_400_BAD_REQUEST)
         # Tanpa batas minimum, akun baru bisa lahir dengan password satu huruf,
         # dan orangnya tidak akan pernah tahu itu lemah.
         if len(password) < _PANJANG_PASSWORD_MIN:
             return Response(
-                {"error": f"Password minimal {_PANJANG_PASSWORD_MIN} karakter."},
+                {"error": f"Password must be at least {_PANJANG_PASSWORD_MIN} characters."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if User.objects.filter(email=email).exists():
-            return Response({"error": "Email sudah dipakai."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Email is already in use."}, status=status.HTTP_400_BAD_REQUEST)
 
+        from django.db import transaction
+
+        from plane.db.models import JabatanOrganisasi
+
+        # Hak akses dan jabatan awal dari God Mode > Bawaan member baru (KEP-44).
+        # Profil & zona waktu ikut lewat signal saat barisnya lahir.
+        keanggotaan = baca_bawaan()["keanggotaan"]
         depan, belakang = _pecah_nama(nama)
-        u = User.objects.create(
-            email=email,
-            username=_uname(email),
-            display_name=nama,
-            first_name=depan,
-            last_name=belakang,
-            is_password_autoset=False,
-        )
-        u.set_password(password)
-        u.save()
+        with transaction.atomic():
+            u = User(
+                email=email,
+                username=_uname(email),
+                display_name=nama,
+                first_name=depan,
+                last_name=belakang,
+                is_password_autoset=False,
+            )
+            u.set_password(password)
+            u.save()
+            # Dibuat sekarang, bukan saat login pertama: bawaan yang berlaku adalah
+            # yang ada ketika akun dibuat, dan editor member langsung menampilkannya.
+            Profile.objects.get_or_create(user=u)
 
-        # Tanpa WorkspaceMember, akunnya ada tapi tidak bisa masuk ke mana pun.
-        ws = _workspace_utama()
-        if ws:
-            WorkspaceMember.objects.get_or_create(workspace=ws, member=u, defaults={"role": 15})
+            # Tanpa WorkspaceMember, akunnya ada tapi tidak bisa masuk ke mana pun.
+            ws = _workspace_utama()
+            if ws:
+                WorkspaceMember.objects.get_or_create(
+                    workspace=ws, member=u, defaults={"role": keanggotaan["workspace_role"]}
+                )
+                if keanggotaan["tingkat"] is not None:
+                    # Tanpa penempatan: departemen dipilih orangnya sendiri
+                    # (penempatan_saya) atau diatur di halaman Member.
+                    JabatanOrganisasi.objects.create(
+                        workspace=ws, member=u, tingkat=keanggotaan["tingkat"], sumber=SUMBER_BAWAAN_MEMBER
+                    )
 
         return Response(_serialize(u, super_admin_user_ids(), _keanggotaan([u.id])), status=status.HTTP_201_CREATED)
 
@@ -290,7 +302,7 @@ class InstanceMemberEndpoint(BaseAPIView):
         (`on_delete=CASCADE`) — data milik orang lain ikut hilang. Di sini yang
         terjadi: nonaktif + email/nama digosok + sesi diakhiri + status Super
         Admin dicabut + keanggotaan workspace dinonaktifkan. FK dan riwayat
-        (audit, worklog, work item) tetap utuh, pemiliknya tampil "Akun dihapus".
+        (audit, worklog, work item) tetap utuh, pemiliknya tampil "Deleted account", dan identitas aslinya disimpan di `AkunTerhapus` supaya bisa dipulihkan dari Trash.
 
         Gerbang (gagal-tertutup semua):
         - `konfirmasi` harus persis display_name akun (ketik-ulang ala hapus
@@ -302,44 +314,66 @@ class InstanceMemberEndpoint(BaseAPIView):
 
         u = User.objects.filter(pk=pk, is_bot=False).first()
         if not u:
-            return Response({"error": "Akun tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
         if u.id == request.user.id:
             return Response(
-                {"error": "Tidak bisa menghapus akun sendiri."},
+                {"error": "You cannot delete your own account."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         konfirmasi = (request.data.get("konfirmasi") or "").strip() if isinstance(request.data, dict) else ""
         if not konfirmasi or konfirmasi != (u.display_name or "").strip():
             return Response(
-                {"error": "Ketik nama lengkap akun persis seperti tampil untuk konfirmasi."},
+                {"error": "Type the account's full name exactly as shown to confirm."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         instance = Instance.objects.first()
         if instance and InstanceAdmin.objects.filter(instance=instance).count() <= 1:
             if InstanceAdmin.objects.filter(instance=instance, user=u).exists():
                 return Response(
-                    {"error": "Harus ada minimal satu Super Admin."},
+                    {"error": "There must be at least one Super Admin."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        from plane.db.models import AkunTerhapus, NAMA_AKUN_TERHAPUS, email_akun_terhapus
+
+        if hasattr(u, "akun_terhapus"):
+            return Response({"error": "Account is already deleted."}, status=status.HTTP_400_BAD_REQUEST)
+
         with transaction.atomic():
+            was_super_admin = False
             if instance:
-                InstanceAdmin.objects.filter(instance=instance, user=u).delete()
-            email_gosok = f"terhapus-{str(u.id)[:8]}@deleted.local"
+                sa = InstanceAdmin.objects.filter(instance=instance, user=u)
+                was_super_admin = sa.exists()
+                sa.delete()
+            keanggotaan_aktif = WorkspaceMember.objects.filter(member=u, is_active=True)
+            # Potret identitas asli SEBELUM digosok: tanpa ini penghapusan final
+            # dan akunnya tidak bisa muncul di Trash untuk dipulihkan.
+            AkunTerhapus.objects.create(
+                user=u,
+                email=u.email,
+                username=u.username,
+                display_name=u.display_name or "",
+                first_name=u.first_name or "",
+                last_name=u.last_name or "",
+                was_super_admin=was_super_admin,
+                workspace_member_ids=[str(i) for i in keanggotaan_aktif.values_list("id", flat=True)],
+                dihapus_oleh=request.user,
+            )
+            email_gosok = email_akun_terhapus(u.id)
             u.email = email_gosok
             u.username = _uname(email_gosok)
-            u.display_name = "Akun dihapus"
-            u.first_name = "Akun"
-            u.last_name = "dihapus"
+            u.display_name = NAMA_AKUN_TERHAPUS
+            u.first_name, u.last_name = NAMA_AKUN_TERHAPUS.split(" ", 1)
             u.is_active = False
             u.save(update_fields=["email", "username", "display_name", "first_name", "last_name", "is_active"])
-            WorkspaceMember.objects.filter(member=u).update(is_active=False)
+            keanggotaan_aktif.update(is_active=False)
             sesi = _akhiri_sesi(u.id)
 
         return Response(
             {"id": str(u.id), "email": u.email, "display_name": u.display_name, "sessions_ended": sesi},
             status=status.HTTP_200_OK,
         )
+
     def patch(self, request, pk):
         """Ubah profil, identitas, password, hak akses, status aktif, Super Admin.
 
@@ -347,9 +381,13 @@ class InstanceMemberEndpoint(BaseAPIView):
         di God Mode bisa mengirim sebagian saja tanpa menimpa sisanya dengan
         nilai kosong.
         """
+        from plane.db.models import adalah_akun_terhapus
+
         u = User.objects.filter(pk=pk, is_bot=False).first()
-        if not u:
-            return Response({"error": "Akun tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        # Akun terhapus hanya bisa kembali lewat Trash; menyuntingnya di sini
+        # (mis. menyalakan is_active) akan menghidupkan placeholder tanpa identitas.
+        if not u or adalah_akun_terhapus(u.email):
+            return Response({"error": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Gerbang konfirmasi diperiksa DI DEPAN, sebelum satu kolom pun disentuh.
         # Kalau di belakang, permintaan gabungan (ubah password + beri Super
@@ -367,7 +405,7 @@ class InstanceMemberEndpoint(BaseAPIView):
         if "display_name" in request.data:
             nama = (request.data.get("display_name") or "").strip()
             if not nama:
-                return Response({"error": "Nama tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Name cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
             u.display_name = nama
             u.first_name, u.last_name = _pecah_nama(nama)
             kolom += ["display_name", "first_name", "last_name"]
@@ -376,16 +414,16 @@ class InstanceMemberEndpoint(BaseAPIView):
         if "email" in request.data:
             email = (request.data.get("email") or "").strip().lower()
             if not email or "@" not in email:
-                return Response({"error": "Email tidak sah."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid email."}, status=status.HTTP_400_BAD_REQUEST)
             if User.objects.filter(email=email).exclude(pk=u.pk).exists():
-                return Response({"error": "Email sudah dipakai akun lain."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Email is already used by another account."}, status=status.HTTP_400_BAD_REQUEST)
             username_baru = _uname(email)
             # `username` juga unik. Tanpa pemeriksaan ini, dua email berbeda yang
             # memetakan ke username sama (titik vs garis bawah) menabrak
             # IntegrityError → 500, bukan pesan yang bisa dibaca orang.
             if User.objects.filter(username=username_baru).exclude(pk=u.pk).exists():
                 return Response(
-                    {"error": "Username turunan email itu sudah dipakai akun lain."},
+                    {"error": "The username derived from that email is already used by another account."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             if email != u.email:
@@ -399,7 +437,7 @@ class InstanceMemberEndpoint(BaseAPIView):
             password = request.data.get("password") or ""
             if len(password) < _PANJANG_PASSWORD_MIN:
                 return Response(
-                    {"error": f"Password minimal {_PANJANG_PASSWORD_MIN} karakter."},
+                    {"error": f"Password must be at least {_PANJANG_PASSWORD_MIN} characters."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             u.set_password(password)
@@ -424,10 +462,10 @@ class InstanceMemberEndpoint(BaseAPIView):
                 try:
                     peran = int(request.data["workspace_role"])
                 except (TypeError, ValueError):
-                    return Response({"error": "Peran tidak sah."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Invalid role."}, status=status.HTTP_400_BAD_REQUEST)
                 if peran not in _PERAN_SAH:
                     return Response(
-                        {"error": f"Peran harus salah satu dari {sorted(_PERAN_SAH)}."},
+                        {"error": f"Role must be one of {sorted(_PERAN_SAH)}."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
             ws_slug = str(request.data.get("workspace_slug") or "").strip()
@@ -438,7 +476,7 @@ class InstanceMemberEndpoint(BaseAPIView):
                 Workspace.objects.filter(slug=ws_slug, deleted_at__isnull=True).first() if ws_slug else _workspace_utama()
             )
             if not ws:
-                return Response({"error": "Workspace tidak ditemukan."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Workspace not found."}, status=status.HTTP_400_BAD_REQUEST)
             # `update_or_create`, bukan `filter().update()`: akun yang belum
             # pernah jadi anggota workspace (`workspace_role: null`) harus ikut
             # bisa diberi peran dari sini. `is_active=True` menghidupkan lagi
@@ -457,7 +495,7 @@ class InstanceMemberEndpoint(BaseAPIView):
             # halaman yang sedang ia pakai, tolak, jangan biarkan.
             if not aktif and u.id == request.user.id:
                 return Response(
-                    {"error": "Tidak bisa menonaktifkan akun sendiri."},
+                    {"error": "You cannot deactivate your own account."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             u.is_active = aktif
@@ -471,23 +509,23 @@ class InstanceMemberEndpoint(BaseAPIView):
             jadikan = bool(request.data["is_super_admin"])
             instance = Instance.objects.first()
             if not instance:
-                return Response({"error": "Instance belum terdaftar."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Instance is not registered yet."}, status=status.HTTP_400_BAD_REQUEST)
             if jadikan:
-                InstanceAdmin.objects.get_or_create(
-                    instance=instance, user=u, defaults={"role": 20, "is_verified": True}
-                )
+                # Bukan `get_or_create`: Super Admin yang pernah dicabut masih
+                # punya baris soft-deleted, dan INSERT baru menabrak uniknya.
+                angkat_super_admin(instance, u)
                 # Susulkan akses ke project yang sudah ada; project baru ikut
                 # sendiri lewat signal.
                 sinkronkan_super_admin(user_id=u.id)
             else:
                 if u.id == request.user.id:
                     return Response(
-                        {"error": "Tidak bisa mencabut status Super Admin sendiri."},
+                        {"error": "You cannot revoke your own Super Admin status."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 if InstanceAdmin.objects.filter(instance=instance).count() <= 1:
                     return Response(
-                        {"error": "Harus ada minimal satu Super Admin."},
+                        {"error": "There must be at least one Super Admin."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 InstanceAdmin.objects.filter(instance=instance, user=u).delete()
@@ -505,15 +543,19 @@ def _preferensi_notifikasi(u):
     return pref
 
 
-def _bentuk_preferensi(profil, notif):
+def _bentuk_preferensi(u, profil, notif):
+    tema = profil.theme if isinstance(profil.theme, dict) else {}
     return {
         "profile": {
             "language": profil.language,
+            "timezone": u.user_timezone,
+            "theme": tema.get("theme") or "system",
             "start_of_the_week": profil.start_of_the_week,
-            "notification_view_mode": profil.notification_view_mode,
-            **{k: getattr(profil, k) for k in _SAKLAR_PROFIL},
         },
-        "notifications": {k: getattr(notif, k) for k in _SAKLAR_NOTIFIKASI},
+        "notifications": {**saklar_efektif(notif), "ikut_bawaan_jabatan": notif.ikut_bawaan_jabatan},
+        # Saklar yang dipaksa mati kebijakan direktur (baris direktur di /members/defaults).
+        "notifikasi_dikunci": dikunci(u.id),
+        **baca_tampilan(u),
     }
 
 
@@ -522,41 +564,35 @@ def _periksa_preferensi(data):
     profil = data.get("profile") or {}
     notif = data.get("notifications") or {}
     if not isinstance(profil, dict) or not isinstance(notif, dict):
-        return None, None, "Format tidak sah."
+        return None, None, "Invalid format."
 
-    baru_profil = {}
-    if "language" in profil:
-        if profil["language"] not in _BAHASA_SAH:
-            return None, None, "Bahasa tidak didukung."
-        baru_profil["language"] = profil["language"]
-    if "start_of_the_week" in profil:
-        # bool lolos `in` set angka (True == 1), jadi tolak eksplisit.
-        hari = profil["start_of_the_week"]
-        if isinstance(hari, bool) or hari not in _HARI_PEKAN_SAH:
-            return None, None, "Hari awal pekan tidak sah."
-        baru_profil["start_of_the_week"] = hari
-    if "notification_view_mode" in profil:
-        if profil["notification_view_mode"] not in _MODE_NOTIFIKASI_SAH:
-            return None, None, "Mode tampilan notifikasi tidak sah."
-        baru_profil["notification_view_mode"] = profil["notification_view_mode"]
-    for kolom in _SAKLAR_PROFIL:
-        if kolom in profil:
-            if not isinstance(profil[kolom], bool):
-                return None, None, f"{kolom} harus true/false."
-            baru_profil[kolom] = profil[kolom]
+    baru_profil, galat = periksa_profil(profil)
+    if galat:
+        return None, None, galat
 
     baru_notif = {}
-    for kolom in _SAKLAR_NOTIFIKASI:
+    for kolom in (*_SAKLAR_NOTIFIKASI, "ikut_bawaan_jabatan"):
         if kolom in notif:
             if not isinstance(notif[kolom], bool):
-                return None, None, f"{kolom} harus true/false."
+                return None, None, f"{kolom} must be true or false."
             baru_notif[kolom] = notif[kolom]
     return baru_profil, baru_notif, None
 
 
+def _periksa_tampilan(data):
+    """Balikkan (navigasi_baru, work_items_baru, galat) untuk satu member."""
+    nav, galat = periksa_navigasi(data.get("navigasi") or {})
+    if galat:
+        return None, None, galat
+    wi, galat = periksa_work_items(data.get("work_items") or {})
+    if galat:
+        return None, None, galat
+    return nav, wi, None
+
+
 class InstanceMemberPreferenceEndpoint(BaseAPIView):
-    """Baca/ubah pengaturan pribadi satu member dari God Mode (bahasa, awal pekan,
-    mode notifikasi, saklar email notifikasi).
+    """Baca/ubah pengaturan pribadi satu member dari God Mode (bahasa, zona waktu,
+    tema, awal pekan, mode notifikasi, saklar email notifikasi).
 
     Hanya kolom di daftar putih di atas yang bisa disentuh. Tidak mengakhiri sesi:
     ini preferensi tampilan, bukan kredensial.
@@ -568,29 +604,45 @@ class InstanceMemberPreferenceEndpoint(BaseAPIView):
     def get(self, request, pk):
         u = self._user(pk)
         if not u:
-            return Response({"error": "Akun tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
         profil, _ = Profile.objects.get_or_create(user=u)
-        return Response(_bentuk_preferensi(profil, _preferensi_notifikasi(u)), status=status.HTTP_200_OK)
+        return Response(_bentuk_preferensi(u, profil, _preferensi_notifikasi(u)), status=status.HTTP_200_OK)
 
     def patch(self, request, pk):
         from django.db import transaction
 
         u = self._user(pk)
         if not u:
-            return Response({"error": "Akun tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
         baru_profil, baru_notif, galat = _periksa_preferensi(request.data)
+        baru_nav, baru_wi = {}, {}
+        if not galat:
+            baru_nav, baru_wi, galat = _periksa_tampilan(request.data)
         if galat:
             return Response({"error": galat}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             profil, _ = Profile.objects.get_or_create(user=u)
             notif = _preferensi_notifikasi(u)
+            zona = baru_profil.pop("timezone", None)
+            if zona is not None:
+                u.user_timezone = zona
+                u.save(update_fields=["user_timezone"])
+            tema = baru_profil.pop("theme", None)
+            if tema is not None:
+                # Gabung, jangan timpa: palet custom (primary/background) tetap
+                # tersimpan kalau orangnya nanti kembali ke tema custom.
+                lama = profil.theme if isinstance(profil.theme, dict) else {}
+                baru_profil["theme"] = {**lama, "theme": tema}
             for kolom, nilai in baru_profil.items():
                 setattr(profil, kolom, nilai)
-            for kolom, nilai in baru_notif.items():
-                setattr(notif, kolom, nilai)
             if baru_profil:
                 profil.save(update_fields=list(baru_profil))
-            if baru_notif:
-                notif.save(update_fields=list(baru_notif))
-        return Response(_bentuk_preferensi(profil, notif), status=status.HTTP_200_OK)
+            kolom_notif = terapkan_perubahan(notif, baru_notif)
+            if kolom_notif:
+                notif.save(update_fields=[*kolom_notif, "updated_at"])
+            if baru_nav:
+                ubah_navigasi(u, baru_nav)
+            if "layout" in baru_wi:
+                ubah_tata_letak(u, baru_wi["layout"])
+        return Response(_bentuk_preferensi(u, profil, notif), status=status.HTTP_200_OK)

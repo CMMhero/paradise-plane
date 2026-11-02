@@ -26,6 +26,11 @@ from plane.license.api.views import (
     InstanceMemberSessionEndpoint,
 )
 from plane.license.api.views.member import InstanceMemberPreferenceEndpoint
+from plane.license.api.views.bawaan_member import (
+    InstanceMemberDefaultsApplyEndpoint,
+    InstanceMemberDefaultsEndpoint,
+    InstanceProjectDefaultsEndpoint,
+)
 from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
 from plane.license.api.views.divisi import InstanceDivisiAnggotaEndpoint
 from plane.license.api.views.organisasi import (
@@ -98,6 +103,15 @@ urlpatterns = [
     ),
     # Kelola member, satu-satunya pintu masuk akun selama signup mati.
     path("members/", InstanceMemberEndpoint.as_view(), name="instance-members"),
+    # Paradise: bawaan akun baru (KEP-44). Sebelum <uuid:pk> supaya jelas tak bentrok.
+    path("members/defaults/", InstanceMemberDefaultsEndpoint.as_view(), name="instance-member-defaults"),
+    path(
+        "members/defaults/apply/",
+        InstanceMemberDefaultsApplyEndpoint.as_view(),
+        name="instance-member-defaults-apply",
+    ),
+    # Paradise: bawaan project baru (visibilitas, zona waktu, arsip/tutup otomatis).
+    path("projects/defaults/", InstanceProjectDefaultsEndpoint.as_view(), name="instance-project-defaults"),
     path("members/<uuid:pk>/", InstanceMemberEndpoint.as_view(), name="instance-member"),
     # Paradise: pengaturan pribadi member (bahasa, awal pekan, saklar notifikasi)
     path(

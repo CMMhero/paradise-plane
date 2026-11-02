@@ -58,8 +58,8 @@ _SAH = {nilai for nilai, _ in TINGKAT_CHOICES}
 # lebih baik daripada membulatkannya: 15 yang dikirim dengan maksud "Member" akan
 # tersimpan sebagai "Supervisor" dan memberi kewenangan yang tidak diminta, tanpa error.
 _SALAH_KAPAL = {
-    15: "15 adalah ROLE project (Member), bukan jenjang. Pakai 10 untuk Member.",
-    5: "5 adalah ROLE project (Guest). Jenjang terendah adalah 10 (Member).",
+    15: "15 is a project ROLE (Member), not a level. Use 10 for Member.",
+    5: "5 is a project ROLE (Guest). The lowest level is 10 (Member).",
 }
 
 # Akun yang bukan karyawan: akun uji yang pernah dibuat di workspace produksi.
@@ -117,7 +117,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             # workspace uji biasanya dibuat belakangan.
             workspace = Workspace.objects.filter(deleted_at__isnull=True).order_by("created_at").first()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=404)
+            return Response({"error": "Workspace not found."}, status=404)
 
         hanya_tanpa_atasan = request.query_params.get("hanya_tanpa_atasan") in ("1", "true", "ya")
         divisi_saring = request.query_params.get("divisi")
@@ -328,15 +328,15 @@ class InstanceHierarkiEndpoint(BaseAPIView):
 
         member_id = request.data.get("member_id")
         if not member_id:
-            return Response({"error": "member_id wajib dikirim."}, status=400)
+            return Response({"error": "member_id is required."}, status=400)
 
         user = User.objects.filter(pk=member_id).first()
         if user is None:
-            return Response({"error": "User tidak ditemukan."}, status=404)
+            return Response({"error": "User not found."}, status=404)
 
         workspace = Workspace.objects.filter(deleted_at__isnull=True).order_by("created_at").first()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=404)
+            return Response({"error": "Workspace not found."}, status=404)
 
         # --- tingkat -------------------------------------------------------
         if "tingkat" in request.data:
@@ -345,12 +345,12 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                 try:
                     tingkat = int(tingkat)
                 except (TypeError, ValueError):
-                    return Response({"error": "tingkat harus angka atau null."}, status=400)
+                    return Response({"error": "tingkat must be a number or null."}, status=400)
                 if tingkat in _SALAH_KAPAL:
                     return Response({"error": _SALAH_KAPAL[tingkat]}, status=400)
                 if tingkat not in _SAH:
                     return Response(
-                        {"error": f"tingkat tidak dikenal. Pilihan: {sorted(_SAH)}."}, status=400
+                        {"error": f"Unknown tingkat. Options: {sorted(_SAH)}."}, status=400
                     )
         else:
             tingkat = "tidak-diubah"
@@ -360,7 +360,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         if "pengawasan" in request.data:
             diminta = request.data.get("pengawasan") or []
             if not isinstance(diminta, list):
-                return Response({"error": "pengawasan harus daftar id project."}, status=400)
+                return Response({"error": "pengawasan must be a list of project ids."}, status=400)
             sah = set(
                 Project.objects.filter(workspace=workspace, deleted_at__isnull=True).values_list("id", flat=True)
             )
@@ -369,7 +369,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                 # Gagal-tertutup: id yang tidak dikenal lebih mungkin salah kirim daripada
                 # niat, dan menyimpannya berarti memberi kewenangan atas project asing.
                 return Response(
-                    {"error": f"Project tidak dikenal di workspace ini: {', '.join(asing)}."}, status=400
+                    {"error": f"Unknown projects in this workspace: {', '.join(asing)}."}, status=400
                 )
             pengawasan = [pid for pid in diminta]
 
@@ -383,7 +383,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         if "departemen_ids" in request.data:
             diminta = request.data.get("departemen_ids") or []
             if not isinstance(diminta, list):
-                return Response({"error": "departemen_ids harus daftar id departemen."}, status=400)
+                return Response({"error": "departemen_ids must be a list of department ids."}, status=400)
             sah_dep = {
                 str(did)
                 for did in Departemen.objects.filter(workspace=workspace).values_list("id", flat=True)
@@ -391,7 +391,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             asing_dep = [str(d) for d in diminta if str(d) not in sah_dep]
             if asing_dep:
                 return Response(
-                    {"error": f"Departemen tidak dikenal di workspace ini: {', '.join(asing_dep)}."}, status=400
+                    {"error": f"Unknown departments in this workspace: {', '.join(asing_dep)}."}, status=400
                 )
             dept_ids = {str(d) for d in diminta}
             if len(dept_ids) > 1:
@@ -409,11 +409,11 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     )
                 if efektif is None:
                     return Response(
-                        {"error": "Isi jenjangnya dulu sebelum menempatkan orang ini."}, status=400
+                        {"error": "Set a level before placing this person."}, status=400
                     )
                 if efektif != TINGKAT_SUPERVISOR:
                     return Response(
-                        {"error": "Hanya supervisor yang boleh memegang beberapa departemen."},
+                        {"error": "Only supervisors can hold multiple departments."},
                         status=400,
                     )
 
@@ -425,18 +425,18 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             ).count()
             if banyak > 1:
                 return Response(
-                    {"error": "Turun jenjang butuh satu departemen dulu; rapikan lewat departemen_ids."},
+                    {"error": "Lowering the level requires a single department first. Fix it via departemen_ids."},
                     status=400,
                 )
 
         # --- penempatan divisi manager (tetap satu kunci) ------------------
         penempatan = {}
-        for kunci, model, label in (("divisi_id", Divisi, "Divisi"),):
+        for kunci, model, label in (("divisi_id", Divisi, "Division"),):
             if kunci not in request.data:
                 continue
             nilai = request.data.get(kunci)
             if nilai and not model.objects.filter(workspace=workspace, pk=nilai).exists():
-                return Response({"error": f"{label} tidak ditemukan di workspace ini."}, status=400)
+                return Response({"error": f"{label} not found in this workspace."}, status=400)
             penempatan[kunci] = nilai or None
 
         # --- singkatan satu departemen (kompatibilitas editor) -----------
@@ -447,13 +447,13 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         if "departemen_id" in request.data and dept_ids == "tidak-diubah":
             nilai = request.data.get("departemen_id")
             if nilai and not Departemen.objects.filter(workspace=workspace, pk=nilai).exists():
-                return Response({"error": "Departemen tidak ditemukan di workspace ini."}, status=400)
+                return Response({"error": "Department not found in this workspace."}, status=400)
             ada = JabatanOrganisasi.objects.filter(
                 workspace=workspace, member=user, divisi__isnull=True
             ).count()
             if ada > 1:
                 return Response(
-                    {"error": "Orang ini memegang beberapa departemen; kirim departemen_ids lengkap."},
+                    {"error": "This person holds multiple departments. Send the full departemen_ids."},
                     status=400,
                 )
             dept_ids = {str(nilai)} if nilai else set()
@@ -480,7 +480,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                 elif tingkat != "tidak-diubah" or penempatan or dept_ids != "tidak-diubah":
                     if tingkat == "tidak-diubah" and not baris_aktif:
                         if penempatan or (dept_ids != "tidak-diubah" and dept_ids):
-                            return Response({"error": "Isi jenjangnya dulu sebelum menempatkan orang ini."}, status=400)
+                            return Response({"error": "Set a level before placing this person."}, status=400)
                     else:
                         if tingkat != "tidak-diubah":
                             tingkat_efektif = tingkat

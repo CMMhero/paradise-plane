@@ -146,17 +146,6 @@ from .issue.label import LabelViewSet, BulkCreateIssueLabelsEndpoint
 
 from .issue.link import IssueLinkViewSet
 from .issue.worklog import IssueWorkLogViewSet
-from .issue.issue_type import IssueTypeViewSet
-from .issue.issue_property import (
-    IssuePropertyViewSet,
-    IssuePropertyOptionViewSet,
-    IssuePropertyValueEndpoint,
-)
-from .issue.template import (
-    IssueTemplateViewSet,
-    IssueTemplateApplyEndpoint,
-    RecurringIssueViewSet,
-)
 
 from .issue.relation import IssueRelationViewSet
 
@@ -209,7 +198,6 @@ from .chat import (
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
 )
-from .page.wiki_access import WikiAccessEndpoint, WikiFolderAccessEndpoint
 from .page.wiki_permissions import WikiPermissionsEndpoint
 from .page.wiki_material import (
     WikiFolderEndpoint,

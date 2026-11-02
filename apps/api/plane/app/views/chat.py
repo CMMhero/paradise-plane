@@ -33,6 +33,7 @@ from rest_framework.response import Response
 from plane.settings.storage import S3Storage
 from plane.utils.chat_ruang import ruang_dm
 from plane.utils.ice import daftar_ice
+from plane.utils.inbox_chat import catat_pesan_dm, tandai_chat_terbaca
 from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, url_livekit
 from plane.utils.obrolan_siaran import siarkan
 
@@ -484,9 +485,14 @@ def boleh_lihat_lampiran(user, aset, slug) -> bool:
     pesan = PesanLangsung.objects.filter(id=aset.entity_identifier).first()
     if pesan is None:
         return False
-    # HANYA pengirim dan penerima. Pemilik workspace sengaja TIDAK ikut:
-    # kewenangan membaca obrolan orang lain ditarik 13 Agt 2026 atas permintaan
-    # pemiliknya sendiri, dan lampiran adalah isi obrolan juga.
+    # Lampiran = isi ruang, jadi penjaganya sama dengan isi ruang: anggota
+    # (`_langganan`). Pesan kanal tidak punya penerima; aturan lama
+    # "pengirim/penerima" membuat lampiran kanal hanya bisa dibuka pengirimnya.
+    # Pemilik workspace tetap TIDAK ikut kecuali memang anggota ruangnya:
+    # kewenangan membaca obrolan orang lain ditarik 13 Agt 2026.
+    if pesan.ruang_id is not None:
+        return Langganan.objects.filter(ruang_id=pesan.ruang_id, user_id=user.id).exists()
+    # Pesan lama sebelum ada ruang: pengirim dan penerima saja.
     return user.id in (pesan.pengirim_id, pesan.penerima_id)
 
 
@@ -601,6 +607,9 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     if balasan_ke_id and not PesanLangsung.objects.filter(id=balasan_ke_id, ruang=ruang).exists():
         balasan_ke_id = None
 
+    # Catatan untuk diri sendiri lahir sudah terbaca. Tanpa ini ia jadi kandidat
+    # email pemberitahuan, dan orang dikirimi email berisi tulisannya sendiri.
+    ke_diri_sendiri = penerima_id is not None and str(penerima_id) == str(request.user.id)
     pesan = PesanLangsung.objects.create(
         workspace_id=ruang.workspace_id,
         ruang=ruang,
@@ -608,6 +617,7 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
         penerima_id=penerima_id,
         isi=isi,
         balasan_ke_id=balasan_ke_id,
+        dibaca_pada=timezone.now() if ke_diri_sendiri else None,
     )
 
     # Denormalisasi yang membuat daftar percakapan bisa diurutkan tanpa subquery.
@@ -617,6 +627,10 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     # siaran yang mendahului commit membuat peramban menarik ulang lalu tidak
     # menemukan apa-apa, dan pesannya baru muncul pada penarikan berikutnya.
     siarkan(ruang.id, "pesan", request.user.id)
+
+    # DM juga ditulis ke inbox penerima (saklar inbox_chat). Sesudah tersimpan, sama alasannya.
+    if penerima_id is not None:
+        catat_pesan_dm(pesan)
 
     if lampiran_ids:
         # Yang boleh ditempel HANYA berkas yang diunggah orang ini sendiri, di
@@ -691,16 +705,14 @@ class ChatThreadEndpoint(BaseAPIView):
         langganan = _langganan(request.user.id, ruang)
         if langganan is not None:
             _tandai_terbaca(langganan, ruang.pesan_terakhir_pada)
+        tandai_chat_terbaca(request.user.id, ruang.id)
 
         return Response(isi, status=status.HTTP_200_OK)
 
     def post(self, request, slug, user_id):
-        if str(user_id) == str(request.user.id):
-            return Response(
-                {"error": "Tidak bisa mengirim pesan ke diri sendiri."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+        # Mengirim ke diri sendiri SENGAJA dibolehkan: itu ruang catatan pribadi,
+        # DM berkunci "saya:saya" dengan satu langganan saja.
+        #
         # Penerima WAJIB diperiksa di sini, bukan cuma di UI. Tanpa ini, id siapa
         # pun yang ditebak dari URL bisa dikirimi pesan, termasuk orang dari
         # workspace lain di instance yang sama.
@@ -880,6 +892,7 @@ class ChatRuangThreadEndpoint(BaseAPIView):
             PesanLangsung.objects.filter(
                 ruang=ruang, penerima=request.user, dibaca_pada__isnull=True
             ).update(dibaca_pada=timezone.now())
+            tandai_chat_terbaca(request.user.id, ruang.id)
 
         _tandai_terbaca(langganan, ruang.pesan_terakhir_pada)
         return Response(isi, status=status.HTTP_200_OK)

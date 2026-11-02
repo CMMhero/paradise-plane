@@ -69,7 +69,10 @@ class TestMemberPreferensiGodMode:
         assert response.status_code == status.HTTP_200_OK, getattr(response, "data", None)
         assert response.data["profile"]["language"] == "en"
         assert response.data["notifications"]["approval"] is True
-        assert response.data["notifications"]["daily_digest"] is False
+        # Bawaan staf: ringkasan harian hidup, pengingat per tugas mati (KEP-43).
+        assert response.data["notifications"]["daily_digest"] is True
+        assert response.data["notifications"]["deadline_reminder"] is False
+        assert response.data["notifications"]["ikut_bawaan_jabatan"] is True
 
     @pytest.mark.django_db
     def test_anggota_biasa_TIDAK_bisa_membaca_maupun_menulis(self, super_admin, staf):
@@ -91,17 +94,39 @@ class TestMemberPreferensiGodMode:
             super_admin,
             staf.id,
             {
-                "profile": {"language": "id", "start_of_the_week": 1, "notification_view_mode": "compact"},
+                "profile": {"language": "id", "start_of_the_week": 1},
                 "notifications": {"daily_digest": True, "comment": True},
             },
         )
         assert response.status_code == status.HTTP_200_OK, getattr(response, "data", None)
         profil = Profile.objects.get(user=staf)
-        assert (profil.language, profil.start_of_the_week, profil.notification_view_mode) == ("id", 1, "compact")
+        assert (profil.language, profil.start_of_the_week) == ("id", 1)
         notif = UserNotificationPreference.objects.get(user=staf, workspace=None, project=None)
         assert notif.daily_digest is True and notif.comment is True
         # yang tidak dikirim tidak disentuh
         assert notif.approval is True and notif.mention is False
+
+    @pytest.mark.django_db
+    def test_ubah_zona_waktu_dan_tema(self, super_admin, staf):
+        response = _patch(super_admin, staf.id, {"profile": {"timezone": "Asia/Makassar", "theme": "dark"}})
+        assert response.status_code == status.HTTP_200_OK, getattr(response, "data", None)
+        assert response.data["profile"]["timezone"] == "Asia/Makassar"
+        assert response.data["profile"]["theme"] == "dark"
+        staf.refresh_from_db()
+        assert staf.user_timezone == "Asia/Makassar"
+        assert Profile.objects.get(user=staf).theme["theme"] == "dark"
+
+    @pytest.mark.django_db
+    def test_ganti_tema_tidak_menghapus_palet_custom(self, super_admin, staf):
+        palet = {"theme": "custom", "primary": "#ff0000", "background": "#000000", "darkPalette": True}
+        Profile.objects.create(user=staf, theme=palet)
+        response = _patch(super_admin, staf.id, {"profile": {"theme": "light"}})
+        assert response.status_code == status.HTTP_200_OK
+        assert Profile.objects.get(user=staf).theme == {**palet, "theme": "light"}
+
+    @pytest.mark.django_db
+    def test_tema_kosong_dibaca_sebagai_system(self, super_admin, staf):
+        assert _get(super_admin, staf.id).data["profile"]["theme"] == "system"
 
     @pytest.mark.django_db
     def test_kolom_di_luar_daftar_putih_diabaikan(self, super_admin, staf):
@@ -114,13 +139,36 @@ class TestMemberPreferensiGodMode:
         assert profil.is_onboarded is False and profil.billing_address_country == "INDIA"
 
     @pytest.mark.django_db
+    def test_saklar_yang_dicabut_tidak_lagi_diatur_dari_god_mode(self, super_admin, staf):
+        """Tiga kolom Profile upstream yang tak pernah dibaca apps/web edisi ini
+        dicabut dari God Mode (30 Okt 2026): tidak ditulis, tidak dikembalikan."""
+        response = _patch(
+            super_admin,
+            staf.id,
+            {
+                "profile": {
+                    "notification_view_mode": "compact",
+                    "is_app_rail_docked": False,
+                    "is_smooth_cursor_enabled": True,
+                }
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        profil = Profile.objects.get(user=staf)
+        assert profil.notification_view_mode == "full"
+        assert profil.is_app_rail_docked is True and profil.is_smooth_cursor_enabled is False
+        assert set(response.data["profile"]) == {"language", "timezone", "theme", "start_of_the_week"}
+
+    @pytest.mark.django_db
     @pytest.mark.parametrize(
         "badan",
         [
             {"profile": {"language": "klingon"}},
             {"profile": {"start_of_the_week": 9}},
             {"profile": {"start_of_the_week": True}},
-            {"profile": {"notification_view_mode": "huge"}},
+            {"profile": {"timezone": "Mars/Olympus"}},
+            {"profile": {"theme": "custom"}},
+            {"profile": {"theme": "neon"}},
             {"notifications": {"comment": "ya"}},
             {"profile": "bukan-objek"},
         ],

@@ -88,6 +88,8 @@ class ProjectCreateSerializer(BaseSerializer):
             "archive_in",
             "close_in",
             "timezone",
+            # Paradise: supaya bawaan visibilitas dari God Mode juga berlaku di API v1.
+            "network",
             "external_source",
             "external_id",
             "is_issue_type_enabled",

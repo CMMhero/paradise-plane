@@ -31,6 +31,7 @@ from plane.license.api.serializers import (
 )
 from plane.license.models import Instance, InstanceAdmin
 from plane.db.models import LoginActivity, Profile, User
+from plane.db.superadmin import angkat_super_admin
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.authentication.utils.login import user_login
 from plane.authentication.utils.host import base_host, user_ip
@@ -64,7 +65,9 @@ class InstanceAdminEndpoint(BaseAPIView):
         # Fetch the user
         user = User.objects.get(email=email)
 
-        instance_admin = InstanceAdmin.objects.create(instance=instance, user=user, role=role)
+        # Kustomisasi Paradise: hidupkan baris yang pernah dicabut (soft delete),
+        # jangan INSERT ulang yang menabrak unique (instance, user).
+        instance_admin = angkat_super_admin(instance, user, role=role)
         serializer = InstanceAdminSerializer(instance_admin)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -109,26 +112,26 @@ class InstanceAdminEndpoint(BaseAPIView):
         instance = Instance.objects.first()
         if instance is None:
             return Response(
-                {"error": "Instance belum terdaftar."},
+                {"error": "Instance is not registered yet."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         admin = InstanceAdmin.objects.filter(instance=instance, pk=pk).first()
         if not admin:
             return Response(
-                {"error": "Super Admin tidak ditemukan."},
+                {"error": "Super Admin not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         if admin.user_id == request.user.id:
             return Response(
-                {"error": "Tidak bisa mencabut status Super Admin sendiri."},
+                {"error": "You cannot revoke your own Super Admin status."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if InstanceAdmin.objects.filter(instance=instance).count() <= 1:
             return Response(
-                {"error": "Harus ada minimal satu Super Admin."},
+                {"error": "There must be at least one Super Admin."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

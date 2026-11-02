@@ -21,6 +21,8 @@ from plane.license.api.serializers import InstanceSerializer
 from plane.license.models import Instance
 from plane.license.utils.instance_value import get_configuration_value
 from plane.utils.cache import cache_response, invalidate_cache
+from plane.utils import google_calendar as gcal
+from plane.utils.saklar_instance import modul_aktif
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 
@@ -142,6 +144,16 @@ class InstanceEndpoint(BaseAPIView):
         # membuat orang mengira produknya rusak.
         data["is_control_plane_enabled"] = bool(getattr(settings, "ENABLE_CONTROL_PLANE", False))
 
+        # Modul yang dinyalakan/dimatikan Super Admin di God Mode > Features.
+        # apps/web menyembunyikan menu dan menjaga halamannya berdasarkan ini.
+        data["paradise_modules"] = modul_aktif()
+
+        # Bawaan project baru (God Mode > Workspaces > New project defaults).
+        # Formulir "Create project" di apps/web mengisi dirinya dari sini.
+        from plane.utils.bawaan_project import baca_bawaan as bawaan_project
+
+        data["paradise_project_defaults"] = bawaan_project()
+
         # Github app name
         data["github_app_name"] = str(GITHUB_APP_NAME)
 
@@ -157,6 +169,12 @@ class InstanceEndpoint(BaseAPIView):
 
         # Open AI settings
         data["has_llm_configured"] = bool(LLM_API_KEY)
+
+        # Google Calendar: tanpa client ID + secret di God Mode (atau env), tab
+        # Connections di setelan profil disembunyikan. Tombol Connect yang mati
+        # terlihat seperti aplikasi rusak bagi orang yang tak bisa mengisinya.
+        gcal_id, gcal_secret = gcal.kredensial()
+        data["has_google_calendar_configured"] = bool(gcal_id and gcal_secret)
 
         # File size settings
         data["file_size_limit"] = float(os.environ.get("FILE_SIZE_LIMIT", 5242880))

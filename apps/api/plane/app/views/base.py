@@ -29,6 +29,8 @@ from plane.authentication.session import BaseSessionAuthentication
 from plane.utils.exception_logger import log_exception
 from plane.utils.paginator import BasePaginator
 from plane.utils.core.mixins import ReadReplicaControlMixin
+# Kustomisasi Paradise: hanya pemilik/atasan yang boleh menulis ke sub-sumber tugas (KEP-25)
+from plane.utils.task_access import KepemilikanTugasMixin
 
 
 class TimezoneMixin:
@@ -45,7 +47,7 @@ class TimezoneMixin:
             timezone.deactivate()
 
 
-class BaseViewSet(TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
+class BaseViewSet(KepemilikanTugasMixin, TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
     model = None
 
     permission_classes = [IsAuthenticated]
@@ -146,7 +148,7 @@ class BaseViewSet(TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePagi
         return expand if expand else None
 
 
-class BaseAPIView(TimezoneMixin, ReadReplicaControlMixin, APIView, BasePaginator):
+class BaseAPIView(KepemilikanTugasMixin, TimezoneMixin, ReadReplicaControlMixin, APIView, BasePaginator):
     permission_classes = [IsAuthenticated]
 
     filter_backends = (DjangoFilterBackend, SearchFilter)

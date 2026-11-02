@@ -28,6 +28,8 @@ from plane.utils.exception_logger import log_exception
 from plane.utils.paginator import BasePaginator
 # Kustomisasi Paradise: tugas staf yang menunggu persetujuan terkunci untuk semua jalur tulis
 from plane.utils.core.mixins import ReadReplicaControlMixin
+# Kustomisasi Paradise: hanya pemilik/atasan yang boleh menulis ke sub-sumber tugas (KEP-25)
+from plane.utils.task_access import KepemilikanTugasMixin
 
 
 logger = logging.getLogger("plane.api")
@@ -47,7 +49,7 @@ class TimezoneMixin:
             timezone.deactivate()
 
 
-class BaseAPIView(TimezoneMixin, GenericAPIView, ReadReplicaControlMixin, BasePaginator):
+class BaseAPIView(KepemilikanTugasMixin, TimezoneMixin, GenericAPIView, ReadReplicaControlMixin, BasePaginator):
     authentication_classes = [APIKeyAuthentication]
 
     permission_classes = [IsAuthenticated]
@@ -152,7 +154,7 @@ class BaseAPIView(TimezoneMixin, GenericAPIView, ReadReplicaControlMixin, BasePa
         return expand if expand else None
 
 
-class BaseViewSet(TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
+class BaseViewSet(KepemilikanTugasMixin, TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePaginator):
     model = None
 
     authentication_classes = [APIKeyAuthentication]

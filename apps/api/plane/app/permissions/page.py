@@ -93,8 +93,12 @@ class ProjectPagePermission(BasePermission):
         instance dan menyatukannya membuat salah satunya pasti salah:
 
             baca            semua anggota project Wiki
-            unggah baru     anggota aktif divisi pemilik folder teratas
-            unggah / kelola hanya admin workspace atau Super Admin (2026-10-26)
+            halaman (folder/sub-topik)  admin workspace atau Super Admin
+            materi          diatur endpoint aset/materi (KEP-51): unggah oleh
+                            anggota departemen pemilik, ubah oleh pengunggah
+
+        Materi adalah FileAsset, bukan Page, jadi lapisan ini hanya menjaga
+        struktur. Governance selalu aktif untuk project WIKI (KEP-51).
 
         Perhatikan admin project Wiki TIDAK lagi otomatis lolos untuk hak ketiga.
         Yang dimaksud "super admin" oleh pemilik instance adalah Super Admin

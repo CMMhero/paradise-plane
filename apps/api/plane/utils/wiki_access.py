@@ -9,11 +9,21 @@
 
 _MAX_DEPTH = 50  # jaga-jaga dari rantai parent melingkar / rusak
 
+WIKI_IDENTIFIER = "WIKI"
+
 
 def is_wiki_governed(project_id):
-    """True kalau project ini Wiki ber-ACL folder (punya baris WikiGovernedProject)."""
-    from plane.db.models import WikiGovernedProject
+    """True kalau project ini Wiki ber-ACL folder.
 
+    Sejak 2026-11-02 (KEP-51) project ber-identifier WIKI SELALU ber-governance:
+    saklar di Setelan project dibuang, jadi tidak ada lagi keadaan "lokal lebih
+    longgar dari produksi" karena satu baris tabel lupa dibuat. Baris
+    `WikiGovernedProject` tetap dihormati untuk project lain yang sudah ditandai.
+    """
+    from plane.db.models import Project, WikiGovernedProject
+
+    if Project.objects.filter(id=project_id, identifier=WIKI_IDENTIFIER).exists():
+        return True
     return WikiGovernedProject.objects.filter(
         project_id=project_id, deleted_at__isnull=True
     ).exists()
@@ -45,35 +55,84 @@ def owning_division_ids(folder):
     )
 
 
-def can_edit_wiki_page(user, page):
-    """True kalau `user` boleh MENGEDIT/mengunggah ke `page` di Wiki ber-ACL.
+def is_division_folder(folder):
+    """True kalau folder teratas ini milik sebuah Divisi (namanya sama).
 
-    Sejak 2026-10-26 hanya Super Admin atau admin workspace. Kepemilikan folder
-    per-divisi (`WikiFolderAccess`) kini hanya mengatur NAMA penanggung jawab
-    yang tampil, bukan hak tulis.
+    Folder divisi dibuat dan dipelihara `pastikan_folder_divisi`, yang
+    mencocokkan lewat nama. Folder teratas lain (General, folder khusus buatan
+    admin) bukan folder divisi.
     """
-    return is_wiki_admin(user, workspace_id=page.workspace_id)
+    from plane.db.models import Divisi
+
+    return Divisi.objects.filter(
+        workspace_id=folder.workspace_id, nama=folder.name, deleted_at__isnull=True
+    ).exists()
 
 
-# --- Hak KELOLA (sunting, arsip, hapus, kunci) atas materi yang SUDAH ada -----
+def uploader_project_ids(folder):
+    """Project yang anggotanya boleh MENGUNGGAH ke folder teratas ini.
+
+    Aturan bawaan (KEP-51), tanpa setelan apa pun:
+
+    - punya baris `WikiFolderAccess` -> project-project itu (untuk folder
+      divisi: project departemen di bawah divisinya, diselaraskan otomatis);
+    - folder divisi tanpa departemen -> kosong, hanya admin;
+    - folder lain tanpa baris -> General: project Wiki-nya sendiri, jadi
+      semua anggota Wiki boleh mengunggah.
+    """
+    from plane.db.models import ProjectPage
+
+    ids = owning_division_ids(folder)
+    if ids or is_division_folder(folder):
+        return ids
+    return list(
+        ProjectPage.objects.filter(page=folder, deleted_at__isnull=True).values_list(
+            "project_id", flat=True
+        )
+    )
+
+
+def is_department_member(user, project_ids):
+    """Anggota aktif (member/admin, bukan guest) salah satu project ini."""
+    from plane.db.models import ProjectMember
+
+    if not project_ids or user is None or getattr(user, "is_anonymous", True):
+        return False
+    return ProjectMember.objects.filter(
+        member=user,
+        project_id__in=project_ids,
+        role__gte=_ROLE_MEMBER,
+        is_active=True,
+        deleted_at__isnull=True,
+    ).exists()
+
+
+def can_edit_wiki_page(user, page):
+    """True kalau `user` boleh MENGUNGGAH materi ke `page` di Wiki ber-ACL.
+
+    KEP-51 (2026-11-02): admin workspace / Super Admin, atau anggota
+    departemen yang memiliki folder teratasnya (lihat `uploader_project_ids`).
+    Mengubah struktur (folder, sub-topik) tetap `can_manage_wiki_page`.
+    """
+    if is_wiki_admin(user, workspace_id=page.workspace_id):
+        return True
+    return is_department_member(user, uploader_project_ids(top_level_folder(page)))
+
+
+# --- Matriks hak Wiki (KEP-51, 2026-11-02) -----------------------------------
 #
-# Hak UNGGAH dan hak KELOLA sengaja berbeda, dan bedanya itu inti aturan yang
-# diminta pemilik instance:
+#   baca                  semua anggota project Wiki
+#   unggah materi baru    admin, atau anggota departemen pemilik folder divisi
+#                         (folder non-divisi tanpa pemilik = General, semua)
+#   ubah/hapus materi     admin, atau pengunggahnya sendiri
+#   folder & sub-topik    admin saja (buat, ganti nama/ikon, arsip, hapus)
 #
-#   unggah materi baru  -> siapa pun anggota aktif divisi pemilik folder
-#   kelola materi lama  -> pengunggahnya sendiri, kepala divisi pemilik, atau
-#                          Super Admin instance
-#
-# Jadi satu divisi tetap bisa mengisi Wiki-nya bersama-sama, tapi tidak ada yang
-# bisa membuang atau menimpa kerja rekannya. "Menimpa" ikut dikunci karena
-# mengosongkan isi sebuah materi hasilnya sama saja dengan menghapusnya.
-#
-# Kepala divisi ikut dimasukkan bukan demi kelonggaran, melainkan demi jalan
-# keluar: tidak ada alih kepemilikan halaman di Plane, jadi tanpa kepala divisi
-# setiap materi milik karyawan yang resign hanya bisa disentuh Super Admin,
-# selamanya.
+# "admin" = admin workspace atau Super Admin instance (`is_wiki_admin`).
+# Tidak ada setelan: pemilik folder divisi diturunkan dari struktur organisasi
+# God Mode lewat `pastikan_folder_divisi`.
 
 _ROLE_ADMIN = 20
+_ROLE_MEMBER = 15
 
 
 def is_super_admin(user):
@@ -94,10 +153,10 @@ _WORKSPACE_ADMIN = 20
 def is_wiki_admin(user, workspace_id=None, workspace_slug=None):
     """Satu-satunya yang boleh MENGUBAH/mengelola Wiki: Super Admin atau admin workspace.
 
-    Keputusan user 2026-10-26: walaupun Wiki (termasuk folder General) terbuka
-    dibaca semua orang, hak ubah/kelola/unggah hanya admin workspace atau Super
-    Admin. Pengunggah, kepala divisi, dan admin project Wiki yang bukan admin
-    workspace TIDAK lagi punya hak tulis.
+    Admin project Wiki yang bukan admin workspace TIDAK termasuk. Anggota
+    departemen boleh mengunggah (`can_edit_wiki_page`) dan pengunggah boleh
+    mengubah materinya sendiri (`can_manage_wiki_material`), tapi struktur Wiki
+    (folder, sub-topik) hanya untuk yang lolos fungsi ini.
     """
     from plane.db.models import WorkspaceMember
 
@@ -173,39 +232,15 @@ def has_foreign_descendants(page, user, max_depth=_MAX_DEPTH):
     return False
 
 
-def is_division_supervisor(user, division_ids, workspace_id):
-    """True kalau berpangkat supervisor+ DAN anggota salah satu divisi pemilik.
-
-    SPV dalam aturan hapus materi (keputusan user 2026-10-24): atasan yang
-    berpangkat, bukan siapa pun yang kebetulan memegang role admin project.
-    Cakupannya divisi pemilik saja: SPV divisi lain tidak ikut.
-    """
-    from plane.db.models import ProjectMember, TINGKAT_SUPERVISOR  # noqa: PLC0415
-
-    if user is None or getattr(user, "is_anonymous", True):
-        return False
-    if not division_ids:
-        return False
-
-    from plane.utils.hierarki import tingkat_anggota  # noqa: PLC0415
-
-    tingkat = tingkat_anggota(user.id, workspace_id)
-    if tingkat is None or tingkat < TINGKAT_SUPERVISOR:
-        return False
-    return ProjectMember.objects.filter(
-        member=user,
-        project_id__in=division_ids,
-        is_active=True,
-        deleted_at__isnull=True,
-    ).exists()
-
-
 def can_manage_wiki_material(user, asset):
     """True kalau `user` boleh mengubah atau menghapus sebuah Materi Wiki.
 
-    Sejak 2026-10-26 hanya Super Admin atau admin workspace; pengunggah asli
-    tidak lagi otomatis berhak.
+    KEP-51: admin workspace / Super Admin, atau pengunggahnya sendiri.
     """
+    if user is None or getattr(user, "is_anonymous", True) or not getattr(user, "id", None):
+        return False
+    if asset.created_by_id and asset.created_by_id == user.id:
+        return True
     return is_wiki_admin(user, workspace_id=asset.workspace_id)
 
 

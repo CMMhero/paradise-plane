@@ -293,6 +293,24 @@ def test_mencabut_TIDAK_perlu_konfirmasi(admin, target):
     assert not InstanceAdmin.objects.filter(user=target).exists()
 
 
+def test_angkat_ulang_setelah_dicabut_TIDAK_bentrok(admin, target):
+    """Mencabut itu soft delete: baris `InstanceAdmin` tetap ada dengan
+    `deleted_at` terisi, sementara `unique_together (instance, user)` tidak
+    menyertakan `deleted_at`. Dulu `get_or_create` lewat manager bawaan tidak
+    melihat baris itu, INSERT baru menabrak unik, dan God Mode cuma menampilkan
+    "The payload is not valid"."""
+    konfirmasi = {"is_super_admin": True, "grant_confirm": "jadikan superadmin"}
+    _patch(admin, target.pk, konfirmasi)
+    _patch(admin, target.pk, {"is_super_admin": False})
+
+    res = _patch(admin, target.pk, konfirmasi)
+
+    assert res.status_code == 200, getattr(res, "data", None)
+    assert res.data["is_super_admin"] is True
+    assert InstanceAdmin.objects.filter(user=target).exists()
+    assert InstanceAdmin.all_objects.filter(user=target).count() == 1, "baris lama dihidupkan, bukan digandakan"
+
+
 def _hapus(admin, target_pk, data):
     request = APIRequestFactory().delete(f"/api/instances/members/{target_pk}/", data, format="json")
     force_authenticate(request, user=admin)
@@ -306,7 +324,7 @@ def test_hapus_akun_menonaktifkan_dan_menggosok_identitas(admin, target):
     assert res.status_code == 200, getattr(res, "data", None)
     target.refresh_from_db()
     assert target.is_active is False
-    assert target.display_name == "Akun dihapus"
+    assert target.display_name == "Deleted account"
     assert target.email != "budi@paradise.test"
     assert "@deleted.local" in target.email
 
@@ -343,4 +361,4 @@ def test_hapus_akun_sendiri_ditolak_walau_super_admin_terakhir(admin):
     assert InstanceAdmin.objects.filter(user=admin).exists()
     admin.refresh_from_db()
     assert admin.is_active is True
-    assert admin.display_name != "Akun dihapus"
+    assert admin.display_name != "Deleted account"

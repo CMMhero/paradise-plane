@@ -260,7 +260,14 @@ class ProjectViewSet(BaseViewSet):
     def create(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
 
-        serializer = ProjectSerializer(data={**request.data}, context={"workspace_id": workspace.id})
+        # Kustomisasi Paradise: kolom yang tidak dikirim diisi bawaan project dari
+        # God Mode (plane/utils/bawaan_project.py). Formulir web sudah mengisi
+        # dirinya dengan nilai yang sama; ini untuk pemanggil lain.
+        from plane.utils.bawaan_project import lengkapi_data_project
+
+        serializer = ProjectSerializer(
+            data=lengkapi_data_project({**request.data}), context={"workspace_id": workspace.id}
+        )
         if serializer.is_valid():
             # Tanpa satu transaksi, project sempat tersimpan lebih dulu lalu
             # anggota atau state gagal, dan yang tertinggal adalah project tanpa

@@ -6,7 +6,7 @@
 from rest_framework import serializers
 
 # Module import
-from plane.db.models import Account, Profile, User, Workspace, WorkspaceMemberInvite
+from plane.db.models import Account, Profile, User, Workspace, WorkspaceMemberInvite, adalah_akun_terhapus
 from plane.utils.url import contains_url
 
 from .base import BaseSerializer
@@ -138,7 +138,22 @@ class UserMeSettingsSerializer(BaseSerializer):
             }
 
 
+def _is_deleted(obj):
+    """Akun ini dihapus dari God Mode (Paradise).
+
+    Web memakainya untuk menyaring akun dari daftar member dan pemilih, sambil
+    tetap merender rujukan lamanya (assignee, pembuat) sebagai "Deleted
+    account". Dibaca dari email placeholder, jadi nol query tambahan.
+    """
+    return adalah_akun_terhapus(getattr(obj, "email", None))
+
+
 class UserLiteSerializer(BaseSerializer):
+    is_deleted = serializers.SerializerMethodField()
+
+    def get_is_deleted(self, obj):
+        return _is_deleted(obj)
+
     class Meta:
         model = User
         fields = [
@@ -149,11 +164,17 @@ class UserLiteSerializer(BaseSerializer):
             "avatar_url",
             "is_bot",
             "display_name",
+            "is_deleted",
         ]
         read_only_fields = ["id", "is_bot"]
 
 
 class UserAdminLiteSerializer(BaseSerializer):
+    is_deleted = serializers.SerializerMethodField()
+
+    def get_is_deleted(self, obj):
+        return _is_deleted(obj)
+
     class Meta:
         model = User
         fields = [
@@ -166,6 +187,7 @@ class UserAdminLiteSerializer(BaseSerializer):
             "display_name",
             "email",
             "last_login_medium",
+            "is_deleted",
         ]
         read_only_fields = ["id", "is_bot"]
 
