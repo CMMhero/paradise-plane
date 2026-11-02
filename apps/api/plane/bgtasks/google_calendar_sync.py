@@ -22,7 +22,6 @@ Pola yang sama dipakai pengingat tenggat, dengan alasan yang sama.
 
 # Python imports
 import logging
-import os
 
 # Django imports
 from django.db.models import Q
@@ -36,6 +35,7 @@ from plane.db.models import AcaraKalender, Issue, KalenderGoogle
 from plane.license.utils.encryption import decrypt_data
 from plane.utils import google_calendar as gcal
 from plane.utils.exception_logger import log_exception
+from plane.utils.saklar_instance import ENABLE_GOOGLE_CALENDAR_SYNC, saklar_aktif
 
 logger = logging.getLogger("plane")
 
@@ -46,12 +46,10 @@ def _aktif() -> bool:
     """Saklar pengaman, MATI secara bawaan.
 
     Fitur ini menulis ke kalender pribadi orang. Menyalakannya harus tindakan
-    sadar, bukan efek samping sebuah deploy. Nyalakan lewat
-    `ENABLE_GOOGLE_CALENDAR_SYNC=1` di `apps/api/.env` lalu
-    `docker compose up -d`; `restart` TIDAK cukup, env file hanya dibaca ulang
-    saat container dibuat ulang.
+    sadar, bukan efek samping sebuah deploy. Diatur Super Admin di
+    God Mode > Fitur & otomasi, bersama kredensial OAuth-nya.
     """
-    return os.environ.get("ENABLE_GOOGLE_CALENDAR_SYNC", "0") == "1"
+    return saklar_aktif(ENABLE_GOOGLE_CALENDAR_SYNC)
 
 
 def _judul(issue):
@@ -177,7 +175,7 @@ def _sinkron_satu_orang(sambungan) -> dict:
 def sinkron_google_calendar():
     """Dijalankan berkala. Lihat beat_schedule di plane/celery.py."""
     if not _aktif():
-        logger.info("Sinkron Google Calendar dilewati: ENABLE_GOOGLE_CALENDAR_SYNC belum diset ke 1")
+        logger.info("Sinkron Google Calendar dilewati: ENABLE_GOOGLE_CALENDAR_SYNC mati di God Mode")
         return {"aktif": False}
 
     total = {"orang": 0, "dibuat": 0, "diubah": 0, "dihapus": 0, "gagal": 0}

@@ -25,16 +25,15 @@ from plane.db.models import Issue, PesanLangsung, Ruang, User, WorkspaceMember
 from plane.utils.chat_ruang import ruang_dm
 from plane.utils.exception_logger import log_exception
 from plane.utils.obrolan_siaran import siarkan
+from plane.utils.saklar_instance import ENABLE_TUGAS_KE_DM, saklar_aktif
 
 # Saklar pemadam. Bawaannya MENYALA, berbeda dengan ENABLE_CHAT_EMAIL yang
 # bawaannya mati: yang ini menulis ke dalam aplikasi, bukan mengirim email ke
 # kotak masuk orang, dan pemilik instance memang memintanya hidup. Yang tersedia
-# cuma jalan keluarnya, kalau suatu saat dirasa terlalu berisik:
-# `ENABLE_TUGAS_KE_DM=0` di `apps/api/.env` lalu `docker compose up -d`
-# (restart saja TIDAK cukup, env file hanya dibaca ulang saat container dibuat
-# ulang).
+# cuma jalan keluarnya, kalau suatu saat dirasa terlalu berisik: matikan di
+# God Mode > Fitur & otomasi.
 def _aktif() -> bool:
-    return os.environ.get("ENABLE_TUGAS_KE_DM", "1") == "1"
+    return saklar_aktif(ENABLE_TUGAS_KE_DM)
 
 
 BULAN = (
@@ -221,6 +220,16 @@ def kirim_tugas_ke_dm(issue_id, actor_id, penerima_ids):
                 workspace_id=issue.workspace_id, member_id__in=tujuan, is_active=True
             ).values_list("member_id", flat=True)
         )
+        # Kebijakan direktur (God Mode, 2026-11-02): direktur tidak menerima kabar
+        # tugas, termasuk lewat DM penugasan. Saklar inbox biasa TIDAK dipakai di
+        # sini: DM ini permintaan user untuk semua orang, hanya kebijakan direktur
+        # yang memotongnya.
+        from plane.utils.preferensi_email import dikunci, kelompok_massal, tabel_bawaan_sekarang  # noqa: PLC0415
+
+        kelompok = kelompok_massal(aktif)
+        if "direktur" in kelompok.values():
+            sekarang = tabel_bawaan_sekarang()
+            aktif = {p for p in aktif if "inbox_assigned" not in dikunci(p, sekarang, kelompok[p])}
         if not aktif:
             return
 

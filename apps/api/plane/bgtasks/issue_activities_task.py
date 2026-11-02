@@ -34,6 +34,7 @@ from plane.db.models import (
 )
 from plane.settings.redis import redis_instance
 from plane.utils.exception_logger import log_exception
+from plane.bgtasks.penugasan_email import kirim_email_penugasan
 from plane.bgtasks.tugas_ke_dm_task import kirim_tugas_ke_dm, penerima_baru
 from plane.utils.issue_relation_mapper import get_inverse_relation
 from plane.utils.uuid import is_valid_uuid
@@ -1592,6 +1593,10 @@ def issue_activity(
         penerima = penerima_baru(issue_activities_created)
         if penerima:
             kirim_tugas_ke_dm.delay(
+                issue_id=str(issue_id), actor_id=str(actor_id), penerima_ids=penerima
+            )
+            # Email "tugas baru untuk Anda" dari corong yang sama (saklar `assigned`).
+            kirim_email_penugasan.delay(
                 issue_id=str(issue_id), actor_id=str(actor_id), penerima_ids=penerima
             )
 

@@ -16,15 +16,14 @@ cepat daripada yang bisa dibaca akan diabaikan seluruhnya, termasuk yang penting
 Yang dipakai: putaran berkala dengan dua rem, sama polanya dengan pengingat
 tenggat dan sinkronisasi kalender.
 
-Rem pertama, JEDA_TENANG: pesan baru diberitahukan setelah diam beberapa menit.
-Orang yang membalas dalam lima menit tidak pernah memicu satu email pun.
+Rem pertama, jeda_tenang(): pesan baru diberitahukan setelah diam beberapa menit
+(bawaan 10, diatur di God Mode > Features). Balasan cepat tidak memicu email.
 
-Rem kedua, JEDA_ANTAR_EMAIL: satu orang tidak menerima email berikutnya sebelum
-lewat satu jam, sedahsyat apa pun percakapan yang masuk.
+Rem kedua, jeda_antar_email(): satu orang tidak menerima email berikutnya sebelum
+jedanya lewat (bawaan satu jam), sedahsyat apa pun percakapan yang masuk.
 """
 
 import logging
-import os
 from datetime import timedelta
 
 from django.db.models import Max
@@ -32,6 +31,14 @@ from django.utils import timezone
 
 from plane.db.models import PesanLangsung
 from plane.utils.exception_logger import log_exception
+from plane.utils.preferensi_email import penyaring
+from plane.utils.saklar_instance import (
+    CHAT_EMAIL_INTERVAL_MINUTES,
+    CHAT_EMAIL_QUIET_MINUTES,
+    ENABLE_CHAT_EMAIL,
+    saklar_aktif,
+    setelan_angka,
+)
 
 from .chat_email import kirim_email_pesan
 from celery import shared_task
@@ -40,21 +47,23 @@ from celery import shared_task
 # polos tidak terdaftar di konfigurasi produksi.
 logger = logging.getLogger("plane.worker")
 
-# Umur minimum pesan sebelum layak diberitahukan.
-JEDA_TENANG = timedelta(minutes=10)
 
-# Jarak minimum antar email ke orang yang sama.
-JEDA_ANTAR_EMAIL = timedelta(hours=1)
+# Umur minimum pesan sebelum layak diberitahukan. Diatur di God Mode > Features.
+def jeda_tenang() -> timedelta:
+    return timedelta(minutes=setelan_angka(CHAT_EMAIL_QUIET_MINUTES))
+
+
+# Jarak minimum antar email ke orang yang sama. Diatur di God Mode > Features.
+def jeda_antar_email() -> timedelta:
+    return timedelta(minutes=setelan_angka(CHAT_EMAIL_INTERVAL_MINUTES))
 
 
 # Saklar pengaman, MATI secara bawaan, mengikuti pola ENABLE_DEADLINE_REMINDER.
 # Fitur ini mengirim email ke karyawan sungguhan, jadi menyalakannya harus
-# tindakan sadar, bukan efek samping sebuah deploy. Nyalakan lewat
-# `ENABLE_CHAT_EMAIL=1` di `apps/api/.env` lalu `docker compose up -d`
-# (restart saja TIDAK cukup, env file hanya dibaca ulang saat container dibuat
-# ulang).
+# tindakan sadar, bukan efek samping sebuah deploy. Diatur Super Admin di
+# God Mode > Fitur & otomasi.
 def _aktif() -> bool:
-    return os.environ.get("ENABLE_CHAT_EMAIL", "0") == "1"
+    return saklar_aktif(ENABLE_CHAT_EMAIL)
 
 
 def _email_terakhir(user_ids) -> dict:
@@ -76,12 +85,15 @@ def kirim_pemberitahuan_pesan():
         return
 
     sekarang = timezone.now()
-    batas = sekarang - JEDA_TENANG
+    batas = sekarang - jeda_tenang()
+    jeda_email = jeda_antar_email()
 
     # Kandidat: masuk, belum dibaca, belum pernah diberitahukan, dan sudah
     # cukup lama diam. Pesan yang sudah dibaca TIDAK PERNAH ikut, jadi orang
     # tidak menerima email untuk sesuatu yang sudah dilihatnya di layar.
+    # Hanya DM: pesan kanal tidak punya satu penerima (`penerima` kosong).
     kandidat = PesanLangsung.objects.filter(
+        penerima__isnull=False,
         dibaca_pada__isnull=True,
         dinotifikasi_pada__isnull=True,
         created_at__lte=batas,
@@ -91,12 +103,21 @@ def kirim_pemberitahuan_pesan():
     for pesan in kandidat:
         per_penerima.setdefault(pesan.penerima_id, []).append(pesan)
 
+    # Saklar `chat` per orang (keputusan user 2026-11-02). Yang mematikannya: pesannya
+    # ditandai sudah ditangani, supaya menyalakannya lagi tidak memicu email untuk
+    # tumpukan pesan lama.
+    mau = penyaring(per_penerima.keys(), "chat")
+    tolak = [p.id for uid, daftar in per_penerima.items() if uid not in mau for p in daftar]
+    if tolak:
+        PesanLangsung.objects.filter(id__in=tolak).update(dinotifikasi_pada=sekarang)
+    per_penerima = {uid: daftar for uid, daftar in per_penerima.items() if uid in mau}
+
     terakhir_dikirimi = _email_terakhir(list(per_penerima.keys()))
 
     terkirim = 0
     for user_id, pesan_masuk in per_penerima.items():
         terakhir = terakhir_dikirimi.get(user_id)
-        if terakhir is not None and (sekarang - terakhir) < JEDA_ANTAR_EMAIL:
+        if terakhir is not None and (sekarang - terakhir) < jeda_email:
             # Dilewati TANPA menandai. Pesannya tetap kandidat pada putaran
             # berikutnya sesudah jeda habis, jadi tidak ada yang hilang.
             continue

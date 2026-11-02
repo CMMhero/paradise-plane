@@ -25,9 +25,10 @@ from django.utils import timezone
 from celery import shared_task
 
 # Module imports
-from plane.db.models import RETENSI_HARI, LoginActivity
+from plane.db.models import LoginActivity
 from plane.license.models import InstanceAdmin
 from plane.license.utils.instance_value import get_email_configuration
+from plane.utils.saklar_instance import LOGIN_HISTORY_RETENTION_DAYS, setelan_angka
 
 logger = logging.getLogger("plane.worker")
 
@@ -46,23 +47,20 @@ def hitung_peringatan():
     dari angka yang dipakai saat menghapus.
     """
     sekarang = timezone.now()
-    batas_hapus = sekarang - timedelta(days=RETENSI_HARI)
+    retensi = setelan_angka(LOGIN_HISTORY_RETENTION_DAYS)
+    batas_hapus = sekarang - timedelta(days=retensi)
     batas_peringatan = batas_hapus + timedelta(days=AMBANG_PERINGATAN_HARI)
 
-    tertua = (
-        LoginActivity.objects.order_by("terjadi_pada")
-        .values_list("terjadi_pada", flat=True)
-        .first()
-    )
+    tertua = LoginActivity.objects.order_by("terjadi_pada").values_list("terjadi_pada", flat=True).first()
     akan_dibuang = LoginActivity.objects.filter(terjadi_pada__lt=batas_peringatan).count()
     sudah_lewat = LoginActivity.objects.filter(terjadi_pada__lt=batas_hapus).count()
 
     sisa_hari = None
     if tertua:
-        sisa_hari = max(0, RETENSI_HARI - (sekarang - tertua).days)
+        sisa_hari = max(0, retensi - (sekarang - tertua).days)
 
     return {
-        "retensi_hari": RETENSI_HARI,
+        "retensi_hari": retensi,
         "ambang_peringatan_hari": AMBANG_PERINGATAN_HARI,
         "tertua": tertua,
         "sisa_hari": sisa_hari,
@@ -75,9 +73,7 @@ def hitung_peringatan():
 def _kirim_email_peringatan(keadaan):
     """Email ke semua instance admin. Diam kalau SMTP belum jalan."""
     penerima = list(
-        InstanceAdmin.objects.filter(user__is_active=True)
-        .exclude(user__email="")
-        .values_list("user__email", flat=True)
+        InstanceAdmin.objects.filter(user__is_active=True).exclude(user__email="").values_list("user__email", flat=True)
     )
     if not penerima:
         logger.info("Retensi: tidak ada instance admin aktif untuk dikirimi email")
@@ -101,12 +97,12 @@ def _kirim_email_peringatan(keadaan):
     subject = f"[Paradise Task Tracker] {keadaan['akan_dibuang']} riwayat login akan dihapus"
     body = (
         "Peringatan otomatis dari Paradise Task Tracker.\n\n"
-        f"Riwayat login disimpan {keadaan['retensi_hari']} hari (3 bulan). "
+        f"Riwayat login disimpan {keadaan['retensi_hari']} hari. "
         f"Sebanyak {keadaan['akan_dibuang']} peristiwa akan dihapus dalam "
         f"{keadaan['ambang_peringatan_hari']} hari ke depan"
         + (f", terhitung dari data tertua {tertua:%d %B %Y}" if tertua else "")
         + ".\n\n"
-        "Kalau angkanya masih diperlukan, ekspor dulu lewat God Mode -> Aktivitas "
+        "Kalau angkanya masih diperlukan, ekspor dulu lewat God Mode -> Activity "
         "sebelum tanggal itu. Sesudah dihapus, data ini tidak bisa dikembalikan.\n\n"
         "Email ini dikirim ke semua instance admin."
     )
@@ -119,9 +115,7 @@ def _kirim_email_peringatan(keadaan):
         use_tls=EMAIL_USE_TLS == "1",
         use_ssl=EMAIL_USE_SSL == "1",
     )
-    msg = EmailMultiAlternatives(
-        subject=subject, body=body, from_email=EMAIL_FROM, to=penerima, connection=connection
-    )
+    msg = EmailMultiAlternatives(subject=subject, body=body, from_email=EMAIL_FROM, to=penerima, connection=connection)
     msg.send()
     logger.info("Retensi: peringatan terkirim ke %s admin", len(penerima))
     return len(penerima)
@@ -141,22 +135,18 @@ def bersihkan_login_activity():
             # tabel tumbuh selamanya karena email tidak bisa dikirim.
             logger.exception("Retensi: gagal mengirim email peringatan, pembersihan tetap lanjut")
 
-    batas = timezone.now() - timedelta(days=RETENSI_HARI)
+    batas = timezone.now() - timedelta(days=setelan_angka(LOGIN_HISTORY_RETENTION_DAYS))
     dibuang = 0
     while True:
         # `all_objects` + `.delete()` di queryset = hapus KERAS. Jangan pakai
         # `.delete()` per instance: BaseModel menghapus lunak dan mengantre satu
         # task Celery per baris lewat soft_delete_related_objects.
         pk_batch = list(
-            LoginActivity.all_objects.filter(terjadi_pada__lt=batas).values_list(
-                "pk", flat=True
-            )[:UKURAN_BATCH]
+            LoginActivity.all_objects.filter(terjadi_pada__lt=batas).values_list("pk", flat=True)[:UKURAN_BATCH]
         )
         if not pk_batch:
             break
         dibuang += LoginActivity.all_objects.filter(pk__in=pk_batch).delete()[0]
 
     logger.info("Retensi: %s peristiwa dibuang, email ke %s admin", dibuang, terkirim)
-    return {"dibuang": dibuang, "email_terkirim": terkirim, **{
-        k: v for k, v in keadaan.items() if k != "tertua"
-    }}
+    return {"dibuang": dibuang, "email_terkirim": terkirim, **{k: v for k, v in keadaan.items() if k != "tertua"}}

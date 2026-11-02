@@ -70,11 +70,6 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.email_notification_task.stack_email_notification",
         "schedule": crontab(minute="*/5"),  # Every 5 minutes
     },
-    # Paradise: buat work item berulang dari template
-    "create-recurring-issues": {
-        "task": "plane.bgtasks.recurring_issue_task.create_recurring_issues",
-        "schedule": crontab(minute="*/15"),  # Every 15 minutes
-    },
     # Paradise: buang riwayat login >3 bulan, peringatkan sebelum dibuang.
     # 17:00 UTC = 00:00 WIB, jam yang sama dengan backup harian.
     "bersihkan-login-activity": {
@@ -96,6 +91,13 @@ app.conf.beat_schedule = {
     "ringkasan-harian": {
         "task": "plane.bgtasks.daily_digest_task.kirim_ringkasan_harian",
         "schedule": crontab(hour=1, minute=30, day_of_week="mon-fri"),
+    },
+    # Paradise: edisi sore ringkasan harian, Senin-Jumat 17.30 WIB = 10.30 UTC.
+    # Saklarnya sendiri (`daily_digest_sore`): yang selesai hari ini, yang belum
+    # selesai padahal tenggatnya hari ini, terlambat, dan tenggat hari kerja berikutnya.
+    "ringkasan-sore": {
+        "task": "plane.bgtasks.daily_digest_task.kirim_ringkasan_sore",
+        "schedule": crontab(hour=10, minute=30, day_of_week="mon-fri"),
     },
     # Paradise: ringkasan tugas selesai per divisi untuk direktur, 08.30 WIB.
     "ringkasan-direktur": {

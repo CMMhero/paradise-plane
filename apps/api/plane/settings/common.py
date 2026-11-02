@@ -364,8 +364,6 @@ CELERY_IMPORTS = (
     "plane.bgtasks.file_asset_task",
     "plane.bgtasks.email_notification_task",
     "plane.bgtasks.cleanup_task",
-    # Paradise: tanpa baris ini worker buang task dari beat "unregistered"
-    "plane.bgtasks.recurring_issue_task",
     "plane.bgtasks.login_activity_retention",
     "plane.bgtasks.deadline_reminder_task",
     "plane.bgtasks.daily_digest_task",
@@ -373,6 +371,7 @@ CELERY_IMPORTS = (
     "plane.bgtasks.google_calendar_sync",
     "plane.bgtasks.chat_notification_task",
     "plane.bgtasks.tugas_ke_dm_task",
+    "plane.bgtasks.penugasan_email",
     "plane.bgtasks.dormancy_task",
     "plane.bgtasks.control_plane_heartbeat",
     "plane.bgtasks.billing_task",
