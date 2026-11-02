@@ -4,15 +4,15 @@
 # See the LICENSE file for details.
 
 # Django imports
-from django.conf import settings
 
 # Third Party imports
 from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
+from plane.utils.saklar_instance import TRASH_RETENTION_DAYS, setelan_angka
 from plane.license.api.views.base import BaseAPIView
-from plane.utils.trash import ambil, buang_permanen, kumpulkan, pulihkan
+from plane.utils.trash import TrashConflict, ambil, buang_permanen, kumpulkan, pulihkan
 
 
 class InstanceTrashEndpoint(BaseAPIView):
@@ -34,28 +34,25 @@ class InstanceTrashEndpoint(BaseAPIView):
     def get(self, request):
         return Response(
             {
-                "retention_days": settings.HARD_DELETE_AFTER_DAYS,
+                "retention_days": setelan_angka(TRASH_RETENTION_DAYS),
                 "results": kumpulkan(project_id=None, tipe=request.GET.get("type")),
             },
             status=status.HTTP_200_OK,
         )
 
     def post(self, request, trash_type, pk):
-        obj, _ = ambil(trash_type, pk)
+        obj, spec = ambil(trash_type, pk)
         if not obj:
-            return Response(
-                {"error": "Barang tidak ada di TPA."}, status=status.HTTP_404_NOT_FOUND
-            )
-        jumlah = pulihkan(obj)
-        return Response(
-            {"message": "Dipulihkan.", "restored_count": jumlah}, status=status.HTTP_200_OK
-        )
+            return Response({"error": "Item not found in trash."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            jumlah = pulihkan(obj, spec)
+        except TrashConflict as e:
+            return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
+        return Response({"message": "Restored.", "restored_count": jumlah}, status=status.HTTP_200_OK)
 
     def delete(self, request, trash_type, pk):
         obj, _ = ambil(trash_type, pk)
         if not obj:
-            return Response(
-                {"error": "Barang tidak ada di TPA."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Item not found in trash."}, status=status.HTTP_404_NOT_FOUND)
         buang_permanen(obj)
         return Response(status=status.HTTP_204_NO_CONTENT)

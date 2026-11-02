@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Hash, MessageSquare, X } from "lucide-react";
+import { useTranslation } from "@plane/i18n";
 import { Avatar } from "@plane/ui";
 import { cn, getFileURL } from "@plane/utils";
 
@@ -56,6 +57,7 @@ const KartuPopup = ({
   onTutup: (id: string) => void;
   onBuka: (tautan: string) => void;
 }) => {
+  const { t } = useTranslation();
   const [terlihat, setTerlihat] = useState(false);
   const [berjalan, setBerjalan] = useState(false);
   const jam = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,7 +95,9 @@ const KartuPopup = ({
   const punyaAvatar = Boolean(data.namaOrang);
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- hover only pauses the auto-dismiss timer; actions are on the inner button
     <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <output> would change layout semantics of the toast container
       role="status"
       onMouseEnter={() => setBerjalan(false)}
       onMouseLeave={() => setBerjalan(true)}
@@ -129,14 +133,14 @@ const KartuPopup = ({
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="text-sm block truncate leading-5 font-semibold text-primary">{data.judul}</span>
-          <span className="text-xs mt-0.5 line-clamp-2 block leading-4 text-tertiary">{data.isi}</span>
+          <span className="block truncate text-13 leading-5 font-semibold text-primary">{data.judul}</span>
+          <span className="mt-0.5 line-clamp-2 block text-12 leading-4 text-tertiary">{data.isi}</span>
         </span>
       </button>
 
       <button
         type="button"
-        aria-label="Tutup pemberitahuan"
+        aria-label={t("notification_ui.dismiss")}
         onClick={tutup}
         className="absolute top-2 right-2 grid size-6 place-items-center rounded-md text-tertiary opacity-0 transition-opacity group-hover:opacity-100 hover:bg-layer-2 hover:text-primary focus-visible:opacity-100"
       >

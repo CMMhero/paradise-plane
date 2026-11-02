@@ -11,13 +11,17 @@
  */
 
 import { useState } from "react";
+import { FolderKanban } from "lucide-react";
 import useSWR from "swr";
 // plane imports
 import { Button } from "@plane/propel/button";
 import { InstanceOrganisasiService, TINGKAT_DIREKTUR, type TProjectOrganisasi } from "@plane/services";
+import { Checkbox, CustomSelect, Input, Loader } from "@plane/ui";
+// components
+import { Field, PersonCell } from "@/components/common/paradise-ui";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
-import { inputClass } from "../members/constants";
+import { BadgeJabatan } from "../members/jabatan";
 
 const layanan = new InstanceOrganisasiService();
 
@@ -38,14 +42,18 @@ export function BarisProjectLama({ project, semuaDivisi, onJadikan }: Props) {
   const [terbuka, setTerbuka] = useState(false);
 
   return (
-    <div className="rounded border border-subtle px-3 py-2">
-      <div className="flex items-center gap-2">
-        <span className="text-13 text-primary">{project.name}</span>
-        <span className="text-11 text-tertiary">{project.identifier}</span>
+    <li className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-md border border-subtle bg-layer-2 text-tertiary">
+          <FolderKanban className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-13 font-medium text-primary">{project.name}</div>
+          <div className="text-11 text-tertiary">{project.identifier}</div>
+        </div>
         <Button
-          variant="secondary"
+          variant={terbuka ? "ghost" : "secondary"}
           size="sm"
-          className="ml-auto"
           disabled={semuaDivisi.length === 0}
           onClick={() => setTerbuka((t) => !t)}
         >
@@ -53,7 +61,7 @@ export function BarisProjectLama({ project, semuaDivisi, onJadikan }: Props) {
         </Button>
       </div>
       {terbuka && <FormJadikan project={project} semuaDivisi={semuaDivisi} onJadikan={onJadikan} />}
-    </div>
+    </li>
   );
 }
 
@@ -77,78 +85,101 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
   };
 
   return (
-    <div className="mt-2 space-y-2 border-t border-subtle pt-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          className={`${inputClass} min-w-[160px]`}
-          value={divisiId}
-          aria-label={s.org.division_of}
-          onChange={(e) => setDivisiId(e.target.value)}
-        >
-          {semuaDivisi.map((v) => (
-            <option key={v.id} value={v.id}>
-              {s.org.division_of}: {v.nama}
-            </option>
-          ))}
-        </select>
-        <input className={`${inputClass} w-28`} maxLength={20} value={kode} onChange={(e) => setKode(e.target.value)} />
-        <input
-          className={`${inputClass} min-w-[160px] flex-1`}
-          value={nama}
-          onChange={(e) => setNama(e.target.value)}
-        />
+    <div className="mt-3 space-y-4 rounded-md border border-subtle bg-surface-1 p-4">
+      <div className="grid gap-4 sm:grid-cols-[1fr_8rem_1fr]">
+        <Field label={s.org.division_of}>
+          <CustomSelect
+            value={divisiId}
+            label={semuaDivisi.find((v) => v.id === divisiId)?.nama}
+            onChange={(v: string) => setDivisiId(v)}
+            buttonClassName="w-full rounded-md border-subtle bg-layer-2"
+            className="w-full"
+            input
+          >
+            {semuaDivisi.map((v) => (
+              <CustomSelect.Option key={v.id} value={v.id}>
+                {v.nama}
+              </CustomSelect.Option>
+            ))}
+          </CustomSelect>
+        </Field>
+        <Field label={s.org.code}>
+          <Input className="w-full" maxLength={20} value={kode} onChange={(e) => setKode(e.target.value)} />
+        </Field>
+        <Field label={s.org.name}>
+          <Input className="w-full" value={nama} onChange={(e) => setNama(e.target.value)} />
+        </Field>
       </div>
 
-      <span className="block text-11 text-secondary">
-        {fill(s.org.legacy_bring, { a: terpilih.size, b: bisa.length })}
-      </span>
-      {!data ? (
-        <p className="text-11 text-tertiary">{s.org.legacy_loading}</p>
-      ) : (
-        <div className="grid gap-1 sm:grid-cols-2">
-          {data.anggota.map((a) => (
-            <label
-              key={a.id}
-              className={`flex items-center gap-2 text-11 ${a.bisa_ditempatkan ? "text-primary" : "text-tertiary"}`}
-              title={a.email}
-            >
-              <input
-                type="checkbox"
-                disabled={!a.bisa_ditempatkan}
-                checked={a.bisa_ditempatkan && terpilih.has(a.id)}
-                onChange={() => ganti(a.id)}
-              />
-              <span className="truncate">
-                {a.nama} · {a.tingkat_nama ?? s.org.legacy_unleveled}
-                {!a.bisa_ditempatkan &&
-                  ((a.tingkat ?? 0) >= TINGKAT_DIREKTUR ? s.org.legacy_director_reach : s.org.legacy_division_placed)}
-                {a.bisa_ditempatkan && a.departemen && ` · ${fill(s.org.moved_from_bare, { from: a.departemen })}`}
-              </span>
-            </label>
-          ))}
-        </div>
-      )}
+      <div className="space-y-2">
+        <span className="block text-12 font-medium text-secondary">
+          {fill(s.org.legacy_bring, { a: terpilih.size, b: bisa.length })}
+        </span>
+        {!data ? (
+          <Loader className="space-y-1.5">
+            <Loader.Item height="36px" />
+            <Loader.Item height="36px" />
+          </Loader>
+        ) : (
+          <ul className="grid gap-1 sm:grid-cols-2">
+            {data.anggota.map((a) => {
+              const alasan = !a.bisa_ditempatkan
+                ? (a.tingkat ?? 0) >= TINGKAT_DIREKTUR
+                  ? s.org.legacy_director_reach
+                  : s.org.legacy_division_placed
+                : a.departemen
+                  ? fill(s.org.moved_from_bare, { from: a.departemen })
+                  : "";
+              return (
+                <li key={a.id}>
+                  <label
+                    htmlFor={`lama-${project.id}-${a.id}`}
+                    className={`flex items-center gap-3 rounded-md px-2 py-1.5 ${
+                      a.bisa_ditempatkan ? "cursor-pointer hover:bg-layer-1-hover" : "opacity-60"
+                    }`}
+                  >
+                    <Checkbox
+                      id={`lama-${project.id}-${a.id}`}
+                      disabled={!a.bisa_ditempatkan}
+                      checked={a.bisa_ditempatkan && terpilih.has(a.id)}
+                      onChange={() => ganti(a.id)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <PersonCell name={a.nama} email={alasan.trim() || a.email} size="sm" />
+                    </div>
+                    <BadgeJabatan tingkat={a.tingkat} size="sm" />
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle pt-3">
+        <span className="text-11 text-tertiary">{s.org.legacy_kept_note}</span>
         <Button
           variant="primary"
           size="sm"
-          disabled={sibuk || !divisiId || !kode.trim() || !nama.trim() || !data}
+          loading={sibuk}
+          disabled={!divisiId || !kode.trim() || !nama.trim() || !data}
           onClick={async () => {
             setSibuk(true);
-            await onJadikan({
-              project_id: project.id,
-              divisi_id: divisiId,
-              kode: kode.trim(),
-              nama: nama.trim(),
-              member_ids: [...terpilih],
-            });
-            setSibuk(false);
+            try {
+              await onJadikan({
+                project_id: project.id,
+                divisi_id: divisiId,
+                kode: kode.trim(),
+                nama: nama.trim(),
+                member_ids: [...terpilih],
+              });
+            } finally {
+              setSibuk(false);
+            }
           }}
         >
           {s.org.legacy_make}
         </Button>
-        <span className="text-11 text-tertiary">{s.org.legacy_kept_note}</span>
       </div>
     </div>
   );

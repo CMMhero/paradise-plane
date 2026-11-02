@@ -24,7 +24,7 @@ type Props = {
 
 type ImapFormValues = Record<TInstanceImapConfigurationKeys, string>;
 
-const KEAMANAN = { "1": "SSL/TLS (biasanya port 993)", "0": "Tanpa enkripsi (port 143)" } as const;
+const KEAMANAN = { "1": "SSL/TLS (usually port 993)", "0": "No encryption (port 143)" } as const;
 
 /**
  * Setelan server email masuk.
@@ -78,7 +78,7 @@ export function InstanceImapForm({ config }: Props) {
       key: "IMAP_HOST_USER",
       type: "text",
       label: "Username",
-      description: "Alamat kotak masuk yang dipantau, bukan alamat pengirim.",
+      description: "The inbox address being watched, not the sender address.",
       placeholder: "intake@paradiseperkasa.com",
       error: Boolean(errors.IMAP_HOST_USER),
       required: false,
@@ -93,6 +93,7 @@ export function InstanceImapForm({ config }: Props) {
     },
   ];
 
+  // oxlint-disable-next-line react/incompatible-library -- react-hook-form watch() is the intended API here
   const ssl = watch("IMAP_USE_SSL") === "1" ? "1" : "0";
 
   const onSubmit = async (data: ImapFormValues) => {
@@ -100,27 +101,27 @@ export function InstanceImapForm({ config }: Props) {
       .then(() =>
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Tersimpan",
-          message: "Setelan email masuk disimpan. Belum ada fitur yang membacanya.",
+          title: "Saved",
+          message: "Incoming email settings saved. Nothing reads them yet.",
         })
       )
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Gagal",
-          message: (err as { error?: string })?.error ?? "Setelan email masuk gagal disimpan.",
+          title: "Failed",
+          message: (err as { error?: string })?.error ?? "Could not save incoming email settings.",
         });
       });
   };
 
   return (
     <div className="space-y-6">
-      <div className="border-amber-500/40 bg-amber-500/10 flex max-w-4xl items-start gap-3 rounded border p-3">
-        <AlertTriangle className="text-amber-600 mt-0.5 size-4 shrink-0" />
+      <div className="flex max-w-4xl items-start gap-3 rounded-md border border-warning-subtle bg-warning-subtle p-3">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-primary" />
         <div className="text-13 text-secondary">
-          <span className="font-medium text-primary">Tersimpan, belum dipakai.</span> Instance ini belum punya fitur
-          yang memproses email masuk, jadi mengisi kolom di bawah tidak membuat email berubah jadi work item. Gunanya
-          menyimpan setelan mail kantor di satu tempat bersama setelan kirim.
+          <span className="font-medium text-primary">Saved, not used yet.</span> This instance has no feature that
+          processes incoming email, so filling in the fields below does not turn emails into work items. It keeps the
+          office mail settings in one place next to the outgoing ones.
         </div>
       </div>
 
@@ -139,7 +140,7 @@ export function InstanceImapForm({ config }: Props) {
           />
         ))}
         <div className="flex flex-col gap-1">
-          <h4 className="text-13 text-tertiary">Keamanan</h4>
+          <h4 className="text-13 text-tertiary">Security</h4>
           <CustomSelect
             value={ssl}
             label={KEAMANAN[ssl]}
@@ -158,7 +159,7 @@ export function InstanceImapForm({ config }: Props) {
 
       <div className="flex max-w-4xl items-center gap-4 py-1">
         <Button variant="primary" size="lg" onClick={handleSubmit(onSubmit)} loading={isSubmitting} disabled={!isDirty}>
-          {isSubmitting ? "Menyimpan" : "Simpan setelan masuk"}
+          {isSubmitting ? "Saving" : "Save incoming settings"}
         </Button>
       </div>
     </div>

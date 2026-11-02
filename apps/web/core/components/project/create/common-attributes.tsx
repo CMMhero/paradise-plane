@@ -79,7 +79,7 @@ function ProjectCommonAttributes(props: Props) {
               onChange={handleNameChange(onChange)}
               hasError={Boolean(errors.name)}
               placeholder={t("project_name")}
-              className="focus:border-blue-400 w-full"
+              className="w-full focus:border-accent-strong"
               tabIndex={getIndex("name")}
             />
           )}
@@ -113,7 +113,7 @@ function ProjectCommonAttributes(props: Props) {
               onChange={handleIdentifierChange(onChange)}
               hasError={Boolean(errors.identifier)}
               placeholder={t("project_id")}
-              className={cn("focus:border-blue-400 w-full pr-7 text-11", {
+              className={cn("w-full pr-7 text-11 focus:border-accent-strong", {
                 uppercase: value,
               })}
               tabIndex={getIndex("identifier")}
@@ -144,7 +144,7 @@ function ProjectCommonAttributes(props: Props) {
                 onChange(e);
                 handleFormOnChange?.();
               }}
-              className="focus:border-blue-400 !h-24 text-13"
+              className="!h-24 text-13 focus:border-accent-strong"
               hasError={Boolean(errors?.description)}
               tabIndex={getIndex("description")}
             />

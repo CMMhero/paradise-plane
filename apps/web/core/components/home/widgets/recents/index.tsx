@@ -14,6 +14,7 @@ import type { TActivityEntityData, THomeWidgetProps, TRecentActivityFilterKeys }
 // plane ui
 // components
 import { ContentOverflowWrapper } from "@/components/core/content-overflow-HOC";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 // plane web services
 import { WorkspaceService } from "@/services/workspace.service";
 import { RecentsEmptyState } from "../empty-states";
@@ -42,6 +43,10 @@ export const RecentActivityWidget = observer(function RecentActivityWidget(props
   // states
   const [filter, setFilter] = useState<TRecentActivityFilterKeys>(presetFilter ?? filters[0].name);
   const { t } = useTranslation();
+  // Kustomisasi Paradise: tanpa modul Pages, filter & item halaman tidak tampil.
+  const { isModuleEnabled } = useParadiseModules();
+  const isPagesEnabled = isModuleEnabled("pages");
+  const visibleFilters = isPagesEnabled ? filters : filters.filter((f) => f.name !== "page");
   // ref
   const ref = useRef<HTMLDivElement>(null);
 
@@ -65,7 +70,7 @@ export const RecentActivityWidget = observer(function RecentActivityWidget(props
     switch (activity.entity_name) {
       case "page":
       case "workspace_page":
-        return <RecentPage activity={activity} ref={ref} workspaceSlug={workspaceSlug} />;
+        return isPagesEnabled ? <RecentPage activity={activity} ref={ref} workspaceSlug={workspaceSlug} /> : null;
       case "project":
         return <RecentProject activity={activity} ref={ref} workspaceSlug={workspaceSlug} />;
       case "issue":
@@ -80,7 +85,9 @@ export const RecentActivityWidget = observer(function RecentActivityWidget(props
       <div ref={ref} className="max-h-[500px] overflow-y-scroll">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-14 font-semibold text-tertiary">{t("home.recents.title")}</div>
-          {showFilterSelect && <FiltersDropdown filters={filters} activeFilter={filter} setActiveFilter={setFilter} />}
+          {showFilterSelect && (
+            <FiltersDropdown filters={visibleFilters} activeFilter={filter} setActiveFilter={setFilter} />
+          )}
         </div>
         <div className="flex flex-col items-center justify-center">
           <RecentsEmptyState type={filter} />
@@ -97,7 +104,9 @@ export const RecentActivityWidget = observer(function RecentActivityWidget(props
     >
       <div className="mb-2 flex items-center justify-between">
         <div className="text-14 font-semibold text-tertiary">{t("home.recents.title")}</div>
-        {showFilterSelect && <FiltersDropdown filters={filters} activeFilter={filter} setActiveFilter={setFilter} />}
+        {showFilterSelect && (
+          <FiltersDropdown filters={visibleFilters} activeFilter={filter} setActiveFilter={setFilter} />
+        )}
       </div>
       <div className="flex min-h-[250px] flex-col">
         {isLoading && <WidgetLoader widgetKey={WIDGET_KEY} />}

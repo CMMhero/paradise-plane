@@ -82,6 +82,7 @@ export const ProfileSidebar = observer(function ProfileSidebar(props: TProfileSi
     window.addEventListener("resize", handleToggleProfileSidebar);
     handleToggleProfileSidebar();
     return () => window.removeEventListener("resize", handleToggleProfileSidebar);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- mount-only resize listener; adding deps would re-subscribe on every collapse toggle
   }, []);
 
   return (
@@ -177,7 +178,7 @@ export const ProfileSidebar = observer(function ProfileSidebar(props: TProfileSi
                                     completedIssuePercentage <= 35
                                       ? "bg-danger-subtle text-danger-primary"
                                       : completedIssuePercentage <= 70
-                                        ? "bg-yellow-500/10 text-yellow-500"
+                                        ? "bg-warning-subtle text-warning-primary"
                                         : "bg-success-subtle text-success-primary"
                                   }`}
                                 >
@@ -210,7 +211,7 @@ export const ProfileSidebar = observer(function ProfileSidebar(props: TProfileSi
                                 <div
                                   className="h-1 rounded-sm"
                                   style={{
-                                    backgroundColor: "#3f76ff",
+                                    backgroundColor: "var(--bg-accent-primary)",
                                     width: `${(project.assigned_issues / totalIssues) * 100}%`,
                                   }}
                                 />
@@ -242,7 +243,7 @@ export const ProfileSidebar = observer(function ProfileSidebar(props: TProfileSi
                               </div>
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  <div className="h-2.5 w-2.5 rounded-xs bg-[#3f76ff]" />
+                                  <div className="h-2.5 w-2.5 rounded-xs bg-accent-primary" />
                                   Assigned
                                 </div>
                                 <div className="font-medium">

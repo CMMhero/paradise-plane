@@ -10,7 +10,7 @@ import type { Control, UseFormSetValue } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { SlidersHorizontal } from "lucide-react";
 // plane package imports
-import { ANALYTICS_X_AXIS_VALUES, ANALYTICS_Y_AXIS_VALUES } from "@plane/constants";
+import { ANALYTICS_X_AXIS_VALUES, ANALYTICS_Y_AXIS_VALUES, isAnalyticsKeyAvailable } from "@plane/constants";
 import { CalendarLayoutIcon } from "@plane/propel/icons";
 import type { IAnalyticsParams } from "@plane/types";
 import { ChartYAxisMetric } from "@plane/types";
@@ -31,11 +31,17 @@ type Props = {
 export const AnalyticsSelectParams = observer(function AnalyticsSelectParams(props: Props) {
   const { control, params, classNames, isEpic } = props;
   const xAxisOptions = useMemo(
-    () => ANALYTICS_X_AXIS_VALUES.filter((option) => option.value !== params.group_by),
+    () =>
+      ANALYTICS_X_AXIS_VALUES.filter(
+        (option) => option.value !== params.group_by && isAnalyticsKeyAvailable(option.value)
+      ),
     [params.group_by]
   );
   const groupByOptions = useMemo(
-    () => ANALYTICS_X_AXIS_VALUES.filter((option) => option.value !== params.x_axis),
+    () =>
+      ANALYTICS_X_AXIS_VALUES.filter(
+        (option) => option.value !== params.x_axis && isAnalyticsKeyAvailable(option.value)
+      ),
     [params.x_axis]
   );
 

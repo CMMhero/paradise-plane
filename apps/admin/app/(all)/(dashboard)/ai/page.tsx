@@ -9,7 +9,9 @@ import useSWR from "swr";
 import { Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
+import { ApiKeysTabs } from "@/components/common/section-tabs";
 // hooks
+import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { useInstance } from "@/hooks/store";
 // types
 import type { Route } from "./+types/page";
@@ -17,6 +19,7 @@ import type { Route } from "./+types/page";
 import { InstanceAIForm } from "./form";
 
 const InstanceAIPage = observer(function InstanceAIPage(_props: Route.ComponentProps) {
+  const { s } = useGodmodeStrings();
   // store
   const { fetchInstanceConfigurations, formattedConfig } = useInstance();
 
@@ -25,10 +28,11 @@ const InstanceAIPage = observer(function InstanceAIPage(_props: Route.ComponentP
   return (
     <PageWrapper
       header={{
-        title: "AI features for all your workspaces",
-        description: "Atur kredensial API AI supaya fitur AI menyala untuk seluruh workspace.",
+        title: s.api_keys.title,
+        description: s.api_keys.ai_description,
       }}
     >
+      <ApiKeysTabs />
       {formattedConfig ? (
         <InstanceAIForm config={formattedConfig} />
       ) : (
@@ -45,6 +49,6 @@ const InstanceAIPage = observer(function InstanceAIPage(_props: Route.ComponentP
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Artificial Intelligence Settings - God Mode" }];
+export const meta: Route.MetaFunction = () => [{ title: "Artificial intelligence - God Mode" }];
 
 export default InstanceAIPage;

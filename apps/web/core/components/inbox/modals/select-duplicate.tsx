@@ -57,6 +57,7 @@ export function SelectDuplicateInboxIssueModal(props: Props) {
   useEffect(() => {
     if (!isOpen || !workspaceSlug || !projectId) return;
 
+    // oxlint-disable-next-line react/set-state-in-effect -- loading flag must flip when the search request starts
     setIsSearching(true);
     projectService
       .projectIssuesSearch(workspaceSlug.toString(), projectId.toString(), {
@@ -135,7 +136,7 @@ export function SelectDuplicateInboxIssueModal(props: Props) {
       <Combobox value={value} onChange={handleSubmit}>
         <div className="relative m-1">
           <SearchIcon
-            className="text-opacity-40 pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-primary"
+            className="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-placeholder"
             aria-hidden="true"
           />
           <input

@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
 import { Box, PenTool, Rocket, Monitor, RefreshCw } from "lucide-react";
@@ -38,6 +39,7 @@ const defaultValues = {
 };
 
 export const RoleSetupStep = observer(function RoleSetupStep({ handleStepChange }: Props) {
+  const { t } = useTranslation();
   // store hooks
   const { data: profile, updateUserProfile } = useUserProfile();
   // form info
@@ -91,10 +93,7 @@ export const RoleSetupStep = observer(function RoleSetupStep({ handleStepChange 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10">
       {/* Header */}
-      <CommonOnboardingHeader
-        title="What's your role?"
-        description="Sesuaikan Paradise Task Tracker dengan cara Anda bekerja."
-      />
+      <CommonOnboardingHeader title="What's your role?" description={t("shared_ui.onboarding_role_description")} />
       {/* Role Selection */}
       <div className="flex flex-col gap-3">
         <p className="text-body-sm-semibold text-placeholder">Select one</p>
@@ -131,7 +130,7 @@ export const RoleSetupStep = observer(function RoleSetupStep({ handleStepChange 
                     {isSelected && (
                       <>
                         <button
-                          className={`border-blue-500 flex size-4 items-center justify-center rounded-sm border-2 bg-accent-primary`}
+                          className={`flex size-4 items-center justify-center rounded-sm border-2 border-accent-strong bg-accent-primary`}
                         >
                           <CheckIcon className="h-3 w-3 text-on-color" />
                         </button>

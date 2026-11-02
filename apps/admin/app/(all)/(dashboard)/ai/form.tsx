@@ -130,7 +130,7 @@ export function InstanceAIForm(props: IInstanceAIForm) {
             Vendor model AI di sini ditentukan IT sendiri lewat kolom di atas. */}
         <div className="relative inline-flex items-center gap-1.5 rounded-sm border border-accent-subtle bg-accent-subtle px-4 py-2 text-caption-sm-regular text-accent-secondary">
           <Lightbulb className="size-4" />
-          <div>Kredensial ini dipakai bersama oleh seluruh workspace di instance ini.</div>
+          <div>These credentials are shared by every workspace on this instance.</div>
         </div>
       </div>
     </div>

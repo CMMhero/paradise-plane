@@ -5,6 +5,7 @@
  */
 
 import { Pencil, ExternalLink, Link, Trash2, ArchiveRestoreIcon } from "lucide-react";
+import { isParadiseModuleActive } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { ArchiveIcon } from "@plane/propel/icons";
 import type { TContextMenuItem } from "@plane/ui";
@@ -51,7 +52,8 @@ export const useQuickActionsFactory = () => {
       iconClassName: "mt-1",
       description: opts.description,
       disabled: opts.disabled,
-      shouldRender: opts.shouldRender,
+      // Kustomisasi Paradise: tanpa modul Archives, aksi arsip disembunyikan.
+      shouldRender: opts.shouldRender !== false && isParadiseModuleActive("archives"),
     }),
 
     createRestoreMenuItem: (handler: () => void, shouldRender: boolean = true): TContextMenuItem => ({

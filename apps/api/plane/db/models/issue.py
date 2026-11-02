@@ -59,15 +59,22 @@ def get_default_filters():
 
 
 def get_default_display_filters():
-    return {
-        "group_by": None,
-        "order_by": "-created_at",
-        "type": None,
-        "sub_issue": True,
-        "show_empty_groups": True,
-        "layout": "list",
-        "calendar_date_range": "",
-    }
+    # Kustomisasi Paradise: tata letak work item bawaan diatur Super Admin di God
+    # Mode (bawaan member, bagian `work_items`; pabriknya Board). Hanya
+    # ProjectUserProperty yang memakai fungsi ini (selain migrasi lama).
+    from plane.utils.bawaan_member import filter_tampilan, tata_letak_bawaan
+
+    return filter_tampilan(
+        tata_letak_bawaan(),
+        {
+            "group_by": None,
+            "order_by": "-created_at",
+            "type": None,
+            "sub_issue": True,
+            "show_empty_groups": True,
+            "calendar_date_range": "",
+        },
+    )
 
 
 def get_default_display_properties():
@@ -180,6 +187,7 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
     def save(self, *args, **kwargs):
         self._ensure_default_state()
         kwargs = self._sync_completed_at(kwargs)
+        kwargs = self._sync_tanggal_otomatis(kwargs)
 
         if self._state.adding:
             with transaction.atomic():
@@ -220,6 +228,7 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
                 else strip_tags(self.description_html)
             )
             super(Issue, self).save(*args, **kwargs)
+        self.catat_tanggal_otomatis()
 
     def __str__(self):
         """Return name of the issue"""
@@ -253,6 +262,92 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         if update_fields is not None:
             kwargs["update_fields"] = list(set(update_fields) | {"completed_at"})
         return kwargs
+
+    def _sync_tanggal_otomatis(self, kwargs):
+        """Isi start_date/target_date yang kosong saat status berpindah (KEP-41).
+
+        Masuk `started` -> tanggal mulai. Masuk `completed` -> tanggal selesai,
+        KECUALI `_tahan_tanggal_selesai` disetel: staf yang menggeser ke selesai
+        masih menunggu atasan, dan tanggalnya baru diisi saat disetujui
+        (`isi_tanggal_selesai`). Aturan isinya di `plane/utils/tanggal_otomatis.py`.
+        """
+        self._tanggal_otomatis = []
+        if not self.state:
+            return kwargs
+        if not self._state.adding and not self.has_changed("state_id"):
+            return kwargs
+
+        from plane.utils.tanggal_otomatis import mulai_otomatis, selesai_otomatis, tanggal_lokal
+
+        group = self.state.group
+        if group == StateGroup.STARTED.value:
+            baru = mulai_otomatis(self.start_date, self.target_date, tanggal_lokal(None, self.project.timezone))
+            field = "start_date"
+        elif group == StateGroup.COMPLETED.value and not getattr(self, "_tahan_tanggal_selesai", False):
+            baru = selesai_otomatis(
+                self.start_date, self.target_date, tanggal_lokal(self.completed_at, self.project.timezone)
+            )
+            field = "target_date"
+        else:
+            return kwargs
+        if baru is None:
+            return kwargs
+
+        setattr(self, field, baru)
+        self._tanggal_otomatis = [(field, baru)]
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = list(set(update_fields) | {field})
+        return kwargs
+
+    def isi_tanggal_selesai(self, actor_id=None):
+        """Isi target_date yang kosong untuk tugas yang SUDAH selesai.
+
+        Dipakai saat atasan menyetujui tugas yang sejak diajukan sudah berstatus
+        selesai (statusnya tidak berpindah, jadi `save()` tidak memicu apa pun).
+        Tanggalnya = hari tugas digeser ke selesai (`completed_at`), bukan hari
+        disetujui: lamanya menunggu atasan bukan lamanya pengerjaan.
+        """
+        from plane.utils.tanggal_otomatis import selesai_otomatis, tanggal_lokal
+
+        if not self.state or self.state.group != StateGroup.COMPLETED.value:
+            return
+        baru = selesai_otomatis(
+            self.start_date, self.target_date, tanggal_lokal(self.completed_at, self.project.timezone)
+        )
+        if baru is None:
+            return
+        self.target_date = baru
+        # Lewat induk: status tidak berpindah, hook `save()` milik Issue tak relevan.
+        super(Issue, self).save(update_fields=["target_date", "updated_at"])
+        self._tanggal_otomatis = [("target_date", baru)]
+        self.catat_tanggal_otomatis(actor_id=actor_id)
+
+    def catat_tanggal_otomatis(self, actor_id=None):
+        """Tulis aktivitas untuk tanggal yang diisi sistem, supaya tidak tampak
+        seperti ada orang yang diam-diam mengubah tugas."""
+        isian = getattr(self, "_tanggal_otomatis", None)
+        if not isian:
+            return
+        self._tanggal_otomatis = []
+        label = {"start_date": "start date", "target_date": "due date"}
+        IssueActivity.objects.bulk_create(
+            [
+                IssueActivity(
+                    issue_id=self.id,
+                    actor_id=actor_id or self.updated_by_id,
+                    verb="updated",
+                    old_value="",
+                    new_value=str(nilai),
+                    field=field,
+                    project_id=self.project_id,
+                    workspace_id=self.workspace_id,
+                    comment=f"automatically set the {label[field]} to ",
+                    epoch=timezone.now().timestamp(),
+                )
+                for field, nilai in isian
+            ]
+        )
 
 
 class IssueBlocker(ProjectBaseModel):

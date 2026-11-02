@@ -10,7 +10,8 @@ from django.utils import timezone
 # Module imports
 from .base import BaseModel
 
-# Retensi riwayat. Permintaan kantor: bisa ditelusuri mundur sampai 3 bulan.
+# Retensi riwayat BAWAAN (3 bulan, permintaan kantor). Nilai yang berlaku diatur di
+# God Mode > Features lewat LOGIN_HISTORY_RETENTION_DAYS (`setelan_angka`).
 RETENSI_HARI = 90
 
 # Ambang "sedang aktif". Sesi boleh hidup berhari-hari, jadi keberadaan baris di
@@ -39,9 +40,7 @@ class LoginActivity(BaseModel):
         LOGIN = "LOGIN", "Login"
         LOGOUT = "LOGOUT", "Logout"
 
-    user = models.ForeignKey(
-        "db.User", related_name="login_activities", on_delete=models.CASCADE
-    )
+    user = models.ForeignKey("db.User", related_name="login_activities", on_delete=models.CASCADE)
     jenis = models.CharField(max_length=10, choices=Jenis.choices)
     terjadi_pada = models.DateTimeField(default=timezone.now, db_index=True)
 

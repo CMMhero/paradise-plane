@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Acceso al wiki",
-      "description": "Elija qué divisiones pueden editar cada carpeta de nivel superior. Todos los miembros del proyecto pueden seguir leyendo todas las páginas."
-    },
     "trash": {
       "heading": "Papelera",
       "description": "Los elementos eliminados llegan aquí antes de borrarse definitivamente. Los administradores del proyecto pueden restaurarlos o eliminarlos de forma permanente."

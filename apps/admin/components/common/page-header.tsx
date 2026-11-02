@@ -10,7 +10,7 @@ type TPageHeader = {
 };
 
 export function PageHeader(props: TPageHeader) {
-  const { title = "God Mode, Paradise Task Tracker", description = "Panel administrasi instance." } = props;
+  const { title = "God Mode, Paradise Task Tracker", description = "Instance administration panel." } = props;
 
   return (
     <>

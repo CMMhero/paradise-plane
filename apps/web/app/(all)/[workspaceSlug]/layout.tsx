@@ -10,6 +10,7 @@ import { WorkspaceContentWrapper } from "@/plane-web/components/workspace/conten
 import { AppRailVisibilityProvider } from "@/lib/app-rail";
 import { GlobalModals } from "@/plane-web/components/common/modal/global";
 import { PenjagaNotifikasi } from "@/components/notifikasi/penjaga";
+import { PendengarPengajuanPersetujuan } from "@/components/issues/approval-requested-listener";
 import { WorkspaceAuthWrapper } from "@/layouts/auth-layout/workspace-wrapper";
 import type { Route } from "./+types/layout";
 
@@ -27,6 +28,7 @@ export default function WorkspaceLayout(props: Route.ComponentProps) {
                 muncul di halaman yang bersangkutan tidak memberi tahu apa pun: orangnya
                 sudah ada di sana. */}
             <PenjagaNotifikasi workspaceSlug={workspaceSlug} />
+            <PendengarPengajuanPersetujuan />
             <Outlet />
           </WorkspaceContentWrapper>
         </AppRailVisibilityProvider>

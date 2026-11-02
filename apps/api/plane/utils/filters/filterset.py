@@ -5,10 +5,10 @@
 import copy
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, OuterRef, Q, Subquery
 from django_filters import FilterSet, filters
 
-from plane.db.models import Issue
+from plane.db.models import Issue, PersetujuanPenugasan
 
 
 class UUIDInFilter(filters.BaseInFilter, filters.UUIDFilter):
@@ -157,6 +157,12 @@ class IssueFilterSet(BaseFilterSet):
     subscriber_id = filters.UUIDFilter(method="filter_subscriber_id")
     subscriber_id__in = UUIDInFilter(method="filter_subscriber_id_in", lookup_expr="in")
 
+    # Kustomisasi Paradise: status persetujuan penugasan (KEP-25). Bukan kolom
+    # Issue, jadi disaring lewat baris persetujuan TERBARU per tugas, sama
+    # dengan yang dibaca badge (`status_persetujuan_tugas`).
+    approval_status = filters.CharFilter(method="filter_approval_status")
+    approval_status__in = CharInFilter(method="filter_approval_status_in", lookup_expr="in")
+
     class Meta:
         model = Issue
         fields = {
@@ -264,3 +270,28 @@ class IssueFilterSet(BaseFilterSet):
             issue_subscribers__subscriber_id__in=value,
             issue_subscribers__deleted_at__isnull=True,
         )
+
+    def filter_approval_status(self, queryset, name, value):
+        """Filter by latest approval status (menunggu/disetujui/ditolak)"""
+        return q_approval_status([value])
+
+    def filter_approval_status_in(self, queryset, name, value):
+        """Filter by latest approval status (in)"""
+        return q_approval_status(value)
+
+
+def q_approval_status(values):
+    """Q for issues whose LATEST approval row has one of `values`.
+
+    Only the newest row counts: a task that was rejected and then resubmitted
+    has an old `ditolak` row and a new `menunggu` row, and it is pending.
+    """
+    terbaru = (
+        PersetujuanPenugasan.objects.filter(issue_id=OuterRef("issue_id")).order_by("-created_at").values("id")[:1]
+    )
+    issue_ids = (
+        PersetujuanPenugasan.objects.annotate(terbaru_id=Subquery(terbaru))
+        .filter(id=F("terbaru_id"), status__in=list(values))
+        .values("issue_id")
+    )
+    return Q(pk__in=issue_ids)

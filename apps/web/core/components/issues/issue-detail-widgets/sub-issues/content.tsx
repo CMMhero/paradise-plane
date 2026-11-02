@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { observer } from "mobx-react";
 import type { TIssue, TIssueServiceType } from "@plane/types";
 import { EIssueServiceType, EIssuesStoreType } from "@plane/types";
@@ -83,20 +83,36 @@ export const SubIssuesCollapsibleContent = observer(function SubIssuesCollapsibl
     [issueCrudState]
   );
 
+  // Kustomisasi Paradise: `setSubIssueHelpers` itu SAKLAR (ada = dicabut). Efek di
+  // bawah jalan dua kali di StrictMode (dev) atau saat dipasang ulang; dua fetch
+  // yang balapan sama-sama lolos cek "belum tampil", lalu menyaklar visibilitas
+  // nyala lalu MATI lagi: daftar sub work item berkedip lalu hilang. Jadi nilai
+  // disetel, bukan disaklar, dan fetch yang masih jalan tidak diulang.
+  const sedangMemuat = useRef<string | null>(null);
+  const setelHelper = useCallback(
+    (kunci: "issue_visibility" | "preview_loader", nyala: boolean) => {
+      const sekarang = subIssueHelpersByIssueId(`${parentIssueId}_root`)[kunci].includes(parentIssueId);
+      if (sekarang !== nyala) setSubIssueHelpers(`${parentIssueId}_root`, kunci, parentIssueId);
+    },
+    [parentIssueId, setSubIssueHelpers, subIssueHelpersByIssueId]
+  );
+
   const handleFetchSubIssues = useCallback(async () => {
     const currentSubIssueHelpers = subIssueHelpersByIssueId(`${parentIssueId}_root`);
-    if (!currentSubIssueHelpers.issue_visibility.includes(parentIssueId)) {
-      try {
-        setSubIssueHelpers(`${parentIssueId}_root`, "preview_loader", parentIssueId);
-        await subIssueOperations.fetchSubIssues(workspaceSlug, projectId, parentIssueId);
-        setSubIssueHelpers(`${parentIssueId}_root`, "issue_visibility", parentIssueId);
-      } catch (error) {
-        console.error("Error fetching sub-work items:", error);
-      } finally {
-        setSubIssueHelpers(`${parentIssueId}_root`, "preview_loader", "");
-      }
+    if (currentSubIssueHelpers.issue_visibility.includes(parentIssueId)) return;
+    if (sedangMemuat.current === parentIssueId) return;
+    sedangMemuat.current = parentIssueId;
+    try {
+      setelHelper("preview_loader", true);
+      await subIssueOperations.fetchSubIssues(workspaceSlug, projectId, parentIssueId);
+      setelHelper("issue_visibility", true);
+    } catch (error) {
+      console.error("Error fetching sub-work items:", error);
+    } finally {
+      setelHelper("preview_loader", false);
+      if (sedangMemuat.current === parentIssueId) sedangMemuat.current = null;
     }
-  }, [parentIssueId, projectId, setSubIssueHelpers, subIssueHelpersByIssueId, subIssueOperations, workspaceSlug]);
+  }, [parentIssueId, projectId, setelHelper, subIssueHelpersByIssueId, subIssueOperations, workspaceSlug]);
 
   useEffect(() => {
     handleFetchSubIssues();

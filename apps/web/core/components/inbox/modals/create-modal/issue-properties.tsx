@@ -24,6 +24,7 @@ import { IssueLabelSelect } from "@/components/issues/select";
 // helpers
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
+import { useProject } from "@/hooks/store/use-project";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
 type TInboxIssueProperties = {
@@ -37,7 +38,10 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
   const { projectId, data, handleData, isVisible = false } = props;
   // hooks
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
+  const { getProjectById } = useProject();
   const { isMobile } = usePlatformOS();
+  // Kustomisasi Paradise: flag ini sudah dipaksa false bila modulnya dimatikan di God Mode.
+  const projectDetails = getProjectById(projectId);
   // states
   const [parentIssueModalOpen, setParentIssueModalOpen] = useState(false);
   const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | undefined>(undefined);
@@ -128,7 +132,7 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
       </div>
 
       {/* cycle */}
-      {isVisible && (
+      {isVisible && projectDetails?.cycle_view && (
         <div className="h-7">
           <CycleDropdown
             value={data?.cycle_id || ""}
@@ -142,7 +146,7 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
       )}
 
       {/* module */}
-      {isVisible && (
+      {isVisible && projectDetails?.module_view && (
         <div className="h-7">
           <ModuleDropdown
             value={data?.module_ids || []}

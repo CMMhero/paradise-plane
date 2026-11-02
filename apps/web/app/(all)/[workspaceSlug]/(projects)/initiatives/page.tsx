@@ -11,8 +11,10 @@ import { useParams } from "react-router";
 import { Link2, Plus, Target, Trash2, X } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // components
+import { TintedIconBox, tintHueFromKey } from "@/components/common/tint";
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
@@ -22,16 +24,18 @@ import { InitiativeService, type TInitiative, type TInitiativeStatus } from "@/s
 
 const initiativeService = new InitiativeService();
 
+// `label` adalah KUNCI i18n, diterjemahkan saat dirender.
 const STATUS: { value: TInitiativeStatus; label: string; cls: string }[] = [
-  { value: "PLANNED", label: "Direncanakan", cls: "bg-layer-3 text-secondary" },
-  { value: "ACTIVE", label: "Berjalan", cls: "bg-amber-500/10 text-amber-600" },
-  { value: "ON_HOLD", label: "Ditunda", cls: "bg-layer-3 text-tertiary" },
-  { value: "COMPLETED", label: "Selesai", cls: "bg-green-500/10 text-green-600" },
+  { value: "PLANNED", label: "initiatives_ui.status.planned", cls: "bg-label-indigo-bg text-label-indigo-text" },
+  { value: "ACTIVE", label: "initiatives_ui.status.active", cls: "bg-warning-subtle text-warning-primary" },
+  { value: "ON_HOLD", label: "initiatives_ui.status.on_hold", cls: "bg-layer-3 text-tertiary" },
+  { value: "COMPLETED", label: "initiatives_ui.status.completed", cls: "bg-success-subtle text-success-primary" },
 ];
 
-const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-xs outline-none focus:border-accent";
+const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-12 outline-none focus:border-accent-strong";
 
 function InitiativesPage() {
+  const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   // store
   const { workspaceProjectIds, getProjectById } = useProject();
@@ -57,6 +61,7 @@ function InitiativesPage() {
   }, [workspaceSlug]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- initial data load triggers state updates by design
     void fetchInitiatives();
   }, [fetchInitiatives]);
 
@@ -66,10 +71,10 @@ function InitiativesPage() {
       await initiativeService.create(workspaceSlug, { name: newName.trim() });
       setNewName("");
       await fetchInitiatives();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Tersimpan", message: "Initiative dibuat." });
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("initiatives_ui.saved"), message: t("initiatives_ui.created") });
     } catch (err) {
-      const message = (err as { error?: string })?.error ?? "Gagal membuat initiative.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+      const message = (err as { error?: string })?.error ?? t("initiatives_ui.create_failed");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("initiatives_ui.failed"), message });
     }
   };
 
@@ -79,18 +84,26 @@ function InitiativesPage() {
       await initiativeService.update(workspaceSlug, item.id, { status: statusValue });
       await fetchInitiatives();
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message: "Tidak bisa mengubah status." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("initiatives_ui.failed"),
+        message: t("initiatives_ui.status_failed"),
+      });
     }
   };
 
   const handleDelete = async (item: TInitiative) => {
     if (!workspaceSlug) return;
-    if (!window.confirm(`Hapus initiative "${item.name}"?`)) return;
+    if (!window.confirm(t("initiatives_ui.confirm_delete", { name: item.name }))) return;
     try {
       await initiativeService.remove(workspaceSlug, item.id);
       await fetchInitiatives();
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message: "Tidak bisa menghapus." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("initiatives_ui.failed"),
+        message: t("initiatives_ui.delete_failed"),
+      });
     }
   };
 
@@ -102,8 +115,8 @@ function InitiativesPage() {
       setLinkDrafts((prev) => ({ ...prev, [item.id]: "" }));
       await fetchInitiatives();
     } catch (err) {
-      const message = (err as { error?: string })?.error ?? "Gagal menautkan divisi.";
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+      const message = (err as { error?: string })?.error ?? t("initiatives_ui.link_failed");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("initiatives_ui.failed"), message });
     }
   };
 
@@ -113,7 +126,11 @@ function InitiativesPage() {
       await initiativeService.unlinkProject(workspaceSlug, item.id, projectId);
       await fetchInitiatives();
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message: "Tidak bisa melepas tautan." });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("initiatives_ui.failed"),
+        message: t("initiatives_ui.unlink_failed"),
+      });
     }
   };
 
@@ -129,18 +146,16 @@ function InitiativesPage() {
         <div className="flex flex-col gap-1 border-b border-subtle pb-3">
           <div className="flex items-center gap-2">
             <Target className="size-5 text-secondary" />
-            <h2 className="text-lg font-semibold text-primary">Initiatives</h2>
+            <h2 className="text-16 font-semibold text-primary">Initiatives</h2>
           </div>
-          <p className="text-sm text-tertiary">
-            Misi & objektif besar perusahaan, payungi beberapa divisi dan pantau progres gabungannya.
-          </p>
+          <p className="text-13 text-tertiary">{t("initiatives_ui.description")}</p>
         </div>
 
         {isWorkspaceAdmin && (
           <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="nama initiative baru (mis. Digitalisasi Gudang 2026)"
+              placeholder={t("initiatives_ui.name_placeholder")}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
@@ -151,47 +166,59 @@ function InitiativesPage() {
             <button
               type="button"
               onClick={handleCreate}
-              className="bg-accent text-xs flex items-center gap-1 rounded px-2.5 py-1 font-medium text-on-color"
+              className="flex items-center gap-1 rounded bg-accent-primary px-2.5 py-1 text-12 font-medium text-on-color hover:bg-accent-primary-hover"
             >
-              <Plus className="size-3.5" /> Buat Initiative
+              <Plus className="size-3.5" /> {t("initiatives_ui.create")}
             </button>
           </div>
         )}
 
         {isLoading ? (
-          <p className="text-sm text-tertiary">Memuat…</p>
+          <p className="text-13 text-tertiary">{t("chat_ui.loading")}</p>
         ) : initiatives.length === 0 ? (
-          <p className="text-sm text-tertiary">Belum ada initiative.</p>
+          <p className="text-13 text-tertiary">{t("initiatives_ui.empty")}</p>
         ) : (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {initiatives.map((item) => {
               const pct = item.issues_total > 0 ? Math.round((item.issues_completed / item.issues_total) * 100) : 0;
               const statusInfo = STATUS.find((s) => s.value === item.status) ?? STATUS[0];
               return (
-                <div key={item.id} className="flex flex-col gap-2.5 rounded-md border border-subtle px-4 py-3">
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-2.5 rounded-md border border-subtle bg-layer-1 px-4 py-3"
+                >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-primary">{item.name}</p>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <TintedIconBox hue={tintHueFromKey(item.id)}>
+                        <Target />
+                      </TintedIconBox>
+                      <p className="text-13 font-semibold text-primary">{item.name}</p>
+                    </div>
                     <div className="flex shrink-0 items-center gap-2">
                       {isWorkspaceAdmin ? (
                         <select
                           value={item.status}
                           onChange={(e) => void handleStatusChange(item, e.target.value as TInitiativeStatus)}
-                          className={`rounded px-1.5 py-0.5 text-[11px] font-medium outline-none ${statusInfo.cls}`}
+                          className={`rounded px-1.5 py-0.5 text-11 font-medium outline-none ${statusInfo.cls}`}
                         >
                           {STATUS.map((s) => (
                             <option key={s.value} value={s.value}>
-                              {s.label}
+                              {t(s.label)}
                             </option>
                           ))}
                         </select>
                       ) : (
-                        <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${statusInfo.cls}`}>
-                          {statusInfo.label}
+                        <span className={`rounded px-1.5 py-0.5 text-11 font-medium ${statusInfo.cls}`}>
+                          {t(statusInfo.label)}
                         </span>
                       )}
                       {isWorkspaceAdmin && (
-                        <button type="button" onClick={() => handleDelete(item)} aria-label={`Hapus ${item.name}`}>
-                          <Trash2 className="hover:text-red-500 size-4 text-tertiary" />
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item)}
+                          aria-label={t("initiatives_ui.delete_named", { name: item.name })}
+                        >
+                          <Trash2 className="size-4 text-tertiary hover:text-danger-primary" />
                         </button>
                       )}
                     </div>
@@ -200,9 +227,9 @@ function InitiativesPage() {
                   {/* Progress */}
                   <div className="flex items-center gap-2">
                     <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-layer-3">
-                      <div className="h-full rounded-full bg-[#ED1F24]" style={{ width: `${pct}%` }} />
+                      <div className="h-full rounded-full bg-accent-primary" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-xs shrink-0 text-tertiary">
+                    <span className="shrink-0 text-12 text-tertiary">
                       {item.issues_completed}/{item.issues_total} · {pct}%
                     </span>
                   </div>
@@ -215,16 +242,16 @@ function InitiativesPage() {
                       return (
                         <span
                           key={pid}
-                          className="flex items-center gap-1 rounded-full border border-subtle px-2 py-0.5 text-[11px] text-secondary"
+                          className="flex items-center gap-1 rounded-full border border-subtle px-2 py-0.5 text-11 text-secondary"
                         >
                           {proj.name}
                           {isWorkspaceAdmin && (
                             <button
                               type="button"
                               onClick={() => handleUnlink(item, pid)}
-                              aria-label={`Lepas ${proj.name}`}
+                              aria-label={t("initiatives_ui.unlink_named", { name: proj.name })}
                             >
-                              <X className="hover:text-red-500 size-3 text-tertiary" />
+                              <X className="size-3 text-tertiary hover:text-danger-primary" />
                             </button>
                           )}
                         </span>
@@ -235,9 +262,9 @@ function InitiativesPage() {
                         <select
                           value={linkDrafts[item.id] ?? ""}
                           onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          className={`${inputClass} text-[11px]`}
+                          className={`${inputClass} text-11`}
                         >
-                          <option value="">tautkan divisi…</option>
+                          <option value="">{t("initiatives_ui.link_placeholder")}</option>
                           {availableProjects(item).map((pid) => {
                             const proj = getProjectById(pid);
                             if (!proj) return null;
@@ -251,7 +278,7 @@ function InitiativesPage() {
                         <button
                           type="button"
                           onClick={() => handleLink(item)}
-                          aria-label="Tautkan divisi"
+                          aria-label={t("initiatives_ui.link_division")}
                           className="rounded border border-subtle p-1 text-secondary hover:bg-layer-2"
                         >
                           <Link2 className="size-3.5" />

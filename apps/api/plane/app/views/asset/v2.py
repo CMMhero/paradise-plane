@@ -621,9 +621,9 @@ class ProjectAssetEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ACL Wiki: unggah ke halaman di Wiki ber-governance hanya
-        # boleh oleh admin project atau anggota divisi pemilik folder, biar gate
-        # ini tidak jadi celah samping dari izin halaman.
+        # ACL Wiki: unggah ke halaman di Wiki ber-governance hanya boleh oleh
+        # admin atau anggota departemen pemilik folder (KEP-51), biar gate ini
+        # tidak jadi celah samping dari izin halaman.
         if (
             entity_type
             in (
@@ -633,7 +633,6 @@ class ProjectAssetEndpoint(BaseAPIView):
             and is_wiki_governed(project_id)
         ):
             page = Page.objects.filter(id=entity_identifier, workspace__slug=slug).first()
-            # Hanya admin workspace / Super Admin (keputusan user 2026-10-26).
             if not (page and can_edit_wiki_page(request.user, page)):
                 return Response(
                     {"error": "Anda tidak berhak mengunggah ke folder ini.", "status": False},
@@ -718,8 +717,8 @@ class ProjectAssetEndpoint(BaseAPIView):
         ):
             return Response(
                 {
-                    "error": "Hanya pengunggahnya, admin/kepala/SPV divisi pemilik folder, "
-                    "atau Super Admin yang boleh menghapus materi ini."
+                    "error": "Hanya pengunggahnya, admin workspace, atau Super Admin "
+                    "yang boleh menghapus materi ini."
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )

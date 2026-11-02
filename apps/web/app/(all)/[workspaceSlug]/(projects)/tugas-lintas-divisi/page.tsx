@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: halaman pengirim permintaan lintas divisi 
+ * Kustomisasi Paradise Task Tracker: halaman pengirim permintaan lintas divisi
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { useParams } from "react-router";
 import { AlertTriangle, ArrowLeftRight, Clock, Inbox, ListTodo, Send } from "lucide-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // components
 import { PageHead } from "@/components/core/page-title";
@@ -27,50 +28,51 @@ import {
 
 const crossDivisionService = new CrossDivisionService();
 
-const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-xs outline-none focus:border-accent";
+const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-12 outline-none focus:border-accent-strong";
 
+// `label` di semua peta ini adalah KUNCI i18n, diterjemahkan saat dirender.
 const PRIORITAS: { value: string; label: string }[] = [
-  { value: "none", label: "Tidak ada" },
-  { value: "low", label: "Rendah" },
-  { value: "medium", label: "Sedang" },
-  { value: "high", label: "Tinggi" },
-  { value: "urgent", label: "Mendesak" },
+  { value: "none", label: "cross_division_ui.priority.none" },
+  { value: "low", label: "cross_division_ui.priority.low" },
+  { value: "medium", label: "cross_division_ui.priority.medium" },
+  { value: "high", label: "cross_division_ui.priority.high" },
+  { value: "urgent", label: "cross_division_ui.priority.urgent" },
 ];
 
 // Kosakata status dipakai APA ADANYA dari API (jangan diterjemahkan jadi teks
 // lain); yang ada di sini hanya label tampilan. `Record<string, string>` supaya
 // status yang belum dikenal tetap ditampilkan mentah, bukan hilang.
 const LABEL_STATUS_PERMINTAAN: Record<string, string> = {
-  menunggu: "Menunggu",
-  ditunda: "Ditunda",
-  ditolak: "Ditolak",
-  duplikat: "Duplikat",
-  diterima: "Diterima",
-  dibatalkan: "Dibatalkan",
+  menunggu: "cross_division_ui.request_status.pending",
+  ditunda: "cross_division_ui.request_status.snoozed",
+  ditolak: "cross_division_ui.request_status.declined",
+  duplikat: "cross_division_ui.request_status.duplicate",
+  diterima: "cross_division_ui.request_status.accepted",
+  dibatalkan: "cross_division_ui.request_status.cancelled",
 };
 
 const KELAS_STATUS_PERMINTAAN: Record<string, string> = {
-  menunggu: "bg-amber-500/10 text-amber-600",
+  menunggu: "bg-warning-subtle text-warning-primary",
   ditunda: "bg-layer-3 text-secondary",
-  ditolak: "bg-red-500/10 text-red-600",
+  ditolak: "bg-danger-subtle text-danger-primary",
   duplikat: "bg-layer-3 text-tertiary",
-  diterima: "bg-green-500/10 text-green-600",
+  diterima: "bg-success-subtle text-success-primary",
   dibatalkan: "bg-layer-3 text-tertiary",
 };
 
 const LABEL_STATUS_TUGAS: Record<string, string> = {
-  belum_diterima: "Belum diterima",
-  terbuka: "Terbuka",
-  selesai: "Selesai",
-  dibatalkan: "Dibatalkan",
-  tidak_dikerjakan: "Tidak dikerjakan",
+  belum_diterima: "cross_division_ui.task_status.not_accepted",
+  terbuka: "cross_division_ui.task_status.open",
+  selesai: "cross_division_ui.task_status.done",
+  dibatalkan: "cross_division_ui.task_status.cancelled",
+  tidak_dikerjakan: "cross_division_ui.task_status.wont_do",
 };
 
 const KELAS_STATUS_TUGAS: Record<string, string> = {
   belum_diterima: "bg-layer-3 text-tertiary",
-  terbuka: "bg-blue-500/10 text-blue-600",
-  selesai: "bg-green-500/10 text-green-600",
-  dibatalkan: "bg-red-500/10 text-red-600",
+  terbuka: "bg-accent-subtle text-accent-primary",
+  selesai: "bg-success-subtle text-success-primary",
+  dibatalkan: "bg-danger-subtle text-danger-primary",
   tidak_dikerjakan: "bg-layer-3 text-tertiary",
 };
 
@@ -105,18 +107,22 @@ const keHtmlParagraf = (teks: string): string => {
     .join("");
 };
 
-const formatTanggal = (nilai: string): string => {
+const formatTanggal = (nilai: string, lokal: string): string => {
   const tanggal = new Date(nilai);
   if (Number.isNaN(tanggal.getTime())) return "—";
-  return tanggal.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+  return tanggal.toLocaleDateString(lokal, { day: "2-digit", month: "short", year: "numeric" });
 };
 
-const labelStatusPermintaan = (nilai: TStatusPermintaan): string => LABEL_STATUS_PERMINTAAN[nilai] ?? nilai;
+type TTerjemah = (key: string) => string;
 
-const labelStatusTugas = (nilai: TStatusTugas): string => LABEL_STATUS_TUGAS[nilai] ?? nilai;
+const labelStatusPermintaan = (nilai: TStatusPermintaan, t: TTerjemah): string =>
+  LABEL_STATUS_PERMINTAAN[nilai] ? t(LABEL_STATUS_PERMINTAAN[nilai]) : nilai;
+
+const labelStatusTugas = (nilai: TStatusTugas, t: TTerjemah): string =>
+  LABEL_STATUS_TUGAS[nilai] ? t(LABEL_STATUS_TUGAS[nilai]) : nilai;
 
 function Badge({ label, className }: { label: string; className: string }) {
-  return <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${className}`}>{label}</span>;
+  return <span className={`inline-block rounded-full px-2 py-0.5 text-11 font-medium ${className}`}>{label}</span>;
 }
 
 type TStatCard = { label: string; value: string; keterangan: string; icon: React.ReactNode };
@@ -126,15 +132,16 @@ function StatCard({ label, value, keterangan, icon }: TStatCard) {
     <div className="flex items-center gap-3 rounded-md border border-subtle bg-layer-1 px-4 py-3">
       <div className="shrink-0 text-secondary">{icon}</div>
       <div className="min-w-0">
-        <p className="text-lg font-semibold text-primary">{value}</p>
-        <p className="text-xs truncate text-tertiary">{label}</p>
-        <p className="truncate text-[11px] text-tertiary">{keterangan}</p>
+        <p className="text-16 font-semibold text-primary">{value}</p>
+        <p className="truncate text-12 text-tertiary">{label}</p>
+        <p className="truncate text-11 text-tertiary">{keterangan}</p>
       </div>
     </div>
   );
 }
 
 function TugasLintasDivisiPage() {
+  const { t, currentLocale } = useTranslation();
   const { workspaceSlug } = useParams();
   // store: divisi asal = divisi tempat SAYA anggota. `joinedProjectIds`
   // menyaring `member_role` dari project store, jadi tidak perlu endpoint baru;
@@ -181,13 +188,14 @@ function TugasLintasDivisiPage() {
     } catch (err) {
       // Pesan dari API ditampilkan apa adanya; kegagalan senyap adalah kelas bug
       // termahal di proyek ini.
-      setGagalMuat(pesanGagal(err, "Gagal memuat data lintas divisi. Coba muat ulang halaman."));
+      setGagalMuat(pesanGagal(err, t("cross_division_ui.load_failed")));
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceSlug]);
+  }, [workspaceSlug, t]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- initial data load triggers state updates by design
     void muatSemua();
   }, [muatSemua]);
 
@@ -203,15 +211,15 @@ function TugasLintasDivisiPage() {
     if (!workspaceSlug) return;
     setGagalKirim(null);
     if (!asalId) {
-      setGagalKirim("Pilih divisi asal dulu.");
+      setGagalKirim(t("cross_division_ui.error_pick_origin"));
       return;
     }
     if (!tujuanDipilih) {
-      setGagalKirim("Pilih divisi tujuan dulu.");
+      setGagalKirim(t("cross_division_ui.error_pick_target"));
       return;
     }
     if (!judul.trim()) {
-      setGagalKirim("Judul permintaan wajib diisi.");
+      setGagalKirim(t("cross_division_ui.error_title_required"));
       return;
     }
     setIsSending(true);
@@ -230,11 +238,15 @@ function TugasLintasDivisiPage() {
       // Muat ulang daftarnya supaya baris baru langsung terlihat, alih-alih
       // menebak bentuk balasan POST di state lokal.
       await muatSemua();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Terkirim", message: "Permintaan diteruskan ke divisi tujuan." });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("cross_division_ui.sent_title"),
+        message: t("cross_division_ui.sent_message"),
+      });
     } catch (err) {
-      const pesan = pesanGagal(err, "Gagal mengirim permintaan.");
+      const pesan = pesanGagal(err, t("cross_division_ui.send_failed_message"));
       setGagalKirim(pesan);
-      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal mengirim", message: pesan });
+      setToast({ type: TOAST_TYPE.ERROR, title: t("cross_division_ui.send_failed_title"), message: pesan });
     } finally {
       setIsSending(false);
     }
@@ -244,17 +256,13 @@ function TugasLintasDivisiPage() {
 
   return (
     <div className="h-full w-full overflow-y-auto px-6 py-5">
-      <PageHead title="Tugas Lintas Divisi" />
+      <PageHead title={t("cross_division_ui.title")} />
 
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <p className="text-xs text-tertiary">
-          Pekerjaan yang lahir di divisimu tapi harus dikerjakan divisi lain dikirim lewat halaman ini. Permintaan masuk
-          ke kotak masuk (Intake) divisi tujuan, dan admin divisi itu yang memutuskan menerima atau menolak. Kamu tidak
-          mendapat akses ke isi divisi tujuan, dan sebaliknya.
-        </p>
+        <p className="text-12 text-tertiary">{t("cross_division_ui.intro")}</p>
 
         {gagalMuat ? (
-          <div className="border-red-500/30 bg-red-500/5 text-xs text-red-600 flex items-start gap-2 rounded-md border px-3 py-2">
+          <div className="flex items-start gap-2 rounded-md border border-danger-subtle bg-danger-subtle px-3 py-2 text-12 text-danger-primary">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <div className="flex flex-col gap-1">
               <span>{gagalMuat}</span>
@@ -263,52 +271,50 @@ function TugasLintasDivisiPage() {
                 onClick={() => void muatSemua()}
                 className="self-start rounded border border-subtle px-2 py-0.5 font-medium text-secondary hover:bg-layer-2"
               >
-                Coba lagi
+                {t("cross_division_ui.retry")}
               </button>
             </div>
           </div>
         ) : isLoading ? (
-          <p className="text-sm text-tertiary">Memuat…</p>
+          <p className="text-13 text-tertiary">{t("chat_ui.loading")}</p>
         ) : (
           <>
             {/* 1. Ringkasan saya */}
             <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-primary">Ringkasan</h2>
+              <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.summary")}</h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <StatCard
-                  label="Menunggu jawaban"
+                  label={t("cross_division_ui.stat_waiting")}
                   value={String(keluarMenunggu)}
-                  keterangan="dikirim divisi asal saya, belum diputuskan"
+                  keterangan={t("cross_division_ui.stat_waiting_hint")}
                   icon={<Clock className="size-5" />}
                 />
                 <StatCard
-                  label="Masih terbuka"
+                  label={t("cross_division_ui.stat_open")}
                   value={String(keluarTerbuka)}
-                  keterangan="sudah diterima, tugasnya belum selesai"
-                  icon={<ListTodo className="text-amber-500 size-5" />}
+                  keterangan={t("cross_division_ui.stat_open_hint")}
+                  icon={<ListTodo className="size-5 text-warning-primary" />}
                 />
                 <StatCard
-                  label="Permintaan saya"
+                  label={t("cross_division_ui.stat_mine")}
                   value={String(permintaan.length)}
-                  keterangan="baris di tabel bawah"
+                  keterangan={t("cross_division_ui.stat_mine_hint")}
                   icon={<ArrowLeftRight className="size-5" />}
                 />
               </div>
-              <p className="text-[11px] text-tertiary">
-                Dua angka pertama menghitung seluruh permintaan yang{" "}
-                <span className="font-medium">dikirim divisi asalmu</span> (endpoint ringkasan hanya membuka divisi
-                tempat kamu menjadi anggota). Tabel di bawah hanya menampilkan permintaan yang{" "}
-                <span className="font-medium">kamu kirim sendiri</span>.
-              </p>
+              <p className="text-11 text-tertiary">{t("cross_division_ui.summary_note")}</p>
               {rincianKeluar.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {rincianKeluar.map((item) => (
                     <span
                       key={item.projectId}
-                      className="rounded-full border border-subtle px-2 py-0.5 text-[11px] text-secondary"
+                      className="rounded-full border border-subtle px-2 py-0.5 text-11 text-secondary"
                     >
-                      {item.nama ?? item.projectId}: {item.baris.keluar_menunggu} menunggu · {item.baris.keluar_terbuka}{" "}
-                      terbuka
+                      {item.nama ?? item.projectId}:{" "}
+                      {t("cross_division_ui.breakdown", {
+                        pending: item.baris.keluar_menunggu,
+                        open: item.baris.keluar_terbuka,
+                      })}
                     </span>
                   ))}
                 </div>
@@ -317,29 +323,20 @@ function TugasLintasDivisiPage() {
 
             {/* 2. Form kirim permintaan */}
             <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-primary">Minta bantuan divisi lain</h2>
+              <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.request_help")}</h2>
 
               {divisiSaya.length === 0 ? (
-                <p className="text-sm text-tertiary">
-                  Kamu belum menjadi anggota divisi mana pun di workspace ini, jadi belum ada divisi asal yang bisa kamu
-                  ajukan. Minta admin menambahkanmu ke divisimu dulu.
-                </p>
+                <p className="text-13 text-tertiary">{t("cross_division_ui.no_origin")}</p>
               ) : tujuanTersedia.length === 0 ? (
-                <div className="text-xs flex items-start gap-2 rounded-md border border-subtle bg-layer-1 px-3 py-2 text-secondary">
+                <div className="flex items-start gap-2 rounded-md border border-subtle bg-layer-1 px-3 py-2 text-12 text-secondary">
                   <Inbox className="mt-0.5 size-4 shrink-0 text-tertiary" />
-                  <span>
-                    Belum ada divisi yang bisa menerima permintaan. Hanya divisi yang{" "}
-                    <span className="font-medium">sudah menyalakan pintu Intake</span> yang muncul di sini, dan
-                    menyalakannya adalah keputusan divisi itu sendiri — bukan sesuatu yang bisa dinyalakan dari halaman
-                    ini. Hubungi admin divisi tujuan dan minta mereka mengaktifkan Inbox/Intake di pengaturan
-                    projectnya.
-                  </span>
+                  <span>{t("cross_division_ui.no_targets")}</span>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 rounded-md border border-subtle bg-layer-1 p-4">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">Divisi asal</span>
+                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.origin")}</span>
                       <select value={asalId} onChange={(e) => setAsalDipilih(e.target.value)} className={inputClass}>
                         {divisiSaya.map((divisi) => (
                           <option key={divisi.id} value={divisi.id}>
@@ -347,46 +344,48 @@ function TugasLintasDivisiPage() {
                           </option>
                         ))}
                       </select>
-                      <span className="text-[11px] text-tertiary">Hanya divisi tempat kamu menjadi anggota.</span>
+                      <span className="text-11 text-tertiary">{t("cross_division_ui.origin_hint")}</span>
                     </label>
 
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">Divisi tujuan</span>
+                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.target")}</span>
                       <select
                         value={tujuanDipilih}
                         onChange={(e) => setTujuanDipilih(e.target.value)}
                         className={inputClass}
                       >
-                        <option value="">— pilih divisi tujuan —</option>
+                        <option value="">{t("cross_division_ui.target_placeholder")}</option>
                         {tujuanTersedia.map((divisi) => (
                           <option key={divisi.id} value={divisi.id}>
                             {divisi.name} ({divisi.identifier})
                           </option>
                         ))}
                       </select>
-                      <span className="text-[11px] text-tertiary">Hanya divisi yang sudah menyalakan Intake.</span>
+                      <span className="text-11 text-tertiary">{t("cross_division_ui.target_hint")}</span>
                     </label>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">Judul permintaan</span>
+                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.request_title")}</span>
                       <input
                         type="text"
                         value={judul}
                         maxLength={255}
                         onChange={(e) => setJudul(e.target.value)}
-                        placeholder="mis. Siapkan akun dokumen tender"
+                        placeholder={t("cross_division_ui.request_title_placeholder")}
                         className={inputClass}
                       />
                     </label>
 
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">Prioritas</span>
+                      <span className="text-12 font-medium text-secondary">
+                        {t("cross_division_ui.priority_label")}
+                      </span>
                       <select value={prioritas} onChange={(e) => setPrioritas(e.target.value)} className={inputClass}>
                         {PRIORITAS.map((pilihan) => (
                           <option key={pilihan.value} value={pilihan.value}>
-                            {pilihan.label}
+                            {t(pilihan.label)}
                           </option>
                         ))}
                       </select>
@@ -394,34 +393,36 @@ function TugasLintasDivisiPage() {
                   </div>
 
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-secondary">Catatan untuk divisi tujuan</span>
+                    <span className="text-12 font-medium text-secondary">{t("cross_division_ui.note_label")}</span>
                     <textarea
                       value={catatan}
                       maxLength={2000}
                       rows={3}
                       onChange={(e) => setCatatan(e.target.value)}
-                      placeholder="Konteks singkat: apa yang dibutuhkan, untuk apa, kapan."
+                      placeholder={t("cross_division_ui.note_placeholder")}
                       className={inputClass}
                     />
-                    <span className="text-[11px] text-tertiary">{catatan.length}/2000 karakter.</span>
+                    <span className="text-11 text-tertiary">
+                      {t("cross_division_ui.char_count", { count: catatan.length, max: 2000 })}
+                    </span>
                   </label>
 
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-secondary">Keterangan tugas (opsional)</span>
+                    <span className="text-12 font-medium text-secondary">
+                      {t("cross_division_ui.description_label")}
+                    </span>
                     <textarea
                       value={keterangan}
                       rows={3}
                       onChange={(e) => setKeterangan(e.target.value)}
-                      placeholder="Rincian langkah atau bahan yang perlu disiapkan."
+                      placeholder={t("cross_division_ui.description_placeholder")}
                       className={inputClass}
                     />
-                    <span className="text-[11px] text-tertiary">
-                      Dikirim sebagai teks biasa (tanpa format HTML). Baris kosong jadi paragraf baru.
-                    </span>
+                    <span className="text-11 text-tertiary">{t("cross_division_ui.description_hint")}</span>
                   </label>
 
                   {gagalKirim && (
-                    <p className="border-red-500/30 bg-red-500/5 text-xs text-red-600 rounded border px-2 py-1">
+                    <p className="rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-12 text-danger-primary">
                       {gagalKirim}
                     </p>
                   )}
@@ -431,14 +432,12 @@ function TugasLintasDivisiPage() {
                       type="button"
                       disabled={isSending}
                       onClick={() => void handleKirim()}
-                      className="text-xs flex items-center gap-1.5 rounded border border-subtle px-3 py-1.5 font-medium text-secondary hover:bg-layer-2 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex items-center gap-1.5 rounded border border-subtle px-3 py-1.5 text-12 font-medium text-secondary hover:bg-layer-2 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Send className="size-3.5" />
-                      {isSending ? "Mengirim…" : "Kirim permintaan"}
+                      {isSending ? t("cross_division_ui.sending") : t("cross_division_ui.send")}
                     </button>
-                    <span className="text-[11px] text-tertiary">
-                      Judul dan catatanmu terlihat divisi tujuan. Isi divisimu yang lain tidak.
-                    </span>
+                    <span className="text-11 text-tertiary">{t("cross_division_ui.visibility_hint")}</span>
                   </div>
                 </div>
               )}
@@ -446,23 +445,20 @@ function TugasLintasDivisiPage() {
 
             {/* 3. Tabel permintaan saya */}
             <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-primary">Permintaan saya</h2>
+              <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.stat_mine")}</h2>
               {permintaan.length === 0 ? (
-                <p className="text-sm text-tertiary">
-                  Belum ada permintaan yang kamu kirim. Permintaan yang sudah dikirim akan muncul di sini beserta
-                  statusnya di divisi tujuan.
-                </p>
+                <p className="text-13 text-tertiary">{t("cross_division_ui.no_requests")}</p>
               ) : (
                 <div className="overflow-x-auto rounded-md border border-subtle">
-                  <table className="text-sm w-full min-w-[720px] text-left">
+                  <table className="w-full min-w-[720px] text-left text-13">
                     <thead>
-                      <tr className="text-xs border-b border-subtle bg-layer-2 text-tertiary">
-                        <th className="px-3 py-2 font-medium">Judul</th>
-                        <th className="px-3 py-2 font-medium">Asal → Tujuan</th>
-                        <th className="px-3 py-2 font-medium">Status permintaan</th>
-                        <th className="px-3 py-2 font-medium">Status tugas</th>
-                        <th className="px-3 py-2 font-medium">No. tugas</th>
-                        <th className="px-3 py-2 font-medium">Tanggal</th>
+                      <tr className="border-b border-subtle bg-layer-2 text-12 text-tertiary">
+                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_title")}</th>
+                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_route")}</th>
+                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_request_status")}</th>
+                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_task_status")}</th>
+                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_task_no")}</th>
+                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_date")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -470,35 +466,34 @@ function TugasLintasDivisiPage() {
                         <tr key={baris.id} className="border-b border-subtle last:border-0 hover:bg-layer-2">
                           <td className="px-3 py-2">
                             <span className="font-medium text-primary">{baris.judul ?? "—"}</span>
-                            {baris.catatan && <p className="text-[11px] text-tertiary">{baris.catatan}</p>}
+                            {baris.catatan && <p className="text-11 text-tertiary">{baris.catatan}</p>}
                           </td>
                           <td className="px-3 py-2 text-secondary">
                             {baris.asal.identifier} → {baris.tujuan.identifier}
                           </td>
                           <td className="px-3 py-2">
                             <Badge
-                              label={labelStatusPermintaan(baris.status_permintaan)}
+                              label={labelStatusPermintaan(baris.status_permintaan, t)}
                               className={KELAS_STATUS_PERMINTAAN[baris.status_permintaan] ?? "bg-layer-3 text-tertiary"}
                             />
                           </td>
                           <td className="px-3 py-2">
                             <Badge
-                              label={labelStatusTugas(baris.status_tugas)}
+                              label={labelStatusTugas(baris.status_tugas, t)}
                               className={KELAS_STATUS_TUGAS[baris.status_tugas] ?? "bg-layer-3 text-tertiary"}
                             />
                           </td>
                           <td className="px-3 py-2 text-secondary">{baris.nomor_tugas_tujuan ?? "—"}</td>
-                          <td className="px-3 py-2 text-secondary">{formatTanggal(baris.dibuat_pada)}</td>
+                          <td className="px-3 py-2 text-secondary">
+                            {formatTanggal(baris.dibuat_pada, currentLocale)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
-              <p className="text-[11px] text-tertiary">
-                Status tugas di divisi tujuan hanya ditampilkan kasar (terbuka / selesai / tidak dikerjakan). Siapa yang
-                mengerjakan, tenggat, label, dan komentar tidak dibuka lewat halaman ini.
-              </p>
+              <p className="text-11 text-tertiary">{t("cross_division_ui.footer_note")}</p>
             </section>
           </>
         )}

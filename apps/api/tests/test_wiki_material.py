@@ -73,28 +73,16 @@ def test_matroska_diperiksa_sebelum_prefix_video():
 # --- siapa boleh mengubah dan menghapus materi -------------------------------
 
 
-def _aset(created_by=SAYA, page_id="topik"):
-    return SimpleNamespace(created_by_id=created_by, page_id=page_id)
+def _aset(created_by=SAYA):
+    return SimpleNamespace(created_by_id=created_by, workspace_id="ws")
 
 
 def _pengguna(uid=SAYA):
     return SimpleNamespace(id=uid, is_anonymous=False)
 
 
-def _pasang(monkeypatch, *, super_admin=False, kepala_divisi=False, halaman=object()):
-    monkeypatch.setattr(wiki_access, "is_super_admin", lambda u: super_admin)
-    monkeypatch.setattr(wiki_access, "is_division_lead", lambda u, p: kepala_divisi)
-
-    class _Qs:
-        def first(self):
-            return halaman
-
-    class _PageFake:
-        objects = SimpleNamespace(filter=lambda **kw: _Qs())
-
-    import plane.db.models as models
-
-    monkeypatch.setattr(models, "Page", _PageFake)
+def _pasang(monkeypatch, *, admin=False):
+    monkeypatch.setattr(wiki_access, "is_wiki_admin", lambda u, workspace_id=None, workspace_slug=None: admin)
 
 
 def test_pengunggah_boleh_mengelola_materinya_sendiri(monkeypatch):
@@ -103,30 +91,22 @@ def test_pengunggah_boleh_mengelola_materinya_sendiri(monkeypatch):
 
 
 def test_rekan_sedivisi_tidak_boleh_mengelola_materi_orang_lain(monkeypatch):
-    _pasang(monkeypatch, super_admin=False, kepala_divisi=False)
+    _pasang(monkeypatch, admin=False)
     assert wiki_access.can_manage_wiki_material(_pengguna(), _aset(created_by=ORANG_LAIN)) is False
 
 
-def test_kepala_divisi_boleh_mengelola_materi_orang_lain(monkeypatch):
-    _pasang(monkeypatch, kepala_divisi=True)
+def test_admin_boleh_mengelola_materi_siapa_pun(monkeypatch):
+    _pasang(monkeypatch, admin=True)
     assert wiki_access.can_manage_wiki_material(_pengguna(), _aset(created_by=ORANG_LAIN)) is True
 
 
-def test_super_admin_boleh_mengelola_materi_siapa_pun(monkeypatch):
-    _pasang(monkeypatch, super_admin=True)
-    assert wiki_access.can_manage_wiki_material(_pengguna(), _aset(created_by=ORANG_LAIN)) is True
-
-
-def test_materi_tanpa_halaman_hanya_boleh_disentuh_pengunggah_atau_super_admin(monkeypatch):
-    # Keadaan yang seharusnya tidak pernah terjadi. Kalau terjadi, jawabannya
-    # harus menutup, bukan membuka: tanpa halaman tidak ada folder yang bisa
-    # dijadikan dasar penilaian kepala divisi.
-    _pasang(monkeypatch, kepala_divisi=True)
-    assert wiki_access.can_manage_wiki_material(_pengguna(), _aset(created_by=ORANG_LAIN, page_id=None)) is False
+def test_materi_tanpa_pengunggah_hanya_admin(monkeypatch):
+    _pasang(monkeypatch, admin=False)
+    assert wiki_access.can_manage_wiki_material(_pengguna(), _aset(created_by=None)) is False
 
 
 def test_pengguna_anonim_ditolak(monkeypatch):
-    _pasang(monkeypatch, super_admin=True, kepala_divisi=True)
+    _pasang(monkeypatch, admin=True)
     assert wiki_access.can_manage_wiki_material(None, _aset(created_by=ORANG_LAIN)) is False
     assert (
         wiki_access.can_manage_wiki_material(SimpleNamespace(id=None, is_anonymous=True), _aset())

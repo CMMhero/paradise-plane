@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 # Module imports
 from plane.license.models import Instance, InstanceAdmin
 from plane.db.models import User
+from plane.db.superadmin import angkat_super_admin
 
 
 class Command(BaseCommand):
@@ -31,11 +32,12 @@ class Command(BaseCommand):
             # Get the instance
             instance = Instance.objects.last()
 
-            # Get or create an instance admin
-            _, created = InstanceAdmin.objects.get_or_create(user=user, instance=instance, role=20)
-
-            if not created:
+            # Kustomisasi Paradise: Super Admin yang pernah dicabut masih punya
+            # baris soft-deleted; `get_or_create` tidak melihatnya dan INSERT-nya
+            # menabrak unique (instance, user). Lihat `angkat_super_admin`.
+            if InstanceAdmin.objects.filter(user=user, instance=instance).exists():
                 raise CommandError("The provided email is already an instance admin.")
+            angkat_super_admin(instance, user)
 
             self.stdout.write(self.style.SUCCESS("Successfully created the admin"))
         except Exception as e:

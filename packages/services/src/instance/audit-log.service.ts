@@ -44,10 +44,26 @@ export type TAuditLogResponse = {
   results: TAuditLogEntry[];
 };
 
+/** Kunci `actor` khusus untuk entri tanpa aktor (skrip server). */
+export const AUDIT_SYSTEM_ACTOR = "system";
+
+export type TAuditLogSort = "-timestamp" | "timestamp" | `${"" | "-"}${"actor" | "action" | "model" | "object" | "ip"}`;
+
+/** Nilai ganda dipisah koma (`model=issue,page`); `*_not` = kebalikannya. */
 export type TAuditLogFilter = {
-  model?: TAuditLogModel;
-  action?: TAuditLogAction;
+  model?: string;
+  model_not?: string;
+  action?: string;
+  action_not?: string;
+  /** Id user, atau `AUDIT_SYSTEM_ACTOR`. */
   actor?: string;
+  actor_not?: string;
+  /** Nama kolom yang berubah (`changes`), mis. `state,target_date`. */
+  field?: string;
+  field_not?: string;
+  /** Sebagian alamat IP. */
+  ip?: string;
+  sort?: TAuditLogSort;
   /** YYYY-MM-DD. Batas atas sudah dinaikkan ke akhir hari di backend. */
   date_from?: string;
   date_to?: string;

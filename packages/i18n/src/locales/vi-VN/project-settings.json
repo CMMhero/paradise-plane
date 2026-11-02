@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Quyền truy cập Wiki",
-      "description": "Chọn bộ phận nào được phép chỉnh sửa từng thư mục cấp cao nhất. Mọi thành viên dự án vẫn có thể đọc tất cả các trang."
-    },
     "trash": {
       "heading": "Thùng rác",
       "description": "Các mục đã xóa sẽ nằm ở đây trước khi bị xóa vĩnh viễn. Quản trị viên dự án có thể khôi phục hoặc xóa vĩnh viễn."

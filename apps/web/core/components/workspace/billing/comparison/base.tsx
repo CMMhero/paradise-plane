@@ -57,7 +57,7 @@ export const PlansComparisonBase = observer(function PlansComparisonBase(props: 
           <section className="flex-shrink-0">
             {/* Plan Highlights */}
             <div
-              className="text-caption-md grid gap-3 rounded-xs py-1 text-secondary even:bg-surface-2"
+              className="grid gap-3 rounded-xs py-1 text-caption-md-regular text-secondary even:bg-surface-2"
               style={{ gridTemplateColumns: `repeat(${numberOfPlansToRender + 1}, minmax(0, 1fr))` }}
             >
               <div className="col-span-1 p-3 text-body-sm-medium">Highlights</div>
@@ -66,8 +66,8 @@ export const PlansComparisonBase = observer(function PlansComparisonBase(props: 
                   shouldRenderPlanDetail(planKey as TPlanePlans) && (
                     <div key={planKey} className="col-span-1 p-3">
                       <ul className="list-disc space-y-1 text-body-xs-regular">
-                        {highlights.map((highlight, index) => (
-                          <li key={index}>{highlight}</li>
+                        {highlights.map((highlight) => (
+                          <li key={highlight}>{highlight}</li>
                         ))}
                       </ul>
                     </div>
@@ -80,6 +80,7 @@ export const PlansComparisonBase = observer(function PlansComparisonBase(props: 
           {isCompareAllFeaturesSectionOpen && (
             <>
               {planComparison.map((section, sectionIdx) => (
+                // oxlint-disable-next-line react/no-array-index-key -- static non-reorderable plan data, title is a ReactNode
                 <section key={sectionIdx} className="flex-shrink-0">
                   <h2 className="mb-2 flex items-start gap-2 pl-2 text-h5-semibold text-secondary">
                     {section.title} {section.comingSoon && <ComingSoonBadge />}
@@ -87,8 +88,9 @@ export const PlansComparisonBase = observer(function PlansComparisonBase(props: 
                   <div className="border-t border-subtle">
                     {section.features.map((feature, featureIdx) => (
                       <div
+                        // oxlint-disable-next-line react/no-array-index-key -- static non-reorderable plan data, title is a ReactNode
                         key={featureIdx}
-                        className="text-caption-md grid gap-3 rounded-xs bg-layer-transparent text-secondary even:bg-layer-1"
+                        className="grid gap-3 rounded-xs bg-layer-transparent text-caption-md-regular text-secondary even:bg-layer-1"
                         style={{ gridTemplateColumns: `repeat(${numberOfPlansToRender + 1}, minmax(0, 1fr))` }}
                       >
                         <div className="col-span-1 flex items-center p-3 text-body-sm-medium">

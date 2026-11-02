@@ -12,6 +12,8 @@ import { MEMBER_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { LinkIcon } from "@plane/propel/icons";
 import { CustomMenu } from "@plane/ui";
+// hooks
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 type Props = {
   workspaceSlug: string;
@@ -38,6 +40,7 @@ export function ProjectActionsMenu({
   const [isMenuActive, setIsMenuActive] = useState(false);
   // translation
   const { t } = useTranslation();
+  const { isModuleEnabled } = useParadiseModules();
   // refs
   const actionSectionRef = useRef<HTMLDivElement | null>(null);
   // router
@@ -48,8 +51,17 @@ export function ProjectActionsMenu({
       customButton={
         <span
           ref={actionSectionRef}
+          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- already rendered inside CustomMenu button; nested <button> is invalid
+          role="button"
+          tabIndex={0}
           className="grid place-items-center rounded-sm p-0.5 text-placeholder hover:bg-layer-1"
           onClick={() => setIsMenuActive(!isMenuActive)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setIsMenuActive(!isMenuActive);
+            }
+          }}
         >
           <MoreHorizontal className="size-4" />
         </span>
@@ -79,7 +91,7 @@ export function ProjectActionsMenu({
           <span>{t("copy_link")}</span>
         </span>
       </CustomMenu.MenuItem>
-      {isAuthorized && (
+      {isAuthorized && isModuleEnabled("archives") && (
         <CustomMenu.MenuItem
           onClick={() => {
             navigate(`/${workspaceSlug}/projects/${project?.id}/archives/issues`);

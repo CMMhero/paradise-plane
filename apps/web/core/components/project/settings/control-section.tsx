@@ -8,7 +8,7 @@ import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "react-router";
 // plane imports
-import { PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
+import { PROJECT_TRACKER_ELEMENTS, isParadiseModuleActive } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 // components
@@ -36,6 +36,8 @@ export const GeneralProjectSettingsControlSection = observer(function GeneralPro
   const { currentProjectDetails } = useProject();
   // translation
   const { t } = useTranslation();
+  // Kustomisasi Paradise: tanpa modul Archives, project tidak bisa diarsipkan dari sini.
+  const isArchiveEnabled = isParadiseModuleActive("archives");
 
   if (!currentProjectDetails) return null;
 
@@ -57,19 +59,21 @@ export const GeneralProjectSettingsControlSection = observer(function GeneralPro
       />
       <div className="rounded-lg border border-subtle bg-layer-2">
         {/* Project Selector */}
-        <SettingsBoxedControlItem
-          className="rounded-b-none border-0 border-b"
-          title={t("archive")}
-          description="Archiving a project will unlist your project from your side navigation although you will still be able to access it from your projects page. You can restore the project or delete it whenever you want."
-          control={
-            <Button variant="secondary" onClick={() => setArchiveProject(true)}>
-              {t("archive")}
-            </Button>
-          }
-        />
+        {isArchiveEnabled && (
+          <SettingsBoxedControlItem
+            className="rounded-b-none border-0 border-b"
+            title={t("archive")}
+            description="Archiving a project will unlist your project from your side navigation although you will still be able to access it from your projects page. You can restore the project or delete it whenever you want."
+            control={
+              <Button variant="secondary" onClick={() => setArchiveProject(true)}>
+                {t("archive")}
+              </Button>
+            }
+          />
+        )}
         {/* Format Selector */}
         <SettingsBoxedControlItem
-          className="rounded-t-none border-0"
+          className={isArchiveEnabled ? "rounded-t-none border-0" : "border-0"}
           title={t("delete")}
           description="When deleting a project, all of the data and resources within that project will be permanently removed and cannot be recovered."
           control={

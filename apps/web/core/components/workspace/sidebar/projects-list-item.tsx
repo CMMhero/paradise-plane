@@ -38,6 +38,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useProjectNavigationPreferences } from "@/hooks/use-navigation-preferences";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 // plane web imports
 import { useNavigationItems } from "@/plane-web/components/navigations";
 import { ProjectNavigationRoot } from "@/plane-web/components/sidebar";
@@ -72,6 +73,7 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
   } = props;
   // store hooks
   const { t } = useTranslation();
+  const { isModuleEnabled } = useParadiseModules();
   const { getPartialProjectById } = useProject();
   const { isMobile } = usePlatformOS();
   const { allowPermissions } = useUserPermissions();
@@ -177,13 +179,13 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
         element,
         canDrop: ({ source }) =>
           !disableDrop && source?.data?.id !== projectId && source?.data?.dragInstanceId === "PROJECTS",
-        getData: ({ input, element }) => {
+        getData: ({ input, element: targetElement }) => {
           const data = { id: projectId };
 
           // attach instruction for last in list
           return attachInstruction(data, {
             input,
-            element,
+            element: targetElement,
             currentLevel: 0,
             indentPerLevel: 0,
             mode: isLastChild ? "last-in-group" : "standard",
@@ -222,6 +224,7 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
         },
       })
     );
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- re-registering dnd on every project/drag-flag change would break drags
   }, [projectId, isLastChild, projectListType, handleOnProjectDrop]);
 
   useEffect(() => {
@@ -384,7 +387,7 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
                       <span className="flex items-center justify-start gap-2">
                         <Star
                           className={cn("h-3.5 w-3.5 ", {
-                            "fill-yellow-500 stroke-yellow-500": project.is_favorite,
+                            "fill-label-yellow-icon stroke-label-yellow-icon": project.is_favorite,
                           })}
                         />
                         <span>{project.is_favorite ? t("remove_from_favorites") : t("add_to_favorites")}</span>
@@ -409,7 +412,7 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
                       <span>{t("copy_link")}</span>
                     </span>
                   </CustomMenu.MenuItem>
-                  {isAuthorized && (
+                  {isAuthorized && isModuleEnabled("archives") && (
                     <CustomMenu.MenuItem
                       onClick={() => {
                         router.push(`/${workspaceSlug}/projects/${project?.id}/archives/issues`);

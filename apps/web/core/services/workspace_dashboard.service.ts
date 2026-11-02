@@ -9,29 +9,60 @@ import { API_BASE_URL } from "@plane/constants";
 // services
 import { APIService } from "@/services/api.service";
 
-export type TDivisionStats = {
+/** Status kesehatan dari porsi tugas aktif yang lewat tenggat (KEP-60). */
+export type TDashboardHealth = "lancar" | "perhatian" | "kritis";
+
+/** Angka yang sama di tingkat project, divisi, dan total. Cermin `_rangkum` di server. */
+type TDashboardFigures = {
+  issues_total: number;
+  issues_completed: number;
+  /** Total dikurangi selesai (termasuk yang dibatalkan). Perilaku lama, dipertahankan. */
+  issues_open: number;
+  /** Belum selesai dan belum dibatalkan. Penyebut status kesehatan. */
+  issues_active: number;
+  issues_overdue: number;
+  completed_7d: number;
+  completed_prev_7d: number;
+  overdue_prev_7d: number;
+  pending_approvals: number;
+  worklog_minutes_total: number;
+  worklog_minutes_month: number;
+  /** Persen selesai dari tugas yang tidak dibatalkan; null kalau belum ada tugas. */
+  completion_rate: number | null;
+  health: TDashboardHealth;
+};
+
+export type TDivisionStats = Omit<TDashboardFigures, "health"> & {
   id: string;
   identifier: string;
   name: string;
   members: number;
-  issues_total: number;
-  issues_completed: number;
-  issues_open: number;
-  issues_overdue: number;
-  worklog_minutes_total: number;
-  worklog_minutes_month: number;
+  health: TDashboardHealth;
+  overdue_oldest_days: number | null;
+  department: { id: string; code: string; name: string } | null;
+  division_id: string | null;
+};
+
+export type TDivisionGroup = TDashboardFigures & {
+  /** null = project yang belum dipetakan ke departemen mana pun. */
+  id: string | null;
+  code: string;
+  name: string;
+  on_time_rate: number | null;
+  /** Urut dari yang paling bermasalah. */
+  project_ids: string[];
 };
 
 export type TDivisionDashboard = {
-  totals: {
+  generated_at: string;
+  thresholds: { attention: number; critical: number };
+  totals: TDashboardFigures & {
     projects: number;
-    issues_total: number;
-    issues_open: number;
-    issues_overdue: number;
-    issues_completed: number;
-    worklog_minutes_total: number;
-    worklog_minutes_month: number;
+    /** Persen tugas bertenggat yang selesai tepat waktu, 30 hari terakhir. */
+    on_time_rate: number | null;
   };
+  divisions: TDivisionGroup[];
+  /** Urut dari yang paling bermasalah. */
   projects: TDivisionStats[];
 };
 

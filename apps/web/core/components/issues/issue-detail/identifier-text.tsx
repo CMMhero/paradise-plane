@@ -13,7 +13,7 @@ const SIZE_MAP: Record<TIssueIdentifierSize, string> = {
   xs: "text-caption-sm-regular",
   sm: "text-caption-sm-medium",
   md: "text-caption-md-medium",
-  lg: "text-caption-lg-medium",
+  lg: "text-body-xs-medium",
 };
 
 const VARIANT_MAP: Record<TIdentifierTextVariant, string> = {

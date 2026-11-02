@@ -32,10 +32,9 @@ def ruang_dm(workspace_id, user_a_id, user_b_id):
         # Kedua belah pihak berlangganan sejak awal. Tanpa ini, penerima tidak
         # punya baris tempat menyimpan sudah-dibaca-sampai-mana, dan pesannya
         # tidak akan pernah terhitung sebagai belum dibaca.
-        Langganan.objects.bulk_create(
-            [
-                Langganan(ruang=ruang, user_id=user_a_id),
-                Langganan(ruang=ruang, user_id=user_b_id),
-            ]
-        )
+        #
+        # Catatan untuk diri sendiri: A dan B orang yang sama, jadi cukup SATU
+        # langganan. Dua baris akan menabrak unique_together (ruang, user).
+        anggota = sorted({str(user_a_id), str(user_b_id)})
+        Langganan.objects.bulk_create([Langganan(ruang=ruang, user_id=u) for u in anggota])
     return ruang

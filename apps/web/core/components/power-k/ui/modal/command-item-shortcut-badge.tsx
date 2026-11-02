@@ -8,10 +8,10 @@ import React from "react";
 
 /**
  * Formats a shortcut string for display
- * Converts "cmd+shift+," to proper keyboard symbols
+ * Converts "cmd+shift+," to one display label per key, e.g. ["Ctrl", "Shift", ","]
  */
-export const formatShortcutForDisplay = (shortcut: string | undefined): string | null => {
-  if (!shortcut) return null;
+export const formatShortcutForDisplay = (shortcut: string | undefined): string[] => {
+  if (!shortcut) return [];
 
   const isMac = typeof window !== "undefined" && navigator.platform.toUpperCase().indexOf("MAC") >= 0;
 
@@ -64,22 +64,23 @@ export const formatShortcutForDisplay = (shortcut: string | undefined): string |
     }
   });
 
-  return parts.join("");
+  return parts;
 };
 
 export function ShortcutBadge({ shortcut }: { shortcut: string | undefined }) {
   if (!shortcut) return null;
 
-  const formatted = formatShortcutForDisplay(shortcut);
+  const keys = formatShortcutForDisplay(shortcut);
 
   return (
     <div className="pointer-events-none inline-flex shrink-0 items-center gap-1 font-medium select-none">
-      {formatted?.split("").map((char, index) => (
-        <React.Fragment key={index}>
-          <kbd className="inline-flex h-5 items-center justify-center rounded-sm border border-strong bg-surface-1 px-1.5 font-code text-10 font-medium text-tertiary">
-            {char.toUpperCase()}
-          </kbd>
-        </React.Fragment>
+      {keys.map((key) => (
+        <kbd
+          key={key}
+          className="inline-flex h-5 items-center justify-center rounded-sm border border-strong bg-surface-1 px-1.5 font-code text-10 font-medium whitespace-nowrap text-tertiary"
+        >
+          {key}
+        </kbd>
       ))}
     </div>
   );
@@ -103,6 +104,7 @@ export function KeySequenceBadge({ sequence }: { sequence: string | undefined })
   return (
     <div className="pointer-events-none inline-flex shrink-0 items-center gap-1 font-medium select-none">
       {chars.map((char, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- chars may repeat, order is fixed
         <React.Fragment key={index}>
           <kbd className="inline-flex h-5 items-center justify-center rounded-sm border border-strong bg-surface-1 px-1.5 font-code text-10 font-medium text-tertiary">
             {char.toUpperCase()}

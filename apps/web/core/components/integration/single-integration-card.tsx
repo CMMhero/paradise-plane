@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -37,12 +38,12 @@ const integrationDetails: { [key: string]: any } = {
   github: {
     logo: GithubLogo,
     installed: "Activate GitHub on individual projects to sync with specific repositories.",
-    notInstalled: "Hubungkan GitHub ke workspace Paradise Task Tracker untuk menyinkronkan work item.",
+    notInstalled: "shared_ui.connect_github",
   },
   slack: {
     logo: SlackLogo,
     installed: "Activate Slack on individual projects to sync with specific channels.",
-    notInstalled: "Hubungkan Slack ke workspace Paradise Task Tracker untuk menyinkronkan work item.",
+    notInstalled: "shared_ui.connect_slack",
   },
 };
 
@@ -50,6 +51,7 @@ const integrationDetails: { [key: string]: any } = {
 const integrationService = new IntegrationService();
 
 export const SingleIntegrationCard = observer(function SingleIntegrationCard({ integration }: Props) {
+  const { t } = useTranslation();
   // states
   const [deletingIntegration, setDeletingIntegration] = useState(false);
   // router
@@ -128,7 +130,7 @@ export const SingleIntegrationCard = observer(function SingleIntegrationCard({ i
             {workspaceIntegrations
               ? isInstalled
                 ? integrationDetails[integration.provider].installed
-                : integrationDetails[integration.provider].notInstalled
+                : t(integrationDetails[integration.provider].notInstalled)
               : "Loading..."}
           </p>
         </div>

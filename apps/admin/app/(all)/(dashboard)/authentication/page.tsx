@@ -169,6 +169,6 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Setelan Autentikasi, God Mode" }];
+export const meta: Route.MetaFunction = () => [{ title: "Authentication Settings - God Mode" }];
 
 export default InstanceAuthenticationPage;

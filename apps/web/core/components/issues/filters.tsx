@@ -15,6 +15,7 @@ import type { IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane
 import { EIssueLayoutTypes, EIssuesStoreType } from "@plane/types";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 // plane web imports
 import type { TProject } from "@plane/types";
 // local imports
@@ -52,6 +53,7 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
   } = props;
   // i18n
   const { t } = useTranslation();
+  const { isModuleEnabled } = useParadiseModules();
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
   // store hooks
@@ -125,7 +127,7 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
           isEpic={storeType === EIssuesStoreType.EPIC}
         />
       </FiltersDropdown>
-      {canUserCreateIssue ? (
+      {canUserCreateIssue && isModuleEnabled("analytics") ? (
         <Button className="hidden px-2 md:block" onClick={() => setAnalyticsModal(true)} variant="secondary" size="lg">
           <div className="hidden @4xl:flex">{t("common.analytics")}</div>
           <div className="flex @4xl:hidden">

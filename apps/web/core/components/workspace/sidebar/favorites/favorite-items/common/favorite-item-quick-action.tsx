@@ -47,7 +47,7 @@ export const FavoriteItemQuickAction = observer(function FavoriteItemQuickAction
     >
       <CustomMenu.MenuItem onClick={() => handleRemoveFromFavorites(favorite)}>
         <span className="flex items-center justify-start gap-2">
-          <Star className="fill-yellow-500 stroke-yellow-500 h-3.5 w-3.5 flex-shrink-0" />
+          <Star className="h-3.5 w-3.5 flex-shrink-0 fill-label-yellow-icon stroke-label-yellow-icon" />
           <span>{t("remove_from_favorites")}</span>
         </span>
       </CustomMenu.MenuItem>

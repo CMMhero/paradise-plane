@@ -20,6 +20,7 @@ import { WithDisplayPropertiesHOC } from "@/components/issues/issue-layouts/prop
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
+import { useBolehHapus, useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
@@ -76,6 +77,12 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
   const { handleRedirection } = useIssuePeekOverviewRedirection();
   const { isMobile } = usePlatformOS();
   const issue = getIssueById(issueId);
+  // Kustomisasi Paradise (KEP-25): `canEdit` datang dari INDUKNYA. Baris anak
+  // dinilai sendiri, supaya membuka tugas milik sendiri tidak membuka sub-issue
+  // milik orang lain untuk disunting.
+  const bolehUbahAnak = useBolehUbahTugas(workspaceSlug, issue?.project_id, issue);
+  const { boleh: bolehHapusAnak } = useBolehHapus(workspaceSlug, issue?.project_id, issue);
+  const bisaUbahAnak = canEdit && bolehUbahAnak;
 
   // derived values
   const projectDetail = (issue && issue.project_id && project.getProjectById(issue.project_id)) || undefined;
@@ -88,7 +95,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
   const displayProperties = subIssueFilters?.displayProperties ?? {};
 
   //
-  const handleIssuePeekOverview = (issue: TIssue) => handleRedirection(workspaceSlug, issue, isMobile);
+  const handleIssuePeekOverview = (targetIssue: TIssue) => handleRedirection(workspaceSlug, targetIssue, isMobile);
 
   if (!issue) return <></>;
 
@@ -125,7 +132,9 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
                       <Loader width={14} strokeWidth={2} className="animate-spin" />
                     </div>
                   ) : (
-                    <div
+                    <button
+                      type="button"
+                      aria-label="Toggle sub-work items"
                       className="flex h-full w-full cursor-pointer items-center justify-center text-placeholder hover:text-tertiary"
                       onClick={async (e) => {
                         e.preventDefault();
@@ -144,7 +153,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
                         })}
                         strokeWidth={2.5}
                       />
-                    </div>
+                    </button>
                   )}
                 </>
               )}
@@ -172,6 +181,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
 
             <div
               className="flex-shrink-0 text-13"
+              role="presentation"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -181,7 +191,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
                 workspaceSlug={workspaceSlug}
                 parentIssueId={parentIssueId}
                 issueId={issueId}
-                canEdit={canEdit}
+                canEdit={bisaUbahAnak}
                 updateSubIssue={subIssueOperations.updateSubIssue}
                 displayProperties={displayProperties}
                 issue={issue}
@@ -190,7 +200,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
 
             <div className="flex-shrink-0 text-13">
               <CustomMenu placement="bottom-end" ellipsis>
-                {canEdit && (
+                {bisaUbahAnak && (
                   <CustomMenu.MenuItem
                     onClick={() => {
                       handleIssueCrudState("update", parentIssueId, { ...issue });
@@ -215,7 +225,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
                   </div>
                 </CustomMenu.MenuItem>
 
-                {canEdit && (
+                {bisaUbahAnak && (
                   <CustomMenu.MenuItem
                     onClick={() => {
                       if (issue.project_id)
@@ -231,7 +241,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
                   </CustomMenu.MenuItem>
                 )}
 
-                {canEdit && (
+                {canEdit && bolehHapusAnak && (
                   <CustomMenu.MenuItem
                     onClick={() => {
                       handleIssueCrudState("delete", parentIssueId, issue);

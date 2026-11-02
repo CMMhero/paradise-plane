@@ -6,6 +6,7 @@
 
 import type { ReactNode } from "react";
 import { observer } from "mobx-react";
+import { isDisplayPropertyAvailable } from "@plane/constants";
 import type { IIssueDisplayProperties } from "@plane/types";
 
 interface IWithDisplayPropertiesHOC {
@@ -21,10 +22,11 @@ export const WithDisplayPropertiesHOC = observer(function WithDisplayPropertiesH
   displayPropertyKey,
   children,
 }: IWithDisplayPropertiesHOC) {
-  let shouldDisplayPropertyFromFilters = false;
-  if (Array.isArray(displayPropertyKey))
-    shouldDisplayPropertyFromFilters = displayPropertyKey.every((key) => !!displayProperties[key]);
-  else shouldDisplayPropertyFromFilters = !!displayProperties[displayPropertyKey];
+  // Kustomisasi Paradise: properti milik modul yang dimatikan di God Mode tak pernah tampil.
+  const keys = Array.isArray(displayPropertyKey) ? displayPropertyKey : [displayPropertyKey];
+  const shouldDisplayPropertyFromFilters = keys.every(
+    (key) => !!displayProperties[key] && isDisplayPropertyAvailable(key)
+  );
 
   const renderProperty =
     shouldDisplayPropertyFromFilters && (shouldRenderProperty ? shouldRenderProperty(displayProperties) : true);

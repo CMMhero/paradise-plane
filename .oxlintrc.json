@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "jsx-a11y", "import", "promise", "unicorn", "oxc"],
+  "jsPlugins": ["@shadcn/lint"],
   "categories": {
     "correctness": "warn",
     "suspicious": "warn",
@@ -17,6 +18,9 @@
     },
     "jsx-a11y": {
       "polymorphicPropName": "as"
+    },
+    "shadcn": {
+      "componentImports": ["^@plane/propel(/|$)", "^@plane/ui(/|$)"]
     }
   },
   "ignorePatterns": [
@@ -35,10 +39,8 @@
   ],
   "rules": {
     "react/react-in-jsx-scope": "off",
-    "react/prop-types": "off",
     "unicorn/filename-case": "off",
     "unicorn/no-null": "off",
-    "unicorn/prevent-abbreviations": "off",
     "no-unused-vars": [
       "warn",
       {

@@ -39,7 +39,6 @@ from plane.app.views import (
     GoogleCalendarStatusEndpoint,
     InitiativeViewSet,
     PageCanEditEndpoint,
-    WikiAccessEndpoint,
     WikiFolderEndpoint,
     WikiMaterialCountEndpoint,
     WikiMaterialEndpoint,
@@ -47,7 +46,6 @@ from plane.app.views import (
     WikiMaterialSearchEndpoint,
     WikiPermissionsEndpoint,
     WikiTopicMaterialEndpoint,
-    WikiFolderAccessEndpoint,
 )
 
 urlpatterns = [
@@ -230,11 +228,6 @@ urlpatterns = [
         name="page-can-edit",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/",
-        WikiAccessEndpoint.as_view(),
-        name="wiki-access",
-    ),
-    path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-permissions/",
         WikiPermissionsEndpoint.as_view(),
         name="wiki-permissions",
@@ -268,11 +261,6 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/materials/<uuid:asset_id>/preview/",
         WikiMaterialPreviewEndpoint.as_view(),
         name="wiki-material-preview",
-    ),
-    path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/folders/<uuid:folder_id>/",
-        WikiFolderAccessEndpoint.as_view(),
-        name="wiki-folder-access",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/trash/",

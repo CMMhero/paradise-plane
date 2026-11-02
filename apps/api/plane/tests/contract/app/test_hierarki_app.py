@@ -38,7 +38,6 @@ from rest_framework.test import APIClient, APIRequestFactory, force_authenticate
 from plane.db.models import (
     Issue,
     IssueAssignee,
-    IssueTemplate,
     JabatanOrganisasi,
     PengawasanDivisi,
     PersetujuanPenugasan,
@@ -69,7 +68,6 @@ URL_HIERARKI = "/api/instances/hierarki/"
 URL_ISSUES = "/api/workspaces/{slug}/projects/{project_id}/issues/"
 URL_PERSETUJUAN = "/api/workspaces/{slug}/projects/{project_id}/persetujuan-penugasan/"
 URL_DRAFTS = "/api/workspaces/{slug}/draft-issues/"
-URL_TEMPLATE_APPLY = "/api/workspaces/{slug}/projects/{project_id}/issue-templates/{template_id}/apply/"
 URL_ISSUE_DETAIL = "/api/workspaces/{slug}/projects/{project_id}/issues/{issue_id}/"
 
 
@@ -794,53 +792,6 @@ class TestGerbangDiJalurHttp:
         assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
 
     @pytest.mark.django_db
-    def test_template_apply_ke_orang_lain_tidak_jadi_pintas(
-        self, workspace, staf_a, staf_a2, divisi_a, jenjang, monkeypatch
-    ):
-        """Staf menekan apply template ber-default orang lain: tugas lahir TANPA assignee."""
-        monkeypatch.setenv(FLAG_GERBANG, "1")
-        template = IssueTemplate.objects.create(
-            workspace=workspace,
-            project=divisi_a,
-            name="Template uji",
-            title="Tugas dari template",
-            default_assignee=staf_a2,
-        )
-        client = _klien(staf_a)
-        response = client.post(
-            URL_TEMPLATE_APPLY.format(slug=workspace.slug, project_id=divisi_a.id, template_id=template.id),
-            {},
-            format="json",
-        )
-        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
-        issue = Issue.objects.get(pk=response.json()["id"])
-        assert not IssueAssignee.objects.filter(issue=issue).exists()
-
-    @pytest.mark.django_db
-    def test_template_apply_default_diri_sendiri_tetap_jalan(
-        self, workspace, staf_a, divisi_a, jenjang, monkeypatch
-    ):
-        """Pasangannya: default = dirinya sendiri tetap terpasang + antrean lahir."""
-        monkeypatch.setenv(FLAG_GERBANG, "1")
-        template = IssueTemplate.objects.create(
-            workspace=workspace,
-            project=divisi_a,
-            name="Template diri",
-            title="Tugas saya dari template",
-            default_assignee=staf_a,
-        )
-        client = _klien(staf_a)
-        response = client.post(
-            URL_TEMPLATE_APPLY.format(slug=workspace.slug, project_id=divisi_a.id, template_id=template.id),
-            {},
-            format="json",
-        )
-        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
-        issue = Issue.objects.get(pk=response.json()["id"])
-        assert IssueAssignee.objects.filter(issue=issue, assignee=staf_a).exists()
-        assert not PersetujuanPenugasan.objects.filter(issue=issue).exists()
-
-    @pytest.mark.django_db
     def test_staf_create_tanpa_assignee_otomatis_jadi_miliknya(
         self, workspace, staf_a, divisi_a, jenjang, monkeypatch
     ):
@@ -1231,7 +1182,7 @@ class TestTulisHierarki:
         """
         response = self._post(super_admin, {"member_id": str(staf_a.id), "tingkat": 15})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "ROLE project" in response.data["error"]
+        assert "project ROLE" in response.data["error"]
         assert tingkat_anggota(staf_a.id, workspace.id) is None
 
     @pytest.mark.django_db
@@ -1287,7 +1238,7 @@ class TestTulisHierarki:
             {"member_id": str(staf_a.id), "tingkat": 20, "pengawasan": [asing]},
         )
         assert respons.status_code == status.HTTP_400_BAD_REQUEST
-        assert "tidak dikenal" in respons.data["error"]
+        assert "Unknown projects" in respons.data["error"]
         # Validasi di depan: jenjangnya pun tidak ikut tersimpan.
         assert tingkat_anggota(staf_a.id, workspace.id) is None
         assert PengawasanDivisi.objects.filter(workspace=workspace, member=staf_a).count() == 0

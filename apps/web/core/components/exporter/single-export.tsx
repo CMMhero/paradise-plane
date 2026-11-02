@@ -17,18 +17,18 @@ type Props = {
   refreshing: boolean;
 };
 
+const checkExpiry = (inputDateString: string) => {
+  const currentDate = new Date();
+  const expiryDate = getDate(inputDateString);
+  if (!expiryDate) return false;
+  expiryDate.setDate(expiryDate.getDate() + 7);
+  return expiryDate > currentDate;
+};
+
 export function SingleExport({ service, refreshing }: Props) {
   const provider = service.provider;
 
   const [isLoading] = useState(false);
-
-  const checkExpiry = (inputDateString: string) => {
-    const currentDate = new Date();
-    const expiryDate = getDate(inputDateString);
-    if (!expiryDate) return false;
-    expiryDate.setDate(expiryDate.getDate() + 7);
-    return expiryDate > currentDate;
-  };
 
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-3">
@@ -45,11 +45,11 @@ export function SingleExport({ service, refreshing }: Props) {
               service.status === "completed"
                 ? "bg-success-subtle text-success-primary"
                 : service.status === "processing"
-                  ? "bg-yellow-500/20 text-yellow-500"
+                  ? "bg-warning-subtle text-warning-primary"
                   : service.status === "failed"
                     ? "bg-danger-subtle text-danger-primary"
                     : service.status === "expired"
-                      ? "bg-orange-500/20 text-orange-500"
+                      ? "bg-label-orange-bg text-label-orange-text"
                       : ""
             }`}
           >

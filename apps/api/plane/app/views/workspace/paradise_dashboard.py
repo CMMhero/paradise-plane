@@ -7,7 +7,6 @@
 import csv
 
 # Django imports
-from django.db.models import Sum
 from django.http import HttpResponse
 from django.utils import timezone
 
@@ -18,71 +17,20 @@ from rest_framework import status
 # Module imports
 from .. import BaseAPIView
 from plane.app.permissions import WorkspaceEntityPermission
-from plane.db.models import Issue, IssueWorkLog, Project, ProjectMember
-
-
-def _accessible_projects(user, slug):
-    return (
-        Project.objects.filter(
-            workspace__slug=slug,
-            project_projectmember__member=user,
-            project_projectmember__is_active=True,
-            archived_at__isnull=True,
-        )
-        .distinct()
-        .order_by("name")
-    )
+from plane.db.models import IssueWorkLog
+from plane.utils.ringkasan_divisi import hitung_ringkasan, project_terjangkau
 
 
 class DivisionDashboardEndpoint(BaseAPIView):
-    """Rekap per-divisi (project) untuk project yang bisa diakses user."""
+    """Ringkasan per divisi untuk project yang bisa diakses user (KEP-60).
+
+    Seluruh angkanya dihitung di `plane/utils/ringkasan_divisi.py`.
+    """
 
     permission_classes = [WorkspaceEntityPermission]
 
     def get(self, request, slug):
-        today = timezone.now().date()
-        month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        rows = []
-        for project in _accessible_projects(request.user, slug):
-            issues = Issue.issue_objects.filter(project=project)
-            total = issues.count()
-            completed = issues.filter(state__group="completed").count()
-            overdue = (
-                issues.filter(target_date__lt=today)
-                .exclude(state__group__in=["completed", "cancelled"])
-                .count()
-            )
-            worklogs = IssueWorkLog.objects.filter(project=project)
-            minutes_total = worklogs.aggregate(s=Sum("duration"))["s"] or 0
-            minutes_month = (
-                worklogs.filter(logged_at__gte=month_start).aggregate(s=Sum("duration"))["s"] or 0
-            )
-            rows.append(
-                {
-                    "id": str(project.id),
-                    "identifier": project.identifier,
-                    "name": project.name,
-                    "members": ProjectMember.objects.filter(project=project, is_active=True).count(),
-                    "issues_total": total,
-                    "issues_completed": completed,
-                    "issues_open": total - completed,
-                    "issues_overdue": overdue,
-                    "worklog_minutes_total": minutes_total,
-                    "worklog_minutes_month": minutes_month,
-                }
-            )
-
-        totals = {
-            "projects": len(rows),
-            "issues_total": sum(r["issues_total"] for r in rows),
-            "issues_open": sum(r["issues_open"] for r in rows),
-            "issues_overdue": sum(r["issues_overdue"] for r in rows),
-            "issues_completed": sum(r["issues_completed"] for r in rows),
-            "worklog_minutes_total": sum(r["worklog_minutes_total"] for r in rows),
-            "worklog_minutes_month": sum(r["worklog_minutes_month"] for r in rows),
-        }
-        return Response({"totals": totals, "projects": rows}, status=status.HTTP_200_OK)
+        return Response(hitung_ringkasan(request.user, slug), status=status.HTTP_200_OK)
 
 
 class WorkLogExportEndpoint(BaseAPIView):
@@ -91,7 +39,7 @@ class WorkLogExportEndpoint(BaseAPIView):
     permission_classes = [WorkspaceEntityPermission]
 
     def get(self, request, slug):
-        project_ids = _accessible_projects(request.user, slug).values_list("id", flat=True)
+        project_ids = project_terjangkau(request.user, slug).values_list("id", flat=True)
         logs = (
             IssueWorkLog.objects.filter(project_id__in=list(project_ids))
             .select_related("project", "issue", "logged_by")

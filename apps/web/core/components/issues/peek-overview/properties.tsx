@@ -6,6 +6,7 @@
 
 import { observer } from "mobx-react";
 // i18n
+import { isParadiseFeatureEnabled } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // ui icons
 import {
@@ -37,8 +38,9 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
-import { useOpsiAssignee } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { IssueParentSelectRoot } from "@/plane-web/components/issues/issue-details/parent-select-root";
+import { ApprovalSidebarInfo } from "@/plane-web/components/issues/issue-details/sidebar/approval-info";
 import { DateAlert } from "@/plane-web/components/issues/issue-details/sidebar/date-alert";
 import { TransferHopInfo } from "@/plane-web/components/issues/issue-details/sidebar/transfer-hop-info";
 import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/property";
@@ -69,10 +71,14 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
   const issue = getIssueById(issueId);
   // Pilihan assignee: diri + rekan/bawahan menurut server (staf bisa menambah rekan).
   const opsiAssignee = useOpsiAssignee(workspaceSlug, projectId, issue?.assignee_ids);
+  // Kustomisasi Paradise: tenggat adalah janji yang dibuat pembuat tugas, jadi hanya
+  // pembuatnya atau Super Admin yang boleh menggesernya. Server menegakkannya; kontrol
+  // di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
+  const { bisaGantiTenggat } = useAturanTugas();
   if (!issue) return <></>;
   const createdByDetails = getUserDetails(issue?.created_by);
   const projectDetails = getProjectById(issue.project_id);
-  const isEstimateEnabled = projectDetails?.estimate;
+  const isEstimateEnabled = isParadiseFeatureEnabled("estimates") && projectDetails?.estimate;
   const stateDetails = getStateById(issue.state_id);
 
   const minDate = getDate(issue.start_date);
@@ -120,6 +126,11 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
           />
         </SidebarPropertyListItem>
+
+        {/* Kustomisasi Paradise (KEP-55): status, Approved by, dan log persetujuan.
+            Peek adalah tampilan detail yang paling sering dibuka, jadi wajib sama
+            dengan sidebar halaman penuh. */}
+        <ApprovalSidebarInfo workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
 
         <SidebarPropertyListItem icon={PriorityPropertyIcon} label={t("common.priority")}>
           <PriorityDropdown
@@ -181,7 +192,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
               placeholder={t("issue.add.due_date")}
               buttonVariant="transparent-with-text"
               minDate={minDate ?? undefined}
-              disabled={disabled}
+              disabled={disabled || !bisaGantiTenggat(issue)}
               className="group w-full grow"
               buttonContainerClassName="w-full text-left h-7.5"
               buttonClassName={cn("text-body-xs-medium", {

@@ -15,6 +15,9 @@ import { orderProjects, shouldFilterProject } from "@plane/utils";
 import type { TProject, TPartialProject } from "@plane/types";
 import { IssueLabelService, IssueService } from "@/services/issue";
 import { ProjectService, ProjectStateService, ProjectArchiveService } from "@/services/project";
+// lib
+import { withParadiseFeatureGates } from "@/lib/paradise-features";
+import { isWikiProject } from "@/lib/wiki-project";
 // store
 import type { CoreRootStore } from "../root.store";
 
@@ -34,6 +37,7 @@ export interface IProjectStore {
   archivedProjectIds: string[] | undefined;
   totalProjectIds: string[] | undefined;
   joinedProjectIds: string[];
+  sidebarProjectIds: string[];
   favoriteProjectIds: string[];
   currentProjectDetails: TProject | undefined;
   currentProjectNextSequenceId: number | undefined;
@@ -113,6 +117,7 @@ export class ProjectStore implements IProjectStore {
       totalProjectIds: computed,
       currentProjectDetails: computed,
       joinedProjectIds: computed,
+      sidebarProjectIds: computed,
       favoriteProjectIds: computed,
       currentProjectNextSequenceId: computed,
       // helper actions
@@ -166,6 +171,7 @@ export class ProjectStore implements IProjectStore {
     let workspaceProjects = Object.values(this.projectMap).filter(
       (p) =>
         p.workspace === workspaceDetails.id &&
+        !isWikiProject(p) &&
         (p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.identifier.toLowerCase().includes(searchQuery.toLowerCase())) &&
         shouldFilterProject(p, displayFilters, filters)
@@ -213,7 +219,8 @@ export class ProjectStore implements IProjectStore {
 
     const workspaceProjects = this.workspaceProjectIds ?? [];
     const archivedProjects = this.archivedProjectIds ?? [];
-    return [...workspaceProjects, ...archivedProjects];
+    // Paradise: Wiki punya rute sendiri, jadi tidak dihitung di halaman Projects.
+    return [...workspaceProjects, ...archivedProjects].filter((id) => !isWikiProject(this.projectMap[id]));
   }
 
   /**
@@ -247,6 +254,14 @@ export class ProjectStore implements IProjectStore {
       .filter((project) => project.workspace === currentWorkspace.id && !!project.member_role && !project.archived_at)
       .map((project) => project.id);
     return projectIds;
+  }
+
+  /**
+   * Paradise: joinedProjectIds tanpa project Wiki, untuk daftar project di sidebar.
+   * Wiki tetap muncul lewat item `/wiki` di sidebar workspace.
+   */
+  get sidebarProjectIds() {
+    return this.joinedProjectIds.filter((id) => !isWikiProject(this.projectMap[id]));
   }
 
   /**
@@ -295,7 +310,7 @@ export class ProjectStore implements IProjectStore {
    */
   processProjectAfterCreation = (workspaceSlug: string, data: TProject) => {
     runInAction(() => {
-      set(this.projectMap, [data.id], data);
+      set(this.projectMap, [data.id], withParadiseFeatureGates(data));
       // updating the user project role in workspaceProjectsPermissions
       set(this.rootStore.user.permission.workspaceProjectsPermissions, [workspaceSlug, data.id], data.member_role);
     });
@@ -313,7 +328,7 @@ export class ProjectStore implements IProjectStore {
       const projectsResponse = await this.projectService.getProjectsLite(workspaceSlug);
       runInAction(() => {
         projectsResponse.forEach((project) => {
-          update(this.projectMap, [project.id], (p) => ({ ...p, ...project }));
+          update(this.projectMap, [project.id], (p) => withParadiseFeatureGates({ ...p, ...project }));
         });
         this.loader = "loaded";
         if (!this.fetchStatus) this.fetchStatus = "partial";
@@ -342,7 +357,7 @@ export class ProjectStore implements IProjectStore {
       const projectsResponse = await this.projectService.getProjects(workspaceSlug);
       runInAction(() => {
         projectsResponse.forEach((project) => {
-          update(this.projectMap, [project.id], (p) => ({ ...p, ...project }));
+          update(this.projectMap, [project.id], (p) => withParadiseFeatureGates({ ...p, ...project }));
         });
         this.loader = "loaded";
         this.fetchStatus = "complete";
@@ -365,7 +380,7 @@ export class ProjectStore implements IProjectStore {
     try {
       const response = await this.projectService.getProject(workspaceSlug, projectId);
       runInAction(() => {
-        update(this.projectMap, [projectId], (p) => ({ ...p, ...response }));
+        update(this.projectMap, [projectId], (p) => withParadiseFeatureGates({ ...p, ...response }));
       });
       return response;
     } catch (error) {
@@ -554,7 +569,7 @@ export class ProjectStore implements IProjectStore {
     const projectDetails = cloneDeep(this.getProjectById(projectId));
     try {
       runInAction(() => {
-        set(this.projectMap, [projectId], { ...projectDetails, ...data });
+        set(this.projectMap, [projectId], withParadiseFeatureGates({ ...projectDetails, ...data }));
         this.isUpdatingProject = true;
       });
       const response = await this.projectService.updateProject(workspaceSlug, projectId, data);
@@ -607,6 +622,7 @@ export class ProjectStore implements IProjectStore {
           set(this.projectMap, [projectId, "archived_at"], response.archived_at);
           this.rootStore.favorite.removeFavoriteFromStore(projectId);
         });
+        return undefined;
       })
       .catch((error) => {
         console.log("Failed to archive project from project store");
@@ -627,6 +643,7 @@ export class ProjectStore implements IProjectStore {
         runInAction(() => {
           set(this.projectMap, [projectId, "archived_at"], null);
         });
+        return undefined;
       })
       .catch((error) => {
         console.log("Failed to restore project from project store");

@@ -7,7 +7,7 @@
 import React from "react";
 import { observer } from "mobx-react";
 // plane constants
-import { ISSUE_DISPLAY_PROPERTIES } from "@plane/constants";
+import { ISSUE_DISPLAY_PROPERTIES, isDisplayPropertyAvailable } from "@plane/constants";
 // plane i18n
 import { useTranslation } from "@plane/i18n";
 // types
@@ -42,6 +42,7 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
   // Also filter out display properties that should not be rendered
   const filteredDisplayProperties = ISSUE_DISPLAY_PROPERTIES.filter((property) => {
     if (!displayPropertiesToRender.includes(property.key)) return false;
+    if (!isDisplayPropertyAvailable(property.key)) return false;
     switch (property.key) {
       case "cycle":
         return !cycleViewDisabled;
@@ -52,7 +53,7 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
     }
   }).map((property) => {
     if (isEpic && property.key === "sub_issue_count") {
-      return { ...property, titleTranslationKey: "issue.display.properties.work_item_count" };
+      return Object.assign({}, property, { titleTranslationKey: "issue.display.properties.work_item_count" });
     }
     return property;
   });

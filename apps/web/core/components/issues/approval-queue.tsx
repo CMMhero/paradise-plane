@@ -10,443 +10,168 @@
  * - Tugas yang ditolak KEMBALI ke draft tak-terlihat; staf mengajukan ulang dari sini.
  * - Penolakan WAJIB beralasan; pembuat tidak boleh menyetujui tugasnya sendiri.
  *
- * Dipakai di dua tempat: tab Persetujuan tiap divisi (`projectId` tetap) dan
- * halaman antrean workspace lama (`projectId` dipilih). Satu komponen supaya
- * keduanya tidak berbeda pendapat tentang bentuk antrean.
+ * Bentuknya sengaja meniru daftar Pages: header sekunder bertab (tab = `?tab=`
+ * di URL, jadi bisa dibagikan), lalu `ListLayout` berisi `ListItem` selebar
+ * halaman. Tidak ada kartu, lebar maksimum, atau gaya buatan sendiri.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { AlertTriangle, CheckCircle2, Clock, Inbox, Send, XCircle } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import useSWR from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
+import { Banner } from "@plane/propel/banner";
 import { Button } from "@plane/propel/button";
-import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
-import { EPillSize, EPillVariant, Pill } from "@plane/propel/pill";
-import { Loader } from "@plane/ui";
-import { useProject } from "@/hooks/store/use-project";
-import { useSetelStatusPersetujuan } from "@/hooks/use-aturan-tugas";
+import { EHeaderVariant, Header } from "@plane/ui";
+import { cn } from "@plane/utils";
+// components
+import { ListLayout } from "@/components/core/list";
+import { ViewListLoader } from "@/components/ui/loader/view-list-loader";
 // services
-import {
-  PersetujuanService,
-  type TDaftarPersetujuan,
-  type TPersetujuanPenugasan,
-  type TStatusPersetujuan,
-} from "@/services/persetujuan.service";
+import { PersetujuanService } from "@/services/persetujuan.service";
+// local imports
+import { kunciAntreanProject, pesanGagalPersetujuan, useAntreanPenyetuju } from "./approval-actions";
+import { ApprovalQueueRow } from "./approval-queue-row";
 
 const persetujuanService = new PersetujuanService();
 
-const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-xs outline-none focus:border-accent";
+type TTabAntrean = "decide" | "mine";
 
-const pesanGagal = (err: unknown, fallback: string): string => {
-  const pesan = (err as { error?: string } | undefined)?.error;
-  return typeof pesan === "string" && pesan.length > 0 ? pesan : fallback;
-};
+const bacaTab = (nilai: string | null): TTabAntrean => (nilai === "mine" ? "mine" : "decide");
 
-const formatTanggal = (nilai: string | null, locale: string): string => {
-  if (!nilai) return "—";
-  const tanggal = new Date(nilai);
-  if (Number.isNaN(tanggal.getTime())) return "—";
-  try {
-    return tanggal.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
-  } catch {
-    return tanggal.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
-  }
-};
-
-function Badge({ status }: { status: TStatusPersetujuan }) {
-  const { t } = useTranslation();
-  if (status === "menunggu") {
-    const label = t("issue.approval.badge.pending");
-    return (
-      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS} title={label}>
-        {label}
-      </Pill>
-    );
-  }
-  if (status === "ditolak") {
-    const label = t("issue.approval.sidebar.rejected");
-    return (
-      <Pill variant={EPillVariant.ERROR} size={EPillSize.XS} title={label}>
-        {label}
-      </Pill>
-    );
-  }
-  const label = t("issue.approval.badge.approved");
-  return (
-    <Pill variant={EPillVariant.SUCCESS} size={EPillSize.XS} title={label}>
-      {label}
-    </Pill>
-  );
-}
-type TBarisAntrean = TPersetujuanPenugasan & { divisi: string; projectId: string };
-
-function KartuKeputusan({
-  baris,
-  workspaceSlug,
-  projectId,
-  onSelesai,
-}: {
-  baris: TBarisAntrean;
+type TApprovalTabNavigationProps = {
   workspaceSlug: string;
   projectId: string;
-  onSelesai: () => void;
-}) {
+  tab: TTabAntrean;
+  jumlahMenunggu: number | undefined;
+};
+
+/** Tab bergaris bawah, sama persis dengan `PageTabNavigation`. */
+function ApprovalTabNavigation(props: TApprovalTabNavigationProps) {
+  const { workspaceSlug, projectId, tab, jumlahMenunggu } = props;
   const { t } = useTranslation();
-  const [alasan, setAlasan] = useState("");
-  const [isWorking, setIsWorking] = useState(false);
-  const [gagal, setGagal] = useState<string | null>(null);
-  const setelStatus = useSetelStatusPersetujuan();
-
-  const putuskan = async (aksi: "setujui" | "tolak") => {
-    setGagal(null);
-    if (aksi === "tolak" && !alasan.trim()) {
-      setGagal(t("issue.approval.modal.reason_required"));
-      return;
-    }
-    setIsWorking(true);
-    try {
-      await persetujuanService.putuskan(workspaceSlug, projectId, baris.id, aksi, alasan.trim());
-      setelStatus(baris.tugas.id, aksi === "setujui" ? "disetujui" : "ditolak");
-      onSelesai();
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: aksi === "setujui" ? t("issue.approval.toast.approved_title") : t("issue.approval.toast.rejected_title"),
-        message:
-          aksi === "setujui" ? t("issue.approval.toast.approved_message") : t("issue.approval.toast.rejected_message"),
-      });
-    } catch (err) {
-      // Pesan dari API ditampilkan apa adanya (mis. "Anda bukan atasan pembuat
-      // di divisi ini") — kegagalan senyap adalah kelas bug termahal di sini.
-      const pesan = pesanGagal(err, t("issue.approval.toast.save_failed_message"));
-      setGagal(pesan);
-      setToast({ type: TOAST_TYPE.ERROR, title: t("issue.approval.toast.save_failed_title"), message: pesan });
-    } finally {
-      setIsWorking(false);
-    }
-  };
-
-  if (!baris.boleh_saya_putuskan) return <></>;
+  const tabs: { key: TTabAntrean; label: string; jumlah?: number }[] = [
+    { key: "decide", label: t("issue.approval.queue.needs_decision"), jumlah: jumlahMenunggu },
+    { key: "mine", label: t("issue.approval.queue.my_requests") },
+  ];
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-subtle bg-layer-1 p-3">
-      <textarea
-        value={alasan}
-        rows={2}
-        maxLength={2000}
-        onChange={(e) => setAlasan(e.target.value)}
-        placeholder={t("issue.approval.sidebar.reason_optional_placeholder")}
-        aria-label={t("issue.approval.sidebar.reason_optional_placeholder")}
-        className={inputClass}
-      />
-      {gagal && (
-        <p className="text-xs rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-danger-primary">
-          {gagal}
-        </p>
-      )}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="primary"
-          size="sm"
-          loading={isWorking}
-          onClick={() => void putuskan("setujui")}
-          prependIcon={<CheckCircle2 className="size-3.5" aria-hidden />}
+    <div className="relative flex h-full items-center">
+      {tabs.map((item) => (
+        <Link
+          key={item.key}
+          href={`/${workspaceSlug}/projects/${projectId}/persetujuan?tab=${item.key}`}
+          onClick={(e) => {
+            if (item.key === tab) e.preventDefault();
+          }}
+          className="flex h-full flex-col"
         >
-          {t("issue.approval.actions.approve")}
-        </Button>
-        <Button
-          variant="error-outline"
-          size="sm"
-          loading={isWorking}
-          onClick={() => void putuskan("tolak")}
-          prependIcon={<XCircle className="size-3.5" aria-hidden />}
-        >
-          {t("issue.approval.actions.reject")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-function TombolAjukanUlang({
-  baris,
-  workspaceSlug,
-  onSelesai,
-}: {
-  baris: TBarisAntrean;
-  workspaceSlug: string;
-  onSelesai: () => void;
-}) {
-  const { t } = useTranslation();
-  const [isWorking, setIsWorking] = useState(false);
-  const [gagal, setGagal] = useState<string | null>(null);
-  const setelStatus = useSetelStatusPersetujuan();
-
-  const ajukan = async () => {
-    setGagal(null);
-    setIsWorking(true);
-    try {
-      const hasil = await persetujuanService.putuskan(workspaceSlug, baris.projectId, baris.id, "ajukan-ulang");
-      setelStatus(baris.tugas.id, hasil?.status ?? "menunggu");
-      onSelesai();
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: t("issue.approval.toast.resubmitted_title"),
-        message: t("issue.approval.toast.resubmitted_message", { number: baris.tugas.nomor ?? "" }),
-      });
-    } catch (err) {
-      const pesan = pesanGagal(err, t("issue.approval.toast.resubmit_failed_message"));
-      setGagal(pesan);
-      setToast({ type: TOAST_TYPE.ERROR, title: t("issue.approval.toast.save_failed_title"), message: pesan });
-    } finally {
-      setIsWorking(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-[11px] text-tertiary">{t("issue.approval.queue.resubmit_hint")}</p>
-      {gagal && (
-        <p className="text-xs rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-danger-primary">
-          {gagal}
-        </p>
-      )}
-      <div>
-        <Button
-          variant="secondary"
-          size="sm"
-          loading={isWorking}
-          onClick={() => void ajukan()}
-          prependIcon={<Send className="size-3.5" aria-hidden />}
-        >
-          {t("issue.approval.actions.resubmit")}
-        </Button>
-      </div>
+          <div
+            className={cn("flex flex-1 items-center justify-center gap-1.5 px-4 text-13 font-medium transition-all", {
+              "text-accent-primary": item.key === tab,
+            })}
+          >
+            {item.label}
+            {!!item.jumlah && (
+              <span className="rounded-full bg-layer-3 px-1.5 text-11 text-secondary">{item.jumlah}</span>
+            )}
+          </div>
+          <div
+            className={cn("w-full rounded-t border-t-2 border-transparent transition-all", {
+              "border-accent-strong": item.key === tab,
+            })}
+          />
+        </Link>
+      ))}
     </div>
   );
 }
 
 export type TAntreanPersetujuanProps = {
   workspaceSlug: string;
-  /** Tetap = tab per divisi. Kosong = pemanggil memilih divisi sendiri. */
-  projectId?: string;
+  projectId: string;
 };
 
 export const AntreanPersetujuan = observer(function AntreanPersetujuan(props: TAntreanPersetujuanProps) {
-  const { t, currentLocale } = useTranslation();
-  const locale = currentLocale || "en";
-  const { workspaceSlug, projectId: projectTetap } = props;
-  const { joinedProjectIds, getProjectById } = useProject();
-  // sudut: antrean yang perlu SAYA putuskan vs pengajuan SAYA sendiri
-  const [sudut, setSudut] = useState<"penyetuju" | "pemohon">("penyetuju");
-  const [divisiDipilih, setDivisiDipilih] = useState("");
-  const [baris, setBaris] = useState<TBarisAntrean[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [gagalMuat, setGagalMuat] = useState<string | null>(null);
-  const [gerbangMati, setGerbangMati] = useState(false);
+  const { workspaceSlug, projectId } = props;
+  const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const tab = bacaTab(searchParams.get("tab"));
 
-  const divisiSaya = useMemo(() => {
-    const daftar: { id: string; identifier: string; name: string }[] = [];
-    for (const projectId of joinedProjectIds ?? []) {
-      const proyek = getProjectById(projectId);
-      if (proyek) daftar.push({ id: proyek.id, identifier: proyek.identifier, name: proyek.name });
-    }
-    return daftar;
-  }, [joinedProjectIds, getProjectById]);
+  // Antrean penyetuju selalu diambil: angkanya tampil di tab walau sedang di
+  // "Pengajuan saya", dan kuncinya sama dengan yang dipakai papan.
+  const penyetuju = useAntreanPenyetuju(workspaceSlug, projectId);
+  const pemohon = useSWR(tab === "mine" ? kunciAntreanProject(workspaceSlug, projectId, "pemohon") : null, () =>
+    persetujuanService.daftar(workspaceSlug, projectId, { peran: "pemohon" })
+  );
+  const aktif = tab === "mine" ? pemohon : penyetuju;
+  const baris = aktif.data?.hasil ?? [];
+  const jumlahMenunggu = penyetuju.data?.hasil.filter((b) => b.status === "menunggu").length;
+  const gerbangMati = aktif.data ? !aktif.data.gerbang_aktif : false;
 
-  // Kunci muat ulang HANYA nilai yang stabil. `t`, `getProjectById`, dan
-  // `divisiSaya` (array baru tiap render karena `joinedProjectIds` adalah
-  // getter) dulu masuk dependensi `muatSemua`, jadi efek memuat ulang tanpa
-  // henti: skeleton berkedip dan daftar tak pernah menetap. Nilai terbarunya
-  // dibaca lewat ref; perubahan DAFTAR divisi ditangkap `kunciDivisi` (string).
-  const terbaru = useRef({ t, getProjectById, divisiSaya });
-  terbaru.current = { t, getProjectById, divisiSaya };
-  const kunciDivisi = divisiSaya.map((d) => d.id).join(",");
-
-  const muatSemua = useCallback(async () => {
-    if (!workspaceSlug) return;
-    const { t: tt, getProjectById: ambilProject, divisiSaya: daftarDivisi } = terbaru.current;
-    // Tab per divisi: tepat satu panggilan. Halaman lama: satu per divisi.
-    const aktif = projectTetap
-      ? [projectTetap]
-      : sudut === "penyetuju" && divisiDipilih
-        ? [divisiDipilih]
-        : daftarDivisi.map((d) => d.id);
-    if (aktif.length === 0) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    setGagalMuat(null);
-    try {
-      const respons: TDaftarPersetujuan[] = await Promise.all(
-        aktif.map((pid) => persetujuanService.daftar(workspaceSlug, pid, { peran: sudut }))
+  const isi = () => {
+    if (aktif.error)
+      return (
+        <div className="px-page-x py-4">
+          <Banner
+            variant="error"
+            title={pesanGagalPersetujuan(aktif.error, t("issue.approval.queue.load_failed"))}
+            action={
+              <Button variant="secondary" size="base" onClick={() => void aktif.mutate()}>
+                {t("issue.approval.actions.retry")}
+              </Button>
+            }
+          />
+        </div>
       );
-      const mati = respons.some((res) => !res?.gerbang_aktif);
-      setGerbangMati(mati);
-      // Yang menunggu di atas, sisanya di bawah — TANPA `sort`: lib TS web
-      // pra-ES2023 (tak ada `toSorted`) dan aturan lint menolak `sort` di
-      // variabel. Urutan dalam grup = urutan server (backend tanpa ORDER BY;
-      // kalau riwayat perlu "terbaru dulu", itu `order_by` di endpoint).
-      const semua: TBarisAntrean[] = respons.flatMap((res, i) => {
-        const pid = aktif[i];
-        const nama = ambilProject(pid)?.name ?? pid;
-        // `Object.assign`, bukan spread: aturan `no-map-spread` (copy-on-write
-        // tetap terjaga — respons axios tidak dimutasi).
-        return (res?.hasil ?? []).map((item) => Object.assign({}, item, { divisi: nama, projectId: pid }));
-      });
-      setBaris([...semua.filter((b) => b.status === "menunggu"), ...semua.filter((b) => b.status !== "menunggu")]);
-    } catch (err) {
-      setGagalMuat(pesanGagal(err, tt("issue.approval.queue.load_failed")));
-    } finally {
-      setIsLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `kunciDivisi` mewakili daftar divisi
-  }, [workspaceSlug, projectTetap, sudut, divisiDipilih, kunciDivisi]);
-
-  useEffect(() => {
-    void muatSemua();
-  }, [muatSemua]);
-
-  const menunggu = baris.filter((b) => b.status === "menunggu");
-  // Tidak ada saring di klien: `muatSemua` sudah mengambil tepat divisi yang
-  // dipilih, jadi `baris` SELALU yang tampil. Menyaring lagi berarti dua
-  // kebenaran tentang "yang tampil".
+    if (!aktif.data) return <ViewListLoader />;
+    if (baris.length === 0)
+      return (
+        <div className="grid h-full w-full place-items-center">
+          <EmptyStateCompact
+            assetKey="intake"
+            title={
+              tab === "decide"
+                ? t("issue.approval.queue.empty_decision_title")
+                : t("issue.approval.queue.empty_mine_title")
+            }
+            description={
+              tab === "decide"
+                ? t("issue.approval.queue.empty_decision_description")
+                : t("issue.approval.queue.empty_mine_description")
+            }
+          />
+        </div>
+      );
+    return (
+      <ListLayout>
+        {baris.map((item) => (
+          <ApprovalQueueRow key={item.id} workspaceSlug={workspaceSlug} projectId={projectId} baris={item} />
+        ))}
+      </ListLayout>
+    );
+  };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <p className="text-xs text-tertiary">{t("issue.approval.queue.description")}</p>
-
-      {!projectTetap && divisiSaya.length === 0 ? (
-        <p className="text-sm text-tertiary">{t("issue.approval.queue.not_member")}</p>
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-md border border-subtle p-0.5">
-              <button
-                type="button"
-                onClick={() => setSudut("penyetuju")}
-                aria-pressed={sudut === "penyetuju"}
-                className={`text-xs rounded px-2.5 py-1 font-medium ${sudut === "penyetuju" ? "bg-layer-3 text-primary" : "text-tertiary"}`}
-              >
-                {t("issue.approval.queue.needs_decision")} ({sudut === "penyetuju" ? menunggu.length : "…"})
-              </button>
-              <button
-                type="button"
-                onClick={() => setSudut("pemohon")}
-                aria-pressed={sudut === "pemohon"}
-                className={`text-xs rounded px-2.5 py-1 font-medium ${sudut === "pemohon" ? "bg-layer-3 text-primary" : "text-tertiary"}`}
-              >
-                {t("issue.approval.queue.my_requests")}
-              </button>
-            </div>
-            {!projectTetap && sudut === "penyetuju" && (
-              <select
-                value={divisiDipilih}
-                onChange={(e) => setDivisiDipilih(e.target.value)}
-                aria-label={t("issue.approval.queue.all_my_divisions")}
-                className={inputClass}
-              >
-                <option value="">{t("issue.approval.queue.all_my_divisions")}</option>
-                {divisiSaya.map((divisi) => (
-                  <option key={divisi.id} value={divisi.id}>
-                    {divisi.name} ({divisi.identifier})
-                  </option>
-                ))}
-              </select>
-            )}
-            <Button variant="secondary" size="sm" onClick={() => void muatSemua()}>
-              {t("issue.approval.actions.reload")}
-            </Button>
-          </div>
-
-          {gerbangMati && (
-            <div className="text-xs flex items-start gap-2 rounded-md border border-subtle bg-layer-1 px-3 py-2 text-secondary">
-              <Inbox className="mt-0.5 size-4 shrink-0 text-tertiary" aria-hidden />
-              <span>{t("issue.approval.queue.gate_off")}</span>
-            </div>
-          )}
-
-          {gagalMuat ? (
-            <div className="text-xs flex items-start gap-2 rounded-md border border-danger-subtle bg-danger-subtle px-3 py-2 text-danger-primary">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-              <div className="flex flex-col gap-1">
-                <span>{gagalMuat}</span>
-                <Button variant="secondary" size="sm" onClick={() => void muatSemua()} className="self-start">
-                  {t("issue.approval.actions.retry")}
-                </Button>
-              </div>
-            </div>
-          ) : isLoading ? (
-            <Loader className="space-y-2">
-              {[1, 2, 3].map((k) => (
-                <Loader.Item key={k} height="72px" />
-              ))}
-            </Loader>
-          ) : baris.length === 0 ? (
-            <EmptyStateCompact
-              assetKey="intake"
-              title={
-                sudut === "penyetuju"
-                  ? t("issue.approval.queue.empty_decision_title")
-                  : t("issue.approval.queue.empty_mine_title")
-              }
-              description={
-                sudut === "penyetuju"
-                  ? t("issue.approval.queue.empty_decision_description")
-                  : t("issue.approval.queue.empty_mine_description")
-              }
-            />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {baris.map((item) => (
-                <div key={item.id} className="flex flex-col gap-2 rounded-md border border-subtle bg-layer-1 p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge status={item.status} />
-                    <span className="text-xs font-medium text-primary">
-                      {item.tugas.nomor ?? "—"} · {item.tugas.judul ?? t("issue.approval.queue.untitled")}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-tertiary">
-                    {projectTetap ? null : <>{t("issue.approval.queue.row_division", { divisi: item.divisi })} · </>}
-                    {t("issue.approval.queue.row_submitted", {
-                      name: item.pemohon.nama ?? item.pemohon.email ?? "—",
-                      date: formatTanggal(item.created_at, locale),
-                    })}
-                    {item.status !== "menunggu" && (
-                      <>
-                        {" "}
-                        · {t("issue.approval.queue.row_decided", { date: formatTanggal(item.diputuskan_pada, locale) })}
-                      </>
-                    )}
-                  </p>
-                  {item.status === "ditolak" && item.alasan && (
-                    <p className="text-xs rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-danger-primary">
-                      {t("issue.approval.queue.rejection_reason", { reason: item.alasan })}
-                    </p>
-                  )}
-                  {item.status === "ditolak" && item.peran_saya === "pemohon" && (
-                    <TombolAjukanUlang baris={item} workspaceSlug={workspaceSlug} onSelesai={() => void muatSemua()} />
-                  )}
-                  {item.status === "menunggu" && item.penyetuju_di_divisi.length === 0 && (
-                    <p className="flex items-center gap-1 text-[11px] text-tertiary">
-                      <Clock className="size-3.5" aria-hidden /> {t("issue.approval.queue.no_approver")}
-                    </p>
-                  )}
-                  {item.status === "menunggu" && (
-                    <KartuKeputusan
-                      baris={item}
-                      workspaceSlug={workspaceSlug}
-                      projectId={item.projectId}
-                      onSelesai={() => void muatSemua()}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+    <div className="relative flex h-full w-full flex-col overflow-hidden">
+      <Header variant={EHeaderVariant.SECONDARY}>
+        <Header.LeftItem>
+          <ApprovalTabNavigation
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            tab={tab}
+            jumlahMenunggu={jumlahMenunggu}
+          />
+        </Header.LeftItem>
+      </Header>
+      {gerbangMati && (
+        <div className="px-page-x pt-4">
+          <Banner variant="warning" title={t("issue.approval.queue.gate_off")} />
+        </div>
       )}
+      <div className="relative h-full w-full overflow-hidden">{isi()}</div>
     </div>
   );
 });

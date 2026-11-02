@@ -130,8 +130,10 @@ export function ExistingIssuesListModal(props: Props) {
     }
   }, [isOpen, issues, selectedWorkItemIds]);
 
+  // oxlint-disable-next-line react/exhaustive-effect-dependencies, react/set-state-in-effect -- handleSearch is re-created each render; re-run only on search inputs
   useEffect(() => {
     handleSearch();
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- same reason as above
   }, [debouncedSearchTerm, isOpen, isWorkspaceLevel, projectId, workspaceSlug]);
 
   const filteredIssues = issues.filter((issue) => !shouldHideIssue?.(issue));
@@ -148,7 +150,7 @@ export function ExistingIssuesListModal(props: Props) {
       >
         <div className="relative m-1">
           <SearchIcon
-            className="text-opacity-40 pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-primary"
+            className="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-placeholder"
             aria-hidden="true"
           />
           <Combobox.Input

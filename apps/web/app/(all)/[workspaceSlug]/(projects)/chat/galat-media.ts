@@ -20,24 +20,27 @@
  * `konteksAman` = `window.isSecureContext`. Diminta sebagai argumen, bukan dibaca
  * di dalam, supaya fungsinya murni dan bisa diperiksa tanpa DOM.
  */
-export function pesanGalatMedia(galat: unknown, konteksAman: boolean): string {
+export type TTerjemah = (key: string, params?: Record<string, unknown>) => string;
+
+export function pesanGalatMedia(galat: unknown, konteksAman: boolean, t: TTerjemah): string {
   // Didahulukan dari nama galat apa pun. Di halaman http:// peramban tidak
   // menolak izinnya, ia meniadakan `navigator.mediaDevices` sama sekali,
   // sehingga galatnya TypeError yang tidak menyebut-nyebut mikrofon. Server
   // masih melayani http di IP lama, jadi jalur ini benar-benar bisa dilalui.
-  if (!konteksAman)
-    return "Peramban memblokir mikrofon karena halaman ini bukan HTTPS. Buka lewat https://space.paradiseperkasa.com lalu coba lagi.";
+  if (!konteksAman) return t("chat_ui.media_error.insecure");
 
   switch ((galat as { name?: string })?.name) {
     case "NotAllowedError":
     case "SecurityError":
-      return "Izin mikrofon ditolak. Klik ikon gembok di bilah alamat, izinkan Mikrofon dan Kamera, lalu muat ulang halaman.";
+      return t("chat_ui.media_error.denied");
     case "NotFoundError":
     case "OverconstrainedError":
-      return "Tidak ada mikrofon yang terpasang di komputer ini.";
+      return t("chat_ui.media_error.not_found");
     case "NotReadableError":
-      return "Mikrofon sedang dipakai aplikasi lain. Tutup aplikasi itu lalu coba lagi.";
+      return t("chat_ui.media_error.in_use");
     default:
-      return `Mikrofon tidak bisa dipakai (${(galat as { name?: string })?.name ?? "sebab tidak diketahui"}).`;
+      return t("chat_ui.media_error.unknown", {
+        reason: (galat as { name?: string })?.name ?? t("chat_ui.media_error.unknown_reason"),
+      });
   }
 }

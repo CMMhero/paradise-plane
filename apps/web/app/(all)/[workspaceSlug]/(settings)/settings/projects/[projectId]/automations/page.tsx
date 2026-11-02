@@ -6,7 +6,7 @@
 
 import { observer } from "mobx-react";
 // plane imports
-import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { EUserPermissions, EUserPermissionsLevel, isParadiseModuleActive } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IProject } from "@plane/types";
@@ -66,7 +66,8 @@ function AutomationSettingsPage({ params }: Route.ComponentProps) {
           description={t("project_settings.automations.description")}
         />
         <div className="mt-6">
-          <AutoArchiveAutomation handleChange={handleChange} />
+          {/* Kustomisasi Paradise: arsip otomatis hanya bila modul Archives aktif. */}
+          {isParadiseModuleActive("archives") && <AutoArchiveAutomation handleChange={handleChange} />}
           <AutoCloseAutomation handleChange={handleChange} />
         </div>
       </section>

@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
+import { useTranslation } from "@plane/i18n";
 import { ChevronRightIcon } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
 // services
@@ -21,26 +22,25 @@ type Props = {
   handleCopyText: (projectId: string) => void;
 };
 
+/** Sidebar hanya memakai nama; kode divisi/departemen tetap ada di God Mode. */
 type TGrup = {
   id: string;
-  kode: string;
   nama: string;
-  departemen: { id: string; kode: string; nama: string; projectIds: string[] }[];
+  departemen: { id: string; nama: string; projectIds: string[] }[];
 };
 
 /** Gabungkan struktur dengan project yang benar-benar ada di store; sisanya ke "Lainnya". */
-function susunGrup(struktur: TStrukturOrganisasi, joinedProjectIds: string[]): TGrup[] {
+function susunGrup(struktur: TStrukturOrganisasi, joinedProjectIds: string[], namaLainnya: string): TGrup[] {
   const terpakai = new Set<string>();
   const grup: TGrup[] = struktur.divisi
     .map((divisi) => ({
       id: divisi.id,
-      kode: divisi.kode,
       nama: divisi.nama,
       departemen: divisi.departemen
         .map((dep) => {
           const projectIds = joinedProjectIds.filter((pid) => dep.project_ids.includes(pid));
           projectIds.forEach((pid) => terpakai.add(pid));
-          return { id: dep.id, kode: dep.kode, nama: dep.nama, projectIds };
+          return { id: dep.id, nama: dep.nama, projectIds };
         })
         .filter((dep) => dep.projectIds.length > 0),
     }))
@@ -50,9 +50,8 @@ function susunGrup(struktur: TStrukturOrganisasi, joinedProjectIds: string[]): T
   if (sisa.length > 0)
     grup.push({
       id: "lainnya",
-      kode: "",
-      nama: "Lainnya",
-      departemen: [{ id: "lainnya", kode: "", nama: "", projectIds: sisa }],
+      nama: namaLainnya,
+      departemen: [{ id: "lainnya", nama: "", projectIds: sisa }],
     });
   return grup;
 }
@@ -62,8 +61,9 @@ export const SidebarProjectsGrouped = observer(function SidebarProjectsGrouped({
   joinedProjectIds,
   handleCopyText,
 }: Props) {
+  const { t } = useTranslation();
   const [tertutup, setTertutup] = useState<Set<string>>(new Set());
-  const grup = susunGrup(struktur, joinedProjectIds);
+  const grup = susunGrup(struktur, joinedProjectIds, t("other"));
 
   const toggle = (id: string) =>
     setTertutup((lama) => {
@@ -86,17 +86,13 @@ export const SidebarProjectsGrouped = observer(function SidebarProjectsGrouped({
               className="flex w-full items-center gap-1 rounded-sm px-2 py-1 text-left text-11 font-semibold tracking-wide text-placeholder uppercase hover:bg-layer-transparent-hover"
             >
               <ChevronRightIcon className={cn("size-3 flex-shrink-0 transition-transform", { "rotate-90": terbuka })} />
-              <span className="truncate">{divisi.kode ? `${divisi.kode} · ${divisi.nama}` : divisi.nama}</span>
+              <span className="truncate">{divisi.nama}</span>
             </button>
             {terbuka &&
               divisi.departemen.map((dep) => (
                 <div key={dep.id} className="flex flex-col gap-0.5 pl-2">
-                  {/* KEP-32: departemen ADALAH project-nya — tampilkan KODE · Nama */}
-                  {dep.nama && (
-                    <span className="truncate px-2 pt-1 text-11 font-medium text-tertiary">
-                      {dep.kode ? `${dep.kode} · ${dep.nama}` : dep.nama}
-                    </span>
-                  )}
+                  {/* Sidebar menampilkan nama saja, tanpa kode divisi/departemen. */}
+                  {dep.nama && <span className="truncate px-2 pt-1 text-11 font-medium text-tertiary">{dep.nama}</span>}
                   {/* Seret-urut dimatikan: urutan lintas grup tidak punya arti di sini. */}
                   {dep.projectIds.map((projectId, index) => (
                     <SidebarProjectsListItem

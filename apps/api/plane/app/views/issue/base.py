@@ -749,6 +749,14 @@ class IssueViewSet(BaseViewSet):
         )
         if serializer.is_valid():
             serializer.save()
+            # KEP-55: perpindahan staf ke selesai ditahan jadi pengajuan. Buang
+            # `state_id` dari catatan aktivitas, kalau tidak log akan berkata
+            # "memindahkan ke Done" padahal statusnya tidak berubah.
+            selesai_ditahan = getattr(serializer, "_ajukan_selesai", False)
+            if selesai_ditahan:
+                requested_data = json.dumps(
+                    {k: v for k, v in self.request.data.items() if k != "state_id"}, cls=DjangoJSONEncoder
+                )
             # Check if the update is a migration description update
             is_migration_description_update = skip_activity and is_description_update
             # Log all the updates
@@ -767,7 +775,7 @@ class IssueViewSet(BaseViewSet):
                 model_activity.delay(
                     model_name="issue",
                     model_id=str(serializer.data.get("id", None)),
-                    requested_data=request.data,
+                    requested_data=json.loads(requested_data),
                     current_instance=current_instance,
                     actor_id=request.user.id,
                     slug=slug,
@@ -781,10 +789,20 @@ class IssueViewSet(BaseViewSet):
                 )
             # Kustomisasi Paradise: kembalikan status persetujuan terbaru supaya
             # penanda "menunggu persetujuan" muncul tanpa muat ulang halaman.
+            # Tanggal ikut dikirim karena status bisa mengisinya otomatis (KEP-41).
             from plane.utils.hierarki import status_persetujuan_tugas  # noqa: PLC0415
 
+            tugas = serializer.instance
             return Response(
-                {"approval_status": status_persetujuan_tugas(pk)},
+                {
+                    "approval_status": status_persetujuan_tugas(pk),
+                    # Klien mengembalikan status optimisnya ke nilai ini dan
+                    # menampilkan "Requested for approval" (KEP-55).
+                    "state_id": str(tugas.state_id) if tugas.state_id else None,
+                    "approval_requested": selesai_ditahan,
+                    "start_date": tugas.start_date,
+                    "target_date": tugas.target_date,
+                },
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

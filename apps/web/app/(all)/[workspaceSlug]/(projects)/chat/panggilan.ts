@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectionState, Room, RoomEvent, Track } from "livekit-client";
+import { useTranslation } from "@plane/i18n";
 import { ChatService } from "@/services/chat.service";
 import { pesanGalatMedia } from "./galat-media";
 import { statusSesudahPeristiwa } from "./tata-panggilan";
@@ -70,6 +71,10 @@ type Opsi = {
 };
 
 export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
+  // Lewat ref supaya callback panggilan tidak dibuat ulang tiap bahasa berganti.
+  const { t } = useTranslation();
+  const tRef = useRef(t);
+  tRef.current = t;
   const [status, setStatus] = useState<TStatusPanggilan>("diam");
   const [koneksi, setKoneksi] = useState("belum mulai");
   const [lawan, setLawan] = useState<string | null>(null);
@@ -139,7 +144,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
   const masukRuang = useCallback(
     async (video: boolean) => {
       if (!slug || !ruangId) {
-        gagalRef.current?.("Percakapan ini belum punya ruang panggilan.");
+        gagalRef.current?.(tRef.current("chat_ui.call_error.no_room"));
         return null;
       }
 
@@ -147,7 +152,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       try {
         izin = await chatService.getTokenPanggilan(slug, ruangId);
       } catch (e) {
-        gagalRef.current?.((e as { error?: string })?.error ?? "Tidak bisa memulai panggilan. Coba lagi sebentar.");
+        gagalRef.current?.((e as { error?: string })?.error ?? tRef.current("chat_ui.call_error.cannot_start"));
         return null;
       }
 
@@ -189,7 +194,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       try {
         await room.connect(izin.url, izin.token);
       } catch {
-        gagalRef.current?.("Gagal menyambung ke server panggilan. Periksa jaringan kantor.");
+        gagalRef.current?.(tRef.current("chat_ui.call_error.server_unreachable"));
         bereskan();
         return null;
       }
@@ -202,7 +207,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       try {
         await room.localParticipant.setMicrophoneEnabled(true);
       } catch (e) {
-        gagalRef.current?.(pesanGalatMedia(e, typeof window !== "undefined" && window.isSecureContext));
+        gagalRef.current?.(pesanGalatMedia(e, typeof window !== "undefined" && window.isSecureContext, tRef.current));
         bereskan();
         return null;
       }
@@ -215,7 +220,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
           await room.localParticipant.setCameraEnabled(true);
         } catch (e) {
           gagalRef.current?.(
-            `Kamera tidak bisa dipakai, panggilan diteruskan dengan suara saja. ${pesanGalatMedia(e, typeof window !== "undefined" && window.isSecureContext)}`
+            `${tRef.current("chat_ui.call_error.camera_failed")} ${pesanGalatMedia(e, typeof window !== "undefined" && window.isSecureContext, tRef.current)}`
           );
           setKameraMati(true);
         }
@@ -243,7 +248,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       if (!room) return;
 
       if (!kirimSinyal(ke, { jenis: "panggil", video })) {
-        gagalRef.current?.("Sambungan sedang putus. Coba lagi sebentar.");
+        gagalRef.current?.(tRef.current("chat_ui.call_error.connection_down"));
         bereskan();
         return;
       }
@@ -366,10 +371,10 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       const tugas: Promise<{ audio: number; video: number }>[] = [];
       room.remoteParticipants.forEach((peserta) => {
         peserta.trackPublications.forEach((pub) => {
-          const t = pub.track;
-          if (!t) return;
+          const track = pub.track;
+          if (!track) return;
           tugas.push(
-            t
+            track
               .getRTCStatsReport()
               .then((laporan) => {
                 let audio = 0;

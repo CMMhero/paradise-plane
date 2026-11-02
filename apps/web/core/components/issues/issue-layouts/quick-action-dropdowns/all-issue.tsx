@@ -17,7 +17,7 @@ import { cn } from "@plane/utils";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
-import { bolehUbahTugas, useAturanTugas, useBolehHapus, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { useBolehHapus, useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // plane-web components
 import { DuplicateWorkItemModal } from "@/plane-web/components/issues/issue-layouts/quick-action-dropdowns";
 // helper
@@ -72,10 +72,7 @@ export const AllIssueQuickActions = observer(function AllIssueQuickActions(props
     },
     ["id"]
   );
-
-  const { idSaya } = useAturanTugas();
-  const tingkatSaya = useTingkatSaya(workspaceSlug?.toString(), issue.project_id);
-  const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
+  const bolehUbah = useBolehUbahTugas(workspaceSlug?.toString(), issue.project_id, issue);
   const isDeletingAllowed = isEditingAllowed && bolehHapus;
 
   // Menu items and modals using helper

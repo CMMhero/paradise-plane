@@ -21,7 +21,7 @@ menampilkan setengah kantor sebagai online pada jam 11 malam.
 from datetime import timedelta
 
 # Django imports
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.utils import timezone
 
 # Third party imports
@@ -31,17 +31,13 @@ from rest_framework.response import Response
 # Module imports
 from .base import BaseAPIView
 from plane.db.models import (
+    DOMAIN_AKUN_TERHAPUS,
     AMBANG_AKTIF_MENIT,
-    RETENSI_HARI,
     LoginActivity,
     Session,
     User,
 )
-from plane.license.models import InstanceAdmin
-
-# Batas rentang yang boleh diminta. Sama dengan retensi, meminta lebih jauh
-# hanya menghasilkan grafik yang sebagian besar kosong lalu dikira "sepi".
-RENTANG_MAKS_HARI = RETENSI_HARI
+from plane.utils.saklar_instance import LOGIN_HISTORY_RETENTION_DAYS, setelan_angka
 
 
 def _batas_aktif():
@@ -49,12 +45,14 @@ def _batas_aktif():
 
 
 def _rentang(request):
-    """Baca ?hari=N, dijepit ke 1..RENTANG_MAKS_HARI."""
+    """Baca ?hari=N, dijepit ke 1..retensi."""
     try:
         hari = int(request.GET.get("hari", 30))
     except (TypeError, ValueError):
         hari = 30
-    hari = max(1, min(hari, RENTANG_MAKS_HARI))
+    # Batas atas = retensi (God Mode > Features). Meminta lebih jauh hanya
+    # menghasilkan grafik yang sebagian besar kosong lalu dikira "sepi".
+    hari = max(1, min(hari, setelan_angka(LOGIN_HISTORY_RETENTION_DAYS)))
     return hari, timezone.now() - timedelta(days=hari)
 
 
@@ -78,17 +76,17 @@ def _sesi_hidup_per_user():
 def _sesi_user(user_id):
     """Daftar sesi hidup satu user, terbaru dulu."""
     hasil = []
-    for s in Session.objects.filter(
-        user_id=str(user_id), expire_date__gt=timezone.now()
-    ).order_by("-expire_date"):
+    for s in Session.objects.filter(user_id=str(user_id), expire_date__gt=timezone.now()).order_by("-expire_date"):
         info = s.device_info if isinstance(s.device_info, dict) else {}
-        hasil.append({
-            "session_key": s.session_key,
-            "expire_date": s.expire_date,
-            "user_agent": info.get("user_agent", ""),
-            "ip_address": info.get("ip_address", ""),
-            "domain": info.get("domain", ""),
-        })
+        hasil.append(
+            {
+                "session_key": s.session_key,
+                "expire_date": s.expire_date,
+                "user_agent": info.get("user_agent", ""),
+                "ip_address": info.get("ip_address", ""),
+                "domain": info.get("domain", ""),
+            }
+        )
     return hasil
 
 
@@ -104,7 +102,7 @@ class InstanceMemberSessionEndpoint(BaseAPIView):
         try:
             u = User.objects.get(pk=pk)
         except User.DoesNotExist:
-            return Response({"error": "Member tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Member not found."}, status=status.HTTP_404_NOT_FOUND)
 
         sesi = _sesi_user(u.id)
         return Response(
@@ -129,14 +127,14 @@ class InstanceMemberSessionEndpoint(BaseAPIView):
         try:
             u = User.objects.get(pk=pk)
         except User.DoesNotExist:
-            return Response({"error": "Member tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Member not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Menendang diri sendiri akan langsung membuang sesi God Mode yang
         # sedang dipakai untuk mengirim request ini. Ditolak di depan supaya
         # admin tidak mengunci dirinya sendiri karena salah klik baris.
         if str(u.id) == str(request.user.id):
             return Response(
-                {"error": "Tidak bisa menendang akun sendiri"},
+                {"error": "You cannot kick your own account."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -187,7 +185,8 @@ class InstanceActivityEndpoint(BaseAPIView):
         peristiwa = LoginActivity.objects.filter(terjadi_pada__gte=sejak)
         login_qs = peristiwa.filter(jenis=LoginActivity.Jenis.LOGIN)
 
-        pengguna = User.objects.filter(is_bot=False)
+        # Akun terhapus bukan pengguna lagi; mereka tinggal di Trash.
+        pengguna = User.objects.filter(is_bot=False).exclude(email__endswith=f"@{DOMAIN_AKUN_TERHAPUS}")
         total_user = pengguna.count()
 
         # "Sedang memakai" mensyaratkan DUA hal: ada sesi hidup, DAN last_active
@@ -196,9 +195,7 @@ class InstanceActivityEndpoint(BaseAPIView):
         # sedang memakai selama 5 menit padahal belum pernah login sekali pun.
         punya_sesi = set(_sesi_hidup_per_user())
         masih_login = len(punya_sesi)
-        sedang_memakai = pengguna.filter(
-            id__in=punya_sesi, last_active__gte=batas_aktif
-        ).count()
+        sedang_memakai = pengguna.filter(id__in=punya_sesi, last_active__gte=batas_aktif).count()
 
         # Keluar-masuk: berapa kali tiap orang login dalam rentang ini. Inilah
         # yang tidak mungkin dijawab sebelum tabel login_activities ada,
@@ -211,11 +208,7 @@ class InstanceActivityEndpoint(BaseAPIView):
         # per-orang; angka rata-rata menyembunyikan satu orang yang login 40 kali
         # sehari karena sesinya terus putus.
         teratas = sorted(per_user, key=lambda p: -p["n"])[:10]
-        nama = dict(
-            User.objects.filter(id__in=[p["user_id"] for p in teratas]).values_list(
-                "id", "email"
-            )
-        )
+        nama = dict(User.objects.filter(id__in=[p["user_id"] for p in teratas]).values_list("id", "email"))
         teraktif = [
             {
                 "user_id": str(p["user_id"]),
@@ -278,20 +271,73 @@ class InstanceActivityEndpoint(BaseAPIView):
 class InstanceLoginHistoryEndpoint(BaseAPIView):
     """`/api/instances/login-history/`, riwayat mentah, bisa disaring.
 
-    `?user_id=` `?jenis=LOGIN|LOGOUT` `?hari=N` `?page=` `?per_page=`
+    Nilai ganda dipisah koma, `*_not` = kebalikannya:
+      ?user_id= / ?user_id_not=       <user_id>,...
+      ?jenis= / ?jenis_not=           LOGIN,LOGOUT
+      ?permukaan= / ?permukaan_not=   web,admin,... (nilai kosong = `none`)
+      ?medium= / ?medium_not=         email,google,... (nilai kosong = `none`)
+      ?ip=<sebagian IP>  ?search=<nama, email, atau IP>
+      ?date_from=YYYY-MM-DD  ?date_to=YYYY-MM-DD  (di dalam jendela ?hari=N)
+      ?sort=-time|time|person|event|source|medium|ip   ?page=  ?per_page=
+
+    Respons ikut membawa `pilihan` (permukaan & medium yang benar-benar ada di
+    jendela ini), supaya filter di God Mode tidak menawarkan nilai yang mustahil.
     """
 
     def get(self, request):
-        _, sejak = _rentang(request)
-        qs = LoginActivity.objects.filter(terjadi_pada__gte=sejak).select_related("user")
+        from django.db.models import Q
 
-        if user_id := request.GET.get("user_id"):
-            qs = qs.filter(user_id=user_id)
-        if (jenis := request.GET.get("jenis")) in (
-            LoginActivity.Jenis.LOGIN,
-            LoginActivity.Jenis.LOGOUT,
-        ):
-            qs = qs.filter(jenis=jenis)
+        from .audit_log import _daftar, _parse_tanggal
+
+        _, sejak = _rentang(request)
+        dasar = LoginActivity.objects.filter(terjadi_pada__gte=sejak)
+        qs = dasar.select_related("user")
+
+        def saring(qs, kolom, kunci):
+            # `none` mewakili string kosong: event lama sebelum kolom ini diisi.
+            for negasi, k in ((False, kunci), (True, f"{kunci}_not")):
+                nilai = ["" if v == "none" else v for v in _daftar(request, k)]
+                if nilai:
+                    q = Q(**{f"{kolom}__in": nilai})
+                    qs = qs.exclude(q) if negasi else qs.filter(q)
+            return qs
+
+        qs = saring(qs, "user_id", "user_id")
+        qs = saring(qs, "jenis", "jenis")
+        qs = saring(qs, "permukaan", "permukaan")
+        qs = saring(qs, "medium", "medium")
+
+        if ip := (request.GET.get("ip") or "").strip():
+            qs = qs.filter(ip__icontains=ip)
+        if cari := (request.GET.get("search") or "").strip():
+            qs = qs.filter(
+                Q(user__email__icontains=cari) | Q(user__display_name__icontains=cari) | Q(ip__icontains=cari)
+            )
+        if dari := _parse_tanggal(request.GET.get("date_from")):
+            qs = qs.filter(terjadi_pada__gte=dari)
+        if sampai := _parse_tanggal(request.GET.get("date_to"), akhir_hari=True):
+            qs = qs.filter(terjadi_pada__lte=sampai)
+
+        urutan = {
+            "-time": "-terjadi_pada",
+            "time": "terjadi_pada",
+            "person": "user__display_name",
+            "-person": "-user__display_name",
+            "event": "jenis",
+            "-event": "-jenis",
+            "source": "permukaan",
+            "-source": "-permukaan",
+            "medium": "medium",
+            "-medium": "-medium",
+            "ip": "ip",
+            "-ip": "-ip",
+        }.get(request.GET.get("sort") or "", "-terjadi_pada")
+        qs = qs.order_by(urutan, "-terjadi_pada")
+
+        pilihan = {
+            kolom: sorted(set(dasar.order_by().values_list(kolom, flat=True).distinct()))
+            for kolom in ("permukaan", "medium")
+        }
 
         try:
             page = max(1, int(request.GET.get("page", 1)))
@@ -324,6 +370,7 @@ class InstanceLoginHistoryEndpoint(BaseAPIView):
                 "per_page": per_page,
                 "total_pages": (total + per_page - 1) // per_page,
                 "results": baris,
+                "pilihan": pilihan,
             },
             status=status.HTTP_200_OK,
         )

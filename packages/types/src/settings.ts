@@ -28,7 +28,6 @@ export type TWorkspaceSettingsItem = {
 export type TProjectSettingsTabs =
   | "general"
   | "members"
-  | "features_cycles"
   | "features_modules"
   | "features_views"
   | "features_pages"
@@ -36,9 +35,6 @@ export type TProjectSettingsTabs =
   | "states"
   | "labels"
   | "estimates"
-  | "work_item_types"
-  | "templates"
-  | "wiki_access"
   | "trash"
   | "automations";
 export type TProjectSettingsItem = {

@@ -87,6 +87,7 @@ from .initiative import Initiative, InitiativeProject
 from .wiki_access import WikiGovernedProject, WikiFolderAccess
 from .plan import WorkspacePlan
 from .superadmin_visibility import SuperAdminTerlihatDiProject
+from .akun_terhapus import AkunTerhapus, DOMAIN_AKUN_TERHAPUS, NAMA_AKUN_TERHAPUS, adalah_akun_terhapus, email_akun_terhapus
 from .deadline_reminder import PengingatTenggat, SEMUA_TITIK, TITIK_OVERDUE, TITIK_SEBELUM
 from .google_calendar import AcaraKalender, KalenderGoogle, SCOPE_KALENDER
 from .chat import Langganan, PesanLangsung, ReaksiPesan, Ruang, BATAS_ISI

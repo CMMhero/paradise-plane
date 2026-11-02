@@ -9,6 +9,8 @@ import useSWR from "swr";
 import type { TPage } from "@plane/types";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+// lib
+import { WIKI_PROJECT_IDENTIFIER } from "@/lib/wiki-project";
 // services
 import { ProjectPageService } from "@/services/page";
 import { WikiAccessService, type TWikiFolderPermission } from "@/services/wiki_access.service";
@@ -28,11 +30,9 @@ const layananHalaman = new ProjectPageService();
 const layananAkses = new WikiAccessService();
 const layananMateri = new WikiMaterialService();
 
-const IDENTIFIER_WIKI = "WIKI";
-
 export const useProjectWiki = () => {
   const { getProjectByIdentifier, loader } = useProject();
-  const project = getProjectByIdentifier(IDENTIFIER_WIKI);
+  const project = getProjectByIdentifier(WIKI_PROJECT_IDENTIFIER);
   return { projectId: project?.id, sedangMemuat: loader === "init-loader", project };
 };
 
@@ -45,11 +45,16 @@ export const usePohonWiki = (workspaceSlug?: string, projectId?: string) => {
   return { halaman: data, sedangMemuat: isLoading, muatUlang: mutate };
 };
 
+/**
+ * Izin SENGAJA ikut segar saat tab kembali difokus (bawaan SWR global). Izin
+ * bisa berubah dari luar halaman ini: admin mengatur pemilik folder di tab
+ * lain, atau penempatan divisi diubah di God Mode. Mematikannya membuat tombol
+ * unggah dan kelola baru muncul setelah refresh penuh.
+ */
 export const useIzinWiki = (workspaceSlug?: string, projectId?: string) => {
   const { data, mutate } = useSWR(
     workspaceSlug && projectId ? `WIKI_PERMISSIONS_${projectId}` : null,
-    workspaceSlug && projectId ? () => layananAkses.fetchPermissions(workspaceSlug, projectId) : null,
-    { revalidateOnFocus: false }
+    workspaceSlug && projectId ? () => layananAkses.fetchPermissions(workspaceSlug, projectId) : null
   );
   return { izin: data, muatUlangIzin: mutate };
 };
@@ -114,15 +119,16 @@ export const ukuranTerbaca = (bytes: number): string => {
 };
 
 /** Label pendek untuk tipe berkas, yang dibaca orang bukan mesin. */
-export const labelTipe = (mime: string): string => {
+export const labelTipe = (mime: string, t: (key: string) => string): string => {
   if (mime === "application/pdf") return "PDF";
-  if (mime.startsWith("image/")) return "Gambar";
-  if (mime.startsWith("video/")) return "Video";
-  if (mime.startsWith("audio/")) return "Audio";
+  if (mime.startsWith("image/")) return t("wiki_ui.file_type.image");
+  if (mime.startsWith("video/")) return t("wiki_ui.file_type.video");
+  if (mime.startsWith("audio/")) return t("wiki_ui.file_type.audio");
   if (mime.includes("wordprocessingml") || mime === "application/msword") return "Word";
   if (mime.includes("spreadsheetml") || mime === "application/vnd.ms-excel") return "Excel";
   if (mime.includes("presentationml") || mime === "application/vnd.ms-powerpoint") return "PowerPoint";
-  if (mime.startsWith("text/")) return "Teks";
-  if (mime.includes("zip") || mime.includes("compressed") || mime.includes("rar")) return "Arsip";
-  return "Berkas";
+  if (mime.startsWith("text/")) return t("wiki_ui.file_type.text");
+  if (mime.includes("zip") || mime.includes("compressed") || mime.includes("rar"))
+    return t("wiki_ui.file_type.archive");
+  return t("wiki_ui.file_type.file");
 };

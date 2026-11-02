@@ -52,6 +52,7 @@ from plane.utils.timezone_converter import user_timezone_converter
 from plane.utils.global_paginator import paginate
 from plane.utils.host import base_host
 from plane.db.models.intake import SourceType
+from plane.utils.task_access import bisa_ganti_tenggat_intake, tenggat_diubah
 
 
 class IntakeViewSet(BaseViewSet):
@@ -408,6 +409,25 @@ class IntakeIssueViewSet(BaseViewSet):
                     "description_html": issue_data.get("description_html", issue.description_html),
                     "description_json": issue_data.get("description_json", issue.description_json),
                 }
+
+            # Kustomisasi Paradise: tenggat adalah janji yang dibuat pembuat tugas,
+            # jadi hanya pembuatnya atau Super Admin yang boleh menggesernya. Pintu
+            # intake kebagian pengecualian (keputusan user 2026-10-29): di antrean
+            # triage-lah tenggat dijanjikan pertama kali, jadi penanggung jawab
+            # intake ikut boleh — bukan hanya pembuat. Setelah diterima ke papan,
+            # aturan biasa kembali berlaku. Tanpa gerbang ini, triage sama sekali
+            # tidak bisa mengatur tenggat tugas yang dibuat orang lain.
+            penanggung_jawab = bool(project_member and project_member.role > ROLE.MEMBER.value) or is_workspace_admin
+            if tenggat_diubah(issue, issue_data) and not bisa_ganti_tenggat_intake(
+                request.user, issue, penanggung_jawab
+            ):
+                return Response(
+                    {
+                        "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
+                        "penanggung jawab intake, atau Super Admin."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
             issue_current_instance = json.dumps(IssueDetailSerializer(issue).data, cls=DjangoJSONEncoder)
             issue_requested_data = json.dumps(issue_data, cls=DjangoJSONEncoder)

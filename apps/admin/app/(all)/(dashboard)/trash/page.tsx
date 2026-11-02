@@ -1,20 +1,45 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: TPA (Tempat Pembuangan Akhir)
+ * Kustomisasi Paradise Task Tracker: tong sampah lintas project (dulu "TPA")
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
+ *
+ * Susunan baku daftar God Mode (sama dengan Audit log & Accounts): toolbar ala
+ * tampilan work item (cari, Filters, Display), DataTable dengan kepala yang bisa
+ * diurutkan, dan AlertModalCore untuk aksi yang tak bisa dibatalkan. Isi tong
+ * sampah dimuat utuh lalu disaring di klien supaya pilihan filter (jenis,
+ * penghapus) diturunkan dari isinya, bukan dari daftar tetap yang bisa basi.
  */
 
-import { useState } from "react";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Boxes, CalendarX2, Hourglass, RotateCcw, Trash2, UserX } from "lucide-react";
 import useSWR from "swr";
 // plane imports
-import { Button } from "@plane/propel/button";
+import { Badge } from "@plane/propel/badge";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
-import { InstanceTrashService, type TTrashItem, type TTrashType } from "@plane/services";
-import { Loader } from "@plane/ui";
+import { InstanceTrashService, countTrashTypes, type TTrashItem, type TTrashType } from "@plane/services";
+import { AlertModalCore, Loader } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
+import {
+  DataTable,
+  ViewToolbar,
+  applyConditions,
+  applySearch,
+  paginate,
+  sortRows,
+  useViewState,
+  type TColumn,
+  type TFilterField,
+  type TViewState,
+} from "@/components/common/data-view";
 import { PageWrapper } from "@/components/common/page-wrapper";
+import { Pagination, StateBox } from "@/components/common/paradise";
+import { formatDateTime } from "@/components/common/paradise-styles";
+import { IconAction, PersonCell } from "@/components/common/paradise-ui";
+import { LogsTabs } from "@/components/common/section-tabs";
+// local
+import { useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
 // types
 import type { Route } from "./+types/page";
 
@@ -22,38 +47,102 @@ const trashService = new InstanceTrashService();
 
 const SKELETON_ROWS = ["s1", "s2", "s3", "s4", "s5", "s6"];
 
-const JENIS: { value: TTrashType | ""; label: string }[] = [
-  { value: "", label: "Semua jenis" },
-  { value: "issue", label: "Work item" },
-  { value: "page", label: "Halaman" },
-  { value: "cycle", label: "Cycle" },
-  { value: "module", label: "Module" },
-];
+/** Sisa hari yang dianggap mendesak: angkanya diwarnai bahaya. */
+const HARI_MENDESAK = 3;
+const HARI_SEPEKAN = 7;
 
-const toastError = (err: unknown, fallback: string) => {
-  const message = (err as { error?: string })?.error ?? fallback;
-  setToast({ type: TOAST_TYPE.ERROR, title: "Gagal", message });
+/** Kunci penghapus: email kalau ada, `none` untuk skrip / model yang tak dipantau. */
+const kunciPenghapus = (item: TTrashItem): string => item.deleted_by?.email ?? "none";
+
+const sisaHari = (item: TTrashItem): "urgent" | "week" | "later" =>
+  item.days_left <= HARI_MENDESAK ? "urgent" : item.days_left <= HARI_SEPEKAN ? "week" : "later";
+
+const petaJenis = (t: TGodmodeStrings["trash"]): Partial<Record<TTrashType, string>> => ({
+  account: t.type_account,
+  project: t.type_project,
+  issue: t.type_issue,
+  page: t.type_page,
+  wiki_material: t.type_wiki_material,
+  cycle: t.type_cycle,
+  module: t.type_module,
+  view: t.type_view,
+  label: t.type_label,
+  template: t.type_template,
+  initiative: t.type_initiative,
+});
+
+const VIEW_BAWAAN: TViewState = {
+  search: "",
+  conditions: [],
+  sort: { key: "deleted", dir: "desc" },
+  hidden: [],
+  perPage: 50,
 };
 
-function formatWaktu(iso: string) {
-  return new Date(iso).toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 const TrashPage = function TrashPage(_props: Route.ComponentProps) {
-  const [jenis, setJenis] = useState<TTrashType | "">("");
+  const { s, fill } = useGodmodeStrings();
+  const t = s.trash;
   const [sibuk, setSibuk] = useState<string | null>(null);
+  const [akanDibuang, setAkanDibuang] = useState<TTrashItem | null>(null);
 
-  const { data, isLoading, error, mutate } = useSWR(
-    ["INSTANCE_TRASH", jenis],
-    () => trashService.list(jenis || undefined),
-    { revalidateOnFocus: false }
-  );
+  const { data, isLoading, error, mutate } = useSWR("INSTANCE_TRASH", () => trashService.list(), {
+    revalidateOnFocus: false,
+  });
+  const items = useMemo(() => data?.results ?? [], [data]);
+
+  const typeLabel = petaJenis(t);
+  const labelJenis = (type: TTrashType, fallback: string) => typeLabel[type] ?? fallback;
+
+  const fields = useMemo<TFilterField<TTrashItem>[]>(() => {
+    const penghapus = new Map<string, string>();
+    for (const item of items) {
+      if (item.deleted_by) penghapus.set(item.deleted_by.email, item.deleted_by.display_name || item.deleted_by.email);
+    }
+    return [
+      {
+        key: "type",
+        label: t.col_type,
+        icon: Boxes,
+        kind: "select",
+        options: countTrashTypes(items).map((j) => ({
+          value: j.type,
+          label: `${petaJenis(t)[j.type] ?? j.label} (${j.count})`,
+        })),
+        get: (item) => item.type,
+      },
+      {
+        key: "deleted_by",
+        label: t.col_deleted_by,
+        icon: UserX,
+        kind: "select",
+        options: [
+          ...[...penghapus].map(([email, nama]) => ({ value: email, label: `${nama} (${email})` })),
+          { value: "none", label: t.nobody },
+        ],
+        get: kunciPenghapus,
+      },
+      { key: "deleted", label: t.col_deleted, icon: CalendarX2, kind: "date", get: (item) => item.deleted_at },
+      {
+        key: "expires",
+        label: t.filter_expires,
+        icon: Hourglass,
+        kind: "select",
+        options: [
+          { value: "urgent", label: t.expires_urgent },
+          { value: "week", label: t.expires_week },
+          { value: "later", label: t.expires_later },
+        ],
+        get: sisaHari,
+      },
+    ];
+  }, [items, t]);
+
+  const view = useViewState("trash", VIEW_BAWAAN, fields);
+
+  const toastError = (err: unknown, fallback: string) => {
+    const message = (err as { error?: string })?.error ?? fallback;
+    setToast({ type: TOAST_TYPE.ERROR, title: s.common.failed, message });
+  };
 
   const handlePulihkan = async (item: TTrashItem) => {
     setSibuk(item.id);
@@ -62,61 +151,153 @@ const TrashPage = function TrashPage(_props: Route.ComponentProps) {
       await mutate();
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Dipulihkan",
-        message: `"${item.name}" kembali beserta ${Math.max((hasil?.restored_count ?? 1) - 1, 0)} objek terkait.`,
+        title: t.restored,
+        message:
+          item.type === "account"
+            ? fill(t.account_restored_message, { name: item.name })
+            : fill(t.restored_message, {
+                name: item.name,
+                n: Math.max((hasil?.restored_count ?? 1) - 1, 0),
+              }),
       });
     } catch (err) {
-      toastError(err, "Tidak bisa memulihkan.");
+      toastError(err, t.restore_failed);
     } finally {
       setSibuk(null);
     }
   };
 
-  const handleBuang = async (item: TTrashItem) => {
-    // Satu-satunya aksi tak terbalikkan di halaman ini, dan tombolnya
-    // bersebelahan dengan "Pulihkan", konfirmasi wajib.
-    const yakin = window.confirm(
-      `Buang "${item.name}" secara permanen?\n\nTidak bisa dibatalkan, barang ini tidak akan bisa dipulihkan lagi, bahkan oleh Super Admin.`
-    );
-    if (!yakin) return;
+  const handleBuang = async () => {
+    const item = akanDibuang;
+    if (!item) return;
     setSibuk(item.id);
     try {
       await trashService.purge(item.type, item.id);
       await mutate();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: "Dibuang permanen", message: `"${item.name}" sudah tidak ada.` });
+      setAkanDibuang(null);
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t.purged, message: fill(t.purged_message, { name: item.name }) });
     } catch (err) {
-      toastError(err, "Tidak bisa membuang permanen.");
+      toastError(err, t.purge_failed);
     } finally {
       setSibuk(null);
     }
   };
 
-  return (
-    <PageWrapper
-      size="lg"
-      header={{
-        title: "TPA, Tempat Pembuangan Akhir",
-        description: `Semua barang terhapus dari seluruh project${
-          data?.retention_days ? `, disimpan ${data.retention_days} hari` : ""
-        }. Bisa dipulihkan atau dibuang permanen.`,
-      }}
-    >
-      <div className="mx-4 flex items-center justify-between">
-        <select
-          value={jenis}
-          onChange={(e) => setJenis(e.target.value as TTrashType | "")}
-          className="focus:border-accent-primary rounded border border-subtle bg-layer-1 px-2 py-1.5 text-body-sm-regular text-primary outline-none"
+  const columns: TColumn<TTrashItem>[] = [
+    {
+      key: "item",
+      label: t.col_item,
+      locked: true,
+      className: "max-w-0",
+      sortValue: (item) => item.name.toLowerCase(),
+      render: (item) => (
+        <span className="block truncate font-medium text-primary" title={item.name}>
+          {item.name}
+        </span>
+      ),
+    },
+    {
+      key: "type",
+      label: t.col_type,
+      headClassName: "w-32",
+      sortValue: (item) => labelJenis(item.type, item.type_label),
+      render: (item) => (
+        <Badge variant="neutral" size="sm">
+          {labelJenis(item.type, item.type_label)}
+        </Badge>
+      ),
+    },
+    {
+      key: "deleted_by",
+      label: t.col_deleted_by,
+      headClassName: "w-56",
+      sortValue: (item) => item.deleted_by?.display_name || item.deleted_by?.email,
+      render: (item) =>
+        item.deleted_by ? (
+          <PersonCell name={item.deleted_by.display_name} email={item.deleted_by.email} size="sm" />
+        ) : (
+          <span className="text-placeholder">—</span>
+        ),
+    },
+    {
+      key: "deleted",
+      label: t.col_deleted,
+      headClassName: "w-40",
+      className: "whitespace-nowrap text-secondary",
+      sortValue: (item) => new Date(item.deleted_at).getTime(),
+      render: (item) => formatDateTime(item.deleted_at),
+    },
+    {
+      key: "expires",
+      label: t.col_expires,
+      headClassName: "w-28",
+      sortValue: (item) => item.days_left,
+      render: (item) => (
+        <span
+          className={cn("whitespace-nowrap text-secondary", {
+            "font-medium text-danger-primary": item.days_left <= HARI_MENDESAK,
+          })}
         >
-          {JENIS.map((j) => (
-            <option key={j.value} value={j.value}>
-              {j.label}
-            </option>
-          ))}
-        </select>
-        {data && <span className="text-body-sm-regular text-secondary">{data.results.length} barang</span>}
-      </div>
+          {fill(t.days_left, { n: item.days_left })}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: t.restore,
+      locked: true,
+      srOnlyLabel: true,
+      headClassName: "w-20",
+      render: (item) => (
+        <div className="flex items-center justify-end gap-1">
+          <IconAction
+            label={t.restore}
+            icon={RotateCcw}
+            disabled={sibuk === item.id}
+            onClick={() => void handlePulihkan(item)}
+          />
+          <IconAction
+            label={t.purge}
+            icon={Trash2}
+            variant="error-outline"
+            disabled={sibuk === item.id}
+            onClick={() => setAkanDibuang(item)}
+          />
+        </div>
+      ),
+    },
+  ];
 
-      <div className="mx-4">
+  const teksCari = (item: TTrashItem) =>
+    `${item.name} ${labelJenis(item.type, item.type_label)} ${item.deleted_by?.display_name ?? ""} ${item.deleted_by?.email ?? ""}`;
+  const tersaring = sortRows(
+    applyConditions(applySearch(items, view.search, teksCari), fields, view.conditions),
+    view.sort,
+    columns.find((c) => c.key === view.sort.key)?.sortValue
+  );
+  const halaman = paginate(tersaring, view.page, view.perPage);
+
+  const kept = data?.retention_days ? fill(t.kept, { days: data.retention_days }) : "";
+  const teksKonfirmasi = akanDibuang?.type === "account" ? t.account_purge_confirm : t.purge_confirm;
+
+  return (
+    <PageWrapper header={{ title: s.logs.title, description: fill(t.description, { kept }) }}>
+      <LogsTabs />
+      <div className="space-y-3">
+        <ViewToolbar
+          view={view}
+          fields={fields}
+          searchPlaceholder={t.search_placeholder}
+          sortOptions={columns.filter((c) => c.sortValue).map((c) => ({ key: c.key, label: c.label }))}
+          columns={columns.filter((c) => !c.locked).map((c) => ({ key: c.key, label: c.label }))}
+          summary={
+            data &&
+            (tersaring.length === items.length
+              ? fill(t.count, { n: items.length })
+              : fill(t.count_filtered, { n: tersaring.length, total: items.length }))
+          }
+        />
+
         {isLoading ? (
           <Loader className="space-y-2">
             {SKELETON_ROWS.map((k) => (
@@ -124,53 +305,48 @@ const TrashPage = function TrashPage(_props: Route.ComponentProps) {
             ))}
           </Loader>
         ) : error ? (
-          <div className="rounded border border-subtle p-8 text-center text-body-sm-regular text-secondary">
-            Gagal memuat isi TPA.
-          </div>
-        ) : !data?.results.length ? (
-          <div className="rounded border border-subtle p-8 text-center text-body-sm-regular text-secondary">
-            TPA kosong.
-          </div>
+          <StateBox tone="danger">{t.load_failed}</StateBox>
+        ) : tersaring.length === 0 ? (
+          <StateBox>{items.length === 0 ? t.empty : t.no_results}</StateBox>
         ) : (
-          <div className="divide-y divide-subtle rounded border border-subtle">
-            {data.results.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="flex items-center justify-between gap-4 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-body-sm-medium text-primary">{item.name}</p>
-                  <p className="mt-0.5 text-11 text-secondary">
-                    {item.type_label} · dibuang {formatWaktu(item.deleted_at)}
-                    {item.deleted_by ? ` oleh ${item.deleted_by.display_name || item.deleted_by.email}` : ""}
-                    {" · "}
-                    <span className={item.days_left <= 3 ? "text-red-600 font-medium" : ""}>
-                      sisa {item.days_left} hari
-                    </span>
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={sibuk === item.id}
-                    onClick={() => handlePulihkan(item)}
-                  >
-                    <RotateCcw className="size-3.5" /> Pulihkan
-                  </Button>
-                  <Button
-                    variant="error-outline"
-                    size="sm"
-                    disabled={sibuk === item.id}
-                    onClick={() => handleBuang(item)}
-                  >
-                    <Trash2 className="size-3.5" /> Buang permanen
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <DataTable
+            rows={halaman.rows}
+            columns={columns}
+            hidden={view.hidden}
+            sort={view.sort}
+            onSort={view.setSort}
+            rowKey={(item) => `${item.type}-${item.id}`}
+            minWidth={820}
+          />
+        )}
+
+        {tersaring.length > view.perPage && (
+          <Pagination
+            summary={fill(s.members.page_summary, { page: halaman.page, total: halaman.totalPages })}
+            page={halaman.page}
+            totalPages={halaman.totalPages}
+            onChange={view.setPage}
+            prevLabel={s.common.prev_page}
+            nextLabel={s.common.next_page}
+          />
         )}
       </div>
+
+      {/* Satu-satunya aksi tak terbalikkan di halaman ini, konfirmasi wajib. */}
+      <AlertModalCore
+        isOpen={akanDibuang !== null}
+        handleClose={() => sibuk === null && setAkanDibuang(null)}
+        handleSubmit={() => void handleBuang()}
+        isSubmitting={akanDibuang !== null && sibuk === akanDibuang.id}
+        title={t.purge_title}
+        content={<span className="whitespace-pre-line">{fill(teksKonfirmasi, { name: akanDibuang?.name ?? "" })}</span>}
+        primaryButtonText={{ default: t.purge, loading: t.purging }}
+        secondaryButtonText={s.common.cancel}
+      />
     </PageWrapper>
   );
 };
+
+export const meta: Route.MetaFunction = () => [{ title: "Trash - God Mode" }];
 
 export default TrashPage;

@@ -12,6 +12,8 @@ import { IconButton } from "@plane/propel/icon-button";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useInstance } from "@/hooks/store/use-instance";
+import { isProfileTabAvailable, PROFILE_TAB_FALLBACK } from "@/lib/profile-tabs";
 // local imports
 import { ProfileSettingsContent } from "./content";
 import { ProfileSettingsSidebarRoot } from "./sidebar";
@@ -19,8 +21,10 @@ import { ProfileSettingsSidebarRoot } from "./sidebar";
 export const ProfileSettingsModal = observer(function ProfileSettingsModal() {
   // store hooks
   const { profileSettingsModal, toggleProfileSettingsModal } = useCommandPalette();
+  const { config } = useInstance();
   // derived values
-  const activeTab = profileSettingsModal.activeTab ?? "general";
+  const diminta = profileSettingsModal.activeTab ?? PROFILE_TAB_FALLBACK;
+  const activeTab = isProfileTabAvailable(config, diminta) ? diminta : PROFILE_TAB_FALLBACK;
 
   const handleClose = useCallback(() => {
     toggleProfileSettingsModal({

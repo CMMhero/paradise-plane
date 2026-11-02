@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { BookText, LayoutDashboard, MessageSquare, Target } from "lucide-react";
+import { BookText, LayoutDashboard, Link2, MessageSquare, Target } from "lucide-react";
 import {
   AnalyticsIcon,
   ArchiveIcon,
@@ -18,8 +18,34 @@ import {
   YourWorkIcon,
 } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
+// components
+import type { TTintHue } from "@/components/common/tint";
+import { TINT_ICON_CLASS } from "@/components/common/tint";
 
-export const getSidebarNavigationItemIcon = (key: string, className: string = "") => {
+// Paradise: tiap item navigasi punya rona ikon sendiri supaya sidebar tidak
+// abu-abu seragam dan item lebih cepat dikenali. Teksnya tetap netral, yang
+// berwarna hanya ikonnya. Item yang tak terdaftar tetap mewarisi warna teks.
+const NAV_ICON_HUE: Record<string, TTintHue> = {
+  home: "indigo",
+  your_work: "emerald",
+  inbox: "orange",
+  projects: "purple",
+  views: "pink",
+  active_cycles: "yellow",
+  analytics: "indigo",
+  drafts: "grey",
+  archives: "grey",
+  stickies: "yellow",
+  wiki: "crimson",
+  dashboard_divisi: "emerald",
+  initiatives: "pink",
+  chat: "indigo",
+  quick_links: "emerald",
+};
+
+export const getSidebarNavigationItemIcon = (key: string, extraClassName: string = "") => {
+  const hue = NAV_ICON_HUE[key];
+  const className = cn(hue && TINT_ICON_CLASS[hue], extraClassName);
   switch (key) {
     case "home":
       return <HomeIcon className={cn("size-4 flex-shrink-0", className)} />;
@@ -54,5 +80,7 @@ export const getSidebarNavigationItemIcon = (key: string, className: string = ""
     // ikonnya ikut dibuang. Route + halamannya tetap hidup sebagai deep-link.
     case "chat":
       return <MessageSquare className={cn("size-4 flex-shrink-0", className)} />;
+    case "quick_links":
+      return <Link2 className={cn("size-4 flex-shrink-0", className)} />;
   }
 };

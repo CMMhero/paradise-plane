@@ -31,11 +31,10 @@ import { useKanbanView } from "@/hooks/store/use-kanban-view";
 import { useProject } from "@/hooks/store/use-project";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 import { ApprovalCardBadge } from "@/components/issues/approval-card-badge";
-// Kustomisasi Paradise: filter tunggu-persetujuan.
-import { lolosFilterApproval, useApprovalFilter } from "@/components/issues/approval-filter-context";
 import { IssueStats } from "@/plane-web/components/issues/issue-layouts/issue-stats";
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { IssueProperties } from "../properties/all-properties";
@@ -57,6 +56,11 @@ interface IssueBlockProps {
   shouldRenderByDefault?: boolean;
   isEpic?: boolean;
 }
+
+const handleEventPropagation = (e: React.MouseEvent) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
 
 interface IssueDetailsBlockProps {
   cardRef: React.RefObject<HTMLElement>;
@@ -82,6 +86,7 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
       className={`flex h-full w-full cursor-pointer items-center rounded-sm p-1 text-placeholder hover:bg-layer-1 ${
         isMenuActive ? "bg-layer-1 text-primary" : "text-secondary"
       }`}
+      role="presentation"
       onClick={() => setIsMenuActive(!isMenuActive)}
     >
       <MoreHorizontal className="h-3.5 w-3.5" />
@@ -90,11 +95,6 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
 
   // derived values
   const subIssueCount = issue?.sub_issues_count ?? 0;
-
-  const handleEventPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
 
   useOutsideClickDetector(menuActionRef, () => setIsMenuActive(false));
 
@@ -115,6 +115,7 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
             "hidden group-hover/kanban-block:block": !isMobile,
             "!block": isMenuActive,
           })}
+          role="presentation"
           onClick={handleEventPropagation}
         >
           {quickActions({
@@ -192,12 +193,10 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
   const [isDraggingOverBlock, setIsDraggingOverBlock] = useState(false);
   const [isCurrentBlockDragging, setIsCurrentBlockDragging] = useState(false);
 
-  const canEditIssueProperties = canEditProperties(issue?.project_id ?? undefined);
+  // KEP-25: chip properti & seret kartu ikut kunci milik, bukan cuma peran project.
+  const bolehUbahMilik = useBolehUbahTugas(workspaceSlug, issue?.project_id, issue);
+  const canEditIssueProperties = canEditProperties(issue?.project_id ?? undefined) && bolehUbahMilik;
   const isDragAllowed = canDragIssuesInCurrentGrouping && !issue?.tempId && canEditIssueProperties;
-  // Kustomisasi Paradise: filter lokal tunggu-persetujuan (KEP-25). Provider
-  // dipasang di root papan; di luar papan (contoh: pratinjau) context default
-  // = mati, jadi aman dirender di mana pun.
-  const { hanyaMenunggu } = useApprovalFilter();
   const projectIdentifier = getProjectIdentifierById(issue?.project_id);
 
   const workItemLink = generateWorkItemLink({
@@ -251,10 +250,10 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
         },
       })
     );
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- cardRef.current is intentionally tracked so the effect re-binds when the element mounts; setIsKanbanDragging omitted to keep original behavior
   }, [cardRef?.current, issue?.id, isDragAllowed, canDropOverIssue, setIsCurrentBlockDragging, setIsDraggingOverBlock]);
 
   if (!issue) return null;
-  if (!lolosFilterApproval(issue.approval_status, hanyaMenunggu)) return null;
 
   return (
     <>
@@ -289,9 +288,13 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
             // kuning tipis (KEP-25) — bukan cuma chip, supaya atasan memindai
             // antrean sekilas di papan yang ramai.
             {
-              "border-amber-500/40 bg-amber-500/[0.04] hover:border-amber-500/60": issue.approval_status === "menunggu",
+              "border-warning-subtle bg-warning-primary/[0.04] hover:border-warning-strong":
+                issue.approval_status === "menunggu",
             },
-            { "border-red-500/40 bg-red-500/[0.04] hover:border-red-500/60": issue.approval_status === "ditolak" }
+            {
+              "border-danger-subtle bg-danger-primary/[0.04] hover:border-danger-strong":
+                issue.approval_status === "ditolak",
+            }
           )}
           onClick={() => handleIssuePeekOverview(issue)}
           disabled={!!issue?.tempId}

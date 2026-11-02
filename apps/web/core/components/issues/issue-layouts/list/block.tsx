@@ -22,8 +22,6 @@ import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
 import { ApprovalCardBadge } from "@/components/issues/approval-card-badge";
-// Kustomisasi Paradise: filter tunggu-persetujuan.
-import { lolosFilterApproval, useApprovalFilter } from "@/components/issues/approval-filter-context";
 import { IssueProperties } from "@/components/issues/issue-layouts/properties";
 // helpers
 // hooks
@@ -32,6 +30,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import type { TSelectionHelper } from "@/hooks/use-multiple-select";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 import { IssueStats } from "@/plane-web/components/issues/issue-layouts/issue-stats";
@@ -111,11 +110,10 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
   // derived values
   const issue = issuesMap[issueId];
   const subIssuesCount = issue?.sub_issues_count ?? 0;
-  const canEditIssueProperties = canEditProperties(issue?.project_id ?? undefined);
+  // KEP-25: chip properti & seret kartu ikut kunci milik, bukan cuma peran project.
+  const bolehUbahMilik = useBolehUbahTugas(workspaceSlug, issue?.project_id, issue);
+  const canEditIssueProperties = canEditProperties(issue?.project_id ?? undefined) && bolehUbahMilik;
   const isDraggingAllowed = canDrag && canEditIssueProperties;
-  // Kustomisasi Paradise: filter lokal tunggu-persetujuan (KEP-25).
-  const { hanyaMenunggu } = useApprovalFilter();
-
   const { isMobile } = usePlatformOS();
 
   useEffect(() => {
@@ -139,7 +137,6 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
   }, [isDraggingAllowed, issueId, groupId, setIsCurrentBlockDragging]);
 
   if (!issue) return null;
-  if (!lolosFilterApproval(issue.approval_status, hanyaMenunggu)) return null;
 
   const projectIdentifier = getProjectIdentifierById(issue.project_id);
   const isIssueSelected = selectionHelpers.getIsEntitySelected(issue.id);
@@ -201,8 +198,8 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
             "lg:flex-row lg:items-center": !isSidebarCollapsed,
             // Kustomisasi Paradise: baris tunggu-approval beda bawah kuning
             // tipis (KEP-25) — sama bahasanya dengan kartu kanban.
-            "bg-amber-500/[0.04] hover:bg-amber-500/[0.07]": issue.approval_status === "menunggu",
-            "bg-red-500/[0.04] hover:bg-red-500/[0.07]": issue.approval_status === "ditolak",
+            "bg-warning-primary/[0.04] hover:bg-warning-primary/[0.07]": issue.approval_status === "menunggu",
+            "bg-danger-primary/[0.04] hover:bg-danger-primary/[0.07]": issue.approval_status === "ditolak",
           }
         )}
         onDragStart={() => {
@@ -336,6 +333,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                   "md:flex": isSidebarCollapsed,
                   "lg:flex": !isSidebarCollapsed,
                 })}
+                role="presentation"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

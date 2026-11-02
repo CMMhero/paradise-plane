@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Dostęp do wiki",
-      "description": "Można wybrać, które działy mogą edytować każdy folder najwyższego poziomu. Wszyscy członkowie projektu nadal mogą czytać wszystkie strony."
-    },
     "trash": {
       "heading": "Kosz",
       "description": "Usunięte elementy trafiają tutaj, zanim zostaną trwale usunięte. Administratorzy projektu mogą je przywrócić lub usunąć na stałe."

@@ -10,7 +10,7 @@ import { useParams } from "react-router";
 // plane imports
 import {
   EUserPermissionsLevel,
-  GROUPED_PROJECT_SETTINGS,
+  getGroupedProjectSettings,
   PROJECT_SETTINGS_CATEGORIES,
   PROJECT_SETTINGS_CATEGORY_LABELS,
 } from "@plane/constants";
@@ -37,11 +37,13 @@ export const ProjectSettingsSidebarItemCategories = observer(function ProjectSet
   const { allowPermissions } = useUserPermissions();
   // translation
   const { t } = useTranslation();
+  // Tab milik modul yang dimatikan di God Mode tidak tampil.
+  const groupedSettings = getGroupedProjectSettings();
 
   return (
     <div className="mt-3 flex flex-col divide-y divide-subtle px-3">
       {PROJECT_SETTINGS_CATEGORIES.map((category) => {
-        const categoryItems = GROUPED_PROJECT_SETTINGS[category];
+        const categoryItems = groupedSettings[category];
         const accessibleItems = categoryItems.filter((item) =>
           allowPermissions(item.access, EUserPermissionsLevel.PROJECT, workspaceSlug, projectId)
         );

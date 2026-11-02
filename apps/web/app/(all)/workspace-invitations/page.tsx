@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
@@ -28,6 +29,7 @@ import { WorkspaceService } from "@/services/workspace.service";
 const workspaceService = new WorkspaceService();
 
 function WorkspaceInvitationPage() {
+  const { t } = useTranslation();
   // router
   const router = useAppRouter();
   // query params
@@ -104,13 +106,13 @@ function WorkspaceInvitationPage() {
             </EmptySpace>
           ) : (
             <EmptySpace
-              title="Tautan undangan ini sudah tidak aktif."
-              description="Hubungi admin workspace untuk meminta undangan baru."
+              title={t("shared_ui.invite_inactive_title")}
+              description={t("shared_ui.invite_inactive_description")}
             >
               {!currentUser ? (
-                <EmptySpaceItem Icon={User2} title="Masuk untuk melanjutkan" href="/" />
+                <EmptySpaceItem Icon={User2} title={t("shared_ui.sign_in_to_continue")} href="/" />
               ) : (
-                <EmptySpaceItem Icon={Boxes} title="Kembali ke beranda" href="/" />
+                <EmptySpaceItem Icon={Boxes} title={t("shared_ui.back_to_home")} href="/" />
               )}
             </EmptySpace>
           )

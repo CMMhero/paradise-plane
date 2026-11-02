@@ -176,6 +176,31 @@ class TestChat:
         assert PesanLangsung.objects.count() == 0
 
     @pytest.mark.django_db
+    def test_catatan_untuk_diri_sendiri(self, kantor):
+        """DM ke diri sendiri: satu ruang, satu langganan, tidak pernah "belum dibaca".
+
+        Yang dijaga: dua langganan untuk orang yang sama menabrak unique_together
+        (500, bukan 400), dan pesan yang lahir belum terbaca akan dikirimi email
+        pemberitahuan berisi tulisan sendiri.
+        """
+        workspace, aku, _, _ = kantor
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        url = f"/api/workspaces/{workspace.slug}/chat/{aku.id}/"
+
+        assert client.post(url, {"isi": "ingat beli kopi"}, format="json").status_code == 201
+        assert client.post(url, {"isi": "dan gula"}, format="json").status_code == 201
+
+        ruang = Ruang.objects.get(kunci_dm=Ruang.buat_kunci_dm(aku.id, aku.id))
+        assert Langganan.objects.filter(ruang=ruang).count() == 1
+        assert PesanLangsung.objects.filter(ruang=ruang, dibaca_pada__isnull=True).count() == 0
+        assert client.get(f"/api/workspaces/{workspace.slug}/chat/belum-dibaca/").data["jumlah"] == 0
+
+        daftar = client.get(f"/api/workspaces/{workspace.slug}/chat/").data
+        assert [(b["lawan_bicara"], b["isi"]) for b in daftar] == [(str(aku.id), "dan gula")]
+        assert [p["isi"] for p in client.get(url).data] == ["ingat beli kopi", "dan gula"]
+
+    @pytest.mark.django_db
     def test_lampiran_hanya_boleh_dibuka_pihak_yang_berhak(self, kantor):
         """Penjaga lampiran, diuji lewat fungsinya langsung.
 
@@ -209,6 +234,32 @@ class TestChat:
         assert boleh_lihat_lampiran(orang_lain, aset, workspace.slug) is False, (
             "anggota lain TIDAK boleh, walau punya akun dan tahu id-nya"
         )
+
+    @pytest.mark.django_db
+    def test_lampiran_kanal_terbuka_untuk_anggota_kanal_saja(self, kantor):
+        """Pesan kanal tidak punya penerima. Dulu lampirannya hanya bisa dibuka
+        pengirimnya, padahal seluruh anggota kanal bisa membaca pesannya.
+        Aturannya sekarang sama dengan isi ruang: anggota (Langganan) saja."""
+        from plane.app.views.chat import boleh_lihat_lampiran
+
+        workspace, aku, budi, citra = kantor
+        kanal = Ruang.objects.create(workspace=workspace, tipe=Ruang.Tipe.KANAL, nama="Umum")
+        Langganan.objects.bulk_create([Langganan(ruang=kanal, user=budi), Langganan(ruang=kanal, user=citra)])
+        pesan = PesanLangsung.objects.create(workspace=workspace, ruang=kanal, pengirim=budi, isi="materi rapat")
+        aset = FileAsset.objects.create(
+            attributes={"name": "rapat.pdf", "type": "application/pdf"},
+            asset="x/rapat.pdf",
+            size=10,
+            workspace=workspace,
+            created_by=budi,
+            entity_type=FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+            entity_identifier=str(pesan.id),
+            is_uploaded=True,
+        )
+
+        assert boleh_lihat_lampiran(budi, aset, workspace.slug) is True, "pengirim boleh"
+        assert boleh_lihat_lampiran(citra, aset, workspace.slug) is True, "anggota kanal boleh"
+        assert boleh_lihat_lampiran(aku, aset, workspace.slug) is False, "pemilik workspace bukan anggota: TIDAK"
 
     @pytest.mark.django_db
     def test_lampiran_orang_lain_tidak_bisa_ditempel_ke_pesan_sendiri(self, kantor):

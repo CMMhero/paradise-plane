@@ -12,6 +12,7 @@ from datetime import timezone as dt_timezone
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.utils import timezone
+from django.utils.html import escape
 
 from plane.license.utils.instance_value import get_email_configuration
 
@@ -28,6 +29,17 @@ ALARM_HARI = [7, 5, 3, 1]
 # kalender menyimpan SEQUENCE sebagai integer 32-bit, dan detik Unix menembus
 # batas itu pada 2038. Dihitung dari sini, angkanya tetap kecil.
 EPOCH_SEQUENCE = datetime(2026, 1, 1, tzinfo=dt_timezone.utc)
+
+BULAN = ("Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober",
+         "November", "Desember")  # fmt: skip
+
+
+def tanggal_id(nilai, pendek: bool = False) -> str:
+    """`2 November 2026` / `2 Nov 2026`. strftime ikut locale server (Inggris), email ini berbahasa Indonesia."""
+    if not nilai:
+        return ""
+    bulan = BULAN[nilai.month - 1]
+    return f"{nilai.day} {bulan[:3] if pendek else bulan} {nilai.year}"
 
 
 def _base_url() -> str:
@@ -131,31 +143,24 @@ def bangun_ics(issue, judul: str, deskripsi: str, url: str) -> str:
     return "\r\n".join(_lipat(b) for b in baris) + "\r\n"
 
 
-def kirim_email_pengingat(issue, penerima, titik: int, label: str) -> None:
-    """Kirim satu pengingat. Melempar kalau gagal, biar pemanggil yang mencatat."""
-    host, user, pwd, port, use_tls, use_ssl, efrom = get_email_configuration()
-
+def susun_email_pengingat(issue, penerima, titik: int, label: str, tautan: str = ""):
+    """(subjek, teks, html) satu pengingat. Murni: dipakai pengirim dan pratinjau."""
     kode = f"{issue.project.identifier}-{issue.sequence_id}"
     overdue = titik > 0
     awalan = "TERLAMBAT" if overdue else "Pengingat"
     subjek = f"[{awalan}] {kode} {issue.name} ({label})"
-
-    url = _base_url()
-    tautan = (
-        f"{url}/{issue.workspace.slug}/projects/{issue.project_id}/issues/{issue.id}"
-        if url
-        else ""
-    )
+    status = issue.state.name if issue.state else "-"
+    kalimat = "Work item ini SUDAH LEWAT TENGGAT." if overdue else "Pengingat tenggat work item."
 
     baris_teks = [
         f"Halo {penerima.display_name or penerima.first_name or ''},".strip(),
         "",
-        ("Work item ini SUDAH LEWAT TENGGAT." if overdue else "Pengingat tenggat work item."),
+        kalimat,
         "",
         f"  {kode}  {issue.name}",
         f"  Project : {issue.project.name}",
-        f"  Tenggat : {issue.target_date:%d %B %Y} ({label})",
-        f"  Status  : {issue.state.name if issue.state else '-'}",
+        f"  Tenggat : {tanggal_id(issue.target_date)} ({label})",
+        f"  Status  : {status}",
     ]
     if tautan:
         baris_teks += ["", f"Buka: {tautan}"]
@@ -168,34 +173,48 @@ def kirim_email_pengingat(issue, penerima, titik: int, label: str) -> None:
     ]
 
     warna = "#b91c1c" if overdue else "#1f2937"
+    tombol = (
+        f'<p><a href="{escape(tautan)}" style="background:#1f2937;color:#fff;padding:8px 16px;border-radius:4px;'
+        f'text-decoration:none;display:inline-block">Buka work item</a></p>'
+        if tautan
+        else ""
+    )
     html = f"""
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1f2937;max-width:560px">
-  <p>Halo {penerima.display_name or ''},</p>
-  <p style="color:{warna};font-weight:bold">
-    {"Work item ini SUDAH LEWAT TENGGAT." if overdue else "Pengingat tenggat work item."}
-  </p>
+  <p>Halo {escape(penerima.display_name or '')},</p>
+  <p style="color:{warna};font-weight:bold">{kalimat}</p>
   <table style="border-collapse:collapse;margin:16px 0">
-    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Work item</td><td style="padding:4px 0"><strong>{kode}</strong> {issue.name}</td></tr>
-    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Project</td><td style="padding:4px 0">{issue.project.name}</td></tr>
-    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Tenggat</td><td style="padding:4px 0;color:{warna}"><strong>{issue.target_date:%d %B %Y}</strong> ({label})</td></tr>
-    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Status</td><td style="padding:4px 0">{issue.state.name if issue.state else '-'}</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Work item</td><td style="padding:4px 0"><strong>{escape(kode)}</strong> {escape(issue.name)}</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Project</td><td style="padding:4px 0">{escape(issue.project.name)}</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Tenggat</td><td style="padding:4px 0;color:{warna}"><strong>{tanggal_id(issue.target_date)}</strong> ({escape(label)})</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;color:#6b7280">Status</td><td style="padding:4px 0">{escape(status)}</td></tr>
   </table>
-  {f'<p><a href="{tautan}" style="background:#1f2937;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;display:inline-block">Buka work item</a></p>' if tautan else ''}
+  {tombol}
   <p style="color:#6b7280;font-size:12px">
     Berkas <strong>.ics</strong> terlampir. Buka sekali untuk memasukkan tenggat ini ke
     kalender Anda (Outlook, Google, atau ponsel) berikut pengingatnya.
   </p>
   <p style="color:#9ca3af;font-size:11px;margin-top:24px">
-    Email otomatis dari {PRODUK}, sistem internal {KANTOR}. Tidak perlu dibalas.<br>
-    Paradise Task Tracker
+    Email otomatis dari {PRODUK}, sistem internal {KANTOR}. Tidak perlu dibalas.
   </p>
 </div>
 """.strip()
+    return subjek, "\n".join(baris_teks), html
+
+
+def kirim_email_pengingat(issue, penerima, titik: int, label: str) -> None:
+    """Kirim satu pengingat. Melempar kalau gagal, biar pemanggil yang mencatat."""
+    host, user, pwd, port, use_tls, use_ssl, efrom = get_email_configuration()
+
+    kode = f"{issue.project.identifier}-{issue.sequence_id}"
+    url = _base_url()
+    tautan = f"{url}/{issue.workspace.slug}/projects/{issue.project_id}/issues/{issue.id}" if url else ""
+    subjek, teks, html = susun_email_pengingat(issue, penerima, titik, label, tautan)
 
     ics = bangun_ics(
         issue=issue,
         judul=f"{kode} {issue.name}",
-        deskripsi=f"Project {issue.project.name}. Tenggat {issue.target_date:%d %B %Y}." + (f" {tautan}" if tautan else ""),
+        deskripsi=f"Project {issue.project.name}. Tenggat {tanggal_id(issue.target_date)}." + (f" {tautan}" if tautan else ""),
         url=tautan,
     )
 
@@ -210,7 +229,7 @@ def kirim_email_pengingat(issue, penerima, titik: int, label: str) -> None:
     )
     pesan = EmailMultiAlternatives(
         subject=subjek,
-        body="\n".join(baris_teks),
+        body=teks,
         from_email=efrom,
         to=[penerima.email],
         connection=koneksi,

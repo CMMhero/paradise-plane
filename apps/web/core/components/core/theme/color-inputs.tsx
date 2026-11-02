@@ -15,15 +15,15 @@ type Props = {
   control: Control<IUserTheme>;
 };
 
+const handleValueChange = (val: string | undefined, onChange: (...args: unknown[]) => void) => {
+  let hex = val;
+  // prepend a hashtag if it doesn't exist
+  if (val && val[0] !== "#") hex = `#${val}`;
+  onChange(hex);
+};
+
 export const CustomThemeColorInputs = observer(function CustomThemeColorInputs(props: Props) {
   const { control } = props;
-
-  const handleValueChange = (val: string | undefined, onChange: (...args: unknown[]) => void) => {
-    let hex = val;
-    // prepend a hashtag if it doesn't exist
-    if (val && val[0] !== "#") hex = `#${val}`;
-    onChange(hex);
-  };
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -81,7 +81,7 @@ export const CustomThemeColorInputs = observer(function CustomThemeColorInputs(p
                 name="primary"
                 value={value}
                 onChange={(val) => handleValueChange(val, onChange)}
-                placeholder="#3f76ff"
+                placeholder="#e40a1a"
                 className="w-full placeholder:text-placeholder"
                 style={{
                   backgroundColor: value,

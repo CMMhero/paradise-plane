@@ -18,7 +18,33 @@
  */
 
 import assert from "node:assert/strict";
-import { ringkasNotifikasi, ringkasPercakapan, teksPolos } from "./teks";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  ringkasNotifikasi as ringkasNotifikasiAsli,
+  ringkasPercakapan as ringkasPercakapanAsli,
+  teksPolos,
+} from "./teks";
+
+// Kamus Indonesia yang sama dengan yang dibaca orang di aplikasi, bukan salinan
+// teks di berkas ini, supaya pemeriksaan ikut gagal kalau kamusnya berubah.
+// Jalankan dari packages/i18n (lihat petunjuk di atas), jadi path-nya relatif ke sana.
+const kamus = JSON.parse(readFileSync(resolve("src/locales/id/paradise.json"), "utf8"));
+const t = (key: string, params?: Record<string, unknown>): string => {
+  const nilai = key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], kamus) as string;
+  // Bentuk ICU `{count, plural, one{..} other{..}}` cukup dipilih one/other di sini.
+  const jamak = nilai.replace(/\{(\w+), plural,((?:[^{}]|\{[^{}]*\})*)\}/g, (_, nama, isi: string) => {
+    const n = Number(params?.[nama]);
+    const pilih = (bentuk: string) => new RegExp(`${bentuk}\\{([^{}]*)\\}`).exec(isi)?.[1];
+    return (n === 1 ? (pilih("one") ?? pilih("other")) : pilih("other"))?.replace(/#/g, String(n)) ?? "";
+  });
+  return jamak.replace(/\{(\w+)\}/g, (_, nama) => String(params?.[nama] ?? ""));
+};
+const ringkasNotifikasi = (n: Parameters<typeof ringkasNotifikasiAsli>[0]) => ringkasNotifikasiAsli(n, t);
+const ringkasPercakapan = (
+  baris: Parameters<typeof ringkasPercakapanAsli>[0],
+  nama: Parameters<typeof ringkasPercakapanAsli>[1]
+) => ringkasPercakapanAsli(baris, nama, t);
 
 // --- HTML komentar jadi teks yang bisa dibaca --------------------------------
 
@@ -95,6 +121,18 @@ const tugas = { name: "Printer lantai 2 macet", identifier: "IT", sequence_id: 4
     data: { issue: tugas, issue_activity: { field: "state", new_value: "Done", verb: "updated" } },
   });
   assert.equal(r.isi, "Paradise Bot memindahkan statusnya ke Done");
+}
+
+{
+  // Pengingat tenggat dari sistem: tanpa nama pemicu di depan kalimatnya.
+  const r = ringkasNotifikasi({
+    data: { issue: tugas, issue_activity: { field: "deadline", new_value: "3", verb: "updated" } },
+  });
+  assert.equal(r.isi, "Terlambat 3 hari");
+  const hariIni = ringkasNotifikasi({
+    data: { issue: tugas, issue_activity: { field: "deadline", new_value: "0", verb: "updated" } },
+  });
+  assert.equal(hariIni.isi, "Jatuh tempo hari ini");
 }
 
 // --- obrolan ----------------------------------------------------------------

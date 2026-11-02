@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Accesso al wiki",
-      "description": "Scelga quali divisioni possono modificare ogni cartella di primo livello. Tutti i membri del progetto possono comunque leggere ogni pagina."
-    },
     "trash": {
       "heading": "Cestino",
       "description": "Gli elementi eliminati finiscono qui prima di essere rimossi definitivamente. Gli amministratori del progetto possono ripristinarli o eliminarli in modo permanente."

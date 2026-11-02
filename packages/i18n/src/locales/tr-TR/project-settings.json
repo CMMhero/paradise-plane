@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Wiki erişimi",
-      "description": "Her üst düzey klasörü hangi bölümlerin düzenleyebileceğini seçin. Tüm proje üyeleri tüm sayfaları okumaya devam edebilir."
-    },
     "trash": {
       "heading": "Çöp kutusu",
       "description": "Silinen öğeler kalıcı olarak kaldırılmadan önce buraya gelir. Proje yöneticileri bunları geri yükleyebilir veya kalıcı olarak silebilir."

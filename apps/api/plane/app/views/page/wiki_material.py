@@ -327,8 +327,8 @@ class WikiMaterialEndpoint(BaseAPIView):
         if not can_manage_wiki_material(request.user, asset):
             return Response(
                 {
-                    "error": "Hanya pengunggahnya, admin/kepala/SPV divisi pemilik folder, "
-                    "atau Super Admin yang boleh mengubah materi ini."
+                    "error": "Hanya pengunggahnya, admin workspace, atau Super Admin "
+                    "yang boleh mengubah materi ini."
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )

@@ -42,7 +42,7 @@ export const FiltersToggle = observer(function FiltersToggle<P extends TFilterPr
 
   // Base classes when filter is active
   const activeFilterBaseClasses =
-    "text-accent-primary border border-accent-subtle-1 hover:border-accent-subtle-1 active:border-accent-subtle-1 focus:border-accent-subtle-1";
+    "text-accent-primary border border-accent-subtle hover:border-accent-subtle active:border-accent-subtle focus:border-accent-subtle";
 
   // State classes that prevent hover/active/focus color changes
   const noHoverStateClasses = "hover:text-accent-primary active:text-accent-primary focus:text-accent-primary";

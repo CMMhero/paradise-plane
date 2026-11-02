@@ -27,10 +27,11 @@ Batasnya harus disebut: kalau `crum` tidak menyetel user (mis. dijalankan dari C
 aktornya `None`, dan gerbangnya **menolak** (gagal ke arah aman, prinsip #3).
 """
 
-# Python imports
-import os
+# Django imports
+from django.utils import timezone
 
 # Module imports
+from plane.utils.saklar_instance import HIERARKI_GERBANG_TUGAS, saklar_aktif
 from plane.db.models import (
     JabatanOrganisasi,
     PengawasanDivisi,
@@ -75,9 +76,9 @@ __all__ = [
 BUTUH_PERSETUJUAN = "butuh-persetujuan"
 TANPA_ATASAN = "tanpa-atasan"
 
-# Nama variabel lingkungan katup darurat. Default MATI: dengan ini mati, perilaku
-# 88 user TIDAK berubah satu pun.
-FLAG_GERBANG = "HIERARKI_GERBANG_TUGAS"
+# Kunci katup darurat di God Mode > Fitur & otomasi. Default MATI: dengan ini mati,
+# perilaku 88 user TIDAK berubah satu pun.
+FLAG_GERBANG = HIERARKI_GERBANG_TUGAS
 
 # Periksa "member yang dia bawahi" (tingkat penerima HARUS lebih rendah)?
 #
@@ -90,11 +91,10 @@ PERIKSA_TINGKAT_PENERIMA = True
 def gerbang_aktif():
     """Katup darurat. Dibaca saat dipanggil, bukan saat modul diimpor.
 
-    Dibaca per panggilan supaya bisa dinyalakan/dimatikan tanpa membuat ulang container
-    (jebakan A2: `docker compose restart` tidak membaca ulang `env_file`, jadi mengubah
-    nilai ini WAJIB `up -d`).
+    Diatur Super Admin dari God Mode dan dibaca per panggilan, jadi menyala/mati
+    seketika tanpa membuat ulang container.
     """
-    return os.environ.get(FLAG_GERBANG, "0") == "1"
+    return saklar_aktif(FLAG_GERBANG)
 
 
 # --------------------------------------------------------------------------
@@ -670,6 +670,46 @@ def boleh_memutuskan(user, workspace_id, project_id):
 
     return is_super_admin(user)
 
+
+def project_boleh_diputuskan(user, workspace_id, project_ids):
+    """`boleh_memutuskan` untuk banyak project sekaligus: set project yang lolos.
+
+    Aturannya SAMA persis. Bedanya hanya biaya: `boleh_memutuskan` menghitung ulang
+    `divisi_diawasi` untuk setiap calon penyetuju di setiap project (~35 kueri per
+    project di data kantor), di sini tiap orang dihitung sekali. Dashboard Divisi
+    yang memanggilnya untuk belasan project sekaligus (KEP-60).
+
+    Urutannya juga memotong jalan: kalau `user` sendiri mengawasi project itu,
+    jawabannya sudah pasti ya tanpa melihat calon lain. Calon lain hanya perlu
+    dicek untuk jalan keluar Super Admin (divisi tanpa atasan sama sekali).
+    """
+    sisa = set(project_ids)
+    if not sisa:
+        return set()
+
+    peta = peta_tingkat(workspace_id)
+    kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
+    diawasi = {}
+
+    def awasi(uid):
+        if uid not in diawasi:
+            diawasi[uid] = set(divisi_diawasi(uid, workspace_id))
+        return diawasi[uid]
+
+    hasil = set()
+    if user.id in kandidat:
+        hasil = awasi(user.id) & sisa
+        sisa -= hasil
+    if not sisa:
+        return hasil
+
+    from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
+    if not is_super_admin(user):
+        return hasil
+    return hasil | {pid for pid in sisa if not any(pid in awasi(uid) for uid in kandidat)}
+
+
 # (Dihapus 2026-10-24: tidak ada lagi kunci tulis. Persetujuan hanya di
 # gerbang selesai -- `selesai_perlu_persetujuan` di atas. Lihat riwayat git untuk
 # `galat_terkunci` / `KunciPersetujuanMixin` / masa susun.)
@@ -860,6 +900,7 @@ def catat_persetujuan(issue, actor=None, state_sebelumnya_id=None):
         penerima=actor,
         state_sebelumnya_id=state_sebelumnya_id,
     )
+    catat_aktivitas_persetujuan(baris, AKTIVITAS_DIAJUKAN, actor)
     # Inbox + email ke atasan yang boleh memutuskan (KEP-30 lanjutan).
     # Menelan galat sendiri di dalam — pengajuan tidak boleh gagal hanya
     # karena pemberitahuannya gagal.
@@ -867,6 +908,43 @@ def catat_persetujuan(issue, actor=None, state_sebelumnya_id=None):
 
     beritahu_diajukan(baris, issue=issue)
     return baris
+
+
+# Kata kerja baris aktivitas `field="approval"` (KEP-55). Klien membaca ketiganya
+# di `AdditionalActivityRoot`; kata kerja lain di field ini tidak dikenal.
+AKTIVITAS_DIAJUKAN = "requested"
+AKTIVITAS_DISETUJUI = "approved"
+AKTIVITAS_DITOLAK = "rejected"
+
+
+def catat_aktivitas_persetujuan(baris, verb, actor, alasan=""):
+    """Tulis satu baris log persetujuan ke riwayat aktivitas tugas.
+
+    Langsung ke `IssueActivity`, BUKAN lewat `issue_activity.delay`: tugas Celery
+    itu menghitung selisih field, dan persetujuan bukan field tugas. Ditulis di
+    transaksi yang sama dengan barisnya, jadi log tidak bisa hilang sementara
+    keputusannya tersimpan (atau sebaliknya).
+    """
+    from plane.db.models import IssueActivity  # noqa: PLC0415
+
+    aktivitas = IssueActivity(
+        workspace_id=baris.workspace_id,
+        project_id=baris.project_id,
+        issue_id=baris.issue_id,
+        actor=actor,
+        verb=verb,
+        field="approval",
+        new_value=alasan or None,
+        # Id baris persetujuannya: menautkan log ke pengajuan yang mana, dan
+        # dipakai migrasi 0157 supaya isian ulang tidak menggandakan.
+        new_identifier=baris.id,
+        comment=f"approval {verb}",
+        epoch=int(timezone.now().timestamp()),
+    )
+    # `created_by=` di konstruktor ditimpa BaseModel.save() (jadi None di luar
+    # request); hanya `save(created_by_id=...)` yang bertahan.
+    aktivitas.save(created_by_id=getattr(actor, "id", None))
+    return aktivitas
 
 
 def galat_tambah_rekan(project_id, issue, assignee_ids_baru, actor):

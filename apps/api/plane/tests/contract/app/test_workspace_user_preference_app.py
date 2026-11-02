@@ -81,3 +81,35 @@ class TestWorkspaceUserPreferencePatch:
         preference.refresh_from_db()
         assert preference.is_pinned is True
         assert preference.sort_order == 42
+
+
+@pytest.mark.contract
+class TestWorkspaceUserPreferenceGet:
+    """Paradise: Quick links moved from a Home widget to its own sidebar menu."""
+
+    @pytest.mark.django_db
+    def test_get_seeds_quick_links_pinned(self, session_client, create_user, workspace):
+        """A user with no preferences gets a ``quick_links`` row, pinned by default."""
+        url = reverse("workspace-user-preference", kwargs={"slug": workspace.slug})
+        response = session_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["quick_links"]["is_pinned"] is True
+        assert WorkspaceUserPreference.objects.filter(
+            workspace=workspace, user=create_user, key="quick_links"
+        ).exists()
+
+    @pytest.mark.django_db
+    def test_get_adds_quick_links_for_existing_users(self, session_client, create_user, workspace):
+        """Users who already have older preference rows still receive the new key."""
+        WorkspaceUserPreference.objects.create(
+            workspace=workspace, user=create_user, key="drafts", is_pinned=False, sort_order=100
+        )
+
+        url = reverse("workspace-user-preference", kwargs={"slug": workspace.slug})
+        response = session_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["quick_links"]["is_pinned"] is True
+        # The existing row is left as the user set it.
+        assert response.data["drafts"]["is_pinned"] is False

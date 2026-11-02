@@ -14,9 +14,6 @@ import { Spinner } from "@plane/ui";
 // components
 import { ProjectLevelWorkItemFiltersHOC } from "@/components/work-item-filters/filters-hoc/project-level";
 import { WorkItemFiltersRow } from "@/components/work-item-filters/filters-row";
-// Kustomisasi Paradise: toggle filter tunggu-persetujuan (KEP-25).
-import { ApprovalFilterProvider } from "@/components/issues/approval-filter-context";
-import { ApprovalFilterToggle } from "@/components/issues/approval-filter-toggle";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { IssuesStoreContext } from "@/hooks/use-issue-layout-store";
@@ -80,36 +77,27 @@ export const ProjectLayoutRoot = observer(function ProjectLayoutRoot() {
         workspaceSlug={workspaceSlug}
       >
         {({ filter: projectWorkItemsFilter }) => (
-          <ApprovalFilterProvider>
-            <div className="relative flex h-full w-full flex-col overflow-hidden">
-              {projectWorkItemsFilter && (
-                <div className="flex items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <WorkItemFiltersRow
-                      filter={projectWorkItemsFilter}
-                      trackerElements={{
-                        saveView: PROJECT_VIEW_TRACKER_ELEMENTS.PROJECT_HEADER_SAVE_AS_VIEW_BUTTON,
-                      }}
-                    />
-                  </div>
-                  <div className="shrink-0 pr-3">
-                    <ApprovalFilterToggle />
-                  </div>
+          <div className="relative flex h-full w-full flex-col overflow-hidden">
+            {projectWorkItemsFilter && (
+              <WorkItemFiltersRow
+                filter={projectWorkItemsFilter}
+                trackerElements={{
+                  saveView: PROJECT_VIEW_TRACKER_ELEMENTS.PROJECT_HEADER_SAVE_AS_VIEW_BUTTON,
+                }}
+              />
+            )}
+            <div className="relative h-full w-full overflow-auto bg-surface-1">
+              {/* mutation loader */}
+              {issues?.getIssueLoader() === "mutation" && (
+                <div className="shadow-sm fixed top-[70px] right-[20px] z-50 flex h-[40px] w-[40px] items-center justify-center rounded-sm bg-layer-1">
+                  <Spinner className="h-4 w-4" />
                 </div>
               )}
-              <div className="relative h-full w-full overflow-auto bg-surface-1">
-                {/* mutation loader */}
-                {issues?.getIssueLoader() === "mutation" && (
-                  <div className="shadow-sm fixed top-[70px] right-[20px] z-50 flex h-[40px] w-[40px] items-center justify-center rounded-sm bg-layer-1">
-                    <Spinner className="h-4 w-4" />
-                  </div>
-                )}
-                <ProjectIssueLayout activeLayout={activeLayout} />
-              </div>
-              {/* peek overview */}
-              <IssuePeekOverview />
+              <ProjectIssueLayout activeLayout={activeLayout} />
             </div>
-          </ApprovalFilterProvider>
+            {/* peek overview */}
+            <IssuePeekOverview />
+          </div>
         )}
       </ProjectLevelWorkItemFiltersHOC>
     </IssuesStoreContext.Provider>

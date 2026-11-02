@@ -8,6 +8,14 @@
 import type { EUserPermissions, TMemberOrderByOptions } from "@plane/constants";
 import type { IUserLite, TProjectMembership } from "@plane/types";
 
+/**
+ * Whether a user belongs in member lists and pickers. Bots and accounts deleted
+ * from God Mode are left out; their details stay in memberMap so existing
+ * references still render (deleted accounts as "Deleted account").
+ */
+export const isListableMember = (user: Pick<IUserLite, "is_bot" | "is_deleted"> | undefined): boolean =>
+  !user?.is_bot && !user?.is_deleted;
+
 export interface IMemberFilters {
   order_by?: TMemberOrderByOptions;
   roles?: string[];
@@ -109,6 +117,7 @@ export const sortMembers = <T>(
 
   const { field, direction } = parseOrderKey(orderBy);
 
+  // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); already a copy
   return [...members].sort((a, b) => {
     const aKey = getMemberKey(a);
     const bKey = getMemberKey(b);

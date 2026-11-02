@@ -22,7 +22,7 @@ const PAD = { atas: 12, kanan: 12, bawah: 24, kiri: 32 };
 
 function tanggalPendek(iso: string) {
   const d = new Date(`${iso}T00:00:00`);
-  return d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 }
 
 /**
@@ -40,10 +40,10 @@ export function GrafikHarian({ harian }: Props) {
 
   if (titik.length === 0) {
     return (
-      <div className="rounded border border-subtle p-8 text-center text-body-sm-regular text-secondary">
-        Belum ada login yang tercatat pada rentang ini.
+      <div className="rounded-md border border-subtle p-8 text-center text-13 text-tertiary">
+        No sign-ins recorded in this range.
         <div className="mt-1 text-11 text-placeholder">
-          Riwayat baru direkam sejak fitur ini dipasang, hari sebelumnya memang kosong, bukan sepi.
+          History is only recorded since this feature was installed, so earlier days are empty, not quiet.
         </div>
       </div>
     );
@@ -62,7 +62,7 @@ export function GrafikHarian({ harian }: Props) {
   const t = aktif !== null ? titik[aktif] : null;
 
   return (
-    <div className="rounded border border-subtle p-3">
+    <div className="rounded-md border border-subtle p-3">
       {/* Legenda selalu ada untuk 2 seri, identitas tidak boleh bersandar pada warna saja. */}
       <div className="mb-2 flex items-center gap-4 px-1">
         {(["login", "orang"] as const).map((k) => (
@@ -71,7 +71,7 @@ export function GrafikHarian({ harian }: Props) {
             {SERI[k].label}
           </span>
         ))}
-        <span className="ml-auto text-11 text-placeholder">maks {maks}/hari</span>
+        <span className="ml-auto text-11 text-placeholder">peak {maks}/day</span>
       </div>
 
       <style>{`
@@ -87,11 +87,13 @@ export function GrafikHarian({ harian }: Props) {
       `}</style>
 
       <div className="grafik-aktivitas relative">
+        {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- hover reset on chart svg; tooltip is pointer-only */}
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"
+          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- inline <svg> chart needs role=img, <img> cannot replace it
           role="img"
-          aria-label={`Login harian, ${titik.length} hari, puncak ${maks} login per hari`}
+          aria-label={`Daily sign-ins over ${titik.length} days, peak ${maks} per day`}
           onMouseLeave={() => setAktif(null)}
         >
           {tanda.map(({ f, n }) => (
@@ -173,12 +175,12 @@ export function GrafikHarian({ harian }: Props) {
 
         {t ? (
           <div
-            className="shadow-sm pointer-events-none absolute top-0 rounded border border-subtle bg-layer-1 px-2 py-1 text-11"
+            className="shadow-sm pointer-events-none absolute top-0 rounded-md border border-subtle bg-layer-1 px-2 py-1 text-11"
             style={{ left: `${(x(aktif ?? 0) / W) * 100}%`, transform: "translateX(-50%)" }}
           >
             <div className="font-medium text-primary">{tanggalPendek(t.tgl)}</div>
             <div className="text-secondary">
-              {t.login} login · {t.orang} orang
+              {t.login} sign-ins · {t.orang} people
             </div>
           </div>
         ) : null}

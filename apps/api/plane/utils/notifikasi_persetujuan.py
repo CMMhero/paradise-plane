@@ -14,10 +14,10 @@ membuka antrean. Modul ini menutup lubang itu di tiga titik:
   `ajukan_ulang`) → atasan yang boleh memutuskan
 - diputuskan (setujui/tolak) → pemohon
 
-Inbox SELALU ditulis (konsisten dengan notifikasi issue lain: saklar preferensi
-hanya mengatur email). Email diatur per penerima lewat
-`UserNotificationPreference.approval`; baris preferensi yang belum ada dianggap
-True (pengguna lama tidak perlu migrasi manual).
+Inbox diatur saklar `inbox_approval` (bawaan hidup untuk semua jabatan, keputusan
+user 2026-11-02). Email diatur per penerima lewat saklar `approval` yang
+BERLAKU (plane/utils/preferensi_email.py): bawaan hidup untuk staf, mati untuk
+pimpinan, kecuali orangnya menyalakan sendiri.
 
 Semua fungsi menelan galatnya sendiri: pemberitahuan tidak boleh menggagalkan
 permintaan utama.
@@ -51,16 +51,18 @@ def bahasa_penerima(user) -> str:
         return "en"
 
 
-def _boleh_email(user_id) -> bool:
-    from plane.db.models import UserNotificationPreference
+def _boleh(user_id, kunci) -> bool:
+    """Saklar `approval` (email) atau `inbox_approval` yang berlaku (preferensi_email.py).
+
+    Galat membaca preferensi: email dianggap mati, inbox dianggap hidup. Atasan yang
+    tak pernah melihat pengajuannya lebih buruk daripada satu baris inbox berlebih.
+    """
+    from plane.utils.preferensi_email import boleh
 
     try:
-        pref = UserNotificationPreference.objects.filter(user_id=user_id).first()
+        return boleh(user_id, kunci)
     except Exception:  # noqa: BLE001
-        return True
-    if pref is None:
-        return True
-    return bool(getattr(pref, "approval", True))
+        return kunci.startswith("inbox_")
 
 
 def _penerima_aktif(user_ids):
@@ -111,19 +113,20 @@ def _tulis(workspace_id, project_id, issue, penerima_id, pemicu, sender, verb, k
                 "activity_time": None,
             },
         }
-        Notification.objects.create(
-            workspace=workspace,
-            project=project,
-            sender=sender,
-            triggered_by=pemicu,
-            receiver_id=penerima_id,
-            entity_identifier=issue.id,
-            entity_name="issue",
-            title="",
-            message={"keputusan": keputusan, "alasan": alasan},
-            data=data,
-        )
-        if _boleh_email(penerima_id):
+        if _boleh(penerima_id, "inbox_approval"):
+            Notification.objects.create(
+                workspace=workspace,
+                project=project,
+                sender=sender,
+                triggered_by=pemicu,
+                receiver_id=penerima_id,
+                entity_identifier=issue.id,
+                entity_name="issue",
+                title="",
+                message={"keputusan": keputusan, "alasan": alasan},
+                data=data,
+            )
+        if _boleh(penerima_id, "approval"):
             EmailNotificationLog.objects.create(
                 receiver_id=penerima_id,
                 triggered_by=pemicu,

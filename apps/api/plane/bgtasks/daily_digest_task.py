@@ -3,164 +3,238 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-"""Satu email ringkasan per orang per hari: jatuh tempo hari ini, jatuh tempo
-7 hari ke depan, dan yang sudah terlambat.
+"""Satu email ringkasan per orang per workspace per hari kerja: jatuh tempo hari
+ini, 7 hari ke depan, dan terlambat. Isinya disesuaikan jabatan (KEP-43):
 
-Beda dengan `deadline_reminder_task` (satu email per tugas di delapan titik),
-ini satu email berisi semuanya, jadi orang yang punya banyak tugas tidak
-kebanjiran. Yang dihitung hanya tugas yang DI-ASSIGN ke penerima, bukan yang
-ia buat: ringkasan ini daftar kerja, bukan daftar pantauan.
+    staf       -> tugas yang di-assign ke dia + tugas yang ia berikan ke orang lain
+    supervisor -> + project SEMUA departemennya
+    manager    -> + project divisinya
+    direktur   -> TANPA bagian tim (keputusan user 2026-11-02): ikhtisar divisinya
+                  datang lewat laporan direktur (`direktur_digest_task`), angka saja
 
-OPT-IN per orang (keputusan user 2026-10-26): hanya yang menyalakan
-`UserNotificationPreference.daily_digest` di Profil -> Notifikasi yang dikirimi,
-dan bawaannya MATI. Karena persetujuannya sudah per orang, saklar global
-`ENABLE_DEADLINE_REMINDER` (untuk pengingat tenggat massal) tidak dipakai di sini.
-Jadwal: Senin-Jumat 08.30 Jakarta (lihat beat_schedule di plane/celery.py).
+Cakupan tim dibaca dari `divisi_diawasi`, sumber yang sama dengan wewenang
+memutuskan persetujuan, jadi "yang dia awasi" tidak punya dua definisi.
+
+HIDUP secara bawaan untuk semua jabatan (keputusan user 2026-10-30) dan
+menggantikan pengingat per tugas (`deadline_reminder_task`, kini bawaannya mati).
+Orang mematikannya sendiri di Profil > Notifikasi. Jadwal: Senin-Jumat 08.30
+Jakarta (beat_schedule di plane/celery.py).
+
+Edisi sore (`kirim_ringkasan_sore`, 17.30 Jakarta, saklar `daily_digest_sore`,
+keputusan user 2026-11-02): isi sama, ditambah yang SELESAI hari ini, dan jendela
+depan menyempit ke hari kerja berikutnya. Lihat docstring daily_digest_email.
 
 ponytail: tidak ada tabel pencatat "sudah terkirim hari ini". Beat memicu sekali
-sehari; kalau task dijalankan manual dua kali, orang menerima dua email. Tambah
-tabel kalau itu mulai terjadi.
+sehari; kalau task dijalankan manual dua kali, orang menerima dua email.
 """
 
 import logging
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from celery import shared_task
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.utils import timezone
-from django.utils.html import escape
 
-from plane.bgtasks.deadline_reminder_email import KANTOR, PRODUK, _base_url
+from plane.bgtasks.daily_digest_email import (
+    HARI_KE_DEPAN,
+    GrupTim,
+    Kelompok,
+    Ringkasan,
+    hari_ke_hari_kerja_berikutnya,
+    kelompokkan,
+    susun_email,
+)
 from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI
-from plane.db.models import IssueAssignee, UserNotificationPreference
+from plane.db.models import (
+    TINGKAT_DIREKTUR,
+    TINGKAT_MANAGER,
+    TINGKAT_SUPERVISOR,
+    Departemen,
+    Divisi,
+    Issue,
+    IssueAssignee,
+    UserNotificationPreference,
+    Workspace,
+    WorkspaceMember,
+)
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.exception_logger import log_exception
+from plane.utils.hierarki import divisi_diawasi, semua_departemen_ids, semua_divisi_ids, tingkat_efektif
+from plane.utils.preferensi_email import saklar_efektif
 
 logger = logging.getLogger("plane")
 
-HARI_KE_DEPAN = 7
-# Batas baris per bagian. Orang dengan 80 tugas terlambat butuh tahu angkanya,
-# bukan 80 baris di email; sisanya diringkas jadi "+N lainnya".
-BATAS_BARIS = 15
+NAMA_PERAN = {TINGKAT_SUPERVISOR: "Supervisor", TINGKAT_MANAGER: "Manager", TINGKAT_DIREKTUR: "Direktur"}
+
+# Celery dan Django berjalan di UTC. "Hari ini" dan "selesai hari ini" harus hari
+# kantor: tugas yang selesai 06.30 WIB tercatat 23.30 UTC kemarin.
+ZONA_KANTOR = ZoneInfo("Asia/Jakarta")
 
 
-def kelompokkan(tugas_per_orang, hari_ini):
-    """Pecah tugas satu orang jadi (hari_ini, tujuh_hari, terlambat), terurut tenggat."""
-    batas = hari_ini + timedelta(days=HARI_KE_DEPAN)
-    hari, depan, lewat = [], [], []
-    for issue in sorted(tugas_per_orang, key=lambda i: i.target_date):
-        if issue.target_date < hari_ini:
-            lewat.append(issue)
-        elif issue.target_date == hari_ini:
-            hari.append(issue)
-        elif issue.target_date <= batas:
-            depan.append(issue)
-    return hari, depan, lewat
+def hari_ini_kantor():
+    return datetime.now(ZONA_KANTOR).date()
 
 
-def _tautan(issue):
-    url = _base_url()
-    return f"{url}/{issue.workspace.slug}/projects/{issue.project_id}/issues/{issue.id}" if url else ""
+class TugasWorkspace:
+    """Semua tugas terbuka dalam jendela ringkasan di satu workspace, dimuat SEKALI.
+
+    Tiap penerima lalu disaring di memori: 90 orang x 3 bagian tidak boleh berarti
+    270 kueri tugas.
+    """
+
+    def __init__(self, workspace_id, hari_ini, hari_ke_depan=HARI_KE_DEPAN, dengan_selesai=False):
+        self.hari_ke_depan = hari_ke_depan
+        self.tugas = list(
+            Issue.issue_objects.filter(
+                workspace_id=workspace_id,
+                project__deleted_at__isnull=True,
+                target_date__isnull=False,
+                target_date__lte=hari_ini + timedelta(days=hari_ke_depan),
+            )
+            .exclude(state__group__in=GRUP_SELESAI)
+            .select_related("project", "workspace", "state")
+        )
+        # Edisi sore: yang pindah ke grup "completed" sejak 00.00 WIB hari ini,
+        # bertenggat atau tidak. Dibatalkan (cancelled) bukan "selesai".
+        self.selesai_ids = set()
+        if dengan_selesai:
+            awal = datetime.combine(hari_ini, time.min, tzinfo=ZONA_KANTOR)
+            selesai = list(
+                Issue.issue_objects.filter(
+                    workspace_id=workspace_id,
+                    project__deleted_at__isnull=True,
+                    state__group="completed",
+                    completed_at__gte=awal,
+                    completed_at__lt=awal + timedelta(days=1),
+                ).select_related("project", "workspace", "state")
+            )
+            self.selesai_ids = {i.id for i in selesai}
+            self.tugas += selesai
+        # Lewat IssueAssignee (manajer soft-delete), bukan `issue.assignees`: M2M
+        # through ikut membawa penugasan yang sudah dicabut.
+        self.assignee = defaultdict(set)
+        self.nama = defaultdict(list)
+        for ia in IssueAssignee.objects.filter(
+            issue_id__in=[i.id for i in self.tugas], assignee__is_active=True
+        ).select_related("assignee"):
+            self.assignee[ia.issue_id].add(ia.assignee_id)
+            self.nama[ia.issue_id].append(ia.assignee.display_name or ia.assignee.first_name or ia.assignee.email)
 
 
-def _baris_teks(issue, hari_ini):
-    selisih = (issue.target_date - hari_ini).days
-    if selisih < 0:
-        ket = f"terlambat {-selisih} hari"
-    elif selisih == 0:
-        ket = "hari ini"
+def _cakupan(user_id, workspace_id, tingkat, jumlah_project):
+    """(cakupan, judul_tim) untuk baris peran dan judul bagian tim."""
+    if tingkat >= TINGKAT_DIREKTUR:
+        return "Seluruh divisi", "Seluruh divisi"
+    if tingkat >= TINGKAT_MANAGER:
+        nama = list(Divisi.objects.filter(id__in=semua_divisi_ids(user_id, workspace_id)).values_list("nama", flat=True))
+        judul = "Divisi Anda"
     else:
-        ket = f"{selisih} hari lagi"
-    return f"  {issue.project.identifier}-{issue.sequence_id}  {issue.name}  ({issue.target_date:%d %b %Y}, {ket})"
-
-
-def _bagian_teks(judul, daftar, hari_ini):
-    if not daftar:
-        return []
-    baris = [f"{judul} ({len(daftar)})"] + [_baris_teks(i, hari_ini) for i in daftar[:BATAS_BARIS]]
-    if len(daftar) > BATAS_BARIS:
-        baris.append(f"  ... +{len(daftar) - BATAS_BARIS} lainnya")
-    return baris + [""]
-
-
-def _bagian_html(judul, daftar, hari_ini, warna):
-    if not daftar:
-        return ""
-    baris = []
-    for issue in daftar[:BATAS_BARIS]:
-        selisih = (issue.target_date - hari_ini).days
-        ket = f"terlambat {-selisih} hari" if selisih < 0 else ("hari ini" if selisih == 0 else f"{selisih} hari lagi")
-        nama = f"<strong>{escape(issue.project.identifier)}-{issue.sequence_id}</strong> {escape(issue.name)}"
-        tautan = _tautan(issue)
-        if tautan:
-            nama = f'<a href="{escape(tautan)}" style="color:#1f2937;text-decoration:none">{nama}</a>'
-        baris.append(
-            f'<tr><td style="padding:4px 12px 4px 0">{nama}</td>'
-            f'<td style="padding:4px 0;color:{warna};white-space:nowrap">{issue.target_date:%d %b %Y} ({ket})</td></tr>'
+        nama = list(
+            Departemen.objects.filter(id__in=semua_departemen_ids(user_id, workspace_id)).values_list("nama", flat=True)
         )
-    sisa = (
-        f'<tr><td colspan="2" style="padding:4px 0;color:#6b7280">+{len(daftar) - BATAS_BARIS} lainnya</td></tr>'
-        if len(daftar) > BATAS_BARIS
-        else ""
-    )
-    return (
-        f'<h3 style="margin:20px 0 6px;color:{warna};font-size:14px">{judul} ({len(daftar)})</h3>'
-        f'<table style="border-collapse:collapse;font-size:13px">{"".join(baris)}{sisa}</table>'
+        judul = "Departemen Anda" if tingkat >= TINGKAT_SUPERVISOR else ""
+    if nama:
+        return ", ".join(sorted(nama)), judul
+    # Struktur divisi/departemen belum diisi: jangkauan jatuh ke keanggotaan project.
+    return (f"{jumlah_project} project" if jumlah_project else ""), (judul and "Project yang Anda awasi")
+
+
+def _saring_bagian(kelompok, bagian):
+    """Kosongkan jendela tenggat yang dimatikan orangnya (digest_terlambat/hari_ini/depan).
+
+    "Selesai hari ini" (edisi sore) bagian dari "hari ini", jadi ikut `digest_hari_ini`.
+    """
+    hari_ini_hidup = bagian.get("digest_hari_ini", True)
+    return Kelompok(
+        hari=kelompok.hari if hari_ini_hidup else [],
+        depan=kelompok.depan if bagian.get("digest_depan", True) else [],
+        lewat=kelompok.lewat if bagian.get("digest_terlambat", True) else [],
+        selesai=kelompok.selesai if hari_ini_hidup else [],
     )
 
 
-def susun_email(penerima, hari, depan, lewat, hari_ini):
-    """Kembalikan (subjek, teks, html). Murni, tanpa I/O, supaya mudah diuji."""
-    subjek = f"[Ringkasan harian] {len(hari)} hari ini, {len(depan)} 7 hari ke depan, {len(lewat)} terlambat"
-    sapaan = penerima.display_name or penerima.first_name or ""
-    teks = (
-        [f"Halo {sapaan},".strip(), "", f"Ringkasan tugas Anda, {hari_ini:%d %B %Y}.", ""]
-        + _bagian_teks("TERLAMBAT", lewat, hari_ini)
-        + _bagian_teks("JATUH TEMPO HARI INI", hari, hari_ini)
-        + _bagian_teks(f"JATUH TEMPO {HARI_KE_DEPAN} HARI KE DEPAN", depan, hari_ini)
-        + [f"Email otomatis dari {PRODUK}. Tidak perlu dibalas."]
+def _kelompok(daftar, data, hari_ini, bagian):
+    """Kelompok tenggat untuk tugas terbuka, plus yang selesai hari ini (edisi sore)."""
+    kelompok = kelompokkan([i for i in daftar if i.id not in data.selesai_ids], hari_ini, data.hari_ke_depan)
+    kelompok.selesai = sorted(
+        (i for i in daftar if i.id in data.selesai_ids), key=lambda i: (i.completed_at, i.sequence_id)
     )
-    html = (
-        '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1f2937;max-width:600px">'
-        f"<p>Halo {escape(sapaan)},</p><p>Ringkasan tugas Anda, <strong>{hari_ini:%d %B %Y}</strong>.</p>"
-        + _bagian_html("Terlambat", lewat, hari_ini, "#b91c1c")
-        + _bagian_html("Jatuh tempo hari ini", hari, hari_ini, "#b45309")
-        + _bagian_html(f"Jatuh tempo {HARI_KE_DEPAN} hari ke depan", depan, hari_ini, "#1f2937")
-        + f'<p style="color:#9ca3af;font-size:11px;margin-top:24px">Email otomatis dari {PRODUK}, '
-        f"sistem internal {KANTOR}. Tidak perlu dibalas.</p></div>"
-    )
-    return subjek, "\n".join(teks), html
+    return _saring_bagian(kelompok, bagian)
 
 
-def _tugas_per_orang(hari_ini):
-    """{User: [Issue]} untuk tugas terbuka yang tenggatnya sudah dekat atau lewat."""
-    baris = (
-        IssueAssignee.objects.filter(
-            issue__target_date__lte=hari_ini + timedelta(days=HARI_KE_DEPAN),
-            issue__deleted_at__isnull=True,
-            issue__archived_at__isnull=True,
-            issue__is_draft=False,
-            issue__project__archived_at__isnull=True,
-            assignee__is_active=True,
-            assignee__is_bot=False,
-            # Subquery, bukan join ke tabel preferensi: join menggandakan baris
-            # (dan tugas di email) kalau satu orang punya beberapa baris preferensi.
-            assignee_id__in=UserNotificationPreference.objects.filter(daily_digest=True).values("user_id"),
+def susun_ringkasan(user, workspace_id, data, hari_ini, bagian=None, sore=False):
+    """Ringkasan satu orang di satu workspace, disaring dari `data` (TugasWorkspace).
+
+    `bagian`: saklar SAKLAR_RINGKASAN yang berlaku untuk orangnya (keputusan user
+    2026-11-02, ringkasan bisa diatur per bagian). None = semua bagian.
+    `sore`: edisi 17.30; `data` sebaiknya dimuat dengan `dengan_selesai=True`.
+    """
+    bagian = bagian or {}
+    tingkat = tingkat_efektif(user.id, workspace_id)
+    sendiri = [i for i in data.tugas if user.id in data.assignee[i.id]]
+    diberikan = [
+        i for i in data.tugas if i.created_by_id == user.id and data.assignee[i.id] and user.id not in data.assignee[i.id]
+    ]
+    # Daftar utuh tetap dipakai untuk mencegah tugas yang sama tampil lagi di bagian tim.
+    sudah = {i.id for i in sendiri} | {i.id for i in diberikan}
+    if not bagian.get("digest_diberikan", True):
+        diberikan = []
+
+    # Direktur: tanpa bagian tim. Ikhtisar divisinya datang lewat laporan direktur
+    # (direktur_digest_task), angka saja, tanpa rincian staf (keputusan 2026-11-02).
+    pids = divisi_diawasi(user.id, workspace_id) if TINGKAT_SUPERVISOR <= tingkat < TINGKAT_DIREKTUR else set()
+    cakupan, judul_tim = _cakupan(user.id, workspace_id, tingkat, len(pids))
+    ringkasan = Ringkasan(
+        peran=NAMA_PERAN.get(tingkat, "Staf"),
+        cakupan=cakupan,
+        sendiri=_kelompok(sendiri, data, hari_ini, bagian),
+        diberikan=_kelompok(diberikan, data, hari_ini, bagian),
+        judul_tim=judul_tim or "Tim Anda",
+        penanggung=data.nama,
+        bagian=bagian,
+        sore=sore,
+        hari_ke_depan=data.hari_ke_depan,
+    )
+    if not pids or not bagian.get("digest_tim", True):
+        return ringkasan
+
+    per_project = defaultdict(list)
+    for i in data.tugas:
+        if i.project_id in pids and i.id not in sudah:
+            per_project[i.project].append(i)
+    grup = [GrupTim(nama=p.name, tugas=_kelompok(t, data, hari_ini, bagian)) for p, t in per_project.items()]
+    # Yang paling butuh perhatian di atas: terlambat terbanyak, lalu hari ini.
+    ringkasan.tim = sorted(grup, key=lambda g: (-len(g.tugas.lewat), -len(g.tugas.hari), g.nama))
+    return ringkasan
+
+
+def penerima_dan_saklar(workspace_id, kunci="daily_digest"):
+    """[(user, saklar_berlaku)] untuk anggota aktif yang saklar `kunci`-nya BERLAKU hidup.
+
+    `kunci`: `daily_digest` (edisi pagi) atau `daily_digest_sore`.
+    """
+    anggota = list(
+        WorkspaceMember.objects.filter(
+            workspace_id=workspace_id, is_active=True, member__is_active=True, member__is_bot=False
+        ).select_related("member")
+    )
+    pref = {
+        p.user_id: p
+        for p in UserNotificationPreference.objects.filter(
+            user_id__in=[a.member_id for a in anggota], workspace=None, project=None
         )
-        .exclude(issue__state__group__in=GRUP_SELESAI)
-        .select_related("issue__project", "issue__workspace", "assignee")
-    )
-    peta = defaultdict(list)
-    for r in baris:
-        peta[r.assignee].append(r.issue)
-    return peta
+    }
+    hasil = [(a.member, saklar_efektif(pref.get(a.member_id), a.member_id)) for a in anggota]
+    return [(orang, saklar) for orang, saklar in hasil if saklar[kunci]]
 
 
-@shared_task
-def kirim_ringkasan_harian():
-    """Dijalankan sekali sehari. Lihat beat_schedule di plane/celery.py."""
-    hari_ini = timezone.localtime(timezone.now()).date()
+def penerima_workspace(workspace_id):
+    """Anggota aktif yang saklar `daily_digest`-nya BERLAKU hidup (bawaan: semua)."""
+    return [orang for orang, _ in penerima_dan_saklar(workspace_id)]
+
+
+def _koneksi():
     host, user, pwd, port, use_tls, use_ssl, efrom = get_email_configuration()
     koneksi = get_connection(
         host=host,
@@ -171,25 +245,51 @@ def kirim_ringkasan_harian():
         use_ssl=str(use_ssl) == "1",
         timeout=30,
     )
+    return koneksi, efrom
+
+
+def _kirim(sore):
+    hari_ini = hari_ini_kantor()
+    kunci = "daily_digest_sore" if sore else "daily_digest"
+    hari_ke_depan = hari_ke_hari_kerja_berikutnya(hari_ini) if sore else HARI_KE_DEPAN
+    koneksi, efrom = _koneksi()
 
     terkirim = kosong = gagal = 0
-    for orang, tugas in _tugas_per_orang(hari_ini).items():
-        hari, depan, lewat = kelompokkan(tugas, hari_ini)
-        if not (hari or depan or lewat):
-            kosong += 1
+    for workspace_id in Workspace.objects.values_list("id", flat=True):
+        penerima = penerima_dan_saklar(workspace_id, kunci)
+        if not penerima:
             continue
-        try:
-            subjek, teks, html = susun_email(orang, hari, depan, lewat, hari_ini)
-            pesan = EmailMultiAlternatives(
-                subject=subjek, body=teks, from_email=efrom, to=[orang.email], connection=koneksi
-            )
-            pesan.attach_alternative(html, "text/html")
-            pesan.send(fail_silently=False)
-            terkirim += 1
-        except Exception as e:  # noqa: BLE001
-            # Satu alamat rusak tidak boleh menahan ringkasan orang lain.
-            gagal += 1
-            log_exception(e)
+        data = TugasWorkspace(workspace_id, hari_ini, hari_ke_depan, dengan_selesai=sore)
+        for orang, saklar in penerima:
+            try:
+                ringkasan = susun_ringkasan(orang, workspace_id, data, hari_ini, saklar, sore=sore)
+                if not ringkasan:
+                    kosong += 1
+                    continue
+                subjek, teks, html = susun_email(orang, ringkasan, hari_ini)
+                pesan = EmailMultiAlternatives(
+                    subject=subjek, body=teks, from_email=efrom, to=[orang.email], connection=koneksi
+                )
+                pesan.attach_alternative(html, "text/html")
+                pesan.send(fail_silently=False)
+                terkirim += 1
+            except Exception as e:  # noqa: BLE001
+                # Satu alamat rusak tidak boleh menahan ringkasan orang lain.
+                gagal += 1
+                log_exception(e)
 
-    logger.info("Ringkasan harian %s: %s terkirim, %s kosong, %s gagal", hari_ini, terkirim, kosong, gagal)
+    edisi = "sore" if sore else "pagi"
+    logger.info("Ringkasan %s %s: %s terkirim, %s kosong, %s gagal", edisi, hari_ini, terkirim, kosong, gagal)
     return {"terkirim": terkirim, "kosong": kosong, "gagal": gagal}
+
+
+@shared_task
+def kirim_ringkasan_harian():
+    """Edisi pagi, 08.30 WIB. Lihat beat_schedule di plane/celery.py."""
+    return _kirim(sore=False)
+
+
+@shared_task
+def kirim_ringkasan_sore():
+    """Edisi sore, 17.30 WIB. Lihat beat_schedule di plane/celery.py."""
+    return _kirim(sore=True)

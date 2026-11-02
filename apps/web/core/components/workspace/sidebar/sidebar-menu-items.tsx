@@ -74,6 +74,12 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
         sort_order: personalPreferences.items.drafts.sort_order,
       });
     }
+    if (personalPreferences.items.quick_links?.enabled && WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["quick_links"]) {
+      personalItems.push({
+        ...WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["quick_links"],
+        sort_order: personalPreferences.items.quick_links.sort_order,
+      });
+    }
 
     // Sort personal items by sort_order
     personalItems.sort((a, b) => a.sort_order - b.sort_order);
@@ -93,6 +99,7 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
           ...item,
           sort_order: preference ? preference.sort_order : 0,
         };
+        // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); map result is a fresh array
       }).sort((a, b) => a.sort_order - b.sort_order),
     [workspacePreferences]
   );

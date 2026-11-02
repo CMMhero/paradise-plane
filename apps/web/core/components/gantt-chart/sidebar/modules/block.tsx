@@ -44,7 +44,7 @@ export const ModulesSidebarBlock = observer(function ModulesSidebarBlock(props: 
         className={cn(
           "group flex w-full items-center gap-2 bg-layer-transparent pr-4 hover:bg-layer-transparent-hover",
           {
-            "bg-transparent-hover": isBlockActive(block.id),
+            "bg-layer-transparent-hover": isBlockActive(block.id),
           }
         )}
         style={{

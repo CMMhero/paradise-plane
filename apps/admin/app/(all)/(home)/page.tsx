@@ -45,6 +45,6 @@ function HomePage() {
 export default observer(HomePage);
 
 export const meta: Route.MetaFunction = () => [
-  { title: "God Mode, Masuk & Setup Instance" },
-  { name: "description", content: "Konfigurasi instance Paradise Task Tracker atau masuk ke panel admin." },
+  { title: "God Mode - Sign in & instance setup" },
+  { name: "description", content: "Set up the Paradise Task Tracker instance or sign in to the admin panel." },
 ];

@@ -64,7 +64,7 @@ const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.Comp
         title: "Secure emails from your own instance",
         description: (
           <>
-            Instance ini bisa mengirim email ke kamu dan penggunanya lewat server sendiri, tanpa keluar ke internet.
+            This instance can email you and its users through your own server, without going out to the internet.
             <div className="text-13 font-regular text-tertiary">
               Set it up below and please test your settings before you save them.&nbsp;
               <span className="text-danger-primary">Misconfigs can lead to email bounces and errors.</span>
@@ -88,17 +88,17 @@ const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.Comp
                   halaman ini hanya menampilkan yang keluar tanpa menyebutnya,
                   jadi tidak ada petunjuk bahwa yang masuk memang belum ada. */}
               <section>
-                <h3 className="text-13 font-medium text-primary">Email KELUAR (SMTP)</h3>
+                <h3 className="text-13 font-medium text-primary">Outgoing email (SMTP)</h3>
                 <p className="mb-4 text-11 font-regular text-tertiary">
-                  Dipakai instance untuk mengirim undangan, reset password, dan notifikasi.
+                  Used to send invitations, password resets, and notifications.
                 </p>
                 <InstanceEmailForm config={formattedConfig} />
               </section>
 
               <section className="border-t border-subtle pt-8">
-                <h3 className="text-13 font-medium text-primary">Email MASUK (IMAP)</h3>
+                <h3 className="text-13 font-medium text-primary">Incoming email (IMAP)</h3>
                 <p className="mb-4 text-11 font-regular text-tertiary">
-                  Server kotak masuk kantor. Disimpan di sini supaya satu tempat dengan setelan kirim.
+                  The office inbox server, kept here next to the outgoing settings.
                 </p>
                 <InstanceImapForm config={formattedConfig} />
               </section>

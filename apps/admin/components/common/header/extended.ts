@@ -4,4 +4,16 @@
  * See the LICENSE file for details.
  */
 
-export const EXTENDED_HEADER_SEGMENT_LABELS: Record<string, string> = {};
+// Paradise pages. Without an entry the breadcrumb shows the raw URL segment in caps.
+export const EXTENDED_HEADER_SEGMENT_LABELS: Record<string, string> = {
+  members: "Members",
+  organization: "Organization",
+  defaults: "New member defaults",
+  logs: "Logs",
+  audit: "Audit log",
+  trash: "Trash",
+  features: "Features",
+  "api-keys": "API keys",
+  image: "Image library",
+  google: "Google",
+};

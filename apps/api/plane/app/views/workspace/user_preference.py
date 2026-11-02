@@ -13,6 +13,7 @@ from plane.db.models import Workspace
 # Third party imports
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Max
 
 
 class WorkspaceUserPreferenceViewSet(BaseAPIView):
@@ -26,39 +27,35 @@ class WorkspaceUserPreferenceViewSet(BaseAPIView):
     def get(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
 
-        get_preference = WorkspaceUserPreference.objects.filter(user=request.user, workspace_id=workspace.id)
-
-        create_preference_keys = []
-
+        milik = WorkspaceUserPreference.objects.filter(user=request.user, workspace_id=workspace.id)
+        ada = set(milik.values_list("key", flat=True))
         keys = [key for key, _ in WorkspaceUserPreference.UserPreferenceKeys.choices]
+        baru = [key for key in keys if key not in ada]
 
-        for preference in keys:
-            if preference not in get_preference.values_list("key", flat=True):
-                create_preference_keys.append(preference)
+        if baru:
+            # Kustomisasi Paradise: item yang tersemat untuk baris baru diatur Super
+            # Admin di God Mode (bawaan member, bagian `navigasi`). Kunci di luar
+            # daftar God Mode (mis. active_cycles) tidak tersemat. Dulu bulk_create
+            # ini ada DI DALAM loop, jadi barisnya dicoba dibuat berulang kali.
+            from plane.utils.bawaan_member import baca_bawaan
 
-                preference = WorkspaceUserPreference.objects.bulk_create(
-                    [
-                        WorkspaceUserPreference(
-                            key=key,
-                            user=request.user,
-                            workspace=workspace,
-                            sort_order=(65535 + (i * 10000)),
-                            is_pinned=(
-                                True
-                                if key
-                                in [
-                                    WorkspaceUserPreference.UserPreferenceKeys.DRAFTS,
-                                    WorkspaceUserPreference.UserPreferenceKeys.YOUR_WORK,
-                                    WorkspaceUserPreference.UserPreferenceKeys.STICKIES,
-                                ]
-                                else False
-                            ),
-                        )
-                        for i, key in enumerate(create_preference_keys)
-                    ],
-                    batch_size=10,
-                    ignore_conflicts=True,
-                )
+            semat = baca_bawaan()["navigasi"]["pinned"]
+            # Kunci baru untuk akun lama (mis. chat, wiki) masuk di ujung urutan.
+            awal = (milik.aggregate(m=Max("sort_order"))["m"] or 55535) + 10000
+            WorkspaceUserPreference.objects.bulk_create(
+                [
+                    WorkspaceUserPreference(
+                        key=key,
+                        user=request.user,
+                        workspace=workspace,
+                        sort_order=awal + (i * 10000),
+                        is_pinned=semat.get(key, False),
+                    )
+                    for i, key in enumerate(baru)
+                ],
+                batch_size=10,
+                ignore_conflicts=True,
+            )
 
         preferences = (
             WorkspaceUserPreference.objects.filter(user=request.user, workspace_id=workspace.id)

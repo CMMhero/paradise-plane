@@ -4,19 +4,16 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Dropdown multi-pilih dengan cari: tombol ringkas ("3 divisi dipilih") yang
- * membuka panel berisi kolom cari + daftar checkbox + pilih-semua/bersihkan.
- * 31 divisi tidak muat sebagai checkbox gelar maupun select-native (tanpa cari).
- *
- * Tanpa dependensi baru: tombol + panel absolut + penutup klik-di-luar
- * (pointerdown di document). Panel menutup juga dengan Escape.
+ * CustomSearchSelect upstream dalam mode multiple: tombol ringkas ("3 divisi
+ * dipilih"), kolom cari, daftar bercentang. Pilih-semua/bersihkan ada di kaki
+ * daftar. 31 divisi tidak muat sebagai checkbox gelar maupun select-native.
+ * Daftar dirender lewat portal, jadi aman di dalam modal yang bergulir.
  */
 
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+// plane imports
+import { CustomSearchSelect } from "@plane/ui";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
-import { inputClass } from "./constants";
 
 type Props = {
   /** Semua opsi (identifier divisi). */
@@ -29,98 +26,53 @@ type Props = {
   disabled?: boolean;
 };
 
-export function DivisiPicker({ opsi, dipilih, onUbah, nama = {}, placeholder, disabled = false }: Props) {
+const NAMA_KOSONG: Record<string, string> = {};
+
+export function DivisiPicker({ opsi, dipilih, onUbah, nama = NAMA_KOSONG, placeholder, disabled = false }: Props) {
   const { s, fill } = useGodmodeStrings();
-  const labelKosong = placeholder ?? s.picker.default_placeholder;
-  const [terbuka, setTerbuka] = useState(false);
-  const [cari, setCari] = useState("");
-  const wadah = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!terbuka) return;
-    const tutupLuar = (e: PointerEvent) => {
-      if (wadah.current && !wadah.current.contains(e.target as Node)) setTerbuka(false);
-    };
-    const tutupEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setTerbuka(false);
-    };
-    document.addEventListener("pointerdown", tutupLuar);
-    document.addEventListener("keydown", tutupEsc);
-    return () => {
-      document.removeEventListener("pointerdown", tutupLuar);
-      document.removeEventListener("keydown", tutupEsc);
-    };
-  }, [terbuka]);
-
-  const q = cari.trim().toLowerCase();
   const label = (d: string): string => nama[d] ?? d;
-  const saring = q ? opsi.filter((d) => `${d} ${label(d)}`.toLowerCase().includes(q)) : opsi;
-
-  const toggle = (d: string) =>
-    dipilih.includes(d) ? onUbah(dipilih.filter((x) => x !== d)) : onUbah([...dipilih, d]);
 
   const ringkas =
-    dipilih.length === 0
-      ? labelKosong
-      : dipilih.length <= 2
-        ? dipilih.map(label).join(", ")
-        : fill(s.picker.chosen_count, { n: dipilih.length });
+    dipilih.length === 0 ? (
+      <span className="text-placeholder">{placeholder ?? s.picker.default_placeholder}</span>
+    ) : dipilih.length <= 2 ? (
+      dipilih.map(label).join(", ")
+    ) : (
+      fill(s.picker.chosen_count, { n: dipilih.length })
+    );
 
   return (
-    <div ref={wadah} className="relative">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setTerbuka((v) => !v)}
-        className={`${inputClass} flex w-full items-center justify-between gap-2 text-left disabled:opacity-60`}
-      >
-        <span className={dipilih.length === 0 ? "text-placeholder" : "text-primary"}>{ringkas}</span>
-        <ChevronDown className="size-4 shrink-0 text-tertiary" />
-      </button>
-
-      {terbuka && !disabled && (
-        <div className="shadow-lg absolute z-20 mt-1 max-h-64 w-full min-w-56 overflow-hidden rounded border border-subtle bg-layer-1">
-          <div className="border-b border-subtle p-2">
-            <input
-              // eslint-disable-next-line jsx-a11y/no-autofocus -- panel dibuka lewat klik eksplisit; fokus langsung ke cari menghemat satu Tab per buka
-              autoFocus
-              aria-label={s.picker.search_placeholder}
-              placeholder={s.picker.search_placeholder}
-              className={`${inputClass} w-full`}
-              value={cari}
-              onChange={(e) => setCari(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center justify-between border-b border-subtle px-3 py-1.5">
-            <button type="button" onClick={() => onUbah([...opsi])} className="text-11 font-medium text-accent-primary">
-              {s.picker.select_all}
-            </button>
-            <button type="button" onClick={() => onUbah([])} className="text-11 font-medium text-secondary">
-              {s.picker.clear}
-            </button>
-          </div>
-          <div className="max-h-44 overflow-y-auto p-1">
-            {saring.length === 0 ? (
-              <p className="px-2 py-3 text-center text-11 text-tertiary">{s.picker.empty}</p>
-            ) : (
-              saring.map((d) => (
-                <label
-                  key={d}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left text-body-sm-regular text-primary hover:bg-layer-2"
-                >
-                  <input
-                    type="checkbox"
-                    checked={dipilih.includes(d)}
-                    onChange={() => toggle(d)}
-                    className="accent-accent-primary size-4 shrink-0"
-                  />
-                  {label(d)}
-                </label>
-              ))
-            )}
-          </div>
+    <CustomSearchSelect
+      multiple
+      value={dipilih}
+      onChange={(v: string[]) => onUbah(v)}
+      label={<span className="truncate">{ringkas}</span>}
+      disabled={disabled}
+      buttonClassName="w-full rounded-md border-subtle bg-layer-2"
+      className="w-full"
+      input
+      maxHeight="lg"
+      noResultsMessage={s.picker.empty}
+      options={opsi.map((d) => ({
+        value: d,
+        query: `${d} ${label(d)}`,
+        content: (
+          <span className="flex w-full items-center justify-between gap-2">
+            <span className="truncate">{label(d)}</span>
+            {nama[d] && <span className="shrink-0 text-11 text-tertiary">{d}</span>}
+          </span>
+        ),
+      }))}
+      footerOption={
+        <div className="flex items-center justify-between border-t border-subtle px-2 pt-1.5">
+          <button type="button" onClick={() => onUbah([...opsi])} className="text-11 font-medium text-accent-primary">
+            {s.picker.select_all}
+          </button>
+          <button type="button" onClick={() => onUbah([])} className="text-11 font-medium text-secondary">
+            {s.picker.clear}
+          </button>
         </div>
-      )}
-    </div>
+      }
+    />
   );
 }

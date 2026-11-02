@@ -6,6 +6,7 @@
 
 import { action, observable, makeObservable } from "mobx";
 import { computedFn } from "mobx-utils";
+import { isPowerKCommandModuleActive } from "./paradise-gates";
 import type { TPowerKCommandConfig, TPowerKContext, TPowerKCommandGroup } from "./types";
 
 export interface IPowerKCommandRegistry {
@@ -71,7 +72,8 @@ export class PowerKCommandRegistry implements IPowerKCommandRegistry {
 
   getAllCommandsWithShortcuts: IPowerKCommandRegistry["getAllCommandsWithShortcuts"] = () =>
     Array.from(this.commands.values()).filter(
-      (command) => command.shortcut || command.keySequence || command.modifierShortcut
+      (command) =>
+        (command.shortcut || command.keySequence || command.modifierShortcut) && isPowerKCommandModuleActive(command.id)
     );
 
   getVisibleCommands: IPowerKCommandRegistry["getVisibleCommands"] = computedFn((ctx) =>
@@ -144,6 +146,9 @@ export class PowerKCommandRegistry implements IPowerKCommandRegistry {
   // ============================================================================
 
   private isCommandVisible(command: TPowerKCommandConfig, ctx: TPowerKContext): boolean {
+    // Kustomisasi Paradise: perintah milik modul yang dimatikan di God Mode
+    if (!isPowerKCommandModuleActive(command.id)) return false;
+
     // Check custom visibility function
     if (command.isVisible && !command.isVisible(ctx)) {
       return false;

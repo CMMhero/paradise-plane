@@ -19,6 +19,8 @@ import { useTranslation } from "@plane/i18n";
 import type { ISvgIcons } from "@plane/propel/icons";
 import type { TProfileSettingsTabs } from "@plane/types";
 // local imports
+import { useInstance } from "@/hooks/store/use-instance";
+import { isProfileTabAvailable } from "@/lib/profile-tabs";
 import { SettingsSidebarItem } from "../../sidebar/item";
 import { ProfileSettingsSidebarWorkspaceOptions } from "./workspace-options";
 
@@ -47,11 +49,14 @@ export const ProfileSettingsSidebarItemCategories = observer(function ProfileSet
   const { profileTabId } = useParams();
   // translation
   const { t } = useTranslation();
+  const { config } = useInstance();
 
   return (
     <div className="mt-4 flex flex-col gap-y-4">
       {PROFILE_SETTINGS_CATEGORIES.map((category) => {
-        const categoryItems = GROUPED_PROFILE_SETTINGS[category];
+        const categoryItems = GROUPED_PROFILE_SETTINGS[category].filter((item) =>
+          isProfileTabAvailable(config, item.key)
+        );
 
         if (categoryItems.length === 0) return null;
 
@@ -62,6 +67,7 @@ export const ProfileSettingsSidebarItemCategories = observer(function ProfileSet
             </div>
             <div className="flex flex-col">
               {categoryItems.map((item) => (
+                // oxlint-disable-next-line jsx-a11y/control-has-associated-label -- label is passed via the label prop
                 <SettingsSidebarItem
                   key={item.key}
                   as="button"

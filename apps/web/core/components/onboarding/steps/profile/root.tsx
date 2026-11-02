@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
@@ -54,6 +55,7 @@ const defaultValues: Partial<TProfileSetupFormValues> = {
 };
 
 export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepChange }: Props) {
+  const { t } = useTranslation();
   // states
   const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false);
   // store hooks
@@ -152,7 +154,7 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
       {/* Header */}
       <CommonOnboardingHeader
         title="Create your profile."
-        description="Beginilah Anda akan terlihat di Paradise Task Tracker."
+        description={t("shared_ui.onboarding_profile_description")}
       />
 
       {/* Profile Picture Section */}

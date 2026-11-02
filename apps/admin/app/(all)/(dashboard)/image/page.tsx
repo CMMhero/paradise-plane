@@ -9,7 +9,9 @@ import useSWR from "swr";
 import { Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
+import { ApiKeysTabs } from "@/components/common/section-tabs";
 // hooks
+import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { useInstance } from "@/hooks/store";
 // types
 import type { Route } from "./+types/page";
@@ -17,6 +19,7 @@ import type { Route } from "./+types/page";
 import { InstanceImageConfigForm } from "./form";
 
 const InstanceImagePage = observer(function InstanceImagePage(_props: Route.ComponentProps) {
+  const { s } = useGodmodeStrings();
   // store
   const { formattedConfig, fetchInstanceConfigurations } = useInstance();
 
@@ -25,10 +28,11 @@ const InstanceImagePage = observer(function InstanceImagePage(_props: Route.Comp
   return (
     <PageWrapper
       header={{
-        title: "Third-party image libraries",
-        description: "Let your users search and choose images from third-party libraries",
+        title: s.api_keys.title,
+        description: s.api_keys.image_description,
       }}
     >
+      <ApiKeysTabs />
       {formattedConfig ? (
         <InstanceImageConfigForm config={formattedConfig} />
       ) : (
@@ -41,6 +45,6 @@ const InstanceImagePage = observer(function InstanceImagePage(_props: Route.Comp
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Images Settings - God Mode" }];
+export const meta: Route.MetaFunction = () => [{ title: "Image library - God Mode" }];
 
 export default InstanceImagePage;

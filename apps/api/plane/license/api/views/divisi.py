@@ -49,13 +49,13 @@ class InstanceDivisiAnggotaEndpoint(BaseAPIView):
     def get(self, request):
         member_id = request.query_params.get("member_id")
         if not member_id:
-            return Response({"error": "member_id wajib dikirim."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "member_id is required."}, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(pk=member_id).first()
         if user is None:
-            return Response({"error": "User tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         workspace = _workspace_utama()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Workspace not found."}, status=status.HTTP_404_NOT_FOUND)
 
         projects = {
             p.id: p.identifier for p in Project.objects.filter(workspace=workspace, deleted_at__isnull=True)
@@ -81,17 +81,17 @@ class InstanceDivisiAnggotaEndpoint(BaseAPIView):
         """
         member_id = request.data.get("member_id")
         if not member_id:
-            return Response({"error": "member_id wajib dikirim."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "member_id is required."}, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(pk=member_id).first()
         if user is None:
-            return Response({"error": "User tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         workspace = _workspace_utama()
         if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Workspace not found."}, status=status.HTTP_404_NOT_FOUND)
 
         diminta = request.data.get("divisi")
         if not isinstance(diminta, list):
-            return Response({"error": "divisi harus daftar {project_id, role}."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "divisi must be a list of {project_id, role}."}, status=status.HTTP_400_BAD_REQUEST)
 
         projects = {p.id: p.identifier for p in Project.objects.filter(workspace=workspace, deleted_at__isnull=True)}
         # Peta uuid→identifier untuk balasan. (Identifier→uuid tak perlu di sini:
@@ -103,19 +103,19 @@ class InstanceDivisiAnggotaEndpoint(BaseAPIView):
             pid = str((baris or {}).get("project_id") or "")
             if pid not in ke_identifier:
                 return Response(
-                    {"error": f"Project tidak dikenal di workspace ini: {pid or '(kosong)'}."},
+                    {"error": f"Unknown project in this workspace: {pid or '(empty)'}."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             try:
                 role = int((baris or {}).get("role"))
             except (TypeError, ValueError):
                 return Response(
-                    {"error": f"role harus 15 atau 20 (project {ke_identifier[pid]})."},
+                    {"error": f"role must be 15 or 20 (project {ke_identifier[pid]})."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             if role not in _PERAN_SAH:
                 return Response(
-                    {"error": f"role harus 15 (Member) atau 20 (Admin divisi), bukan {role}."},
+                    {"error": f"role must be 15 (Member) or 20 (Division admin), not {role}."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             ingin[pid] = role
@@ -126,7 +126,7 @@ class InstanceDivisiAnggotaEndpoint(BaseAPIView):
         tingkat = tingkat_anggota(user.id, workspace.id)
         peran_wajar = 20 if (tingkat is not None and tingkat >= TINGKAT_SUPERVISOR) else 15
         peringatan = sorted(
-            f"{ke_identifier[q]} diberi {r}, wajarnya {peran_wajar}" for q, r in ingin.items() if r != peran_wajar
+            f"{ke_identifier[q]} was given role {r}, expected {peran_wajar}" for q, r in ingin.items() if r != peran_wajar
         )
 
         # Baris yang ADA (aktif maupun nonaktif — `is_active=False` TIDAK

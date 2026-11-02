@@ -253,7 +253,7 @@ export const TopNavPowerK = observer(() => {
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
             placeholder="Search commands..."
-            className="placeholder-text-placeholder min-w-0 flex-1 bg-transparent text-13 text-primary outline-none"
+            className="min-w-0 flex-1 bg-transparent text-13 text-primary placeholder-(--text-color-placeholder) outline-none"
           />
           {searchTerm && (
             <button type="button" onClick={handleClear} className="ml-2 shrink-0">

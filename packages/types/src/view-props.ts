@@ -109,6 +109,8 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "project_id",
   "created_at",
   "updated_at",
+  // Kustomisasi Paradise: status persetujuan penugasan (KEP-25)
+  "approval_status",
 ] as const;
 export type TWorkItemFilterProperty = (typeof WORK_ITEM_FILTER_PROPERTY_KEYS)[number];
 

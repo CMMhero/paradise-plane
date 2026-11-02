@@ -53,6 +53,22 @@ function ApprovalNotificationAction({ verb }: { verb: string | undefined }) {
   return <>{t("issue.approval.inbox.submitted")}</>;
 }
 
+// Kustomisasi Paradise: baris tenggat (`field: "deadline"`, deadline_reminder_task).
+// `newValue` = selisih hari terhadap tenggat: negatif belum lewat, 0 hari ini.
+function DeadlineNotificationAction({ newValue }: { newValue: string | undefined }) {
+  const { t } = useTranslation();
+  const selisih = Number(newValue ?? 0);
+  if (selisih > 0) return <>{t("notif_prefs_ui.inbox_overdue", { count: selisih })}</>;
+  if (selisih === 0) return <>{t("notif_prefs_ui.inbox_due_today")}</>;
+  return <>{t("notif_prefs_ui.inbox_due_in", { count: -selisih })}</>;
+}
+
+// Kustomisasi Paradise: baris DM (`field: "chat"`, plane/utils/inbox_chat.py).
+function ChatNotificationAction({ count }: { count: number }) {
+  const { t } = useTranslation();
+  return <>{t("notif_prefs_ui.inbox_chat_messages", { count })}</>;
+}
+
 // Base notification content map for core fields
 export const BASE_NOTIFICATION_CONTENT_MAP: TNotificationContentMap = {
   duplicate: ({ verb }) => ({
@@ -199,6 +215,25 @@ export function NotificationContent({
           <ApprovalNotificationAction verb={verb} />
         </span>
         {"."}
+      </>
+    );
+  }
+
+  if (notificationField === "deadline") {
+    return (
+      <span className="text-primary">
+        <DeadlineNotificationAction newValue={newValue} />
+      </span>
+    );
+  }
+
+  if (notificationField === "chat") {
+    return (
+      <>
+        {renderTriggerName()}
+        <span className="text-tertiary">
+          <ChatNotificationAction count={data?.chat?.jumlah ?? 1} />
+        </span>
       </>
     );
   }

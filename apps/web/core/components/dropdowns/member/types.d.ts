@@ -15,6 +15,12 @@ export type MemberDropdownProps = TDropdownProps & {
    * menampilkan orang yang pasti ditolak.
    */
   hanyaDiriSendiri?: string | null;
+  /**
+   * Selalu sertakan pengguna yang sedang login di daftar opsi, walau ia tidak
+   * tercatat sebagai anggota (non-guest) project: misalnya atasan yang masuk
+   * lewat jangkauan hierarki. Dipakai lead & anggota module.
+   */
+  sertakanDiriSendiri?: boolean;
 } & (
     | {
         multiple: false;

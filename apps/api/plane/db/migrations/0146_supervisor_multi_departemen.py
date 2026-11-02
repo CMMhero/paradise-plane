@@ -66,6 +66,26 @@ def bersihkan_pemetaan_arsip(apps, schema_editor):
     ).update(deleted_at=django.utils.timezone.now())
 
 
+def satukan_pemetaan_ganda(apps, schema_editor):
+    """Departemen yang masih memegang >1 project aktif (hasil seed massal / 4
+    jalur create tanpa validasi) disisakan pemetaan TERTUA-nya; sisanya
+    di-soft-delete supaya constraint 1:1 bisa dibuat. Tanpa ini migrasi gagal
+    di database mana pun yang sudah kadung punya duplikat."""
+    DepartemenProject = apps.get_model("db", "DepartemenProject")
+    terlihat = set()
+    aktif = DepartemenProject.objects.filter(deleted_at__isnull=True).order_by(
+        "created_at", "id"
+    )
+    kelebihan = []
+    for baris in aktif:
+        if baris.departemen_id in terlihat:
+            kelebihan.append(baris.pk)
+        terlihat.add(baris.departemen_id)
+    DepartemenProject.objects.filter(pk__in=kelebihan).update(
+        deleted_at=django.utils.timezone.now()
+    )
+
+
 def biarkan_apa_adanya(apps, schema_editor):
     pass
 
@@ -118,6 +138,7 @@ class Migration(migrations.Migration):
         # Payung arsip E1 pemetaannya masih aktif -> bersihkan dulu, kalau tidak
         # constraint 1:1 di bawah gagal (departemen terhitung memegang dua project).
         migrations.RunPython(bersihkan_pemetaan_arsip, biarkan_apa_adanya),
+        migrations.RunPython(satukan_pemetaan_ganda, biarkan_apa_adanya),
         migrations.AddConstraint(
             model_name='departemenproject',
             constraint=models.UniqueConstraint(

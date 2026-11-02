@@ -17,8 +17,13 @@ import {
   Video,
 } from "lucide-react";
 import { Link } from "react-router";
+import { useTranslation } from "@plane/i18n";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import type { TLogoProps } from "@plane/types";
+import { cn } from "@plane/utils";
+// components
+import type { TTintHue } from "@/components/common/tint";
+import { TINT_CHIP_CLASS } from "@/components/common/tint";
 // local imports
 import { gradienUntuk } from "./gradien";
 
@@ -49,6 +54,17 @@ const SAMPUL = "relative flex h-[132px] items-center justify-center overflow-hid
 const KARTU =
   "group relative flex flex-col overflow-hidden rounded-lg border border-subtle bg-layer-2 transition-shadow duration-200 hover:border-strong hover:shadow-raised-200 focus-visible:border-strong";
 
+/** Rona chip jenis berkas: lembar kerja hijau, presentasi oranye, dst., supaya jenisnya terbaca sekilas. */
+function ronaBerkas(tipe: string): TTintHue {
+  if (tipe.startsWith("image/")) return "purple";
+  if (tipe.startsWith("video/")) return "pink";
+  if (tipe.startsWith("audio/")) return "yellow";
+  if (tipe.includes("spreadsheetml") || tipe === "application/vnd.ms-excel") return "emerald";
+  if (tipe.includes("presentationml") || tipe === "application/vnd.ms-powerpoint") return "orange";
+  if (tipe === "application/pdf") return "crimson";
+  return "indigo";
+}
+
 /** Ikon yang menjawab "ini berkas apa" dari jauh, sebelum judulnya terbaca. */
 function IkonBerkas({ tipe }: { tipe: string }) {
   const kelas = "size-12";
@@ -71,6 +87,7 @@ function IkonBerkas({ tipe }: { tipe: string }) {
  * setelah diklik.
  */
 export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satuanAnak, terbuka }: TKartuFolder) {
+  const { t } = useTranslation();
   return (
     <Link to={to} className={KARTU}>
       <div className={SAMPUL} style={{ backgroundImage: gradienUntuk(judul) }}>
@@ -85,14 +102,14 @@ export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satu
         )}
         {terbuka && (
           <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-11 font-medium text-white backdrop-blur-[1px]">
-            <Users className="size-3" /> Terbuka
+            <Users className="size-3" /> {t("wiki_ui.card.open")}
           </span>
         )}
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-15 truncate font-semibold text-primary">{judul}</h3>
-        <p className="mt-1 line-clamp-1 text-12 text-tertiary">{keterangan || "Belum ada keterangan"}</p>
+        <h3 className="truncate text-14 font-semibold text-primary">{judul}</h3>
+        <p className="mt-1 line-clamp-1 text-12 text-tertiary">{keterangan || t("wiki_ui.card.no_description")}</p>
 
         <div className="mt-4 flex items-center justify-between border-t border-subtle pt-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-subtle px-2.5 py-1 text-11 font-medium text-accent-primary">
@@ -100,7 +117,7 @@ export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satu
             {jumlahAnak} {satuanAnak}
           </span>
           <span className="inline-flex items-center gap-1 text-12 font-medium text-secondary transition-colors group-hover:text-accent-primary">
-            Lihat <ArrowRight className="size-3.5" />
+            {t("wiki_ui.card.view")} <ArrowRight className="size-3.5" />
           </span>
         </div>
       </div>
@@ -116,6 +133,7 @@ export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satu
  * menekannya, bukan sesudah.
  */
 export function KartuMateri({ to, judul, keterangan, tipe, label, ukuran, aksi }: TKartuMateri) {
+  const { t } = useTranslation();
   return (
     <div className={KARTU}>
       <Link to={to} className="flex flex-1 flex-col">
@@ -126,15 +144,20 @@ export function KartuMateri({ to, judul, keterangan, tipe, label, ukuran, aksi }
         </div>
 
         <div className="flex flex-1 flex-col p-4">
-          <h3 className="text-15 truncate font-semibold text-primary">{judul}</h3>
+          <h3 className="truncate text-14 font-semibold text-primary">{judul}</h3>
           <p className="mt-1 line-clamp-1 text-12 text-tertiary">{keterangan}</p>
 
           <div className="mt-4 flex items-center justify-between border-t border-subtle pt-3">
-            <span className="rounded-md bg-layer-3 px-2 py-1 text-11 font-medium tracking-wide text-tertiary">
+            <span
+              className={cn(
+                "rounded-md px-2 py-1 text-11 font-medium tracking-wide",
+                TINT_CHIP_CLASS[ronaBerkas(tipe)]
+              )}
+            >
               {label} · {ukuran}
             </span>
             <span className="rounded-md border border-accent-strong px-3 py-1 text-12 font-medium text-accent-primary transition-colors group-hover:bg-accent-primary group-hover:text-on-color">
-              Buka
+              {t("wiki_ui.card.open_material")}
             </span>
           </div>
         </div>

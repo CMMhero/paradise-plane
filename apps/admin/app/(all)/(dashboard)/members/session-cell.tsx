@@ -9,7 +9,10 @@ import { useState } from "react";
 import { LogOut } from "lucide-react";
 // plane imports
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
+import { Tooltip } from "@plane/propel/tooltip";
 import { InstanceActivityService } from "@plane/services";
+// components
+import { IconAction } from "@/components/common/paradise-ui";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 
@@ -39,7 +42,7 @@ export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendi
     ? { warna: "bg-success-primary", label: s.session.active, judul: s.session.active_hint }
     : masihLogin
       ? { warna: "bg-warning-primary", label: s.session.idle, judul: s.session.idle_hint }
-      : { warna: "bg-placeholder", label: s.session.out, judul: s.session.out_hint };
+      : { warna: "bg-layer-3", label: s.session.out, judul: s.session.out_hint };
 
   // Hanya logout paksa. Menonaktifkan akun sudah punya kontrolnya sendiri di
   // kolom "Aktif", dan backend-nya memang sekalian memutus sesi
@@ -69,23 +72,21 @@ export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendi
   };
 
   return (
-    <div className="flex items-center justify-center gap-2">
-      <span className="flex items-center gap-1.5" title={status.judul}>
-        <span className={`size-2 rounded-full ${status.warna}`} aria-hidden />
-        <span className="text-11 whitespace-nowrap text-secondary">{status.label}</span>
-      </span>
+    <div className="flex items-center gap-1">
+      <Tooltip tooltipContent={status.judul}>
+        <span className="flex items-center gap-1.5">
+          <span className={`size-2 shrink-0 rounded-full ${status.warna}`} aria-hidden />
+          <span className="text-12 whitespace-nowrap text-secondary">{status.label}</span>
+        </span>
+      </Tooltip>
 
       {masihLogin && !diriSendiri ? (
-        <button
-          type="button"
+        <IconAction
+          label={fill(s.session.kick_label, { name: nama })}
+          icon={LogOut}
           disabled={sibuk}
-          onClick={() => kick()}
-          className="rounded p-1 text-secondary hover:bg-layer-1 hover:text-danger-primary disabled:opacity-40"
-          title={s.session.kick_hint}
-          aria-label={fill(s.session.kick_label, { name: nama })}
-        >
-          <LogOut className="size-4" />
-        </button>
+          onClick={() => void kick()}
+        />
       ) : null}
     </div>
   );

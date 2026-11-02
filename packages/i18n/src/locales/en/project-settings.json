@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Wiki access",
-      "description": "Choose which divisions can edit each top-level folder. Everyone in the project can still read every page."
-    },
     "trash": {
       "heading": "Trash bin",
       "description": "Deleted items land here before they are removed for good. Project admins can restore them or remove them permanently."

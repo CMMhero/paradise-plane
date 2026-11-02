@@ -23,6 +23,7 @@ import {
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 export const ProjectIssuesMobileHeader = observer(function ProjectIssuesMobileHeader() {
   // i18n
@@ -30,6 +31,7 @@ export const ProjectIssuesMobileHeader = observer(function ProjectIssuesMobileHe
   const [analyticsModal, setAnalyticsModal] = useState(false);
   const { workspaceSlug, projectId } = useParams();
   const { currentProjectDetails } = useProject();
+  const { isModuleEnabled } = useParadiseModules();
 
   // store hooks
   const {
@@ -98,12 +100,14 @@ export const ProjectIssuesMobileHeader = observer(function ProjectIssuesMobileHe
           </FiltersDropdown>
         </div>
 
-        <button
-          onClick={() => setAnalyticsModal(true)}
-          className="flex flex-grow justify-center border-l border-subtle text-13 text-secondary"
-        >
-          {t("common.analytics")}
-        </button>
+        {isModuleEnabled("analytics") && (
+          <button
+            onClick={() => setAnalyticsModal(true)}
+            className="flex flex-grow justify-center border-l border-subtle text-13 text-secondary"
+          >
+            {t("common.analytics")}
+          </button>
+        )}
       </div>
     </>
   );

@@ -10,6 +10,8 @@ from typing import Optional, Any
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 # Module imports
 from .base import BaseModel
@@ -326,11 +328,12 @@ class WorkspaceUserProperties(BaseModel):
     display_filters = models.JSONField(default=get_default_display_filters)
     display_properties = models.JSONField(default=get_default_display_properties)
     rich_filters = models.JSONField(default=dict)
-    navigation_project_limit = models.IntegerField(default=10)
+    # Paradise: bawaan = semua project tampil (0) dan navigasi project bertab.
+    navigation_project_limit = models.IntegerField(default=0)
     navigation_control_preference = models.CharField(
         max_length=25,
         choices=NavigationControlPreference.choices,
-        default=NavigationControlPreference.ACCORDION,
+        default=NavigationControlPreference.TABBED,
     )
 
     class Meta:
@@ -425,6 +428,15 @@ class WorkspaceUserPreference(BaseModel):
         YOUR_WORK = "your_work", "Your Work"
         ARCHIVES = "archives", "Archives"
         STICKIES = "stickies", "Stickies"
+        # Paradise: Quick links pindah dari widget Home ke menu & halaman sendiri.
+        QUICK_LINKS = "quick_links", "Quick Links"
+        # Paradise: menu workspace kustom. Tanpa barisnya, menyematkan menu ini di
+        # "Customize navigation" diam-diam tidak berbuat apa-apa (PATCH melewati
+        # kunci yang barisnya tak ada). Cermin NAV_KUNCI di plane/utils/bawaan_member.py.
+        DASHBOARD_DIVISI = "dashboard_divisi", "Division Dashboard"
+        INITIATIVES = "initiatives", "Initiatives"
+        CHAT = "chat", "Chat"
+        WIKI = "wiki", "Wiki"
 
     workspace = models.ForeignKey(
         "db.Workspace",
@@ -453,3 +465,13 @@ class WorkspaceUserPreference(BaseModel):
         verbose_name_plural = "Workspace User Preferences"
         db_table = "workspace_user_preferences"
         ordering = ("-created_at",)
+
+
+@receiver(pre_save, sender=WorkspaceUserProperties)
+def isi_bawaan_properti_workspace_baru(sender, instance, **kwargs):
+    # Kustomisasi Paradise: gaya dan batas daftar project di sidebar untuk baris
+    # baru diambil dari God Mode (bawaan member, bagian `navigasi`).
+    if instance._state.adding:
+        from plane.utils.bawaan_member import terapkan_ke_properti_workspace_baru
+
+        terapkan_ke_properti_workspace_baru(instance)

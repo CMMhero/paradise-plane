@@ -23,6 +23,8 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.utils.paginator import BasePaginator
+from plane.utils.inbox_chat import ENTITY_CHAT
+from plane.utils.preferensi_email import SAKLAR_NOTIFIKASI, dikunci, saklar_efektif, terapkan_perubahan
 from plane.utils.order_queryset import NOTIFICATION_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.app.permissions import allow_permission, ROLE
 
@@ -63,7 +65,8 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
 
         notifications = (
             Notification.objects.filter(workspace__slug=slug, receiver_id=request.user.id)
-            .filter(entity_name="issue")
+            # Kustomisasi Paradise: baris DM (plane/utils/inbox_chat.py) ikut tampil.
+            .filter(entity_name__in=["issue", ENTITY_CHAT])
             .annotate(is_inbox_issue=Exists(intake_issue))
             .annotate(is_intake_issue=Exists(intake_issue))
             .annotate(
@@ -213,6 +216,8 @@ class UnreadNotificationEndpoint(BaseAPIView):
                 snoozed_till__isnull=True,
             )
             .exclude(sender__icontains="mentioned")
+            # Obrolan punya lencana, pop-up, dan bunyi sendiri; dihitung di sini = bunyi dua kali.
+            .exclude(entity_name=ENTITY_CHAT)
             .count()
         )
 
@@ -297,17 +302,34 @@ class UserNotificationPreferenceEndpoint(BaseAPIView):
     model = UserNotificationPreference
     serializer_class = UserNotificationPreferenceSerializer
 
-    # request the object
-    def get(self, request):
-        user_notification_preference = UserNotificationPreference.objects.get(user=request.user)
-        serializer = UserNotificationPreferenceSerializer(user_notification_preference)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    # Kustomisasi Paradise: yang dikirim ke klien adalah saklar yang BERLAKU
+    # (bawaan jabatan selama `ikut_bawaan_jabatan` hidup), dan perubahan apa pun
+    # membekukan nilai itu ke kolom. Lihat plane/utils/preferensi_email.py.
+    def _bentuk(self, pref):
+        return {
+            "id": str(pref.id),
+            **saklar_efektif(pref),
+            # Saklar yang dipaksa mati kebijakan direktur di God Mode; web mengunci tombolnya.
+            "dikunci": dikunci(pref.user_id),
+            "ikut_bawaan_jabatan": pref.ikut_bawaan_jabatan,
+        }
 
-    # update the object
+    def _pref(self, request):
+        pref, _ = UserNotificationPreference.objects.get_or_create(user=request.user, workspace=None, project=None)
+        return pref
+
+    def get(self, request):
+        return Response(self._bentuk(self._pref(request)), status=status.HTTP_200_OK)
+
     def patch(self, request):
-        user_notification_preference = UserNotificationPreference.objects.get(user=request.user)
-        serializer = UserNotificationPreferenceSerializer(user_notification_preference, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        perubahan = {}
+        for kunci in (*SAKLAR_NOTIFIKASI, "ikut_bawaan_jabatan"):
+            if kunci in request.data:
+                if not isinstance(request.data[kunci], bool):
+                    return Response({"error": f"{kunci} harus true/false."}, status=status.HTTP_400_BAD_REQUEST)
+                perubahan[kunci] = request.data[kunci]
+        pref = self._pref(request)
+        kolom = terapkan_perubahan(pref, perubahan)
+        if kolom:
+            pref.save(update_fields=[*kolom, "updated_at"])
+        return Response(self._bentuk(pref), status=status.HTTP_200_OK)

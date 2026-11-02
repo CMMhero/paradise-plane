@@ -10,7 +10,19 @@ import { API_BASE_URL } from "@plane/constants";
 // api service
 import { APIService } from "../api.service";
 
-export type TTrashType = "issue" | "page" | "cycle" | "module";
+export type TTrashType =
+  | "issue"
+  | "page"
+  | "wiki_material"
+  | "cycle"
+  | "module"
+  | "view"
+  | "label"
+  | "template"
+  // Hanya di Trash God Mode, tidak pernah dikembalikan Trashbin project.
+  | "project"
+  | "initiative"
+  | "account";
 
 export type TTrashItem = {
   id: string;
@@ -28,6 +40,31 @@ export type TTrashItem = {
 export type TTrashResponse = {
   retention_days: number;
   results: TTrashItem[];
+};
+
+/**
+ * Jenis yang benar-benar ada di `items`, urut sesuai kemunculan, dengan jumlahnya.
+ * Dipakai filter jenis di kedua halaman Trash: opsi yang ditawarkan selalu
+ * isi tong sampahnya, bukan daftar tetap yang bisa basi (mis. cycle yang dicabut).
+ */
+export const countTrashTypes = (items: TTrashItem[]): { type: TTrashType; label: string; count: number }[] => {
+  const peta = new Map<TTrashType, { type: TTrashType; label: string; count: number }>();
+  for (const item of items) {
+    const ada = peta.get(item.type);
+    peta.set(item.type, { type: item.type, label: item.type_label, count: (ada?.count ?? 0) + 1 });
+  }
+  return [...peta.values()];
+};
+
+/** Saring tong sampah per jenis dan teks (nama atau nama/email penghapus), tanpa membedakan huruf besar. */
+export const filterTrashItems = (items: TTrashItem[], type: TTrashType | "", search: string): TTrashItem[] => {
+  const kata = search.trim().toLowerCase();
+  return items.filter((item) => {
+    if (type && item.type !== type) return false;
+    if (!kata) return true;
+    const penghapus = item.deleted_by ? `${item.deleted_by.display_name} ${item.deleted_by.email}` : "";
+    return `${item.name} ${penghapus}`.toLowerCase().includes(kata);
+  });
 };
 
 /**

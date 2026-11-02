@@ -54,6 +54,11 @@ export const usePersonalNavigationPreferences = () => {
         enabled: storePreferences.drafts?.is_pinned ?? DEFAULT_PERSONAL_PREFERENCES.items.drafts.enabled,
         sort_order: storePreferences.drafts?.sort_order ?? DEFAULT_PERSONAL_PREFERENCES.items.drafts.sort_order,
       },
+      quick_links: {
+        enabled: storePreferences.quick_links?.is_pinned ?? DEFAULT_PERSONAL_PREFERENCES.items.quick_links.enabled,
+        sort_order:
+          storePreferences.quick_links?.sort_order ?? DEFAULT_PERSONAL_PREFERENCES.items.quick_links.sort_order,
+      },
     };
 
     return {
@@ -123,7 +128,8 @@ export const useProjectNavigationPreferences = () => {
       storePreferences &&
       (storePreferences.navigation_control_preference || storePreferences.navigation_project_limit !== undefined)
     ) {
-      const limit = storePreferences.navigation_project_limit ?? DEFAULT_PROJECT_PREFERENCES.limitedProjectsCount;
+      // Missing limit = show every project (0), never a silent limit of 10.
+      const limit = storePreferences.navigation_project_limit ?? 0;
 
       return {
         navigationMode: storePreferences.navigation_control_preference || DEFAULT_PROJECT_PREFERENCES.navigationMode,

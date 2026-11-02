@@ -6,7 +6,7 @@
 
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { ArchiveIcon, CycleIcon, ModuleIcon, WorkItemsIcon } from "@plane/propel/icons";
+import { ArchiveIcon, ModuleIcon, WorkItemsIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import { EIssuesStoreType } from "@plane/types";
 // ui
@@ -22,7 +22,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 
 type TProps = {
-  activeTab: "issues" | "cycles" | "modules";
+  activeTab: "issues" | "modules";
 };
 
 const PROJECT_ARCHIVES_BREADCRUMB_LIST: {
@@ -36,11 +36,6 @@ const PROJECT_ARCHIVES_BREADCRUMB_LIST: {
     label: "Work items",
     href: "/issues",
     icon: WorkItemsIcon,
-  },
-  cycles: {
-    label: "Cycles",
-    href: "/cycles",
-    icon: CycleIcon,
   },
   modules: {
     label: "Modules",

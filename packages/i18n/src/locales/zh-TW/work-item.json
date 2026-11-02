@@ -181,9 +181,7 @@
         "approved": "Approved"
       },
       "filter": {
-        "pending_only": "Pending approval",
-        "show_pending_title": "Show only work items awaiting approval",
-        "show_all_title": "Show all work items"
+        "label": "審批"
       },
       "menu": {
         "approve": "Approve",
@@ -192,62 +190,69 @@
       },
       "modal": {
         "reject_title": "Reject this work item?",
-        "reject_description": "The work item returns to the requester draft. Write the reason so they know what to fix.",
-        "reason_placeholder": "Rejection reason (required)",
-        "reason_required": "A rejection reason is required so the requester knows what to fix."
+        "reject_description": "The work item moves back to In Progress. Write the reason so the requester knows what to fix.",
+        "reason_placeholder": "Rejection reason (required)"
       },
       "actions": {
         "approve": "Approve",
         "reject": "Reject",
         "resubmit": "Resubmit",
-        "reload": "Reload",
         "retry": "Try again",
-        "cancel": "Cancel",
-        "save": "Save"
+        "cancel": "Cancel"
       },
       "toast": {
         "approved_title": "Approved",
-        "approved_message": "Work item approved and no longer locked.",
+        "approved_message": "Work item approved and moved to Done.",
         "rejected_title": "Rejected",
-        "rejected_message": "Work item returned to the requester draft.",
+        "rejected_message": "Work item moved back to In Progress.",
         "resubmitted_title": "Resubmitted",
         "resubmitted_message": "Work item {number} is back in the manager queue.",
         "save_failed_title": "Could not save",
         "save_failed_message": "Could not save the decision.",
-        "resubmit_failed_message": "Could not resubmit."
+        "resubmit_failed_message": "Could not resubmit.",
+        "requested_title": "Requested for approval",
+        "requested_message": "Your manager will review it. The work item moves to Done once approved."
       },
       "queue": {
-        "description": "Staff can only assign work to themselves, and each assignment waits for a manager in their division (supervisor, manager, or director). Rejected work returns to the requester draft — this list is what marks the status.",
         "needs_decision": "Needs my decision",
         "my_requests": "My requests",
-        "all_my_divisions": "All my divisions",
-        "not_member": "You are not a member of any division in this workspace yet. Ask an admin to add you to your division first.",
         "gate_off": "The approval gate on the server is off, so this queue is empty not because nothing is waiting — no assignment has been recorded yet. Switch the gate on first (after the ladder is filled via God Mode), then reload.",
         "load_failed": "Could not load the approval queue. Try reloading the page.",
         "empty_decision_title": "Nothing awaiting a decision",
         "empty_decision_description": "When staff in your division assign work to themselves, it shows up here.",
         "empty_mine_title": "No requests yet",
         "empty_mine_description": "Work you create for yourself shows up here with its approval status.",
-        "resubmit_hint": "This work item is back in your private draft (off the board). Fix it per the feedback above, then resubmit.",
         "rejection_reason": "Rejection reason: {reason}",
         "no_approver": "No manager in this division yet — the ladder needs filling via God Mode.",
-        "row_division": "Division {divisi}",
         "row_submitted": "submitted by {name} · {date}",
         "row_decided": "decided {date}",
+        "row_approved_by": "approved by {name} on {date}",
+        "row_rejected_by": "rejected by {name} on {date}",
         "untitled": "Untitled"
       },
       "sidebar": {
         "waiting": "Awaiting manager approval",
-        "locked_note": "Submitted by {name}. This work item is locked: it cannot be edited, moved, or worked on until approved. Comments are still allowed.",
-        "approved": "Assignment approved",
-        "rejected": "Assignment rejected",
-        "reason_placeholder": "Reason (required to reject)",
-        "reason_optional_placeholder": "Reason (required to reject, optional to approve)"
+        "approved": "Approved",
+        "approved_by": "Approved by {name}",
+        "rejected_by": "Rejected by {name}",
+        "rejected": "Rejected",
+        "label": "Approval",
+        "log": "Approval log",
+        "log_requested": "{name} requested approval",
+        "log_approved": "{name} approved",
+        "log_rejected": "{name} rejected",
+        "resubmit_hint": "Back in progress. Finish the work, then move it to Done again to resubmit."
       },
       "inbox": {
         "submitted": "requested approval",
         "approved": "approved your request",
         "rejected": "rejected your request"
+      },
+      "activity": {
+        "requested": "requested approval to mark this work item as done.",
+        "approved": "approved the work item.",
+        "rejected": "rejected the work item and moved it back to In Progress.",
+        "reason": "Reason: {reason}"
       }
     },
     "restore": {

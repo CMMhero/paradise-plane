@@ -8,8 +8,11 @@ Kontrak struktur Wiki yang disederhanakan (keputusan user 2026-10-24):
 
     - hanya folder divisi, tanpa sub-topik (buat halaman ber-parent -> 403),
     - materi ditaruh langsung di folder divisinya,
-    - ubah/hapus/unggah Wiki: HANYA admin workspace atau Super Admin (2026-10-26),
-    - sub-topik: dibuat admin workspace/Super Admin di bawah folder Wiki (2026-10-26),
+    - folder & sub-topik: HANYA admin workspace atau Super Admin,
+    - unggah materi: admin, atau anggota departemen pemilik folder (KEP-51),
+    - ubah/hapus materi: admin, atau pengunggahnya sendiri (KEP-51),
+    - folder non-divisi tanpa pemilik = General (semua anggota Wiki),
+    - governance selalu aktif untuk project WIKI tanpa saklar,
     - folder divisi dibuat otomatis per Divisi (`pastikan_folder_divisi`).
 """
 
@@ -45,7 +48,13 @@ def _user(prefix, workspace):
 
 
 def _anggota(workspace, project, user, role):
-    return ProjectMember.objects.create(workspace=workspace, project=project, member=user, role=role)
+    # Sinyal bawaan bisa sudah memasukkan user ke project (mis. bawaan member
+    # baru), jadi tetapkan peran yang diuji alih-alih membuat baris ganda.
+    pm, _ = ProjectMember.objects.update_or_create(
+        project=project, member=user, deleted_at__isnull=True,
+        defaults={"workspace": workspace, "role": role, "is_active": True},
+    )
+    return pm
 
 
 def _klien(user):
@@ -94,6 +103,10 @@ class TestWikiTanpaSubTopik:
             entity_type=FileAsset.EntityTypeContext.WIKI_MATERIAL,
             is_uploaded=True,
         )
+        # BaseModel.save() menimpa created_by dari request (kosong di tes), jadi
+        # pengunggahnya ditetapkan lewat update() seperti jalur API yang asli.
+        FileAsset.objects.filter(id=materi.id).update(created_by=pengunggah)
+        materi.refresh_from_db()
         return admin, anggota, pengunggah, spv, wiki.wiki, wiki.div, folder, materi
 
     def _url_buat(self, workspace, project_id):
@@ -135,10 +148,10 @@ class TestWikiTanpaSubTopik:
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     @pytest.mark.django_db
-    def test_pengunggah_biasa_TIDAK_boleh_hapus_materinya_lagi(self, workspace, siap):
+    def test_pengunggah_boleh_hapus_materinya_sendiri(self, workspace, siap):
         _, _, pengunggah, _, wiki_p, _, _, materi = siap
         res = _klien(pengunggah).delete(self._url_hapus_materi(workspace, wiki_p.id, materi.id))
-        assert res.status_code == status.HTTP_403_FORBIDDEN
+        assert res.status_code == status.HTTP_204_NO_CONTENT
 
     @pytest.mark.django_db
     def test_anggota_biasa_tidak_boleh_hapus_materi_orang(self, workspace, siap):
@@ -162,17 +175,87 @@ class TestWikiTanpaSubTopik:
         assert res.status_code == status.HTTP_204_NO_CONTENT
 
     @pytest.mark.django_db
-    def test_folder_general_terbuka_dibaca_tapi_hanya_admin_boleh_unggah(self, workspace, siap):
-        """General (pemilik = project Wiki sendiri) tidak lagi memberi hak tulis ke semua anggota."""
-        from plane.utils.wiki_access import can_edit_wiki_page, is_wiki_admin  # noqa: PLC0415
+    def test_anggota_departemen_boleh_unggah_ke_folder_divisinya(self, workspace, siap):
+        from plane.utils.wiki_access import can_edit_wiki_page  # noqa: PLC0415
 
-        admin, anggota, _, _, wiki_p, _, folder, _ = siap
-        WikiFolderAccess.objects.create(workspace=workspace, project=wiki_p, folder=folder, division=wiki_p)
-        assert can_edit_wiki_page(anggota, folder) is False
-        assert is_wiki_admin(anggota, workspace_id=workspace.id) is False
-        admin_ws = _user("adminws2", workspace)
-        WorkspaceMember.objects.filter(workspace=workspace, member=admin_ws).update(role=20)
-        assert can_edit_wiki_page(admin_ws, folder) is True
+        _, anggota, _, _, _, _, folder, _ = siap
+        assert can_edit_wiki_page(anggota, folder) is True
+
+    @pytest.mark.django_db
+    def test_bukan_anggota_departemen_tidak_boleh_unggah(self, workspace, siap):
+        from plane.utils.wiki_access import can_edit_wiki_page  # noqa: PLC0415
+
+        _, _, _, _, wiki_p, _, folder, _ = siap
+        luar = _user("luar", workspace)
+        _anggota(workspace, wiki_p, luar, 15)
+        assert can_edit_wiki_page(luar, folder) is False
+
+    @pytest.mark.django_db
+    def test_guest_departemen_tidak_boleh_unggah(self, workspace, siap):
+        from plane.utils.wiki_access import can_edit_wiki_page  # noqa: PLC0415
+
+        _, _, _, _, wiki_p, div, folder, _ = siap
+        tamu = _user("tamu", workspace)
+        _anggota(workspace, wiki_p, tamu, 5)
+        _anggota(workspace, div, tamu, 5)
+        assert can_edit_wiki_page(tamu, folder) is False
+
+    @pytest.mark.django_db
+    def test_folder_non_divisi_tanpa_pemilik_jadi_general(self, workspace, siap):
+        from plane.utils.wiki_access import can_edit_wiki_page  # noqa: PLC0415
+
+        admin, _, _, _, wiki_p, _, _, _ = siap
+        umum = Page.objects.create(workspace=workspace, owned_by=admin, name="General", access=Page.PUBLIC_ACCESS)
+        ProjectPage.objects.create(workspace=workspace, project=wiki_p, page=umum)
+        luar = _user("luar2", workspace)
+        _anggota(workspace, wiki_p, luar, 15)
+        assert can_edit_wiki_page(luar, umum) is True
+
+    @pytest.mark.django_db
+    def test_folder_divisi_tanpa_departemen_hanya_admin(self, workspace, siap):
+        from plane.utils.wiki_access import can_edit_wiki_page  # noqa: PLC0415
+
+        admin, anggota, _, _, wiki_p, _, _, _ = siap
+        Divisi.objects.create(workspace=workspace, kode="FIN", nama="Keuangan")
+        kosong = Page.objects.create(workspace=workspace, owned_by=admin, name="Keuangan", access=Page.PUBLIC_ACCESS)
+        ProjectPage.objects.create(workspace=workspace, project=wiki_p, page=kosong)
+        assert can_edit_wiki_page(anggota, kosong) is False
+
+    @pytest.mark.django_db
+    def test_izin_borongan_sama_dengan_resolver(self, workspace, siap):
+        _, anggota, _, _, wiki_p, _, folder, _ = siap
+        luar = _user("luar3", workspace)
+        _anggota(workspace, wiki_p, luar, 15)
+        url = f"/api/workspaces/{workspace.slug}/projects/{wiki_p.id}/wiki-permissions/"
+
+        def bisa(user):
+            data = _klien(user).get(url).data
+            return next(f for f in data["folders"] if f["id"] == str(folder.id))["can_upload"]
+
+        assert bisa(anggota) is True
+        assert bisa(luar) is False
+
+    @pytest.mark.django_db
+    def test_anggota_tidak_boleh_ganti_nama_folder(self, workspace, siap):
+        _, anggota, _, _, wiki_p, _, folder, _ = siap
+        res = _klien(anggota).patch(
+            f"/api/workspaces/{workspace.slug}/projects/{wiki_p.id}/wiki/folders/{folder.id}/",
+            {"name": "Liar"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.contract
+class TestGovernanceBawaan:
+    @pytest.mark.django_db
+    def test_project_wiki_selalu_ber_governance_tanpa_baris(self, db, workspace):
+        from plane.utils.wiki_access import is_wiki_governed  # noqa: PLC0415
+
+        wiki = Project.objects.create(name="Wiki", identifier="WIKI", workspace=workspace)
+        lain = Project.objects.create(name="Lain", identifier="LAIN", workspace=workspace)
+        assert is_wiki_governed(wiki.id) is True
+        assert is_wiki_governed(lain.id) is False
 
 
 @pytest.mark.contract

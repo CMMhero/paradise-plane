@@ -5,6 +5,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { useEffect, useRef } from "react";
 import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from "lucide-react";
 import { Avatar } from "@plane/propel/avatar";
@@ -65,7 +66,7 @@ function Peserta({ peserta }: { peserta: TPesertaJauh }) {
           Kalau ia ikut dirender bersyarat, audionya tidak punya tempat keluar. */}
       <Media stream={peserta.stream} className={peserta.adaVideo ? "h-full w-full object-contain" : "hidden"} />
       {!peserta.adaVideo ? <Avatar name={peserta.nama} size={64} shape="circle" /> : null}
-      <span className="text-xs absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-white/90">
+      <span className="absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-12 text-white/90">
         {peserta.nama}
       </span>
     </div>
@@ -87,19 +88,20 @@ export function PanggilanLayar({
   onSetelMik,
   onSetelKamera,
 }: Props) {
+  const { t } = useTranslation();
   const tata = tataPanggilan(status, pakaiVideo, Boolean(streamLokal), pesertaJauh.length);
   if (!tata.tampil) return null;
 
   const keterangan =
     status === "berdering"
-      ? "Memanggil Anda"
+      ? t("chat_ui.call.ringing")
       : status === "memanggil"
-        ? "Menunggu dijawab..."
+        ? t("chat_ui.call.waiting")
         : status === "menyambungkan"
-          ? "Menyambungkan..."
+          ? t("chat_ui.call.connecting")
           : pesertaJauh.length > 1
-            ? `${pesertaJauh.length + 1} peserta`
-            : "Tersambung";
+            ? t("chat_ui.call.participants", { count: pesertaJauh.length + 1 })
+            : t("chat_ui.call.connected");
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-3 sm:p-6">
@@ -135,22 +137,20 @@ export function PanggilanLayar({
         ) : null}
       </div>
 
-      <p className="text-lg mt-5 font-medium text-white">{judul}</p>
-      <p className="text-sm mt-1 text-white/60">{keterangan}</p>
+      <p className="mt-5 text-16 font-medium text-white">{judul}</p>
+      <p className="mt-1 text-13 text-white/60">{keterangan}</p>
       {/* Angka byte adalah SATU-SATUNYA bukti media benar-benar mengalir. Status
           koneksi, track yang tiba, bahkan tulisan "Tersambung" semuanya bisa
           terlihat benar sementara nol byte berpindah. */}
-      <p className="text-xs mt-1 text-white/35">
+      <p className="mt-1 text-12 text-white/35">
         {koneksi}
-        {streamLokal ? " · mik siap" : " · mik BELUM siap"}
-        {" · masuk "}
-        {Math.round(byteMasuk.audio / 1024)} KB audio / {Math.round(byteMasuk.video / 1024)} KB video
+        {streamLokal ? ` · ${t("chat_ui.call.mic_ready")}` : ` · ${t("chat_ui.call.mic_not_ready")}`}
+        {` · ${t("chat_ui.call.incoming")} `}
+        {Math.round(byteMasuk.audio / 1024)} {t("chat_ui.call.kb_audio")} / {Math.round(byteMasuk.video / 1024)}{" "}
+        {t("chat_ui.call.kb_video")}
       </p>
       {status === "tersambung" && byteMasuk.audio === 0 && byteMasuk.video === 0 ? (
-        <p className="text-xs text-amber-300/80 mt-2 max-w-md text-center">
-          Tersambung tapi belum ada data yang masuk. Kalau angka di atas tetap nol beberapa detik, lalu lintas media
-          sedang diblokir jaringan.
-        </p>
+        <p className="mt-2 max-w-md text-center text-12 text-label-yellow-icon">{t("chat_ui.call.no_data")}</p>
       ) : null}
 
       {/* Merah dan hijau di sini SENGAJA dipatok, bukan memakai token semantik.
@@ -165,16 +165,16 @@ export function PanggilanLayar({
             <button
               type="button"
               onClick={onAngkat}
-              aria-label="Angkat panggilan"
-              className="bg-green-600 hover:bg-green-500 flex size-14 items-center justify-center rounded-full text-white"
+              aria-label={t("chat_ui.call.accept")}
+              className="flex size-14 items-center justify-center rounded-full bg-success-primary text-white hover:opacity-90"
             >
               <Phone className="size-6" />
             </button>
             <button
               type="button"
               onClick={onTutup}
-              aria-label="Tolak panggilan"
-              className="bg-red-600 hover:bg-red-500 flex size-14 items-center justify-center rounded-full text-white"
+              aria-label={t("chat_ui.call.decline")}
+              className="flex size-14 items-center justify-center rounded-full bg-danger-primary text-white hover:bg-danger-primary-hover"
             >
               <PhoneOff className="size-6" />
             </button>
@@ -184,7 +184,7 @@ export function PanggilanLayar({
             <button
               type="button"
               onClick={() => onSetelMik(!mikMati)}
-              aria-label={mikMati ? "Nyalakan mikrofon" : "Matikan mikrofon"}
+              aria-label={mikMati ? t("chat_ui.call.mic_on") : t("chat_ui.call.mic_off")}
               className="flex size-12 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
             >
               {mikMati ? <MicOff className="size-5" /> : <Mic className="size-5" />}
@@ -193,7 +193,7 @@ export function PanggilanLayar({
               <button
                 type="button"
                 onClick={() => onSetelKamera(!kameraMati)}
-                aria-label={kameraMati ? "Nyalakan kamera" : "Matikan kamera"}
+                aria-label={kameraMati ? t("chat_ui.call.camera_on") : t("chat_ui.call.camera_off")}
                 className="flex size-12 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
               >
                 {kameraMati ? <VideoOff className="size-5" /> : <Video className="size-5" />}
@@ -202,8 +202,8 @@ export function PanggilanLayar({
             <button
               type="button"
               onClick={onTutup}
-              aria-label="Akhiri panggilan"
-              className="bg-red-600 hover:bg-red-500 flex size-14 items-center justify-center rounded-full text-white"
+              aria-label={t("chat_ui.call.end")}
+              className="flex size-14 items-center justify-center rounded-full bg-danger-primary text-white hover:bg-danger-primary-hover"
             >
               <PhoneOff className="size-6" />
             </button>

@@ -38,6 +38,7 @@ export type TPersetujuanPenugasan = {
   status: TStatusPersetujuan;
   alasan: string | null;
   diputuskan_oleh: string | null;
+  diputuskan_oleh_nama: string | null;
   diputuskan_pada: string | null;
   boleh_saya_putuskan: boolean;
   penyetuju_di_divisi: TPenyetujuRingkas[];
@@ -63,6 +64,10 @@ export type TBisaDitugaskan = {
   tingkat_saya: number | null;
   users?: { id: string; nama: string | null; email: string | null }[];
   user_ids?: string[];
+  /** false = gerbang hierarki mati: server tidak mengunci edit berdasarkan kepemilikan. */
+  gerbang_aktif?: boolean;
+  /** Bawahan yang tugasnya boleh saya UBAH (cermin `_bawahan_ids` server). Staf: kosong. */
+  bawahan_ids?: string[];
 };
 
 export class PersetujuanService extends APIService {

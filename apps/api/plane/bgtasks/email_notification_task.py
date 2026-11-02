@@ -355,6 +355,25 @@ _STRINGS_APPROVAL_EN = {
 }
 
 
+def konteks_persetujuan(s, verb, nama_aktor, label, judul, alasan, url_tugas, url_antrean) -> dict:
+    """Konteks templat `approval.html`. Murni: dipakai pengirim dan pratinjau."""
+    kunci = "diajukan" if verb == "submitted" else ("disetujui" if verb == "approved" else "ditolak")
+    return {
+        "s": s,
+        "heading": s[f"heading_{kunci}"],
+        "intro": s[f"intro_{kunci}"].format(aktor=nama_aktor),
+        "subject": s[f"subject_{kunci}"].format(label=label, judul=judul),
+        "label": label,
+        "judul": judul,
+        "alasan": alasan,
+        "tampilkan_alasan": kunci == "ditolak",
+        "cta_label": s["cta_diajukan"] if verb == "submitted" else s["cta_diputuskan"],
+        "cta_url": url_antrean if verb == "submitted" else url_tugas,
+        "url_tugas": url_tugas,
+        "kaki": s["kaki"],
+    }
+
+
 @shared_task
 def send_approval_email_notification(email_log_id):
     """Kirim satu email persetujuan untuk satu baris `EmailNotificationLog`."""
@@ -387,7 +406,6 @@ def send_approval_email_notification(email_log_id):
             s = _STRINGS_APPROVAL_ID if bahasa == "id" else _STRINGS_APPROVAL_EN
             label = f"{issue.project.identifier}-{issue.sequence_id}"
             verb = str(aktivitas.get("verb") or "submitted")
-            kunci = "diajukan" if verb == "submitted" else ("disetujui" if verb == "approved" else "ditolak")
             nama_aktor = (
                 getattr(aktor, "display_name", None) or getattr(aktor, "email", None) or "—"
             )
@@ -399,20 +417,9 @@ def send_approval_email_notification(email_log_id):
             slug = issue.project.workspace.slug
             url_tugas = f"{dasar}/{slug}/projects/{issue.project.id}/issues/{issue.id}"
             url_antrean = f"{dasar}/{slug}/projects/{issue.project.id}/persetujuan"
-            context = {
-                "s": s,
-                "heading": s[f"heading_{kunci}"],
-                "intro": s[f"intro_{kunci}"].format(aktor=nama_aktor),
-                "subject": s[f"subject_{kunci}"].format(label=label, judul=issue.name),
-                "label": label,
-                "judul": issue.name,
-                "alasan": str(aktivitas.get("issue_comment") or ""),
-                "tampilkan_alasan": kunci == "ditolak",
-                "cta_label": s["cta_diajukan"] if verb == "submitted" else s["cta_diputuskan"],
-                "cta_url": url_antrean if verb == "submitted" else url_tugas,
-                "url_tugas": url_tugas,
-                "kaki": s["kaki"],
-            }
+            context = konteks_persetujuan(
+                s, verb, nama_aktor, label, issue.name, str(aktivitas.get("issue_comment") or ""), url_tugas, url_antrean
+            )
             subject = context["subject"]
             html_content = render_to_string("emails/notifications/approval.html", context)
             text_content = generate_plain_text_from_html(html_content)

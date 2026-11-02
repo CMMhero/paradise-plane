@@ -5,7 +5,6 @@
 # Django imports
 from django.utils import timezone
 from django.apps import apps
-from django.conf import settings
 from django.db import models
 from django.db.models.fields.related import OneToOneRel
 
@@ -14,6 +13,7 @@ from django.db.models.fields.related import OneToOneRel
 from celery import shared_task
 
 # Module imports
+from plane.utils.saklar_instance import TRASH_RETENTION_DAYS, setelan_angka
 from plane.utils.exception_logger import log_exception
 
 
@@ -207,7 +207,7 @@ def hard_delete():
         EstimatePoint,
     )
 
-    days = settings.HARD_DELETE_AFTER_DAYS
+    days = setelan_angka(TRASH_RETENTION_DAYS)
     # check delete workspace
     _ = Workspace.all_objects.filter(deleted_at__lt=timezone.now() - timezone.timedelta(days=days)).delete()
 
@@ -252,6 +252,13 @@ def hard_delete():
     _ = Estimate.all_objects.filter(deleted_at__lt=timezone.now() - timezone.timedelta(days=days)).delete()
 
     _ = EstimatePoint.all_objects.filter(deleted_at__lt=timezone.now() - timezone.timedelta(days=days)).delete()
+
+    # Paradise: potret identitas akun terhapus ikut masa simpan Trash. Barisnya
+    # tidak punya `deleted_at`, jadi sapuan generik di bawah tidak melihatnya.
+    # Baris User-nya sendiri TIDAK dihapus: ia tetap "Deleted account".
+    from plane.db.models import AkunTerhapus
+
+    _ = AkunTerhapus.objects.filter(dihapus_pada__lt=timezone.now() - timezone.timedelta(days=days)).delete()
 
     # at last, check for every thing which ever is left and delete it
     # Get all Django models

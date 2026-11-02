@@ -86,6 +86,7 @@ def _serial(baris, peran, boleh_memutuskan):
         "status": baris.status,
         "alasan": baris.alasan,
         "diputuskan_oleh": str(baris.diputuskan_oleh_id) if baris.diputuskan_oleh_id else None,
+        "diputuskan_oleh_nama": baris.diputuskan_oleh.display_name if baris.diputuskan_oleh_id else None,
         "diputuskan_pada": baris.diputuskan_pada,
         "boleh_saya_putuskan": boleh_memutuskan,
         # Dihitung ULANG saat dibaca, BUKAN disimpan: begitu God Mode mengisi jenjang
@@ -161,6 +162,10 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "mode": "semua",
                     "tingkat_saya": tingkat_anggota(saya, project.workspace_id),
                     "user_ids": [str(u) for u in anggota],
+                    # Klien memakai dua kunci ini untuk mencerminkan `galat_ubah_tugas`:
+                    # gerbang mati = tidak ada kunci edit; Super Admin dibaca klien sendiri.
+                    "gerbang_aktif": gerbang_aktif(),
+                    "bawahan_ids": [],
                 }
             )
 
@@ -171,7 +176,17 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "member_id", flat=True
                 )
             )
-            return Response({"mode": "semua", "tingkat_saya": tingkat, "user_ids": [str(u) for u in anggota]})
+            return Response(
+                {
+                    "mode": "semua",
+                    "tingkat_saya": tingkat,
+                    "user_ids": [str(u) for u in anggota],
+                    "gerbang_aktif": True,
+                    # Hak UBAH direktur tetap "assignee-nya bawahan saya" (`galat_ubah_tugas`),
+                    # lebih sempit daripada hak menugaskan "semua anggota".
+                    "bawahan_ids": [str(u) for u in _bawahan_ids(saya, project.workspace_id, project_id)],
+                }
+            )
         if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
             bawahan = _bawahan_ids(saya, project.workspace_id, project_id)
             # BUG 2026-10-16: tadinya `u in divisi_anggota(u, …)` — id USER
@@ -193,6 +208,9 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 {
                     "mode": "bawahan",
                     "tingkat_saya": tingkat,
+                    "gerbang_aktif": True,
+                    # Tanpa saringan anggota project: sama persis dengan yang dibaca `galat_ubah_tugas`.
+                    "bawahan_ids": [str(u) for u in bawahan],
                     "users": [
                         {
                             "id": str(uid),
@@ -212,6 +230,9 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 # "diri-sendiri" dipertahankan saat tak ada rekan: klien lama tetap benar.
                 "mode": "rekan" if len(boleh) > 1 else "diri-sendiri",
                 "tingkat_saya": tingkat,
+                "gerbang_aktif": True,
+                # Rekan boleh DIAJAK, bukan disunting tugasnya: staf hanya mengubah tugas yang melibatkan dirinya.
+                "bawahan_ids": [],
                 "users": [
                     {"id": str(uid), "nama": users[uid].display_name, "email": users[uid].email}
                     for uid in sorted(boleh, key=lambda u: (u != saya, str(u)))
@@ -237,7 +258,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         dasar = (
             PersetujuanPenugasan.objects.filter(project_id=project_id)
-            .select_related("issue", "issue__project", "pemohon")
+            .select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
         )
         # `?tugas=<issue_id>`: dipakai indikator di sidebar work item. Tanpa ini,
         # komponen itu harus mengunduh SELURUH antrean project hanya untuk menjawab
@@ -249,7 +270,10 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             dasar = dasar.filter(pemohon=request.user)
         elif sudut == "penyetuju":
             dasar = dasar.filter(status=STATUS_PERSETUJUAN_MENUNGGU)
-        else:
+        elif not tugas:
+            # Dengan `?tugas=` tanpa `peran`: riwayat LENGKAP satu tugas untuk
+            # detail work item (KEP-55). Semua anggota project boleh melihat tugas
+            # apa pun (KEP-38), jadi log keputusannya juga.
             dasar = dasar.filter(_q_daftar(request.user))
 
         hasil = []
@@ -292,7 +316,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         baris = (
             PersetujuanPenugasan.objects.filter(pk=pk, project_id=project_id)
-            .select_related("issue", "issue__project", "pemohon")
+            .select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
             .first()
         )
         if baris is None:
@@ -328,14 +352,22 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         from plane.utils.notifikasi_persetujuan import beritahu_diputuskan  # noqa: PLC0415
 
         beritahu_diputuskan(baris, aksi)
+        from plane.utils.hierarki import (  # noqa: PLC0415
+            AKTIVITAS_DISETUJUI,
+            AKTIVITAS_DITOLAK,
+            catat_aktivitas_persetujuan,
+        )
+
+        if baris.issue_id:
+            catat_aktivitas_persetujuan(
+                baris, AKTIVITAS_DISETUJUI if aksi == "setujui" else AKTIVITAS_DITOLAK, request.user, alasan
+            )
 
         if aksi == "setujui" and baris.issue_id:
             self._selesaikan_tugas(request, baris)
 
-        # Ditolak = tugas dikembalikan ke status sebelum diajukan (keputusan user
-        # 2026-10-26: selama menunggu tugas tetap berstatus selesai, jadi
-        # penolakanlah yang mencabut status selesainya). Tugas tetap terlihat;
-        # staf mengerjakan lagi, atau mengajukan ulang lewat `ajukan-ulang`.
+        # Ditolak = tugas kembali ke In Progress (KEP-55). Staf mengerjakannya lagi
+        # lalu mengajukan ulang dengan menggeser ke selesai lagi (atau `ajukan-ulang`).
         if aksi == "tolak" and baris.issue_id:
             self._kembalikan_tugas(request, baris)
         return Response(_serial(baris, "penyetuju", False))
@@ -349,30 +381,39 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         """
         from plane.db.models import Issue, State  # noqa: PLC0415
 
-        issue = Issue.objects.filter(pk=baris.issue_id).first()
+        issue = Issue.objects.filter(pk=baris.issue_id).select_related("state", "project").first()
+        if issue is None:
+            return
+        # Masih berstatus selesai sejak diajukan (jalur biasa): statusnya tak
+        # berpindah, jadi tanggal selesai otomatis (KEP-41) diisi di sini.
+        if issue.state is not None and issue.state.group == "completed":
+            issue.isi_tanggal_selesai(actor_id=request.user.id)
+            return
         selesai = State.objects.filter(project_id=baris.project_id, group="completed").order_by("sequence").first()
-        if issue is None or selesai is None or issue.state_id == selesai.id:
+        if selesai is None:
             return
         _pindahkan_tugas(request.user, issue, selesai)
 
     def _kembalikan_tugas(self, request, baris):
-        """Tolak: kembalikan tugas dari selesai ke status sebelum diajukan.
+        """Tolak: kembalikan tugas ke In Progress supaya staf mengerjakannya lagi.
 
-        Status asal disimpan di `state_sebelumnya`. Kalau kosong (tugas dibuat
-        langsung selesai) atau statusnya sudah dihapus, jatuh ke status bawaan
-        project, lalu status non-selesai pertama. Tugas yang sudah dipindahkan
-        keluar dari selesai oleh orang lain dibiarkan.
+        KEP-55 (keputusan user 2 Nov 2026, "if rejected return to in progress"):
+        tujuannya status `started` pertama project, apa pun status asalnya. Kalau
+        project tidak punya status `started`, jatuh ke `state_sebelumnya`, lalu
+        status bawaan. Tugas yang sudah di `started` atau dibatalkan dibiarkan.
         """
         from plane.db.models import Issue, State  # noqa: PLC0415
 
         issue = Issue.objects.filter(pk=baris.issue_id).select_related("state").first()
-        if issue is None or issue.state is None or issue.state.group != "completed":
+        if issue is None or (issue.state is not None and issue.state.group in ("started", "cancelled")):
             return
-        tujuan = State.objects.filter(pk=baris.state_sebelumnya_id).exclude(group="completed").first()
-        if tujuan is None:
-            dasar = State.objects.filter(project_id=baris.project_id).exclude(group__in=["completed", "cancelled"])
-            tujuan = dasar.filter(default=True).first() or dasar.order_by("sequence").first()
-        if tujuan is None:
+        dasar = State.objects.filter(project_id=baris.project_id)
+        tujuan = (
+            dasar.filter(group="started").order_by("sequence").first()
+            or dasar.filter(pk=baris.state_sebelumnya_id).exclude(group="completed").first()
+            or dasar.exclude(group__in=["completed", "cancelled"]).filter(default=True).first()
+        )
+        if tujuan is None or tujuan.id == issue.state_id:
             return
         _pindahkan_tugas(request.user, issue, tujuan)
 
@@ -390,7 +431,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         baris = (
             PersetujuanPenugasan.objects.filter(pk=pk, project_id=project_id)
-            .select_related("issue", "issue__project", "pemohon")
+            .select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
             .first()
         )
         if baris is None:
@@ -406,7 +447,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        from plane.db.models import Issue, PersetujuanPenugasan as Baris  # noqa: PLC0415
+        from plane.db.models import Issue  # noqa: PLC0415
         from plane.utils.hierarki import butuh_persetujuan  # noqa: PLC0415
 
         issue = Issue.objects.filter(pk=baris.issue_id).first()
@@ -423,22 +464,11 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
 
         issue.is_draft = False
         issue.save(update_fields=["is_draft", "updated_at"])
-        # Diajukan ulang = tugas kembali berstatus selesai, ditandai menunggu.
-        from plane.db.models import State as _State  # noqa: PLC0415
+        # Diajukan ulang = pengajuan baru. Statusnya TIDAK dipindah (KEP-55):
+        # tugas baru masuk selesai saat atasan menyetujui. `catat_persetujuan`
+        # idempoten, menulis log, dan memberi tahu atasan.
+        from plane.utils.hierarki import catat_persetujuan  # noqa: PLC0415
 
-        sebelum = issue.state_id
-        selesai = _State.objects.filter(project_id=baris.project_id, group="completed").order_by("sequence").first()
-        if selesai is not None and issue.state_id != selesai.id:
-            _pindahkan_tugas(request.user, issue, selesai)
-        baru = Baris.objects.create(
-            workspace_id=baris.workspace_id,
-            project_id=baris.project_id,
-            issue_id=baris.issue_id,
-            pemohon=request.user,
-            penerima=request.user,
-            state_sebelumnya_id=sebelum,
-        )
-        from plane.utils.notifikasi_persetujuan import beritahu_diajukan  # noqa: PLC0415
-
-        beritahu_diajukan(baru, issue=issue)
-        return Response(_serial(baru, "pemohon", False))
+        baru = catat_persetujuan(issue, actor=request.user, state_sebelumnya_id=issue.state_id)
+        # None hanya kalau gerbang hierarki dimatikan di tengah jalan.
+        return Response(_serial(baru or baris, "pemohon", False))

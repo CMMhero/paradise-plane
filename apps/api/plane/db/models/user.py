@@ -12,7 +12,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserM
 
 # Django imports
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -295,6 +295,25 @@ class Account(TimeAuditModel):
         ordering = ("-created_at",)
 
 
+@receiver(pre_save, sender=User)
+def isi_bawaan_user_baru(sender, instance, **kwargs):
+    # Kustomisasi Paradise: zona waktu akun baru dari God Mode (plane/utils/bawaan_member.py).
+    if instance._state.adding and not instance.is_bot:
+        from plane.utils.bawaan_member import terapkan_ke_user_baru
+
+        terapkan_ke_user_baru(instance)
+
+
+@receiver(pre_save, sender=Profile)
+def isi_bawaan_profil_baru(sender, instance, **kwargs):
+    # Kustomisasi Paradise: bahasa, tema, dst. akun baru dari God Mode. Hanya saat
+    # baris lahir; mengubah bawaan tidak menyentuh profil yang sudah ada.
+    if instance._state.adding:
+        from plane.utils.bawaan_member import terapkan_ke_profil_baru
+
+        terapkan_ke_profil_baru(instance)
+
+
 @receiver(post_save, sender=User)
 def create_user_notification(sender, instance, created, **kwargs):
     # create preferences
@@ -302,12 +321,6 @@ def create_user_notification(sender, instance, created, **kwargs):
         # Module imports
         from plane.db.models import UserNotificationPreference
 
-        UserNotificationPreference.objects.create(
-            user=instance,
-            property_change=True,
-            state_change=True,
-            comment=True,
-            mention=True,
-            issue_completed=True,
-            approval=True,
-        )
+        # Saklar email ikut bawaan jabatan sampai orangnya mengubahnya sendiri
+        # (plane/utils/preferensi_email.py).
+        UserNotificationPreference.objects.create(user=instance, ikut_bawaan_jabatan=True)

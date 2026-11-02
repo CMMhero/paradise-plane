@@ -22,6 +22,7 @@ import { IssueLayoutIcon } from "@/components/issues/issue-layouts/layout-icon";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useModule } from "@/hooks/store/use-module";
 import { useProject } from "@/hooks/store/use-project";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 const SUPPORTED_LAYOUTS = [
   { key: "list", i18n_title: "issue.layouts.list", icon: ListLayoutIcon },
@@ -38,6 +39,7 @@ export const ModuleIssuesMobileHeader = observer(function ModuleIssuesMobileHead
   const { t } = useTranslation();
   // store hooks
   const { currentProjectDetails } = useProject();
+  const { isModuleEnabled } = useParadiseModules();
   const { getModuleById } = useModule();
   const {
     issuesFilter: { issueFilters, updateFilters },
@@ -126,12 +128,14 @@ export const ModuleIssuesMobileHeader = observer(function ModuleIssuesMobileHead
           </FiltersDropdown>
         </div>
 
-        <button
-          onClick={() => setAnalyticsModal(true)}
-          className="flex flex-grow justify-center border-l border-subtle text-13 text-secondary"
-        >
-          Analytics
-        </button>
+        {isModuleEnabled("analytics") && (
+          <button
+            onClick={() => setAnalyticsModal(true)}
+            className="flex flex-grow justify-center border-l border-subtle text-13 text-secondary"
+          >
+            Analytics
+          </button>
+        )}
       </div>
     </div>
   );
