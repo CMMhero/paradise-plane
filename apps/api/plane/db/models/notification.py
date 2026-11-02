@@ -5,6 +5,8 @@
 # Django imports
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 # Module imports
 from .base import BaseModel
@@ -110,12 +112,47 @@ class UserNotificationPreference(BaseModel):
     mention = models.BooleanField(default=False)
     issue_completed = models.BooleanField(default=True)
     # Kustomisasi Paradise: persetujuan penugasan (diajukan/diputuskan).
-    # Inbox selalu ditulis; saklar ini hanya mengatur EMAIL-nya.
+    # Saklar ini mengatur EMAIL-nya; inbox diatur `inbox_approval`.
     approval = models.BooleanField(default=True)
     # Kustomisasi Paradise: ringkasan tugas harian lewat email (hari ini, 7 hari
     # ke depan, terlambat). MATI secara bawaan; orang menyalakannya sendiri dari
     # Profil -> Notifikasi (keputusan user 2026-10-26).
     daily_digest = models.BooleanField(default=False)
+    # Kustomisasi Paradise: edisi sore ringkasan harian, 17.30 WIB (keputusan user
+    # 2026-11-02). Yang selesai hari ini + yang tenggatnya hari kerja berikutnya.
+    daily_digest_sore = models.BooleanField(default=False)
+    # Kustomisasi Paradise: pengingat tenggat H-7..H+7 (deadline_reminder_task).
+    deadline_reminder = models.BooleanField(default=False)
+    # Kustomisasi Paradise: email "tugas baru untuk Anda" saat seseorang
+    # ditambahkan sebagai penanggung jawab (penugasan_email.py).
+    assigned = models.BooleanField(default=True)
+    # Kustomisasi Paradise: email pesan obrolan yang belum dibaca (chat_notification_task).
+    chat = models.BooleanField(default=True)
+    # Kustomisasi Paradise: saklar INBOX per jenis kabar (keputusan user 2026-11-02).
+    # Hidup semua = perilaku lama (inbox selalu ditulis).
+    inbox_assigned = models.BooleanField(default=True)
+    inbox_mention = models.BooleanField(default=True)
+    inbox_comment = models.BooleanField(default=True)
+    inbox_approval = models.BooleanField(default=True)
+    inbox_deadline = models.BooleanField(default=True)
+    inbox_issue_completed = models.BooleanField(default=True)
+    inbox_state_change = models.BooleanField(default=True)
+    inbox_property_change = models.BooleanField(default=True)
+    inbox_chat = models.BooleanField(default=True)
+    # Kustomisasi Paradise: bagian yang dimuat ringkasan harian (daily_digest_email).
+    digest_terlambat = models.BooleanField(default=True)
+    digest_hari_ini = models.BooleanField(default=True)
+    digest_depan = models.BooleanField(default=True)
+    digest_diberikan = models.BooleanField(default=True)
+    digest_tim = models.BooleanField(default=True)
+    # Hidup = saklar di atas DIABAIKAN; yang berlaku bawaan menurut jabatan,
+    # dihitung saat dibaca (plane/utils/preferensi_email.py). Mati begitu orangnya
+    # mengubah satu saklar (keputusan user 2026-10-30).
+    ikut_bawaan_jabatan = models.BooleanField(default=True)
+    # Tabel bawaan jabatan ({"staf": {...}, "pimpinan": {...}}) yang dipotret dari
+    # God Mode saat baris lahir. Mengubah bawaan di God Mode hanya mengenai akun
+    # baru; orang lama tetap ikut jabatannya, tapi dengan tabel miliknya sendiri.
+    bawaan_email = models.JSONField(null=True, blank=True)
 
     class Meta:
         verbose_name = "UserNotificationPreference"
@@ -126,6 +163,16 @@ class UserNotificationPreference(BaseModel):
     def __str__(self):
         """Return the user"""
         return f"<{self.user}>"
+
+
+@receiver(pre_save, sender=UserNotificationPreference)
+def potret_bawaan_email(sender, instance, **kwargs):
+    # Kustomisasi Paradise: semua jalur pembuatan (signal user, get_or_create di
+    # view) lewat sini, jadi tak ada baris yang lahir tanpa tabelnya sendiri.
+    if instance._state.adding and instance.bawaan_email is None:
+        from plane.utils.bawaan_member import baca_bawaan
+
+        instance.bawaan_email = baca_bawaan()["email"]
 
 
 class EmailNotificationLog(BaseModel):

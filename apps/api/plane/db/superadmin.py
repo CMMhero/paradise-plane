@@ -51,6 +51,29 @@ def super_admin_user_ids():
     return set(InstanceAdmin.objects.values_list("user_id", flat=True))
 
 
+def angkat_super_admin(instance, user, role=20):
+    """Jadikan `user` instance admin, menghidupkan baris lama kalau ada.
+
+    Mencabut Super Admin itu SOFT delete (`deleted_at` diisi, baris tetap ada),
+    sedangkan `InstanceAdmin.unique_together = (instance, user)` tidak memuat
+    `deleted_at`. `get_or_create` lewat manager bawaan tidak melihat baris
+    yang sudah dicabut, lalu INSERT-nya menabrak unik: IntegrityError, yang
+    oleh view dibalas "The payload is not valid". Jadi carinya lewat
+    `all_objects`, dan baris yang dicabut dihidupkan kembali.
+    """
+    from plane.license.models import InstanceAdmin
+
+    admin = InstanceAdmin.all_objects.filter(instance=instance, user=user).first()
+    if admin is None:
+        return InstanceAdmin.objects.create(instance=instance, user=user, role=role, is_verified=True)
+    if admin.deleted_at is not None or admin.role != role or not admin.is_verified:
+        admin.deleted_at = None
+        admin.role = role
+        admin.is_verified = True
+        admin.save(update_fields=["deleted_at", "role", "is_verified"])
+    return admin
+
+
 def is_super_admin(user):
     """True kalau `user` berstatus Super Admin instance (God Mode).
 

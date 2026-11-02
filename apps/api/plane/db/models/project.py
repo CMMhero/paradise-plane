@@ -90,12 +90,15 @@ class Project(BaseModel):
     )
     emoji = models.CharField(max_length=255, null=True, blank=True)
     icon_prop = models.JSONField(null=True)
-    module_view = models.BooleanField(default=False)
+    # Paradise (KEP-53): semua fitur project menyala sejak project lahir, termasuk
+    # project departemen. Yang menentukan tampil atau tidak adalah modul God Mode.
+    # Cycles & work item types dicabut, jadi flag-nya dibiarkan mati.
+    module_view = models.BooleanField(default=True)
     cycle_view = models.BooleanField(default=False)
-    issue_views_view = models.BooleanField(default=False)
+    issue_views_view = models.BooleanField(default=True)
     page_view = models.BooleanField(default=True)
-    intake_view = models.BooleanField(default=False)
-    is_time_tracking_enabled = models.BooleanField(default=False)
+    intake_view = models.BooleanField(default=True)
+    is_time_tracking_enabled = models.BooleanField(default=True)
     is_issue_type_enabled = models.BooleanField(default=False)
     guest_view_all_features = models.BooleanField(default=False)
     cover_image = models.TextField(blank=True, null=True)
