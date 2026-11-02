@@ -95,7 +95,9 @@ const KartuPopup = ({
   const punyaAvatar = Boolean(data.namaOrang);
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- hover only pauses the auto-dismiss timer; actions are on the inner button
     <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <output> would change layout semantics of the toast container
       role="status"
       onMouseEnter={() => setBerjalan(false)}
       onMouseLeave={() => setBerjalan(true)}
@@ -131,8 +133,8 @@ const KartuPopup = ({
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="text-sm block truncate leading-5 font-semibold text-primary">{data.judul}</span>
-          <span className="text-xs mt-0.5 line-clamp-2 block leading-4 text-tertiary">{data.isi}</span>
+          <span className="block truncate text-13 leading-5 font-semibold text-primary">{data.judul}</span>
+          <span className="mt-0.5 line-clamp-2 block text-12 leading-4 text-tertiary">{data.isi}</span>
         </span>
       </button>
 

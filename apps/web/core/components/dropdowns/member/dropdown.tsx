@@ -9,6 +9,7 @@ import { useParams } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
+import { useUser } from "@/hooks/store/user";
 // local imports
 import { MemberDropdownBase } from "./base";
 import type { MemberDropdownProps } from "./types";
@@ -23,10 +24,11 @@ type TMemberDropdownProps = {
 } & MemberDropdownProps;
 
 export const MemberDropdown = observer(function MemberDropdown(props: TMemberDropdownProps) {
-  const { memberIds: propsMemberIds, projectId, hanyaDiriSendiri } = props;
+  const { memberIds: propsMemberIds, projectId, hanyaDiriSendiri, sertakanDiriSendiri } = props;
   // router params
   const { workspaceSlug } = useParams();
   // store hooks
+  const { data: currentUser } = useUser();
   const {
     getUserDetails,
     getMemberIds,
@@ -41,11 +43,15 @@ export const MemberDropdown = observer(function MemberDropdown(props: TMemberDro
     : projectId
       ? getProjectMemberIds(projectId, false)
       : workspaceMemberIds;
+  const tersaring = hanyaDiriSendiri != null ? (dasar ?? []).filter((id) => id === hanyaDiriSendiri) : dasar;
+  const idSaya = currentUser?.id;
   const memberIds =
-    hanyaDiriSendiri != null ? (dasar ?? []).filter((id) => id === hanyaDiriSendiri) : dasar;
+    sertakanDiriSendiri && idSaya && !tersaring?.includes(idSaya) ? [idSaya, ...(tersaring ?? [])] : tersaring;
 
   const onDropdownOpen = () => {
-    if (!memberIds && projectId && workspaceSlug) fetchProjectMembers(workspaceSlug.toString(), projectId);
+    // Cek `dasar`, bukan `memberIds`: diri sendiri yang disisipkan di atas
+    // membuat `memberIds` tidak pernah kosong, padahal anggota project belum dimuat.
+    if (!dasar && projectId && workspaceSlug) fetchProjectMembers(workspaceSlug.toString(), projectId);
     // Daftar di atas hanya berisi ID. NAMA-nya diambil `getUserDetails` dari
     // `memberRoot.memberMap`, dan di seluruh apps/web map itu cuma punya SATU
     // penulis: `fetchWorkspaceMembers` (workspace-member.store.ts:240), yang

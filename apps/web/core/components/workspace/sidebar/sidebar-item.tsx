@@ -19,6 +19,7 @@ import { SidebarNavItem } from "@/components/sidebar/sidebar-navigation";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useWorkspaceNavigationPreferences } from "@/hooks/use-navigation-preferences";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 // plane web imports
 import { getSidebarNavigationItemIcon } from "@/plane-web/components/workspace/sidebar/helper";
 
@@ -39,6 +40,7 @@ export const SidebarItemBase = observer(function SidebarItemBase({
   const { allowPermissions } = useUserPermissions();
   const { isWorkspaceItemPinned } = useWorkspaceNavigationPreferences();
   const { data } = useUser();
+  const { isNavKeyEnabled } = useParadiseModules();
 
   const { toggleSidebar, isExtendedSidebarOpened, toggleExtendedSidebar } = useAppTheme();
 
@@ -54,11 +56,14 @@ export const SidebarItemBase = observer(function SidebarItemBase({
     "your_work",
     "stickies",
     "drafts",
+    "quick_links",
     ...(additionalStaticItems || []),
   ];
   const slug = workspaceSlug?.toString() || "";
 
   if (!allowPermissions(item.access, EUserPermissionsLevel.WORKSPACE, slug)) return null;
+  // Modul yang dimatikan Super Admin di God Mode > Features.
+  if (!isNavKeyEnabled(item.key)) return null;
 
   const isPinned = isWorkspaceItemPinned(item.key);
   if (!isPinned && !staticItems.includes(item.key)) return null;

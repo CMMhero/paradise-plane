@@ -21,6 +21,7 @@ import type { IMemberRootStore } from "../index.ts";
 import type { IWorkspaceMemberFiltersStore } from "./workspace-member-filters.store";
 import { WorkspaceMemberFiltersStore } from "./workspace-member-filters.store";
 import type { RootStore } from "@/plane-web/store/root.store";
+import { isListableMember } from "../utils";
 
 export interface IWorkspaceMembership {
   id: string;
@@ -133,8 +134,11 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
       (m) => m.member !== this.userStore?.data?.id,
       (m) => this.memberRoot?.memberMap?.[m.member]?.display_name?.toLowerCase(),
     ]);
-    //filter out bots
-    const memberIds = members.filter((m) => !this.memberRoot?.memberMap?.[m.member]?.is_bot).map((m) => m.member);
+    // filter out bots and deleted accounts. Deleted accounts stay in memberMap
+    // so old references (assignee, creator) still render as "Deleted account".
+    const memberIds = members
+      .filter((m) => isListableMember(this.memberRoot?.memberMap?.[m.member]))
+      .map((m) => m.member);
     return memberIds;
   });
 
@@ -144,8 +148,8 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
    */
   getFilteredWorkspaceMemberIds = computedFn((workspaceSlug: string) => {
     let members = Object.values(this.workspaceMemberMap?.[workspaceSlug] ?? {});
-    //filter out bots and inactive members
-    members = members.filter((m) => !this.memberRoot?.memberMap?.[m.member]?.is_bot);
+    //filter out bots and deleted accounts
+    members = members.filter((m) => isListableMember(this.memberRoot?.memberMap?.[m.member]));
 
     // Use filters store to get filtered member ids
     const memberIds = this.filtersStore.getFilteredMemberIds(
@@ -286,6 +290,7 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
       runInAction(() => {
         set(this.workspaceMemberMap, [workspaceSlug, userId, "is_active"], false);
       });
+      return undefined;
     });
   };
 
@@ -323,7 +328,7 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
     invitationId: string,
     data: Partial<IWorkspaceMemberInvitation>
   ) => {
-    const originalMemberInvitations = [...this.workspaceMemberInvitations?.[workspaceSlug]]; // in case of error, we will revert back to original members
+    const originalMemberInvitations = [...this.workspaceMemberInvitations[workspaceSlug]]; // in case of error, we will revert back to original members
     try {
       const memberInvitations = originalMemberInvitations?.map((invitation) => ({
         ...invitation,
@@ -355,6 +360,7 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
           (inv) => inv.id !== invitationId
         );
       });
+      return undefined;
     });
 
   isUserSuspended = computedFn((userId: string, workspaceSlug: string) => {

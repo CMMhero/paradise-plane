@@ -16,12 +16,11 @@ import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 import { getPageName } from "@plane/utils";
 // services
 import { ProjectPageService } from "@/services/page";
-import { WikiAccessService, type TWikiPermissions } from "@/services/wiki_access.service";
+import type { TWikiPermissions } from "@/services/wiki_access.service";
 import { WikiFolderService } from "@/services/wiki_material.service";
 
 const layananFolder = new WikiFolderService();
 const layananHalaman = new ProjectPageService();
-const layananAkses = new WikiAccessService();
 
 type TProps = {
   workspaceSlug: string;
@@ -37,13 +36,11 @@ type TProps = {
 };
 
 /**
- * Satu tempat untuk mengurus sebuah folder Wiki: nama, ikon, siapa
- * pengelolanya, dan menghapusnya.
+ * Satu tempat untuk mengurus sebuah folder Wiki: nama, ikon, dan menghapusnya.
  *
- * Sebelum ini pengaturan divisi pemilik HANYA ada di Setelan project Wiki, dan
- * begitu Wiki punya rutenya sendiri, tidak ada lagi jalan ke sana. Jadi Super
- * Admin sekalipun tidak bisa mengubah akses walau izinnya memang ada. Itu bukan
- * bug izin, itu jalan yang saya putus sendiri, dan panel inilah gantinya.
+ * Siapa yang boleh mengisi folder TIDAK diatur di sini (KEP-51). Ia diturunkan
+ * dari struktur organisasi God Mode: folder divisi diisi anggota departemennya,
+ * folder lain terbuka untuk semua anggota Wiki. Panel ini hanya menampilkannya.
  */
 export function KelolaFolder({
   workspaceSlug,
@@ -63,10 +60,7 @@ export function KelolaFolder({
   const [ikonTerbuka, setIkonTerbuka] = useState(false);
 
   const adalahDivisi = !folder.parent;
-  const bolehAturDivisi = adalahDivisi && !!izin?.is_project_admin;
   const izinFolder = izin?.folders.find((f) => f.id === folder.id);
-  const pemilikSekarang = new Set((izinFolder?.divisions ?? []).map((d) => d.id));
-  const terbuka = !!izinFolder?.is_general;
 
   const galat = (error: unknown, cadangan: string) =>
     setToast({
@@ -105,22 +99,6 @@ export function KelolaFolder({
     }
   };
 
-  const aturPemilik = async (divisionId: string, dicentang: boolean) => {
-    if (!folder.id) return;
-    // Endpoint ini MENGGANTI seluruh daftar, bukan menambah satu per satu, jadi
-    // yang dikirim harus keadaan akhir yang diinginkan. Mengirim satu id saja
-    // akan mencabut semua pemilik lainnya.
-    const berikutnya = dicentang
-      ? [...pemilikSekarang, divisionId]
-      : [...pemilikSekarang].filter((id) => id !== divisionId);
-    try {
-      await layananAkses.setFolderDivisions(workspaceSlug, projectId, folder.id, berikutnya);
-      await onBerubah();
-    } catch (error) {
-      galat(error, t("wiki_ui.manage.owners_failed"));
-    }
-  };
-
   const hapus = async () => {
     if (!folder.id || sedangHapus) return;
     setSedangHapus(true);
@@ -149,7 +127,7 @@ export function KelolaFolder({
     <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XXL}>
       <div className="space-y-6 p-6">
         <div>
-          <h2 className="text-lg font-semibold text-primary">{t("wiki_ui.manage.title")}</h2>
+          <h2 className="text-16 font-semibold text-primary">{t("wiki_ui.manage.title")}</h2>
           <p className="mt-1 text-12 text-tertiary">{t("wiki_ui.manage.subtitle")}</p>
         </div>
 
@@ -192,50 +170,16 @@ export function KelolaFolder({
         {adalahDivisi && (
           <div className="space-y-2">
             <p className="text-12 font-medium text-secondary">{t("wiki_ui.manage.who_can_add")}</p>
-            {bolehAturDivisi ? (
-              <div className="space-y-2 rounded-md border border-subtle p-3">
-                <label className="flex items-center gap-2 text-12 font-medium text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={terbuka}
-                    onChange={(e) =>
-                      izin?.general_division_id && void aturPemilik(izin.general_division_id, e.target.checked)
-                    }
-                    className="size-3.5"
-                  />
-                  {t("wiki_ui.manage.open_to_all")}
-                </label>
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-subtle pt-2">
-                  {(izin?.available_divisions ?? []).map((d) => (
-                    <label
-                      key={d.id}
-                      title={d.name}
-                      className={`flex items-center gap-1.5 text-11 ${terbuka ? "text-placeholder" : "text-secondary"}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={pemilikSekarang.has(d.id)}
-                        onChange={(e) => void aturPemilik(d.id, e.target.checked)}
-                        className="size-3.5"
-                      />
-                      {d.identifier}
-                    </label>
-                  ))}
-                </div>
-                <p className="text-11 text-tertiary">{t("wiki_ui.manage.read_note")}</p>
-              </div>
-            ) : (
-              <p className="rounded-md border border-subtle px-3 py-2 text-12 text-tertiary">
-                {izinFolder?.is_general
-                  ? t("wiki_ui.manage.status_general")
-                  : izinFolder?.divisions.length
-                    ? t("wiki_ui.manage.status_managed_by", {
-                        names: izinFolder.divisions.map((d) => d.name).join(", "),
-                      })
-                    : t("wiki_ui.manage.status_locked")}{" "}
-                {t("wiki_ui.manage.only_admins_can_change")}
-              </p>
-            )}
+            <p className="rounded-md border border-subtle px-3 py-2 text-12 text-tertiary">
+              {izinFolder?.is_general
+                ? t("wiki_ui.manage.status_general")
+                : izinFolder?.divisions.length
+                  ? t("wiki_ui.manage.status_managed_by", {
+                      names: izinFolder.divisions.map((d) => d.name).join(", "),
+                    })
+                  : t("wiki_ui.manage.status_locked")}{" "}
+              {t("wiki_ui.manage.only_admins_can_change")}
+            </p>
           </div>
         )}
 

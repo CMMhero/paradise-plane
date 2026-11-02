@@ -41,7 +41,7 @@ function WikiMateriPage() {
     return (
       <div className="flex h-full w-full items-center justify-center p-8 text-center">
         <div className="max-w-md">
-          <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.material.cannot_open_title")}</h2>
+          <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.material.cannot_open_title")}</h2>
           <p className="mt-1 text-13 text-tertiary">
             {(error as { error?: string })?.error || t("wiki_ui.material.cannot_open_message")}
           </p>
@@ -77,7 +77,7 @@ function WikiMateriPage() {
               <ArrowLeft className="size-3.5" />
               {t("wiki_ui.material.back_to_division")}
             </Link>
-            <h1 className="text-2xl mt-2 truncate font-semibold tracking-tight text-primary">{data.title}</h1>
+            <h1 className="mt-2 truncate text-20 font-semibold tracking-tight text-primary">{data.title}</h1>
             <p className="mt-1 text-12 text-tertiary">
               {[
                 labelTipe(data.type, t),

@@ -21,6 +21,7 @@ import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 export type TNavigationItem = {
   name: string;
@@ -47,6 +48,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar, toggleSidebar } = useAppTheme();
   const { getPartialProjectById } = useProject();
   const { allowPermissions } = useUserPermissions();
+  const { isNavKeyEnabled } = useParadiseModules();
   const {
     issue: { getIssueIdByIdentifier, getIssueById },
   } = useIssueDetail();
@@ -70,12 +72,12 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
   };
 
   const baseNavigation = useCallback(
-    (workspaceSlug: string, projectId: string): TNavigationItem[] => [
+    (navWorkspaceSlug: string, navProjectId: string): TNavigationItem[] => [
       {
         i18n_key: "sidebar.work_items",
         key: "work_items",
         name: "Work items",
-        href: `/${workspaceSlug}/projects/${projectId}/issues`,
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/issues`,
         icon: WorkItemsIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: true,
@@ -85,7 +87,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         i18n_key: "sidebar.cycles",
         key: "cycles",
         name: "Cycles",
-        href: `/${workspaceSlug}/projects/${projectId}/cycles`,
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/cycles`,
         icon: CycleIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
         shouldRender: project?.cycle_view ?? false,
@@ -95,7 +97,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         i18n_key: "sidebar.modules",
         key: "modules",
         name: "Modules",
-        href: `/${workspaceSlug}/projects/${projectId}/modules`,
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/modules`,
         icon: ModuleIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
         shouldRender: project?.module_view ?? false,
@@ -105,7 +107,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         i18n_key: "sidebar.views",
         key: "views",
         name: "Views",
-        href: `/${workspaceSlug}/projects/${projectId}/views`,
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/views`,
         icon: ViewsIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: project?.issue_views_view ?? false,
@@ -115,7 +117,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         i18n_key: "sidebar.pages",
         key: "pages",
         name: "Pages",
-        href: `/${workspaceSlug}/projects/${projectId}/pages`,
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/pages`,
         icon: PageIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: project?.page_view ?? false,
@@ -125,7 +127,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         i18n_key: "sidebar.intake",
         key: "intake",
         name: "Intake",
-        href: `/${workspaceSlug}/projects/${projectId}/intake`,
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/intake`,
         icon: IntakeIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: project?.inbox_view ?? false,
@@ -135,7 +137,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         i18n_key: "sidebar.persetujuan",
         key: "persetujuan",
         name: "Persetujuan",
-        href: `/${workspaceSlug}/projects/${projectId}/persetujuan`,
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/persetujuan`,
         icon: Stamp,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
         shouldRender: true,
@@ -147,17 +149,18 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
 
   // memoized navigation items and adding additional navigation items
   const navigationItemsMemo = useMemo(() => {
-    const navigationItems = (workspaceSlug: string, projectId: string): TNavigationItem[] => {
-      const navItems = baseNavigation(workspaceSlug, projectId);
+    const navigationItems = (navWorkspaceSlug: string, navProjectId: string): TNavigationItem[] => {
+      const navItems = baseNavigation(navWorkspaceSlug, navProjectId);
 
       if (additionalNavigationItems) {
-        navItems.push(...additionalNavigationItems(workspaceSlug, projectId));
+        navItems.push(...additionalNavigationItems(navWorkspaceSlug, navProjectId));
       }
 
       return navItems;
     };
 
     // sort navigation items by sortOrder
+    // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); array is freshly built
     const sortedNavigationItems = navigationItems(workspaceSlug, projectId).sort(
       (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
     );
@@ -187,7 +190,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
   return (
     <>
       {navigationItemsMemo.map((item) => {
-        if (!item.shouldRender) return;
+        if (!item.shouldRender || !isNavKeyEnabled(item.key)) return;
 
         const hasAccess = allowPermissions(item.access, EUserPermissionsLevel.PROJECT, workspaceSlug, project.id);
         if (!hasAccess) return null;

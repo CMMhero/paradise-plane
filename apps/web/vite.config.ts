@@ -14,6 +14,20 @@ const viteEnv = Object.keys(process.env)
     return a;
   }, {});
 
+// Hasil build tiap paket workspace yang dipakai web. Garis miring maju karena
+// pencocok glob menolak pemisah gaya Windows.
+const WORKSPACE_DIST_ENTRIES = [
+  "constants",
+  "editor",
+  "hooks",
+  "i18n",
+  "propel",
+  "services",
+  "shared-state",
+  "ui",
+  "utils",
+].map((pkg) => `${path.resolve(__dirname, "../../packages", pkg, "dist").replaceAll("\\", "/")}/**/*.{js,mjs}`);
+
 export default defineConfig(() => ({
   define: {
     "process.env": JSON.stringify(viteEnv),
@@ -33,6 +47,16 @@ export default defineConfig(() => ({
   },
   server: {
     host: "0.0.0.0",
+  },
+  optimizeDeps: {
+    // Paradise: rute dipindai lewat `future.unstable_optimizeDeps` di
+    // react-router.config.ts (entri ini digabung dengan milik plugin). Yang
+    // ditambah di sini: `dist` paket workspace. Dependensi yang diimpor dari
+    // sana (base-ui, blueprintjs, atlaskit, ...) tidak ikut terayapi dari rute,
+    // jadi baru ketemu saat halaman dibuka. Vite lalu mengoptimasi ulang di
+    // tengah sesi, hash bundel yang sudah dimuat jadi basi (504 "Outdated
+    // Optimize Dep"), impor modul rute gagal, dan halaman tampil kosong.
+    entries: WORKSPACE_DIST_ENTRIES,
   },
   // No SSR-specific overrides needed; alias resolves to ESM build
 }));

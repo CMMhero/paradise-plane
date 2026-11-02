@@ -74,7 +74,7 @@ export function GantiNamaMateri({
     <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XL}>
       <div className="space-y-4 p-6">
         <div>
-          <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.rename.title")}</h2>
+          <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.rename.title")}</h2>
           <p className="mt-1 text-12 text-tertiary">{t("wiki_ui.rename.note", { fileName: namaBerkas })}</p>
         </div>
 

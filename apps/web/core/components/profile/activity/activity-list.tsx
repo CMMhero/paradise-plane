@@ -37,7 +37,7 @@ export const ActivityList = observer(function ActivityList(props: Props) {
   return (
     <>
       {activity ? (
-        <ul role="list">
+        <ul>
           {activity.results.map((activityItem) => {
             if (activityItem.field === "comment")
               return (
@@ -52,10 +52,10 @@ export const ActivityList = observer(function ActivityList(props: Props) {
                           alt={activityItem.actor_detail.display_name}
                           height={30}
                           width={30}
-                          className="bg-gray-500 grid h-7 w-7 place-items-center rounded-full border-2 border-white text-on-color"
+                          className="grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-label-grey-bg-strong text-on-color"
                         />
                       ) : (
-                        <div className="bg-gray-500 grid h-7 w-7 place-items-center rounded-full border-2 border-white text-on-color capitalize">
+                        <div className="grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-label-grey-bg-strong text-on-color capitalize">
                           {activityItem.actor_detail.display_name?.[0]}
                         </div>
                       )}
@@ -134,7 +134,7 @@ export const ActivityList = observer(function ActivityList(props: Props) {
                                     className="h-full w-full rounded-full object-cover"
                                   />
                                 ) : (
-                                  <div className="bg-gray-700 grid h-6 w-6 place-items-center rounded-full border-2 border-white text-11 text-on-color capitalize">
+                                  <div className="grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-label-grey-bg-strong text-11 text-on-color capitalize">
                                     {activityItem.actor_detail.display_name?.[0]}
                                   </div>
                                 )}
@@ -145,15 +145,17 @@ export const ActivityList = observer(function ActivityList(props: Props) {
                         <div className="min-w-0 flex-1 border-b border-subtle py-4">
                           <div className="text-13 break-words text-secondary">
                             {activityItem.field === "archived_at" && activityItem.new_value !== "restore" ? (
-                              <span className="text-gray font-medium">Sistem</span>
+                              <span className="font-medium text-tertiary">Sistem</span>
                             ) : activityItem.actor_detail.is_bot ? (
-                              <span className="text-gray font-medium">{activityItem.actor_detail.first_name} Bot</span>
+                              <span className="font-medium text-tertiary">
+                                {activityItem.actor_detail.first_name} Bot
+                              </span>
                             ) : (
                               <Link
                                 href={`/${activityItem.workspace_detail?.slug}/profile/${activityItem.actor_detail.id}`}
                                 className="inline"
                               >
-                                <span className="text-gray font-medium">
+                                <span className="font-medium text-tertiary">
                                   {currentUser?.id === activityItem.actor_detail.id
                                     ? "You"
                                     : activityItem.actor_detail.display_name}

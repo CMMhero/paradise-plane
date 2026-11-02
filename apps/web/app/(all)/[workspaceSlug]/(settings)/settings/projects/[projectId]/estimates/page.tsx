@@ -15,10 +15,12 @@ import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 // local imports
-import type { Route } from "./+types/page";
+// Tipe props ditulis tangan, peninggalan masa rute ini bisa dibuang saat build.
+// Sekarang rutenya selalu terdaftar dan dijaga ParadiseModuleGate (God Mode).
+type TPageProps = { params: { workspaceSlug: string; projectId: string } };
 import { EstimatesProjectSettingsHeader } from "./header";
 
-function EstimatesSettingsPage({ params }: Route.ComponentProps) {
+function EstimatesSettingsPage({ params }: TPageProps) {
   const { workspaceSlug, projectId } = params;
   // store
   const { currentProjectDetails } = useProject();

@@ -234,7 +234,10 @@ export abstract class BaseProjectMemberStore implements IBaseProjectMemberStore 
    */
   getProjectMemberIds = computedFn((projectId: string, includeGuestUsers: boolean): string[] | null => {
     if (!this.projectMemberMap?.[projectId]) return null;
-    let members = this.getProjectMemberships(projectId);
+    // Deleted accounts never appear in pickers; their details stay in memberMap.
+    let members = this.getProjectMemberships(projectId).filter(
+      (m) => !this.memberRoot?.memberMap?.[m.member]?.is_deleted
+    );
     if (includeGuestUsers === false) {
       members = members.filter((m) => m.role !== EUserPermissions.GUEST);
     }
@@ -436,6 +439,7 @@ export abstract class BaseProjectMemberStore implements IBaseProjectMemberStore 
       runInAction(() => {
         this.processMemberRemoval(projectId, userId);
       });
+      return undefined;
     });
   };
 

@@ -54,7 +54,7 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
   const { preferences: projectPreferences } = useProjectNavigationPreferences();
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar } = useAppTheme();
 
-  const { loader, getPartialProjectById, joinedProjectIds: joinedProjects, updateProjectView } = useProject();
+  const { loader, getPartialProjectById, sidebarProjectIds: joinedProjects, updateProjectView } = useProject();
   // router params
   const { workspaceSlug } = useParams();
   const pathname = usePathname();

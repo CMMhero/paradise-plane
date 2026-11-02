@@ -6,6 +6,7 @@
 
 import { observer } from "mobx-react";
 import { Outlet } from "react-router";
+import { ParadiseModuleGate } from "@/components/paradise/module-gate";
 import { ProjectsAppPowerKProvider } from "@/components/power-k/projects-app-provider";
 import { PilihDepartemen } from "@/components/workspace/pilih-departemen";
 // plane web components
@@ -23,7 +24,9 @@ function WorkspaceLayout() {
           <ProjectAppSidebar />
           <ExtendedProjectSidebar />
           <main className="relative flex h-full w-full flex-col overflow-hidden bg-surface-1">
-            <Outlet />
+            <ParadiseModuleGate>
+              <Outlet />
+            </ParadiseModuleGate>
           </main>
         </div>
       </div>

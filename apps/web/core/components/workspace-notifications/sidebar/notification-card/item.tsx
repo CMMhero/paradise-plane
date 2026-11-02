@@ -6,7 +6,8 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
-import { Clock } from "lucide-react";
+import { CalendarClock, Clock } from "lucide-react";
+import { useNavigate } from "react-router";
 // plane imports
 import { Avatar, Row } from "@plane/ui";
 import { cn, calculateTimeAgo, renderFormattedDate, renderFormattedTime, getFileURL } from "@plane/utils";
@@ -42,8 +43,28 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
 
   const notificationField = notification?.data?.issue_activity.field || undefined;
   const notificationTriggeredBy = notification.triggered_by_details || undefined;
+  // Kustomisasi Paradise: baris DM (tanpa project) dan baris tenggat (tanpa pemicu).
+  const isChat = notificationField === "chat";
+  const isDeadline = notificationField === "deadline";
+  const chatSenderId = notification?.data?.chat?.pengirim_id;
+  const navigate = useNavigate();
+
+  const handleOpenChat = async () => {
+    if (notification.read_at === null) {
+      try {
+        await markNotificationAsRead(workspaceSlug);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    if (chatSenderId) navigate(`/${workspaceSlug}/chat/?dengan=${chatSenderId}`);
+  };
 
   const handleNotificationIssuePeekOverview = async () => {
+    if (isChat) {
+      if (!isSnoozeStateModalOpen && !customSnoozeModal) await handleOpenChat();
+      return;
+    }
     if (workspaceSlug && projectId && issueId && !isSnoozeStateModalOpen && !customSnoozeModal) {
       setPeekIssue(undefined);
       setCurrentSelectedNotificationId(notificationId);
@@ -65,8 +86,8 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
     }
   };
 
-  if (!workspaceSlug || !notificationId || !notification?.id || !notificationField || !workspace?.id || !projectId)
-    return <></>;
+  if (!workspaceSlug || !notificationId || !notification?.id || !notificationField || !workspace?.id) return <></>;
+  if (!projectId && !isChat) return <></>;
 
   return (
     <Row
@@ -85,6 +106,7 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
 
       <div className="relative flex w-full gap-2">
         <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-layer-1">
+          {isDeadline && !notificationTriggeredBy && <CalendarClock className="size-5 text-tertiary" aria-hidden />}
           {notificationTriggeredBy && (
             <Avatar
               name={notificationTriggeredBy.display_name || notificationTriggeredBy?.first_name}
@@ -103,7 +125,7 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
                 notification={notification}
                 workspaceId={workspace.id}
                 workspaceSlug={workspaceSlug}
-                projectId={projectId}
+                projectId={projectId ?? ""}
               />
             </div>
             <NotificationOption
@@ -118,8 +140,14 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
 
           <div className="relative flex items-center gap-3 text-caption-sm-regular text-secondary">
             <div className="line-clamp-1 w-full truncate overflow-hidden break-words whitespace-normal">
-              {notification?.data?.issue?.identifier}-{notification?.data?.issue?.sequence_id}&nbsp;
-              {notification?.data?.issue?.name}
+              {isChat ? (
+                notification?.data?.issue_activity.new_value
+              ) : (
+                <>
+                  {notification?.data?.issue?.identifier}-{notification?.data?.issue?.sequence_id}&nbsp;
+                  {notification?.data?.issue?.name}
+                </>
+              )}
             </div>
             <div className="flex-shrink-0">
               {notification?.snoozed_till ? (

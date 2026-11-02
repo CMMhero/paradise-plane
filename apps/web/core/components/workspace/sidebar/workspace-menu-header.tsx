@@ -19,6 +19,7 @@ import { CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
 // store hooks
 import { useUserPermissions } from "@/hooks/store/user";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 export type SidebarWorkspaceMenuHeaderProps = {
   isWorkspaceMenuOpen: boolean;
@@ -37,6 +38,7 @@ export const SidebarWorkspaceMenuHeader = observer(function SidebarWorkspaceMenu
   const { workspaceSlug } = useParams();
   const router = useRouter();
   const { allowPermissions } = useUserPermissions();
+  const { isModuleEnabled } = useParadiseModules();
   const { t } = useTranslation();
 
   useOutsideClickDetector(actionSectionRef, () => setIsMenuActive(false));
@@ -58,9 +60,18 @@ export const SidebarWorkspaceMenuHeader = observer(function SidebarWorkspaceMenu
         customButton={
           <span
             ref={actionSectionRef}
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- already rendered inside CustomMenu button; nested <button> is invalid
+            role="button"
+            tabIndex={0}
             className="my-auto grid place-items-center rounded-sm p-0.5 text-placeholder hover:bg-layer-1"
             onClick={() => {
               setIsMenuActive(!isMenuActive);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setIsMenuActive(!isMenuActive);
+              }
             }}
           >
             <MoreHorizontal className="size-4" />
@@ -75,12 +86,14 @@ export const SidebarWorkspaceMenuHeader = observer(function SidebarWorkspaceMenu
         customButtonClassName="grid place-items-center"
         placement="bottom-start"
       >
-        <CustomMenu.MenuItem onClick={() => router.push(`/${workspaceSlug}/projects/archives`)}>
-          <div className="flex items-center justify-start gap-2">
-            <ArchiveIcon className="h-3.5 w-3.5 stroke-[1.5]" />
-            <span>{t("archives")}</span>
-          </div>
-        </CustomMenu.MenuItem>
+        {isModuleEnabled("archives") && (
+          <CustomMenu.MenuItem onClick={() => router.push(`/${workspaceSlug}/projects/archives`)}>
+            <div className="flex items-center justify-start gap-2">
+              <ArchiveIcon className="h-3.5 w-3.5 stroke-[1.5]" />
+              <span>{t("archives")}</span>
+            </div>
+          </CustomMenu.MenuItem>
+        )}
 
         {isAdmin && (
           <CustomMenu.MenuItem onClick={() => router.push(`/${workspaceSlug}/settings`)}>

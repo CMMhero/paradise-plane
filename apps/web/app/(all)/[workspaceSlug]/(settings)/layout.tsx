@@ -7,6 +7,7 @@
 import { Outlet } from "react-router";
 // components
 import { ContentWrapper } from "@/components/core/content-wrapper";
+import { ParadiseModuleGate } from "@/components/paradise/module-gate";
 import { ProjectsAppPowerKProvider } from "@/components/power-k/projects-app-provider";
 
 export default function SettingsLayout() {
@@ -18,7 +19,10 @@ export default function SettingsLayout() {
           {/* Content */}
           <ContentWrapper className="w-full bg-surface-1 md:flex">
             <div className="size-full overflow-hidden">
-              <Outlet />
+              {/* Setelan fitur yang dimatikan di God Mode (cycles, estimates, dst.). */}
+              <ParadiseModuleGate>
+                <Outlet />
+              </ParadiseModuleGate>
             </div>
           </ContentWrapper>
         </main>

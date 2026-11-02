@@ -17,6 +17,7 @@ import ProjectCreateHeader from "@/components/project/create/header";
 import ProjectCreateButtons from "@/components/project/create/project-create-buttons";
 // hooks
 import { getCoverImageType, uploadCoverImage } from "@/helpers/cover-image.helper";
+import { useInstance } from "@/hooks/store/use-instance";
 import { useProject } from "@/hooks/store/use-project";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web types
@@ -39,11 +40,13 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
   // store
   const { t } = useTranslation();
   const { addProjectToFavorites, createProject, updateProject } = useProject();
+  const { config } = useInstance();
   // states
   const [shouldAutoSyncIdentifier, setShouldAutoSyncIdentifier] = useState(true);
-  // form info
+  // form info. Paradise: bawaan visibilitas dkk. dari God Mode.
+  const formDefaults = { ...getProjectFormValues(config), ...data };
   const methods = useForm<TProject>({
-    defaultValues: { ...getProjectFormValues(), ...data },
+    defaultValues: formDefaults,
     reValidateMode: "onChange",
   });
   const { handleSubmit, reset, setValue } = methods;
@@ -168,7 +171,8 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
     onClose();
     setShouldAutoSyncIdentifier(true);
     setTimeout(() => {
-      reset();
+      // Kembali ke bawaan God Mode, bukan ke nilai pertama kali formulir dibuat.
+      reset(formDefaults);
     }, 300);
   };
 

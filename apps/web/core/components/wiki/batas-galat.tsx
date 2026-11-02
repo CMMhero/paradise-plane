@@ -56,7 +56,7 @@ function TampilanGalat({ tautanDaftar }: { tautanDaftar: string }) {
   return (
     <div className="flex h-full w-full items-center justify-center p-8">
       <div className="max-w-md text-center">
-        <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.error.title")}</h2>
+        <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.error.title")}</h2>
         <p className="mt-1 text-13 text-tertiary">{t("wiki_ui.error.message")}</p>
         <Link
           to={tautanDaftar}

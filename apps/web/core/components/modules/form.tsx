@@ -100,7 +100,7 @@ export function ModuleForm(props: Props) {
                     }}
                     multiple={false}
                     buttonVariant="border-with-text"
-                    renderCondition={(projectId) => !!projectsWithCreatePermissions?.[projectId]}
+                    renderCondition={(candidateProjectId) => !!projectsWithCreatePermissions?.[candidateProjectId]}
                     tabIndex={getIndex("cover_image")}
                   />
                 </div>
@@ -134,6 +134,7 @@ export function ModuleForm(props: Props) {
                   placeholder={t("title")}
                   className="w-full text-14"
                   tabIndex={getIndex("name")}
+                  // oxlint-disable-next-line jsx-a11y/no-autofocus -- intentional: title field gets focus when the modal opens
                   autoFocus
                 />
               )}
@@ -204,6 +205,7 @@ export function ModuleForm(props: Props) {
                     onChange={onChange}
                     projectId={projectId}
                     multiple={false}
+                    sertakanDiriSendiri
                     buttonVariant="border-with-text"
                     placeholder={t("lead")}
                     tabIndex={getIndex("lead")}
@@ -221,6 +223,7 @@ export function ModuleForm(props: Props) {
                     onChange={onChange}
                     projectId={projectId}
                     multiple
+                    sertakanDiriSendiri
                     buttonVariant={value && value.length > 0 ? "transparent-without-text" : "border-with-text"}
                     buttonClassName={value && value.length > 0 ? "hover:bg-transparent px-0" : ""}
                     placeholder={t("members")}

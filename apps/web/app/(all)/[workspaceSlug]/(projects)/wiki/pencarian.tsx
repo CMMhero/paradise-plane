@@ -74,7 +74,7 @@ export function PencarianWiki({
       {kueri.trim().length >= 2 && (
         <div className="mt-6">
           <div className="mb-4 flex items-baseline gap-2">
-            <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.search.results")}</h2>
+            <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.search.results")}</h2>
             <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
               {isLoading ? t("wiki_ui.search.searching") : t("wiki_ui.folder.material_count", { count: hasil.length })}
             </span>

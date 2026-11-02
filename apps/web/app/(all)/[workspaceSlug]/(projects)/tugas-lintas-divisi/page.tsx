@@ -28,7 +28,7 @@ import {
 
 const crossDivisionService = new CrossDivisionService();
 
-const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-xs outline-none focus:border-accent";
+const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-12 outline-none focus:border-accent-strong";
 
 // `label` di semua peta ini adalah KUNCI i18n, diterjemahkan saat dirender.
 const PRIORITAS: { value: string; label: string }[] = [
@@ -52,11 +52,11 @@ const LABEL_STATUS_PERMINTAAN: Record<string, string> = {
 };
 
 const KELAS_STATUS_PERMINTAAN: Record<string, string> = {
-  menunggu: "bg-amber-500/10 text-amber-600",
+  menunggu: "bg-warning-subtle text-warning-primary",
   ditunda: "bg-layer-3 text-secondary",
-  ditolak: "bg-red-500/10 text-red-600",
+  ditolak: "bg-danger-subtle text-danger-primary",
   duplikat: "bg-layer-3 text-tertiary",
-  diterima: "bg-green-500/10 text-green-600",
+  diterima: "bg-success-subtle text-success-primary",
   dibatalkan: "bg-layer-3 text-tertiary",
 };
 
@@ -70,9 +70,9 @@ const LABEL_STATUS_TUGAS: Record<string, string> = {
 
 const KELAS_STATUS_TUGAS: Record<string, string> = {
   belum_diterima: "bg-layer-3 text-tertiary",
-  terbuka: "bg-blue-500/10 text-blue-600",
-  selesai: "bg-green-500/10 text-green-600",
-  dibatalkan: "bg-red-500/10 text-red-600",
+  terbuka: "bg-accent-subtle text-accent-primary",
+  selesai: "bg-success-subtle text-success-primary",
+  dibatalkan: "bg-danger-subtle text-danger-primary",
   tidak_dikerjakan: "bg-layer-3 text-tertiary",
 };
 
@@ -122,7 +122,7 @@ const labelStatusTugas = (nilai: TStatusTugas, t: TTerjemah): string =>
   LABEL_STATUS_TUGAS[nilai] ? t(LABEL_STATUS_TUGAS[nilai]) : nilai;
 
 function Badge({ label, className }: { label: string; className: string }) {
-  return <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${className}`}>{label}</span>;
+  return <span className={`inline-block rounded-full px-2 py-0.5 text-11 font-medium ${className}`}>{label}</span>;
 }
 
 type TStatCard = { label: string; value: string; keterangan: string; icon: React.ReactNode };
@@ -132,9 +132,9 @@ function StatCard({ label, value, keterangan, icon }: TStatCard) {
     <div className="flex items-center gap-3 rounded-md border border-subtle bg-layer-1 px-4 py-3">
       <div className="shrink-0 text-secondary">{icon}</div>
       <div className="min-w-0">
-        <p className="text-lg font-semibold text-primary">{value}</p>
-        <p className="text-xs truncate text-tertiary">{label}</p>
-        <p className="truncate text-[11px] text-tertiary">{keterangan}</p>
+        <p className="text-16 font-semibold text-primary">{value}</p>
+        <p className="truncate text-12 text-tertiary">{label}</p>
+        <p className="truncate text-11 text-tertiary">{keterangan}</p>
       </div>
     </div>
   );
@@ -195,6 +195,7 @@ function TugasLintasDivisiPage() {
   }, [workspaceSlug, t]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- initial data load triggers state updates by design
     void muatSemua();
   }, [muatSemua]);
 
@@ -258,10 +259,10 @@ function TugasLintasDivisiPage() {
       <PageHead title={t("cross_division_ui.title")} />
 
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <p className="text-xs text-tertiary">{t("cross_division_ui.intro")}</p>
+        <p className="text-12 text-tertiary">{t("cross_division_ui.intro")}</p>
 
         {gagalMuat ? (
-          <div className="border-red-500/30 bg-red-500/5 text-xs text-red-600 flex items-start gap-2 rounded-md border px-3 py-2">
+          <div className="flex items-start gap-2 rounded-md border border-danger-subtle bg-danger-subtle px-3 py-2 text-12 text-danger-primary">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <div className="flex flex-col gap-1">
               <span>{gagalMuat}</span>
@@ -275,12 +276,12 @@ function TugasLintasDivisiPage() {
             </div>
           </div>
         ) : isLoading ? (
-          <p className="text-sm text-tertiary">{t("chat_ui.loading")}</p>
+          <p className="text-13 text-tertiary">{t("chat_ui.loading")}</p>
         ) : (
           <>
             {/* 1. Ringkasan saya */}
             <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-primary">{t("cross_division_ui.summary")}</h2>
+              <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.summary")}</h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <StatCard
                   label={t("cross_division_ui.stat_waiting")}
@@ -292,7 +293,7 @@ function TugasLintasDivisiPage() {
                   label={t("cross_division_ui.stat_open")}
                   value={String(keluarTerbuka)}
                   keterangan={t("cross_division_ui.stat_open_hint")}
-                  icon={<ListTodo className="text-amber-500 size-5" />}
+                  icon={<ListTodo className="size-5 text-warning-primary" />}
                 />
                 <StatCard
                   label={t("cross_division_ui.stat_mine")}
@@ -301,13 +302,13 @@ function TugasLintasDivisiPage() {
                   icon={<ArrowLeftRight className="size-5" />}
                 />
               </div>
-              <p className="text-[11px] text-tertiary">{t("cross_division_ui.summary_note")}</p>
+              <p className="text-11 text-tertiary">{t("cross_division_ui.summary_note")}</p>
               {rincianKeluar.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {rincianKeluar.map((item) => (
                     <span
                       key={item.projectId}
-                      className="rounded-full border border-subtle px-2 py-0.5 text-[11px] text-secondary"
+                      className="rounded-full border border-subtle px-2 py-0.5 text-11 text-secondary"
                     >
                       {item.nama ?? item.projectId}:{" "}
                       {t("cross_division_ui.breakdown", {
@@ -322,12 +323,12 @@ function TugasLintasDivisiPage() {
 
             {/* 2. Form kirim permintaan */}
             <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-primary">{t("cross_division_ui.request_help")}</h2>
+              <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.request_help")}</h2>
 
               {divisiSaya.length === 0 ? (
-                <p className="text-sm text-tertiary">{t("cross_division_ui.no_origin")}</p>
+                <p className="text-13 text-tertiary">{t("cross_division_ui.no_origin")}</p>
               ) : tujuanTersedia.length === 0 ? (
-                <div className="text-xs flex items-start gap-2 rounded-md border border-subtle bg-layer-1 px-3 py-2 text-secondary">
+                <div className="flex items-start gap-2 rounded-md border border-subtle bg-layer-1 px-3 py-2 text-12 text-secondary">
                   <Inbox className="mt-0.5 size-4 shrink-0 text-tertiary" />
                   <span>{t("cross_division_ui.no_targets")}</span>
                 </div>
@@ -335,7 +336,7 @@ function TugasLintasDivisiPage() {
                 <div className="flex flex-col gap-3 rounded-md border border-subtle bg-layer-1 p-4">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">{t("cross_division_ui.origin")}</span>
+                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.origin")}</span>
                       <select value={asalId} onChange={(e) => setAsalDipilih(e.target.value)} className={inputClass}>
                         {divisiSaya.map((divisi) => (
                           <option key={divisi.id} value={divisi.id}>
@@ -343,11 +344,11 @@ function TugasLintasDivisiPage() {
                           </option>
                         ))}
                       </select>
-                      <span className="text-[11px] text-tertiary">{t("cross_division_ui.origin_hint")}</span>
+                      <span className="text-11 text-tertiary">{t("cross_division_ui.origin_hint")}</span>
                     </label>
 
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">{t("cross_division_ui.target")}</span>
+                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.target")}</span>
                       <select
                         value={tujuanDipilih}
                         onChange={(e) => setTujuanDipilih(e.target.value)}
@@ -360,13 +361,13 @@ function TugasLintasDivisiPage() {
                           </option>
                         ))}
                       </select>
-                      <span className="text-[11px] text-tertiary">{t("cross_division_ui.target_hint")}</span>
+                      <span className="text-11 text-tertiary">{t("cross_division_ui.target_hint")}</span>
                     </label>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">{t("cross_division_ui.request_title")}</span>
+                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.request_title")}</span>
                       <input
                         type="text"
                         value={judul}
@@ -378,7 +379,7 @@ function TugasLintasDivisiPage() {
                     </label>
 
                     <label className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-secondary">
+                      <span className="text-12 font-medium text-secondary">
                         {t("cross_division_ui.priority_label")}
                       </span>
                       <select value={prioritas} onChange={(e) => setPrioritas(e.target.value)} className={inputClass}>
@@ -392,7 +393,7 @@ function TugasLintasDivisiPage() {
                   </div>
 
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-secondary">{t("cross_division_ui.note_label")}</span>
+                    <span className="text-12 font-medium text-secondary">{t("cross_division_ui.note_label")}</span>
                     <textarea
                       value={catatan}
                       maxLength={2000}
@@ -401,13 +402,13 @@ function TugasLintasDivisiPage() {
                       placeholder={t("cross_division_ui.note_placeholder")}
                       className={inputClass}
                     />
-                    <span className="text-[11px] text-tertiary">
+                    <span className="text-11 text-tertiary">
                       {t("cross_division_ui.char_count", { count: catatan.length, max: 2000 })}
                     </span>
                   </label>
 
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-secondary">
+                    <span className="text-12 font-medium text-secondary">
                       {t("cross_division_ui.description_label")}
                     </span>
                     <textarea
@@ -417,11 +418,11 @@ function TugasLintasDivisiPage() {
                       placeholder={t("cross_division_ui.description_placeholder")}
                       className={inputClass}
                     />
-                    <span className="text-[11px] text-tertiary">{t("cross_division_ui.description_hint")}</span>
+                    <span className="text-11 text-tertiary">{t("cross_division_ui.description_hint")}</span>
                   </label>
 
                   {gagalKirim && (
-                    <p className="border-red-500/30 bg-red-500/5 text-xs text-red-600 rounded border px-2 py-1">
+                    <p className="rounded border border-danger-subtle bg-danger-subtle px-2 py-1 text-12 text-danger-primary">
                       {gagalKirim}
                     </p>
                   )}
@@ -431,12 +432,12 @@ function TugasLintasDivisiPage() {
                       type="button"
                       disabled={isSending}
                       onClick={() => void handleKirim()}
-                      className="text-xs flex items-center gap-1.5 rounded border border-subtle px-3 py-1.5 font-medium text-secondary hover:bg-layer-2 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex items-center gap-1.5 rounded border border-subtle px-3 py-1.5 text-12 font-medium text-secondary hover:bg-layer-2 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Send className="size-3.5" />
                       {isSending ? t("cross_division_ui.sending") : t("cross_division_ui.send")}
                     </button>
-                    <span className="text-[11px] text-tertiary">{t("cross_division_ui.visibility_hint")}</span>
+                    <span className="text-11 text-tertiary">{t("cross_division_ui.visibility_hint")}</span>
                   </div>
                 </div>
               )}
@@ -444,14 +445,14 @@ function TugasLintasDivisiPage() {
 
             {/* 3. Tabel permintaan saya */}
             <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-primary">{t("cross_division_ui.stat_mine")}</h2>
+              <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.stat_mine")}</h2>
               {permintaan.length === 0 ? (
-                <p className="text-sm text-tertiary">{t("cross_division_ui.no_requests")}</p>
+                <p className="text-13 text-tertiary">{t("cross_division_ui.no_requests")}</p>
               ) : (
                 <div className="overflow-x-auto rounded-md border border-subtle">
-                  <table className="text-sm w-full min-w-[720px] text-left">
+                  <table className="w-full min-w-[720px] text-left text-13">
                     <thead>
-                      <tr className="text-xs border-b border-subtle bg-layer-2 text-tertiary">
+                      <tr className="border-b border-subtle bg-layer-2 text-12 text-tertiary">
                         <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_title")}</th>
                         <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_route")}</th>
                         <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_request_status")}</th>
@@ -465,7 +466,7 @@ function TugasLintasDivisiPage() {
                         <tr key={baris.id} className="border-b border-subtle last:border-0 hover:bg-layer-2">
                           <td className="px-3 py-2">
                             <span className="font-medium text-primary">{baris.judul ?? "—"}</span>
-                            {baris.catatan && <p className="text-[11px] text-tertiary">{baris.catatan}</p>}
+                            {baris.catatan && <p className="text-11 text-tertiary">{baris.catatan}</p>}
                           </td>
                           <td className="px-3 py-2 text-secondary">
                             {baris.asal.identifier} → {baris.tujuan.identifier}
@@ -492,7 +493,7 @@ function TugasLintasDivisiPage() {
                   </table>
                 </div>
               )}
-              <p className="text-[11px] text-tertiary">{t("cross_division_ui.footer_note")}</p>
+              <p className="text-11 text-tertiary">{t("cross_division_ui.footer_note")}</p>
             </section>
           </>
         )}

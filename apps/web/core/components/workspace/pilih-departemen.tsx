@@ -82,6 +82,7 @@ export function PilihDepartemen() {
 
   return (
     <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- native <dialog> needs open/showModal and changes default styling
       role="dialog"
       aria-modal="true"
       aria-labelledby="pilih-departemen-judul"
@@ -89,19 +90,19 @@ export function PilihDepartemen() {
     >
       <div className="shadow-xl flex max-h-[85vh] w-full max-w-md flex-col gap-4 rounded-lg border border-subtle bg-surface-1 p-5">
         <div>
-          <h2 id="pilih-departemen-judul" className="text-lg font-semibold">
+          <h2 id="pilih-departemen-judul" className="text-16 font-semibold">
             {t("department_picker_ui.title")}
           </h2>
-          <p className="text-sm mt-1 text-secondary">{t("department_picker_ui.description")}</p>
+          <p className="mt-1 text-13 text-secondary">{t("department_picker_ui.description")}</p>
         </div>
         <div className="flex flex-col gap-3 overflow-y-auto">
           {Object.entries(perDivisi).map(([divisi, daftar]) => (
             <fieldset key={divisi} className="flex flex-col gap-1">
-              <legend className="text-xs mb-1 font-medium tracking-wide text-tertiary uppercase">{divisi}</legend>
+              <legend className="mb-1 text-12 font-medium tracking-wide text-tertiary uppercase">{divisi}</legend>
               {daftar.map((d) => (
                 <label
                   key={d.id}
-                  className={`text-sm flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-13 ${
                     terpilih === d.id ? "border-accent-strong bg-accent-subtle" : "border-subtle hover:bg-layer-1"
                   }`}
                 >

@@ -41,6 +41,7 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useModule } from "@/hooks/store/use-module";
 import { useProject } from "@/hooks/store/use-project";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
@@ -71,10 +72,11 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
   const { currentProjectDetails, loader } = useProject();
+  const { isModuleEnabled } = useParadiseModules();
   // local storage
   const { setValue, storedValue } = useLocalStorage("module_sidebar_collapsed", "false");
   // derived values
-  const isSidebarCollapsed = storedValue ? (storedValue === "true" ? true : false) : false;
+  const isSidebarCollapsed = storedValue ? storedValue === "true" : false;
   const activeLayout = issueFilters?.displayFilters?.layout;
   const moduleDetails = moduleId ? getModuleById(moduleId) : undefined;
   const canUserCreateIssue = allowPermissions(
@@ -113,12 +115,12 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
 
   const switcherOptions = projectModuleIds
     ?.map((id) => {
-      const _module = id === moduleId ? moduleDetails : getModuleById(id);
-      if (!_module) return;
+      const moduleItem = id === moduleId ? moduleDetails : getModuleById(id);
+      if (!moduleItem) return;
       return {
-        value: _module.id,
-        query: _module.name,
-        content: <SwitcherLabel name={_module.name} LabelIcon={ModuleIcon} />,
+        value: moduleItem.id,
+        query: moduleItem.name,
+        content: <SwitcherLabel name={moduleItem.name} LabelIcon={ModuleIcon} />,
       };
     })
     .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
@@ -228,12 +230,19 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
 
           {canUserCreateIssue ? (
             <>
-              <Button className="hidden md:block" onClick={() => setAnalyticsModal(true)} variant="secondary" size="lg">
-                <span className="hidden @4xl:flex">Analytics</span>
-                <span className="@4xl:hidden">
-                  <ChartNoAxesColumn className="size-3.5" />
-                </span>
-              </Button>
+              {isModuleEnabled("analytics") && (
+                <Button
+                  className="hidden md:block"
+                  onClick={() => setAnalyticsModal(true)}
+                  variant="secondary"
+                  size="lg"
+                >
+                  <span className="hidden @4xl:flex">Analytics</span>
+                  <span className="@4xl:hidden">
+                    <ChartNoAxesColumn className="size-3.5" />
+                  </span>
+                </Button>
+              )}
               <Button
                 variant="primary"
                 size="lg"

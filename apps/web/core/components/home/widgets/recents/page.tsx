@@ -10,7 +10,7 @@ import { PageIcon } from "@plane/propel/icons";
 // plane import
 import type { TActivityEntityData, TPageEntityData } from "@plane/types";
 import { Avatar } from "@plane/ui";
-import { calculateTimeAgo, getFileURL, getPageName } from "@plane/utils";
+import { calculateTimeAgo, cn, getFileURL, getPageName } from "@plane/utils";
 import { ListItem } from "@/components/core/list";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
@@ -44,11 +44,16 @@ export function RecentPage(props: BlockProps) {
       title={getPageName(pageDetails?.name)}
       prependTitleElement={
         <div className="flex flex-shrink-0 items-center gap-2">
-          <div className="grid size-8 flex-shrink-0 place-items-center rounded-sm bg-layer-2">
+          <div
+            className={cn(
+              "grid size-8 flex-shrink-0 place-items-center rounded-sm",
+              pageDetails?.logo_props?.in_use ? "bg-layer-2" : "bg-label-orange-bg"
+            )}
+          >
             {pageDetails?.logo_props?.in_use ? (
               <Logo logo={pageDetails?.logo_props} size={16} type="lucide" />
             ) : (
-              <PageIcon className="size-4 text-tertiary" />
+              <PageIcon className="size-4 text-label-orange-icon" />
             )}
           </div>
           {pageDetails?.project_identifier && (

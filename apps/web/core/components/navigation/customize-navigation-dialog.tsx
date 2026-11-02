@@ -11,6 +11,7 @@ import { GripVertical, X } from "lucide-react";
 // plane imports
 import { WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { Checkbox, EModalPosition, EModalWidth, ModalCore, Sortable } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
@@ -20,6 +21,8 @@ import {
   useProjectNavigationPreferences,
   useWorkspaceNavigationPreferences,
 } from "@/hooks/use-navigation-preferences";
+import { useInstance } from "@/hooks/store/use-instance";
+import { isNavKeyEnabled } from "@/lib/paradise-modules";
 // helpers
 import { getSidebarNavigationItemIcon } from "@/plane-web/components/workspace/sidebar/helper";
 // types
@@ -41,7 +44,16 @@ const PERSONAL_ITEMS: Array<{ key: TPersonalNavigationItemKey; labelTranslationK
   { key: "stickies", labelTranslationKey: "sidebar.stickies" },
   { key: "your_work", labelTranslationKey: "sidebar.your_work" },
   { key: "drafts", labelTranslationKey: "drafts" },
+  { key: "quick_links", labelTranslationKey: "home.quick_links.title_plural" },
 ];
+
+// Prevent typing invalid characters in number input
+const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Block: e, E, +, -, .
+  if (["e", "E", "+", "-", "."].includes(e.key)) {
+    e.preventDefault();
+  }
+};
 
 export const CustomizeNavigationDialog = observer(function CustomizeNavigationDialog(
   props: TCustomizeNavigationDialogProps
@@ -54,6 +66,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
 
   // store hooks
   const { allowPermissions } = useUserPermissions();
+  const { config: instanceConfig } = useInstance();
   const {
     preferences: personalPreferences,
     togglePersonalItem,
@@ -75,7 +88,11 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
   const [projectCountInput, setProjectCountInput] = useState(projectPreferences.limitedProjectsCount.toString());
 
   // Filter personal items by feature flags
-  const filteredPersonalItems = PERSONAL_ITEMS;
+  // Paradise: item yang dimatikan Super Admin di God Mode tidak ditawarkan.
+  const filteredPersonalItems = useMemo(
+    () => PERSONAL_ITEMS.filter((item) => isNavKeyEnabled(instanceConfig, item.key)),
+    [instanceConfig]
+  );
 
   // Filter workspace items by permissions and feature flags, then get pinned/unpinned items
   const workspaceItems = useMemo(() => {
@@ -86,7 +103,8 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
         EUserPermissionsLevel.WORKSPACE,
         workspaceSlug?.toString() || ""
       );
-      return hasPermission;
+      // Modul yang dimatikan di God Mode > Features tidak ditawarkan untuk dipin.
+      return hasPermission && isNavKeyEnabled(instanceConfig, item.key);
     }).map((item) => {
       // Get pinned status and sort order from localStorage
       const preference = workspacePreferences.items[item.key];
@@ -101,8 +119,9 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
       };
     });
 
+    // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); items is a fresh local array
     return items.sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [workspaceSlug, allowPermissions, workspacePreferences]);
+  }, [workspaceSlug, allowPermissions, workspacePreferences, instanceConfig]);
 
   // Handle checkbox toggle
   const handleWorkspaceItemToggle = useCallback(
@@ -150,15 +169,14 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
       };
     });
 
+    // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); items is a fresh local array
     return items.sort((a, b) => a.sortOrder - b.sortOrder);
   }, [personalPreferences, filteredPersonalItems]);
 
-  // Prevent typing invalid characters in number input
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Block: e, E, +, -, .
-    if (["e", "E", "+", "-", "."].includes(e.key)) {
-      e.preventDefault();
-    }
+  // Paradise: the store rolls back on a failed save, which used to look like the
+  // checkbox refusing to change. Say so instead of snapping back silently.
+  const simpanPreferensiProject = (simpan: Promise<void>) => {
+    simpan.catch(() => setToast({ type: TOAST_TYPE.ERROR, title: t("error"), message: t("something_went_wrong") }));
   };
 
   // Handle project count input change
@@ -173,7 +191,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
     // If valid number, enforce minimum of 1
     if (!isNaN(numValue)) {
       const validValue = Math.max(1, numValue);
-      updateLimitedProjectsCount(validValue);
+      simpanPreferensiProject(updateLimitedProjectsCount(validValue));
     }
   };
 
@@ -266,13 +284,14 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
               <div className="space-y-3">
                 {/* Navigation Mode Radio Buttons */}
                 <div className="space-y-2">
+                  {/* oxlint-disable-next-line jsx-a11y/label-has-associated-control -- input is nested; text lives in child divs */}
                   <label className="flex cursor-pointer gap-2 rounded-md px-2 py-1.5 hover:bg-surface-2">
                     <input
                       type="radio"
                       name="navigation-mode"
                       value="ACCORDION"
                       checked={projectPreferences.navigationMode === "ACCORDION"}
-                      onChange={() => updateNavigationMode("ACCORDION")}
+                      onChange={() => simpanPreferensiProject(updateNavigationMode("ACCORDION"))}
                       className="mt-1 size-4 text-accent-primary focus:ring-accent-strong"
                     />
                     <div className="flex-1">
@@ -283,13 +302,14 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
                     </div>
                   </label>
 
+                  {/* oxlint-disable-next-line jsx-a11y/label-has-associated-control -- input is nested; text lives in child divs */}
                   <label className="flex cursor-pointer gap-2 rounded-md px-2 py-1.5 hover:bg-surface-2">
                     <input
                       type="radio"
                       name="navigation-mode"
                       value="TABBED"
                       checked={projectPreferences.navigationMode === "TABBED"}
-                      onChange={() => updateNavigationMode("TABBED")}
+                      onChange={() => simpanPreferensiProject(updateNavigationMode("TABBED"))}
                       className="mt-1 size-4 text-accent-primary focus:ring-accent-strong"
                     />
                     <div className="flex-1">
@@ -306,7 +326,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
                   <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-2">
                     <Checkbox
                       checked={projectPreferences.showLimitedProjects}
-                      onChange={(e) => updateShowLimitedProjects(e.target.checked)}
+                      onChange={(e) => simpanPreferensiProject(updateShowLimitedProjects(e.target.checked))}
                     />
                     <span className="text-13 text-primary">{t("show_limited_projects_on_sidebar")}</span>
                   </label>

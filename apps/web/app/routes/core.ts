@@ -7,6 +7,13 @@
 import { index, layout, route } from "@react-router/dev/routes";
 import type { RouteConfig, RouteConfigEntry } from "@react-router/dev/routes";
 
+// Rute fitur Paradise (estimates, time tracking, dst.) SELALU
+// terdaftar. Fitur itu dinyalakan/dimatikan Super Admin di God Mode saat aplikasi
+// berjalan, jadi rute yang dibuang saat build tak bisa hidup lagi tanpa build
+// ulang. Halaman yang modulnya mati dijaga ParadiseModuleGate (lib/paradise-modules.ts).
+// Cycles, work item types, dan templates DICABUT (KEP-53): rutenya dibuang, jadi
+// alamat lamanya jatuh ke 404.
+
 export const coreRoutes: RouteConfigEntry[] = [
   // ========================================================================
   // USER MANAGEMENT ROUTES
@@ -79,7 +86,8 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/dashboard-divisi", "./(all)/[workspaceSlug]/(projects)/dashboard-divisi/page.tsx"),
         ]),
 
-        // Initiatives (Paradise)
+        // Initiatives (Paradise). Selalu terdaftar; dinyalakan/dimatikan Super Admin
+        // di God Mode > Features dan dijaga ParadiseModuleGate di layout workspace.
         layout("./(all)/[workspaceSlug]/(projects)/initiatives/layout.tsx", [
           route(":workspaceSlug/initiatives", "./(all)/[workspaceSlug]/(projects)/initiatives/page.tsx"),
         ]),
@@ -142,6 +150,11 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/stickies", "./(all)/[workspaceSlug]/(projects)/stickies/page.tsx"),
         ]),
 
+        // Quick links (Paradise). Dulu widget di Home, sekarang menu & halaman sendiri.
+        layout("./(all)/[workspaceSlug]/(projects)/quick-links/layout.tsx", [
+          route(":workspaceSlug/quick-links", "./(all)/[workspaceSlug]/(projects)/quick-links/page.tsx"),
+        ]),
+
         // Workspace Views
         layout("./(all)/[workspaceSlug]/(projects)/workspace-views/layout.tsx", [
           route(":workspaceSlug/workspace-views", "./(all)/[workspaceSlug]/(projects)/workspace-views/page.tsx"),
@@ -182,22 +195,6 @@ export const coreRoutes: RouteConfigEntry[] = [
             ":workspaceSlug/projects/:projectId/issues/:issueId",
             "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/issues/(detail)/[issueId]/page.tsx"
           ),
-
-          // Cycle Detail
-          layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/cycles/(detail)/layout.tsx", [
-            route(
-              ":workspaceSlug/projects/:projectId/cycles/:cycleId",
-              "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/cycles/(detail)/[cycleId]/page.tsx"
-            ),
-          ]),
-
-          // Cycles List
-          layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/cycles/(list)/layout.tsx", [
-            route(
-              ":workspaceSlug/projects/:projectId/cycles",
-              "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/cycles/(list)/page.tsx"
-            ),
-          ]),
 
           // Module Detail
           layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/modules/(detail)/layout.tsx", [
@@ -280,14 +277,6 @@ export const coreRoutes: RouteConfigEntry[] = [
           ),
         ]),
 
-        // Project Archives - Cycles
-        layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/cycles/layout.tsx", [
-          route(
-            ":workspaceSlug/projects/:projectId/archives/cycles",
-            "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/cycles/page.tsx"
-          ),
-        ]),
-
         // Project Archives - Modules
         layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/modules/layout.tsx", [
           route(
@@ -348,10 +337,6 @@ export const coreRoutes: RouteConfigEntry[] = [
             ),
             // Project Features
             route(
-              ":workspaceSlug/settings/projects/:projectId/features/cycles",
-              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/cycles/page.tsx"
-            ),
-            route(
               ":workspaceSlug/settings/projects/:projectId/features/modules",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/modules/page.tsx"
             ),
@@ -381,21 +366,6 @@ export const coreRoutes: RouteConfigEntry[] = [
             route(
               ":workspaceSlug/settings/projects/:projectId/estimates",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/estimates/page.tsx"
-            ),
-            // Work Item Types & Custom Properties (Paradise)
-            route(
-              ":workspaceSlug/settings/projects/:projectId/work-item-types",
-              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/work-item-types/page.tsx"
-            ),
-            // Templates & Recurring Work Items (Paradise)
-            route(
-              ":workspaceSlug/settings/projects/:projectId/templates",
-              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/templates/page.tsx"
-            ),
-            // Wiki per-folder access control (Paradise)
-            route(
-              ":workspaceSlug/settings/projects/:projectId/wiki-access",
-              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/wiki-access/page.tsx"
             ),
             // Trashbin per project (Paradise), pasangan TPA di God Mode
             route(

@@ -6,7 +6,7 @@
 
 import { observer } from "mobx-react";
 // plane imports
-import { EUserPermissionsLevel, PROJECT_SETTINGS } from "@plane/constants";
+import { EUserPermissionsLevel, getGroupedProjectSettings } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // components
 import type { TPowerKContext } from "@/components/power-k/core/types";
@@ -27,22 +27,27 @@ export const PowerKOpenProjectSettingsMenu = observer(function PowerKOpenProject
   // store hooks
   const { allowPermissions } = useUserPermissions();
   // derived values
-  const settingsList = Object.values(PROJECT_SETTINGS).filter(
-    (setting) =>
-      context.params.workspaceSlug &&
-      context.params.projectId &&
-      allowPermissions(
-        setting.access,
-        EUserPermissionsLevel.PROJECT,
-        context.params.workspaceSlug?.toString(),
-        context.params.projectId?.toString()
-      )
+  // Kustomisasi Paradise: sumbernya daftar yang sama dengan sidebar setelan, jadi
+  // setelan milik modul yang dimatikan di God Mode tidak muncul di Power K.
+  const settingsList = Object.values(getGroupedProjectSettings())
+    .flat()
+    .filter(
+      (setting) =>
+        context.params.workspaceSlug &&
+        context.params.projectId &&
+        allowPermissions(
+          setting.access,
+          EUserPermissionsLevel.PROJECT,
+          context.params.workspaceSlug?.toString(),
+          context.params.projectId?.toString()
+        )
+    );
+  const settingsListWithIcons = settingsList.map((setting) =>
+    Object.assign({}, setting, {
+      label: t(setting.i18n_label),
+      icon: PROJECT_SETTINGS_ICONS[setting.key],
+    })
   );
-  const settingsListWithIcons = settingsList.map((setting) => ({
-    ...setting,
-    label: t(setting.i18n_label),
-    icon: PROJECT_SETTINGS_ICONS[setting.key],
-  }));
 
   return <PowerKSettingsMenu settings={settingsListWithIcons} onSelect={(setting) => handleSelect(setting.href)} />;
 });

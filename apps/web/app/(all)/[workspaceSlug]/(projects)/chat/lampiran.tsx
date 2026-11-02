@@ -56,8 +56,8 @@ export function DaftarLampiran({ lampiran, terang }: Props) {
           >
             <FileText className="size-4 shrink-0" />
             <span className="min-w-0 flex-1">
-              <span className="text-xs block truncate font-medium">{l.nama || t("chat_ui.file")}</span>
-              <span className={`text-xs ${warnaTeks}`}>{ukuranTerbaca(l.ukuran)}</span>
+              <span className="block truncate text-12 font-medium">{l.nama || t("chat_ui.file")}</span>
+              <span className={`text-12 ${warnaTeks}`}>{ukuranTerbaca(l.ukuran)}</span>
             </span>
           </a>
         );

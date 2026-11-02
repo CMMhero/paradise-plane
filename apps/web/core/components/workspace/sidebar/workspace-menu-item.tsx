@@ -17,6 +17,7 @@ import { SidebarNavItem } from "@/components/sidebar/sidebar-navigation";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 // plane web imports
 import { UpgradeBadge } from "@/plane-web/components/workspace/upgrade-badge";
 
@@ -42,12 +43,16 @@ export const SidebarWorkspaceMenuItem = observer(function SidebarWorkspaceMenuIt
   const { allowPermissions } = useUserPermissions();
   // store hooks
   const { toggleSidebar } = useAppTheme();
+  const { isNavKeyEnabled } = useParadiseModules();
 
   const handleLinkClick = () => {
     if (window.innerWidth < 768) {
       toggleSidebar();
     }
   };
+
+  // Modul yang dimatikan Super Admin di God Mode > Features.
+  if (!isNavKeyEnabled(item.key)) return null;
 
   if (!allowPermissions(item.access as any, EUserPermissionsLevel.WORKSPACE, workspaceSlug.toString())) {
     return null;

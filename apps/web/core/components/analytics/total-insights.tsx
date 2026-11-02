@@ -9,7 +9,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import type { IInsightField } from "@plane/constants";
-import { ANALYTICS_INSIGHTS_FIELDS } from "@plane/constants";
+import { ANALYTICS_INSIGHTS_FIELDS, isAnalyticsKeyAvailable } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import type { IAnalyticsResponse, TAnalyticsTabsBase } from "@plane/types";
 import { cn } from "@plane/utils";
@@ -77,18 +77,16 @@ const TotalInsights = observer(function TotalInsights({
         isPeekView
       )
   );
+  // Kustomisasi Paradise: kartu milik modul yang dimatikan di God Mode (mis. Total cycles) disembunyikan.
+  const fields = (ANALYTICS_INSIGHTS_FIELDS[analyticsType] ?? []).filter((item) => isAnalyticsKeyAvailable(item.key));
   return (
     <div
       className={cn(
         "grid grid-cols-1 gap-8 sm:grid-cols-2 md:gap-10",
-        !peekView
-          ? ANALYTICS_INSIGHTS_FIELDS[analyticsType]?.length % 5 === 0
-            ? "gap-10 lg:grid-cols-5"
-            : "gap-8 lg:grid-cols-4"
-          : "grid-cols-2"
+        !peekView ? (fields.length % 5 === 0 ? "gap-10 lg:grid-cols-5" : "gap-8 lg:grid-cols-4") : "grid-cols-2"
       )}
     >
-      {ANALYTICS_INSIGHTS_FIELDS[analyticsType]?.map((item) => (
+      {fields.map((item) => (
         <InsightCard
           key={`${analyticsType}-${item.key}`}
           isLoading={isLoading}

@@ -8,12 +8,27 @@ import { Command } from "cmdk";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
+import { PARADISE_REMOVED, isParadiseGateActive } from "@plane/constants";
+import type { TParadiseGate } from "@plane/constants";
 import type { IWorkspaceSearchResults } from "@plane/types";
 // hooks
 import { useAppRouter } from "@/hooks/use-app-router";
 // helpers
 import { PowerKModalCommandItem } from "./command-item";
 import { POWER_K_SEARCH_RESULTS_GROUPS_MAP } from "./search-results-map";
+
+/** Kustomisasi Paradise: grup hasil pencarian milik modul yang dimatikan di God Mode disembunyikan. */
+const MODUL_PER_GRUP: Partial<Record<string, TParadiseGate>> = {
+  cycle: PARADISE_REMOVED,
+  module: "modules",
+  issue_view: "views",
+  page: "pages",
+};
+
+const isGrupAktif = (key: string) => {
+  const module = MODUL_PER_GRUP[key];
+  return module === undefined ? true : isParadiseGateActive(module);
+};
 
 type Props = {
   closePalette: () => void;
@@ -34,7 +49,7 @@ export const PowerKModalSearchResults = observer(function PowerKModalSearchResul
         const section = results.results[key as keyof typeof results.results];
         const currentSection = POWER_K_SEARCH_RESULTS_GROUPS_MAP[key as keyof typeof POWER_K_SEARCH_RESULTS_GROUPS_MAP];
 
-        if (!currentSection) return null;
+        if (!currentSection || !isGrupAktif(key)) return null;
         if (section.length <= 0) return null;
 
         return (

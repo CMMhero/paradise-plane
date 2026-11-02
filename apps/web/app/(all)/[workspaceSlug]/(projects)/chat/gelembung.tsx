@@ -81,17 +81,17 @@ export function Gelembung(props: Props) {
         {/* Kutipan pesan yang dibalas. Ditaruh DI DALAM gelembung supaya
             terbaca sebagai bagian dari pesan ini, bukan pesan tersendiri. */}
         {pesan.balasan_ke ? (
-          <div className={`mb-1.5 rounded border-l-2 pl-2 ${dariSaya ? "border-white/50" : "border-accent-primary"}`}>
-            <p className={`text-xs font-medium ${redup}`}>{namaOrang(pesan.balasan_ke.pengirim)}</p>
-            <p className={`text-xs line-clamp-2 ${redup}`}>{pesan.balasan_ke.isi || t("chat_ui.attachment")}</p>
+          <div className={`mb-1.5 rounded border-l-2 pl-2 ${dariSaya ? "border-white/50" : "border-accent-strong"}`}>
+            <p className={`text-12 font-medium ${redup}`}>{namaOrang(pesan.balasan_ke.pengirim)}</p>
+            <p className={`line-clamp-2 text-12 ${redup}`}>{pesan.balasan_ke.isi || t("chat_ui.attachment")}</p>
           </div>
         ) : null}
 
-        {pesan.isi ? <p className="text-sm break-words whitespace-pre-wrap">{denganTautan(pesan.isi)}</p> : null}
+        {pesan.isi ? <p className="text-13 break-words whitespace-pre-wrap">{denganTautan(pesan.isi)}</p> : null}
         <DaftarLampiran lampiran={pesan.lampiran} terang={dariSaya} />
 
         {akhirKelompok || pesan.disunting ? (
-          <p className={`text-xs mt-1 flex items-center gap-1 ${redup}`}>
+          <p className={`mt-1 flex items-center gap-1 text-12 ${redup}`}>
             {renderFormattedTime(pesan.created_at)}
             {pesan.disunting ? <span>· {t("chat_ui.edited")}</span> : null}
             {/* Tanda dibaca hanya untuk pesan KELUAR. Menampilkannya pada pesan
@@ -117,8 +117,8 @@ export function Gelembung(props: Props) {
                 type="button"
                 onClick={() => props.onReaksi?.(pesan, r.emoji)}
                 title={r.orang.map(namaOrang).join(", ")}
-                className={`text-xs flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${
-                  punyaSaya ? "border-accent-primary text-accent-primary" : "border-subtle text-secondary"
+                className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-12 ${
+                  punyaSaya ? "border-accent-strong text-accent-primary" : "border-subtle text-secondary"
                 } hover:bg-layer-1`}
               >
                 <span>{r.emoji}</span>
@@ -177,7 +177,7 @@ export function Gelembung(props: Props) {
                   props.onReaksi?.(pesan, e);
                   setPilihReaksi(false);
                 }}
-                className="text-sm rounded px-0.5 hover:bg-layer-2"
+                className="rounded px-0.5 text-13 hover:bg-layer-2"
               >
                 {e}
               </button>

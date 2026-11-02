@@ -97,21 +97,21 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <h3 className="text-xl font-medium">{t("connections_ui.title")}</h3>
-        <p className="text-sm mt-1 text-secondary">{t("connections_ui.description")}</p>
+        <h3 className="text-18 font-medium">{t("connections_ui.title")}</h3>
+        <p className="mt-1 text-13 text-secondary">{t("connections_ui.description")}</p>
       </div>
 
       <div className="rounded-lg border border-subtle p-5">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
             <h4 className="font-medium">Google Calendar</h4>
-            <p className="text-sm mt-1 text-secondary">{t("connections_ui.google_description")}</p>
+            <p className="mt-1 text-13 text-secondary">{t("connections_ui.google_description")}</p>
 
             {status?.tersambung && (
               // Tidak menampilkan alamat akun Google di sini: izin yang kita
               // minta tidak mencakup pembacaan profil, jadi nilainya tidak
               // tersedia tanpa meminta izin tambahan yang tidak sepadan.
-              <dl className="text-sm mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+              <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-13">
                 <dt className="text-secondary">{t("connections_ui.status")}</dt>
                 <dd>{t("connections_ui.connected")}</dd>
                 <dt className="text-secondary">{t("connections_ui.last_sync")}</dt>
@@ -120,7 +120,7 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
             )}
 
             {status?.galat_terakhir && (
-              <p className="text-sm text-danger mt-3">
+              <p className="mt-3 text-13 text-danger-primary">
                 {t("connections_ui.sync_failed", { error: status.galat_terakhir })}
               </p>
             )}
@@ -129,7 +129,7 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
               // Tanpa penjelasan ini, tombol yang mati terlihat seperti aplikasi
               // yang rusak, dan orang akan melapor ke IT alih-alih ke yang bisa
               // mengisinya di God Mode.
-              <p className="text-sm mt-3 text-secondary">{t("connections_ui.unavailable")}</p>
+              <p className="mt-3 text-13 text-secondary">{t("connections_ui.unavailable")}</p>
             )}
           </div>
 

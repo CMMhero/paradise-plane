@@ -9,6 +9,8 @@ import useSWR from "swr";
 import type { TPage } from "@plane/types";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+// lib
+import { WIKI_PROJECT_IDENTIFIER } from "@/lib/wiki-project";
 // services
 import { ProjectPageService } from "@/services/page";
 import { WikiAccessService, type TWikiFolderPermission } from "@/services/wiki_access.service";
@@ -28,11 +30,9 @@ const layananHalaman = new ProjectPageService();
 const layananAkses = new WikiAccessService();
 const layananMateri = new WikiMaterialService();
 
-const IDENTIFIER_WIKI = "WIKI";
-
 export const useProjectWiki = () => {
   const { getProjectByIdentifier, loader } = useProject();
-  const project = getProjectByIdentifier(IDENTIFIER_WIKI);
+  const project = getProjectByIdentifier(WIKI_PROJECT_IDENTIFIER);
   return { projectId: project?.id, sedangMemuat: loader === "init-loader", project };
 };
 
@@ -45,11 +45,16 @@ export const usePohonWiki = (workspaceSlug?: string, projectId?: string) => {
   return { halaman: data, sedangMemuat: isLoading, muatUlang: mutate };
 };
 
+/**
+ * Izin SENGAJA ikut segar saat tab kembali difokus (bawaan SWR global). Izin
+ * bisa berubah dari luar halaman ini: admin mengatur pemilik folder di tab
+ * lain, atau penempatan divisi diubah di God Mode. Mematikannya membuat tombol
+ * unggah dan kelola baru muncul setelah refresh penuh.
+ */
 export const useIzinWiki = (workspaceSlug?: string, projectId?: string) => {
   const { data, mutate } = useSWR(
     workspaceSlug && projectId ? `WIKI_PERMISSIONS_${projectId}` : null,
-    workspaceSlug && projectId ? () => layananAkses.fetchPermissions(workspaceSlug, projectId) : null,
-    { revalidateOnFocus: false }
+    workspaceSlug && projectId ? () => layananAkses.fetchPermissions(workspaceSlug, projectId) : null
   );
   return { izin: data, muatUlangIzin: mutate };
 };

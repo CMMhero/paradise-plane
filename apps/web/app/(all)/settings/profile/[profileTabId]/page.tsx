@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 // plane imports
 import { PROFILE_SETTINGS, PROFILE_SETTINGS_TABS } from "@plane/constants";
@@ -15,8 +16,10 @@ import { PageHead } from "@/components/core/page-title";
 import { ProfileSettingsContent } from "@/components/settings/profile/content";
 import { ProfileSettingsSidebarRoot } from "@/components/settings/profile/sidebar";
 // hooks
+import { useInstance } from "@/hooks/store/use-instance";
 import { useUser } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { isProfileTabAvailable, PROFILE_TAB_FALLBACK } from "@/lib/profile-tabs";
 // local imports
 import type { Route } from "../+types/layout";
 
@@ -26,12 +29,20 @@ function ProfileSettingsPage(props: Route.ComponentProps) {
   const router = useAppRouter();
   // store hooks
   const { data: currentUser } = useUser();
+  const { config } = useInstance();
   // translation
   const { t } = useTranslation();
   // derived values
   const isAValidTab = PROFILE_SETTINGS_TABS.includes(profileTabId as TProfileSettingsTabs);
+  // Tab yang ada tapi tak tersedia di instance ini (mis. Connections tanpa
+  // kredensial Google) dialihkan, bukan dibiarkan memutar spinner selamanya.
+  const isTabUnavailable = isAValidTab && !isProfileTabAvailable(config, profileTabId as TProfileSettingsTabs);
 
-  if (!currentUser || !isAValidTab)
+  useEffect(() => {
+    if (isTabUnavailable) router.replace(`/settings/profile/${PROFILE_TAB_FALLBACK}`);
+  }, [isTabUnavailable, router]);
+
+  if (!currentUser || !isAValidTab || isTabUnavailable)
     return (
       <div className="grid size-full place-items-center px-4">
         <LogoSpinner />

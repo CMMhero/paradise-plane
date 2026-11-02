@@ -7,12 +7,28 @@
 import { orderBy, clone, set } from "lodash-es";
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 // plane imports
-import type { THomeWidgetKeys, TWidgetEntityData } from "@plane/types";
+import { isParadiseModuleActive } from "@plane/constants";
+import type { THomeWidgetKeys, TParadiseModule, TWidgetEntityData } from "@plane/types";
 // plane web services
 import { WorkspaceService } from "@/services/workspace.service";
 // store
 import type { IWorkspaceLinkStore } from "./link.store";
 import { WorkspaceLinkStore } from "./link.store";
+
+/**
+ * Widget Home milik modul God Mode: modulnya mati, widgetnya ikut hilang.
+ * Stickies dan Quick links tampil di DUA tempat, widget Home dan menu
+ * sidebar beserta halamannya, jadi satu saklar mengatur keduanya.
+ */
+const MODUL_PER_WIDGET: Partial<Record<THomeWidgetKeys, TParadiseModule>> = {
+  my_stickies: "stickies",
+  quick_links: "quick_links",
+};
+
+const isHomeWidgetAvailable = (key: THomeWidgetKeys): boolean => {
+  const module = MODUL_PER_WIDGET[key];
+  return module ? isParadiseModuleActive(module) : true;
+};
 
 export interface IHomeStore {
   // observables
@@ -71,12 +87,18 @@ export class HomeStore implements IHomeStore {
     this.quickLinks = new WorkspaceLinkStore();
   }
 
+  // Widget yang modulnya dimatikan di God Mode tidak tampil di Home maupun di
+  // dialog kelola widget. Barisnya tetap tersimpan di backend.
+  private get homeWidgets() {
+    return Object.values(this.widgetsMap).filter((widget) => isHomeWidgetAvailable(widget.key));
+  }
+
   get isAnyWidgetEnabled() {
-    return Object.values(this.widgetsMap).some((widget) => widget.is_enabled);
+    return this.homeWidgets.some((widget) => widget.is_enabled);
   }
 
   get orderedWidgets() {
-    return orderBy(Object.values(this.widgetsMap), "sort_order", "desc").map((widget) => widget.key);
+    return orderBy(this.homeWidgets, "sort_order", "desc").map((widget) => widget.key);
   }
 
   toggleWidgetSettings = (value?: boolean) => {

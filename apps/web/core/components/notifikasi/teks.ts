@@ -119,6 +119,13 @@ const AKSI: Record<string, (a: TAktivitas, t: TTerjemah) => string> = {
   description: (_a, t) => t("notification_ui.action.description"),
   archived_at: (a, t) =>
     t(a.new_value === "restore" ? "notification_ui.action.restored" : "notification_ui.action.archived"),
+  // Baris tenggat dari sistem (deadline_reminder_task): new_value = selisih hari.
+  deadline: (a, t) => {
+    const selisih = Number(a.new_value ?? 0);
+    if (selisih > 0) return t("notif_prefs_ui.inbox_overdue", { count: selisih });
+    if (selisih === 0) return t("notif_prefs_ui.inbox_due_today");
+    return t("notif_prefs_ui.inbox_due_in", { count: -selisih });
+  },
 };
 
 const kalimat = (n: TNotifikasiRingkas, t: TTerjemah) => {
@@ -149,6 +156,10 @@ export const ringkasNotifikasi = (n: TNotifikasiRingkas, t: TTerjemah): TRingkas
   const kode = tugas?.identifier && tugas?.sequence_id ? `${tugas.identifier}-${tugas.sequence_id} ` : "";
   const judul = tugas?.name ? `${kode}${tugas.name}` : n.title || t("notification_ui.new_notification");
 
+  // Pengingat tenggat tidak punya pemicu: "Seseorang terlambat 3 hari" itu salah.
+  if (n.data?.issue_activity?.field === "deadline") {
+    return { judul: potong(judul, 90), isi: potong(kalimat(n, t), BATAS_ISI) };
+  }
   return { judul: potong(judul, 90), isi: potong(`${nama} ${kalimat(n, t)}`, BATAS_ISI) };
 };
 

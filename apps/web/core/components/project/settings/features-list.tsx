@@ -6,11 +6,12 @@
 
 import { observer } from "mobx-react";
 // plane imports
+import { isParadiseModuleActive } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { setPromiseToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import type { IProject } from "@plane/types";
-import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon } from "@plane/propel/icons";
+import type { IProject, TParadiseModule } from "@plane/types";
+import { IntakeIcon, ModuleIcon, PageIcon, ViewsIcon } from "@plane/propel/icons";
 // components
 import { SettingsBoxedControlItem } from "@/components/settings/boxed-control-item";
 import { SettingsHeading } from "@/components/settings/heading";
@@ -28,15 +29,6 @@ type Props = {
 };
 
 const PROJECT_FEATURES_LIST = {
-  cycles: {
-    key: "cycles",
-    property: "cycle_view",
-    title: "Cycles",
-    description: "Timebox work as you see fit per project and change frequency from one period to the next.",
-    icon: <CycleIcon className="h-5 w-5 flex-shrink-0 rotate-180 text-tertiary" />,
-    isPro: false,
-    isEnabled: true,
-  },
   modules: {
     key: "modules",
     property: "module_view",
@@ -73,6 +65,14 @@ const PROJECT_FEATURES_LIST = {
     isPro: false,
     isEnabled: true,
   },
+};
+
+/** Fitur project yang dimatikan di God Mode tidak bisa dinyalakan per project. */
+const MODUL_PER_FITUR_PROJECT: Record<keyof typeof PROJECT_FEATURES_LIST, TParadiseModule> = {
+  modules: "modules",
+  views: "views",
+  pages: "pages",
+  inbox: "intake",
 };
 
 export const ProjectFeaturesList = observer(function ProjectFeaturesList(props: Props) {
@@ -113,36 +113,40 @@ export const ProjectFeaturesList = observer(function ProjectFeaturesList(props: 
       <div>
         <SettingsHeading title={t("projects_and_issues")} description={t("projects_and_issues_description")} />
         <div className="mt-6 flex flex-col gap-y-4">
-          {Object.entries(PROJECT_FEATURES_LIST).map(([featureItemKey, featureItem]) => (
-            <div key={featureItemKey}>
-              <SettingsBoxedControlItem
-                title={
-                  <span className="flex items-center gap-2">
-                    {t(featureItem.key)}
-                    {featureItem.isPro && (
-                      <Tooltip tooltipContent="Pro feature" position="top">
-                        <UpgradeBadge className="rounded-sm" />
-                      </Tooltip>
-                    )}
-                  </span>
-                }
-                description={t(`${featureItem.key}_description`)}
-                control={
-                  <ProjectFeatureToggle
-                    workspaceSlug={workspaceSlug}
-                    projectId={projectId}
-                    featureItem={featureItem}
-                    value={Boolean(currentProjectDetails?.[featureItem.property as keyof IProject])}
-                    handleSubmit={handleSubmit}
-                    disabled={!isAdmin}
-                  />
-                }
-              />
-              {/* {currentProjectDetails?.[featureItem.property as keyof IProject] && (
+          {Object.entries(PROJECT_FEATURES_LIST)
+            .filter(([featureItemKey]) =>
+              isParadiseModuleActive(MODUL_PER_FITUR_PROJECT[featureItemKey as keyof typeof PROJECT_FEATURES_LIST])
+            )
+            .map(([featureItemKey, featureItem]) => (
+              <div key={featureItemKey}>
+                <SettingsBoxedControlItem
+                  title={
+                    <span className="flex items-center gap-2">
+                      {t(featureItem.key)}
+                      {featureItem.isPro && (
+                        <Tooltip tooltipContent="Pro feature" position="top">
+                          <UpgradeBadge className="rounded-sm" />
+                        </Tooltip>
+                      )}
+                    </span>
+                  }
+                  description={t(`${featureItem.key}_description`)}
+                  control={
+                    <ProjectFeatureToggle
+                      workspaceSlug={workspaceSlug}
+                      projectId={projectId}
+                      featureItem={featureItem}
+                      value={Boolean(currentProjectDetails?.[featureItem.property as keyof IProject])}
+                      handleSubmit={handleSubmit}
+                      disabled={!isAdmin}
+                    />
+                  }
+                />
+                {/* {currentProjectDetails?.[featureItem.property as keyof IProject] && (
                 <div className="pl-14">{featureItem.renderChildren?.(currentProjectDetails, workspaceSlug)}</div>
               )} */}
-            </div>
-          ))}
+              </div>
+            ))}
         </div>
       </div>
     </>

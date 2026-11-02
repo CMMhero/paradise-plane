@@ -57,7 +57,16 @@ export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: 
   // router
   const router = useAppRouter();
   // store hooks
-  const { createWorkspace } = useWorkspace();
+  const { createWorkspace, getWorkspaceRedirectionUrl } = useWorkspace();
+  // Kustomisasi Paradise: router.back() diam saja kalau halaman ini dibuka
+  // langsung (tab baru, tautan, muat ulang). React Router mencatat urutan riwayat
+  // di history.state.idx; idx 0 berarti tak ada halaman aplikasi sebelumnya, jadi
+  // pulang ke workspace terakhir.
+  const handleGoBack = () => {
+    const historyIndex = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (historyIndex > 0) router.back();
+    else router.push(getWorkspaceRedirectionUrl());
+  };
   // form info
   const {
     handleSubmit,
@@ -245,7 +254,7 @@ export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: 
           {isSubmitting ? t(primaryButtonText.loading) : t(primaryButtonText.default)}
         </Button>
         {!secondaryButton && (
-          <Button variant="secondary" type="button" size="xl" onClick={() => router.back()}>
+          <Button variant="secondary" type="button" size="xl" onClick={handleGoBack}>
             {t("common.go_back")}
           </Button>
         )}

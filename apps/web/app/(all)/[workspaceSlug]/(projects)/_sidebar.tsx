@@ -14,6 +14,7 @@ import { useLocalStorage } from "@plane/hooks";
 import { ResizableSidebar } from "@/components/sidebar/resizable-sidebar";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
+import { useAppRailVisibility } from "@/lib/app-rail";
 // local imports
 import { ExtendedAppSidebar } from "./extended-sidebar";
 import { AppSidebar } from "./sidebar";
@@ -28,6 +29,7 @@ export const ProjectAppSidebar = observer(function ProjectAppSidebar() {
     isExtendedSidebarOpened,
     isAnySidebarDropdownOpen,
   } = useAppTheme();
+  const { shouldRenderAppRail } = useAppRailVisibility();
   const { storedValue, setValue } = useLocalStorage("sidebarWidth", SIDEBAR_WIDTH);
   // states
   const [sidebarWidth, setSidebarWidth] = useState<number>(storedValue ?? SIDEBAR_WIDTH);
@@ -42,7 +44,11 @@ export const ProjectAppSidebar = observer(function ProjectAppSidebar() {
   // handlers
   const handleWidthChange = (width: number) => setValue(width);
 
-  if (isNotificationsPath) return null;
+  // Kustomisasi Paradise: upstream menyembunyikan sidebar di Inbox karena app
+  // rail yang jadi jalan pulang. App rail di sini mati, jadi Inbox tanpa
+  // sidebar adalah jalan buntu (keluar hanya lewat tombol Back browser).
+  // Sidebar hanya disembunyikan kalau rail benar-benar tampil.
+  if (isNotificationsPath && shouldRenderAppRail) return null;
 
   return (
     <>

@@ -19,6 +19,7 @@ import { CountChip } from "@/components/common/count-chip";
 import { useWorkspaceNotifications } from "@/hooks/store/notifications";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 // plane web components
+import { ExtendedAppHeader } from "@/plane-web/components/common/extended-app-header";
 import { NotificationListRoot } from "@/plane-web/components/workspace-notifications/list-root";
 // local imports
 import { NotificationEmptyState } from "./empty-state";
@@ -64,15 +65,26 @@ export const NotificationsSidebarRoot = observer(function NotificationsSidebarRo
     >
       <div className="relative flex h-full w-full flex-col">
         <Row className="flex h-header flex-shrink-0 border-b border-subtle">
-          <NotificationSidebarHeader workspaceSlug={workspaceSlug.toString()} />
+          {/* ExtendedAppHeader memberi tombol buka sidebar saat sidebar diciutkan,
+              sama seperti header halaman lain. */}
+          <ExtendedAppHeader header={<NotificationSidebarHeader workspaceSlug={workspaceSlug.toString()} />} />
         </Row>
 
         <Header variant={EHeaderVariant.SECONDARY} className="justify-start">
           {NOTIFICATION_TABS.map((tab) => (
             <div
               key={tab.value}
+              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- tab wraps block-level divs; <button> content model forbids them
+              role="button"
+              tabIndex={0}
               className="relative h-full cursor-pointer px-3"
               onClick={() => handleTabClick(tab.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleTabClick(tab.value);
+                }
+              }}
             >
               <div
                 className={cn(

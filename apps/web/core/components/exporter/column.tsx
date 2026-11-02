@@ -35,7 +35,7 @@ export const useExportColumns = () => {
                   />
                 </span>
               ) : (
-                <span className="bg-gray-700 relative flex h-4 w-4 items-center justify-center rounded-full text-11 text-on-color capitalize">
+                <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-label-grey-bg-strong text-11 text-on-color capitalize">
                   {(email ?? display_name ?? "?")[0]}
                 </span>
               )}
@@ -80,12 +80,12 @@ export const useExportColumns = () => {
             rowData.status === "completed"
               ? "bg-success-subtle text-success-primary"
               : rowData.status === "processing"
-                ? "bg-yellow-500/20 text-yellow-500"
+                ? "bg-warning-subtle text-warning-primary"
                 : rowData.status === "failed"
                   ? "bg-danger-subtle text-danger-primary"
                   : rowData.status === "expired"
-                    ? "bg-orange-500/20 text-orange-500"
-                    : "bg-gray-500/20 text-gray-500"
+                    ? "bg-label-orange-bg text-label-orange-text"
+                    : "bg-label-grey-bg text-label-grey-text"
           }`}
         >
           {rowData.status}

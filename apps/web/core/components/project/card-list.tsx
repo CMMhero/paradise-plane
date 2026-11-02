@@ -18,6 +18,7 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectFilter } from "@/hooks/store/use-project-filter";
 import { useUserPermissions } from "@/hooks/store/user";
+import { isWikiProject } from "@/lib/wiki-project";
 // local imports
 import { ProjectCard } from "./card";
 
@@ -43,7 +44,10 @@ export const ProjectCardList = observer(function ProjectCardList(props: TProject
   const { allowPermissions } = useUserPermissions();
 
   // derived values
-  const workspaceProjectIds = totalProjectIdsProps ?? storeWorkspaceProjectIds;
+  // Paradise: Wiki bukan project bagi pengguna, jadi tidak ikut menentukan layar kosong.
+  const workspaceProjectIds = (totalProjectIdsProps ?? storeWorkspaceProjectIds)?.filter(
+    (id) => !isWikiProject(getProjectById(id))
+  );
   const filteredProjectIds = filteredProjectIdsProps ?? storeFilteredProjectIds;
 
   // permissions

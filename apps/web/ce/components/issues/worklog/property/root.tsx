@@ -5,6 +5,7 @@
  * See the LICENSE file for details.
  */
 
+import { isParadiseFeatureEnabled } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
@@ -41,7 +42,7 @@ const displayName = (log: TIssueWorkLog, t: TTerjemah): string => {
   return d.display_name || [d.first_name, d.last_name].filter(Boolean).join(" ") || t("chat_ui.member");
 };
 
-export const IssueWorklogProperty = observer(function IssueWorklogProperty(props: TIssueWorklogProperty) {
+const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyContent(props: TIssueWorklogProperty) {
   const { t } = useTranslation();
   const { workspaceSlug, projectId, issueId, disabled } = props;
   // store
@@ -102,7 +103,11 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
     try {
       await worklogService.remove(workspaceSlug, projectId, issueId, log.id);
       await fetchLogs();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: t("worklog_ui.deleted_title"), message: t("worklog_ui.deleted_message") });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("worklog_ui.deleted_title"),
+        message: t("worklog_ui.deleted_message"),
+      });
     } catch (err: unknown) {
       const message = (err as { error?: string })?.error ?? t("worklog_ui.delete_failed");
       setToast({ type: TOAST_TYPE.ERROR, title: t("worklog_ui.failed"), message });
@@ -114,12 +119,12 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
   return (
     <div className="flex w-full flex-col gap-2 border-t border-subtle py-3">
       <div className="flex items-center justify-between">
-        <div className="text-sm flex items-center gap-1.5 text-secondary">
+        <div className="flex items-center gap-1.5 text-13 text-secondary">
           <Clock className="size-4" />
           <span>{t("worklog_ui.title")}</span>
         </div>
         {total > 0 && (
-          <span className="text-xs rounded bg-layer-3 px-1.5 py-0.5 font-medium text-primary">
+          <span className="rounded bg-layer-3 px-1.5 py-0.5 text-12 font-medium text-primary">
             {formatDuration(total, t)}
           </span>
         )}
@@ -135,12 +140,12 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
                 className="group flex items-start justify-between gap-2 rounded px-1 py-1 hover:bg-layer-2"
               >
                 <div className="min-w-0">
-                  <div className="text-xs flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 text-12">
                     <span className="font-medium text-primary">{formatDuration(log.duration, t)}</span>
                     <span className="text-tertiary">·</span>
                     <span className="truncate text-tertiary">{displayName(log, t)}</span>
                   </div>
-                  {log.description && <p className="text-xs truncate text-tertiary">{log.description}</p>}
+                  {log.description && <p className="truncate text-12 text-tertiary">{log.description}</p>}
                 </div>
                 {canDelete && (
                   <button
@@ -149,7 +154,7 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
                     className="opacity-0 transition group-hover:opacity-100"
                     aria-label={t("worklog_ui.delete")}
                   >
-                    <Trash2 className="hover:text-red-500 size-3.5 text-tertiary" />
+                    <Trash2 className="size-3.5 text-tertiary hover:text-danger-primary" />
                   </button>
                 )}
               </div>
@@ -166,7 +171,7 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
             placeholder={t("worklog_ui.hours")}
             value={hours}
             onChange={(e) => setHours(e.target.value)}
-            className="text-xs focus:border-accent w-14 rounded border border-subtle bg-layer-1 px-1.5 py-1 outline-none"
+            className="w-14 rounded border border-subtle bg-layer-1 px-1.5 py-1 text-12 outline-none focus:border-accent-strong"
           />
           <input
             type="number"
@@ -175,20 +180,20 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
             placeholder={t("worklog_ui.minutes")}
             value={minutes}
             onChange={(e) => setMinutes(e.target.value)}
-            className="text-xs focus:border-accent w-16 rounded border border-subtle bg-layer-1 px-1.5 py-1 outline-none"
+            className="w-16 rounded border border-subtle bg-layer-1 px-1.5 py-1 text-12 outline-none focus:border-accent-strong"
           />
           <input
             type="text"
             placeholder={t("worklog_ui.note_placeholder")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="text-xs focus:border-accent min-w-0 flex-1 rounded border border-subtle bg-layer-1 px-1.5 py-1 outline-none"
+            className="min-w-0 flex-1 rounded border border-subtle bg-layer-1 px-1.5 py-1 text-12 outline-none focus:border-accent-strong"
           />
           <button
             type="button"
             disabled={isSubmitting}
             onClick={handleAdd}
-            className="bg-accent text-xs flex items-center gap-1 rounded px-2 py-1 font-medium text-on-color disabled:opacity-50"
+            className="flex items-center gap-1 rounded bg-accent-primary px-2 py-1 text-12 font-medium text-on-color hover:bg-accent-primary-hover disabled:opacity-50"
             aria-label={t("worklog_ui.add")}
           >
             <Plus className="size-3.5" />
@@ -198,3 +203,9 @@ export const IssueWorklogProperty = observer(function IssueWorklogProperty(props
     </div>
   );
 });
+
+/** Dimatikan lewat PARADISE_FEATURES.timeTracking: tak ada panel, tak ada request worklog. */
+export function IssueWorklogProperty(props: TIssueWorklogProperty) {
+  if (!isParadiseFeatureEnabled("timeTracking")) return null;
+  return <IssueWorklogPropertyContent {...props} />;
+}

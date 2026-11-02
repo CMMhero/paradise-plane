@@ -81,7 +81,7 @@ function WikiBerandaPage() {
     return (
       <div className="flex h-full w-full items-center justify-center p-8 text-center">
         <div className="max-w-md">
-          <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.home.unavailable_title")}</h2>
+          <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.home.unavailable_title")}</h2>
           <p className="mt-1 text-13 text-tertiary">{t("wiki_ui.home.unavailable_message")}</p>
           <p className="mt-3 text-13 text-tertiary">{t("wiki_ui.home.unavailable_admin_hint")}</p>
         </div>
@@ -93,7 +93,7 @@ function WikiBerandaPage() {
       <PageHead title={t("wiki_ui.home.title")} />
       <div className="flex h-full w-full flex-col overflow-y-auto">
         <div className="border-b border-subtle bg-surface-1 px-page-x py-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-primary">{t("wiki_ui.home.title")}</h1>
+          <h1 className="text-24 font-semibold tracking-tight text-primary">{t("wiki_ui.home.title")}</h1>
           <p className="mt-1 max-w-2xl text-13 text-tertiary">{t("wiki_ui.home.description")}</p>
           <div className="mt-5">
             {projectId && <PencarianWiki workspaceSlug={slug} projectId={projectId} onAktif={setMencari} />}
@@ -104,7 +104,7 @@ function WikiBerandaPage() {
           <div className="flex-1 px-page-x py-6">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">
-                <h2 className="text-15 font-semibold text-primary">{t("wiki_ui.home.pick_division")}</h2>
+                <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.home.pick_division")}</h2>
                 <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
                   {t("wiki_ui.home.division_count", { count: divisi.length })}
                 </span>

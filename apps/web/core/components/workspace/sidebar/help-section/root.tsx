@@ -16,6 +16,7 @@ import { CustomMenu } from "@plane/ui";
 import { AppSidebarItem } from "@/components/sidebar/sidebar-item";
 // hooks
 import { usePowerK } from "@/hooks/store/use-power-k";
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 // Menu bantuan ini dulu mengarah ke properti upstream: docs go.plane.so,
 // mailto sales@plane.so, forum.plane.so, dan modal changelog produk Plane.
@@ -26,6 +27,7 @@ export const HelpMenuRoot = observer(function HelpMenuRoot() {
   // store hooks
   const { t } = useTranslation();
   const { toggleShortcutsListModal } = usePowerK();
+  const { isModuleEnabled } = useParadiseModules();
   // routers
   const { workspaceSlug } = useParams();
   // states
@@ -50,13 +52,18 @@ export const HelpMenuRoot = observer(function HelpMenuRoot() {
         maxHeight="lg"
         closeOnSelect
       >
-        <CustomMenu.MenuItem onClick={() => window.open(`/${workspaceSlug}/wiki/`, "_self")}>
-          <div className="flex items-center gap-x-2 rounded-sm text-11">
-            <PageIcon className="h-3.5 w-3.5 text-secondary" height={14} width={14} />
-            <span className="text-11">{t("documentation")}</span>
-          </div>
-        </CustomMenu.MenuItem>
-        <div className="my-1 border-t border-subtle" />
+        {/* Kustomisasi Paradise: "Dokumentasi" = Wiki, ikut saklar modulnya. */}
+        {isModuleEnabled("wiki") && (
+          <>
+            <CustomMenu.MenuItem onClick={() => window.open(`/${workspaceSlug}/wiki/`, "_self")}>
+              <div className="flex items-center gap-x-2 rounded-sm text-11">
+                <PageIcon className="h-3.5 w-3.5 text-secondary" height={14} width={14} />
+                <span className="text-11">{t("documentation")}</span>
+              </div>
+            </CustomMenu.MenuItem>
+            <div className="my-1 border-t border-subtle" />
+          </>
+        )}
         <CustomMenu.MenuItem>
           <button
             type="button"
