@@ -49,7 +49,13 @@ from plane.db.models import (
     STATUS_PERSETUJUAN_DITOLAK,
     STATUS_PERSETUJUAN_MENUNGGU,
 )
-from plane.utils.hierarki import boleh_memutuskan, calon_penyetuju, gerbang_aktif, tingkat_anggota
+from plane.utils.hierarki import boleh_memutuskan, calon_penyetuju, gerbang_aktif, peta_tingkat, tingkat_anggota
+
+# Batas baris yang SUDAH diputuskan dalam satu balasan GET. Baris menunggu tidak
+# pernah dipotong (itu pekerjaan yang harus dilihat); riwayat keputusan
+# (`peran=pemohon`, tanpa `peran`, `?tugas=`) diambil 200 terbaru saja. Tanpa batas,
+# staf yang rajin mengajukan membuat daftarnya tumbuh selamanya.
+BATAS_RIWAYAT = 200
 
 
 def _q_daftar(user):
@@ -57,13 +63,57 @@ def _q_daftar(user):
     return Q(pemohon=user) | Q(status=STATUS_PERSETUJUAN_MENUNGGU)
 
 
-def _serial(baris, peran, boleh_memutuskan):
+class _Wewenang:
+    """Calon penyetuju + "boleh saya putuskan" satu project, dihitung SEKALI.
+
+    BUG-11: dulu GET menghitung `calon_penyetuju` dua kali dan `tingkat_anggota`
+    sekali per calon untuk SETIAP baris (~180 kueri per baris di data lokal, 6 baris
+    = 1.085 kueri / 2,4 dtk). Semua baris satu balasan milik project yang sama, jadi
+    jawabannya sama untuk semuanya. Aturannya tidak berubah: `boleh_memutuskan`
+    tetap satu-satunya penentu, di sini ia cuma diberi daftar yang sudah jadi.
+    """
+
+    def __init__(self, user):
+        self.user = user
+        self._cache = {}
+        self._peta = {}
+
+    def _hitung(self, workspace_id, project_id):
+        kunci = (str(workspace_id), str(project_id))
+        if kunci not in self._cache:
+            if kunci[0] not in self._peta:
+                self._peta[kunci[0]] = peta_tingkat(workspace_id)
+            peta = self._peta[kunci[0]]
+            calon = calon_penyetuju(workspace_id, project_id, peta=peta)
+            self._cache[kunci] = (
+                # Tingkat dari peta yang sama dengan `tingkat_anggota` (MAX per orang).
+                [{"id": str(uid), "tingkat": peta.get(uid)} for uid in calon],
+                boleh_memutuskan(self.user, workspace_id, project_id, penyetuju=calon),
+            )
+        return self._cache[kunci]
+
+    def penyetuju(self, baris):
+        return self._hitung(baris.workspace_id, baris.project_id)[0]
+
+    def boleh(self, baris):
+        return self._hitung(baris.workspace_id, baris.project_id)[1]
+
+
+def _serial(baris, peran, boleh_memutuskan, penyetuju=None):
     """Daftar-putih. Sengaja BUKAN `fields = "__all__"`.
 
     Yang menyeberang cuma nomor & judul tugas, status keputusan, dan daftar calon
     penyetuju. Tidak ada assignee lain, label, atau isi deskripsi -- alasan yang sama
     dengan proyeksi lintas divisi (`.herdr/crossdiv-desain.md` §3 poin 2).
+
+    `penyetuju` = daftar `{id, tingkat}` yang sudah dihitung (`_Wewenang`). None =
+    hitung di sini, cukup untuk balasan satu baris (POST).
     """
+    if penyetuju is None:
+        penyetuju = [
+            {"id": str(uid), "tingkat": tingkat_anggota(uid, baris.workspace_id)}
+            for uid in calon_penyetuju(baris.workspace_id, baris.project_id)
+        ]
     return {
         "id": str(baris.id),
         "peran_saya": peran,
@@ -77,6 +127,10 @@ def _serial(baris, peran, boleh_memutuskan):
                 else None
             ),
             "judul": baris.issue.name if baris.issue_id else None,
+            # Status tugas SAAT INI. Di balasan POST keputusan ini status SESUDAH
+            # setujui (Done) / tolak (In Progress), supaya papan memindahkan kartu
+            # tanpa muat ulang (KEP-55).
+            "state_id": str(baris.issue.state_id) if baris.issue_id and baris.issue.state_id else None,
         },
         "pemohon": {
             "id": str(baris.pemohon_id),
@@ -92,10 +146,7 @@ def _serial(baris, peran, boleh_memutuskan):
         # Dihitung ULANG saat dibaca, BUKAN disimpan: begitu God Mode mengisi jenjang
         # orangnya, label "belum ada penyetuju" hilang sendiri tanpa ada yang perlu
         # membersihkan data lama.
-        "penyetuju_di_divisi": [
-            {"id": str(uid), "tingkat": tingkat_anggota(uid, baris.workspace_id)}
-            for uid in calon_penyetuju(baris.workspace_id, baris.project_id)
-        ],
+        "penyetuju_di_divisi": penyetuju,
         "created_at": baris.created_at,
     }
 
@@ -276,20 +327,30 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             # apa pun (KEP-38), jadi log keputusannya juga.
             dasar = dasar.filter(_q_daftar(request.user))
 
+        # Terbaru dulu. Menunggu selalu utuh; riwayat keputusan dipotong
+        # `BATAS_RIWAYAT` (indeks `persetujuan_proyek_status_idx` menutup keduanya).
+        dasar = dasar.order_by("-created_at")
+        semua = list(dasar.filter(status=STATUS_PERSETUJUAN_MENUNGGU))
+        if sudut != "penyetuju":
+            semua += list(dasar.exclude(status=STATUS_PERSETUJUAN_MENUNGGU)[:BATAS_RIWAYAT])
+            semua.sort(key=lambda b: b.created_at, reverse=True)
+
+        wewenang = _Wewenang(request.user)
         hasil = []
-        for baris in dasar:
+        for baris in semua:
             # Atasan yang sah saja; Super Admin hanya kalau divisi tanpa atasan sama
-            # sekali (lihat `boleh_memutuskan`).
+            # sekali (lihat `boleh_memutuskan`). Dihitung sekali per project.
             boleh = (
-                boleh_memutuskan(request.user, baris.workspace_id, baris.project_id)
-                and baris.pemohon_id != request.user.id
+                baris.pemohon_id != request.user.id
                 and baris.status == STATUS_PERSETUJUAN_MENUNGGU
+                and wewenang.boleh(baris)
             )
             hasil.append(
                 _serial(
                     baris,
                     "pemohon" if baris.pemohon_id == request.user.id else "penyetuju",
                     boleh,
+                    penyetuju=wewenang.penyetuju(baris),
                 )
             )
 
@@ -327,7 +388,8 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         # Diperiksa ULANG di sini, bukan dipercaya dari daftar: kewenangan bisa berubah
         # antara menampilkan daftar dan menekan tombol. Super Admin lolos sebagai
         # jalan keluar (B1), cermin pengecualian yang sama di kunci persetujuan.
-        if not boleh_memutuskan(request.user, baris.workspace_id, baris.project_id):
+        wewenang = _Wewenang(request.user)
+        if not wewenang.boleh(baris):
             return Response(
                 {"error": "Anda bukan atasan pembuat di divisi ini, jadi tidak dapat memutuskan."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -370,7 +432,11 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         # lalu mengajukan ulang dengan menggeser ke selesai lagi (atau `ajukan-ulang`).
         if aksi == "tolak" and baris.issue_id:
             self._kembalikan_tugas(request, baris)
-        return Response(_serial(baris, "penyetuju", False))
+        # `baris.issue` dimuat SEBELUM status dipindah (objek lain yang disimpan),
+        # jadi dibaca ulang: `tugas.state_id` di balasan wajib status sesudahnya.
+        if baris.issue_id:
+            baris.issue.refresh_from_db(fields=["state"])
+        return Response(_serial(baris, "penyetuju", False, penyetuju=wewenang.penyetuju(baris)))
 
     def _selesaikan_tugas(self, request, baris):
         """Pindahkan tugas ke status selesai setelah atasan menyetujui.

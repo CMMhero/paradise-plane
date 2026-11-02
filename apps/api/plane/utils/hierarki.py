@@ -382,7 +382,7 @@ def divisi_diawasi(user_id, workspace_id):
     return set()
 
 
-def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None):
+def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None, peta=None):
     """Orang-orang yang boleh menyetujui penugasan di project ini.
 
     Aturannya (rancangan §5.4): tingkat **lebih tinggi** dari pembuat DAN mengawasi
@@ -394,18 +394,27 @@ def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None):
     SEMUA orang yang mengawasi divisi itu dianggap calon penyetuju — lebih baik
     daripada tidak ada seorang pun, karena yang terakhir itu membuat penugasan
     menggantung tanpa jalan keluar.
+
+    `peta` boleh dikirim pemanggil yang sudah memegang `peta_tingkat(workspace_id)`
+    (antrean persetujuan) supaya tidak dibaca dua kali. Fungsi ini MAHAL: satu
+    `divisi_diawasi` per calon (~5 kueri tiap orang). Pemanggil yang melayani banyak
+    baris wajib menghitungnya sekali per project, bukan per baris (BUG-11).
     """
     if project_id is None:
         return []
 
-    peta = peta_tingkat(workspace_id)
+    if peta is None:
+        peta = peta_tingkat(workspace_id)
     kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
     if tingkat_pembuat is not None:
         kandidat = [uid for uid in kandidat if peta[uid] > tingkat_pembuat]
 
+    # Dibandingkan sebagai string: id dari URL/serializer bisa str atau UUID, dan
+    # `UUID in {str}` selalu False tanpa error (pelajaran `_bawahan_ids` 2026-10-16).
+    target = str(project_id)
     hasil = []
     for uid in kandidat:
-        if project_id in divisi_diawasi(uid, workspace_id):
+        if target in {str(p) for p in divisi_diawasi(uid, workspace_id)}:
             hasil.append(uid)
     return sorted(hasil, key=lambda uid: -peta[uid])
 
@@ -653,15 +662,19 @@ def selesai_perlu_persetujuan(project_id, actor, state_baru, penerima_ids, sudah
     return butuh_persetujuan(actor, project_id, penerima_ids or [])
 
 
-def boleh_memutuskan(user, workspace_id, project_id):
+def boleh_memutuskan(user, workspace_id, project_id, penyetuju=None):
     """Bolehkah `user` menyetujui/menolak pengajuan di project ini?
 
     Hanya atasan yang sah (`calon_penyetuju`: jenjang lebih tinggi dan mengawasi
     divisinya). Super Admin hanya jalan keluar kalau divisi itu SAMA SEKALI tidak
     punya atasan, supaya pengajuan tidak menggantung selamanya. Super Admin yang
     berjenjang staf tidak bisa menyetujui staf lain "atas nama atasan".
+
+    `penyetuju` = hasil `calon_penyetuju(workspace_id, project_id)` yang sudah
+    dihitung pemanggil. Aturannya tetap di sini; yang dihemat hanya hitungannya.
     """
-    penyetuju = calon_penyetuju(workspace_id, project_id)
+    if penyetuju is None:
+        penyetuju = calon_penyetuju(workspace_id, project_id)
     if user.id in penyetuju:
         return True
     if penyetuju:
