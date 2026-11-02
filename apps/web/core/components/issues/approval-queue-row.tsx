@@ -10,11 +10,10 @@
 
 import { useRef } from "react";
 import { observer } from "mobx-react";
-import { AlertTriangle, CheckCircle2, Clock, Send, XCircle } from "lucide-react";
+import { AlertTriangle, Send } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
-import { EPillSize, EPillVariant, Pill } from "@plane/propel/pill";
 import { Tooltip } from "@plane/propel/tooltip";
 import { Avatar } from "@plane/ui";
 import { getFileURL, renderFormattedDate } from "@plane/utils";
@@ -27,22 +26,16 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 import type { TPersetujuanPenugasan } from "@/services/persetujuan.service";
 // local imports
 import { ApprovalDecisionButtons, usePutuskanPersetujuan } from "./approval-actions";
+import { ApprovalStatusChip } from "./approval-card-badge";
 
-type TStatusPillProps = { baris: TPersetujuanPenugasan };
+type TStatusBarisProps = { baris: TPersetujuanPenugasan };
 
-function StatusPill({ baris }: TStatusPillProps) {
+/** Chip status bersama + tooltip pemutus/tanggal/alasan untuk baris yang sudah diputuskan. */
+function StatusBaris({ baris }: TStatusBarisProps) {
   const { t } = useTranslation();
+  if (baris.status === "menunggu") return <ApprovalStatusChip status="menunggu" />;
+
   const tanggal = renderFormattedDate(baris.diputuskan_pada) ?? "-";
-
-  if (baris.status === "menunggu") {
-    return (
-      <Pill variant={EPillVariant.WARNING} size={EPillSize.XS} className="gap-1">
-        <Clock className="size-3 shrink-0" aria-hidden />
-        {t("issue.approval.badge.pending")}
-      </Pill>
-    );
-  }
-
   const disetujui = baris.status === "disetujui";
   const siapa = baris.diputuskan_oleh_nama
     ? t(disetujui ? "issue.approval.queue.row_approved_by" : "issue.approval.queue.row_rejected_by", {
@@ -54,25 +47,15 @@ function StatusPill({ baris }: TStatusPillProps) {
     !disetujui && baris.alasan ? t("issue.approval.queue.rejection_reason", { reason: baris.alasan }) : null;
 
   return (
-    <Tooltip
+    <ApprovalStatusChip
+      status={baris.status}
       tooltipContent={
         <span className="flex max-w-72 flex-col gap-1">
           <span>{siapa}</span>
           {alasan && <span className="text-tertiary">{alasan}</span>}
         </span>
       }
-    >
-      <span className="cursor-default">
-        <Pill variant={disetujui ? EPillVariant.SUCCESS : EPillVariant.ERROR} size={EPillSize.XS} className="gap-1">
-          {disetujui ? (
-            <CheckCircle2 className="size-3 shrink-0" aria-hidden />
-          ) : (
-            <XCircle className="size-3 shrink-0" aria-hidden />
-          )}
-          {disetujui ? t("issue.approval.badge.approved") : t("issue.approval.badge.rejected")}
-        </Pill>
-      </span>
-    </Tooltip>
+    />
   );
 }
 
@@ -117,7 +100,7 @@ export const ApprovalQueueRow = observer(function ApprovalQueueRow(props: TAppro
               </span>
             </Tooltip>
           )}
-          <StatusPill baris={baris} />
+          <StatusBaris baris={baris} />
           <Tooltip
             tooltipContent={t("issue.approval.queue.row_submitted", {
               name: namaPemohon,
