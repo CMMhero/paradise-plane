@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Akses wiki",
-      "description": "Pilih divisi mana yang boleh mengedit setiap folder tingkat teratas. Semua anggota proyek tetap dapat membaca seluruh halaman."
-    },
     "trash": {
       "heading": "Tong sampah",
       "description": "Barang yang dihapus mampir ke sini sebelum benar-benar dibuang. Admin project bisa memulihkannya atau membuangnya permanen."

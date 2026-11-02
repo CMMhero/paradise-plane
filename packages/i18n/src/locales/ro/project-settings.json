@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Acces la wiki",
-      "description": "Alegeți ce divizii pot edita fiecare folder de nivel superior. Toți membrii proiectului pot citi în continuare toate paginile."
-    },
     "trash": {
       "heading": "Coș de gunoi",
       "description": "Elementele șterse ajung aici înainte de a fi eliminate definitiv. Administratorii proiectului le pot restaura sau elimina permanent."

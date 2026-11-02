@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Prístup k wiki",
-      "description": "Vyberte, ktoré divízie môžu upravovať každý priečinok najvyššej úrovne. Všetci členovia projektu môžu naďalej čítať všetky stránky."
-    },
     "trash": {
       "heading": "Kôš",
       "description": "Odstránené položky sa sem presunú predtým, než budú trvalo zmazané. Správcovia projektu ich môžu obnoviť alebo trvalo odstrániť."

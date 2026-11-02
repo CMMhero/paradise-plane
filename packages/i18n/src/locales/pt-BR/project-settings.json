@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Acesso ao wiki",
-      "description": "Escolha quais divisões podem editar cada pasta de nível superior. Todos os membros do projeto continuam podendo ler todas as páginas."
-    },
     "trash": {
       "heading": "Lixeira",
       "description": "Itens excluídos vão para cá antes de serem removidos definitivamente. Administradores do projeto podem restaurá-los ou removê-los permanentemente."

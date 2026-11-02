@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Wiki-Zugriff",
-      "description": "Wählen Sie aus, welche Abteilungen die einzelnen Ordner der obersten Ebene bearbeiten dürfen. Alle Projektmitglieder können weiterhin jede Seite lesen."
-    },
     "trash": {
       "heading": "Papierkorb",
       "description": "Gelöschte Elemente landen hier, bevor sie endgültig entfernt werden. Projektadmins können sie wiederherstellen oder endgültig löschen."

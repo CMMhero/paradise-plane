@@ -522,10 +522,6 @@
         }
       }
     },
-    "wiki_access": {
-      "heading": "Accès au wiki",
-      "description": "Choisissez les divisions autorisées à modifier chaque dossier de premier niveau. Tous les membres du projet peuvent toujours lire chaque page."
-    },
     "trash": {
       "heading": "Corbeille",
       "description": "Les éléments supprimés arrivent ici avant d'être définitivement effacés. Les administrateurs du projet peuvent les restaurer ou les supprimer définitivement."
