@@ -9,8 +9,8 @@
    komponen DAN nilai biasa mematikan Fast Refresh untuk berkas itu, setiap
    sunting jadi reload halaman penuh, bukan hot swap. */
 
-export const inputClass =
-  "rounded border border-subtle bg-layer-1 px-2 py-1.5 text-body-sm-regular text-primary outline-none focus:border-accent-primary";
+/** Same input style as every custom God Mode page. */
+export { inputClass } from "@/components/common/paradise-styles";
 
 /** Nilai `WorkspaceMember.role` di backend (`ROLE_CHOICES`).
  * Label tampil TIDAK dari sini — pakai kamus God Mode

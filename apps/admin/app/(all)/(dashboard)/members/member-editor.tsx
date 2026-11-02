@@ -4,23 +4,24 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Satu panel, satu tombol Simpan, untuk semua sumbu orang ini:
+ * Satu modal, satu tombol Simpan, untuk semua sumbu orang ini:
  * - Data akun (nama, email, hak akses workspace, password) — PATCH members.
  * - Jabatan organisasi + "divisi yang dia bawahi" — POST hierarki.
  * - Divisi tempat ia anggota — POST divisi-anggota (atomik).
  *
  * Tiga panggilan berurutan, berhenti di yang pertama gagal supaya tidak ada
- * keadaan setengah jadi. Gaya mengikuti EditMember (yang digantikan berkas ini):
- * `space-y-3 border-t border-subtle bg-layer-1 p-4`, label `text-11`, catatan
- * `text-11 text-secondary`, tombol Simpan/Batal yang sama.
+ * keadaan setengah jadi. Tampilan: ParadiseModal dengan Panel per bagian
+ * (Akun, Organisasi, Preferensi, Super Admin, Zona bahaya); Simpan/Batal di
+ * kaki yang lengket supaya tidak perlu menggulir ke bawah untuk menyimpan.
  *
  * Peran divisi DITURUNKAN dari jabatan, bukan dipilih: manager/supervisor =
  * Admin divisi (20), member/belum-diisi = Member (15). Keputusan user 2026-10-16.
  */
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, Trash2 } from "lucide-react";
+import { Building2, KeyRound, Settings2, ShieldAlert, ShieldCheck, Trash2, UserRound } from "lucide-react";
 // plane imports
+import { Badge } from "@plane/propel/badge";
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
@@ -37,9 +38,12 @@ import {
   type TPilihanDepartemen,
   type TPilihanDivisi,
 } from "@plane/services";
+import { CustomSearchSelect, CustomSelect, Input } from "@plane/ui";
+// components
+import { EModalWidth, Field, Panel, ParadiseModal, PersonAvatar } from "@/components/common/paradise-ui";
 // local
 import { cocokKonfirmasiGrant, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
-import { inputClass, PERAN_DEFAULT } from "./constants";
+import { PERAN_DEFAULT } from "./constants";
 import { DivisiPicker } from "./divisi-picker";
 import { PreferensiMember, useMemberPreferences } from "./preferensi";
 
@@ -63,6 +67,14 @@ const pesanGagal = (err: unknown, fallback: string): string => {
   const pesan = (err as { error?: string } | undefined)?.error;
   return typeof pesan === "string" && pesan.length > 0 ? pesan : fallback;
 };
+
+/** Pecah kalimat bertanda {placeholder} supaya bagian tengahnya bisa ditebalkan/dikode. */
+const pecah = (kalimat: string, sisip: string): [string, string] => {
+  const i = kalimat.indexOf(sisip);
+  return i < 0 ? [kalimat, ""] : [kalimat.slice(0, i), kalimat.slice(i + sisip.length)];
+};
+
+const TOMBOL_SELECT = "w-full rounded-md border-subtle bg-layer-2";
 
 type Props = {
   member: TInstanceMember;
@@ -92,14 +104,18 @@ type Props = {
   sibukSuperAdmin?: boolean;
 };
 
+const NAMA_DIVISI_KOSONG: Record<string, string> = {};
+const DEPARTEMEN_KOSONG: TPilihanDepartemen[] = [];
+const DIVISI_KOSONG: TPilihanDivisi[] = [];
+
 export function MemberEditor({
   member,
   hierarki,
   daftarDivisi,
   petaDivisi,
-  namaDivisi = {},
-  pilihanDepartemen = [],
-  pilihanDivisi = [],
+  namaDivisi = NAMA_DIVISI_KOSONG,
+  pilihanDepartemen = DEPARTEMEN_KOSONG,
+  pilihanDivisi = DIVISI_KOSONG,
   onSelesai,
   onTutup,
   onCabutSuperAdmin,
@@ -107,7 +123,7 @@ export function MemberEditor({
 }: Props) {
   const { s, fill } = useGodmodeStrings();
   const opsiTingkat = pilihanTingkat(s);
-  // --- data akun (dari EditMember) ---
+  // --- data akun ---
   const [nama, setNama] = useState(member.display_name);
   const [email, setEmail] = useState(member.email);
   const [peran, setPeran] = useState(member.workspace_role ?? PERAN_DEFAULT);
@@ -157,8 +173,8 @@ export function MemberEditor({
   const passwordTerlaluPendek = password.length > 0 && password.length < 8;
 
   const simpanAkun = async (): Promise<number> => {
-    // Kirim HANYA yang berubah — pola EditMember: tulis-ulang email mengakhiri
-    // sesi orangnya tanpa alasan.
+    // Kirim HANYA yang berubah: tulis-ulang email mengakhiri sesi orangnya
+    // tanpa alasan.
     const patch: TMemberUpdate = {};
     if (nama.trim() && nama.trim() !== member.display_name) patch.display_name = nama.trim();
     if (email.trim().toLowerCase() !== member.email.toLowerCase()) patch.email = email.trim().toLowerCase();
@@ -254,182 +270,238 @@ export function MemberEditor({
   const opsiAwasi = daftarDivisi.filter((d) => divisi.includes(d) || awasi.includes(d));
   const masuk = hierarki === undefined ? [] : divisi.filter((d) => !hierarki.divisi.includes(d));
   const keluar = hierarki === undefined ? [] : hierarki.divisi.filter((d) => !divisi.includes(d));
+  const labelPeran: Record<number, string> = {
+    20: s.members.role_admin,
+    15: s.members.role_member,
+    5: s.members.role_guest,
+  };
+  const [instruksiAwal, instruksiAkhir] = pecah(
+    fill(s.editor.confirm_instruction, { phrase: s.editor.confirm_phrase }),
+    s.editor.confirm_phrase
+  );
 
   return (
-    <div className="space-y-3 border-t border-subtle bg-layer-1 px-4 py-3">
-      <div className="w-full space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="space-y-1">
-            <span className="block text-11 text-secondary">{s.editor.name}</span>
-            <input className={`${inputClass} w-full`} value={nama} onChange={(e) => setNama(e.target.value)} />
-          </label>
-
-          <label className="space-y-1">
-            <span className="block text-11 text-secondary">{s.editor.email}</span>
-            <input
-              className={`${inputClass} w-full`}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </label>
-
-          <div className="space-y-1">
-            <span className="block text-11 text-secondary">{s.editor.workspace}</span>
-            <PemilihWorkspace nilai={wsSlug} onUbah={setWsSlug} />
-          </div>
-
-          <label className="space-y-1">
-            <span className="block text-11 text-secondary">{s.editor.workspace_role}</span>
-            <select className={`${inputClass} w-full`} value={peran} onChange={(e) => setPeran(Number(e.target.value))}>
-              <option value={20}>{s.members.role_admin}</option>
-              <option value={15}>{s.members.role_member}</option>
-              <option value={5}>{s.members.role_guest}</option>
-            </select>
-          </label>
-
-          <label className="space-y-1">
-            <span className="block text-11 text-secondary">{s.editor.new_password}</span>
-            <input
-              className={`${inputClass} w-full`}
-              type="password"
-              autoComplete="new-password"
-              placeholder={s.editor.password_hint}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
-        </div>
-
-        {passwordTerlaluPendek && <p className="text-danger text-11">{s.editor.password_too_short}</p>}
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          <label className="space-y-1">
-            <span className="block text-11 text-secondary">{s.editor.position}</span>
-            <select
-              className={`${inputClass} w-full`}
-              value={tingkat}
-              onChange={(e) => setTingkat(e.target.value)}
-              disabled={hierarki === undefined}
-            >
-              {opsiTingkat.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {strukturAktif && hierarki !== undefined && (
-            <Penempatan
-              tingkat={Number(tingkat)}
-              departemenId={departemenId}
-              divisiId={divisiId}
-              onDepartemen={setDepartemenId}
-              onDivisi={setDivisiId}
-              pilihanDepartemen={pilihanDepartemen}
-              pilihanDivisi={pilihanDivisi}
-            />
+    <ParadiseModal
+      isOpen
+      onClose={onTutup}
+      width={EModalWidth.XXXXL}
+      leading={<PersonAvatar name={member.display_name || member.email} size="lg" />}
+      title={
+        <span className="flex items-center gap-2">
+          <span className="truncate">{member.display_name || member.email}</span>
+          {member.is_super_admin && (
+            <Badge variant="warning" prependIcon={<ShieldCheck />}>
+              {s.supercell.label}
+            </Badge>
           )}
-
-          <div className={strukturAktif ? "space-y-1 sm:col-span-3" : "space-y-1 sm:col-span-2"}>
-            <span className="block text-11 text-secondary">
-              {strukturAktif
-                ? fill(s.editor.extra_projects, { n: divisi.length })
-                : fill(s.editor.divisions, { n: divisi.length })}
-            </span>
-            {hierarki === undefined ? (
-              <p className="text-11 text-secondary">{s.editor.not_workspace_member}</p>
-            ) : (
-              <>
-                <DivisiPicker opsi={daftarDivisi} dipilih={divisi} onUbah={setDivisi} nama={namaDivisi} />
-                {(masuk.length > 0 || keluar.length > 0) && (
-                  <p className="text-11 text-secondary">
-                    {masuk.length > 0 && `${fill(s.editor.joined, { list: masuk.join(", ") })} `}
-                    {keluar.length > 0 && fill(s.editor.left, { list: keluar.join(", ") })}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {tampilAwasi && (
-          <div className="space-y-1">
-            <span className="block text-11 text-secondary">{s.editor.supervised}</span>
-            <DivisiPicker
-              opsi={opsiAwasi}
-              dipilih={awasi}
-              onUbah={setAwasi}
-              nama={namaDivisi}
-              placeholder={s.editor.supervised_empty}
-            />
-            <p className="text-11 text-secondary">{s.editor.supervised_note}</p>
-          </div>
-        )}
-
-        <PreferensiMember nilai={pref.nilai} gagal={pref.gagal} onProfil={pref.ubahProfil} onNotif={pref.ubahNotif} />
-
-        <p className="text-11 text-secondary">{s.editor.password_note}</p>
-
-        {member.is_super_admin ? (
-          <div className="border-warning-primary/30 flex flex-wrap items-center gap-2 rounded border bg-warning-subtle/20 px-3 py-2">
-            <ShieldCheck className="size-4 shrink-0 text-warning-primary" aria-hidden />
-            <span className="text-11 font-medium text-primary">{s.editor.superadmin_badge}</span>
-            <Button variant="secondary" size="sm" disabled={sibukSuperAdmin} onClick={onCabutSuperAdmin}>
-              {s.editor.revoke}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-1.5 rounded border border-subtle px-3 py-2">
-            <span className="block text-11 font-medium text-secondary">{s.editor.make_superadmin}</span>
-            <span className="block text-11 text-tertiary">{s.editor.make_superadmin_note}</span>
-            <p className="text-11 text-secondary">
-              {
-                fill(s.editor.confirm_instruction, { phrase: s.editor.confirm_phrase }).split(
-                  s.editor.confirm_phrase
-                )[0]
-              }
-              <code className="font-mono rounded bg-layer-2 px-1 py-0.5 text-primary">{s.editor.confirm_phrase}</code>
-              {
-                fill(s.editor.confirm_instruction, { phrase: s.editor.confirm_phrase }).split(
-                  s.editor.confirm_phrase
-                )[1]
-              }
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                className={`${inputClass} min-w-[200px] flex-1`}
-                type="text"
-                autoComplete="off"
-                placeholder={s.editor.confirm_phrase}
-                aria-label={s.editor.confirm_phrase}
-                aria-invalid={frasa.length > 0 && !frasaCocok}
-                value={frasa}
-                onChange={(e) => setFrasa(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && frasaCocok && !sibukGrant) handleGrant();
-                }}
-              />
-              <Button variant="primary" size="sm" disabled={sibukGrant || !frasaCocok} onClick={handleGrant}>
-                {s.editor.grant_superadmin}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <Button variant="primary" size="sm" disabled={sibuk || passwordTerlaluPendek} onClick={handleSimpan}>
-            {s.editor.save}
-          </Button>
+        </span>
+      }
+      subtitle={member.email}
+      closeLabel={s.editor.close}
+      footerNote={s.editor.password_note}
+      footer={
+        <>
           <Button variant="secondary" size="sm" disabled={sibuk} onClick={onTutup}>
             {s.editor.cancel}
           </Button>
-        </div>
+          <Button variant="primary" size="sm" loading={sibuk} disabled={passwordTerlaluPendek} onClick={handleSimpan}>
+            {s.editor.save}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <Panel
+          icon={<UserRound className="size-4" />}
+          title={s.editor.section_account}
+          description={s.editor.section_account_note}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={s.editor.name}>
+              <Input className="w-full" value={nama} onChange={(e) => setNama(e.target.value)} />
+            </Field>
+            <Field label={s.editor.email}>
+              <Input className="w-full" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </Field>
+            <PemilihWorkspace nilai={wsSlug} onUbah={setWsSlug} />
+            <Field label={s.editor.workspace_role}>
+              <CustomSelect
+                value={peran}
+                label={labelPeran[peran] ?? s.members.role_member}
+                onChange={(v: number) => setPeran(Number(v))}
+                buttonClassName={TOMBOL_SELECT}
+                className="w-full"
+                input
+              >
+                {[20, 15, 5].map((v) => (
+                  <CustomSelect.Option key={v} value={v}>
+                    {labelPeran[v]}
+                  </CustomSelect.Option>
+                ))}
+              </CustomSelect>
+            </Field>
+            <Field
+              label={s.editor.new_password}
+              hint={s.editor.password_hint}
+              error={passwordTerlaluPendek ? s.editor.password_too_short : undefined}
+            >
+              <Input
+                className="w-full"
+                type="password"
+                autoComplete="new-password"
+                hasError={passwordTerlaluPendek}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </Field>
+          </div>
+        </Panel>
+
+        <Panel
+          icon={<Building2 className="size-4" />}
+          title={s.editor.section_org}
+          description={hierarki === undefined ? s.editor.not_workspace_member : s.editor.section_org_note}
+        >
+          {hierarki !== undefined && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={s.editor.position}>
+                <CustomSelect
+                  value={tingkat}
+                  label={opsiTingkat.find((p) => p.value === tingkat)?.label}
+                  onChange={(v: string) => setTingkat(v)}
+                  buttonClassName={TOMBOL_SELECT}
+                  className="w-full"
+                  input
+                >
+                  {opsiTingkat.map((p) => (
+                    <CustomSelect.Option key={p.value} value={p.value}>
+                      {p.label}
+                    </CustomSelect.Option>
+                  ))}
+                </CustomSelect>
+              </Field>
+
+              {strukturAktif && (
+                <Penempatan
+                  tingkat={Number(tingkat)}
+                  departemenId={departemenId}
+                  divisiId={divisiId}
+                  onDepartemen={setDepartemenId}
+                  onDivisi={setDivisiId}
+                  pilihanDepartemen={pilihanDepartemen}
+                  pilihanDivisi={pilihanDivisi}
+                />
+              )}
+
+              <Field
+                className="sm:col-span-2"
+                label={
+                  strukturAktif
+                    ? fill(s.editor.extra_projects, { n: divisi.length })
+                    : fill(s.editor.divisions, { n: divisi.length })
+                }
+                hint={
+                  masuk.length > 0 || keluar.length > 0
+                    ? [
+                        masuk.length > 0 ? fill(s.editor.joined, { list: masuk.join(", ") }) : "",
+                        keluar.length > 0 ? fill(s.editor.left, { list: keluar.join(", ") }) : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
+                    : undefined
+                }
+              >
+                <DivisiPicker opsi={daftarDivisi} dipilih={divisi} onUbah={setDivisi} nama={namaDivisi} />
+              </Field>
+
+              {tampilAwasi && (
+                <Field className="sm:col-span-2" label={s.editor.supervised} hint={s.editor.supervised_note}>
+                  <DivisiPicker
+                    opsi={opsiAwasi}
+                    dipilih={awasi}
+                    onUbah={setAwasi}
+                    nama={namaDivisi}
+                    placeholder={s.editor.supervised_empty}
+                  />
+                </Field>
+              )}
+            </div>
+          )}
+        </Panel>
+
+        <Panel
+          icon={<Settings2 className="size-4" />}
+          title={s.editor.section_prefs}
+          description={s.editor.section_prefs_note}
+        >
+          <PreferensiMember
+            nilai={pref.nilai}
+            gagal={pref.gagal}
+            onProfil={pref.ubahProfil}
+            onNotif={pref.ubahNotif}
+            onNavigasi={pref.ubahNavigasi}
+            onTataLetak={pref.ubahTataLetak}
+          />
+        </Panel>
+
+        {member.is_super_admin ? (
+          <Panel
+            tone="warning"
+            icon={<ShieldCheck className="size-4" />}
+            title={s.editor.section_superadmin}
+            description={s.editor.superadmin_badge}
+            actions={
+              <Button variant="secondary" size="sm" loading={sibukSuperAdmin} onClick={onCabutSuperAdmin}>
+                {s.editor.revoke}
+              </Button>
+            }
+          />
+        ) : (
+          <Panel
+            icon={<KeyRound className="size-4" />}
+            title={s.editor.make_superadmin}
+            description={s.editor.make_superadmin_note}
+          >
+            <div className="space-y-2">
+              <p className="text-12 text-secondary">
+                {instruksiAwal}
+                <code className="rounded-sm bg-layer-2 px-1 py-0.5 font-code text-primary">
+                  {s.editor.confirm_phrase}
+                </code>
+                {instruksiAkhir}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  className="min-w-[220px] flex-1"
+                  type="text"
+                  autoComplete="off"
+                  placeholder={s.editor.confirm_phrase}
+                  aria-label={s.editor.confirm_phrase}
+                  hasError={frasa.length > 0 && !frasaCocok}
+                  value={frasa}
+                  onChange={(e) => setFrasa(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && frasaCocok && !sibukGrant) void handleGrant();
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  prependIcon={<ShieldAlert />}
+                  loading={sibukGrant}
+                  disabled={!frasaCocok}
+                  onClick={handleGrant}
+                >
+                  {s.editor.grant_superadmin}
+                </Button>
+              </div>
+            </div>
+          </Panel>
+        )}
 
         <ZonaHapus member={member} onSelesai={onSelesai} onTutup={onTutup} />
       </div>
-    </div>
+    </ParadiseModal>
   );
 }
 
@@ -458,49 +530,81 @@ function Penempatan({
   const { s } = useGodmodeStrings();
   if (tingkat >= TINGKAT_DIREKTUR) {
     return (
-      <div className="space-y-1 sm:col-span-2">
-        <span className="block text-11 text-secondary">{s.editor.placement}</span>
-        <p className="text-11 text-secondary">{s.editor.director_note}</p>
-      </div>
+      <Field label={s.editor.placement}>
+        <p className="rounded-md border border-subtle bg-layer-2 px-3 py-2 text-12 text-secondary">
+          {s.editor.director_note}
+        </p>
+      </Field>
     );
   }
   if (tingkat >= TINGKAT_MANAGER) {
+    const pilihan = pilihanDivisi.find((v) => v.id === divisiId);
     return (
-      <label className="space-y-1 sm:col-span-2">
-        <span className="block text-11 text-secondary">{s.editor.led_division}</span>
-        <select className={`${inputClass} w-full`} value={divisiId} onChange={(e) => onDivisi(e.target.value)}>
-          <option value="">{s.editor.not_placed}</option>
-          {pilihanDivisi.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.nama} ({v.kode})
-            </option>
-          ))}
-        </select>
-        <span className="block text-11 text-tertiary">{s.editor.manager_note}</span>
-      </label>
+      <Field label={s.editor.led_division} hint={s.editor.manager_note}>
+        <CustomSearchSelect
+          value={divisiId}
+          label={pilihan ? `${pilihan.nama} · ${pilihan.kode}` : s.editor.not_placed}
+          onChange={(v: string) => onDivisi(v)}
+          buttonClassName={TOMBOL_SELECT}
+          className="w-full"
+          input
+          options={[
+            {
+              value: "",
+              query: s.editor.not_placed,
+              content: <span className="text-tertiary">{s.editor.not_placed}</span>,
+            },
+            ...pilihanDivisi.map((v) => ({
+              value: v.id,
+              query: `${v.nama} ${v.kode}`,
+              content: (
+                <span className="flex w-full items-center justify-between gap-2">
+                  <span className="truncate">{v.nama}</span>
+                  <span className="text-11 text-tertiary">{v.kode}</span>
+                </span>
+              ),
+            })),
+          ]}
+        />
+      </Field>
     );
   }
+  const namaDivisi = Object.fromEntries(pilihanDivisi.map((v) => [v.id, v.nama]));
+  const pilihan = pilihanDepartemen.find((d) => d.id === departemenId);
   return (
-    <label className="space-y-1 sm:col-span-2">
-      <span className="block text-11 text-secondary">{s.editor.department}</span>
-      <select className={`${inputClass} w-full`} value={departemenId} onChange={(e) => onDepartemen(e.target.value)}>
-        <option value="">{s.editor.not_placed}</option>
-        {pilihanDivisi.map((v) => (
-          <optgroup key={v.id} label={v.nama}>
-            {pilihanDepartemen
-              .filter((d) => d.divisi_id === v.id)
-              .map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.nama} ({d.kode})
-                </option>
-              ))}
-          </optgroup>
-        ))}
-      </select>
-      <span className="block text-11 text-tertiary">
-        {tingkat >= TINGKAT_SUPERVISOR ? s.editor.supervisor_note : s.editor.staff_note}
-      </span>
-    </label>
+    <Field
+      label={s.editor.department}
+      hint={tingkat >= TINGKAT_SUPERVISOR ? s.editor.supervisor_note : s.editor.staff_note}
+    >
+      <CustomSearchSelect
+        value={departemenId}
+        label={pilihan ? `${pilihan.nama} · ${namaDivisi[pilihan.divisi_id] ?? ""}` : s.editor.not_placed}
+        onChange={(v: string) => onDepartemen(v)}
+        buttonClassName={TOMBOL_SELECT}
+        className="w-full"
+        input
+        maxHeight="lg"
+        options={[
+          {
+            value: "",
+            query: s.editor.not_placed,
+            content: <span className="text-tertiary">{s.editor.not_placed}</span>,
+          },
+          ...pilihanDepartemen.map((d) => ({
+            value: d.id,
+            query: `${d.nama} ${d.kode} ${namaDivisi[d.divisi_id] ?? ""}`,
+            content: (
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="min-w-0 truncate">
+                  {d.nama} <span className="text-11 text-tertiary">{d.kode}</span>
+                </span>
+                <span className="shrink-0 text-11 text-tertiary">{namaDivisi[d.divisi_id]}</span>
+              </span>
+            ),
+          })),
+        ]}
+      />
+    </Field>
   );
 }
 
@@ -518,6 +622,10 @@ function ZonaHapus({
   const [ketikan, setKetikan] = useState("");
   const [sibuk, setSibuk] = useState(false);
   const cocok = ketikan.trim() === (member.display_name || "").trim() && ketikan.trim().length > 0;
+  const [konfirmasiAwal, konfirmasiAkhir] = pecah(
+    fill(s.editor.delete_confirm, { name: member.display_name }),
+    member.display_name
+  );
 
   const handleHapus = async () => {
     if (!cocok) return;
@@ -546,37 +654,37 @@ function ZonaHapus({
   };
 
   return (
-    <div className="rounded border border-danger-subtle px-3 py-2">
-      {!terbuka ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <Trash2 className="size-4 shrink-0 text-danger-primary" aria-hidden />
-          <span className="text-11 font-medium text-primary">{s.editor.delete_zone}</span>
-          <span className="text-11 text-tertiary">{s.editor.delete_zone_note}</span>
+    <Panel
+      tone="danger"
+      icon={<Trash2 className="size-4" />}
+      title={s.editor.delete_zone}
+      description={s.editor.delete_zone_note}
+      actions={
+        !terbuka && (
           <Button variant="error-outline" size="sm" onClick={() => setTerbuka(true)}>
             {s.editor.delete_open}
           </Button>
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          <p className="text-11 font-medium text-primary">
-            {fill(s.editor.delete_confirm, { name: member.display_name }).split(member.display_name)[0]}
-            <strong>{member.display_name}</strong>
-            {fill(s.editor.delete_confirm, { name: member.display_name }).split(member.display_name)[1]}
+        )
+      }
+    >
+      {terbuka && (
+        <div className="space-y-2">
+          <p className="text-12 text-secondary">
+            {konfirmasiAwal}
+            <strong className="text-primary">{member.display_name}</strong>
+            {konfirmasiAkhir}
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              className={`${inputClass} min-w-[200px] flex-1`}
+            <Input
+              className="min-w-[220px] flex-1"
               placeholder={member.display_name}
               aria-label={member.display_name}
               value={ketikan}
               onChange={(e) => setKetikan(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && cocok && !sibuk) handleHapus();
+                if (e.key === "Enter" && cocok && !sibuk) void handleHapus();
               }}
             />
-            <Button variant="error-fill" size="sm" disabled={sibuk || !cocok} onClick={handleHapus}>
-              {s.editor.delete_now}
-            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -588,13 +696,17 @@ function ZonaHapus({
             >
               {s.editor.cancel}
             </Button>
+            <Button variant="error-fill" size="sm" loading={sibuk} disabled={!cocok} onClick={handleHapus}>
+              {s.editor.delete_now}
+            </Button>
           </div>
         </div>
       )}
-    </div>
+    </Panel>
   );
 }
 
+/** Pemilih workspace; tersembunyi kalau instance hanya punya satu workspace. */
 function PemilihWorkspace({ nilai, onUbah }: { nilai: string; onUbah: (slug: string) => void }) {
   const { s } = useGodmodeStrings();
   const [daftar, setDaftar] = useState<{ slug: string; name: string }[]>([]);
@@ -613,18 +725,21 @@ function PemilihWorkspace({ nilai, onUbah }: { nilai: string; onUbah: (slug: str
   }, []);
   if (daftar.length <= 1) return null;
   return (
-    <select
-      className={`${inputClass} w-full`}
-      value={nilai}
-      aria-label={s.editor.workspace}
-      onChange={(e) => onUbah(e.target.value)}
-    >
-      {nilai === "" && <option value="">{s.editor.workspace_none}</option>}
-      {daftar.map((w) => (
-        <option key={w.slug} value={w.slug}>
-          {w.name}
-        </option>
-      ))}
-    </select>
+    <Field label={s.editor.workspace}>
+      <CustomSelect
+        value={nilai}
+        label={daftar.find((w) => w.slug === nilai)?.name ?? s.editor.workspace_none}
+        onChange={(v: string) => onUbah(v)}
+        buttonClassName={TOMBOL_SELECT}
+        className="w-full"
+        input
+      >
+        {daftar.map((w) => (
+          <CustomSelect.Option key={w.slug} value={w.slug}>
+            {w.name}
+          </CustomSelect.Option>
+        ))}
+      </CustomSelect>
+    </Field>
   );
 }
