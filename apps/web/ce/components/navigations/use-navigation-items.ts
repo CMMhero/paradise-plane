@@ -7,6 +7,7 @@
 import { useMemo, useCallback } from "react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { Stamp } from "lucide-react";
 import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
 import type { EUserProjectRoles, IPartialProject } from "@plane/types";
 import type { TNavigationItem } from "@/components/navigation/tab-navigation-root";
@@ -95,6 +96,18 @@ export const useNavigationItems = ({
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.inbox_view,
         sortOrder: 6,
+      },
+      // Paradise: antrean persetujuan (KEP-55), cermin item di sidebar
+      // (`project-navigation.tsx`) supaya tab header dan sidebar sama.
+      {
+        i18n_key: "sidebar.persetujuan",
+        key: "persetujuan",
+        name: "Approval",
+        href: `/${slug}/projects/${id}/persetujuan`,
+        icon: Stamp,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+        shouldRender: true,
+        sortOrder: 7,
       },
     ],
     [project]
