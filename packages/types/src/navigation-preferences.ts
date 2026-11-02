@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-export type TPersonalNavigationItemKey = "stickies" | "your_work" | "drafts";
+export type TPersonalNavigationItemKey = "stickies" | "your_work" | "drafts" | "quick_links";
 
 export interface TPersonalNavigationItem {
   key: TPersonalNavigationItemKey;
@@ -52,14 +52,17 @@ export interface TNavigationPreferences {
 
 export const DEFAULT_PERSONAL_PREFERENCES: TPersonalNavigationPreferences = {
   items: {
-    stickies: { enabled: false, sort_order: 0 },
+    stickies: { enabled: true, sort_order: 0 },
     your_work: { enabled: true, sort_order: 1 },
     drafts: { enabled: true, sort_order: 2 },
+    quick_links: { enabled: true, sort_order: 3 },
   },
 };
 
+// Paradise: project bertab dan semua project tampil. Cermin bawaan kolom
+// WorkspaceUserProperties dan PABRIK["navigasi"] di plane/utils/bawaan_member.py.
 export const DEFAULT_PROJECT_PREFERENCES: TProjectNavigationPreferences = {
-  navigationMode: "ACCORDION",
+  navigationMode: "TABBED",
   showLimitedProjects: false,
   limitedProjectsCount: 10,
 };

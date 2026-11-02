@@ -86,9 +86,24 @@ export type TLoginEvent = {
   permukaan: string;
 };
 
+export type TLoginHistorySort = `${"" | "-"}${"time" | "person" | "event" | "source" | "medium" | "ip"}`;
+
+/** Nilai ganda dipisah koma; `*_not` = kebalikannya. `none` = nilai kosong (permukaan/medium). */
 export type TLoginHistoryFilter = {
   user_id?: string;
-  jenis?: "LOGIN" | "LOGOUT" | "";
+  user_id_not?: string;
+  jenis?: string;
+  jenis_not?: string;
+  permukaan?: string;
+  permukaan_not?: string;
+  medium?: string;
+  medium_not?: string;
+  ip?: string;
+  search?: string;
+  /** YYYY-MM-DD, di dalam jendela `hari`. */
+  date_from?: string;
+  date_to?: string;
+  sort?: TLoginHistorySort;
   hari?: number;
   page?: number;
   per_page?: number;
@@ -100,6 +115,8 @@ export type TLoginHistoryResponse = {
   per_page: number;
   total_pages: number;
   results: TLoginEvent[];
+  /** Nilai yang benar-benar ada di jendela `hari`, untuk opsi filter. */
+  pilihan?: { permukaan: string[]; medium: string[] };
 };
 
 export class InstanceActivityService extends APIService {

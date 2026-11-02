@@ -217,3 +217,123 @@ th,
   --txt-tertiary: var(--neutral-1100);
   --txt-placeholder: var(--neutral-1000);
 }
+
+/* ==========================================================================
+   Rona label yang didefinisikan tema tapi tidak pernah didaftarkan
+   ==========================================================================
+
+   variables.css mendefinisikan DELAPAN rona label (`--label-<rona>-*`) untuk
+   tema terang dan gelap, tapi blok `@theme`-nya hanya mendaftarkan lima:
+   indigo, emerald, grey, crimson, yellow. Purple, orange, dan pink sudah punya
+   nilai lengkap di kedua tema, hanya tidak bisa dipakai sebagai utilitas
+   (`text-label-purple-icon` menghasilkan NOL CSS, diuji lewat compiler).
+
+   Didaftarkan di sini dengan bentuk tujuh slot yang sama persis, jadi warna
+   tambahan untuk ikon dan kartu tetap ikut tema (terang/gelap/kontras) dan
+   tidak ada satu pun warna yang dikarang. Dipakai lewat peta rona di
+   apps/web/core/components/common/tint.tsx. */
+@theme inline {
+  --color-label-purple-bg: var(--label-purple-bg);
+  --color-label-purple-bg-strong: var(--label-purple-bg-strong);
+  --color-label-purple-hover: var(--label-purple-hover);
+  --color-label-purple-icon: var(--label-purple-icon);
+  --color-label-purple-text: var(--label-purple-text);
+  --color-label-purple-border: var(--label-purple-border);
+  --color-label-purple-focus: var(--label-purple-focus);
+  --color-label-orange-bg: var(--label-orange-bg);
+  --color-label-orange-bg-strong: var(--label-orange-bg-strong);
+  --color-label-orange-hover: var(--label-orange-hover);
+  --color-label-orange-icon: var(--label-orange-icon);
+  --color-label-orange-text: var(--label-orange-text);
+  --color-label-orange-border: var(--label-orange-border);
+  --color-label-orange-focus: var(--label-orange-focus);
+  --color-label-pink-bg: var(--label-pink-bg);
+  --color-label-pink-bg-strong: var(--label-pink-bg-strong);
+  --color-label-pink-hover: var(--label-pink-hover);
+  --color-label-pink-icon: var(--label-pink-icon);
+  --color-label-pink-text: var(--label-pink-text);
+  --color-label-pink-border: var(--label-pink-border);
+  --color-label-pink-focus: var(--label-pink-focus);
+}
+
+/* ==========================================================================
+   Kanvas bernuansa merek, supaya aplikasi tidak abu-abu datar
+   ==========================================================================
+
+   Kanvas adalah bingkai di belakang semua permukaan: rel aplikasi, bilah atas,
+   dan celah di sekitar sidebar serta konten. Di tema bawaan ia abu-abu netral
+   murni (`--neutral-300`, gelap: `--neutral-black`), sehingga seluruh layar
+   terasa monoton.
+
+   Di sini kanvas dicampur SEDIKIT dengan warna merek (`--brand-default`).
+   Permukaan tempat kerja (`surface`, `layer`) TIDAK disentuh, jadi kontras teks
+   dan kartu tetap sama persis; yang berubah hanya bingkainya.
+
+   Disusun dari token, bukan warna yang dikarang. Tema kustom menulis ulang
+   `--neutral-*` dan `--brand-*` lewat style inline di <html>, jadi rona ini
+   ikut warna pilihan orang itu dengan sendirinya. Tema kontras tinggi
+   dikecualikan: orang yang memilihnya meminta pemisahan maksimal, bukan
+   hiasan. */
+:root:not([data-theme*="contrast"]) {
+  --bg-canvas: color-mix(in oklch, var(--neutral-300) 95%, var(--brand-default));
+}
+
+:root[data-theme="dark"] {
+  --bg-canvas: color-mix(in oklch, var(--neutral-black) 93%, var(--brand-default));
+}
+
+/* ==========================================================================
+   Warna merek PT Paradise Perkasa (merah logo), menggantikan biru Plane
+   ==========================================================================
+
+   Sumber: `Company_Logo/Paradise_Perkasa.png`, merah #ED1F24 =
+   oklch(0.6043 0.2335 27.24). Seluruh token aksen (tombol utama, tautan,
+   garis fokus, item terpilih, kanvas bernuansa merek di atas) membaca
+   `--brand-*`, jadi cukup palet ini yang ditimpa.
+
+   `--brand-default` terang SENGAJA sedikit lebih gelap dari logo
+   (#E40A1A, L 0.58). Merah logo apa adanya cuma 4.35:1 terhadap putih,
+   gagal WCAG AA untuk teks kecil, padahal token yang sama dipakai untuk
+   tautan dan label putih di tombol utama. #E40A1A mencapai 4.82:1 dan di
+   mata nyaris tak bisa dibedakan dari logo.
+
+   Tangga lightness tiap langkah meniru palet biru bawaan supaya kontras
+   permukaan (subtle, hover, teks sekunder) tetap sama; hanya hue dan chroma
+   yang diganti, chroma dipotong ke gamut sRGB. Langkah 900/1000 terang
+   (hover/aktif tombol utama) digeser lebih dekat ke default; jarak bawaan
+   0.58 -> 0.43 terlalu jauh untuk sekadar hover.
+
+   Tema kustom (Pengaturan > Tema) tetap menang karena menulis `--brand-*`
+   lewat style inline di <html>. */
+:root {
+  --brand-100: oklch(0.9847 0.0074 27.24);
+  --brand-200: oklch(0.9715 0.014 27.24);
+  --brand-300: oklch(0.9428 0.0287 27.24);
+  --brand-400: oklch(0.9008 0.0516 27.24);
+  --brand-500: oklch(0.8414 0.0872 27.24);
+  --brand-600: oklch(0.7649 0.1395 27.24);
+  --brand-700: oklch(0.6766 0.2114 27.24);
+  --brand-900: oklch(0.51 0.2081 27.24);
+  --brand-1000: oklch(0.44 0.1796 27.24);
+  --brand-1100: oklch(0.2626 0.1076 27.24);
+  --brand-1200: oklch(0.2093 0.0861 27.24);
+  --brand-default: oklch(0.58 0.2335 27.24);
+}
+
+/* Gelap: palet dibalik seperti bawaan Plane. Default dinaikkan ke L 0.64
+   (#FA3231), setara L 0.63 biru gelap bawaan, supaya teks aksen tetap
+   terbaca di atas latar gelap. */
+:root[data-theme*="dark"] {
+  --brand-100: oklch(0.2029 0.0555 27.24);
+  --brand-200: oklch(0.2513 0.0773 27.24);
+  --brand-300: oklch(0.3208 0.1074 27.24);
+  --brand-400: oklch(0.4088 0.1436 27.24);
+  --brand-500: oklch(0.4511 0.1608 27.24);
+  --brand-700: oklch(0.7408 0.1578 27.24);
+  --brand-800: oklch(0.8318 0.0933 27.24);
+  --brand-900: oklch(0.8969 0.0538 27.24);
+  --brand-1000: oklch(0.9409 0.0297 27.24);
+  --brand-1100: oklch(0.9704 0.0145 27.24);
+  --brand-1200: oklch(0.9856 0.007 27.24);
+  --brand-default: oklch(0.64 0.2335 27.24);
+}

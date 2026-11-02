@@ -29,6 +29,8 @@ export interface IUserLite {
   first_name: string;
   id: string;
   is_bot: boolean;
+  /** Akun dihapus dari God Mode: disaring dari daftar member, rujukan lamanya tampil "Deleted account". */
+  is_deleted?: boolean;
   last_name: string;
   joining_date?: string;
 }
@@ -181,16 +183,51 @@ export interface IUserProjectsRole {
   [projectId: string]: TUserPermissions;
 }
 
-export interface IUserEmailNotificationSettings {
-  property_change: boolean;
-  state_change: boolean;
-  comment: boolean;
-  mention: boolean;
-  issue_completed: boolean;
-  /** Kustomisasi Paradise: email pengajuan & keputusan persetujuan. */
-  approval: boolean;
-  /** Kustomisasi Paradise: ringkasan tugas harian lewat email (opt-in, bawaan mati). */
-  daily_digest: boolean;
+/** Kustomisasi Paradise: saklar EMAIL per jenis kabar. Cermin `SAKLAR_EMAIL` di
+ * apps/api/plane/utils/preferensi_email.py. */
+export type TNotificationEmailKey =
+  | "property_change"
+  | "state_change"
+  | "comment"
+  | "mention"
+  | "issue_completed"
+  | "approval"
+  | "daily_digest"
+  | "daily_digest_sore"
+  | "deadline_reminder"
+  | "assigned"
+  | "chat";
+
+/** Saklar INBOX di dalam aplikasi per jenis kabar (`SAKLAR_INBOX`). */
+export type TNotificationInboxKey =
+  | "inbox_assigned"
+  | "inbox_mention"
+  | "inbox_comment"
+  | "inbox_approval"
+  | "inbox_deadline"
+  | "inbox_issue_completed"
+  | "inbox_state_change"
+  | "inbox_property_change"
+  | "inbox_chat";
+
+/** Bagian isi ringkasan harian (`SAKLAR_RINGKASAN`). */
+export type TNotificationDigestKey =
+  | "digest_terlambat"
+  | "digest_hari_ini"
+  | "digest_depan"
+  | "digest_diberikan"
+  | "digest_tim";
+
+export type TNotificationPreferenceKey = TNotificationEmailKey | TNotificationInboxKey | TNotificationDigestKey;
+
+/** Semua saklar satu baris preferensi notifikasi (`SAKLAR_NOTIFIKASI`). */
+export type TNotificationPreferences = Record<TNotificationPreferenceKey, boolean>;
+
+export interface IUserEmailNotificationSettings extends TNotificationPreferences {
+  /** Hidup = saklar mengikuti bawaan jabatan (staf, leader, direktur), bukan pilihan tersimpan. */
+  ikut_bawaan_jabatan: boolean;
+  /** Saklar yang dipaksa mati kebijakan direktur di God Mode. Kosong untuk selain direktur. */
+  dikunci?: TNotificationPreferenceKey[];
 }
 
 export type TProfileViews = "assigned" | "created" | "subscribed";

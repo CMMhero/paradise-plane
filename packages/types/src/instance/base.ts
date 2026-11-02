@@ -7,6 +7,8 @@
 import type { IUserLite } from "../users";
 import type {
   TInstanceAIConfigurationKeys,
+  TInstanceParadiseConfigurationKeys,
+  TParadiseModule,
   TInstanceEmailConfigurationKeys,
   TInstanceImapConfigurationKeys,
   TInstanceImageConfigurationKeys,
@@ -55,6 +57,17 @@ export interface IInstanceConfig {
   is_magic_login_enabled: boolean;
   /** Deployment ini menjalankan bidang kendali SaaS (panel pemilik produk). */
   is_control_plane_enabled?: boolean;
+  /** Modul yang dinyalakan/dimatikan Super Admin di God Mode > Features. Tidak ada = server lama, anggap menyala. */
+  paradise_modules?: Partial<Record<TParadiseModule, boolean>>;
+  /** Bawaan project baru dari God Mode. Tidak ada = server lama, pakai bawaan formulir. */
+  paradise_project_defaults?: {
+    /** 2 = Public, 0 = Private. */
+    network: 0 | 2;
+    timezone: string;
+    archive_in: number;
+    close_in: number;
+    guest_view_all_features: boolean;
+  };
   is_email_password_enabled: boolean;
   github_app_name: string | undefined;
   slack_client_id: string | undefined;
@@ -62,6 +75,8 @@ export interface IInstanceConfig {
   posthog_host: string | undefined;
   has_unsplash_configured: boolean;
   has_llm_configured: boolean;
+  /** Client ID + secret Google Calendar terisi. Tidak ada = server lama, anggap terisi. */
+  has_google_calendar_configured?: boolean;
   file_size_limit: number | undefined;
   is_smtp_configured: boolean;
   app_base_url: string | undefined;
@@ -89,7 +104,8 @@ export type TInstanceConfigurationKeys =
   | TInstanceImapConfigurationKeys
   | TInstanceImageConfigurationKeys
   | TInstanceAuthenticationKeys
-  | TInstanceWorkspaceConfigurationKeys;
+  | TInstanceWorkspaceConfigurationKeys
+  | TInstanceParadiseConfigurationKeys;
 
 export interface IInstanceConfiguration {
   id: string;

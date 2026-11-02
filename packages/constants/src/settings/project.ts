@@ -6,7 +6,8 @@
 
 // plane imports
 import { EUserProjectRoles } from "@plane/types";
-import type { TProjectSettingsItem, TProjectSettingsTabs } from "@plane/types";
+import type { TParadiseModule, TProjectSettingsItem, TProjectSettingsTabs } from "@plane/types";
+import { isParadiseModuleActive } from "../paradise-features";
 
 export enum PROJECT_SETTINGS_CATEGORY {
   GENERAL = "general",
@@ -43,13 +44,6 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     href: `/members`,
     access: [EUserProjectRoles.ADMIN, EUserProjectRoles.MEMBER, EUserProjectRoles.GUEST],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/members/`,
-  },
-  features_cycles: {
-    key: "features_cycles",
-    i18n_label: "project_settings.features.cycles.short_title",
-    href: `/features/cycles`,
-    access: [EUserProjectRoles.ADMIN],
-    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/features/cycles/`,
   },
   features_modules: {
     key: "features_modules",
@@ -100,27 +94,6 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/estimates/`,
   },
-  work_item_types: {
-    key: "work_item_types",
-    i18n_label: "project_settings.work_item_types.heading",
-    href: `/work-item-types`,
-    access: [EUserProjectRoles.ADMIN],
-    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/work-item-types/`,
-  },
-  templates: {
-    key: "templates",
-    i18n_label: "common.templates",
-    href: `/templates`,
-    access: [EUserProjectRoles.ADMIN],
-    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/templates/`,
-  },
-  wiki_access: {
-    key: "wiki_access",
-    i18n_label: "project_settings.wiki_access.heading",
-    href: `/wiki-access`,
-    access: [EUserProjectRoles.ADMIN],
-    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/wiki-access/`,
-  },
   // Kustomisasi Paradise, Trashbin per project. Khusus admin project:
   // memulihkan & membuang permanen bukan wewenang anggota biasa.
   trash: {
@@ -141,25 +114,36 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
 
 export const PROJECT_SETTINGS_FLAT_MAP: TProjectSettingsItem[] = Object.values(PROJECT_SETTINGS);
 
-export const GROUPED_PROJECT_SETTINGS: Record<PROJECT_SETTINGS_CATEGORY, TProjectSettingsItem[]> = {
-  [PROJECT_SETTINGS_CATEGORY.GENERAL]: [PROJECT_SETTINGS["general"], PROJECT_SETTINGS["members"]],
-  [PROJECT_SETTINGS_CATEGORY.FEATURES]: [
-    PROJECT_SETTINGS["features_cycles"],
-    PROJECT_SETTINGS["features_modules"],
-    PROJECT_SETTINGS["features_views"],
-    PROJECT_SETTINGS["features_pages"],
-    PROJECT_SETTINGS["features_intake"],
-  ],
-  [PROJECT_SETTINGS_CATEGORY.WORK_STRUCTURE]: [
-    PROJECT_SETTINGS["states"],
-    PROJECT_SETTINGS["labels"],
-    PROJECT_SETTINGS["estimates"],
-    PROJECT_SETTINGS["work_item_types"],
-  ],
-  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [
-    PROJECT_SETTINGS["templates"],
-    PROJECT_SETTINGS["wiki_access"],
-    PROJECT_SETTINGS["trash"],
-    PROJECT_SETTINGS["automations"],
-  ],
+/** Tab setelan milik modul God Mode. Tab yang tak terdaftar selalu tampil. */
+const MODUL_PER_TAB: Partial<Record<TProjectSettingsTabs, TParadiseModule>> = {
+  features_modules: "modules",
+  features_views: "views",
+  features_pages: "pages",
+  features_intake: "intake",
+  estimates: "estimates",
 };
+
+const isProjectSettingVisible = (key: TProjectSettingsTabs): boolean => {
+  const module = MODUL_PER_TAB[key];
+  return module ? isParadiseModuleActive(module) : true;
+};
+
+const visible = (keys: TProjectSettingsTabs[]): TProjectSettingsItem[] =>
+  keys.filter(isProjectSettingVisible).map((key) => PROJECT_SETTINGS[key]);
+
+/**
+ * Fungsi, bukan konstanta: modulnya diatur di God Mode saat aplikasi berjalan,
+ * sedangkan konstanta tingkat modul dihitung sekali saat diimpor, sebelum
+ * /api/instances/ menjawab.
+ */
+export const getGroupedProjectSettings = (): Record<PROJECT_SETTINGS_CATEGORY, TProjectSettingsItem[]> => ({
+  [PROJECT_SETTINGS_CATEGORY.GENERAL]: visible(["general", "members"]),
+  [PROJECT_SETTINGS_CATEGORY.FEATURES]: visible([
+    "features_modules",
+    "features_views",
+    "features_pages",
+    "features_intake",
+  ]),
+  [PROJECT_SETTINGS_CATEGORY.WORK_STRUCTURE]: visible(["states", "labels", "estimates"]),
+  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: visible(["trash", "automations"]),
+});

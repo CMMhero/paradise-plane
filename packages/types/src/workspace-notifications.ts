@@ -38,6 +38,12 @@ export type TNotificationData = {
     new_value: string | undefined;
     old_value: string | undefined;
   };
+  /** Kustomisasi Paradise: baris DM di inbox (`entity_name: "chat"`, plane/utils/inbox_chat.py). */
+  chat?: {
+    ruang_id: string;
+    pengirim_id: string;
+    jumlah: number;
+  };
 };
 
 export type TNotification = {
