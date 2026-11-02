@@ -128,6 +128,7 @@ export function InstanceGiteaConfigForm(props: Props) {
           field{" "}
           <a
             tabIndex={-1}
+            // oxlint-disable-next-line no-underscore-dangle -- react-hook-form exposes current values only via control._formValues
             href={`${control._formValues.GITEA_HOST || "https://gitea.com"}/user/settings/applications`}
             target="_blank"
             className="text-accent-primary hover:underline"
@@ -178,7 +179,7 @@ export function InstanceGiteaConfigForm(props: Props) {
       <div className="flex flex-col gap-8">
         <div className="grid w-full grid-cols-2 gap-x-12 gap-y-8">
           <div className="col-span-2 flex flex-col gap-y-4 pt-1 md:col-span-1">
-            <div className="pt-2.5 text-18 font-medium">Detail dari Gitea untuk instance ini</div>
+            <div className="pt-2.5 text-18 font-medium">Gitea details for this instance</div>
             {GITEA_FORM_FIELDS.map((field) => (
               <ControllerInput
                 key={field.key}
@@ -212,7 +213,7 @@ export function InstanceGiteaConfigForm(props: Props) {
           </div>
           <div className="col-span-2 md:col-span-1">
             <div className="flex flex-col gap-y-4 rounded-lg bg-layer-1 px-6 pt-1.5 pb-4">
-              <div className="pt-2 text-18 font-medium">Detail dari Paradise Task Tracker untuk Gitea</div>
+              <div className="pt-2 text-18 font-medium">Paradise Task Tracker details for Gitea</div>
               {GITEA_SERVICE_FIELD.map((field) => (
                 <CopyField key={field.key} label={field.label} url={field.url} description={field.description} />
               ))}

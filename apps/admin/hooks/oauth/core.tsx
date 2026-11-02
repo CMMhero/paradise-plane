@@ -36,7 +36,7 @@ export const getCoreAuthenticationModesMap: (
   "unique-codes": {
     key: "unique-codes",
     name: "Unique codes",
-    description: "Masuk atau daftar memakai kode yang dikirim lewat email. Perlu SMTP aktif.",
+    description: "Sign in or sign up with a code sent by email. Needs SMTP to be set up.",
     icon: <Mails className="h-6 w-6 p-0.5 text-tertiary" />,
     config: <EmailCodesConfiguration disabled={disabled} updateConfig={updateConfig} />,
     enabledConfigKey: "ENABLE_MAGIC_LINK_LOGIN",
@@ -52,7 +52,7 @@ export const getCoreAuthenticationModesMap: (
   google: {
     key: "google",
     name: "Google",
-    description: "Izinkan anggota masuk atau mendaftar dengan akun Google mereka.",
+    description: "Allow members to sign in or sign up with their Google accounts.",
     icon: <img src={googleLogo} height={20} width={20} alt="Google Logo" />,
     config: <GoogleConfiguration disabled={disabled} updateConfig={updateConfig} />,
     enabledConfigKey: "IS_GOOGLE_ENABLED",
@@ -60,7 +60,7 @@ export const getCoreAuthenticationModesMap: (
   github: {
     key: "github",
     name: "GitHub",
-    description: "Izinkan anggota masuk atau mendaftar dengan akun GitHub mereka.",
+    description: "Allow members to sign in or sign up with their GitHub accounts.",
     icon: (
       <img
         src={resolvedTheme === "dark" ? githubDarkModeImage : githubLightModeImage}
@@ -75,7 +75,7 @@ export const getCoreAuthenticationModesMap: (
   gitlab: {
     key: "gitlab",
     name: "GitLab",
-    description: "Allow members to log in or sign up to plane with their GitLab accounts.",
+    description: "Allow members to sign in or sign up with their GitLab accounts.",
     icon: <img src={gitlabLogo} height={20} width={20} alt="GitLab Logo" />,
     config: <GitlabConfiguration disabled={disabled} updateConfig={updateConfig} />,
     enabledConfigKey: "IS_GITLAB_ENABLED",
@@ -83,7 +83,7 @@ export const getCoreAuthenticationModesMap: (
   gitea: {
     key: "gitea",
     name: "Gitea",
-    description: "Allow members to log in or sign up to plane with their Gitea accounts.",
+    description: "Allow members to sign in or sign up with their Gitea accounts.",
     icon: <img src={giteaLogo} height={20} width={20} alt="Gitea Logo" />,
     config: <GiteaConfiguration disabled={disabled} updateConfig={updateConfig} />,
     enabledConfigKey: "IS_GITEA_ENABLED",

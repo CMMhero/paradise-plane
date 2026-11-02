@@ -8,15 +8,8 @@
 /* Dipisah dari berkas komponen: satu berkas yang mengekspor komponen DAN nilai
    biasa mematikan Fast Refresh, sama alasannya dengan members/constants.ts. */
 
-/** Sama persis dengan halaman Member & Jejak audit, jangan dibuat sendiri. */
-export const selectClass =
-  "rounded border border-subtle bg-layer-1 px-2 py-1.5 text-body-sm-regular text-primary outline-none focus:border-accent-primary";
-
-export const RENTANG = [
-  { value: 7, label: "7 hari" },
-  { value: 30, label: "30 hari" },
-  { value: 90, label: "90 hari (maks)" },
-];
+/** Pilihan rentang. Yang melebihi retensi (God Mode > Features) disembunyikan halaman. */
+export const RENTANG = [7, 30, 90, 180, 365];
 
 export const SKELETON_ROWS = ["s1", "s2", "s3", "s4", "s5", "s6"];
 
@@ -30,6 +23,6 @@ export const SKELETON_ROWS = ["s1", "s2", "s3", "s4", "s5", "s6"];
  * terpisah untuk permukaannya masing-masing.
  */
 export const SERI = {
-  login: { terang: "#2a78d6", gelap: "#3987e5", label: "Login" },
-  orang: { terang: "#eb6834", gelap: "#d95926", label: "Orang unik" },
+  login: { terang: "#2a78d6", gelap: "#3987e5", label: "Sign-ins" },
+  orang: { terang: "#eb6834", gelap: "#d95926", label: "Unique people" },
 } as const;

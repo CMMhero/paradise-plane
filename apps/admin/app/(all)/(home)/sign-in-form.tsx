@@ -71,6 +71,7 @@ export function InstanceSignInForm() {
   }, [csrfToken]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- one-shot sync of URL/query param into form state
     if (emailParam) setFormData((prev) => ({ ...prev, email: emailParam }));
   }, [emailParam]);
 
@@ -103,6 +104,7 @@ export function InstanceSignInForm() {
     if (errorCode) {
       const errorDetail = authErrorHandler(errorCode?.toString() as EAdminAuthErrorCodes);
       if (errorDetail) {
+        // oxlint-disable-next-line react/set-state-in-effect -- derive banner from error code in URL
         setErrorInfo(errorDetail);
       }
     }
@@ -115,8 +117,9 @@ export function InstanceSignInForm() {
         <div className="relative flex w-full max-w-[22.5rem] flex-col gap-6">
           <FormHeader
             heading="Kelola instance Paradise Task Tracker"
-            subHeading="Atur setelan tingkat instance untuk mengamankannya"
+            subHeading="Configure instance-wide settings to secure it"
           />
+          {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- form submit/error state tracking, not a click target */}
           <form
             className="space-y-4"
             method="POST"

@@ -97,6 +97,7 @@ export function InstanceSetupForm() {
   }, [csrfToken]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- one-shot sync of URL/query param into form state
     if (firstNameParam) setFormData((prev) => ({ ...prev, first_name: firstNameParam }));
     if (lastNameParam) setFormData((prev) => ({ ...prev, last_name: lastNameParam }));
     if (companyParam) setFormData((prev) => ({ ...prev, company_name: companyParam }));
@@ -150,13 +151,14 @@ export function InstanceSetupForm() {
         <div className="relative flex w-full max-w-[22.5rem] flex-col gap-6">
           <FormHeader
             heading="Siapkan instance Paradise Task Tracker"
-            subHeading="Setelah ini kamu bisa mengelola instance dari God Mode."
+            subHeading="After this you can manage the instance from God Mode."
           />
           {errorData.type &&
             errorData?.message &&
             ![EErrorCodes.INVALID_EMAIL, EErrorCodes.INVALID_PASSWORD].includes(errorData.type) && (
               <Banner type="error" message={errorData?.message} />
             )}
+          {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- form submit/error state tracking, not a click target */}
           <form
             className="space-y-4"
             method="POST"

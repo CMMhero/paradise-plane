@@ -107,14 +107,14 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
               </div>
             </div>
             <div className="grow">
-              <div className="text-13 leading-5 font-medium text-primary">Kirim data pemakaian anonim ke vendor</div>
+              <div className="text-13 leading-5 font-medium text-primary">Send anonymous usage data to the vendor</div>
               {/* Tautan ke kebijakan telemetri vendor DIBUANG, tapi tombolnya
                   TIDAK, dan teksnya sengaja diperjelas siapa penerimanya.
                   Saklar ini benar-benar mengirim data keluar ke Plane; menyamarkan
                   itu demi debranding akan menyesatkan orang yang menyalakannya. */}
               <div className="text-11 leading-5 font-regular text-tertiary">
-                Tidak ada data pribadi yang dikirim. Data anonim ini dikirim ke pembuat perangkat lunak (Plane), bukan
-                ke internal kantor. Matikan kalau instance ini harus benar-benar tertutup.
+                No personal data is sent. This anonymous data goes to the software maker (Plane), not to the office.
+                Turn it off if this instance must stay fully closed.
               </div>
             </div>
           </div>

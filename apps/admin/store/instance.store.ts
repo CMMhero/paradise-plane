@@ -183,14 +183,21 @@ export class InstanceStore implements IInstanceStore {
     try {
       const response = await this.instanceService.updateConfigurations(data);
       runInAction(() => {
-        this.instanceConfigurations = this.instanceConfigurations?.map((config) => {
-          // Nama dalam diberi nama sendiri: `item` yang membayangi `item` luar
-          // adalah warning warisan, dan berkas yang tersentuh dinilai UTUH oleh
-          // gerbang `oxlint --deny-warnings` (jebakan I1).
-          const baris = response.find((kandidat) => kandidat.key === config.key);
-          if (baris) return baris;
-          return config;
-        });
+        const lama = this.instanceConfigurations ?? [];
+        // Server membuat baris yang belum ada untuk kunci yang dikenalnya; tanpa
+        // ditambahkan di sini, saklar di layar tetap menunjukkan nilai lama.
+        const baru = response.filter((kandidat) => !lama.some((config) => config.key === kandidat.key));
+        this.instanceConfigurations = [
+          ...lama.map((config) => {
+            // Nama dalam diberi nama sendiri: `item` yang membayangi `item` luar
+            // adalah warning warisan, dan berkas yang tersentuh dinilai UTUH oleh
+            // gerbang `oxlint --deny-warnings` (jebakan I1).
+            const baris = response.find((kandidat) => kandidat.key === config.key);
+            if (baris) return baris;
+            return config;
+          }),
+          ...baru,
+        ];
       });
       return response;
     } catch (error) {

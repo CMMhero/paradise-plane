@@ -17,6 +17,7 @@ import { Loader, ToggleSwitch } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
+import { WorkspacesTabs } from "@/components/common/section-tabs";
 import { WorkspaceListItem } from "@/components/workspace/list-item";
 // hooks
 import { useInstance, useWorkspace } from "@/hooks/store";
@@ -67,6 +68,7 @@ const WorkspaceManagementPage = observer(function WorkspaceManagementPage(_props
     await updateConfigPromise
       .then(() => {
         setIsSubmitting(false);
+        return undefined;
       })
       .catch((err) => {
         console.error(err);
@@ -81,6 +83,7 @@ const WorkspaceManagementPage = observer(function WorkspaceManagementPage(_props
         description: "See all workspaces and control who can create them.",
       }}
     >
+      <WorkspacesTabs />
       <div className="space-y-3">
         {formattedConfig ? (
           <div className={cn("flex w-full items-center gap-14 rounded-sm")}>

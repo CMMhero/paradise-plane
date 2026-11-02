@@ -5,8 +5,6 @@
  */
 
 import type { ReactNode } from "react";
-// plane imports
-import { cn } from "@plane/utils";
 
 type TPageWrapperProps = {
   children: ReactNode;
@@ -16,19 +14,16 @@ type TPageWrapperProps = {
     actions?: ReactNode;
   };
   customHeader?: ReactNode;
-  size?: "lg" | "md";
 };
 
+// Paradise: one width for every God Mode page. Pages under the same menu
+// switch tabs without the layout jumping; wide tables scroll inside their own
+// wrapper instead of widening the page.
 export const PageWrapper = (props: TPageWrapperProps) => {
-  const { children, header, customHeader, size = "md" } = props;
+  const { children, header, customHeader } = props;
 
   return (
-    <div
-      className={cn("mx-auto h-full w-full space-y-6 py-4", {
-        "max-w-[1000px] md:px-4 2xl:max-w-[1200px]": size === "md",
-        "px-4 lg:px-12": size === "lg",
-      })}
-    >
+    <div className="mx-auto h-full w-full max-w-[1200px] space-y-6 py-4 md:px-4">
       {customHeader ? (
         <div className="mx-4 shrink-0 space-y-1 border-b border-subtle py-4">{customHeader}</div>
       ) : (
