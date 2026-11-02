@@ -17,22 +17,29 @@ nggak ada di dalamnya.
 
 ## Yang saya bangun sendiri
 
-Delapan ini nggak ada di basis aslinya. Semuanya dari nol, model database,
+Yang di bawah ini nggak ada di basis aslinya. Semuanya dari nol, model database,
 migrasi, endpoint, aturan izin, sampai tampilannya.
 
 **Time tracking.** Orang catat jam kerja langsung di work item-nya. Tiap orang
 cuma bisa hapus catatan miliknya sendiri, admin project bisa lihat semua.
 
-**Work item types + custom properties.** Tiap project bisa punya tipe work item
-sendiri, dan properti custom dengan 6 jenis field (teks, angka, boolean,
-tanggal, pilihan, anggota). Validasinya di server, opsi harus beneran milik
-propertinya, dan kalau field-nya "anggota" ya orangnya harus beneran anggota
-project itu.
+**Work item types, template + recurring, dan Cycles: dicabut (2 Nov 2026,
+KEP-53).** Ketiganya sempat dibangun, lalu dibuang dari aplikasi karena kantor
+tidak memakainya. Halaman, menu, saklar God Mode, endpoint kustom, dan jadwal
+berulangnya sudah tidak ada. Tabelnya sengaja dibiarkan, jadi data lama tidak
+hilang. Sebagai gantinya, semua fitur project (Modules, Views, Pages, Intake,
+Time tracking) sekarang menyala di setiap project, termasuk project lama;
+yang menentukan tampil atau tidaknya tinggal modul di God Mode.
 
-**Template + recurring.** Bikin template work item, terus jadwalkan berulang.
-Yang agak saya pikirin di sini: kalau laptop mati semalam, jadwal yang kelewat
-**dilewat**, bukan dirapel. Kalau dirapel, paginya orang bangun dan dapat
-tumpukan tugas palsu.
+**Setelan pribadi dan project diatur dari God Mode (KEP-44, KEP-57).** Setiap
+setelan yang bisa diubah orang sendiri (bahasa, zona waktu, tema, awal pekan,
+notifikasi, menu yang tersemat di sidebar, gaya daftar project, tata letak work
+item) punya nilai bawaan di Members > New member defaults dan bisa diubah per
+orang dari panel member. Tata letak work item bawaannya Board. Bawaan akun baru
+tidak diam-diam menimpa akun lama; untuk navigasi dan tata letak ada tombol
+"Apply to everyone" yang minta konfirmasi. Project baru mengikuti
+Workspaces > New project defaults (visibilitas, zona waktu, arsip/tutup
+otomatis, akses guest), dan pembuatnya masih bisa mengubahnya di formulir.
 
 **Wiki perusahaan.** Ini yang paling panjang, dikerjain tiga tahap:
 
@@ -52,9 +59,14 @@ pendapat.
 Tahap C, pohon halaman bertingkat. Sub-halaman dulu bukan cuma nggak keliatan,
 tapi **404 kalau dibuka**.
 
-**Dashboard divisi.** Rekap per project yang kamu ikuti: total, yang masih
-jalan, yang lewat tenggat, yang selesai, plus total jam kerja. Ada ekspor CSV
-juga, langsung bisa dibuka Excel. Staf cuma lihat project yang dia ikuti.
+**Dashboard divisi.** Dibuat buat direktur dan Super Admin, jadi yang tampil
+pertama itu mode Ringkas: satu kalimat soal divisi mana yang bermasalah, empat
+angka (selesai tepat waktu, selesai 7 hari, terlambat, nunggu persetujuanmu)
+dengan pembanding minggu lalu, status tiap divisi (Lancar / Perlu perhatian /
+Kritis), dan maksimal lima hal yang perlu dilihat. Angka lengkap per departemen,
+jam kerja, dan ekspor CSV (langsung bisa dibuka Excel) ada di mode Rinci.
+Ambang statusnya diatur di God Mode > Features. Yang dihitung cuma project yang
+kamu ikuti.
 
 **Initiatives.** Sasaran tingkat workspace yang nyambungin beberapa project
 divisi, progresnya dihitung dari semua work item di project yang ketaut.
@@ -62,6 +74,26 @@ divisi, progresnya dihitung dari semua work item di project yang ketaut.
 **Audit logs.** Nyatet siapa ngubah apa di model-model penting. Aktornya
 kerekam baik lewat request HTTP biasa maupun lewat editor kolaboratif, yang
 kedua ini sempat saya ragukan, ternyata jalan.
+
+**Daftar di God Mode bisa disaring kayak work item.** Accounts, Activity,
+Audit log, dan Trash punya kotak cari, tombol Filters yang nambah chip
+(properti, is / is not, nilai), menu Display buat urutan, kolom yang tampil, dan
+jumlah baris, plus kepala tabel yang bisa diklik buat ngurutin. Pilihannya
+diingat per halaman di browser. Accounts disaring di browser (semua akun dimuat
+sekali); Audit log dan riwayat masuk disaring di server karena isinya bisa
+ratusan ribu baris.
+
+**Notifikasi yang bisa dipilih sendiri.** Di Profil > Notifikasi ada satu
+tabel: tiap jenis kabar (diberi tugas, disebut, komentar, persetujuan, tenggat
+dan terlambat, tugas selesai, ganti status, perubahan lain, obrolan) punya dua
+saklar, inbox di aplikasi dan email. Ringkasan tugas datang dua kali sehari
+kerja, masing-masing dengan saklarnya sendiri: 08.30 WIB untuk memulai hari,
+17.30 WIB untuk menutupnya (yang selesai hari ini, yang tenggatnya hari ini tapi
+belum selesai, terlambat, dan tenggat hari kerja berikutnya). Isi keduanya bisa
+dipilih per bagian. Bawaannya ikut jabatan, dan tabel yang sama persis muncul di God
+Mode, baik untuk satu orang maupun untuk bawaan staf dan pimpinan. Daftar
+saklarnya cuma ditulis sekali di tiap sisi (`preferensi_email.py` dan
+`notification-preferences.ts`), jadi tiga layar itu nggak bisa beda isi.
 
 **ACL per folder Wiki.** Pemetaan folder ke divisi, sub-halaman mewarisi dari
 induknya, admin bisa override. Sengaja nggak nambah dependency: keanggotaan
@@ -335,6 +367,62 @@ workspace tujuannya ternyata punya orang lain, biar nggak kejadian kesiram ke
 data beneran.
 
 **Buat lokal doang.** Sandinya seragam dan ketulis di berkasnya.
+
+#### Perusahaan contoh lengkap (hierarki + work item)
+
+`seed-demo.py` di atas cuma ngisi Wiki dan belum kenal hierarki (KEP-29). Biar
+aplikasinya kerasa hidup, ada command kedua yang ngisi **workspace utama**:
+
+```bash
+docker compose -f docker-compose-local.yml exec api python manage.py seed_demo_data --settings=plane.settings.local          # isi
+docker compose -f docker-compose-local.yml exec api python manage.py seed_demo_data --reset --settings=plane.settings.local  # buang yang lama, isi ulang
+```
+
+`--settings=plane.settings.local` wajib. Tanpa itu `manage.py` jalan dengan
+settings produksi (bawaan `manage.py`, termasuk di container lokal), dan
+command-nya menolak.
+
+Isinya: 5 divisi, 12 departemen (tiap departemen otomatis dapat project-nya),
+56 akun berjenjang (2 direktur, 5 manager, 11 supervisor, satu di antaranya
+pegang dua departemen, dan 38 staf), label, modul, page, view tersimpan,
+sekitar 170 work item induk dan sub-tugas lengkap dengan assignee, komentar,
+aktivitas, lampiran, tautan, relasi, reaksi, dan worklog. Ada juga persetujuan
+(menunggu, disetujui, ditolak), 6 permintaan lintas divisi di intake, draft,
+dan notifikasi Inbox.
+
+Di luar project: Chat (kanal Umum, Pengumuman, kanal privat per divisi, DM
+atasan dan staf, lengkap dengan balasan, reaksi, lampiran, dan pesan yang
+belum dibaca), Wiki (dua sub-topik per divisi berisi materi yang diunggah
+anggota departemennya), riwayat login 14 hari buat God Mode > Logs, serta pin
+sidebar, favorit, sticky, quick link, dan Recents tiap akun.
+
+Akun Super Admin kamu (akun sungguhan, bukan demo) ikut dimasukkan: di tiap
+departemen ada tugas yang kamu buat buat staf dan tugas (plus sub-tugas) yang
+diberikan supervisor ke kamu, kamu ikut berkomentar, punya page "Catatan IT"
+di tiap project, mengunggah satu materi Wiki per divisi, punya satu draft, ada
+di kanal Umum, dan dapat DM dari direktur. Setelan pribadimu (pin sidebar,
+favorit, sticky) nggak disentuh, dan semua yang ditambahkan ikut bersih saat
+`--reset`.
+
+Lampirannya berkas sungguhan (PDF, PNG, CSV, TXT) yang diunggah ke MinIO, jadi
+bisa dibuka. `--reset` ikut membuang objeknya dari MinIO. Cycles nggak dibuat
+karena modulnya sudah dicabut (KEP-53).
+
+Semua email pakai domain `@paradise.test`, sandinya `P@ssw0rd`. Contoh akun
+buat dicoba: `hendra.gunawan@` (direktur), `bambang.prasetyo@` (manager
+Sales), `rudi.hartono@` (supervisor), `dimas.saputra@` (staf).
+
+Keanggotaan project nggak ditulis tangan. Semuanya lahir dari sinkron hierarki
+yang sama dengan God Mode, jadi kalau ada akses yang aneh, itu bug hierarki,
+bukan bug seed. `--reset` cuma nyapu akun `@paradise.test`, divisi dan
+departemen contohnya, plus apa pun yang bertanda `seed-demo`.
+
+**Buat lokal doang, dan memang nggak bisa jalan di server.** Ini bukan data
+migration, jadi deploy nggak pernah menjalankannya. Di atas itu ada tiga pagar
+tanpa jalan pintas: settings harus `plane.settings.local`, instance dengan
+lebih dari 5 akun sungguhan ditolak, dan berkas seed-nya nggak ikut ke image
+produksi (`apps/api/.dockerignore`), jadi command-nya bahkan nggak ada di
+server.
 
 ### Tabel port
 
