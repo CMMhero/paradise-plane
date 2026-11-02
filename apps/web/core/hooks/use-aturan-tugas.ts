@@ -14,10 +14,12 @@ import { EUserProjectRoles } from "@plane/types";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { StoreContext } from "@/lib/store-context";
 // services
-import { PersetujuanService } from "@/services/persetujuan.service";
+import { IssueService } from "@/services/issue";
+import { PersetujuanService, type TBisaDitugaskan } from "@/services/persetujuan.service";
 import { UserService } from "@/services/user.service";
 
 const userService = new UserService();
+const issueService = new IssueService();
 const persetujuanService = new PersetujuanService();
 
 /** Batas supervisor di tangga jenjang (10 member · 20 supervisor · 30 manager · 40 direktur). */
@@ -41,12 +43,19 @@ export const TINGKAT_SUPERVISOR = 20;
  * diubah adalah YANG DI SINI. Server tetap pemegang keputusan.
  */
 
+/** Satu kunci + satu fetcher untuk `bisa-ditugaskan/`: dipakai bersama `useTingkatSaya` dan `useBisaDitugaskan`. */
+const kunciBisaDitugaskan = (workspaceSlug: string | undefined, projectId: string | null | undefined) =>
+  workspaceSlug && projectId ? `BISA_DITUGASKAN:${workspaceSlug}:${projectId}` : null;
+const ambilBisaDitugaskan = (workspaceSlug: string, projectId: string): Promise<TBisaDitugaskan | null> =>
+  persetujuanService.bisaDitugaskan(workspaceSlug, projectId).catch(() => null);
+
 /**
  * Jenjang saya di sebuah divisi (10/20/30/40 · null = belum dimuat · -1 = belum diisi).
  *
- * Dibaca dari `GET persetujuan-penugasan/` yang memang sudah membalas
- * `tingkat_saya` — tanpa endpoint baru, di-cache per project oleh SWR.
- * Hook sendiri (bukan method di dalam hook lain) supaya `useSWR`-nya sah.
+ * Dibaca dari `GET bisa-ditugaskan/` (kunci SWR yang SAMA dengan
+ * `useBisaDitugaskan`, jadi satu request per project untuk keduanya). Dulu
+ * dari `GET persetujuan-penugasan/` tanpa saringan: seluruh antrean
+ * persetujuan project ikut terambil hanya untuk membaca satu angka.
  *
  * Tiga keadaan sengaja dibedakan: null (belum tahu — tampilkan loading/tertutup
  * sementara), -1 (sudah tahu: jenjang belum diisi — perlakukan sebagai staf),
@@ -57,12 +66,10 @@ export const TINGKAT_SUPERVISOR = 20;
 export const BELUM_DIMUAT = null;
 export const BELUM_DIISI = -1;
 export const useTingkatSaya = (workspaceSlug: string | undefined, projectId: string | null | undefined) => {
-  const kunci = workspaceSlug && projectId ? `TINGKAT_SAYA:${workspaceSlug}:${projectId}` : null;
-  const { data, isLoading } = useSWR(kunci, () =>
-    persetujuanService.daftar(workspaceSlug as string, projectId as string).then((res) => res?.tingkat_saya ?? -1)
-  );
+  const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
+  const { data, isLoading } = useSWR(kunci, () => ambilBisaDitugaskan(workspaceSlug as string, projectId as string));
   if (!kunci || isLoading) return null;
-  return data ?? -1;
+  return data?.tingkat_saya ?? BELUM_DIISI;
 };
 
 /** Bentuk minimum yang cukup untuk menilai "apakah saya pembuatnya". */
@@ -82,16 +89,66 @@ export const stafSaja = (tingkat: number | null): boolean => tingkat != null && 
  * MASUK status selesai tanpa persetujuan yang disetujui.
  */
 
+/** Bagian tugas yang berubah karena keputusan persetujuan. */
+export type TPerubahanKeputusan = Pick<Partial<TIssue>, "approval_status" | "state_id" | "completed_at">;
+
 /**
- * Samakan `approval_status` tugas di store sesudah keputusan (setujui/tolak/
- * ajukan ulang), supaya kunci & badge di papan berubah tanpa refresh.
- * Tugas yang belum ada di store diabaikan (`updateIssue` sudah no-op).
+ * Samakan tugas di store sesudah keputusan (setujui/tolak/ajukan ulang),
+ * supaya badge DAN kolom kartu berubah tanpa refresh (KEP-55: setujui
+ * memindahkan tugas ke Done, tolak ke In Progress, dua-duanya di server).
+ *
+ * `issues.updateIssue` hanya mengubah data tugas. Kartu kanban/list baru
+ * pindah kolom kalau `groupedIssueIds` tiap store daftar ikut digeser, jadi
+ * semua store daftar diminta `pindahkanGrupTugas`; yang tidak memuat tugas
+ * ini mengabaikannya. Tugas yang belum ada di store diabaikan.
  */
 export const useSetelStatusPersetujuan = () => {
   const store = useContext(StoreContext);
-  return (issueId: string | null | undefined, status: TIssue["approval_status"]) => {
-    if (issueId) store?.issue.issues.updateIssue(issueId, { approval_status: status });
+  return (issueId: string | null | undefined, perubahan: TPerubahanKeputusan) => {
+    const akar = store?.issue;
+    if (!issueId || !akar) return;
+    const sebelum = akar.issues.getIssueById(issueId);
+    if (!sebelum) return;
+    const salinanSebelum = { ...sebelum };
+    akar.issues.updateIssue(issueId, perubahan);
+    const sesudah = akar.issues.getIssueById(issueId);
+    if (!sesudah || perubahan.state_id === undefined || perubahan.state_id === salinanSebelum.state_id) return;
+    const daftar = [
+      akar.projectIssues,
+      akar.cycleIssues,
+      akar.moduleIssues,
+      akar.projectViewIssues,
+      akar.workspaceIssues,
+      akar.profileIssues,
+      akar.teamIssues,
+      akar.teamViewIssues,
+      akar.teamProjectWorkItems,
+      akar.archivedIssues,
+    ];
+    for (const storeDaftar of daftar) storeDaftar?.pindahkanGrupTugas?.(sesudah, salinanSebelum);
   };
+};
+
+/**
+ * Ambil ulang status tugas dari server, untuk balasan keputusan yang belum
+ * membawa `tugas.state_id` (server lama). Gagal diam-diam: keputusannya sudah
+ * tersimpan, paling buruk kartu baru pindah sesudah muat ulang.
+ */
+export const ambilPerubahanKeputusan = async (
+  workspaceSlug: string,
+  projectId: string,
+  issueId: string
+): Promise<TPerubahanKeputusan | null> => {
+  try {
+    const tugas = await issueService.retrieve(workspaceSlug, projectId, issueId);
+    return {
+      state_id: tugas.state_id,
+      completed_at: tugas.completed_at,
+      approval_status: tugas.approval_status,
+    };
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -111,13 +168,8 @@ export const useBisaDitugaskan = (
   gerbangAktif: boolean;
   bawahanIds: string[];
 } => {
-  const kunci = workspaceSlug && projectId ? `BISA_DITUGASKAN:${workspaceSlug}:${projectId}` : null;
-  const { data, isLoading } = useSWR(kunci, () =>
-    persetujuanService
-      .bisaDitugaskan(workspaceSlug as string, projectId as string)
-      .then((res) => res)
-      .catch(() => null)
-  );
+  const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
+  const { data, isLoading } = useSWR(kunci, () => ambilBisaDitugaskan(workspaceSlug as string, projectId as string));
   if (!kunci || isLoading || !data)
     return { mode: null, userIds: [], memuat: true, tingkat: null, gerbangAktif: true, bawahanIds: [] };
   const users = (data.users ?? []).map((u) => u.id);

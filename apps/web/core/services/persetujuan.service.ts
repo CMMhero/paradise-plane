@@ -29,6 +29,12 @@ export type TPersetujuanPenugasan = {
     id: string;
     nomor: string | null;
     judul: string | null;
+    /**
+     * Status tugas SESUDAH keputusan (KEP-55: setujui -> Done, tolak -> In
+     * Progress). Hanya ada di balasan POST keputusan; server lama tidak
+     * mengirimnya, jadi `undefined` = ambil ulang tugasnya.
+     */
+    state_id?: string | null;
   };
   pemohon: {
     id: string;

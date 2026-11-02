@@ -6,7 +6,7 @@
  *
  * KEP-55: staf yang menggeser tugasnya ke Done hanya MENGAJUKAN; tugasnya tidak
  * berpindah sampai atasan menyetujui. Di daftar properti cukup SATU chip, sama
- * persis dengan badge di kartu (`ApprovalChip`): "Awaiting approval", "Approved
+ * persis dengan badge di kartu (`ApprovalStatusChip`): "Awaiting approval", "Approved
  * by <nama>", atau "Rejected"; tanpa pengajuan = "-". Log tiap pengajuan &
  * keputusan ada di Activity (`IssueActivity field="approval"`), bukan di sini
  * (keputusan user 2 Nov).
@@ -17,14 +17,14 @@
  */
 
 import { observer } from "mobx-react";
-import { CheckCircle2, Clock, ShieldCheck, XCircle } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import useSWR from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 // components
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
 import { AWALAN_KUNCI_PERSETUJUAN, ApprovalDecisionButtons } from "@/components/issues/approval-actions";
-import { ApprovalChip } from "@/components/issues/approval-card-badge";
+import { ApprovalStatusChip } from "@/components/issues/approval-card-badge";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // services
@@ -62,22 +62,13 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
   );
 
   const pemutus = terkini?.status === status ? terkini?.diputuskan_oleh_nama : null;
-  const chip = {
-    menunggu: { icon: Clock, iconClassName: "text-warning-primary", label: t("issue.approval.badge.pending") },
-    disetujui: {
-      icon: CheckCircle2,
-      iconClassName: "text-success-primary",
-      label: pemutus ? t("issue.approval.sidebar.approved_by", { name: pemutus }) : t("issue.approval.badge.approved"),
-    },
-    ditolak: { icon: XCircle, iconClassName: "text-danger-primary", label: t("issue.approval.sidebar.rejected") },
-  };
 
   return (
     <SidebarPropertyListItem icon={ShieldCheck} label={t("issue.approval.sidebar.label")} childrenClassName="px-2">
       {status ? (
         // Setinggi baris properti lain (h-7.5) supaya chip 20px sejajar label.
         <span className="flex h-7.5 min-w-0 items-center">
-          <ApprovalChip {...chip[status]} />
+          <ApprovalStatusChip status={status} decidedBy={pemutus} />
         </span>
       ) : (
         <span className="flex h-7.5 items-center text-body-xs-medium text-placeholder">-</span>
