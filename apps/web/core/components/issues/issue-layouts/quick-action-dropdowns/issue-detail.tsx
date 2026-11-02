@@ -20,7 +20,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserPermissions } from "@/hooks/store/user";
-import { bolehUbahTugas, useAturanTugas, useBolehHapus, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { useBolehHapus, useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // plane-web components
 import { DuplicateWorkItemModal } from "@/plane-web/components/issues/issue-layouts/quick-action-dropdowns/duplicate-modal";
 // helper
@@ -95,10 +95,7 @@ export const WorkItemDetailQuickActions = observer(function WorkItemDetailQuickA
   const isArchivingAllowed = !issue.archived_at && isEditingAllowed && bolehHapus;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
   const isRestoringAllowed = !!issue.archived_at && isEditingAllowed && bolehHapus;
-
-  const { idSaya } = useAturanTugas();
-  const tingkatSaya = useTingkatSaya(workspaceSlug?.toString(), issue.project_id);
-  const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
+  const bolehUbah = useBolehUbahTugas(workspaceSlug?.toString(), issue.project_id, issue);
   // Kustomisasi Paradise: Setujui / Tolak sebaris dengan menu lain (hanya untuk
   // penyetuju, hanya saat tugasnya menunggu).
   const persetujuan = useMenuPersetujuan(workspaceSlug?.toString(), issue);

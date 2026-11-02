@@ -22,7 +22,7 @@ import { IssueGanttSidebar } from "@/components/gantt-chart/sidebar/issues/sideb
 import { useIssues } from "@/hooks/store/use-issues";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useUserPermissions } from "@/hooks/store/user";
-import { useAturanTugas } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, usePenilaiUbahTugas } from "@/hooks/use-aturan-tugas";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useTimeLineChart } from "@/hooks/use-timeline-chart";
@@ -71,6 +71,7 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
 
   useEffect(() => {
     initGantt();
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- init must run once on mount only
   }, []);
 
   const issuesIds = (issues.groupedIssueIds?.[ALL_ISSUES] as string[]) ?? [];
@@ -88,7 +89,7 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
     const payload: any = { ...data };
     if (data.sort_order) payload.sort_order = data.sort_order.newSortOrder;
 
-    updateIssue && (await updateIssue(issue.project_id, issue.id, payload));
+    if (updateIssue) await updateIssue(issue.project_id, issue.id, payload);
   };
 
   const isAllowed = allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
@@ -97,13 +98,19 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
   // bukan baru gagal 403 sesudah seretannya selesai, dan bukan diam-diam hilang.
   const { issue: issueDetailStore } = useIssueDetail();
   const { bisaGantiTenggat } = useAturanTugas();
+  // KEP-25: blok tugas orang lain tidak bisa diseret/diubah ukurannya. Dulu
+  // cuma peran project yang dicek, jadi blok siapa pun tampak bisa digeser.
+  const bolehUbah = usePenilaiUbahTugas(workspaceSlug?.toString(), projectId?.toString());
+  const bisaGeserBlok = (blockId: string) => isAllowed && bolehUbah(issueDetailStore.getIssueById(blockId));
 
   const updateBlockDates = useCallback(
-    (updates: {
-      id: string;
-      start_date?: string;
-      target_date?: string;
-    }[]) => {
+    (
+      updates: {
+        id: string;
+        start_date?: string;
+        target_date?: string;
+      }[]
+    ) => {
       const boleh: typeof updates = [];
       const tertahan: typeof updates = [];
 
@@ -126,15 +133,13 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
       }
       if (boleh.length === 0) return Promise.resolve();
 
-      return issues
-        .updateIssueDates(workspaceSlug.toString(), boleh, projectId.toString())
-        .catch(() => {
-          setToast({
-            type: TOAST_TYPE.ERROR,
-            title: t("toast.error"),
-            message: "Error while updating work item dates, Please try again Later",
-          });
+      return issues.updateIssueDates(workspaceSlug.toString(), boleh, projectId.toString()).catch(() => {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("toast.error"),
+          message: "Error while updating work item dates, Please try again Later",
         });
+      });
     },
     [issues, projectId, workspaceSlug, bisaGantiTenggat, issueDetailStore, t]
   );
@@ -164,11 +169,13 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
             loaderTitle={isEpic ? t("epic.label", { count: 2 }) : t("issue.label", { count: 2 })}
             blockIds={issuesIds}
             blockUpdateHandler={updateIssueBlockStructure}
+            // oxlint-disable-next-line react/no-unstable-nested-components -- render callback, not a component
             blockToRender={(data: TIssue) => <IssueGanttBlock issueId={data.id} isEpic={isEpic} />}
-            sidebarToRender={(props) => <IssueGanttSidebar {...props} showAllBlocks isEpic={isEpic} />}
-            enableBlockLeftResize={isAllowed}
-            enableBlockRightResize={isAllowed}
-            enableBlockMove={isAllowed}
+            // oxlint-disable-next-line react/no-unstable-nested-components -- render callback, not a component
+            sidebarToRender={(sidebarProps) => <IssueGanttSidebar {...sidebarProps} showAllBlocks isEpic={isEpic} />}
+            enableBlockLeftResize={bisaGeserBlok}
+            enableBlockRightResize={bisaGeserBlok}
+            enableBlockMove={bisaGeserBlok}
             enableReorder={appliedDisplayFilters?.order_by === "sort_order" && isAllowed}
             enableAddBlock={isAllowed}
             enableSelection={isBulkOperationsEnabled && isAllowed}

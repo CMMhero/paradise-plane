@@ -7,7 +7,12 @@
 import React, { useRef } from "react";
 import { observer } from "mobx-react";
 // plane constants
-import { SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/constants";
+import {
+  SPREADSHEET_SELECT_GROUP,
+  SPREADSHEET_PROPERTY_LIST,
+  isDisplayPropertyAvailable,
+  isParadiseFeatureEnabled,
+} from "@plane/constants";
 // types
 import type { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
 import { EIssueLayoutTypes } from "@plane/types";
@@ -66,15 +71,15 @@ export const SpreadsheetView = observer(function SpreadsheetView(props: Props) {
   // plane web hooks
   const isBulkOperationsEnabled = useBulkOperationStatus();
 
-  const isEstimateEnabled: boolean = currentProjectDetails?.estimate !== null;
+  const isEstimateEnabled: boolean = isParadiseFeatureEnabled("estimates") && currentProjectDetails?.estimate !== null;
 
-  const spreadsheetColumnsList = isWorkspaceLevel
-    ? SPREADSHEET_PROPERTY_LIST
-    : SPREADSHEET_PROPERTY_LIST.filter((property) => {
-        if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
-        if (property === "modules" && !currentProjectDetails?.module_view) return false;
-        return true;
-      });
+  const spreadsheetColumnsList = SPREADSHEET_PROPERTY_LIST.filter((property) => {
+    if (!isDisplayPropertyAvailable(property)) return false;
+    if (isWorkspaceLevel) return true;
+    if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
+    if (property === "modules" && !currentProjectDetails?.module_view) return false;
+    return true;
+  });
 
   if (!issueIds || issueIds.length === 0) return <></>;
   return (

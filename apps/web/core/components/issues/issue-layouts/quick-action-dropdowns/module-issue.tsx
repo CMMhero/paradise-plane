@@ -19,7 +19,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserPermissions } from "@/hooks/store/user";
-import { bolehUbahTugas, useAturanTugas, useBolehHapus, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { useBolehHapus, useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // plane-web components
 import { DuplicateWorkItemModal } from "@/plane-web/components/issues/issue-layouts/quick-action-dropdowns/duplicate-modal";
 // helper
@@ -70,9 +70,7 @@ export const ModuleIssueQuickActions = observer(function ModuleIssueQuickActions
   const nonaktifTerkunci = aturanHapus.terkunci;
   const isArchivingAllowed = handleArchive && isEditingAllowed && bolehHapus;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
-  const { idSaya } = useAturanTugas();
-  const tingkatSaya = useTingkatSaya(workspaceSlug?.toString(), issue.project_id);
-  const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
+  const bolehUbah = useBolehUbahTugas(workspaceSlug?.toString(), issue.project_id, issue);
 
   // Lihat komentar di atas: Hapus tidak pernah longgar dari Arsip.
   const isDeletingAllowed = isEditingAllowed && bolehHapus;

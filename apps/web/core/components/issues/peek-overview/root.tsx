@@ -20,6 +20,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useWorkItemProperties } from "@/hooks/use-issue-properties";
+import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // local imports
 import type { TIssueOperations } from "../issue-detail";
 import { IssueView } from "./view";
@@ -70,9 +71,9 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
         try {
           setError(false);
           await fetchIssue(workspaceSlug, projectId, issueId);
-        } catch (error) {
+        } catch (err) {
           setError(true);
-          console.error("Error fetching the parent issue", error);
+          console.error("Error fetching the parent issue", err);
         }
       },
       update: async (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => {
@@ -110,8 +111,8 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
         try {
           if (!issues?.archiveIssue) return;
           await issues.archiveIssue(workspaceSlug, projectId, issueId);
-        } catch (error) {
-          console.error("Error archiving the issue", error);
+        } catch (err) {
+          console.error("Error archiving the issue", err);
         }
       },
       restore: async (workspaceSlug: string, projectId: string, issueId: string) => {
@@ -169,8 +170,8 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
           });
           await removeFromCyclePromise;
           fetchActivities(workspaceSlug, projectId, issueId);
-        } catch (error) {
-          console.error("Error removing issue from cycle", error);
+        } catch (err) {
+          console.error("Error removing issue from cycle", err);
         }
       },
       changeModulesInIssue: async (
@@ -206,8 +207,8 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
           });
           await removeFromModulePromise;
           fetchActivities(workspaceSlug, projectId, issueId);
-        } catch (error) {
-          console.error("Error removing issue from module", error);
+        } catch (err) {
+          console.error("Error removing issue from module", err);
         }
       },
     }),
@@ -225,15 +226,27 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
     }
   );
 
+  // Kustomisasi Paradise (KEP-25): semua anggota boleh MELIHAT, tapi panel ini
+  // hanya bisa disunting pembuat/assignee, atasan dari assignee-nya, atau
+  // Super Admin. Dulu cuma peran project yang dicek, jadi tugas orang lain
+  // tampak bisa disunting dari peek (laporan user 2 Nov 2026).
+  const bolehUbah = useBolehUbahTugas(
+    peekIssue?.workspaceSlug,
+    peekIssue?.projectId,
+    peekIssue?.issueId ? getIssueById(peekIssue.issueId) : undefined
+  );
+
   if (!peekIssue?.workspaceSlug || !peekIssue?.projectId || !peekIssue?.issueId) return <></>;
 
   // Check if issue is editable, based on user role
-  const isEditable = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.PROJECT,
-    peekIssue?.workspaceSlug,
-    peekIssue?.projectId
-  );
+  const isEditable =
+    bolehUbah &&
+    allowPermissions(
+      [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+      EUserPermissionsLevel.PROJECT,
+      peekIssue?.workspaceSlug,
+      peekIssue?.projectId
+    );
 
   return (
     <IssueView

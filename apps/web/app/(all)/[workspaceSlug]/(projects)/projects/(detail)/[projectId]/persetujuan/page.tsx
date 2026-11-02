@@ -24,10 +24,10 @@ function PersetujuanDivisiPage() {
   if (!workspaceSlug || !projectId) return <></>;
 
   return (
-    <div className="h-full w-full overflow-y-auto px-6 py-5">
+    <>
       <PageHead title={t("sidebar.persetujuan")} />
       <AntreanPersetujuan workspaceSlug={workspaceSlug} projectId={projectId} />
-    </div>
+    </>
   );
 }
 

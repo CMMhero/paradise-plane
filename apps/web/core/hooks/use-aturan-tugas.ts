@@ -95,26 +95,6 @@ export const useSetelStatusPersetujuan = () => {
 };
 
 /**
- * Bolehkah saya MENGUBAH tugas ini? Cerminan `galat_ubah_tugas()` server.
- *
- * - Staf: hanya kalau saya assignee-nya (atau pembuatnya).
- * - Atasan: selalu boleh di sini (server yang menilai bawahan-vs-bukan; tampilan
- *   tidak punya peta tingkat semua orang tanpa request tambahan).
- * - null (belum dimuat): TERBUKA dulu — server 403 kalau dipaksa. Mengunci saat
- *   loading membuat seluruh formulir mati sesaat tiap buka layar.
- */
-export const bolehUbahTugas = (
-  issue: { assignee_ids?: string[] | null; created_by?: string; approval_status?: string | null } | undefined | null,
-  idSaya: string | null,
-  tingkatSaya: number | null
-): boolean => {
-  if (!issue) return false;
-  if (tingkatSaya == null) return true;
-  if (tingkatSaya >= TINGKAT_SUPERVISOR) return true;
-  if (!idSaya) return false;
-  return (issue.assignee_ids ?? []).includes(idSaya) || issue.created_by === idSaya;
-};
-/**
  * Daftar user yang boleh masuk dropdown assignee saya di sebuah project.
  * Dibaca dari `GET bisa-ditugaskan/` — staf → [diri sendiri], atasan → diri +
  * bawahan, direktur → seluruh anggota. null = belum dimuat (dropdown tertutup
@@ -123,7 +103,14 @@ export const bolehUbahTugas = (
 export const useBisaDitugaskan = (
   workspaceSlug: string | undefined,
   projectId: string | null | undefined
-): { mode: string | null; userIds: string[]; memuat: boolean } => {
+): {
+  mode: string | null;
+  userIds: string[];
+  memuat: boolean;
+  tingkat: number | null;
+  gerbangAktif: boolean;
+  bawahanIds: string[];
+} => {
   const kunci = workspaceSlug && projectId ? `BISA_DITUGASKAN:${workspaceSlug}:${projectId}` : null;
   const { data, isLoading } = useSWR(kunci, () =>
     persetujuanService
@@ -131,10 +118,75 @@ export const useBisaDitugaskan = (
       .then((res) => res)
       .catch(() => null)
   );
-  if (!kunci || isLoading || !data) return { mode: null, userIds: [], memuat: true };
+  if (!kunci || isLoading || !data)
+    return { mode: null, userIds: [], memuat: true, tingkat: null, gerbangAktif: true, bawahanIds: [] };
   const users = (data.users ?? []).map((u) => u.id);
   const ids = users.length > 0 ? users : (data.user_ids ?? []);
-  return { mode: data.mode, userIds: ids, memuat: false };
+  return {
+    mode: data.mode,
+    userIds: ids,
+    memuat: false,
+    tingkat: data.tingkat_saya ?? null,
+    // Server lama yang belum membalas kunci ini: anggap gerbang menyala (aman).
+    gerbangAktif: data.gerbang_aktif ?? true,
+    bawahanIds: data.bawahan_ids ?? [],
+  };
+};
+
+/** Bentuk minimum tugas untuk menilai hak ubah/hapus. */
+type TugasKepemilikan = { assignee_ids?: string[] | null; created_by?: string | null; approval_status?: string | null };
+
+/**
+ * Bolehkah saya MENGUBAH tugas ini? Cerminan PERSIS `galat_ubah_tugas()` server
+ * (KEP-25), dan satu-satunya sumber jawaban "boleh sunting" di tampilan.
+ *
+ *     Super Admin                       boleh
+ *     pembuat (pemberi tugas)/assignee  boleh
+ *     gerbang hierarki mati             boleh (katup darurat, server juga melepas)
+ *     supervisor+                       boleh kalau SEMUA assignee bawahannya
+ *                                       (tanpa assignee: boleh, sama dengan server)
+ *     sisanya                           hanya lihat
+ *
+ * Belum dimuat: pembuat/assignee langsung boleh (tidak berkedip untuk pemilik),
+ * orang lain TERTUTUP dulu. Dulu kebalikannya (terbuka dulu, atasan selalu
+ * lolos), dan itulah sebab detail tugas orang lain tampak bisa disunting
+ * (laporan user 2 Nov 2026).
+ */
+export const useBolehUbahTugas = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined,
+  issue: TugasKepemilikan | undefined | null
+): boolean => usePenilaiUbahTugas(workspaceSlug, projectId)(issue);
+
+/**
+ * Bentuk fungsi dari `useBolehUbahTugas`, untuk layar yang menilai BANYAK tugas
+ * sekaligus lewat callback (blok Gantt). Aturannya satu, ditulis di sini saja.
+ * Tugas dari project lain (tampilan lintas project) dinilai tanpa data atasan:
+ * pemilik tetap boleh, selainnya terkunci; server tetap penegaknya.
+ */
+export const usePenilaiUbahTugas = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined
+): ((issue: (TugasKepemilikan & { project_id?: string | null }) | undefined | null) => boolean) => {
+  const { data: currentUser } = useUser();
+  const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>
+    userService.currentUserInstanceAdminStatus()
+  );
+  const wewenang = useBisaDitugaskan(workspaceSlug, projectId);
+  const bawahan = new Set(wewenang.bawahanIds);
+  return (issue) => {
+    if (!issue) return false;
+    if (statusAdmin?.is_instance_admin) return true;
+    const idSaya = currentUser?.id;
+    if (!idSaya) return false;
+    const assignees = issue.assignee_ids ?? [];
+    if (issue.created_by === idSaya || assignees.includes(idSaya)) return true;
+    if (issue.project_id && projectId && issue.project_id !== projectId) return false;
+    if (wewenang.memuat) return false;
+    if (!wewenang.gerbangAktif) return true;
+    if (wewenang.tingkat == null || wewenang.tingkat < TINGKAT_SUPERVISOR) return false;
+    return assignees.every((id) => bawahan.has(id));
+  };
 };
 
 /**
@@ -191,20 +243,6 @@ export const useAturanTugas = () => {
     bisaGantiTenggat,
 
     /**
-     * Boleh menghapus atau mengarsipkan. Jenjang sudah dimuat: sama dengan
-     * `bolehUbahTugas` (pemilik/assignee atau atasan), cermin `bisa_hapus_tugas`
-     * server. Belum dimuat: aturan lama (pembuat/admin project).
-     */
-    bisaHapusTugas: (issue: TIssue | undefined | null, projectId?: string, tingkatSaya: number | null = null) => {
-      if (adalahSuperAdmin) return true;
-      if (tingkatSaya != null) return bolehUbahTugas(issue, currentUser?.id ?? null, tingkatSaya);
-      return (
-        adalahPembuat(issue) ||
-        allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, undefined, projectId)
-      );
-    },
-
-    /**
      * Boleh menggeser Due Date di PINTU INTAKE (antrean triage).
      *
      * Cerminan `bisa_ganti_tenggat_intake()` server. Keputusan user 2026-10-29:
@@ -231,19 +269,11 @@ export const useAturanTugas = () => {
 };
 
 /**
- * Bolehkan menu Arsip/Hapus untuk tugas ini? Aturan TEGAS khusus tindakan
- * destruktif: tombolnya HILANG kalau tidak boleh (bukan error sesudah klik).
+ * Bolehkan menu Arsip/Hapus untuk tugas ini? Tombolnya HILANG kalau tidak
+ * boleh (bukan error sesudah klik). Cerminan `bisa_hapus_tugas` server:
  *
- * - Wewenang belum dimuat -> sembunyi (fail-closed; kebalikan dari
- *   bolehUbahTugas yang terbuka dulu supaya formulir tidak berkedip).
- * - Super Admin -> selalu boleh.
- * - Sisanya: pembuatnya, atau ada assignee yang masuk daftar kuasa saya
- *   (diri sendiri + bawahan; direktur melihat semua anggota).
- * - Tanpa assignee: hanya pembuat, atau yang kuasanya lebih dari diri
- *   sendiri (mencerminkan "himpunan kosong subset dari apa pun" di server).
- *
- * Ini cerminan `bisa_hapus_tugas` server untuk KASUS HAPUS/ARSIP. Sengaja
- * terpisah dari `bolehUbahTugas` (aturan ubah lebih longgar untuk atasan).
+ *     gerbang hierarki aktif   sama dengan hak UBAH (KEP-27) -> `useBolehUbahTugas`
+ *     gerbang mati             pembuat, admin project, atau Super Admin
  *
  * `terkunci` selalu False sejak 2026-10-24 (tidak ada lagi kunci menunggu;
  * dipertahankan di bentuk balik supaya 6 pemanggil dropdown tak perlu diubah).
@@ -251,21 +281,20 @@ export const useAturanTugas = () => {
 export const useBolehHapus = (
   workspaceSlug: string | undefined,
   projectId: string | null | undefined,
-  issue: { assignee_ids?: string[] | null; created_by?: string; approval_status?: string | null } | undefined | null
+  issue: TugasKepemilikan | undefined | null
 ): { boleh: boolean; terkunci: boolean } => {
+  const { allowPermissions } = useUserPermissions();
   const { data: currentUser } = useUser();
   const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>
     userService.currentUserInstanceAdminStatus()
   );
-  const { userIds: kuasaIds, memuat } = useBisaDitugaskan(workspaceSlug, projectId);
-  const adalahSuperAdmin = !!statusAdmin?.is_instance_admin;
-  if (memuat && !adalahSuperAdmin) return { boleh: false, terkunci: false };
-  if (adalahSuperAdmin) return { boleh: true, terkunci: false };
-  const idSaya = currentUser?.id;
-  if (!issue || !idSaya) return { boleh: false, terkunci: false };
-  if (issue.created_by === idSaya) return { boleh: true, terkunci: false };
-  const assignees = issue.assignee_ids ?? [];
-  if (assignees.length === 0) return { boleh: kuasaIds.length > 1, terkunci: false };
-  const kuasa = new Set(kuasaIds);
-  return { boleh: assignees.some((id) => kuasa.has(id)), terkunci: false };
+  const bolehUbah = useBolehUbahTugas(workspaceSlug, projectId, issue);
+  const { memuat, gerbangAktif } = useBisaDitugaskan(workspaceSlug, projectId);
+  if (!issue) return { boleh: false, terkunci: false };
+  if (memuat || gerbangAktif) return { boleh: bolehUbah, terkunci: false };
+  const boleh =
+    !!statusAdmin?.is_instance_admin ||
+    (!!currentUser?.id && issue.created_by === currentUser.id) ||
+    allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, projectId ?? undefined);
+  return { boleh, terkunci: false };
 };

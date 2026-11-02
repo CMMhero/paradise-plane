@@ -7,6 +7,7 @@
 import React from "react";
 import { isEmpty } from "lodash-es";
 import { observer } from "mobx-react";
+import { isGroupByAvailable } from "@plane/constants";
 import type {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
@@ -50,13 +51,11 @@ export const DisplayFiltersSelection = observer(function DisplayFiltersSelection
   const isDisplayFilterEnabled = (displayFilter: keyof IIssueDisplayFilterOptions) =>
     Object.keys(layoutDisplayFiltersOptions?.display_filters ?? {}).includes(displayFilter);
 
+  // Kustomisasi Paradise: grup milik modul yang dimatikan di God Mode ikut disembunyikan,
+  // juga di view tingkat workspace yang tak punya flag per project. Prop tidak dimutasi.
   const computedIgnoreGroupedFilters: Partial<TIssueGroupByOptions>[] = [];
-  if (cycleViewDisabled) {
-    ignoreGroupedFilters.push("cycle");
-  }
-  if (moduleViewDisabled) {
-    ignoreGroupedFilters.push("module");
-  }
+  if (cycleViewDisabled || !isGroupByAvailable("cycle")) computedIgnoreGroupedFilters.push("cycle");
+  if (moduleViewDisabled || !isGroupByAvailable("module")) computedIgnoreGroupedFilters.push("module");
 
   return (
     <div className="vertical-scrollbar relative scrollbar-sm h-full w-full divide-y divide-subtle-1 overflow-hidden overflow-y-auto px-2.5">

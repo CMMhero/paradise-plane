@@ -20,9 +20,9 @@ import { EmptyState } from "@/components/common/empty-state";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
-import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { bolehUbahTugas, stafSaja as hanyaStaf, useAturanTugas, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // local components
 import { IssuePeekOverview } from "../peek-overview";
 import { IssueMainContent } from "./main-content";
@@ -85,16 +85,21 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
 
   const issueOperations: TIssueOperations = useMemo(
     () => ({
-      fetch: async (workspaceSlug: string, projectId: string, issueId: string) => {
+      fetch: async (targetWorkspaceSlug: string, targetProjectId: string, targetIssueId: string) => {
         try {
-          await fetchIssue(workspaceSlug, projectId, issueId);
+          await fetchIssue(targetWorkspaceSlug, targetProjectId, targetIssueId);
         } catch (error) {
           console.error("Error fetching the parent issue:", error);
         }
       },
-      update: async (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => {
+      update: async (
+        targetWorkspaceSlug: string,
+        targetProjectId: string,
+        targetIssueId: string,
+        data: Partial<TIssue>
+      ) => {
         try {
-          await updateIssue(workspaceSlug, projectId, issueId, data);
+          await updateIssue(targetWorkspaceSlug, targetProjectId, targetIssueId, data);
         } catch (error) {
           console.log("Error in updating issue:", error);
           setToast({
@@ -104,10 +109,10 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           });
         }
       },
-      remove: async (workspaceSlug: string, projectId: string, issueId: string) => {
+      remove: async (targetWorkspaceSlug: string, targetProjectId: string, targetIssueId: string) => {
         try {
-          if (is_archived) await removeArchivedIssue(workspaceSlug, projectId, issueId);
-          else await removeIssue(workspaceSlug, projectId, issueId);
+          if (is_archived) await removeArchivedIssue(targetWorkspaceSlug, targetProjectId, targetIssueId);
+          else await removeIssue(targetWorkspaceSlug, targetProjectId, targetIssueId);
           setToast({
             title: t("common.success"),
             type: TOAST_TYPE.SUCCESS,
@@ -122,16 +127,21 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           });
         }
       },
-      archive: async (workspaceSlug: string, projectId: string, issueId: string) => {
+      archive: async (targetWorkspaceSlug: string, targetProjectId: string, targetIssueId: string) => {
         try {
-          await archiveIssue(workspaceSlug, projectId, issueId);
+          await archiveIssue(targetWorkspaceSlug, targetProjectId, targetIssueId);
         } catch (error) {
           console.log("Error in archiving issue:", error);
         }
       },
-      addCycleToIssue: async (workspaceSlug: string, projectId: string, cycleId: string, issueId: string) => {
+      addCycleToIssue: async (
+        targetWorkspaceSlug: string,
+        targetProjectId: string,
+        cycleId: string,
+        targetIssueId: string
+      ) => {
         try {
-          await addCycleToIssue(workspaceSlug, projectId, cycleId, issueId);
+          await addCycleToIssue(targetWorkspaceSlug, targetProjectId, cycleId, targetIssueId);
         } catch (_error) {
           setToast({
             type: TOAST_TYPE.ERROR,
@@ -140,9 +150,14 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           });
         }
       },
-      addIssueToCycle: async (workspaceSlug: string, projectId: string, cycleId: string, issueIds: string[]) => {
+      addIssueToCycle: async (
+        targetWorkspaceSlug: string,
+        targetProjectId: string,
+        cycleId: string,
+        issueIds: string[]
+      ) => {
         try {
-          await addIssueToCycle(workspaceSlug, projectId, cycleId, issueIds);
+          await addIssueToCycle(targetWorkspaceSlug, targetProjectId, cycleId, issueIds);
         } catch (_error) {
           setToast({
             type: TOAST_TYPE.ERROR,
@@ -151,9 +166,19 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           });
         }
       },
-      removeIssueFromCycle: async (workspaceSlug: string, projectId: string, cycleId: string, issueId: string) => {
+      removeIssueFromCycle: async (
+        targetWorkspaceSlug: string,
+        targetProjectId: string,
+        cycleId: string,
+        targetIssueId: string
+      ) => {
         try {
-          const removeFromCyclePromise = removeIssueFromCycle(workspaceSlug, projectId, cycleId, issueId);
+          const removeFromCyclePromise = removeIssueFromCycle(
+            targetWorkspaceSlug,
+            targetProjectId,
+            cycleId,
+            targetIssueId
+          );
           setPromiseToast(removeFromCyclePromise, {
             loading: t("issue.remove.cycle.loading"),
             success: {
@@ -170,9 +195,19 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           console.log("Error in removing issue from cycle:", error);
         }
       },
-      removeIssueFromModule: async (workspaceSlug: string, projectId: string, moduleId: string, issueId: string) => {
+      removeIssueFromModule: async (
+        targetWorkspaceSlug: string,
+        targetProjectId: string,
+        moduleId: string,
+        targetIssueId: string
+      ) => {
         try {
-          const removeFromModulePromise = removeIssueFromModule(workspaceSlug, projectId, moduleId, issueId);
+          const removeFromModulePromise = removeIssueFromModule(
+            targetWorkspaceSlug,
+            targetProjectId,
+            moduleId,
+            targetIssueId
+          );
           setPromiseToast(removeFromModulePromise, {
             loading: t("issue.remove.module.loading"),
             success: {
@@ -190,13 +225,19 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
         }
       },
       changeModulesInIssue: async (
-        workspaceSlug: string,
-        projectId: string,
-        issueId: string,
+        targetWorkspaceSlug: string,
+        targetProjectId: string,
+        targetIssueId: string,
         addModuleIds: string[],
         removeModuleIds: string[]
       ) => {
-        const promise = await changeModulesInIssue(workspaceSlug, projectId, issueId, addModuleIds, removeModuleIds);
+        const promise = await changeModulesInIssue(
+          targetWorkspaceSlug,
+          targetProjectId,
+          targetIssueId,
+          addModuleIds,
+          removeModuleIds
+        );
         return promise;
       },
     }),
@@ -218,20 +259,11 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
 
   // issue details
   const issue = getIssueById(issueId);
-  // Staf tanpa akses: JANGAN tampilkan error — jangan tampilkan TOMBOLNYA.
-  // `bolehUbah` = cerminan `galat_ubah_tugas()` server (assignee/pembuat saja
-  // untuk staf; atasan selalu lolos di sini, server yang menilai
-  // bawahan-vs-bukan). `bolehBuka` mengatur halaman, `isEditable` mengatur
-  // semua kontrol tulis di dalamnya — keduanya dari satu keputusan.
-  const { data: currentUser } = useUser();
-  const { idSaya } = useAturanTugas();
-  const tingkatSaya = useTingkatSaya(workspaceSlug, projectId);
-  const bolehUbah = bolehUbahTugas(issue, idSaya, tingkatSaya);
-  const terlibat =
-    !!issue &&
-    !!currentUser?.id &&
-    ((issue.assignee_ids ?? []).includes(currentUser.id) || issue.created_by === currentUser.id);
-  const bolehBuka = hanyaStaf(tingkatSaya) ? terlibat : true;
+  // Semua anggota project boleh MELIHAT tugas apa pun. Yang dibatasi hanya
+  // tulis: `bolehUbah` = cerminan `galat_ubah_tugas()` server (pembuat/assignee,
+  // atasan dari SEMUA assignee-nya, atau Super Admin). `isEditable` mematikan
+  // semua kontrol tulis, termasuk hapus & arsip, tanpa menyembunyikan halamannya.
+  const bolehUbah = useBolehUbahTugas(workspaceSlug, projectId, issue);
   const isEditable =
     bolehUbah &&
     allowPermissions(
@@ -252,13 +284,6 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
             onClick: () => router.push(`/${workspaceSlug}/projects/${projectId}/issues`),
           }}
         />
-      ) : !bolehBuka ? (
-        <div className="flex h-full w-full items-center justify-center px-9 py-5">
-          <div className="border-amber-500/30 bg-amber-500/10 text-amber-600 text-sm flex max-w-md flex-col gap-1 rounded-md border px-4 py-3">
-            <span className="font-medium">{t("work_item_extra_ui.not_yours_title")}</span>
-            <span className="text-xs">{t("work_item_extra_ui.not_yours_message")}</span>
-          </div>
-        </div>
       ) : (
         <div className="flex h-full w-full overflow-hidden">
           <div className="h-full w-full space-y-6 overflow-y-auto px-9 py-5">

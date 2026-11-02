@@ -73,6 +73,7 @@ export function ParentIssuesListModal({
   useEffect(() => {
     if (!isOpen || !workspaceSlug || !projectId) return;
 
+    // oxlint-disable-next-line react/set-state-in-effect -- loading flags must flip when the search request starts
     setIsSearching(true);
     setIsLoading(true);
 
@@ -89,7 +90,7 @@ export function ParentIssuesListModal({
         setIsSearching(false);
         setIsLoading(false);
       });
-  }, [debouncedSearchTerm, isOpen, issueId, projectId, workspaceSlug]);
+  }, [debouncedSearchTerm, isOpen, issueId, projectId, workspaceSlug, searchEpic]);
 
   return (
     <ModalCore isOpen={isOpen} handleClose={handleClose} position={EModalPosition.CENTER} width={EModalWidth.XXL}>
@@ -102,7 +103,7 @@ export function ParentIssuesListModal({
       >
         <div className="relative m-1">
           <SearchIcon
-            className="text-opacity-40 pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-primary"
+            className="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-placeholder"
             aria-hidden="true"
           />
           <Combobox.Input

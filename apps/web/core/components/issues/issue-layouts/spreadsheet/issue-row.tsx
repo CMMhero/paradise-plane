@@ -32,14 +32,12 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
 import type { TSelectionHelper } from "@/hooks/use-multiple-select";
-import { bolehUbahTugas, useAturanTugas, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { isIssueNew } from "../utils";
-// Kustomisasi Paradise: filter tunggu-persetujuan.
-import { lolosFilterApproval, useApprovalFilter } from "@/components/issues/approval-filter-context";
 import { IssueColumn } from "./issue-column";
 
 interface Props {
@@ -89,11 +87,6 @@ export const SpreadsheetIssueRow = observer(function SpreadsheetIssueRow(props: 
   const subIssues = subIssuesStore.subIssuesByIssueId(issueId);
   const isIssueSelected = selectionHelpers.getIsEntitySelected(issueId);
   const isIssueActive = selectionHelpers.getIsEntityActive(issueId);
-  // Kustomisasi Paradise: filter lokal tunggu-persetujuan (KEP-25).
-  const { hanyaMenunggu } = useApprovalFilter();
-
-  if (!lolosFilterApproval(issue?.approval_status, hanyaMenunggu)) return null;
-
   return (
     <>
       {/* first column/ issue name and key column */}
@@ -101,6 +94,7 @@ export const SpreadsheetIssueRow = observer(function SpreadsheetIssueRow(props: 
         as="tr"
         root={containerRef}
         placeholderChildren={
+          // oxlint-disable-next-line jsx-a11y/control-has-associated-label -- empty placeholder cell, not a control
           <td
             colSpan={100}
             className="border-[0.5px] border-transparent border-b-subtle-1"
@@ -226,11 +220,14 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
       className={`flex h-full w-full cursor-pointer items-center rounded-sm p-1 text-placeholder hover:bg-layer-1 ${
         isMenuActive ? "bg-layer-1 text-primary" : "text-secondary"
       }`}
+      role="presentation"
       onClick={() => setIsMenuActive(!isMenuActive)}
     >
       <MoreHorizontal className="h-3.5 w-3.5" />
     </div>
   );
+  // Hook dipanggil SEBELUM return awal (aturan hooks).
+  const bolehUbahMilik = useBolehUbahTugas(workspaceSlug?.toString(), issueDetail?.project_id, issueDetail);
   if (!issueDetail) return null;
 
   const handleToggleExpand = (e: MouseEvent<HTMLButtonElement>) => {
@@ -250,9 +247,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
   const disableUserActions = !canEditProperties(issueDetail.project_id ?? undefined);
   // KEP-25: sel spreadsheet ikut kunci milik — staf melihat nilai tapi semua
   // sel terkunci untuk tugas bukan miliknya (server 403 kalau dipaksa).
-  const { idSaya } = useAturanTugas();
-  const tingkatSaya = useTingkatSaya(workspaceSlug?.toString(), issueDetail.project_id);
-  const terkunciMilik = !bolehUbahTugas(issueDetail, idSaya, tingkatSaya);
+  const terkunciMilik = !bolehUbahMilik;
   const nonaktif = disableUserActions || terkunciMilik;
   const subIssuesCount = issueDetail?.sub_issues_count ?? 0;
   const isIssueSelected = selectionHelpers.getIsEntitySelected(issueDetail.id);
@@ -272,6 +267,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
   return (
     <>
       {/* Single sticky column containing both identifier and workitem */}
+      {/* oxlint-disable-next-line jsx-a11y/control-has-associated-label -- cell content is labelled by the work item link inside */}
       <td
         id={`issue-${issueId}`}
         ref={cellRef}
@@ -293,8 +289,8 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
                   getIsIssuePeeked(issueDetail.id) && nestingLevel === peekIssue?.nestingLevel,
                 "shadow-[8px_22px_22px_10px_rgba(0,0,0,0.05)]": isScrolled.current,
                 // Kustomisasi Paradise: baris tunggu-approval (KEP-25).
-                "bg-amber-500/[0.04]": issueDetail.approval_status === "menunggu",
-                "bg-red-500/[0.04]": issueDetail.approval_status === "ditolak",
+                "bg-warning-primary/[0.04]": issueDetail.approval_status === "menunggu",
+                "bg-danger-primary/[0.04]": issueDetail.approval_status === "ditolak",
               }
             )}
           >
@@ -389,6 +385,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
                 <ApprovalCardBadge issue={issueDetail} />
                 <div
                   className={`opacity-0 transition-opacity group-hover:opacity-100 ${isMenuActive ? "!opacity-100" : ""}`}
+                  role="presentation"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {quickActions({

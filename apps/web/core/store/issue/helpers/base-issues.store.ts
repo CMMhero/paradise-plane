@@ -38,6 +38,7 @@ import { EIssueServiceType, EIssueLayoutTypes } from "@plane/types";
 import { convertToISODateString } from "@plane/utils";
 // plane web imports
 import { workItemSortWithOrderByExtended } from "@/plane-web/store/issue/helpers/base-issue.store";
+import { pancarkanPengajuanPersetujuan } from "@/lib/pengajuan-persetujuan";
 // services
 import { CycleService } from "@/services/cycle.service";
 import { IssueArchiveService, IssueService } from "@/services/issue";
@@ -586,10 +587,26 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
       // Kustomisasi Paradise: server membalas status persetujuan terbaru, jadi
       // penanda "menunggu persetujuan" muncul tanpa muat ulang halaman.
+      // Tanggal mulai/selesai juga, karena server mengisinya otomatis saat status
+      // berpindah (KEP-41) dan papan/Gantt harus langsung menampilkannya.
       if (hasil && typeof hasil === "object" && "approval_status" in hasil) {
+        const balasan = hasil as Pick<TIssue, "approval_status" | "start_date" | "target_date" | "state_id"> & {
+          approval_requested?: boolean;
+        };
+        // KEP-55: staf menggeser ke selesai = pengajuan, bukan perpindahan. Server
+        // menahan statusnya, jadi status optimis (Done) dikembalikan ke status asli.
+        const ditahan = balasan.approval_requested === true && !!balasan.state_id;
         this.rootIssueStore.issues.updateIssue(issueId, {
-          approval_status: (hasil as { approval_status: TIssue["approval_status"] }).approval_status,
+          approval_status: balasan.approval_status,
+          ...(ditahan ? { state_id: balasan.state_id } : {}),
+          ...("start_date" in balasan ? { start_date: balasan.start_date } : {}),
+          ...("target_date" in balasan ? { target_date: balasan.target_date } : {}),
         });
+        if (ditahan) {
+          const sekarang = this.rootIssueStore.issues.getIssueById(issueId);
+          if (sekarang) this.updateIssueList(sekarang, { ...issueBeforeUpdate, ...data } as TIssue);
+          pancarkanPengajuanPersetujuan(issueId);
+        }
       }
 
       // call fetch Parent Stats
