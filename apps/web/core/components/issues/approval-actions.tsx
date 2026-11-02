@@ -19,7 +19,7 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { Check, X } from "lucide-react";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR, { type SWRConfiguration, useSWRConfig } from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
@@ -29,7 +29,7 @@ import { Tooltip } from "@plane/propel/tooltip";
 import type { TIssue } from "@plane/types";
 import { EModalPosition, EModalWidth, ModalCore, TextArea } from "@plane/ui";
 // hooks
-import { useSetelStatusPersetujuan } from "@/hooks/use-aturan-tugas";
+import { ambilPerubahanKeputusan, useSetelStatusPersetujuan } from "@/hooks/use-aturan-tugas";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
 import { PersetujuanService, type TPersetujuanPenugasan } from "@/services/persetujuan.service";
@@ -48,10 +48,26 @@ export const pesanGagalPersetujuan = (err: unknown, fallback: string): string =>
 };
 
 /** Antrean yang menunggu keputusan di satu project (null = jangan ambil). */
-export const useAntreanPenyetuju = (workspaceSlug: string | undefined, projectId: string | null | undefined) =>
-  useSWR(workspaceSlug && projectId ? kunciAntreanProject(workspaceSlug, projectId, "penyetuju") : null, () =>
-    persetujuanService.daftar(workspaceSlug as string, projectId as string, { peran: "penyetuju" })
+export const useAntreanPenyetuju = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined,
+  opsi?: SWRConfiguration
+) =>
+  useSWR(
+    workspaceSlug && projectId ? kunciAntreanProject(workspaceSlug, projectId, "penyetuju") : null,
+    () => persetujuanService.daftar(workspaceSlug as string, projectId as string, { peran: "penyetuju" }),
+    opsi
   );
+
+/**
+ * Opsi SWR untuk pemakaian per KARTU. `WEB_SWR_CONFIG` memasang
+ * `revalidateOnMount: true`, jadi tiap kartu yang baru ter-mount (gulir papan
+ * tervirtualisasi, buka grup) mengambil ulang antrean begitu jendela dedupe 2
+ * detik lewat. `undefined` mengembalikan aturan bawaan SWR: ambil hanya kalau
+ * cache kosong. Kesegaran tetap dijaga fokus jendela dan `mutate` sesudah
+ * keputusan (awalan `AWALAN_KUNCI_PERSETUJUAN`).
+ */
+const OPSI_PER_KARTU: SWRConfiguration = { revalidateOnMount: undefined, revalidateIfStale: false };
 
 /**
  * Baris menunggu milik `issue` yang boleh SAYA putuskan, atau null.
@@ -62,7 +78,7 @@ export const useBarisBolehSayaPutuskan = (
   issue: Pick<TIssue, "id" | "project_id" | "approval_status"> | undefined
 ): TPersetujuanPenugasan | null => {
   const menunggu = issue?.approval_status === "menunggu";
-  const { data } = useAntreanPenyetuju(menunggu ? workspaceSlug : undefined, issue?.project_id);
+  const { data } = useAntreanPenyetuju(menunggu ? workspaceSlug : undefined, issue?.project_id, OPSI_PER_KARTU);
   if (!menunggu || !issue) return null;
   return (data?.hasil ?? []).find((b) => b.tugas.id === issue.id && b.boleh_saya_putuskan) ?? null;
 };
@@ -88,7 +104,18 @@ export const usePutuskanPersetujuan = () => {
       const hasil = await persetujuanService.putuskan(workspaceSlug, projectId, baris.id, aksi, alasan.trim());
       const statusBaru =
         aksi === "setujui" ? "disetujui" : aksi === "tolak" ? "ditolak" : (hasil?.status ?? "menunggu");
-      setelStatus(baris.tugas.id, statusBaru);
+      // KEP-55: setujui/tolak memindahkan status tugas di server. Kartu ikut
+      // pindah kolom dari `tugas.state_id` balasan; server lama tanpa kunci itu
+      // dijawab dengan mengambil ulang tugasnya.
+      const stateBaru = hasil?.tugas?.state_id;
+      setelStatus(baris.tugas.id, {
+        approval_status: statusBaru,
+        ...(stateBaru !== undefined ? { state_id: stateBaru } : {}),
+      });
+      if (stateBaru === undefined && aksi !== "ajukan-ulang") {
+        const perubahan = await ambilPerubahanKeputusan(workspaceSlug, projectId, baris.tugas.id);
+        if (perubahan) setelStatus(baris.tugas.id, perubahan);
+      }
       void mutate((key) => typeof key === "string" && key.startsWith(AWALAN_KUNCI_PERSETUJUAN));
       const judul = {
         setujui: t("issue.approval.toast.approved_title"),

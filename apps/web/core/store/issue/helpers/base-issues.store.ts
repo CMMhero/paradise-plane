@@ -57,6 +57,12 @@ import type { IBaseIssueFilterStore } from "./issue-filter-helper.store";
 
 export type TIssueDisplayFilterOptions = Exclude<TIssueGroupByOptions, null> | "target_date";
 
+/** True kalau `issueId` ada di salah satu grup/subgrup `groupedIssueIds`. */
+const adaDiDaftar = (grup: TIssues, issueId: string): boolean =>
+  Object.values(grup).some((isi) =>
+    Array.isArray(isi) ? isi.includes(issueId) : !!isi && typeof isi === "object" && adaDiDaftar(isi, issueId)
+  );
+
 export enum EIssueGroupedAction {
   ADD = "ADD",
   DELETE = "DELETE",
@@ -97,6 +103,7 @@ export interface IBaseIssuesStore {
 
   addIssueToList: (issueId: string) => void;
   removeIssueFromList: (issueId: string) => void;
+  pindahkanGrupTugas: (issue: TIssue, issueBeforeUpdate: TIssue) => void;
   addIssuesToModule: (
     workspaceSlug: string,
     projectId: string,
@@ -236,6 +243,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
       setLoader: action.bound,
       addIssue: action.bound,
       removeIssueFromList: action.bound,
+      pindahkanGrupTugas: action.bound,
 
       createIssue: action,
       issueUpdate: action,
@@ -1213,6 +1221,21 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   removeIssueFromList(issueId: string) {
     const issue = this.rootIssueStore.issues.getIssueById(issueId);
     this.updateIssueList(undefined, issue, EIssueGroupedAction.DELETE);
+  }
+
+  /**
+   * Kustomisasi Paradise (KEP-55): pindahkan kartu ke grup barunya sesudah
+   * perubahan yang datang dari LUAR `issueUpdate` (keputusan persetujuan
+   * memindahkan status di server). `issues.updateIssue` saja hanya mengubah
+   * datanya; kartu tetap di kolom lama karena `groupedIssueIds` tidak ikut.
+   *
+   * Hanya bekerja kalau tugasnya memang ada di daftar store ini. Tanpa
+   * pemeriksaan itu, `updateIssueList` akan MENAMBAHKAN tugas dari project
+   * atau tampilan lain ke daftar yang sedang terbuka.
+   */
+  pindahkanGrupTugas(issue: TIssue, issueBeforeUpdate: TIssue) {
+    if (!this.groupedIssueIds || !adaDiDaftar(this.groupedIssueIds, issue.id)) return;
+    this.updateIssueList(issue, issueBeforeUpdate);
   }
 
   /**
