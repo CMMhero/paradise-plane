@@ -6,6 +6,29 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-02
+
+### Versi 2.1.0
+
+- **Naik 2.0.0 ke 2.1.0, minor.** 2.0.0 sudah jalan di produksi. Rilis ini
+  menambah tab baru dan memperbaiki persetujuan, tanpa migrasi dan tanpa
+  langkah operator.
+  - Tab **Approval** muncul di navigasi bertab project, sama dengan menu di
+    sidebar. Bisa dimatikan dari God Mode lewat modul `approvals`.
+  - Sesudah atasan menyetujui, kartu langsung pindah ke kolom Done tanpa muat
+    ulang. Tolak memindahkannya ke In Progress. Balasan keputusan sekarang
+    membawa `tugas.state_id`.
+  - Status persetujuan memakai satu komponen `ApprovalStatusChip` di halaman
+    Approval, kartu kanban/list/spreadsheet, sidebar detail, dan peek.
+  - Halaman Approval lambat: tiap baris menghitung ulang daftar penyetuju
+    (1.085 kueri untuk 6 baris). Sekarang dihitung sekali per permintaan, 93
+    kueri dan 241 ms di data lokal. Riwayat yang sudah diputuskan dibatasi 200
+    baris terbaru, yang menunggu tidak dibatasi. Ini juga sebab "manager divisi
+    tidak bisa menyetujui": tombol Setujui baru tampil sesudah balasan yang
+    bisa melewati batas waktu gunicorn (BUG-11).
+  - Papan tidak lagi mengambil ulang antrean persetujuan untuk tiap kartu yang
+    baru tampil.
+
 ## 2026-10-30
 
 ### Versi 2.0.0
