@@ -8,6 +8,7 @@ import { unset, orderBy, set } from "lodash-es";
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { computedFn } from "mobx-utils";
 // types
+import { isParadiseFeatureEnabled } from "@plane/constants";
 import type { IEstimate as IEstimateType, IEstimateFormData, TEstimateSystemKeys } from "@plane/types";
 // plane web services
 import estimateService from "@/services/estimate.service";
@@ -134,6 +135,9 @@ export class ProjectEstimateStore implements IProjectEstimateStore {
    */
   areEstimateEnabledByProjectId = computedFn((projectId: string) => {
     if (!projectId) return false;
+    // Dimatikan lewat PARADISE_FEATURES: semua dropdown, kolom, dan filter
+    // estimate membaca method ini, jadi cukup satu pintu.
+    if (!isParadiseFeatureEnabled("estimates")) return false;
     const projectDetails = this.store.projectRoot.project.getProjectById(projectId);
     if (!projectDetails) return false;
     return Boolean(projectDetails.estimate) || false;

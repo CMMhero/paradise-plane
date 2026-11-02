@@ -5,8 +5,9 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { AtSign, Briefcase } from "lucide-react";
+import { AtSign, Briefcase, CheckCircle2, Clock, Stamp } from "lucide-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import {
   CalendarLayoutIcon,
@@ -35,6 +36,7 @@ import type {
 } from "@plane/types";
 import { Avatar } from "@plane/ui";
 import {
+  getApprovalStatusFilterConfig,
   getAssigneeFilterConfig,
   getCreatedAtFilterConfig,
   getCreatedByFilterConfig,
@@ -98,6 +100,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getModuleById } = useModule();
   const { getStateById } = useProjectState();
   const { getUserDetails } = useMember();
+  const { t } = useTranslation();
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
@@ -131,10 +134,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [moduleIds, getModuleById]
   );
   const projects = useMemo(
-    () =>
-      projectIds
-        ? (projectIds.map((projectId) => getProjectById(projectId)).filter((project) => project) as IProject[])
-        : [],
+    () => (projectIds ? (projectIds.map((id) => getProjectById(id)).filter((item) => item) as IProject[]) : []),
     [projectIds, getProjectById]
   );
   const areAllConfigsInitialized = useMemo(() => isLoaderReady(projectLoader), [projectLoader]);
@@ -356,10 +356,33 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         isEnabled: isFilterEnabled("project_id") && projects !== undefined,
         filterIcon: Briefcase,
         projects: projects,
-        getOptionIcon: (project) => <Logo logo={project.logo_props} size={12} />,
+        getOptionIcon: (option) => <Logo logo={option.logo_props} size={12} />,
         ...operatorConfigs,
       }),
     [isFilterEnabled, projects, operatorConfigs]
+  );
+
+  // Kustomisasi Paradise: status persetujuan (KEP-25). "Ditolak" sengaja tidak
+  // ditawarkan: tugas yang ditolak kembali ke draft dan tidak pernah ada di papan.
+  const approvalStatusFilterConfig = useMemo(
+    () =>
+      getApprovalStatusFilterConfig<TWorkItemFilterProperty>("approval_status")({
+        isEnabled: isFilterEnabled("approval_status"),
+        label: t("issue.approval.filter.label"),
+        options: [
+          { key: "menunggu", label: t("issue.approval.badge.pending") },
+          { key: "disetujui", label: t("issue.approval.badge.approved") },
+        ],
+        filterIcon: Stamp,
+        getOptionIcon: (status) =>
+          status === "menunggu" ? (
+            <Clock className="size-3.5 text-warning-primary" />
+          ) : (
+            <CheckCircle2 className="size-3.5 text-success-primary" />
+          ),
+        ...operatorConfigs,
+      }),
+    [isFilterEnabled, operatorConfigs, t]
   );
 
   return {
@@ -380,6 +403,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       updatedAtFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
+      approvalStatusFilterConfig,
     ],
     configMap: {
       project_id: projectFilterConfig,
@@ -397,6 +421,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       target_date: targetDateFilterConfig,
       created_at: createdAtFilterConfig,
       updated_at: updatedAtFilterConfig,
+      approval_status: approvalStatusFilterConfig,
     },
     isFilterEnabled,
     members: members ?? [],

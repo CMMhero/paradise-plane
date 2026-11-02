@@ -59,7 +59,7 @@ export const ModuleAnalyticsProgress = observer(function ModuleAnalyticsProgress
   const selectedStateGroups = moduleFilter?.findFirstConditionByPropertyAndOperator("state_group", "in");
   const moduleDetails = getModuleById(moduleId);
   const plotType: TModulePlotType = getPlotTypeByModuleId(moduleId);
-  const isCurrentProjectEstimateEnabled = projectId && areEstimateEnabledByProjectId(projectId) ? true : false;
+  const isCurrentProjectEstimateEnabled = Boolean(projectId && areEstimateEnabledByProjectId(projectId));
   const estimateDetails =
     isCurrentProjectEstimateEnabled && currentActiveEstimateId && estimateById(currentActiveEstimateId);
   const isCurrentEstimateTypeIsPoints = estimateDetails && estimateDetails?.type === EEstimateSystem.POINTS;
@@ -72,7 +72,7 @@ export const ModuleAnalyticsProgress = observer(function ModuleAnalyticsProgress
       ? completedEstimatePoints != 0 && totalEstimatePoints != 0
         ? Math.round((completedEstimatePoints / totalEstimatePoints) * 100)
         : 0
-      : completedIssues != 0 && completedIssues != 0
+      : completedIssues != 0
         ? Math.round((completedIssues / totalIssues) * 100)
         : 0
     : 0;
@@ -120,7 +120,7 @@ export const ModuleAnalyticsProgress = observer(function ModuleAnalyticsProgress
   if (!moduleDetails) return <></>;
   return (
     <div className="space-y-4 border-t border-subtle px-3 py-4">
-      <Disclosure defaultOpen={isModuleDateValid ? true : false}>
+      <Disclosure defaultOpen={Boolean(isModuleDateValid)}>
         {({ open }) => (
           <div className="space-y-6">
             {/* progress bar header */}
@@ -129,7 +129,7 @@ export const ModuleAnalyticsProgress = observer(function ModuleAnalyticsProgress
                 <Disclosure.Button className="relative flex w-full items-center gap-2">
                   <div className="text-13 font-medium text-secondary">{t("common.progress")}</div>
                   {progressHeaderPercentage > 0 && (
-                    <div className="bg-amber-500/20 text-amber-500 flex h-5 w-9 items-center justify-center rounded-sm text-11 font-medium">{`${progressHeaderPercentage}%`}</div>
+                    <div className="flex h-5 w-9 items-center justify-center rounded-sm bg-warning-subtle text-11 font-medium text-warning-primary">{`${progressHeaderPercentage}%`}</div>
                   )}
                 </Disclosure.Button>
                 {isCurrentEstimateTypeIsPoints && (

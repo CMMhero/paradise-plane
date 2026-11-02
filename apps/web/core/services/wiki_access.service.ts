@@ -15,32 +15,14 @@ export type TWikiDivision = {
   name: string;
 };
 
-export type TWikiFolder = {
-  id: string;
-  name: string;
-  divisions: TWikiDivision[];
-};
-
-export type TWikiAccessState = {
-  is_governed: boolean;
-  folders: TWikiFolder[];
-  available_divisions: TWikiDivision[];
-  /**
-   * Id project Wiki itu sendiri. Menjadikannya "divisi pemilik" sebuah folder
-   * berarti folder General: siapa pun anggota Wiki boleh mengunggah ke sana.
-   * Tidak ada mode ketiga di model, dan memang tidak perlu ada.
-   */
-  general_division_id: string;
-};
-
 /** Bendera izin satu folder teratas, untuk pemakai yang sedang bertanya. */
 export type TWikiFolderPermission = {
   id: string;
-  /** Boleh menaruh Topik atau Materi baru di dalam folder ini. */
+  /** Admin atau anggota departemen pemilik folder: boleh menaruh Materi baru. */
   can_upload: boolean;
-  /** Kepala divisi pemilik: boleh membereskan materi orang lain di sini. */
+  /** Admin: boleh membereskan materi orang lain di sini. */
   is_lead: boolean;
-  /** Folder terbuka, semua anggota Wiki boleh mengunggah. */
+  /** Folder General (bawaan untuk folder non-divisi): semua anggota Wiki boleh mengunggah. */
   is_general: boolean;
   divisions: TWikiDivision[];
 };
@@ -56,22 +38,11 @@ export type TWikiPermissions = {
    * Dihitung server supaya aturan izin tidak hidup di dua bahasa sekaligus.
    */
   manageable_page_ids: string[];
-  /** Hanya terisi untuk admin project. Dipakai panel Kelola. */
-  general_division_id: string | null;
-  available_divisions: TWikiDivision[];
 };
 
 export class WikiAccessService extends APIService {
   constructor() {
     super(API_BASE_URL);
-  }
-
-  async fetchState(workspaceSlug: string, projectId: string): Promise<TWikiAccessState> {
-    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki-access/`)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
   }
 
   /**
@@ -84,32 +55,6 @@ export class WikiAccessService extends APIService {
    */
   async fetchPermissions(workspaceSlug: string, projectId: string): Promise<TWikiPermissions> {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki-permissions/`)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
-  }
-
-  async setGoverned(workspaceSlug: string, projectId: string, isGoverned: boolean): Promise<{ is_governed: boolean }> {
-    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki-access/`, {
-      is_governed: isGoverned,
-    })
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
-  }
-
-  /** Mengganti seluruh daftar divisi pemilik folder (bukan menambah satu per satu). */
-  async setFolderDivisions(
-    workspaceSlug: string,
-    projectId: string,
-    folderId: string,
-    divisionIds: string[]
-  ): Promise<TWikiFolder> {
-    return this.put(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki-access/folders/${folderId}/`, {
-      division_ids: divisionIds,
-    })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

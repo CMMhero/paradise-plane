@@ -79,7 +79,7 @@ export const PlanDetail = observer(function PlanDetail(props: TPlanDetailProps) 
           <div className="pt-1">
             {pricingDescription && <div>{pricingDescription}</div>}
             {pricingSecondaryDescription && (
-              <div className="text-caption-xs text-placeholder">{pricingSecondaryDescription}</div>
+              <div className="text-caption-xs-regular text-placeholder">{pricingSecondaryDescription}</div>
             )}
           </div>
         </div>
