@@ -1,6 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
-<html>
-    <p>This is a test email sent to verify if email configuration is working as expected in your Paradise Task Tracker instance.</p>
-
-<p>Regards,</br> Tim IT PT Paradise Perkasa </p>
-</html>
+{% extends "emails/base.html" %}
+{% block isi %}
+<h1 style="{{ g.h1 }}">{{ t.judul }}</h1>
+{% include "emails/partials/callout.html" with isi=t.intro nada="sukses" judul="" isi_html="" butir=None dalam=False latar_ganti="" %}
+{% endblock %}

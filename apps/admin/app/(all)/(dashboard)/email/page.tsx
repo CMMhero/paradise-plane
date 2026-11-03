@@ -11,6 +11,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Loader, ToggleSwitch } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
+import { EmailTabs } from "@/components/common/section-tabs";
 // hooks
 import { useInstance } from "@/hooks/store";
 // types
@@ -73,13 +74,14 @@ const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.Comp
         ),
         actions: isLoading ? (
           <Loader>
-            <Loader.Item width="24px" height="16px" className="rounded-full" />
+            <Loader.Item width="24px" height="16px" className="rounded-control" />
           </Loader>
         ) : (
           <ToggleSwitch value={isSMTPEnabled} onChange={handleToggle} size="sm" disabled={isSubmitting} />
         ),
       }}
     >
+      <EmailTabs />
       {isSMTPEnabled && !isLoading && (
         <>
           {formattedConfig ? (

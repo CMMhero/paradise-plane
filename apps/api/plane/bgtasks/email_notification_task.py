@@ -10,8 +10,7 @@ from bs4 import BeautifulSoup
 
 # Third party imports
 from celery import shared_task
-from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from django.core.mail import get_connection
 
 # Django imports
 from django.utils import timezone
@@ -20,7 +19,8 @@ from django.utils import timezone
 from plane.db.models import EmailNotificationLog, Issue, User
 from plane.license.utils.instance_value import get_email_configuration
 from plane.settings.redis import redis_instance
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email_merek import avatar_untuk, bahasa_penerima, buat_pesan, render_email, url_preferensi
+from plane.utils.email_pembaruan import susun_email_pembaruan
 from plane.utils.exception_logger import log_exception
 
 
@@ -49,7 +49,7 @@ def stack_email_notification():
     email_notifications = EmailNotificationLog.objects.filter(processed_at__isnull=True).order_by("receiver").values()
 
     # Kustomisasi Paradise: baris persetujuan (`entity="approval"`) dikirim
-    # lewat tugas khusus di bawah — templat dan bahasanya sendiri, satu email
+    # lewat tugas khusus di bawah (templat dan bahasanya sendiri), satu email
     # per baris. Dikeluarkan dari digest umum supaya tidak terkirim ganda.
     for baris in [n for n in email_notifications if (n.get("entity") or "") == "approval"]:
         send_approval_email_notification.delay(email_log_id=str(baris.get("id")))
@@ -176,118 +176,34 @@ def send_email_notification(issue_id, notification_data, receiver_id, email_noti
 
             data = create_payload(notification_data=notification_data)
 
-            # Get email configurations
-            (
-                EMAIL_HOST,
-                EMAIL_HOST_USER,
-                EMAIL_HOST_PASSWORD,
-                EMAIL_PORT,
-                EMAIL_USE_TLS,
-                EMAIL_USE_SSL,
-                EMAIL_FROM,
-            ) = get_email_configuration()
-
             receiver = User.objects.get(pk=receiver_id)
             issue = Issue.objects.get(pk=issue_id)
-            template_data = []
-            total_changes = 0
-            comments = []
-            actors_involved = []
+            # Kustomisasi Paradise: satu blok per aktor (perubahan + komentar), foto
+            # profil disisipkan CID lewat `konteks_pembaruan`. Dulu `avatar_url`
+            # ditempel ke `base_api` apa adanya: orang tanpa foto jadi
+            # `http://hostNone` (gambar pecah), yang punya foto jadi URL MinIO LAN.
+            aktor = []
             for actor_id, changes in data.items():
-                actor = User.objects.get(pk=actor_id)
-                total_changes = total_changes + len(changes)
+                actor = User.objects.filter(pk=actor_id).select_related("avatar_asset").first()
                 comment = changes.pop("comment", False)
                 mention = changes.pop("mention", False)
-                actors_involved.append(actor_id)
+                komentar = []
                 if comment:
-                    comments.append(
-                        {
-                            "actor_comments": comment,
-                            "actor_detail": {
-                                "avatar_url": f"{base_api}{actor.avatar_url}",
-                                "first_name": actor.first_name,
-                                "last_name": actor.last_name,
-                            },
-                        }
-                    )
+                    komentar += [k for k in comment.get("new_value") or [] if k]
                 if mention:
-                    mention["new_value"] = process_html_content(mention.get("new_value"))
-                    mention["old_value"] = process_html_content(mention.get("old_value"))
-                    comments.append(
-                        {
-                            "actor_comments": mention,
-                            "actor_detail": {
-                                "avatar_url": f"{base_api}{actor.avatar_url}",
-                                "first_name": actor.first_name,
-                                "last_name": actor.last_name,
-                            },
-                        }
-                    )
+                    komentar += [k for k in process_html_content(mention.get("new_value")) or [] if k]
                 activity_time = changes.pop("activity_time")
-                # Parse the input string into a datetime object
-                formatted_time = datetime.strptime(activity_time, "%Y-%m-%d %H:%M:%S").strftime("%H:%M %p")
+                waktu = datetime.strptime(activity_time, "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
+                aktor.append({"user": actor, "waktu": waktu, "changes": changes, "komentar": komentar})
 
-                if changes:
-                    template_data.append(
-                        {
-                            "actor_detail": {
-                                "avatar_url": f"{base_api}{actor.avatar_url}",
-                                "first_name": actor.first_name,
-                                "last_name": actor.last_name,
-                            },
-                            "changes": changes,
-                            "issue_details": {
-                                "name": issue.name,
-                                "identifier": f"{issue.project.identifier}-{issue.sequence_id}",
-                            },
-                            "activity_time": str(formatted_time),
-                        }
-                    )
-
-            summary = "Updates were made to the issue by"
-
-            # Send the mail
-            subject = f"{issue.project.identifier}-{issue.sequence_id} {remove_unwanted_characters(issue.name)}"
-            context = {
-                "data": template_data,
-                "summary": summary,
-                "actors_involved": len(set(actors_involved)),
-                "issue": {
-                    "issue_identifier": f"{str(issue.project.identifier)}-{str(issue.sequence_id)}",
-                    "name": issue.name,
-                    "issue_url": f"{base_api}/{str(issue.project.workspace.slug)}/projects/{str(issue.project.id)}/issues/{str(issue.id)}",  # noqa: E501
-                },
-                "receiver": {"email": receiver.email},
-                "issue_url": f"{base_api}/{str(issue.project.workspace.slug)}/projects/{str(issue.project.id)}/issues/{str(issue.id)}",  # noqa: E501
-                "project_url": f"{base_api}/{str(issue.project.workspace.slug)}/projects/{str(issue.project.id)}/issues/",  # noqa: E501
-                "workspace": str(issue.project.workspace.slug),
-                "project": str(issue.project.name),
-                "user_preference": f"{base_api}/{str(issue.project.workspace.slug)}/settings/account/notifications/",
-                "comments": comments,
-                "entity_type": "issue",
-            }
-            html_content = render_to_string("emails/notifications/issue-updates.html", context)
-            text_content = generate_plain_text_from_html(html_content)
+            subject, html_content, text_content, gambar = susun_email_pembaruan(
+                issue, aktor, base_api, bahasa_penerima(receiver), receiver.email
+            )
 
             try:
-                connection = get_connection(
-                    host=EMAIL_HOST,
-                    port=int(EMAIL_PORT),
-                    username=EMAIL_HOST_USER,
-                    password=EMAIL_HOST_PASSWORD,
-                    use_tls=EMAIL_USE_TLS == "1",
-                    use_ssl=EMAIL_USE_SSL == "1",
-                )
-
-                msg = EmailMultiAlternatives(
-                    subject=subject,
-                    body=text_content,
-                    from_email=EMAIL_FROM,
-                    to=[receiver.email],
-                    connection=connection,
-                )
-                msg.attach_alternative(html_content, "text/html")
-                msg.send()
+                buat_pesan(
+                    ke=receiver.email, subjek=subject, html=html_content, teks=text_content, gambar=gambar
+                ).send()
                 logging.getLogger("plane.worker").info("Email Sent Successfully")
 
                 # Update the logs
@@ -322,63 +238,115 @@ def send_email_notification(issue_id, notification_data, receiver_id, email_noti
 # templatnya satu dan logikanya tidak bercabang di HTML.
 # ---------------------------------------------------------------------------
 
+# Dua penerima, dua peran, jangan sampai tertukar (laporan user 3 Nov 2026:
+# "approved work or needing my approval?"). Pengajuan pergi ke ATASAN dan
+# meminta tindakan; keputusan pergi ke STAF dan cuma memberi kabar. Karena itu
+# subjek pengajuan diawali "Perlu persetujuanmu" dan subjek keputusan diawali
+# "Pekerjaanmu ...", supaya peran penerima terbaca dari kotak masuk tanpa membuka
+# email. Yang diajukan selalu "tandai selesai" (KEP-55): staf menggeser ke Done,
+# status tidak pindah sampai atasan menyetujui, ditolak = kembali ke In Progress.
 _STRINGS_APPROVAL_ID = {
-    "subject_diajukan": "Perlu persetujuan: {label} {judul}",
-    "subject_disetujui": "Disetujui: {label} {judul}",
-    "subject_ditolak": "Ditolak: {label} {judul}",
-    "heading_diajukan": "Permintaan persetujuan baru",
-    "heading_disetujui": "Pengajuanmu disetujui",
-    "heading_ditolak": "Pengajuanmu ditolak",
-    "intro_diajukan": "{aktor} meminta persetujuan untuk tugas ini. Buka antrean untuk menyetujui atau menolak.",
-    "intro_disetujui": "{aktor} menyetujui tugas ini. Tugas tidak lagi terkunci.",
-    "intro_ditolak": "{aktor} menolak tugas ini dengan alasan di bawah. Tugas kembali ke draft pribadimu.",
+    "subject_diajukan": "Perlu persetujuanmu: {aktor} menandai {label} {judul} selesai",
+    "subject_disetujui": "Pekerjaanmu disetujui: {label} {judul}",
+    "subject_ditolak": "Pekerjaanmu ditolak: {label} {judul}",
+    "heading_diajukan": "Menunggu persetujuanmu",
+    "heading_disetujui": "Pekerjaanmu disetujui",
+    "heading_ditolak": "Pekerjaanmu dikembalikan",
+    "intro_diajukan": (
+        "{aktor} menggeser tugas ini ke Done dan meminta kamu memeriksanya. Statusnya belum pindah "
+        "sampai kamu memutuskan. Setujui untuk menandainya selesai, atau tolak dengan alasan untuk "
+        "mengembalikannya ke In Progress."
+    ),
+    "intro_disetujui": (
+        "{aktor} menyetujui pekerjaanmu. Tugas ini sekarang berstatus Done. Tidak ada yang perlu kamu lakukan."
+    ),
+    "intro_ditolak": (
+        "{aktor} menolak pekerjaanmu dan mengembalikan tugas ini ke In Progress. Baca alasannya di bawah, "
+        "perbaiki, lalu geser lagi ke Done untuk mengajukan ulang."
+    ),
     "alasan_label": "Alasan penolakan",
-    "cta_diajukan": "Buka antrean persetujuan",
-    "cta_diputuskan": "Lihat tugas",
-    "kaki": "Kamu menerima email ini karena kamu terlibat dalam persetujuan tugas ini. Atur email persetujuan di Profil → Notifikasi.",
+    "cta_diajukan": "Periksa dan putuskan",
+    "cta_diputuskan": "Buka tugas",
+    "kaki_diajukan": "Kamu menerima email ini karena kamu atasan yang boleh menyetujui tugas di project ini.",
+    "kaki_diputuskan": "Kamu menerima email ini karena kamu yang mengajukan tugas ini untuk disetujui.",
+    "kaki_atur": "Atur email persetujuan di Profil → Notifikasi.",
 }
 
 _STRINGS_APPROVAL_EN = {
-    "subject_diajukan": "Approval needed: {label} {judul}",
-    "subject_disetujui": "Approved: {label} {judul}",
-    "subject_ditolak": "Rejected: {label} {judul}",
-    "heading_diajukan": "New approval request",
-    "heading_disetujui": "Your request was approved",
-    "heading_ditolak": "Your request was rejected",
-    "intro_diajukan": "{aktor} requested approval for this work item. Open the queue to approve or reject.",
-    "intro_disetujui": "{aktor} approved this work item. It is no longer locked.",
-    "intro_ditolak": "{aktor} rejected this work item with the reason below. It is back in your private draft.",
+    "subject_diajukan": "Needs your approval: {aktor} marked {label} {judul} as done",
+    "subject_disetujui": "Your work was approved: {label} {judul}",
+    "subject_ditolak": "Your work was rejected: {label} {judul}",
+    "heading_diajukan": "Waiting for your approval",
+    "heading_disetujui": "Your work was approved",
+    "heading_ditolak": "Your work was sent back",
+    "intro_diajukan": (
+        "{aktor} moved this work item to Done and asked you to review it. Its status won't change "
+        "until you decide. Approve to mark it done, or reject with a reason to send it back to In Progress."
+    ),
+    "intro_disetujui": "{aktor} approved your work. This work item is now Done. Nothing else to do.",
+    "intro_ditolak": (
+        "{aktor} rejected your work and moved this work item back to In Progress. Read the reason below, "
+        "fix it, then move it to Done again to resubmit."
+    ),
     "alasan_label": "Rejection reason",
-    "cta_diajukan": "Open approval queue",
-    "cta_diputuskan": "View work item",
-    "kaki": "You received this email because you are involved in this work item approval. Manage approval emails in Profile → Notifications.",
+    "cta_diajukan": "Review and decide",
+    "cta_diputuskan": "Open work item",
+    "kaki_diajukan": "You received this email because you can approve work items in this project.",
+    "kaki_diputuskan": "You received this email because you asked for approval on this work item.",
+    "kaki_atur": "Manage approval emails in Profile → Notifications.",
 }
 
 
 def konteks_persetujuan(s, verb, nama_aktor, label, judul, alasan, url_tugas, url_antrean) -> dict:
     """Konteks templat `approval.html`. Murni: dipakai pengirim dan pratinjau."""
     kunci = "diajukan" if verb == "submitted" else ("disetujui" if verb == "approved" else "ditolak")
+    diajukan = kunci == "diajukan"
     return {
         "s": s,
         "heading": s[f"heading_{kunci}"],
         "intro": s[f"intro_{kunci}"].format(aktor=nama_aktor),
-        "subject": s[f"subject_{kunci}"].format(label=label, judul=judul),
+        "subject": s[f"subject_{kunci}"].format(aktor=nama_aktor, label=label, judul=judul),
         "label": label,
         "judul": judul,
         "alasan": alasan,
         "tampilkan_alasan": kunci == "ditolak",
-        "cta_label": s["cta_diajukan"] if verb == "submitted" else s["cta_diputuskan"],
-        "cta_url": url_antrean if verb == "submitted" else url_tugas,
+        "cta_label": s["cta_diajukan"] if diajukan else s["cta_diputuskan"],
+        "cta_url": url_antrean if diajukan else url_tugas,
         "url_tugas": url_tugas,
-        "kaki": s["kaki"],
+        "kaki": f"{s['kaki_diajukan' if diajukan else 'kaki_diputuskan']} {s['kaki_atur']}",
     }
+
+
+def render_approval(context, bahasa, aktor=None, email_penerima="", slug="", gambar=None):
+    """(html, teks) `approval.html` di tata letak bersama; foto aktor masuk ke `gambar`."""
+    avatar, _ = avatar_untuk(aktor, gambar=gambar) if aktor is not None else (None, None)
+    preferensi = url_preferensi(slug)
+    kaki = context["kaki"]
+    if preferensi:
+        # Footer bersama sudah memuat tautan "Atur notifikasi"; kalimat penunjuk
+        # menu yang sama di atasnya cuma mengulang.
+        kaki = kaki.replace(f" {context['s']['kaki_atur']}", "")
+    return render_email(
+        "emails/notifications/approval.html",
+        {
+            **context,
+            "kaki": kaki,
+            "aktor_avatar": avatar,
+            # `judul` dipakai base.html untuk <title>; judul tugas untuk kartu
+            # dipisah, dulu kartu ikut menampilkan seluruh subjek email.
+            "judul_tugas": context["judul"],
+            "judul": context["subject"],
+            "pratajuk": context["intro"],
+            "url_preferensi": preferensi,
+            "email_penerima": email_penerima,
+        },
+        bahasa,
+    )
 
 
 @shared_task
 def send_approval_email_notification(email_log_id):
     """Kirim satu email persetujuan untuk satu baris `EmailNotificationLog`."""
-    from plane.utils.notifikasi_persetujuan import bahasa_penerima
-
     lock_id = f"send_approval_email_{email_log_id}"
     try:
         if not acquire_lock(lock_id=lock_id):
@@ -407,7 +375,7 @@ def send_approval_email_notification(email_log_id):
             label = f"{issue.project.identifier}-{issue.sequence_id}"
             verb = str(aktivitas.get("verb") or "submitted")
             nama_aktor = (
-                getattr(aktor, "display_name", None) or getattr(aktor, "email", None) or "—"
+                getattr(aktor, "display_name", None) or getattr(aktor, "email", None) or "?"
             )
             import os
 
@@ -421,8 +389,8 @@ def send_approval_email_notification(email_log_id):
                 s, verb, nama_aktor, label, issue.name, str(aktivitas.get("issue_comment") or ""), url_tugas, url_antrean
             )
             subject = context["subject"]
-            html_content = render_to_string("emails/notifications/approval.html", context)
-            text_content = generate_plain_text_from_html(html_content)
+            gambar = []
+            html_content, text_content = render_approval(context, bahasa, aktor, receiver.email, slug, gambar)
 
             (
                 EMAIL_HOST,
@@ -448,15 +416,15 @@ def send_approval_email_notification(email_log_id):
                 use_tls=str(EMAIL_USE_TLS) == "1",
                 use_ssl=str(EMAIL_USE_SSL) == "1",
             )
-            msg = EmailMultiAlternatives(
-                subject=remove_unwanted_characters(subject),
-                body=text_content,
-                from_email=EMAIL_FROM,
-                to=[receiver.email],
-                connection=connection,
-            )
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
+            buat_pesan(
+                ke=receiver.email,
+                subjek=remove_unwanted_characters(subject),
+                html=html_content,
+                teks=text_content,
+                koneksi=connection,
+                dari=EMAIL_FROM,
+                gambar=gambar,
+            ).send()
             logging.getLogger("plane.worker").info("Approval email sent successfully")
             EmailNotificationLog.objects.filter(pk=baris.pk).update(
                 processed_at=timezone.now(), sent_at=timezone.now()

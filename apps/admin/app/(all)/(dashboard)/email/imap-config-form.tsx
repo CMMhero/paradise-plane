@@ -15,6 +15,8 @@ import { CustomSelect } from "@plane/ui";
 // components
 import type { TControllerInputFormField } from "@/components/common/controller-input";
 import { ControllerInput } from "@/components/common/controller-input";
+import { Callout } from "@/components/common/paradise";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 // hooks
 import { useInstance } from "@/hooks/store";
 
@@ -46,6 +48,7 @@ export function InstanceImapForm({ config }: Props) {
     watch,
     setValue,
     control,
+    reset,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<ImapFormValues>({
     defaultValues: {
@@ -98,13 +101,14 @@ export function InstanceImapForm({ config }: Props) {
 
   const onSubmit = async (data: ImapFormValues) => {
     await updateInstanceConfigurations(data)
-      .then(() =>
-        setToast({
+      .then(() => {
+        reset(data);
+        return setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "Saved",
           message: "Incoming email settings saved. Nothing reads them yet.",
-        })
-      )
+        });
+      })
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
@@ -116,13 +120,18 @@ export function InstanceImapForm({ config }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex max-w-4xl items-start gap-3 rounded-md border border-warning-subtle bg-warning-subtle p-3">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-primary" />
-        <div className="text-13 text-secondary">
-          <span className="font-medium text-primary">Saved, not used yet.</span> This instance has no feature that
-          processes incoming email, so filling in the fields below does not turn emails into work items. It keeps the
-          office mail settings in one place next to the outgoing ones.
-        </div>
+      <UnsavedBar
+        label="Incoming email (IMAP)"
+        isDirty={isDirty}
+        isSaving={isSubmitting}
+        onSave={() => handleSubmit(onSubmit)()}
+        onDiscard={() => reset()}
+      />
+      <div className="max-w-4xl">
+        <Callout icon={<AlertTriangle className="size-4" />} title="Saved, not used yet.">
+          This instance has no feature that processes incoming email, so filling in the fields below does not turn
+          emails into work items. It keeps the office mail settings in one place next to the outgoing ones.
+        </Callout>
       </div>
 
       <div className="grid-col grid w-full max-w-4xl grid-cols-1 items-start justify-between gap-10 lg:grid-cols-2">
@@ -145,7 +154,6 @@ export function InstanceImapForm({ config }: Props) {
             value={ssl}
             label={KEAMANAN[ssl]}
             onChange={(v: "0" | "1") => setValue("IMAP_USE_SSL", v, { shouldDirty: true })}
-            buttonClassName="rounded-md border-subtle"
             input
           >
             {Object.entries(KEAMANAN).map(([k, v]) => (

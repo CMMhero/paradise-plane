@@ -2,68 +2,33 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-# Python imports
 import logging
 
-# Django imports
-from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
-
-# Third party imports
 from celery import shared_task
 
-# Module imports
 from plane.db.models import User
-from plane.license.utils.instance_value import get_email_configuration
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email_merek import bahasa_penerima, buat_pesan, render_email
+from plane.utils.email_teks import teks
 from plane.utils.exception_logger import log_exception
+
+
+def susun_deaktivasi(email, url, bahasa):
+    """(subjek, html, teks) untuk akun yang dinonaktifkan."""
+    t = teks("deaktivasi", bahasa)
+    html, polos = render_email(
+        "emails/user/user_deactivation.html",
+        {"t": t, "login_url": url, "judul": t["judul"], "pratajuk": t["intro"], "email_penerima": email},
+        bahasa,
+    )
+    return t["subjek"], html, polos
 
 
 @shared_task
 def user_deactivation_email(current_site, user_id):
     try:
-        # Send email to user when account is deactivated
         user = User.objects.get(id=user_id)
-        subject = f"{user.first_name or user.display_name or user.email} telah dinonaktifkan di Paradise Task Tracker"
-
-        context = {"email": str(user.email), "login_url": current_site + "/login"}
-
-        # Send email to user
-        html_content = render_to_string("emails/user/user_deactivation.html", context)
-
-        text_content = generate_plain_text_from_html(html_content)
-        # Configure email connection from the database
-        (
-            EMAIL_HOST,
-            EMAIL_HOST_USER,
-            EMAIL_HOST_PASSWORD,
-            EMAIL_PORT,
-            EMAIL_USE_TLS,
-            EMAIL_USE_SSL,
-            EMAIL_FROM,
-        ) = get_email_configuration()
-
-        connection = get_connection(
-            host=EMAIL_HOST,
-            port=int(EMAIL_PORT),
-            username=EMAIL_HOST_USER,
-            password=EMAIL_HOST_PASSWORD,
-            use_tls=EMAIL_USE_TLS == "1",
-            use_ssl=EMAIL_USE_SSL == "1",
-        )
-
-        # Send email
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_content,
-            from_email=EMAIL_FROM,
-            to=[user.email],
-            connection=connection,
-        )
-
-        # Attach HTML content
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
+        subjek, html, polos = susun_deaktivasi(user.email, current_site + "/login", bahasa_penerima(user))
+        buat_pesan(ke=user.email, subjek=subjek, html=html, teks=polos).send()
         logging.getLogger("plane.worker").info("Email sent successfully.")
         return
     except Exception as e:

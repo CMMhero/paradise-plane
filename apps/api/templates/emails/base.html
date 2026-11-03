@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="{{ bahasa }}" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="x-apple-disable-message-reformatting" />
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>{% block judul %}{{ judul }}{% endblock %}</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<style>table,td,div,p,a,span,h1,h2,h3{font-family:'Segoe UI',Arial,sans-serif !important;} a{text-decoration:none;}</style>
+<![endif]-->
+<!--[if !mso]><!-->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet" />
+<!--<![endif]-->
+<style>
+  body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table { border-collapse: collapse; mso-table-lspace: 0; mso-table-rspace: 0; }
+  img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+  a { color: {{ w.merek }}; }
+  a.em-tombol, a.em-tombol span, a.em-tombol-kedua, a.em-tombol-kedua span { text-decoration: none !important; }
+  a.em-tombol:hover { background-color: {{ w.merek_tekan }} !important; border-color: {{ w.merek_tekan }} !important; }
+  @media only screen and (max-width: 620px) {
+    .em-wadah { width: 100% !important; }
+    .em-isi { padding: 24px 20px !important; }
+    .em-kaki { padding: 16px 20px 0 !important; }
+    .em-ubin { width: auto !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:{{ w.kanvas }};">
+{% if pratajuk %}<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">{{ pratajuk }}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>{% endif %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ w.kanvas }}" style="background-color:{{ w.kanvas }};">
+  <tr>
+    <td align="center" style="padding:28px 12px 32px;">
+      <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+      <table role="presentation" class="em-wadah" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;border-collapse:separate;">
+        <tr>
+          <td style="padding:0 4px 16px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td valign="middle" style="padding-right:10px;"><img src="{{ logo_src }}" width="37" height="32" alt="Paradise Perkasa" style="display:block;width:37px;height:32px;" /></td>
+                <td valign="middle" style="font-family:{{ font }};font-size:16px;line-height:20px;font-weight:700;color:{{ w.teks }};letter-spacing:-0.2px;">{{ merek }}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          {% comment %}Bingkai = sel luar berlatar warna garis + padding 1px. Border pada <td> kadang hilang sebagian di Outlook klasik (sisi bawah kartu di beberapa email).{% endcomment %}
+          <td bgcolor="{{ w.garis }}" style="background-color:{{ w.garis }};border-radius:{{ sudut.kartu }}px;padding:1px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
+              <tr>
+                <td class="em-isi" bgcolor="{{ w.permukaan }}" style="background-color:{{ w.permukaan }};border-radius:{{ sudut.kartu_dalam }}px;padding:32px 36px;font-family:{{ font }};font-size:15px;line-height:1.6;color:{{ w.teks }};">
+<!--isi-->{% block isi %}{{ isi }}{% endblock %}<!--/isi-->
+{% comment %}Outlook klasik: sel yang berakhir dengan <p> kehilangan garis bawah bingkai. Tabel 1px ini membuat isi selalu berakhir dengan tabel.{% endcomment %}<!--[if mso]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:1px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td></tr></table><![endif]-->
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td class="em-kaki" style="padding:20px 8px 0;font-family:{{ font }};font-size:12px;line-height:1.6;color:{{ w.teks_3 }};">
+            {% block kaki %}{% if alasan %}<p style="margin:0 0 8px;">{{ alasan }}</p>{% endif %}{% endblock %}
+            {% if url_preferensi %}<p style="margin:0 0 8px;"><a href="{{ url_preferensi }}" target="_blank" style="color:{{ w.teks_2 }};text-decoration:underline;">{{ kerangka.atur }}</a></p>{% endif %}
+            {% if email_penerima %}<p style="margin:0 0 8px;">{{ kerangka.ditujukan }} <span style="color:{{ w.teks_2 }};">{{ email_penerima }}</span>.</p>{% endif %}
+            <p style="margin:12px 0 0;padding-top:12px;border-top:1px solid {{ w.garis }};color:{{ w.teks_4 }};">{{ kerangka.otomatis }}</p>
+          </td>
+        </tr>
+      </table>
+      <!--[if mso]></td></tr></table><![endif]-->
+    </td>
+  </tr>
+</table>
+</body>
+</html>

@@ -18,7 +18,6 @@ import logging
 from datetime import timedelta
 
 # Django imports
-from django.core.mail import EmailMultiAlternatives, get_connection
 from django.utils import timezone
 
 # Third party imports
@@ -28,6 +27,16 @@ from celery import shared_task
 from plane.db.models import LoginActivity
 from plane.license.models import InstanceAdmin
 from plane.license.utils.instance_value import get_email_configuration
+from plane.utils.email_merek import (
+    MEREK,
+    bahasa_penerima,
+    bungkus,
+    buat_pesan,
+    judul_html,
+    kotak,
+    paragraf,
+    tanggal,
+)
 from plane.utils.saklar_instance import LOGIN_HISTORY_RETENTION_DAYS, setelan_angka
 
 logger = logging.getLogger("plane.worker")
@@ -70,56 +79,69 @@ def hitung_peringatan():
     }
 
 
+TEKS_RETENSI = {
+    "id": {
+        "subjek": "[{merek}] {n} riwayat login akan dihapus",
+        "judul": "Riwayat login akan dihapus",
+        "p1": "Riwayat login disimpan {retensi} hari. Sebanyak {n} peristiwa akan dihapus dalam {ambang} hari ke depan{tertua}.",
+        "tertua": ", terhitung dari data tertua {tgl}",
+        "p2": "Kalau angkanya masih diperlukan, ekspor dulu lewat God Mode > Activity sebelum tanggal itu. "
+        "Sesudah dihapus, data ini tidak bisa dikembalikan.",
+        "alasan": "Anda menerima email ini karena Anda admin instance.",
+    },
+    "en": {
+        "subjek": "[{merek}] {n} login records will be deleted",
+        "judul": "Login history will be deleted",
+        "p1": "Login history is kept for {retensi} days. {n} events will be deleted within the next {ambang} days{tertua}.",
+        "tertua": ", counting from the oldest record on {tgl}",
+        "p2": "If you still need these numbers, export them from God Mode > Activity before then. "
+        "Once deleted, this data cannot be recovered.",
+        "alasan": "You received this email because you are an instance admin.",
+    },
+}
+
+
+def susun_peringatan_retensi(keadaan, bahasa="id", email=""):
+    """(subjek, teks, html). Murni: dipakai pengirim dan `kirim_contoh_email`."""
+    s = TEKS_RETENSI.get(bahasa, TEKS_RETENSI["id"])
+    tertua = keadaan.get("tertua")
+    isian = {
+        "merek": MEREK,
+        "n": keadaan["akan_dibuang"],
+        "retensi": keadaan["retensi_hari"],
+        "ambang": keadaan["ambang_peringatan_hari"],
+        "tertua": s["tertua"].format(tgl=tanggal(tertua, bahasa)) if tertua else "",
+    }
+    subjek = s["subjek"].format(**isian)
+    p1 = s["p1"].format(**isian)
+    isi = judul_html(s["judul"]) + paragraf(p1) + kotak(s["p2"], nada="peringatan")
+    html = bungkus(isi, bahasa=bahasa, judul=subjek, pratajuk=p1, alasan=s["alasan"], email_penerima=email)
+    return subjek, f"{p1}\n\n{s['p2']}\n\n{s['alasan']}\n", html
+
+
 def _kirim_email_peringatan(keadaan):
-    """Email ke semua instance admin. Diam kalau SMTP belum jalan."""
-    penerima = list(
-        InstanceAdmin.objects.filter(user__is_active=True).exclude(user__email="").values_list("user__email", flat=True)
-    )
-    if not penerima:
+    """Email ke semua instance admin, masing-masing dalam bahasanya. Diam kalau SMTP belum jalan."""
+    admin = [
+        a.user
+        for a in InstanceAdmin.objects.filter(user__is_active=True)
+        .exclude(user__email="")
+        .select_related("user", "user__profile")
+    ]
+    if not admin:
         logger.info("Retensi: tidak ada instance admin aktif untuk dikirimi email")
         return 0
 
-    (
-        EMAIL_HOST,
-        EMAIL_HOST_USER,
-        EMAIL_HOST_PASSWORD,
-        EMAIL_PORT,
-        EMAIL_USE_TLS,
-        EMAIL_USE_SSL,
-        EMAIL_FROM,
-    ) = get_email_configuration()
-
-    if not EMAIL_HOST:
+    if not get_email_configuration()[0]:
         logger.warning("Retensi: EMAIL_HOST kosong, peringatan tidak terkirim")
         return 0
 
-    tertua = keadaan["tertua"]
-    subject = f"[Paradise Task Tracker] {keadaan['akan_dibuang']} riwayat login akan dihapus"
-    body = (
-        "Peringatan otomatis dari Paradise Task Tracker.\n\n"
-        f"Riwayat login disimpan {keadaan['retensi_hari']} hari. "
-        f"Sebanyak {keadaan['akan_dibuang']} peristiwa akan dihapus dalam "
-        f"{keadaan['ambang_peringatan_hari']} hari ke depan"
-        + (f", terhitung dari data tertua {tertua:%d %B %Y}" if tertua else "")
-        + ".\n\n"
-        "Kalau angkanya masih diperlukan, ekspor dulu lewat God Mode -> Activity "
-        "sebelum tanggal itu. Sesudah dihapus, data ini tidak bisa dikembalikan.\n\n"
-        "Email ini dikirim ke semua instance admin."
-    )
-
-    connection = get_connection(
-        host=EMAIL_HOST,
-        port=int(EMAIL_PORT),
-        username=EMAIL_HOST_USER,
-        password=EMAIL_HOST_PASSWORD,
-        use_tls=EMAIL_USE_TLS == "1",
-        use_ssl=EMAIL_USE_SSL == "1",
-    )
-    msg = EmailMultiAlternatives(subject=subject, body=body, from_email=EMAIL_FROM, to=penerima, connection=connection)
-    msg.send()
-    logger.info("Retensi: peringatan terkirim ke %s admin", len(penerima))
-    return len(penerima)
-
+    terkirim = 0
+    for user in admin:
+        subjek, teks, html = susun_peringatan_retensi(keadaan, bahasa_penerima(user), user.email)
+        buat_pesan(ke=user.email, subjek=subjek, html=html, teks=teks).send()
+        terkirim += 1
+    logger.info("Retensi: peringatan terkirim ke %s admin", terkirim)
+    return terkirim
 
 @shared_task
 def bersihkan_login_activity():

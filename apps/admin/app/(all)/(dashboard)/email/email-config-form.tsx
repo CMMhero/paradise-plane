@@ -15,6 +15,7 @@ import { CustomSelect } from "@plane/ui";
 // components
 import type { TControllerInputFormField } from "@/components/common/controller-input";
 import { ControllerInput } from "@/components/common/controller-input";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 // hooks
 import { useInstance } from "@/hooks/store";
 // local components
@@ -46,6 +47,7 @@ export function InstanceEmailForm(props: IInstanceEmailForm) {
     watch,
     setValue,
     control,
+    reset,
     formState: { errors, isValid, isDirty, isSubmitting },
   } = useForm<EmailFormValues>({
     defaultValues: {
@@ -111,13 +113,14 @@ export function InstanceEmailForm(props: IInstanceEmailForm) {
     const payload: Partial<EmailFormValues> = { ...formData, ENABLE_SMTP: "1" };
 
     await updateInstanceConfigurations(payload)
-      .then(() =>
-        setToast({
+      .then(() => {
+        reset(formData);
+        return setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "Success",
           message: "Email Settings updated successfully",
-        })
-      )
+        });
+      })
       .catch((err) => console.error(err));
   };
 
@@ -130,22 +133,32 @@ export function InstanceEmailForm(props: IInstanceEmailForm) {
   }, [useTLSValue, useSSLValue]);
 
   const handleEmailSecurityChange = (key: TEmailSecurityKeys) => {
+    // shouldDirty: changing only the security mode must still light the unsaved bar.
+    const dirty = { shouldDirty: true } as const;
     if (key === "EMAIL_USE_SSL") {
-      setValue("EMAIL_USE_TLS", "0");
-      setValue("EMAIL_USE_SSL", "1");
+      setValue("EMAIL_USE_TLS", "0", dirty);
+      setValue("EMAIL_USE_SSL", "1", dirty);
     }
     if (key === "EMAIL_USE_TLS") {
-      setValue("EMAIL_USE_TLS", "1");
-      setValue("EMAIL_USE_SSL", "0");
+      setValue("EMAIL_USE_TLS", "1", dirty);
+      setValue("EMAIL_USE_SSL", "0", dirty);
     }
     if (key === "NONE") {
-      setValue("EMAIL_USE_TLS", "0");
-      setValue("EMAIL_USE_SSL", "0");
+      setValue("EMAIL_USE_TLS", "0", dirty);
+      setValue("EMAIL_USE_SSL", "0", dirty);
     }
   };
 
   return (
     <div className="space-y-8">
+      <UnsavedBar
+        label="Outgoing email (SMTP)"
+        isDirty={isDirty}
+        isSaving={isSubmitting}
+        canSave={isValid}
+        onSave={() => handleSubmit(onSubmit)()}
+        onDiscard={() => reset()}
+      />
       <div>
         <SendTestEmailModal isOpen={isSendTestEmailModalOpen} handleClose={() => setIsSendTestEmailModalOpen(false)} />
         <div className="grid-col grid w-full max-w-4xl grid-cols-1 items-start justify-between gap-10 lg:grid-cols-2">
@@ -168,7 +181,6 @@ export function InstanceEmailForm(props: IInstanceEmailForm) {
               value={emailSecurityKey}
               label={EMAIL_SECURITY_OPTIONS[emailSecurityKey]}
               onChange={handleEmailSecurityChange}
-              buttonClassName="rounded-md border-subtle"
               input
             >
               {Object.entries(EMAIL_SECURITY_OPTIONS).map(([key, value]) => (
