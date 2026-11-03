@@ -2,61 +2,34 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-# Python imports
 import logging
 
-# Third party imports
 from celery import shared_task
 
-# Django imports
-# Third party imports
-from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
-
-# Module imports
-from plane.license.utils.instance_value import get_email_configuration
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email_merek import bahasa_untuk_alamat, buat_pesan, render_email
+from plane.utils.email_teks import teks
 from plane.utils.exception_logger import log_exception
+
+
+def susun_magic_link(email, token, bahasa, grup="magic"):
+    """(subjek, html, teks). Murni: dipakai pengirim dan `kirim_contoh_email`.
+
+    `grup="ganti_email"` = kode verifikasi alamat baru (templat yang sama).
+    """
+    t = teks(grup, bahasa, kode=token)
+    html, polos = render_email(
+        "emails/auth/magic_signin.html",
+        {"t": t, "code": token, "judul": t["judul"], "pratajuk": t["intro"], "email_penerima": email},
+        bahasa,
+    )
+    return t["subjek"], html, polos
 
 
 @shared_task
 def magic_link(email, key, token):
     try:
-        (
-            EMAIL_HOST,
-            EMAIL_HOST_USER,
-            EMAIL_HOST_PASSWORD,
-            EMAIL_PORT,
-            EMAIL_USE_TLS,
-            EMAIL_USE_SSL,
-            EMAIL_FROM,
-        ) = get_email_configuration()
-
-        # Send the mail
-        subject = f"Kode masuk Paradise Task Tracker Anda: {token}"
-        context = {"code": token, "email": email}
-
-        html_content = render_to_string("emails/auth/magic_signin.html", context)
-        text_content = generate_plain_text_from_html(html_content)
-
-        connection = get_connection(
-            host=EMAIL_HOST,
-            port=int(EMAIL_PORT),
-            username=EMAIL_HOST_USER,
-            password=EMAIL_HOST_PASSWORD,
-            use_tls=EMAIL_USE_TLS == "1",
-            use_ssl=EMAIL_USE_SSL == "1",
-        )
-
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_content,
-            from_email=EMAIL_FROM,
-            to=[email],
-            connection=connection,
-        )
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
+        subjek, html, polos = susun_magic_link(email, token, bahasa_untuk_alamat(email))
+        buat_pesan(ke=email, subjek=subjek, html=html, teks=polos).send()
         logging.getLogger("plane.worker").info("Email sent successfully.")
         return
     except Exception as e:

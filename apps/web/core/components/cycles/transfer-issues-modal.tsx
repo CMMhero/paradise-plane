@@ -11,7 +11,7 @@ import { AlertCircle } from "lucide-react";
 import { SearchIcon, CycleIcon, TransferIcon, CloseIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { EIssuesStoreType } from "@plane/types";
-import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+import { EModalPosition, EModalWidth, ModalCore, Input } from "@plane/ui";
 import { useCycle } from "@/hooks/store/use-cycle";
 import { useIssues } from "@/hooks/store/use-issues";
 
@@ -90,8 +90,9 @@ export const TransferIssuesModal = observer(function TransferIssuesModal(props: 
         </div>
         <div className="flex items-center gap-2 border-b border-subtle px-5 pb-3">
           <SearchIcon className="h-4 w-4 text-secondary" />
-          <input
-            className="text-13 outline-none"
+          <Input
+            mode="true-transparent"
+            className="p-0"
             placeholder="Search for a cycle..."
             onChange={(e) => setQuery(e.target.value)}
             value={query}
@@ -108,7 +109,7 @@ export const TransferIssuesModal = observer(function TransferIssuesModal(props: 
                 return (
                   <button
                     key={optionId}
-                    className="flex w-full items-center gap-4 rounded-sm px-4 py-3 text-13 text-secondary hover:bg-surface-2"
+                    className="flex w-full items-center gap-4 rounded-item px-4 py-3 text-13 text-secondary hover:bg-surface-2"
                     onClick={() => {
                       transferIssue({
                         new_cycle_id: optionId,
@@ -120,7 +121,7 @@ export const TransferIssuesModal = observer(function TransferIssuesModal(props: 
                     <div className="flex w-full justify-between truncate">
                       <span className="truncate">{cycleDetails?.name}</span>
                       {cycleDetails.status && (
-                        <span className="flex flex-shrink-0 items-center rounded-full bg-layer-1 px-2 capitalize">
+                        <span className="flex flex-shrink-0 items-center rounded-control bg-layer-1 px-2 capitalize">
                           {cycleDetails.status.toLocaleLowerCase()}
                         </span>
                       )}

@@ -15,10 +15,11 @@ import { AlertTriangle, Send } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { Tooltip } from "@plane/propel/tooltip";
-import { Avatar } from "@plane/ui";
-import { getFileURL, renderFormattedDate } from "@plane/utils";
+import { Avatar, Row } from "@plane/ui";
+import { cn, getFileURL, renderFormattedDate } from "@plane/utils";
 // components
 import { ListItem } from "@/components/core/list";
+import { MemberProfileTrigger } from "@/components/member-profile";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -81,58 +82,89 @@ export const ApprovalQueueRow = observer(function ApprovalQueueRow(props: TAppro
   const tanpaPenyetuju = menunggu && baris.penyetuju_di_divisi.length === 0;
   const bolehAjukanUlang = baris.status === "ditolak" && baris.peran_saya === "pemohon";
 
+  // Tooltip propel tidak tampil di layar sentuh, jadi alasan penolakan dan
+  // peringatan "belum ada penyetuju" juga ditulis terang di bawah baris.
+  // Tanpa ini staf di HP tidak pernah tahu kenapa tugasnya ditolak, padahal
+  // tombol "Ajukan ulang" ada tepat di sebelahnya.
+  const catatan =
+    baris.status === "ditolak" && baris.alasan
+      ? t("issue.approval.queue.rejection_reason", { reason: baris.alasan })
+      : tanpaPenyetuju
+        ? t("issue.approval.queue.no_approver")
+        : null;
+
   return (
-    <ListItem
-      parentRef={parentRef}
-      isMobile={isMobile}
-      title={baris.tugas.judul ?? t("issue.approval.queue.untitled")}
-      itemLink={bisaDibuka ? `/${workspaceSlug}/browse/${baris.tugas.nomor}/` : ""}
-      disableLink={!bisaDibuka}
-      prependTitleElement={
-        <span className="w-16 shrink-0 truncate text-13 font-medium text-tertiary">{baris.tugas.nomor ?? "-"}</span>
-      }
-      actionableItems={
-        <>
-          {tanpaPenyetuju && (
-            <Tooltip tooltipContent={t("issue.approval.queue.no_approver")} isMobile={isMobile}>
-              <span className="grid size-5 cursor-default place-items-center text-warning-primary">
-                <AlertTriangle className="size-4" aria-label={t("issue.approval.queue.no_approver")} />
+    <div>
+      <ListItem
+        className={catatan ? "border-b-0" : undefined}
+        parentRef={parentRef}
+        isMobile={isMobile}
+        title={baris.tugas.judul ?? t("issue.approval.queue.untitled")}
+        itemLink={bisaDibuka ? `/${workspaceSlug}/browse/${baris.tugas.nomor}/` : ""}
+        disableLink={!bisaDibuka}
+        prependTitleElement={
+          <span className="w-16 shrink-0 truncate text-13 font-medium text-tertiary">{baris.tugas.nomor ?? "-"}</span>
+        }
+        actionableItems={
+          <>
+            {tanpaPenyetuju && (
+              <Tooltip tooltipContent={t("issue.approval.queue.no_approver")} isMobile={isMobile}>
+                <span className="grid size-5 cursor-default place-items-center text-warning-primary">
+                  <AlertTriangle className="size-4" aria-label={t("issue.approval.queue.no_approver")} />
+                </span>
+              </Tooltip>
+            )}
+            <StatusBaris baris={baris} />
+            <Tooltip
+              tooltipContent={t("issue.approval.queue.row_submitted", {
+                name: namaPemohon,
+                date: renderFormattedDate(baris.created_at) ?? "-",
+              })}
+              isMobile={isMobile}
+            >
+              <span className="flex cursor-default items-center gap-2 text-13 text-tertiary">
+                <MemberProfileTrigger userId={baris.pemohon.id} className="rounded-full">
+                  <Avatar name={namaPemohon} src={getFileURL(pemohon?.avatar_url ?? "")} showTooltip={false} />
+                </MemberProfileTrigger>
+                <span className="hidden whitespace-nowrap md:inline">{renderFormattedDate(baris.created_at)}</span>
               </span>
             </Tooltip>
+            {menunggu && baris.boleh_saya_putuskan && (
+              <ApprovalDecisionButtons
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                baris={baris}
+                variant="full"
+              />
+            )}
+            {bolehAjukanUlang && (
+              <Button
+                variant="secondary"
+                size="base"
+                loading={prosesId === baris.id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void putuskan(workspaceSlug, projectId, baris, "ajukan-ulang");
+                }}
+                prependIcon={<Send className="size-3.5" aria-hidden />}
+              >
+                {t("issue.approval.actions.resubmit")}
+              </Button>
+            )}
+          </>
+        }
+      />
+      {catatan && (
+        <Row
+          className={cn(
+            "border-b border-subtle pb-3 text-12 text-tertiary",
+            baris.status === "ditolak" ? "line-clamp-2" : "text-warning-primary"
           )}
-          <StatusBaris baris={baris} />
-          <Tooltip
-            tooltipContent={t("issue.approval.queue.row_submitted", {
-              name: namaPemohon,
-              date: renderFormattedDate(baris.created_at) ?? "-",
-            })}
-            isMobile={isMobile}
-          >
-            <span className="flex cursor-default items-center gap-2 text-13 text-tertiary">
-              <Avatar name={namaPemohon} src={getFileURL(pemohon?.avatar_url ?? "")} showTooltip={false} />
-              <span className="hidden whitespace-nowrap md:inline">{renderFormattedDate(baris.created_at)}</span>
-            </span>
-          </Tooltip>
-          {menunggu && baris.boleh_saya_putuskan && (
-            <ApprovalDecisionButtons workspaceSlug={workspaceSlug} projectId={projectId} baris={baris} variant="full" />
-          )}
-          {bolehAjukanUlang && (
-            <Button
-              variant="secondary"
-              size="base"
-              loading={prosesId === baris.id}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void putuskan(workspaceSlug, projectId, baris, "ajukan-ulang");
-              }}
-              prependIcon={<Send className="size-3.5" aria-hidden />}
-            >
-              {t("issue.approval.actions.resubmit")}
-            </Button>
-          )}
-        </>
-      }
-    />
+        >
+          {catatan}
+        </Row>
+      )}
+    </div>
   );
 });

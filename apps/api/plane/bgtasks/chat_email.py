@@ -5,26 +5,64 @@
 
 """Penyusun dan pengirim satu email rangkuman pesan yang belum dibaca."""
 
-import os
-from html import escape
+from django.utils.html import escape
 
-from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, get_connection
+from plane.utils.email_merek import (
+    FONT,
+    GAYA,
+    JEDA_AVATAR,
+    RUANG,
+    TABEL,
+    UKURAN_AVATAR,
+    WARNA,
+    avatar_untuk,
+    bahasa_penerima,
+    base_url,
+    baris_orang,
+    blok,
+    bungkus,
+    buat_pesan,
+    catatan_kecil,
+    garis_pemisah,
+    judul_html,
+    sapaan_html,
+    tombol,
+    url_preferensi,
+)
 
-from plane.license.utils.instance_value import get_email_configuration
-
-PRODUK = "Paradise Task Tracker"
-KANTOR = "PT Paradise Perkasa"
+FONT_SEL = f"font-family:{FONT};"
 
 # Panjang cuplikan isi pesan di dalam email. Cukup untuk tahu ini soal apa,
 # pendek supaya email tidak jadi tempat membaca seluruh percakapan. Membacanya
-# di aplikasi juga yang menandainya terbaca.
+# tetap di aplikasi, supaya status terbaca ikut tercatat.
 PANJANG_CUPLIKAN = 120
 
-
-def _base_url() -> str:
-    """Alamat aplikasi untuk tautan balik. Diambil dari environment."""
-    return (settings.APP_BASE_URL or os.environ.get("WEB_URL") or "").rstrip("/")
+TEKS = {
+    "id": {
+        "subjek_satu": "[Obrolan] {n} pesan baru dari {nama}",
+        "subjek_banyak": "[Obrolan] {n} pesan baru dari {orang} orang",
+        "sapaan": "Halo {nama},",
+        "judul": "Ada pesan yang belum Anda baca",
+        "jumlah": "{n} pesan",
+        "buka": "Buka percakapan",
+        "buka_teks": "Buka: {url}",
+        "tombol": "Buka obrolan",
+        "catatan": "Pesan ditandai terbaca saat Anda membukanya di aplikasi.",
+        "alasan": "Anda menerima email ini karena email obrolan Anda menyala.",
+    },
+    "en": {
+        "subjek_satu": "[Chat] {n} new messages from {nama}",
+        "subjek_banyak": "[Chat] {n} new messages from {orang} people",
+        "sapaan": "Hi {nama},",
+        "judul": "You have unread messages",
+        "jumlah": "{n} messages",
+        "buka": "Open conversation",
+        "buka_teks": "Open: {url}",
+        "tombol": "Open chat",
+        "catatan": "Messages are marked as read when you open them in the app.",
+        "alasan": "You received this email because chat emails are turned on for you.",
+    },
+}
 
 
 def _cuplik(teks: str) -> str:
@@ -34,44 +72,34 @@ def _cuplik(teks: str) -> str:
     return satu_baris[: PANJANG_CUPLIKAN - 1] + "…"
 
 
-def kirim_email_pesan(penerima, slug: str, ringkasan: list) -> None:
-    """Kirim satu email berisi seluruh pesan belum dibaca milik satu orang.
+def _nama(orang) -> str:
+    return orang.display_name or orang.first_name or orang.email
 
-    `ringkasan` berisi tuple (pengirim, jumlah, isi_terakhir), satu per lawan
-    bicara. Melempar kalau gagal, biar pemanggil yang mencatat.
-    """
-    host, user, pwd, port, use_tls, use_ssl, efrom = get_email_configuration()
 
+def susun_email_pesan(penerima, slug: str, ringkasan: list, bahasa="id", gambar=None):
+    """(subjek, teks, html). `gambar` = daftar Gambar pesan; foto pengirim masuk ke sana."""
+    s = TEKS.get(bahasa, TEKS["id"])
     total = sum(jumlah for _, jumlah, _ in ringkasan)
     if len(ringkasan) == 1:
-        pengirim = ringkasan[0][0]
-        nama = pengirim.display_name or pengirim.first_name or pengirim.email
-        subjek = f"[Obrolan] {total} pesan baru dari {nama}"
+        subjek = s["subjek_satu"].format(n=total, nama=_nama(ringkasan[0][0]))
     else:
-        subjek = f"[Obrolan] {total} pesan baru dari {len(ringkasan)} orang"
+        subjek = s["subjek_banyak"].format(n=total, orang=len(ringkasan))
 
-    url = _base_url()
-
-    baris_teks = [
-        f"Halo {penerima.display_name or penerima.first_name or ''},".strip(),
-        "",
-        "Ada pesan yang belum Anda baca di Obrolan:",
-        "",
-    ]
+    url = base_url()
+    sapaan = s["sapaan"].format(nama=penerima.display_name or penerima.first_name or "").replace(" ,", ",")
+    baris_teks = [sapaan, "", s["judul"], ""]
     baris_html = []
     for pengirim, jumlah, isi_terakhir in ringkasan:
-        nama = pengirim.display_name or pengirim.first_name or pengirim.email
+        nama = _nama(pengirim)
         tautan = f"{url}/{slug}/chat?dengan={pengirim.id}" if url else ""
-        baris_teks += [
-            f"  {nama} ({jumlah} pesan)",
-            f"    {_cuplik(isi_terakhir)}",
-        ]
+        baris_teks += [f"  {nama} ({s['jumlah'].format(n=jumlah)})", f"    {_cuplik(isi_terakhir)}"]
         if tautan:
-            baris_teks.append(f"    Buka: {tautan}")
+            baris_teks.append("    " + s["buka_teks"].format(url=tautan))
         baris_teks.append("")
-        tombol = (
-            f'<div style="margin-top:6px"><a href="{escape(tautan)}" '
-            f'style="color:#1f2937">Buka percakapan</a></div>'
+        av, _ = avatar_untuk(pengirim, gambar=gambar)
+        buka = (
+            f'<br><a href="{escape(tautan)}" target="_blank" style="{GAYA["tautan_aksi"]}">'
+            f"{escape(s['buka'])} &rarr;</a>"
             if tautan
             else ""
         )
@@ -79,54 +107,42 @@ def kirim_email_pesan(penerima, slug: str, ringkasan: list) -> None:
         # siapa pun bisa menyuntikkan markup ke kotak masuk rekannya hanya
         # dengan mengetiknya di obrolan.
         baris_html.append(
-            f"""
-  <tr>
-    <td style="padding:8px 0;border-bottom:1px solid #e5e7eb">
-      <div><strong>{escape(nama)}</strong>
-        <span style="color:#6b7280">&middot; {jumlah} pesan</span></div>
-      <div style="color:#4b5563;margin-top:2px">{escape(_cuplik(isi_terakhir))}</div>
-      {tombol}
-    </td>
-  </tr>"""
+            baris_orang(av, s["jumlah"].format(n=jumlah), jarak=4, dalam=True)
+            + f'{TABEL}><tr><td style="padding:0 0 0 {UKURAN_AVATAR + JEDA_AVATAR}px;{FONT_SEL}'
+            f'font-size:14px;line-height:1.5;color:{WARNA["teks_2"]};">{escape(_cuplik(isi_terakhir))}{buka}</td></tr></table>'
         )
+    baris_teks += [s["catatan"], ""]
 
-    baris_teks += [
-        "Pesan ditandai terbaca saat Anda membukanya di aplikasi.",
-        "",
-        f"Email otomatis dari {PRODUK}. Tidak perlu dibalas.",
-    ]
+    # Pemisah HANYA di antara orang: garis terakhir yang menempel ke tombol
+    # membuat tombol terlihat seperti bagian baris terakhir.
+    pemisah = f'</td></tr>{garis_pemisah()}<tr><td style="padding:14px 0;">'
+    daftar = f'{TABEL}><tr><td style="padding:0 0 14px;">{pemisah.join(baris_html)}</td></tr></table>'
 
-    html = f"""
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1f2937;max-width:560px">
-  <p>Halo {escape(penerima.display_name or "")},</p>
-  <p>Ada pesan yang belum Anda baca di Obrolan.</p>
-  <table style="border-collapse:collapse;width:100%;margin:16px 0">{"".join(baris_html)}
-  </table>
-  <p style="color:#6b7280;font-size:12px">
-    Pesan ditandai terbaca saat Anda membukanya di aplikasi.
-  </p>
-  <p style="color:#9ca3af;font-size:11px;margin-top:24px">
-    Email otomatis dari {PRODUK}, sistem internal {KANTOR}. Tidak perlu dibalas.<br>
-    Paradise Task Tracker
-  </p>
-</div>
-""".strip()
-
-    koneksi = get_connection(
-        host=host,
-        port=int(port),
-        username=user,
-        password=pwd,
-        use_tls=str(use_tls) == "1",
-        use_ssl=str(use_ssl) == "1",
-        timeout=30,
+    isi = (
+        judul_html(s["judul"])
+        + sapaan_html(sapaan)
+        + blok(daftar, jarak=RUANG["blok"] - 14)
+        + tombol(s["tombol"], f"{url}/{slug}/chat" if url else "")
+        + catatan_kecil(s["catatan"])
     )
-    pesan = EmailMultiAlternatives(
-        subject=subjek,
-        body="\n".join(baris_teks),
-        from_email=efrom,
-        to=[penerima.email],
-        connection=koneksi,
+    html = bungkus(
+        isi,
+        bahasa=bahasa,
+        judul=subjek,
+        pratajuk=s["judul"],
+        alasan=s["alasan"],
+        url_preferensi=url_preferensi(slug),
+        email_penerima=penerima.email,
     )
-    pesan.attach_alternative(html, "text/html")
-    pesan.send(fail_silently=False)
+    return subjek, "\n".join(baris_teks), html
+
+
+def kirim_email_pesan(penerima, slug: str, ringkasan: list) -> None:
+    """Kirim satu email berisi seluruh pesan belum dibaca milik satu orang.
+
+    `ringkasan` berisi tuple (pengirim, jumlah, isi_terakhir), satu per lawan
+    bicara. Melempar kalau gagal, biar pemanggil yang mencatat.
+    """
+    gambar = []
+    subjek, teks, html = susun_email_pesan(penerima, slug, ringkasan, bahasa_penerima(penerima), gambar)
+    buat_pesan(ke=penerima.email, subjek=subjek, html=html, teks=teks, gambar=gambar).send(fail_silently=False)

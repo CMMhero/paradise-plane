@@ -148,7 +148,7 @@ export function PreferensiMember({ nilai, gagal, onProfil, onNotif, onNavigasi, 
           <span className="block text-12 font-medium text-secondary">{t.email_title}</span>
           <span className="block text-11 text-tertiary">{t.email_note}</span>
         </div>
-        <div className="rounded-md border border-subtle px-3 py-1">
+        <div className="rounded-card border border-subtle px-3 py-1">
           <Saklar
             label={t.ikut_bawaan_jabatan}
             nilai={notifications.ikut_bawaan_jabatan}
@@ -156,7 +156,7 @@ export function PreferensiMember({ nilai, gagal, onProfil, onNotif, onNavigasi, 
           />
           <p className="pb-1.5 text-11 text-tertiary">{t.ikut_bawaan_jabatan_note}</p>
         </div>
-        <div className="rounded-md border border-subtle px-3 py-2">
+        <div className="rounded-card border border-subtle px-3 py-2">
           <MatriksNotifikasi
             nilai={notifications}
             // Mengubah satu saklar = berhenti ikut bawaan jabatan (sama dengan server).

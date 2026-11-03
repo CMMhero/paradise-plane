@@ -105,7 +105,16 @@
       "open_project_setting": "Open a project setting",
       "nav_project_settings": "Go to project settings",
       "nav_workspace_active_cycle": "Go to all active cycles",
-      "nav_project_overview": "Go to project overview"
+      "nav_project_overview": "Go to project overview",
+      "nav_chat": "Go to chat",
+      "nav_wiki": "Go to wiki",
+      "nav_dashboard_divisi": "Go to division dashboard",
+      "nav_initiatives": "Go to initiatives",
+      "nav_stickies": "Go to stickies",
+      "nav_quick_links": "Go to quick links",
+      "nav_your_work_calendar": "Go to your calendar",
+      "nav_project_approvals": "Go to approvals",
+      "open_account_setting": "Open an account setting"
     },
     "account_actions": {
       "sign_out": "Sign out",
@@ -166,7 +175,8 @@
       "update_theme": "Change theme",
       "update_timezone": "Change timezone",
       "update_start_of_week": "Change first day of week",
-      "update_language": "Change language"
+      "update_language": "Change language",
+      "open_account_setting": "Open an account setting"
     },
     "search_menu": {
       "no_results": "No results found",

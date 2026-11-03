@@ -65,12 +65,23 @@ export type TUserProfile = {
   id: string | undefined;
   user: string | undefined;
   role: string | undefined;
+  /** Paradise: jabatan di kartu profil anggota. */
+  job_title?: string;
+  /** Paradise: ekstensi telepon kantor (angka, spasi, + ( ) - # *). */
+  phone_extension?: string;
   last_workspace_id: string | undefined;
   theme: {
     theme: string | undefined;
     primary: string | undefined;
     background: string | undefined;
     darkPalette: boolean | undefined;
+    /** Paradise (KEP-64), lihat IUserTheme. */
+    gerak?: TTampilanGerak;
+    font?: TTampilanFont;
+    skema?: TTampilanSkema;
+    /** Paradise: volume suara pemberitahuan 0..100 dan bisu. */
+    volume_suara?: number;
+    suara_bisu?: boolean;
   };
   onboarding_step: TOnboardingSteps;
   is_onboarded: boolean;
@@ -109,7 +120,32 @@ export interface IUserTheme {
   primary?: string | undefined;
   background?: string | undefined;
   darkPalette?: boolean | undefined;
+  /** Paradise (KEP-64): preferensi tampilan. Kosong = bawaan pabrik. */
+  gerak?: TTampilanGerak;
+  font?: TTampilanFont;
+  skema?: TTampilanSkema;
+  /** Paradise: volume suara pemberitahuan 0..100 (kosong = 80) dan bisu (kosong = tidak). */
+  volume_suara?: number;
+  suara_bisu?: boolean;
 }
+
+/** Font antarmuka. "jakarta" = Plus Jakarta Sans (bawaan). */
+export type TTampilanFont =
+  | "jakarta"
+  | "inter"
+  | "geist"
+  | "figtree"
+  | "bricolage"
+  | "archivo"
+  | "sora"
+  | "shantell"
+  | "jetbrains"
+  | "serif"
+  | "sistem";
+/** Skema warna latar + aksen kedua. Merah merek tidak ikut berubah. */
+export type TTampilanSkema = "bara" | "senja" | "sumi" | "hutan" | "netral";
+/** "kurangi" memangkas transisi jadi hampir seketika. */
+export type TTampilanGerak = "halus" | "kurangi";
 
 export interface IUserMemberLite extends IUserLite {
   email?: string;

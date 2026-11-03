@@ -51,6 +51,7 @@ from plane.bgtasks.event_tracking_task import track_event
 from plane.utils.url import contains_url
 from plane.utils.analytics_events import WORKSPACE_CREATED, WORKSPACE_DELETED
 from plane.utils.csv_utils import sanitize_csv_row
+from plane.utils.tanggal_otomatis import batas_terlambat
 
 
 class WorkSpaceViewSet(BaseViewSet):
@@ -327,7 +328,8 @@ class UserWorkspaceDashboardEndpoint(BaseAPIView):
             ~Q(state__group__in=["completed", "cancelled"]),
             workspace__slug=slug,
             assignees__in=[request.user],
-            target_date__lt=timezone.now(),
+            # Kustomisasi Paradise: tenggang terlambat dari God Mode (OVERDUE_GRACE_DAYS).
+            target_date__lt=batas_terlambat(timezone.localdate()),
             completed_at__isnull=True,
         ).values("id", "name", "workspace__slug", "project_id", "target_date")
 

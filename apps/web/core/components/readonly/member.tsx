@@ -35,7 +35,7 @@ export const ReadonlyMember = observer(function ReadonlyMember(props: TReadonlyM
   if (members.length === 0) {
     return (
       <div className={cn("flex items-center gap-1 text-body-xs-regular", className)}>
-        {<ButtonAvatars showTooltip={false} userIds={value} icon={Icon} />}
+        {<ButtonAvatars showProfileCard showTooltip={false} userIds={value} icon={Icon} />}
         <span className="flex-grow truncate">{placeholder ?? t("common.none")}</span>
       </div>
     );
@@ -45,7 +45,7 @@ export const ReadonlyMember = observer(function ReadonlyMember(props: TReadonlyM
     return (
       <div className={cn("flex items-center gap-1 text-body-xs-regular", className)}>
         {!hideIcon && Icon && <Icon className="h-3 w-3 flex-shrink-0" />}
-        <ButtonAvatars showTooltip={false} userIds={memberIds} />
+        <ButtonAvatars showProfileCard showTooltip={false} userIds={memberIds} />
       </div>
     );
   }

@@ -10,16 +10,17 @@
  * yang langsung terbuka saat chip baru ditambahkan.
  */
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CalendarDays, ListFilter, ListFilterPlus, X } from "lucide-react";
 // plane imports
 import { Button, getButtonStyling } from "@plane/propel/button";
+import { Calendar } from "@plane/propel/calendar";
 import { Popover } from "@plane/propel/popover";
-import { CustomSearchSelect } from "@plane/ui";
-import { cn } from "@plane/utils";
+import { CustomSearchSelect, Input } from "@plane/ui";
+import { cn, getDate, renderFormattedDate } from "@plane/utils";
 // local
 import type { TCondition, TFilterField, TFilterOperator } from "./model";
-import { DATE_PRESETS, OPERATOR_LABEL, describeDate, operatorsFor } from "./model";
+import { DATE_PRESETS, OPERATOR_LABEL, describeDate, operatorsFor, toDayString } from "./model";
 
 const GARIS = "border-r border-subtle";
 const KOSONG = "--";
@@ -30,10 +31,10 @@ type TAddFilterProps<Row> = {
   onAdd: (field: string) => void;
   /** Tanpa label = tombol ikon saja (dipakai di dalam baris filter). */
   label?: string;
-  size?: "sm" | "base";
+  size?: "base" | "lg";
 };
 
-export function AddFilterButton<Row>({ fields, conditions, onAdd, label, size = "base" }: TAddFilterProps<Row>) {
+export function AddFilterButton<Row>({ fields, conditions, onAdd, label, size = "lg" }: TAddFilterProps<Row>) {
   const dipakai = new Set(conditions.map((c) => c.field));
   const sisa = fields.filter((f) => !dipakai.has(f.key));
   const options =
@@ -66,10 +67,10 @@ export function AddFilterButton<Row>({ fields, conditions, onAdd, label, size = 
       optionsClassName="w-56"
       maxHeight="2xl"
       placement="bottom-start"
-      customButtonClassName={cn(getButtonStyling("secondary", size), "py-[5px]")}
+      customButtonClassName={getButtonStyling("secondary", size)}
       customButton={
         <span className="flex items-center gap-1" aria-label={label ?? "Add filter"}>
-          <Ikon className="size-3.5 text-secondary" />
+          <Ikon className={cn(size === "lg" ? "size-4" : "size-3.5", "text-secondary")} />
           {label}
         </span>
       }
@@ -89,7 +90,7 @@ export function FilterChip<Row>({ field, condition, onChange, onRemove }: TChipP
   const Ikon = field.icon;
 
   return (
-    <div className="flex h-7 items-stretch overflow-hidden rounded-sm border border-subtle bg-surface-1">
+    <div className="flex h-7 items-stretch overflow-hidden rounded-control border border-subtle bg-surface-1">
       <div className={cn("flex items-center gap-1 px-2 text-11 text-tertiary", GARIS)}>
         <Ikon className="size-3.5 shrink-0" />
         <span className="truncate">{field.label}</span>
@@ -187,7 +188,7 @@ function NilaiTanggal({
         side="bottom"
         align="start"
         positionerClassName="z-30"
-        className="w-64 space-y-3 rounded-md border border-subtle bg-surface-1 p-3 shadow-raised-100"
+        className="w-64 space-y-3 rounded-popover border border-subtle bg-surface-1 p-3 shadow-raised-200"
       >
         {rentang && (
           <div className="grid grid-cols-2 gap-1">
@@ -195,7 +196,7 @@ function NilaiTanggal({
               <button
                 key={p.key}
                 type="button"
-                className="rounded-sm px-2 py-1 text-left text-12 text-secondary hover:bg-layer-transparent-hover"
+                className="rounded-item px-2 py-1 text-left text-12 text-secondary hover:bg-layer-transparent-hover"
                 onClick={() => {
                   onChange({ value: p.range() });
                   setBuka(false);
@@ -207,31 +208,82 @@ function NilaiTanggal({
           </div>
         )}
         <div className="space-y-2">
-          <label className="block space-y-1 text-11 text-tertiary">
-            <span>{rentang ? "From" : "Date"}</span>
-            <input
-              type="date"
-              value={dari}
-              max={rentang ? sampai || undefined : undefined}
-              onChange={(e) => onChange({ value: rentang ? [e.target.value, sampai] : [e.target.value] })}
-              className="w-full rounded-sm border border-subtle bg-layer-1 px-2 py-1 text-13 text-primary"
-            />
-          </label>
+          <PilihTanggal
+            label={rentang ? "From" : "Date"}
+            value={dari}
+            max={rentang ? sampai : undefined}
+            onChange={(v) => onChange({ value: rentang ? [v, sampai] : [v] })}
+          />
           {rentang && (
-            <label className="block space-y-1 text-11 text-tertiary">
-              <span>To</span>
-              <input
-                type="date"
-                value={sampai}
-                min={dari || undefined}
-                onChange={(e) => onChange({ value: [dari, e.target.value] })}
-                className="w-full rounded-sm border border-subtle bg-layer-1 px-2 py-1 text-13 text-primary"
-              />
-            </label>
+            <PilihTanggal label="To" value={sampai} min={dari} onChange={(v) => onChange({ value: [dari, v] })} />
           )}
         </div>
       </Popover.Panel>
     </Popover>
+  );
+}
+
+/**
+ * Satu tanggal YYYY-MM-DD lewat Calendar propel, pengganti `<input type="date">` bawaan peramban.
+ * `min`/`max` (YYYY-MM-DD) menonaktifkan hari di luar batas, sama seperti atribut min/max input lama.
+ */
+function PilihTanggal({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  min?: string;
+  max?: string;
+  onChange: (value: string) => void;
+}) {
+  const id = useId();
+  const [buka, setBuka] = useState(false);
+  const terpilih = getDate(value);
+  const awal = getDate(min);
+  const akhir = getDate(max);
+  const hariNonaktif: ({ before: Date } | { after: Date })[] = [];
+  if (awal) hariNonaktif.push({ before: awal });
+  if (akhir) hariNonaktif.push({ after: akhir });
+
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className="block text-11 text-tertiary">
+        {label}
+      </label>
+      <Popover open={buka} onOpenChange={setBuka}>
+        <Popover.Button
+          id={id}
+          className="flex w-full items-center gap-2 rounded-field border border-subtle bg-layer-1 px-2 py-1 text-left text-13 text-primary hover:bg-layer-1-hover"
+        >
+          <CalendarDays className="size-3.5 shrink-0 text-tertiary" />
+          {terpilih ? renderFormattedDate(terpilih) : <span className="text-placeholder">Select date</span>}
+        </Popover.Button>
+        <Popover.Panel
+          side="bottom"
+          align="start"
+          positionerClassName="z-40"
+          className="rounded-popover border border-subtle bg-surface-1 shadow-raised-200"
+        >
+          <Calendar
+            mode="single"
+            captionLayout="dropdown"
+            selected={terpilih}
+            defaultMonth={terpilih ?? awal ?? akhir}
+            onSelect={(tanggal: Date | undefined) => {
+              onChange(tanggal ? toDayString(tanggal) : "");
+              setBuka(false);
+            }}
+            disabled={hariNonaktif}
+            showOutsideDays
+            fixedWeeks
+          />
+        </Popover.Panel>
+      </Popover>
+    </div>
   );
 }
 
@@ -243,15 +295,17 @@ function NilaiTeks({
   onChange: (patch: Partial<Omit<TCondition, "field">>) => void;
 }) {
   return (
-    <input
+    <Input
       type="text"
+      mode="true-transparent"
+      inputSize="xs"
       value={condition.value[0] ?? ""}
       onChange={(e) => onChange({ value: [e.target.value] })}
       placeholder="Type a value"
       aria-label="Filter value"
       // oxlint-disable-next-line jsx-a11y/no-autofocus -- chip baru langsung diketik, sama dengan apps/web
       autoFocus={condition.value.length === 0}
-      className={cn("w-36 bg-transparent px-2 text-13 text-primary outline-none placeholder:text-placeholder", GARIS)}
+      className={cn("h-full w-36 rounded-none px-2 text-primary placeholder:text-placeholder", GARIS)}
     />
   );
 }
@@ -273,7 +327,7 @@ export function FiltersRow<Row>({ fields, conditions, onAdd, onChange, onRemove,
   if (tampil.length === 0) return null;
 
   return (
-    <div className="flex w-full items-start gap-2 rounded-lg bg-layer-1 px-3 py-2">
+    <div className="flex w-full items-start gap-2 rounded-card bg-layer-1 px-3 py-2">
       <div className="flex w-full flex-wrap items-center gap-2">
         {tampil.map(({ c, f }) => (
           <FilterChip
@@ -284,10 +338,10 @@ export function FiltersRow<Row>({ fields, conditions, onAdd, onChange, onRemove,
             onRemove={() => onRemove(c.field)}
           />
         ))}
-        <AddFilterButton fields={fields} conditions={conditions} onAdd={onAdd} size="sm" />
+        <AddFilterButton fields={fields} conditions={conditions} onAdd={onAdd} size="base" />
       </div>
       <div className="flex shrink-0 items-center border-l border-subtle pl-3">
-        <Button variant="secondary" size="sm" className="py-1" onClick={onClear}>
+        <Button variant="secondary" size="base" onClick={onClear}>
           Clear all
         </Button>
       </div>

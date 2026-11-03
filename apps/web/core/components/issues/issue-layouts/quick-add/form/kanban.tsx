@@ -6,6 +6,7 @@
 
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
+import { Input } from "@plane/ui";
 import type { TQuickAddIssueForm } from "../root";
 
 export const KanbanQuickAddIssueForm = observer(function KanbanQuickAddIssueForm(props: TQuickAddIssueForm) {
@@ -16,13 +17,14 @@ export const KanbanQuickAddIssueForm = observer(function KanbanQuickAddIssueForm
       <form ref={ref} onSubmit={onSubmit} className="flex w-full items-center gap-x-3 p-3">
         <div className="w-full">
           <h4 className="text-11 leading-5 font-medium text-tertiary">{projectDetail?.identifier ?? "..."}</h4>
-          <input
+          <Input
             autoComplete="off"
             placeholder={isEpic ? t("epic.title.label") : t("issue.title.label")}
             {...register("name", {
               required: isEpic ? t("epic.title.required") : t("issue.title.required"),
             })}
-            className="w-full rounded-md bg-transparent px-2 py-1.5 pl-0 text-13 leading-5 font-medium text-secondary outline-none"
+            mode="true-transparent"
+            className="w-full px-2 py-1.5 pl-0 leading-5 font-medium text-secondary"
           />
         </div>
       </form>

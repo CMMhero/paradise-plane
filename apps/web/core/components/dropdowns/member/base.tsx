@@ -58,6 +58,7 @@ export const MemberDropdownBase = observer(function MemberDropdownBase(props: TM
     renderByDefault = true,
     showTooltip = false,
     showUserDetails = false,
+    showProfileCard = false,
     tabIndex,
     tooltipContent,
     value,
@@ -108,6 +109,46 @@ export const MemberDropdownBase = observer(function MemberDropdownBase(props: TM
     }
   };
 
+  const hasMembers = Array.isArray(value) ? value.length > 0 : Boolean(value);
+  const hasText = BUTTON_VARIANTS_WITH_TEXT.includes(buttonVariant);
+  // Paradise: varian tanpa teks berisi avatar saja; kalau avatar membuka kartu
+  // profil, panah ini jadi satu-satunya sasaran klik untuk membuka pemilih.
+  const showArrow = dropdownArrow || (showProfileCard && hasMembers && !hasText && !disabled);
+
+  const buttonContent = (
+    <DropdownButton
+      className={buttonClassName}
+      isActive={isOpen}
+      tooltipHeading={placeholder}
+      tooltipContent={tooltipContent ?? `${value?.length ?? 0} ${value?.length !== 1 ? t("assignees") : t("assignee")}`}
+      showTooltip={showTooltip}
+      variant={buttonVariant}
+      renderToolTipByDefault={renderByDefault}
+    >
+      {!hideIcon && (
+        <ButtonAvatars showTooltip={showTooltip} userIds={value} icon={icon} showProfileCard={showProfileCard} />
+      )}
+      {hasText && (
+        <span className="flex-grow truncate text-left text-caption-sm-medium leading-5">
+          {getDisplayName(value, showUserDetails, placeholder)}
+        </span>
+      )}
+      {showArrow && (
+        <ChevronDownIcon className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
+      )}
+    </DropdownButton>
+  );
+
+  // Paradise: tombol `disabled` menelan klik anak-anaknya, jadi avatar tidak bisa
+  // membuka kartu profil. Tampilan baca-saja yang memuat anggota dirender tanpa
+  // tombol dan tanpa combobox; isinya sama persis.
+  if (disabled && showProfileCard && hasMembers && !button)
+    return (
+      <div className={cn("h-full", className)}>
+        <div className={cn("block h-full max-w-full text-secondary", buttonContainerClassName)}>{buttonContent}</div>
+      </div>
+    );
+
   const comboButton = (
     <>
       {button ? (
@@ -137,27 +178,7 @@ export const MemberDropdownBase = observer(function MemberDropdownBase(props: TM
           disabled={disabled}
           tabIndex={tabIndex}
         >
-          <DropdownButton
-            className={cn("text-11", buttonClassName)}
-            isActive={isOpen}
-            tooltipHeading={placeholder}
-            tooltipContent={
-              tooltipContent ?? `${value?.length ?? 0} ${value?.length !== 1 ? t("assignees") : t("assignee")}`
-            }
-            showTooltip={showTooltip}
-            variant={buttonVariant}
-            renderToolTipByDefault={renderByDefault}
-          >
-            {!hideIcon && <ButtonAvatars showTooltip={showTooltip} userIds={value} icon={icon} />}
-            {BUTTON_VARIANTS_WITH_TEXT.includes(buttonVariant) && (
-              <span className="flex-grow truncate text-left text-body-xs-medium leading-5">
-                {getDisplayName(value, showUserDetails, placeholder)}
-              </span>
-            )}
-            {dropdownArrow && (
-              <ChevronDownIcon className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
-            )}
-          </DropdownButton>
+          {buttonContent}
         </button>
       )}
     </>

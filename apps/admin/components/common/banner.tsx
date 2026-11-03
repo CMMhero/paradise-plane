@@ -16,12 +16,12 @@ export function Banner(props: TBanner) {
 
   return (
     <div
-      className={`w-full rounded-md border p-2 ${type === "error" ? "border-danger-strong bg-danger-subtle" : "border-success-strong bg-success-subtle"}`}
+      className={`w-full rounded-card border p-2 ${type === "error" ? "border-danger-strong bg-danger-subtle" : "border-success-strong bg-success-subtle"}`}
     >
       <div className="flex items-center justify-center">
         <div className="flex-shrink-0">
           {type === "error" ? (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full">
+            <span className="flex h-6 w-6 items-center justify-center rounded-control">
               <AlertCircle className="h-5 w-5 text-danger-primary" aria-hidden="true" />
             </span>
           ) : (

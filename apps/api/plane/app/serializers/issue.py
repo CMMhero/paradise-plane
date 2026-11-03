@@ -216,7 +216,9 @@ class IssueCreateSerializer(BaseSerializer):
         # supaya SEMUA jalur tulis (REST, bulk, API token, intake-terima) sepakat.
         # Atasan (supervisor+ atas bawahan, direktur) dan Super Admin lolos;
         # nilai assignee BARU tetap diperiksa `galat_penugasan` di bawah.
-        if self.instance is not None and gerbang_aktif():
+        # `akses_ubah_diperiksa`: view PATCH sudah menjalankan pemeriksaan yang
+        # sama tepat sebelum serializer dibuat; jalur tulis lain tetap diperiksa di sini.
+        if self.instance is not None and not self.context.get("akses_ubah_diperiksa") and gerbang_aktif():
             from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
 
             galat_akses = galat_ubah_tugas(

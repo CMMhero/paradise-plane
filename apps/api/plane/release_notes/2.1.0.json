@@ -1,0 +1,20 @@
+{
+  "version": "2.1.0",
+  "date": "2026-11-02",
+  "entries": [
+    { "type": "Added", "text": "Approval tab in the project tab navigation, next to the sidebar menu." },
+    {
+      "type": "Changed",
+      "text": "After an approver decides, the card moves to Done (approved) or In Progress (rejected) without reloading."
+    },
+    {
+      "type": "Changed",
+      "text": "Approval status looks the same everywhere: Approval page, cards, table, detail sidebar and peek."
+    },
+    {
+      "type": "Fixed",
+      "text": "The Approval page loads much faster, which also fixes division managers not seeing the Approve button."
+    },
+    { "type": "Fixed", "text": "Boards no longer reload the approval queue for every card that appears." }
+  ]
+}

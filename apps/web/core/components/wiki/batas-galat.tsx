@@ -8,6 +8,8 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "@plane/i18n";
+import { getButtonStyling } from "@plane/propel/button";
+import { cn } from "@plane/utils";
 
 type TProps = {
   children: ReactNode;
@@ -58,10 +60,7 @@ function TampilanGalat({ tautanDaftar }: { tautanDaftar: string }) {
       <div className="max-w-md text-center">
         <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.error.title")}</h2>
         <p className="mt-1 text-13 text-tertiary">{t("wiki_ui.error.message")}</p>
-        <Link
-          to={tautanDaftar}
-          className="mt-4 inline-block rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
-        >
+        <Link to={tautanDaftar} className={cn(getButtonStyling("secondary", "lg"), "mt-4")}>
           {t("wiki_ui.error.open_list")}
         </Link>
       </div>

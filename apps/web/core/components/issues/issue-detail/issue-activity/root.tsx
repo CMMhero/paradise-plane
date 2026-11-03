@@ -26,6 +26,7 @@ import { ActivityFilterRoot } from "@/plane-web/components/issues/worklog/activi
 import { IssueActivityWorklogCreateButton } from "@/plane-web/components/issues/worklog/activity/worklog-create-button";
 import { IssueActivityCommentRoot } from "./activity-comment-root";
 import { useWorkItemCommentOperations } from "./helper";
+import { StatusLampiranTempel, useLampiranTempel } from "@/components/issues/attachment/lampiran-tempel";
 import { ActivitySortRoot } from "./sort-root";
 
 type TIssueActivity = {
@@ -89,6 +90,9 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   // helper hooks
   const activityOperations = useWorkItemCommentOperations(workspaceSlug, projectId, issueId);
 
+  // pasted/dropped files in the comment box become work item attachments
+  const { attachFiles, status: statusLampiran } = useLampiranTempel(workspaceSlug, projectId, issueId);
+
   const project = getProjectById(projectId);
   const renderCommentCreationBox = useMemo(
     () => (
@@ -98,9 +102,11 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
         activityOperations={activityOperations}
         showToolbarInitially
         projectId={projectId}
+        attachFiles={attachFiles}
+        attachmentStatus={<StatusLampiranTempel {...statusLampiran} />}
       />
     ),
-    [workspaceSlug, issueId, activityOperations, projectId]
+    [workspaceSlug, issueId, activityOperations, projectId, attachFiles, statusLampiran]
   );
   if (!project) return <></>;
 

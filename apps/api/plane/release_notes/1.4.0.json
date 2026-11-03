@@ -1,0 +1,31 @@
+{
+  "version": "1.4.0",
+  "date": "2026-10-21",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Approval flow: work items from staff stay drafts until a lead approves them, and pending items are locked against edits."
+    },
+    { "type": "Added", "text": "Approval queue page, plus Approve and Reject in the work-item menu." },
+    {
+      "type": "Added",
+      "text": "Divisions with departments as children; Super Admins can manage positions and divisions."
+    },
+    { "type": "Added", "text": "Cross-division requests, intake and assignment flow." },
+    { "type": "Added", "text": "Chat: direct messages, channels, calls and unread badges." },
+    { "type": "Added", "text": "Wiki: access control per folder, materials and a management console." },
+    { "type": "Added", "text": "Deadline reminders, Google Calendar sync and division dashboards." },
+    {
+      "type": "Added",
+      "text": "God Mode: member editor, organisation console and refreshed instance, trash and audit pages."
+    },
+    { "type": "Changed", "text": "New work items are assigned to their creator by default." },
+    { "type": "Changed", "text": "Super Admins can create projects and invite members." },
+    { "type": "Changed", "text": "Archive and delete are hidden unless the assignee is you or someone you lead." },
+    { "type": "Changed", "text": "Yorukaze branding removed from the app and the public portal." },
+    { "type": "Fixed", "text": "Work items now return their real assignees, so owners can open their own tasks." },
+    { "type": "Fixed", "text": "Trash restore and permanent delete follow the same ownership rules as work items." },
+    { "type": "Fixed", "text": "Super Admins can decide the approval queue; the queue endpoint no longer errors." },
+    { "type": "Fixed", "text": "Translations bundle again after the locales link was restored." }
+  ]
+}

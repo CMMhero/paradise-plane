@@ -26,7 +26,7 @@ import { cn, getDate, renderFormattedPayloadDate, shouldHighlightIssueDueDate } 
 import { DateDropdown } from "@/components/dropdowns/date";
 import { EstimateDropdown } from "@/components/dropdowns/estimate";
 import { ButtonAvatars } from "@/components/dropdowns/member/avatar";
-import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
+import { MemberProfileTrigger } from "@/components/member-profile";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // hooks
@@ -45,6 +45,7 @@ import { TransferHopInfo } from "@/plane-web/components/issues/issue-details/sid
 import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/property";
 import { ApprovalSidebarInfo } from "@/plane-web/components/issues/issue-details/sidebar/approval-info";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+import { AssigneeProperty } from "./assignee-property";
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
 import { IssueModuleSelect } from "./module-select";
@@ -109,23 +110,15 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
             </SidebarPropertyListItem>
 
             <SidebarPropertyListItem icon={MembersPropertyIcon} label={t("common.assignees")}>
-              <MemberDropdown
-                value={issue?.assignee_ids ?? undefined}
+              <AssigneeProperty
+                value={issue?.assignee_ids ?? []}
                 onChange={(val) =>
                   issueOperations.update(workspaceSlug, projectId, issueId, { assignee_ids: opsiAssignee.rapikan(val) })
                 }
                 disabled={!isEditable}
                 memberIds={opsiAssignee.memberIds}
                 projectId={projectId?.toString() ?? ""}
-                placeholder={t("issue.add.assignee")}
-                multiple
-                buttonVariant={issue?.assignee_ids?.length > 1 ? "transparent-without-text" : "transparent-with-text"}
-                className="group w-full grow"
-                buttonContainerClassName="w-full text-left h-7.5"
-                buttonClassName={`text-body-xs-regular justify-between ${issue?.assignee_ids?.length > 0 ? "" : "text-placeholder"}`}
-                hideIcon={issue.assignee_ids?.length === 0}
-                dropdownArrow
-                dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+                buttonClassName="text-body-xs-regular"
               />
             </SidebarPropertyListItem>
             {/* Kustomisasi Paradise: indikator "belum disetujui" + tombol putusan
@@ -147,8 +140,12 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
             {createdByDetails && (
               <SidebarPropertyListItem icon={UserCirclePropertyIcon} label={t("common.created_by")}>
                 <div className="flex gap-2 px-2">
-                  <ButtonAvatars showTooltip userIds={createdByDetails.id} />
-                  <span className="grow truncate text-body-xs-regular leading-5">{createdByDetails?.display_name}</span>
+                  <MemberProfileTrigger userId={createdByDetails.id} className="min-w-0 gap-2">
+                    <ButtonAvatars showTooltip={false} userIds={createdByDetails.id} />
+                    <span className="truncate text-body-xs-regular leading-5 hover:underline">
+                      {createdByDetails?.display_name}
+                    </span>
+                  </MemberProfileTrigger>
                 </div>
               </SidebarPropertyListItem>
             )}

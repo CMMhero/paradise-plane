@@ -11,6 +11,7 @@
  */
 
 // plane imports
+import { Button } from "@plane/propel/button";
 import { CustomSearchSelect } from "@plane/ui";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
@@ -48,7 +49,7 @@ export function DivisiPicker({ opsi, dipilih, onUbah, nama = NAMA_KOSONG, placeh
       onChange={(v: string[]) => onUbah(v)}
       label={<span className="truncate">{ringkas}</span>}
       disabled={disabled}
-      buttonClassName="w-full rounded-md border-subtle bg-layer-2"
+      buttonClassName="w-full"
       className="w-full"
       input
       maxHeight="lg"
@@ -65,12 +66,12 @@ export function DivisiPicker({ opsi, dipilih, onUbah, nama = NAMA_KOSONG, placeh
       }))}
       footerOption={
         <div className="flex items-center justify-between border-t border-subtle px-2 pt-1.5">
-          <button type="button" onClick={() => onUbah([...opsi])} className="text-11 font-medium text-accent-primary">
+          <Button variant="link" size="base" onClick={() => onUbah([...opsi])}>
             {s.picker.select_all}
-          </button>
-          <button type="button" onClick={() => onUbah([])} className="text-11 font-medium text-secondary">
+          </Button>
+          <Button variant="ghost" size="base" onClick={() => onUbah([])}>
             {s.picker.clear}
-          </button>
+          </Button>
         </div>
       }
     />

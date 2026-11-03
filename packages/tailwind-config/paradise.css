@@ -18,6 +18,9 @@
  * tanpa perlu satu pun `!important`.
  */
 
+/* Sistem tampilan "Bara" (KEP-64): token warna, efek, font, gerak. */
+@import "./paradise-tampilan.css";
+
 /* ==========================================================================
    1. Tinggi layar yang mengikuti ruang yang BENAR-BENAR terlihat
    ==========================================================================
@@ -177,8 +180,23 @@ th,
    komponen mana pun tetap bisa menimpanya dengan kelasnya sendiri.
 
    Permukaan editor tidak perlu disebut di sini: `editor.css` memakai
-   `outline: none !important`, yang tetap menang atas aturan ini. */
-:focus-visible:not(:where([class*="focus:ring-"], [class*="focus-visible:ring-"], [class*="ring-offset"])) {
+   `outline: none !important`, yang tetap menang atas aturan ini.
+
+   KOLOM KETIK ber-`outline-none` juga dikecualikan (3 Nov 2026, permintaan
+   user: kotak fokus di kolom pencarian). Kolom teks SELALU dianggap
+   `:focus-visible`, bahkan saat diklik tetikus, jadi aturan ini menggambar
+   kotak di setiap kolom cari di dalam dropdown dan bilah atas. Kolom seperti
+   itu sudah dibungkus kotak sendiri, dan kursor ketik yang berkedip sudah
+   menjadi penanda fokus bagi pemakai papan ketik. */
+:focus-visible:not(
+  :where(
+    [class*="focus:ring-"],
+    [class*="focus-visible:ring-"],
+    [class*="ring-offset"],
+    input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"])[class*="outline-none"],
+    textarea[class*="outline-none"]
+  )
+) {
   outline: 2px solid var(--border-color-accent-strong, currentColor);
   outline-offset: 2px;
 }
@@ -337,3 +355,19 @@ th,
   --brand-1200: oklch(0.9856 0.007 27.24);
   --brand-default: oklch(0.64 0.2335 27.24);
 }
+
+/* ==========================================================================
+   8. Varian `sentuh:` untuk aksi yang di desktop muncul saat hover
+   ==========================================================================
+
+   Pola "tombol aksi baru terlihat saat kursor di atas baris" (`opacity-0
+   group-hover:opacity-100`, `hidden group-hover:block`) tidak punya padanan di
+   layar sentuh: hover tidak pernah terjadi, jadi tombolnya tak pernah tampil.
+   Yang `opacity-0` malah lebih buruk, karena tetap bisa disentuh tanpa
+   terlihat; sentuhan meleset di pojok kartu bisa menghapus sesuatu.
+
+   `sentuh:opacity-100` / `sentuh:block` menampilkannya selalu di perangkat
+   berpenunjuk kasar. Kuerinya sama dengan `isMobile` (usePlatformOS), jadi
+   CSS dan JS sepakat soal "hover bisa diandalkan atau tidak". Untuk TATA
+   LETAK tetap pakai breakpoint lebar, bukan varian ini. */
+@custom-variant sentuh (@media (pointer: coarse));

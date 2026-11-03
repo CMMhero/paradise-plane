@@ -163,7 +163,7 @@ export const ModuleListItemAction = observer(function ModuleListItemAction(props
 
       {moduleLeadDetails ? (
         <span className="cursor-default">
-          <ButtonAvatars showTooltip={false} userIds={moduleLeadDetails?.id} />
+          <ButtonAvatars showProfileCard showTooltip={false} userIds={moduleLeadDetails?.id} />
         </span>
       ) : (
         <Tooltip tooltipContent="No lead">

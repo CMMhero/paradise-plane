@@ -21,7 +21,7 @@ import { Spinner, ControlLink, Row } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
-import { ApprovalCardBadge } from "@/components/issues/approval-card-badge";
+import { ApprovalCardBadge, getVisibleApprovalStatus } from "@/components/issues/approval-card-badge";
 import { IssueProperties } from "@/components/issues/issue-layouts/properties";
 // helpers
 // hooks
@@ -198,8 +198,8 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
             "lg:flex-row lg:items-center": !isSidebarCollapsed,
             // Kustomisasi Paradise: baris tunggu-approval beda bawah kuning
             // tipis (KEP-25) — sama bahasanya dengan kartu kanban.
-            "bg-warning-primary/[0.04] hover:bg-warning-primary/[0.07]": issue.approval_status === "menunggu",
-            "bg-danger-primary/[0.04] hover:bg-danger-primary/[0.07]": issue.approval_status === "ditolak",
+            "bg-warning-primary/[0.04] hover:bg-warning-primary/[0.07]": getVisibleApprovalStatus(issue) === "menunggu",
+            "bg-danger-primary/[0.04] hover:bg-danger-primary/[0.07]": getVisibleApprovalStatus(issue) === "ditolak",
           }
         )}
         onDragStart={() => {
@@ -291,7 +291,12 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
             >
               <p className="cursor-pointer truncate text-body-xs-medium text-primary">{issue.name}</p>
             </Tooltip>
-            <ApprovalCardBadge issue={issue} />
+            {/* Kustomisasi Paradise: chip persetujuan ikut Display properties & modul Approvals. */}
+            {displayProperties && (
+              <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="approval_status">
+                <ApprovalCardBadge issue={issue} />
+              </WithDisplayPropertiesHOC>
+            )}
             {isEpic && displayProperties && (
               <WithDisplayPropertiesHOC
                 displayProperties={displayProperties}

@@ -19,10 +19,11 @@ import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { isDisplayPropertyAvailable } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { Badge, type TBadgeVariant } from "@plane/propel/badge";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TIssue } from "@plane/types";
-import { cn } from "@plane/utils";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
@@ -30,10 +31,10 @@ import type { TStatusPersetujuan } from "@/services/persetujuan.service";
 // local imports
 import { ApprovalDecisionButtons, useBarisBolehSayaPutuskan } from "./approval-actions";
 
-const TAMPILAN_STATUS: Record<TStatusPersetujuan, { icon: typeof Clock; iconClassName: string }> = {
-  menunggu: { icon: Clock, iconClassName: "text-warning-primary" },
-  disetujui: { icon: CheckCircle2, iconClassName: "text-success-primary" },
-  ditolak: { icon: XCircle, iconClassName: "text-danger-primary" },
+const TAMPILAN_STATUS: Record<TStatusPersetujuan, { icon: typeof Clock; variant: TBadgeVariant }> = {
+  menunggu: { icon: Clock, variant: "warning" },
+  disetujui: { icon: CheckCircle2, variant: "success" },
+  ditolak: { icon: XCircle, variant: "danger" },
 };
 
 type TApprovalStatusChipProps = {
@@ -45,16 +46,15 @@ type TApprovalStatusChipProps = {
 };
 
 /**
- * Bentuknya meniru chip state di kartu (BorderButton varian "border-with-text"
- * + Button ghost sm): tinggi 20px, garis 0.5px, ikon berwarna, teks netral.
- * Warna status cukup di ikon, sama seperti ikon grup state. Lebarnya selebar
- * isinya (`w-fit`): di kartu kanban induknya flex-col, jadi tanpa ini chip
- * melar memenuhi kartu.
+ * Badge standar propel (KEP-64): ukuran, padding, radius, dan warna datang dari
+ * komponennya, bukan ditulis di sini. Varian mengikuti status (warning/success/
+ * danger). Pembungkus `w-fit` hanya tata letak: di kartu kanban induknya
+ * flex-col, jadi tanpa itu badge melar memenuhi kartu.
  */
 export function ApprovalStatusChip({ status, decidedBy, tooltipContent }: TApprovalStatusChipProps) {
   const { t } = useTranslation();
   const { isMobile } = usePlatformOS();
-  const { icon: Icon, iconClassName } = TAMPILAN_STATUS[status];
+  const { icon: Icon, variant } = TAMPILAN_STATUS[status];
   const label =
     status === "menunggu"
       ? t("issue.approval.badge.pending")
@@ -65,15 +65,10 @@ export function ApprovalStatusChip({ status, decidedBy, tooltipContent }: TAppro
           : t("issue.approval.badge.approved");
 
   const chip = (
-    <span
-      className={cn(
-        "flex h-5 w-fit max-w-full shrink-0 items-center gap-1.5 rounded-sm border-[0.5px] border-strong px-1.5 text-caption-md-medium text-secondary",
-        { "cursor-default": !!tooltipContent }
-      )}
-      title={tooltipContent ? undefined : label}
-    >
-      <Icon className={cn("size-3.5 shrink-0", iconClassName)} aria-hidden />
-      <span className="truncate">{label}</span>
+    <span className="flex w-fit max-w-full shrink-0">
+      <Badge variant={variant} prependIcon={<Icon aria-hidden />} title={tooltipContent ? undefined : label}>
+        <span className="truncate">{label}</span>
+      </Badge>
     </span>
   );
 
@@ -84,6 +79,13 @@ export function ApprovalStatusChip({ status, decidedBy, tooltipContent }: TAppro
     </Tooltip>
   );
 }
+
+/**
+ * Status untuk warna baris/kartu: null bila modul Approvals dimatikan di God
+ * Mode, supaya layout tak memberi isyarat persetujuan yang fiturnya tak ada.
+ */
+export const getVisibleApprovalStatus = (issue: TIssue): TStatusPersetujuan | null =>
+  isDisplayPropertyAvailable("approval_status") ? (issue.approval_status ?? null) : null;
 
 export const ApprovalCardBadge = observer(function ApprovalCardBadge({ issue }: { issue: TIssue }) {
   const { workspaceSlug } = useParams();

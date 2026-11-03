@@ -21,9 +21,8 @@ import { EIssueServiceType } from "@plane/types";
 import { ControlLink, Row } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
+import { getVisibleApprovalStatus } from "@/components/issues/approval-card-badge";
 import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
-// Kustomisasi Paradise: badge persetujuan di baris.
-import { ApprovalCardBadge } from "@/components/issues/approval-card-badge";
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 // helper
 // hooks
@@ -101,7 +100,8 @@ export const SpreadsheetIssueRow = observer(function SpreadsheetIssueRow(props: 
             style={{ height: "calc(2.75rem - 1px)" }}
           />
         }
-        classNames={cn("bg-surface-1 transition-[background-color]", {
+        // KEP-64: baris genap sedikit lebih gelap (zebra) supaya baris panjang mudah diikuti.
+        classNames={cn("bg-surface-1 transition-[background-color] even:bg-zebra", {
           "group selected-issue-row": isIssueSelected,
           "border-[0.5px] border-strong-1": isIssueActive,
         })}
@@ -272,7 +272,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
         id={`issue-${issueId}`}
         ref={cellRef}
         tabIndex={0}
-        className="group/list-block relative left-0 z-10 max-w-lg bg-surface-1 md:sticky"
+        className="group/list-block relative left-0 z-10 max-w-lg bg-inherit md:sticky"
       >
         <ControlLink
           href={workItemLink}
@@ -289,8 +289,8 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
                   getIsIssuePeeked(issueDetail.id) && nestingLevel === peekIssue?.nestingLevel,
                 "shadow-[8px_22px_22px_10px_rgba(0,0,0,0.05)]": isScrolled.current,
                 // Kustomisasi Paradise: baris tunggu-approval (KEP-25).
-                "bg-warning-primary/[0.04]": issueDetail.approval_status === "menunggu",
-                "bg-danger-primary/[0.04]": issueDetail.approval_status === "ditolak",
+                "bg-warning-primary/[0.04]": getVisibleApprovalStatus(issueDetail) === "menunggu",
+                "bg-danger-primary/[0.04]": getVisibleApprovalStatus(issueDetail) === "ditolak",
               }
             )}
           >
@@ -381,8 +381,6 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
                     </Tooltip>
                   </div>
                 </div>
-                {/* Kustomisasi Paradise: badge tunggu-approval di baris spreadsheet (KEP-25). */}
-                <ApprovalCardBadge issue={issueDetail} />
                 <div
                   className={`opacity-0 transition-opacity group-hover:opacity-100 ${isMenuActive ? "!opacity-100" : ""}`}
                   role="presentation"

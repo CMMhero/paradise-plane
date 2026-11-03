@@ -62,7 +62,7 @@ const NoLabel = observer(function NoLabel({ isMobile, noLabelBorder, fullWidth, 
     >
       <div
         className={cn(
-          "flex h-full items-center justify-center gap-2 rounded-sm px-2.5 py-1 text-caption-sm-regular hover:bg-layer-1",
+          "flex h-full items-center justify-center gap-2 rounded-button px-1.5 py-1 text-caption-sm-medium hover:bg-layer-1",
           noLabelBorder ? "rounded-none" : "border-[0.5px] border-strong",
           fullWidth && "w-full"
         )}
@@ -88,7 +88,7 @@ function LabelSummary({ isMobile, fullWidth, noLabelBorder, disabled, projectLab
   return (
     <div
       className={cn(
-        "flex h-5 flex-shrink-0 items-center justify-center rounded-sm px-2.5 text-caption-sm-regular",
+        "flex h-5 flex-shrink-0 items-center justify-center rounded-button px-1.5 text-caption-sm-medium",
         fullWidth && "w-full",
         noLabelBorder ? "rounded-none" : "border-[0.5px] border-strong",
         disabled ? "cursor-not-allowed" : "cursor-pointer"
@@ -142,7 +142,7 @@ const LabelItem = observer(function LabelItem({
     >
       <div
         className={cn(
-          "flex h-full max-w-full flex-shrink-0 items-center justify-center overflow-hidden rounded-sm px-2.5 text-caption-sm-regular hover:bg-layer-1",
+          "flex h-full max-w-full flex-shrink-0 items-center justify-center overflow-hidden rounded-button px-1.5 text-caption-sm-medium hover:bg-layer-1",
           !disabled && "cursor-pointer",
           fullWidth && "w-full",
           noLabelBorder ? "rounded-none" : "border-[0.5px] border-strong"

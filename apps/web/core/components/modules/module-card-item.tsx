@@ -214,7 +214,7 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
               </div>
               {moduleLeadDetails ? (
                 <span className="cursor-default">
-                  <ButtonAvatars showTooltip={false} userIds={moduleLeadDetails?.id} />
+                  <ButtonAvatars showProfileCard showTooltip={false} userIds={moduleLeadDetails?.id} />
                 </span>
               ) : (
                 <Tooltip tooltipContent="No lead">

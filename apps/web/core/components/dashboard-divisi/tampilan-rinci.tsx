@@ -12,6 +12,7 @@ import { Fragment, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, Download } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
+import { getButtonStyling } from "@plane/propel/button";
 import { cn } from "@plane/utils";
 import type { TDivisionDashboard, TDivisionGroup, TDivisionStats } from "@/services/workspace_dashboard.service";
 import { HealthPill, divisionLabel, formatMinutes, formatPercent } from "./bagian";
@@ -41,15 +42,12 @@ export function DetailView({ workspaceSlug, data, isTimeTrackingEnabled, csvUrl 
   return (
     <div className="flex flex-col gap-4">
       {isTimeTrackingEnabled && (
-        <a
-          href={csvUrl}
-          className="flex items-center gap-1.5 self-end rounded border border-subtle px-2.5 py-1.5 text-12 font-medium text-secondary hover:bg-layer-2"
-        >
-          <Download className="size-3.5" /> {t("division_dashboard_ui.download_csv")}
+        <a href={csvUrl} className={cn(getButtonStyling("secondary", "lg"), "self-end")}>
+          <Download className="size-4" /> {t("division_dashboard_ui.download_csv")}
         </a>
       )}
 
-      <div className="overflow-x-auto rounded-md border border-subtle gulir-berpenanda">
+      <div className="overflow-x-auto rounded-card border border-subtle gulir-berpenanda">
         <table className="w-full min-w-[640px] text-left text-13">
           <thead>
             <tr className="border-b border-subtle bg-layer-2 text-12 text-tertiary">

@@ -123,7 +123,8 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
                   ref={setReferenceElement}
                   type="button"
                   className={cn(
-                    "flex w-full items-center justify-between gap-1 rounded-sm border-[0.5px] border-strong",
+                    // Paradise (KEP-64): pemicu tampil sama dengan Input (garis tipis, latar layer-2).
+                    "flex w-full items-center justify-between gap-1 rounded-field border-[0.5px] border-subtle-1 bg-layer-2",
                     {
                       "px-3 py-2 text-13": input,
                       "px-2 py-1 text-11": !input,
@@ -146,14 +147,14 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
                 <Combobox.Options data-prevent-outside-click static>
                   <div
                     className={cn(
-                      "z-30 my-1 min-w-48 overflow-y-scroll rounded-md border-[0.5px] border-subtle-1 bg-surface-1 py-2.5 text-11 whitespace-nowrap focus:outline-none",
+                      "z-30 my-1 min-w-48 overflow-y-scroll rounded-popover border-[0.5px] border-subtle-1 bg-surface-1 py-2.5 text-11 whitespace-nowrap focus:outline-none",
                       optionsClassName
                     )}
                     ref={setPopperElement}
                     style={styles.popper}
                     {...attributes.popper}
                   >
-                    <div className="mx-2 flex items-center gap-1.5 rounded-sm border border-subtle px-2">
+                    <div className="mx-2 flex items-center gap-1.5 search-field border border-subtle px-2.5">
                       <SearchIcon className="h-3.5 w-3.5 text-placeholder" strokeWidth={1.5} />
                       <Combobox.Input
                         className="w-full bg-transparent py-1 text-11 text-secondary placeholder:text-placeholder focus:outline-none"
@@ -181,7 +182,7 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
                               value={option.value}
                               className={({ active }) =>
                                 cn(
-                                  "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none",
+                                  "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none",
                                   {
                                     "bg-layer-transparent-hover": active,
                                     "cursor-not-allowed text-placeholder opacity-60": option.disabled,

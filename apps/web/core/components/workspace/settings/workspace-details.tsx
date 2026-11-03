@@ -207,7 +207,7 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
                     ref={ref}
                     hasError={Boolean(errors.name)}
                     placeholder={t("workspace_settings.settings.general.name")}
-                    className="w-full rounded-md"
+                    className="w-full"
                     disabled={!isAdmin}
                   />
                 )}
@@ -229,7 +229,7 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
                       ORGANIZATION_SIZE.find((c) => c === value) ??
                       t("workspace_settings.settings.general.errors.company_size.select_a_range")
                     }
-                    buttonClassName="border border-subtle bg-layer-2 !shadow-none !rounded-md"
+                    buttonClassName="border border-subtle bg-layer-2"
                     input
                     disabled={!isAdmin}
                   >
@@ -259,7 +259,7 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
                     onChange={onChange}
                     ref={ref}
                     hasError={Boolean(errors.url)}
-                    className="w-full cursor-not-allowed rounded-md !bg-layer-1"
+                    className="w-full cursor-not-allowed !bg-layer-1"
                     disabled
                   />
                 )}

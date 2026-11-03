@@ -8,30 +8,23 @@
  */
 
 import { useTranslation } from "@plane/i18n";
+import { Badge } from "@plane/propel/badge";
+import type { TBadgeVariant } from "@plane/propel/badge";
 import { cn } from "@plane/utils";
 import type { TDashboardHealth } from "@/services/workspace_dashboard.service";
 import type { TTrendTone } from "./ringkasan";
 
 type TTranslate = ReturnType<typeof useTranslation>["t"];
 
-const HEALTH_CLASS: Record<TDashboardHealth, string> = {
-  lancar: "bg-success-subtle text-success-primary",
-  perhatian: "bg-warning-subtle text-warning-primary",
-  kritis: "bg-danger-subtle text-danger-primary",
+const HEALTH_VARIANT: Record<TDashboardHealth, TBadgeVariant> = {
+  lancar: "success",
+  perhatian: "warning",
+  kritis: "danger",
 };
 
 export function HealthPill({ health }: { health: TDashboardHealth }) {
   const { t } = useTranslation();
-  return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-11 font-semibold whitespace-nowrap",
-        HEALTH_CLASS[health]
-      )}
-    >
-      {t(`division_dashboard_ui.health_${health}`)}
-    </span>
-  );
+  return <Badge variant={HEALTH_VARIANT[health]}>{t(`division_dashboard_ui.health_${health}`)}</Badge>;
 }
 
 /**
@@ -40,8 +33,8 @@ export function HealthPill({ health }: { health: TDashboardHealth }) {
  */
 export function ProgressBar({ percent }: { percent: number | null }) {
   return (
-    <div aria-hidden className="h-1.5 w-full overflow-hidden rounded-full bg-layer-3">
-      <div className="h-full rounded-full bg-accent-primary" style={{ width: `${percent ?? 0}%` }} />
+    <div aria-hidden className="h-1.5 w-full overflow-hidden rounded-control bg-layer-3">
+      <div className="h-full rounded-control bg-accent-primary" style={{ width: `${percent ?? 0}%` }} />
     </div>
   );
 }
@@ -52,14 +45,24 @@ const TONE_CLASS: Record<TTrendTone, string> = {
   neutral: "text-tertiary",
 };
 
-/** "+3 dibanding 7 hari sebelumnya". Tanpa angka pembanding, tidak tampil apa pun. */
-export function TrendNote({ delta, tone }: { delta: number | null; tone: TTrendTone }) {
+/**
+ * "+3 dibanding 7 hari sebelumnya". Tanpa angka pembanding, tidak tampil apa pun.
+ * `against` = "period" untuk laporan, yang pembandingnya sepanjang periode terpilih.
+ */
+export function TrendNote({
+  delta,
+  tone,
+  against = "week",
+}: {
+  delta: number | null;
+  tone: TTrendTone;
+  against?: "week" | "period";
+}) {
   const { t } = useTranslation();
   if (delta === null) return null;
+  const prefix = against === "period" ? "division_dashboard_ui.report_trend" : "division_dashboard_ui.trend";
   const text =
-    delta === 0
-      ? t("division_dashboard_ui.trend_same")
-      : t("division_dashboard_ui.trend_vs_prev", { delta: delta > 0 ? `+${delta}` : String(delta) });
+    delta === 0 ? t(`${prefix}_same`) : t(`${prefix}_vs_prev`, { delta: delta > 0 ? `+${delta}` : String(delta) });
   return <p className={cn("mt-1 text-11", TONE_CLASS[tone])}>{text}</p>;
 }
 

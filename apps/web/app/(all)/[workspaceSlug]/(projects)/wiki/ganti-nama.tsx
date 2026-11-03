@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+import { EModalPosition, EModalWidth, Input, ModalCore } from "@plane/ui";
 // services
 import { WikiMaterialService } from "@/services/wiki_material.service";
 
@@ -78,7 +78,7 @@ export function GantiNamaMateri({
           <p className="mt-1 text-12 text-tertiary">{t("wiki_ui.rename.note", { fileName: namaBerkas })}</p>
         </div>
 
-        <input
+        <Input
           type="text"
           value={judul}
           // Fokus otomatis memang dipertanyakan untuk form pada umumnya, tapi
@@ -90,7 +90,7 @@ export function GantiNamaMateri({
           onKeyDown={(e) => {
             if (e.key === "Enter") void simpan();
           }}
-          className="w-full rounded-md border border-subtle bg-layer-2 px-3 py-2 text-13 text-primary outline-none focus:border-accent-strong"
+          className="w-full border border-subtle text-primary focus:border-accent-strong"
         />
 
         <div className="flex justify-end gap-2">

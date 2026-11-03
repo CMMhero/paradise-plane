@@ -14,6 +14,8 @@ import {
   ChevronUp,
   CornerUpLeft,
   Paperclip,
+  Settings2,
+  Upload,
   Pencil,
   Search,
   Send,
@@ -31,19 +33,22 @@ import { useTranslation } from "@plane/i18n";
 import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
 import { EmojiReactionPicker } from "@plane/propel/emoji-reaction";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
+import { Button } from "@plane/propel/button";
+import { IconButton } from "@plane/propel/icon-button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { Avatar } from "@plane/ui";
-import { cn, getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
+import { Avatar, Input } from "@plane/ui";
+import { cn, getFileURL, getNumberCount, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
+import { CountChip } from "@/components/common/count-chip";
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import { SaklarSuara } from "@/components/notifikasi/saklar-suara";
 import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { useUser } from "@/hooks/store/user";
+import { useInstance } from "@/hooks/store/use-instance";
 // services
-import { EFileAssetType } from "@plane/types";
-import { FileService } from "@/services/file.service";
 import {
   ChatService,
   KUNCI_BELUM_DIBACA,
@@ -57,11 +62,16 @@ import { useObrolanLangsung } from "./langsung";
 import { usePanggilan } from "./panggilan";
 import { PanggilanLayar } from "./panggilan-layar";
 import { Gelembung } from "./gelembung";
+import { DaftarSebut, useSebutan } from "./pemilih-sebut";
+import type { TCalonSebut } from "./pemilih-sebut";
 import { DialogBuatKanal, DialogJelajahKanal } from "./kanal-dialog";
+import { DialogSetelanKanal } from "./kanal-setelan";
 import { ukuranTerbaca } from "./lampiran";
+import { BATAS_LAMPIRAN, berkasDariTempel, seretBerkas, useUnggahLampiran } from "./unggah-lampiran";
+import { DenganKehadiran, StatusKehadiranTeks, TitikKehadiran } from "@/components/chat/titik-kehadiran";
+import { MemberProfileTrigger } from "@/components/member-profile";
 
 const chatService = new ChatService();
-const fileService = new FileService();
 
 // Selang tarik-ulang. Percakapan yang sedang dibuka diperiksa lebih sering
 // daripada daftarnya, karena di situlah orang menunggu balasan.
@@ -73,6 +83,18 @@ const SELANG_PESAN = 5000;
 const SELANG_PESAN_CADANGAN = 30000;
 const SELANG_DAFTAR = 15000;
 const TINGGI_TULIS_MAKS = 160;
+/** Berapa lama sesudah aksi di tab ini gema soketnya dianggap milik aksi itu. */
+const JENDELA_GEMA_MS = 3000;
+/** Dipanggil penangan aksi pesan, di luar render; lihat `onPerubahan`. */
+const tandaiAksiLokal = (ref: { current: number }): void => {
+  ref.current = Date.now();
+};
+
+/** Id elemen DOM satu baris pesan, sasaran lompatan dari kutipan balasan. */
+const idElemenPesan = (pesanId: string) => `pesan-${pesanId}`;
+/** Paling banyak halaman riwayat yang dimuat untuk mencari pesan asli kutipan. */
+const BATAS_HALAMAN_LOMPAT = 10;
+const LAMA_SOROT_MS = 1600;
 
 type TBarisDaftar = { id: string; terakhir: TPercakapan | undefined };
 
@@ -97,6 +119,8 @@ function ChatPage() {
   const adalahKanal = Boolean(ruangParam);
   // store hooks
   const { data: currentUser } = useUser();
+  const { config: instanceConfig } = useInstance();
+  const batasHapusJam = instanceConfig?.paradise_chat_delete_window_hours;
   const {
     workspace: { workspaceMemberIds, getWorkspaceMemberDetails },
   } = useMember();
@@ -111,19 +135,28 @@ function ChatPage() {
   const [draf, setDraf] = useState("");
   const [mengirim, setMengirim] = useState(false);
   const [emojiTerbuka, setEmojiTerbuka] = useState(false);
-  const [lampiran, setLampiran] = useState<{ id: string; nama: string; ukuran: number }[]>([]);
+  const [setelanTerbuka, setSetelanTerbuka] = useState(false);
+  /** Berkas sedang diseret di atas percakapan: tampilkan area lepas. */
+  const [diseret, setDiseret] = useState(false);
   const [membalas, setMembalas] = useState<TPesan | null>(null);
   const [menyunting, setMenyunting] = useState<TPesan | null>(null);
   const [lama, setLama] = useState<TPesan[]>([]);
   const [memuatLama, setMemuatLama] = useState(false);
   const [habis, setHabis] = useState(false);
-  const [mengunggah, setMengunggah] = useState(false);
+  /** Pesan asli yang sedang dicari sesudah kutipan balasan diklik. */
+  const [lompatKe, setLompatKe] = useState<string | null>(null);
+  /** Baris yang baru dilompati, disorot sebentar supaya mata langsung menemukannya. */
+  const [disorot, setDisorot] = useState<string | null>(null);
+  const sisaHalamanLompat = useRef(0);
   const [buatTerbuka, setBuatTerbuka] = useState(false);
   const [jelajah, setJelajah] = useState(false);
   const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
   const { bunyikan } = useSuaraNotifikasi();
   const pesanTerakhirRef = useRef<string | null>(null);
+  /** Waktu aksi pesan terakhir dari tab ini; lihat `onPerubahan`. */
+  const aksiLokalRef = useRef(0);
+  const { minta, dialog: dialogKonfirmasi } = useKonfirmasi();
   const tulisRef = useRef<HTMLTextAreaElement>(null);
   const panggilanRef = useRef<ReturnType<typeof usePanggilan> | null>(null);
 
@@ -163,10 +196,26 @@ function ChatPage() {
   const { tersambung, kirimSinyal } = useObrolanLangsung({
     slug,
     ruangId: ruangSaatIni,
-    onPerubahan: () => {
+    onPerubahan: (kejadian) => {
+      // Gema aksi tab ini sendiri: penangan aksinya sudah menarik ulang, jadi
+      // menarik lagi di sini menggandakan tiap request (dan tiap tarik pesan
+      // juga menandai dibaca di server). Dibatasi jendela waktu, BUKAN cuma
+      // `oleh === saya`, supaya aksi dari perangkat lain milik orang yang sama
+      // tetap muncul seketika di tab ini.
+      const gemaSendiri =
+        !!kejadian.oleh && kejadian.oleh === currentUser?.id && Date.now() - aksiLokalRef.current < JENDELA_GEMA_MS;
+      if (gemaSendiri) return;
       if (kunciIsi) void mutate(kunciIsi);
       void mutate(`CHAT_PERCAKAPAN_${slug}`);
       void mutate(KUNCI_BELUM_DIBACA);
+      // Nama/topik/anggota kanal berubah (chat_kelola.py menyiarkan "ruang"/"anggota").
+      if (kejadian.tipe === "ruang" || kejadian.tipe === "anggota") {
+        void mutate(`CHAT_KANAL_${slug}`);
+        if (ruangSaatIni) {
+          void mutate(`CHAT_DETAIL_RUANG_${ruangSaatIni}`);
+          void mutate(`CHAT_ANGGOTA_RUANG_${ruangSaatIni}`);
+        }
+      }
     },
     onSinyal: (dari, muatan) => void panggilanRef.current?.terimaSinyal(dari, muatan),
     onPergi: (dari) => panggilanRef.current?.lawanPergi(dari),
@@ -187,6 +236,23 @@ function ChatPage() {
     { refreshInterval: tersambung ? SELANG_PESAN_CADANGAN : SELANG_PESAN }
   );
 
+  // Sebutan @: hanya orang di percakapan ini. Kanal memakai kunci SWR yang
+  // sama dengan panel anggota (kanal-setelan), jadi tidak menambah permintaan.
+  const { data: anggotaRuang } = useSWR(
+    slug && ruangParam ? `CHAT_ANGGOTA_RUANG_${ruangParam}` : null,
+    slug && ruangParam ? () => chatService.getAnggotaRuang(slug, ruangParam) : null
+  );
+  const calonSebut: TCalonSebut[] = useMemo(() => {
+    const ids = ruangParam ? (anggotaRuang ?? []) : dengan ? [dengan] : [];
+    return ids
+      .filter((id) => id !== currentUser?.id)
+      .flatMap((id) => {
+        const anggota = getWorkspaceMemberDetails(id)?.member;
+        return anggota?.display_name ? [{ id, nama: anggota.display_name, avatar: anggota.avatar_url }] : [];
+      });
+  }, [ruangParam, anggotaRuang, dengan, currentUser?.id, getWorkspaceMemberDetails]);
+  const sebutan = useSebutan({ calon: calonSebut, draf, setDraf, tulisRef });
+
   // Ganti lawan bicara = buang riwayat lama yang sudah dimuat, kalau tidak
   // pesan orang sebelumnya ikut menempel di atas percakapan berikutnya.
   useEffect(() => {
@@ -195,23 +261,32 @@ function ChatPage() {
     setHabis(false);
     setMembalas(null);
     setMenyunting(null);
+    setLompatKe(null);
     // oxlint-disable-next-line react/exhaustive-effect-dependencies -- deps are the reset triggers, not read in the body
   }, [dengan, ruangParam]);
 
   // Berbunyi saat pesan MASUK baru tiba di percakapan yang sedang terbuka.
   // Lencana sidebar tidak bisa mengurus ini: membuka percakapan menandainya
   // terbaca, jadi angkanya tidak pernah naik dan bunyinya tidak pernah keluar.
+  //
+  // Penanda dikunci PER PERCAKAPAN. Dulu cuma id pesan terakhir, jadi berpindah
+  // ke percakapan yang sudah ada di cache SWR (tanpa jeda `undefined`) terbaca
+  // sebagai "pesan baru": id-nya beda dan pengirimnya bukan saya. Kanal sistem
+  // paling sering kena karena pengirimnya selalu kosong, jadi tiap kali dibuka
+  // berbunyi. Pembanding sekarang hanya pesan di percakapan yang SAMA.
   useEffect(() => {
     const daftar = pesan ?? [];
     const terakhir = daftar[daftar.length - 1];
-    if (!terakhir) {
+    const sebelumnya = pesanTerakhirRef.current;
+    if (!terakhir || !kunciIsi) {
       pesanTerakhirRef.current = null;
       return;
     }
-    const berganti = pesanTerakhirRef.current !== null && pesanTerakhirRef.current !== terakhir.id;
-    if (berganti && terakhir.pengirim !== currentUser?.id) bunyikan("pesan");
-    pesanTerakhirRef.current = terakhir.id;
-  }, [pesan, currentUser?.id, bunyikan]);
+    const penanda = `${kunciIsi}|${terakhir.id}`;
+    const percakapanSama = sebelumnya?.startsWith(`${kunciIsi}|`) ?? false;
+    if (percakapanSama && sebelumnya !== penanda && terakhir.pengirim !== currentUser?.id) bunyikan("pesan");
+    pesanTerakhirRef.current = penanda;
+  }, [pesan, kunciIsi, currentUser?.id, bunyikan]);
 
   // Selalu tampilkan pesan terbaru saat percakapan bertambah atau berganti.
   useEffect(() => {
@@ -272,39 +347,63 @@ function ChatPage() {
     el.style.height = `${Math.min(el.scrollHeight, TINGGI_TULIS_MAKS)}px`;
   };
 
-  const unggah = async (berkas: FileList | null) => {
-    if (!berkas || berkas.length === 0 || !slug) return;
-    setMengunggah(true);
-    // allSettled, bukan all: satu berkas yang ditolak server tidak boleh
-    // membuang berkas lain yang sudah berhasil naik.
-    const hasil = await Promise.allSettled(
-      Array.from(berkas).map(async (f) => {
-        // entity_identifier dikosongkan: pesannya belum ada saat berkas
-        // diunggah. Server yang menempelkannya ke pesan begitu terkirim, dan
-        // hanya menerima berkas yang diunggah orang yang sama.
-        const res = await fileService.uploadWorkspaceAsset(
-          slug,
-          { entity_identifier: "", entity_type: EFileAssetType.CHAT_ATTACHMENT },
-          f
-        );
-        return { id: res.asset_id, nama: f.name, ukuran: f.size };
-      })
-    );
-
-    const berhasil = hasil.filter((h) => h.status === "fulfilled").map((h) => h.value);
-    if (berhasil.length > 0) setLampiran((sebelumnya) => [...sebelumnya, ...berhasil]);
-
-    const gagal = hasil.length - berhasil.length;
-    if (gagal > 0)
+  // Tombol klip, tempel, dan seret semuanya lewat `tambahLampiran`: batas
+  // jumlah/ukuran dan kemajuan unggah ada di unggah-lampiran.ts.
+  const {
+    siap: lampiran,
+    naik: sedangNaik,
+    mengunggah,
+    tambah: tambahLampiran,
+    buang: buangLampiran,
+    kosongkan: kosongkanLampiran,
+  } = useUnggahLampiran({
+    slug,
+    onTolak: (tolak, maks) => {
+      const terlaluBesar = tolak.filter((x) => x.jenis === "terlalu-besar");
       setToast({
         type: TOAST_TYPE.ERROR,
         title:
-          gagal === hasil.length ? t("chat_ui.upload_failed_all") : t("chat_ui.upload_failed_some", { count: gagal }),
-        message: t("chat_ui.upload_failed_hint"),
+          terlaluBesar.length > 0
+            ? t("chatux_kelola_ui.file_too_large", { name: terlaluBesar[0].nama, size: Math.round(maks / 1024 / 1024) })
+            : t("chatux_kelola_ui.too_many_files", { count: BATAS_LAMPIRAN }),
       });
+    },
+    onGagal: (gagal, total, pesanServer) =>
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: gagal === total ? t("chat_ui.upload_failed_all") : t("chat_ui.upload_failed_some", { count: gagal }),
+        message: pesanServer ?? t("chat_ui.upload_failed_hint"),
+      }),
+  });
 
-    setMengunggah(false);
+  const unggah = async (berkas: FileList | File[] | null) => {
     if (berkasRef.current) berkasRef.current.value = "";
+    await tambahLampiran(berkas);
+  };
+
+  /** Lepas berkas di area percakapan. Hanya aktif saat ada percakapan terbuka. */
+  const aturSeret = {
+    onDragEnter: (e: React.DragEvent) => {
+      if (!seretBerkas(e.dataTransfer)) return;
+      e.preventDefault();
+      setDiseret(true);
+    },
+    onDragOver: (e: React.DragEvent) => {
+      if (!seretBerkas(e.dataTransfer)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      // Masuk ke anak elemen juga memicu dragleave; hanya keluar sungguhan yang dihitung.
+      if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+      setDiseret(false);
+    },
+    onDrop: (e: React.DragEvent) => {
+      if (!seretBerkas(e.dataTransfer)) return;
+      e.preventDefault();
+      setDiseret(false);
+      void unggah(e.dataTransfer.files);
+    },
   };
 
   const cariIsiPesan = async () => {
@@ -344,9 +443,49 @@ function ChatPage() {
     }
   };
 
+  const lompatKePesan = (pesanId: string) => {
+    sisaHalamanLompat.current = BATAS_HALAMAN_LOMPAT;
+    setLompatKe(pesanId);
+  };
+
+  // Cari pesan asli kutipan. Kalau belum termuat, tarik riwayat lama satu
+  // halaman per putaran sampai ketemu, server bilang habis, atau batas halaman
+  // tercapai. Efek ini jalan lagi tiap riwayat bertambah atau pemuatan selesai,
+  // jadi pemuatan yang gagal juga ikut mengurangi jatah, tidak berulang selamanya.
+  // Efek ini memang menyinkronkan dengan DOM (elemen sasaran baru ada sesudah
+  // render), dan pemicunya riwayat yang termuat, bukan muatLama/t yang dibuat
+  // ulang tiap render.
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies, react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (!lompatKe) return;
+    const el = document.getElementById(idElemenPesan(lompatKe));
+    if (el) {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      setDisorot(lompatKe);
+      setLompatKe(null);
+      return;
+    }
+    if (memuatLama) return;
+    if (habis || sisaHalamanLompat.current <= 0) {
+      setToast({ type: TOAST_TYPE.INFO, title: t("chat_ui.original_not_found") });
+      setLompatKe(null);
+      return;
+    }
+    sisaHalamanLompat.current -= 1;
+    void muatLama();
+  }, [lompatKe, semuaPesan.length, memuatLama, habis]);
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies, react-hooks/exhaustive-deps */
+
+  useEffect(() => {
+    if (!disorot) return;
+    const jeda = setTimeout(() => setDisorot(null), LAMA_SOROT_MS);
+    return () => clearTimeout(jeda);
+  }, [disorot]);
+
   const simpanSuntingan = async () => {
     const isi = draf.trim();
     if (!slug || !menyunting || !isi) return;
+    tandaiAksiLokal(aksiLokalRef);
     setMengirim(true);
     try {
       await chatService.suntingPesan(slug, menyunting.id, isi);
@@ -366,6 +505,7 @@ function ChatPage() {
 
   const hapus = async (p: TPesan) => {
     if (!slug) return;
+    tandaiAksiLokal(aksiLokalRef);
     try {
       await chatService.hapusPesan(slug, p.id);
       // Riwayat lama disimpan terpisah dari SWR, jadi harus ikut dibersihkan.
@@ -382,6 +522,7 @@ function ChatPage() {
 
   const reaksi = async (p: TPesan, emoji: string) => {
     if (!slug) return;
+    tandaiAksiLokal(aksiLokalRef);
     try {
       await chatService.toggleReaksi(slug, p.id, emoji);
       await muatPesan();
@@ -395,12 +536,15 @@ function ChatPage() {
     // Boleh mengirim tanpa teks asal ada lampiran.
     if ((!isi && lampiran.length === 0) || !slug || (!dengan && !ruangParam) || mengirim || mengunggah) return;
     setMengirim(true);
+    tandaiAksiLokal(aksiLokalRef);
     try {
       const berkas = lampiran.map((l) => l.id);
-      if (ruangParam) await chatService.kirimPesanRuang(slug, ruangParam, isi, berkas, membalas?.id);
-      else await chatService.kirimPesan(slug, dengan as string, isi, berkas, membalas?.id);
+      const sebut = sebutan.idUntukKirim(isi);
+      if (ruangParam) await chatService.kirimPesanRuang(slug, ruangParam, isi, berkas, membalas?.id, sebut);
+      else await chatService.kirimPesan(slug, dengan as string, isi, berkas, membalas?.id, sebut);
       setDraf("");
-      setLampiran([]);
+      sebutan.reset();
+      kosongkanLampiran();
       setMembalas(null);
       if (tulisRef.current) tulisRef.current.style.height = "auto";
       await Promise.all([muatPesan(), muatPercakapan()]);
@@ -427,6 +571,9 @@ function ChatPage() {
   panggilanRef.current = panggilan;
 
   const kanalAktif = (daftarKanal ?? []).find((r) => r.id === ruangParam);
+  // Kanal sistem yang hanya dibaca (Announcements, Changelog, Paradise) tidak
+  // bisa ditelepon; kanal divisi/departemen bisa, karena isinya orang sungguhan.
+  const kanalTanpaPanggilan = !!kanalAktif?.sistem && !/^(divisi|departemen):/.test(kanalAktif.kunci_sistem ?? "");
   const kanalDiikuti = (daftarKanal ?? []).filter((r) => r.ikut);
   const kanalBelumDiikuti = (daftarKanal ?? []).filter((r) => !r.ikut);
 
@@ -464,20 +611,7 @@ function ChatPage() {
     }
   };
 
-  const keluar = async (ruangId: string) => {
-    if (!slug) return;
-    try {
-      await chatService.keluarRuang(slug, ruangId);
-      await Promise.all([muatKanal(), muatPercakapan()]);
-      setSearchParams({});
-    } catch (galat) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: t("chat_ui.leave_failed"),
-        message: (galat as { error?: string })?.error ?? t("chat_ui.try_again_shortly"),
-      });
-    }
-  };
+  // Keluar kanal pindah ke DialogSetelanKanal (kanal-setelan.tsx).
 
   if (!slug) return <></>;
 
@@ -496,10 +630,11 @@ function ChatPage() {
         )}
       >
         <div className="flex items-center gap-2 border-b border-subtle p-3">
-          <div className="flex flex-1 items-center gap-2 rounded-md border border-subtle px-2.5 py-1.5 focus-within:border-accent-strong">
+          <div className="flex flex-1 items-center gap-2 search-field border border-subtle px-2.5 py-1.5 focus-within:border-accent-strong">
             <Search className="size-3.5 shrink-0 text-tertiary" />
-            <input
+            <Input
               type="text"
+              mode="true-transparent"
               value={cari}
               onChange={(e) => {
                 setCari(e.target.value);
@@ -516,7 +651,7 @@ function ChatPage() {
               }}
               placeholder={t("chat_ui.search_placeholder")}
               aria-label={t("chat_ui.search_label")}
-              className="w-full bg-transparent text-13 text-primary outline-none placeholder:text-placeholder"
+              className="w-full p-0 text-primary placeholder:text-placeholder"
             />
             {cari.trim().length >= 3 ? (
               <button
@@ -525,7 +660,7 @@ function ChatPage() {
                 disabled={mencari}
                 aria-label={t("chat_ui.search_messages")}
                 title={t("chat_ui.search_messages")}
-                className="shrink-0 rounded px-1.5 py-0.5 text-12 font-medium text-accent-primary hover:bg-layer-1 disabled:opacity-50"
+                className="shrink-0 rounded-button px-1.5 py-0.5 text-12 font-medium text-accent-primary hover:bg-layer-1 disabled:opacity-50"
               >
                 {mencari ? "…" : t("chat_ui.search_content_short")}
               </button>
@@ -542,22 +677,22 @@ function ChatPage() {
               <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
                 <p className="text-12 font-semibold tracking-wide text-tertiary uppercase">{t("chat_ui.channels")}</p>
                 <div className="flex items-center gap-0.5">
-                  <button
+                  <IconButton
                     type="button"
                     onClick={() => setJelajah(true)}
                     title={t("chat_ui.browse_channels")}
-                    className="flex size-6 items-center justify-center rounded text-tertiary hover:bg-layer-1 hover:text-secondary"
-                  >
-                    <Compass className="size-3.5" />
-                  </button>
-                  <button
+                    variant="ghost"
+                    size="sm"
+                    icon={Compass}
+                  />
+                  <IconButton
                     type="button"
                     onClick={() => setBuatTerbuka(true)}
                     title={t("chat_ui.create_channel")}
-                    className="flex size-6 items-center justify-center rounded text-tertiary hover:bg-layer-1 hover:text-secondary"
-                  >
-                    <Plus className="size-3.5" />
-                  </button>
+                    variant="ghost"
+                    size="sm"
+                    icon={Plus}
+                  />
                 </div>
               </div>
               {kanalDiikuti.length === 0 ? (
@@ -586,11 +721,18 @@ function ChatPage() {
                       >
                         {r.nama}
                       </span>
-                      {adaBaru ? (
-                        <span className="shrink-0 rounded-full bg-accent-primary px-1.5 text-12 font-medium text-white">
-                          {r.belum_dibaca}
+                      {r.sistem ? (
+                        <span className="shrink-0 rounded-control bg-layer-3 px-1.5 py-px text-11 font-medium text-tertiary">
+                          {/* Kanal divisi/departemen diberi label unitnya, bukan "System":
+                              isinya obrolan orang, cuma anggotanya yang diatur God Mode. */}
+                          {r.kunci_sistem?.startsWith("divisi:")
+                            ? t("chatkartu_ui.org_division")
+                            : r.kunci_sistem?.startsWith("departemen:")
+                              ? t("chatkartu_ui.org_department")
+                              : t("chatkartu_ui.system_badge")}
                         </span>
                       ) : null}
+                      {adaBaru ? <CountChip count={getNumberCount(r.belum_dibaca)} className="shrink-0" /> : null}
                     </button>
                   );
                 })
@@ -673,12 +815,14 @@ function ChatPage() {
                     terpilih ? "bg-layer-1-selected" : ""
                   }`}
                 >
-                  <Avatar
-                    name={anggota?.display_name}
-                    src={getFileURL(anggota?.avatar_url ?? "")}
-                    size={32}
-                    shape="circle"
-                  />
+                  <DenganKehadiran userId={diriSendiri ? null : id}>
+                    <Avatar
+                      name={anggota?.display_name}
+                      src={getFileURL(anggota?.avatar_url ?? "")}
+                      size={32}
+                      shape="circle"
+                    />
+                  </DenganKehadiran>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       {/* Belum dibaca ditandai tebal, bukan cuma lencana. Angka
@@ -701,9 +845,7 @@ function ChatPage() {
                             : t("chat_ui.no_messages")}
                       </p>
                       {adaBaru ? (
-                        <span className="shrink-0 rounded-full bg-accent-primary px-1.5 text-12 font-medium text-white">
-                          {terakhir?.belum_dibaca}
-                        </span>
+                        <CountChip count={getNumberCount(terakhir?.belum_dibaca ?? 0)} className="shrink-0" />
                       ) : null}
                     </div>
                   </div>
@@ -718,7 +860,22 @@ function ChatPage() {
       {/* Kebalikannya: di layar sempit, panel ini hanya muncul kalau ada yang
           dibuka. Keadaan kosong "Pilih orang di sebelah kiri" tidak masuk akal
           di HP, karena di situ tidak ada "sebelah kiri". */}
-      <section className={cn("flex min-w-0 flex-1 flex-col", !adaPercakapanTerbuka && "hidden lg:flex")}>
+      <section
+        className={cn("relative flex min-w-0 flex-1 flex-col", !adaPercakapanTerbuka && "hidden lg:flex")}
+        {...(adaPercakapanTerbuka ? aturSeret : {})}
+      >
+        {/* Area lepas: muncul hanya saat berkas diseret di atas percakapan. */}
+        {diseret && adaPercakapanTerbuka ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-2 z-20 grid place-items-center rounded-card border-2 border-dashed border-accent-strong bg-surface-1/90"
+          >
+            <p className="flex items-center gap-2 text-14 font-medium text-accent-primary">
+              <Upload className="size-5" />
+              {t("chatux_kelola_ui.drop_to_attach")}
+            </p>
+          </div>
+        ) : null}
         {!dengan && !ruangParam ? (
           // Sama dengan Intake: panel detail yang kosong memakai empty state
           // bawaan, bukan teks kecil di tengah layar kosong.
@@ -743,7 +900,7 @@ function ChatPage() {
               <button
                 type="button"
                 onClick={() => setSearchParams({})}
-                className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-sm text-secondary hover:bg-layer-1 hover:text-primary lg:hidden"
+                className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-button text-secondary hover:bg-layer-1 hover:text-primary lg:hidden"
                 aria-label={t("chat_ui.back_to_list")}
               >
                 <ChevronLeft className="size-5" />
@@ -755,52 +912,79 @@ function ChatPage() {
                   ) : (
                     <Hash className="size-4 text-tertiary" />
                   )}
-                  <p className="text-13 font-medium text-primary">{kanalAktif?.nama ?? t("chat_ui.channel")}</p>
-                  {kanalAktif?.topik ? <p className="truncate text-12 text-tertiary">{kanalAktif.topik}</p> : null}
+                  <p className="min-w-0 truncate text-13 font-medium text-primary">
+                    {kanalAktif?.nama ?? t("chat_ui.channel")}
+                  </p>
+                  {kanalAktif?.topik ? (
+                    <p className="hidden min-w-0 truncate text-12 text-tertiary sm:block">{kanalAktif.topik}</p>
+                  ) : null}
                   {/* Panggilan kanal = konferensi. Tidak berdering ke satu orang;
                       undangannya disiarkan ke anggota yang sedang membuka kanal
                       ini, lalu mereka memutuskan sendiri mau gabung atau tidak.
                       Meneleponkan dering ke belasan orang sekaligus akan jadi
                       gangguan, bukan fitur. */}
                   <div className="ml-auto flex items-center gap-1">
-                    <button
+                    <IconButton
                       type="button"
                       onClick={() => void panggilan.mulaiKonferensi(false)}
-                      disabled={!tersambung || panggilan.status !== "diam"}
+                      disabled={!tersambung || panggilan.status !== "diam" || kanalTanpaPanggilan}
                       title={tersambung ? t("chat_ui.start_channel_voice") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.channel_voice_call")}
-                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
-                    >
-                      <Phone className="size-4" />
-                    </button>
-                    <button
+                      variant="ghost"
+                      size="lg"
+                      icon={Phone}
+                    />
+                    <IconButton
                       type="button"
                       onClick={() => void panggilan.mulaiKonferensi(true)}
-                      disabled={!tersambung || panggilan.status !== "diam"}
+                      disabled={!tersambung || panggilan.status !== "diam" || kanalTanpaPanggilan}
                       title={tersambung ? t("chat_ui.start_channel_video") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.channel_video_call")}
-                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
-                    >
-                      <Video className="size-4" />
-                    </button>
-                    <button
+                      variant="ghost"
+                      size="lg"
+                      icon={Video}
+                    />
+                    {/* Setelan kanal: anggota, undang, ubah nama/topik, keluar,
+                        hapus. Keluar pindah ke sini; kanal sistem tidak punya
+                        tombol keluar di dalamnya. */}
+                    <IconButton
                       type="button"
-                      onClick={() => keluar(ruangParam as string)}
-                      className="rounded-md px-2 py-1 text-12 text-tertiary hover:bg-layer-1 hover:text-secondary"
-                    >
-                      {t("chat_ui.leave_channel")}
-                    </button>
+                      onClick={() => setSetelanTerbuka(true)}
+                      title={t("chatux_kelola_ui.channel_settings")}
+                      aria-label={t("chatux_kelola_ui.channel_settings")}
+                      variant="ghost"
+                      size="lg"
+                      icon={Settings2}
+                    />
                   </div>
                 </>
               ) : (
                 <>
-                  <Avatar
-                    name={lawanBicara?.display_name}
-                    src={getFileURL(lawanBicara?.avatar_url ?? "")}
-                    size={32}
-                    shape="circle"
-                  />
-                  <p className="text-13 font-medium text-primary">{lawanBicara?.display_name ?? t("chat_ui.member")}</p>
+                  <MemberProfileTrigger userId={dengan} className="shrink-0">
+                    <DenganKehadiran userId={dengan}>
+                      <Avatar
+                        name={lawanBicara?.display_name}
+                        src={getFileURL(lawanBicara?.avatar_url ?? "")}
+                        size={32}
+                        shape="circle"
+                      />
+                    </DenganKehadiran>
+                  </MemberProfileTrigger>
+                  <div className="min-w-0">
+                    <p className="truncate text-13 font-medium text-primary">
+                      <MemberProfileTrigger userId={dengan}>
+                        <span className="truncate hover:underline">
+                          {lawanBicara?.display_name ?? t("chat_ui.member")}
+                        </span>
+                      </MemberProfileTrigger>
+                    </p>
+                    {dengan !== currentUser?.id ? (
+                      <p className="flex items-center gap-1 text-12 text-tertiary">
+                        <TitikKehadiran userId={dengan} className="size-2" />
+                        <StatusKehadiranTeks userId={dengan} />
+                      </p>
+                    ) : null}
+                  </div>
                   {dengan === currentUser?.id ? (
                     <p className="truncate text-12 text-tertiary">{t("chat_ui.notes_to_self")}</p>
                   ) : null}
@@ -811,26 +995,26 @@ function ChatPage() {
                       Tidak ada tombol sama sekali di catatan diri sendiri:
                       menelepon diri sendiri cuma berdering tanpa ujung. */}
                   <div className={cn("ml-auto flex items-center gap-1", dengan === currentUser?.id && "hidden")}>
-                    <button
+                    <IconButton
                       type="button"
                       onClick={() => dengan && void panggilan.panggil(dengan, false)}
                       disabled={!tersambung || panggilan.status !== "diam"}
                       title={tersambung ? t("chat_ui.voice_call") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.voice_call")}
-                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
-                    >
-                      <Phone className="size-4" />
-                    </button>
-                    <button
+                      variant="ghost"
+                      size="lg"
+                      icon={Phone}
+                    />
+                    <IconButton
                       type="button"
                       onClick={() => dengan && void panggilan.panggil(dengan, true)}
                       disabled={!tersambung || panggilan.status !== "diam"}
                       title={tersambung ? t("chat_ui.video_call") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.video_call")}
-                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
-                    >
-                      <Video className="size-4" />
-                    </button>
+                      variant="ghost"
+                      size="lg"
+                      icon={Video}
+                    />
                   </div>
                 </>
               )}
@@ -841,15 +1025,15 @@ function ChatPage() {
                   yang lebih lama, dan menghilang setelah server bilang habis. */}
               {barisPesan.length > 0 && !habis ? (
                 <div className="mb-2 flex justify-center">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="base"
+                    prependIcon={<ChevronUp />}
                     onClick={() => void muatLama()}
                     disabled={memuatLama}
-                    className="flex items-center gap-1.5 rounded-full border border-subtle px-3 py-1 text-12 text-secondary hover:bg-layer-1 disabled:opacity-50"
                   >
-                    <ChevronUp className="size-3.5" />
                     {memuatLama ? t("chat_ui.loading") : t("chat_ui.load_older")}
-                  </button>
+                  </Button>
                 </div>
               ) : null}
 
@@ -866,7 +1050,7 @@ function ChatPage() {
                     if (baris.jenis === "tanggal")
                       return (
                         <div key={baris.kunci} className="my-3 flex items-center justify-center">
-                          <span className="rounded-full bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">
+                          <span className="rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">
                             {baris.relatif === "hari-ini"
                               ? t("chat_ui.today")
                               : baris.relatif === "kemarin"
@@ -888,22 +1072,28 @@ function ChatPage() {
                       );
 
                     const { pesan: p, dariSaya, awalKelompok, akhirKelompok } = baris;
+                    // Di kanal tiap pesan bisa dari orang lain, jadi avatarnya
+                    // dari pengirim pesan itu, bukan dari lawan bicara DM.
+                    const pengirim = p.pengirim ? getWorkspaceMemberDetails(p.pengirim)?.member : undefined;
                     return (
                       <div
                         key={baris.kunci}
-                        className={`flex items-end gap-2 ${awalKelompok ? "mt-2" : "mt-0.5"} ${
-                          dariSaya ? "justify-end" : "justify-start"
-                        }`}
+                        id={idElemenPesan(p.id)}
+                        className={`flex scroll-my-16 items-end gap-2 rounded-item transition-colors duration-700 ${
+                          awalKelompok ? "mt-2" : "mt-0.5"
+                        } ${dariSaya ? "justify-end" : "justify-start"} ${disorot === p.id ? "bg-accent-subtle" : ""}`}
                       >
                         {!dariSaya ? (
                           <div className="w-7 shrink-0">
-                            {awalKelompok ? (
-                              <Avatar
-                                name={lawanBicara?.display_name}
-                                src={getFileURL(lawanBicara?.avatar_url ?? "")}
-                                size={28}
-                                shape="circle"
-                              />
+                            {awalKelompok && p.pengirim ? (
+                              <MemberProfileTrigger userId={p.pengirim}>
+                                <Avatar
+                                  name={pengirim?.display_name}
+                                  src={getFileURL(pengirim?.avatar_url ?? "")}
+                                  size={28}
+                                  shape="circle"
+                                />
+                              </MemberProfileTrigger>
                             ) : null}
                           </div>
                         ) : null}
@@ -918,6 +1108,12 @@ function ChatPage() {
                               ? t("chat_ui.you")
                               : (getWorkspaceMemberDetails(id)?.member?.display_name ?? t("chat_ui.member"))
                           }
+                          namaSebutan={(id) =>
+                            id === currentUser?.id
+                              ? (currentUser?.display_name ?? "")
+                              : (getWorkspaceMemberDetails(id)?.member?.display_name ?? "")
+                          }
+                          onBukaKutipan={lompatKePesan}
                           onBalas={(pesanIni) => {
                             setMenyunting(null);
                             setMembalas(pesanIni);
@@ -929,8 +1125,18 @@ function ChatPage() {
                             setDraf(pesanIni.isi);
                             tulisRef.current?.focus();
                           }}
-                          onHapus={(pesanIni) => void hapus(pesanIni)}
+                          onHapus={(pesanIni) =>
+                            minta(
+                              { judul: t("chat_ui.confirm_delete_title"), isi: t("chat_ui.confirm_delete_body") },
+                              () => hapus(pesanIni)
+                            )
+                          }
+                          batasHapusJam={batasHapusJam}
                           onReaksi={(pesanIni, emoji) => void reaksi(pesanIni, emoji)}
+                          onTelepon={(video) => {
+                            if (adalahKanal) void panggilan.mulaiKonferensi(video);
+                            else if (dengan) void panggilan.panggil(dengan, video);
+                          }}
                         />
                       </div>
                     );
@@ -940,9 +1146,21 @@ function ChatPage() {
               <div ref={akhirRef} />
             </div>
 
-            <div className="flex flex-col gap-2 border-t border-subtle p-3">
+            {/* Kanal sistem yang hanya bisa dibaca: Changelog, ruang kabar
+                "Paradise", dan Announcements bagi yang bukan admin. Server tetap
+                menolak 403; kolom tulis cuma disembunyikan supaya tidak menipu. */}
+            {kanalAktif?.boleh_kirim === false ? (
+              <p className="border-t border-subtle p-3 text-center text-12 text-tertiary">
+                {kanalAktif.kunci_sistem === "pengumuman"
+                  ? t("chatkartu_ui.announcements_admin_only")
+                  : t("chatkartu_ui.read_only")}
+              </p>
+            ) : null}
+            <div
+              className={`flex flex-col gap-2 border-t border-subtle p-3 ${kanalAktif?.boleh_kirim === false ? "hidden" : ""}`}
+            >
               {membalas || menyunting ? (
-                <div className="flex items-start gap-2 rounded-md border-l-2 border-accent-strong bg-layer-1 px-2.5 py-1.5">
+                <div className="flex items-start gap-2 rounded-item border-l-2 border-accent-strong bg-layer-1 px-2.5 py-1.5">
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1 text-12 font-medium text-accent-primary">
                       {menyunting ? <Pencil className="size-3" /> : <CornerUpLeft className="size-3" />}
@@ -967,7 +1185,7 @@ function ChatPage() {
                       setMembalas(null);
                     }}
                     aria-label={t("cancel")}
-                    className="text-tertiary hover:text-primary"
+                    className="-m-1.5 rounded-button p-1.5 text-tertiary hover:text-primary"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -978,34 +1196,56 @@ function ChatPage() {
                   {lampiran.map((l) => (
                     <span
                       key={l.id}
-                      className="flex items-center gap-1.5 rounded-md border border-subtle px-2 py-1 text-12 text-secondary"
+                      className="flex items-center gap-1.5 rounded-control border border-subtle px-2 py-1 text-12 text-secondary"
                     >
                       <span className="max-w-40 truncate">{l.nama}</span>
                       <span className="text-tertiary">{ukuranTerbaca(l.ukuran)}</span>
                       <button
                         type="button"
-                        onClick={() => setLampiran((s2) => s2.filter((x) => x.id !== l.id))}
+                        data-sentuh-lega
+                        onClick={() => buangLampiran(l.id)}
                         aria-label={t("chat_ui.remove_named", { name: l.nama })}
-                        className="text-tertiary hover:text-primary"
+                        className="-m-1.5 rounded-button p-1.5 text-tertiary hover:text-primary"
                       >
                         <X className="size-3" />
                       </button>
                     </span>
                   ))}
-                  {mengunggah ? <span className="text-12 text-tertiary">{t("chat_ui.uploading")}</span> : null}
+                  {/* Berkas yang masih naik: nama + kemajuan. Tidak bisa dibatalkan
+                      di tengah jalan; sesudah selesai ia jadi chip biasa yang bisa dibuang. */}
+                  {sedangNaik.map((n) => (
+                    <span
+                      key={n.kunci}
+                      className="relative flex items-center gap-1.5 overflow-hidden rounded-control border border-subtle px-2 py-1 text-12 text-tertiary"
+                    >
+                      <span
+                        aria-hidden
+                        className="absolute inset-y-0 left-0 bg-accent-primary/10 transition-[width]"
+                        style={{ width: `${n.persen}%` }}
+                      />
+                      <span className="relative max-w-40 truncate">{n.nama}</span>
+                      <span className="relative tabular-nums">{n.persen}%</span>
+                      <progress
+                        className="sr-only"
+                        max={100}
+                        value={n.persen}
+                        aria-label={t("chatux_kelola_ui.uploading_named", { name: n.nama })}
+                      />
+                    </span>
+                  ))}
                 </div>
               ) : null}
               <div className="flex items-end gap-2">
                 <input ref={berkasRef} type="file" multiple hidden onChange={(e) => void unggah(e.target.files)} />
-                <button
+                <IconButton
                   type="button"
                   onClick={() => berkasRef.current?.click()}
                   disabled={mengunggah}
                   aria-label={t("chat_ui.attach_file")}
-                  className="flex size-9 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
-                >
-                  <Paperclip className="size-4" />
-                </button>
+                  variant="ghost"
+                  size="xl"
+                  icon={Paperclip}
+                />
                 <EmojiReactionPicker
                   isOpen={emojiTerbuka}
                   handleToggle={setEmojiTerbuka}
@@ -1019,42 +1259,67 @@ function ChatPage() {
                   }}
                   label={
                     <span
-                      className="flex size-9 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary"
+                      className="flex size-9 items-center justify-center rounded-button text-secondary hover:bg-layer-transparent-hover"
                       aria-label={t("chat_ui.insert_emoji")}
                     >
                       <SmilePlus className="size-4" />
                     </span>
                   }
                 />
-                <textarea
-                  ref={tulisRef}
-                  value={draf}
-                  onChange={(e) => {
-                    setDraf(e.target.value);
-                    aturTinggiTulis();
-                  }}
-                  onKeyDown={(e) => {
-                    // Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
-                    // sudah dibawa orang dari aplikasi obrolan lain.
-                    if (e.key === "Enter" && !e.shiftKey) {
+                <div className="relative min-w-0 flex-1">
+                  {sebutan.terbuka ? (
+                    <DaftarSebut
+                      cocok={sebutan.cocok}
+                      sorot={sebutan.sorot}
+                      onSorot={sebutan.setSorot}
+                      onPilih={sebutan.pilih}
+                    />
+                  ) : null}
+                  <textarea
+                    ref={tulisRef}
+                    value={draf}
+                    onChange={(e) => {
+                      setDraf(e.target.value);
+                      sebutan.onChange(e);
+                      aturTinggiTulis();
+                    }}
+                    onClick={(e) => sebutan.onKursor(e.currentTarget.value, e.currentTarget.selectionStart ?? 0)}
+                    onBlur={() => sebutan.onKursor("", 0)}
+                    onPaste={(e) => {
+                      // Tempel gambar/berkas = lampiran. Tempelan teks biasa
+                      // dibiarkan jalan seperti biasa.
+                      const berkas = berkasDariTempel(e.clipboardData);
+                      if (berkas.length === 0) return;
                       e.preventDefault();
-                      void (menyunting ? simpanSuntingan() : kirim());
-                    }
-                    // Escape membatalkan balas atau sunting. Tanpa ini, satu
-                    // satunya jalan keluar adalah mengklik tanda silang kecil.
-                    if (e.key === "Escape" && (menyunting || membalas)) {
-                      if (menyunting) setDraf("");
-                      setMenyunting(null);
-                      setMembalas(null);
-                    }
-                  }}
-                  rows={1}
-                  placeholder={t("chat_ui.write_message")}
-                  aria-label={t("chat_ui.write_message")}
-                  className="min-h-9 flex-1 resize-none rounded-md border border-subtle bg-transparent px-3 py-2 text-13 text-primary outline-none placeholder:text-placeholder focus:border-accent-strong"
-                />
-                <button
-                  type="button"
+                      void unggah(berkas);
+                    }}
+                    onKeyDown={(e) => {
+                      // Pemilih sebutan yang terbuka menang atas Enter/Escape.
+                      if (sebutan.onKeyDown(e)) return;
+                      // Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
+                      // sudah dibawa orang dari aplikasi obrolan lain.
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void (menyunting ? simpanSuntingan() : kirim());
+                      }
+                      // Escape membatalkan balas atau sunting. Tanpa ini, satu
+                      // satunya jalan keluar adalah mengklik tanda silang kecil.
+                      if (e.key === "Escape" && (menyunting || membalas)) {
+                        if (menyunting) setDraf("");
+                        setMenyunting(null);
+                        setMembalas(null);
+                      }
+                    }}
+                    rows={1}
+                    placeholder={t("chat_ui.write_message")}
+                    aria-label={t("chat_ui.write_message")}
+                    className="block min-h-9 w-full resize-none rounded-field border border-subtle bg-transparent px-3 py-2 text-13 text-primary outline-none placeholder:text-placeholder focus:border-accent-strong"
+                  />
+                </div>
+                <IconButton
+                  variant="primary"
+                  size="xl"
+                  icon={Send}
                   onClick={() => void (menyunting ? simpanSuntingan() : kirim())}
                   disabled={
                     mengirim ||
@@ -1062,28 +1327,23 @@ function ChatPage() {
                     (menyunting ? draf.trim().length === 0 : draf.trim().length === 0 && lampiran.length === 0)
                   }
                   aria-label={t("chat_ui.send_message")}
-                  className="flex size-9 items-center justify-center rounded-md bg-accent-primary text-white disabled:opacity-40"
-                >
-                  <Send className="size-4" />
-                </button>
+                />
               </div>
             </div>
           </>
         )}
       </section>
 
+      {dialogKonfirmasi}
+
       {/* Ajakan gabung, bukan dering. Muncul untuk yang sedang membuka ruang
           saat orang lain memulai panggilan di sana. */}
       {panggilan.konferensiBerjalan && panggilan.status === "diam" ? (
-        <div className="shadow-lg fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-subtle bg-layer-3 px-4 py-2">
+        <div className="fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-control border border-subtle bg-layer-3 px-4 py-2">
           <span className="text-13 text-primary">{t("chat_ui.call_in_progress")}</span>
-          <button
-            type="button"
-            onClick={() => void panggilan.mulaiKonferensi(panggilan.pakaiVideo)}
-            className="rounded-full bg-accent-primary px-3 py-1.5 text-12 font-medium text-white"
-          >
+          <Button variant="primary" size="base" onClick={() => void panggilan.mulaiKonferensi(panggilan.pakaiVideo)}>
             {t("chat_ui.join")}
-          </button>
+          </Button>
         </div>
       ) : null}
 
@@ -1094,8 +1354,14 @@ function ChatPage() {
           adalahKanal
             ? (kanalAktif?.nama ?? t("chat_ui.channel"))
             : ((panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.display_name : undefined) ??
-              "Anggota")
+              t("chat_ui.member"))
         }
+        avatarJudul={
+          !adalahKanal && panggilan.lawan
+            ? getFileURL(getWorkspaceMemberDetails(panggilan.lawan)?.member?.avatar_url ?? "") || undefined
+            : undefined
+        }
+        cariAvatar={(id) => getFileURL(getWorkspaceMemberDetails(id)?.member?.avatar_url ?? "") || undefined}
         pakaiVideo={panggilan.pakaiVideo}
         mikMati={panggilan.mikMati}
         kameraMati={panggilan.kameraMati}
@@ -1109,6 +1375,17 @@ function ChatPage() {
       />
 
       <DialogBuatKanal isOpen={buatTerbuka} onClose={() => setBuatTerbuka(false)} onBuat={buatKanal} />
+      <DialogSetelanKanal
+        isOpen={setelanTerbuka && adalahKanal}
+        onClose={() => setSetelanTerbuka(false)}
+        slug={slug}
+        ruangId={ruangParam}
+        onPergi={() => {
+          void Promise.all([muatKanal(), muatPercakapan()]);
+          setSearchParams({});
+        }}
+        onBerubah={() => void Promise.all([muatKanal(), muatPercakapan()])}
+      />
       <DialogJelajahKanal
         isOpen={jelajah}
         onClose={() => setJelajah(false)}

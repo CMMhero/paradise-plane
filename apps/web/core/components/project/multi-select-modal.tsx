@@ -107,7 +107,7 @@ export const ProjectMultiSelectModal = observer(function ProjectMultiSelectModal
               return (
                 <div
                   key={projectDetails.id}
-                  className="group flex cursor-pointer items-center gap-1.5 rounded-sm bg-surface-2 px-2 py-1"
+                  className="group flex cursor-pointer items-center gap-1.5 rounded-control bg-surface-2 px-2 py-1"
                   onClick={() => {
                     handleSelectedProjectChange(selectedProjectIds.filter((id) => id !== projectDetails.id));
                   }}
@@ -150,7 +150,7 @@ export const ProjectMultiSelectModal = observer(function ProjectMultiSelectModal
                     value={projectDetails.id}
                     className={({ active }) =>
                       cn(
-                        "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-md p-2 text-secondary transition-colors select-none",
+                        "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item p-2 text-secondary transition-colors select-none",
                         {
                           "bg-layer-1": active,
                           "text-primary": isProjectSelected,

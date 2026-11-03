@@ -29,7 +29,7 @@ export function CycleModuleBoardLayoutLoader() {
                     <span className="h-5 w-5 rounded-sm bg-layer-1" />
                     <span className="h-5 w-20 rounded-sm bg-layer-1" />
                   </div>
-                  <span className="h-5 w-5 rounded-full bg-layer-1" />
+                  <span className="h-5 w-5 rounded-control bg-layer-1" />
                 </div>
                 <span className="h-1.5 rounded-sm bg-layer-1" />
                 <div className="flex items-center justify-between">

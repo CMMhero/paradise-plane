@@ -13,6 +13,7 @@ const Button = React.forwardRef(function Button(props: ButtonProps, ref: React.F
   const {
     variant = "primary",
     size = "base",
+    shape = "rectangle",
     className = "",
     type = "button",
     loading = false,
@@ -29,7 +30,7 @@ const Button = React.forwardRef(function Button(props: ButtonProps, ref: React.F
     <button
       ref={ref}
       type={type}
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={cn(buttonVariants({ variant, size, shape }), className)}
       disabled={disabled || loading}
       {...rest}
     >

@@ -7,7 +7,7 @@
 import { FileText, FolderPlus, Layers, SquarePlus } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { ContrastIcon, DiceIcon, LayersIcon } from "@plane/propel/icons";
+import { DiceIcon, LayersIcon } from "@plane/propel/icons";
 // components
 import { EUserProjectRoles } from "@plane/types";
 import type { TPowerKCommandConfig, TPowerKContext } from "@/components/power-k/core/types";
@@ -21,7 +21,6 @@ export type TPowerKCreationCommandKeys =
   | "create_work_item"
   | "create_page"
   | "create_view"
-  | "create_cycle"
   | "create_module"
   | "create_project"
   | "create_workspace";
@@ -40,7 +39,6 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
   const {
     toggleCreateIssueModal,
     toggleCreateProjectModal,
-    toggleCreateCycleModal,
     toggleCreateModuleModal,
     toggleCreateViewModal,
     toggleCreatePageModal,
@@ -102,19 +100,6 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
         Boolean(
           ctx.params.projectId && getProjectDetails(ctx)?.issue_views_view && hasProjectMemberLevelPermissions(ctx)
         ),
-      closeOnSelect: true,
-    },
-    create_cycle: {
-      id: "create_cycle",
-      type: "action",
-      group: "create",
-      i18n_title: "power_k.creation_actions.create_cycle",
-      icon: ContrastIcon,
-      keySequence: "nc",
-      action: () => toggleCreateCycleModal(true),
-      isEnabled: (ctx) => Boolean(getProjectDetails(ctx)?.cycle_view && hasProjectMemberLevelPermissions(ctx)),
-      isVisible: (ctx) =>
-        Boolean(ctx.params.projectId && getProjectDetails(ctx)?.cycle_view && hasProjectMemberLevelPermissions(ctx)),
       closeOnSelect: true,
     },
     create_module: {

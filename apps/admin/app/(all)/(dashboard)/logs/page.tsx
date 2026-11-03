@@ -398,7 +398,7 @@ function DetailPerubahan({
   const tampil = tampilTeknis ? baris : bermakna;
 
   return (
-    <div className="ml-5 space-y-2 rounded-md border border-subtle bg-surface-1 p-3">
+    <div className="ml-5 space-y-2 rounded-card border border-subtle bg-surface-1 p-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-11 text-tertiary">
         <span>
           {t.exact_time}: <span className="text-secondary">{formatDateTime(entri.timestamp)}</span>
@@ -417,7 +417,7 @@ function DetailPerubahan({
           {tampil.length === 0 ? (
             <p className="text-12 text-secondary">{t.only_technical}</p>
           ) : (
-            <div className="overflow-hidden rounded-md border border-subtle">
+            <div className="overflow-hidden rounded-card border border-subtle">
               <table className="w-full table-fixed text-12">
                 <thead className="bg-layer-1 text-tertiary">
                   <tr>
@@ -448,7 +448,7 @@ function DetailPerubahan({
           {teknis.length > 0 && (
             <Button
               variant="ghost"
-              size="sm"
+              size="base"
               onClick={(ev) => {
                 // Jangan ikut menutup baris induk.
                 ev.stopPropagation();

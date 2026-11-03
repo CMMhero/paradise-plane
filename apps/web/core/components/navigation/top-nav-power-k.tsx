@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // hooks
 import { CloseIcon, SearchIcon } from "@plane/propel/icons";
+import { Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 // power-k
 import type { TPowerKCommandConfig, TPowerKContext } from "@/components/power-k/core/types";
@@ -234,16 +235,17 @@ export const TopNavPowerK = observer(() => {
             menyediakan yang benar; kita tinggal berhenti menulis ulang. */}
         <label
           className={cn(
-            "flex h-7 w-full items-center rounded-lg border border-subtle-1 bg-layer-2 p-2 transition-colors duration-200",
+            "flex h-7 w-full items-center search-field border border-subtle-1 bg-layer-2 p-2 transition-colors duration-200",
             {
               "bg-layer-1": isOpen,
             }
           )}
         >
           <SearchIcon className="mr-2 size-3.5 shrink-0 text-placeholder" />
-          <input
+          <Input
             ref={inputRef}
             type="text"
+            mode="true-transparent"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -253,7 +255,7 @@ export const TopNavPowerK = observer(() => {
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
             placeholder="Search commands..."
-            className="min-w-0 flex-1 bg-transparent text-13 text-primary placeholder-(--text-color-placeholder) outline-none"
+            className="min-w-0 flex-1 p-0 text-primary placeholder-(--text-color-placeholder)"
           />
           {searchTerm && (
             <button type="button" onClick={handleClear} className="ml-2 shrink-0">
@@ -264,7 +266,7 @@ export const TopNavPowerK = observer(() => {
       </div>
       <div
         className={cn(
-          "shadow-lg absolute -top-[6px] left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden rounded-md border border-subtle bg-surface-1 px-0 pt-10 transition-all duration-300 ease-in-out",
+          "shadow-lg absolute -top-[6px] left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden rounded-popover border border-subtle bg-surface-1 px-0 pt-10 transition-all duration-300 ease-in-out",
           {
             "max-h-[80dvh] w-[min(574px,calc(100vw-2rem))] opacity-100": isOpen,
             "h-0 w-0 opacity-0": !isOpen,

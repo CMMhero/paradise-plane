@@ -5,12 +5,12 @@
  */
 
 import { observer } from "mobx-react";
-import Link from "next/link";
 // types
 import type { TWorkspaceBaseActivity } from "@plane/types";
+// components
+import { MemberProfileTrigger } from "@/components/member-profile";
 // store hooks
 import { useMember } from "@/hooks/store/use-member";
-import { useWorkspace } from "@/hooks/store/use-workspace";
 
 type TUser = {
   activity: TWorkspaceBaseActivity;
@@ -21,22 +21,17 @@ export const User = observer(function User(props: TUser) {
   const { activity, customUserName } = props;
   // store hooks
   const { getUserDetails } = useMember();
-  const { getWorkspaceById } = useWorkspace();
   // derived values
   const actorDetail = getUserDetails(activity.actor);
-  const workspaceDetail = getWorkspaceById(activity.workspace);
 
   return (
     <>
       {customUserName || actorDetail?.display_name.includes("-intake") ? (
         <span className="font-medium text-primary">{customUserName || "Sistem"}</span>
       ) : (
-        <Link
-          href={`/${workspaceDetail?.slug}/profile/${actorDetail?.id}`}
-          className="font-medium text-primary hover:underline"
-        >
-          {actorDetail?.display_name}
-        </Link>
+        <MemberProfileTrigger userId={actorDetail?.id}>
+          <span className="font-medium text-primary hover:underline">{actorDetail?.display_name}</span>
+        </MemberProfileTrigger>
       )}
     </>
   );

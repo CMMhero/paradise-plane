@@ -57,7 +57,7 @@ export function ControllerInput(props: Props) {
               ref={ref}
               hasError={error}
               placeholder={placeholder}
-              className={cn("w-full rounded-md font-medium", {
+              className={cn("w-full", {
                 "pr-10": type === "password",
               })}
             />

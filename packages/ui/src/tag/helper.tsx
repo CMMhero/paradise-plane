@@ -20,7 +20,7 @@ export interface ITagProperties {
 
 export const containerStyle: ITagProperties = {
   [ETagVariant.OUTLINED]:
-    "flex items-center rounded-md border border-subtle text-11 text-tertiary hover:text-secondary min-h-[36px] my-auto capitalize flex-wrap cursor-pointer gap-1.5",
+    "flex items-center rounded-field border border-subtle text-11 text-tertiary hover:text-secondary min-h-[36px] my-auto capitalize flex-wrap cursor-pointer gap-1.5",
 };
 export const sizes = {
   [ETagSize.SM]: "p-1.5",

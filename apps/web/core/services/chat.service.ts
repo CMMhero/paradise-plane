@@ -26,6 +26,43 @@ export type TRuang = {
   /** Apakah saya berlangganan. Selalu true di daftar percakapan; berguna di
    * daftar jelajah kanal, tempat kanal yang belum diikuti ikut ditampilkan. */
   ikut: boolean;
+  /** Hanya dari daftar kanal (`chat/ruang/`), untuk direktori. */
+  jumlah_anggota?: number;
+  /** Kanal sistem: tidak bisa ditinggalkan atau diubah, berlencana "System". */
+  sistem?: boolean;
+  /** `pengumuman` | `changelog` | `kabar:<user_id>` (ruang kabar "Paradise"). */
+  kunci_sistem?: string | null;
+  /** False = kolom tulis disembunyikan (Changelog, ruang kabar, Announcements
+   * untuk yang bukan admin). Server tetap menolak 403. */
+  boleh_kirim?: boolean;
+};
+
+/** Bentuk pesan. `teks` = pesan biasa; sisanya kartu dari `muatan`. */
+export type TJenisPesan =
+  | "teks"
+  | "panggilan"
+  | "changelog"
+  | "tugas"
+  | "project"
+  | "persetujuan"
+  | "mention"
+  | "komentar"
+  | "pembaruan";
+
+/** Detail satu kanal: pratinjau sebelum bergabung dan panel setelan. */
+export type TDetailRuang = {
+  id: string;
+  tipe: TTipeRuang;
+  nama: string | null;
+  topik: string;
+  pembuat: string | null;
+  created_at: string;
+  jumlah_anggota: number;
+  ikut: boolean;
+  /** Kanal sistem (Pengumuman/Changelog): tidak bisa diubah atau ditinggalkan. */
+  sistem: boolean;
+  /** Pembuat, admin workspace, atau Super Admin yang juga anggota kanal. */
+  boleh_kelola: boolean;
 };
 
 export type TPercakapan = TRuang & {
@@ -49,8 +86,12 @@ export type TKutipan = { id: string; pengirim: string; isi: string };
 
 export type TPesan = {
   id: string;
-  pengirim: string;
+  /** null = dikirim sistem ("Paradise"): catatan rilis dan kartu kabar. */
+  pengirim: string | null;
   isi: string;
+  /** Tidak ada di respons server lama; anggap "teks". */
+  jenis?: TJenisPesan;
+  muatan?: Record<string, unknown>;
   created_at: string;
   lampiran: TLampiran[];
   disunting: boolean;
@@ -168,12 +209,14 @@ export class ChatService extends APIService {
     userId: string,
     isi: string,
     lampiran: string[] = [],
-    balasanKe?: string
+    balasanKe?: string,
+    sebut: string[] = []
   ): Promise<TPesan> {
     return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, {
       isi,
       lampiran,
       balasan_ke: balasanKe ?? null,
+      sebut,
     })
       .then((res) => res?.data)
       .catch((e) => {
@@ -263,6 +306,42 @@ export class ChatService extends APIService {
       });
   }
 
+  async getDetailRuang(workspaceSlug: string, ruangId: string): Promise<TDetailRuang> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/kelola/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async ubahRuang(
+    workspaceSlug: string,
+    ruangId: string,
+    data: Partial<Pick<TDetailRuang, "nama" | "topik">>
+  ): Promise<TDetailRuang> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/kelola/`, data)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async hapusRuang(workspaceSlug: string, ruangId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/kelola/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async keluarkanAnggota(workspaceSlug: string, ruangId: string, userId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/anggota/${userId}/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async getPesanRuang(workspaceSlug: string, ruangId: string): Promise<TPesan[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`)
       .then((res) => res?.data)
@@ -284,14 +363,31 @@ export class ChatService extends APIService {
     ruangId: string,
     isi: string,
     lampiran: string[] = [],
-    balasanKe?: string
+    balasanKe?: string,
+    sebut: string[] = []
   ): Promise<TPesan> {
     return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`, {
       isi,
       lampiran,
       balasan_ke: balasanKe ?? null,
+      sebut,
     })
       .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  /** Lapor peristiwa panggilan untuk kartu log di linimasa. Server yang
+   * memutuskan "selesai" atau "tak terjawab" dan menghitung durasinya. */
+  async logPanggilan(
+    workspaceSlug: string,
+    ruangId: string,
+    peristiwa: "mulai" | "tersambung" | "selesai",
+    video = false
+  ): Promise<void> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/panggilan-log/`, { peristiwa, video })
+      .then(() => undefined)
       .catch((e) => {
         throw e?.response?.data;
       });

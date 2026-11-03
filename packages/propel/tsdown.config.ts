@@ -4,6 +4,7 @@ export default defineConfig({
   entry: [
     "src/accordion/index.ts",
     "src/animated-counter/index.ts",
+    "src/auth-showcase/index.ts",
     "src/avatar/index.ts",
     "src/badge/index.ts",
     "src/banner/index.ts",
@@ -27,6 +28,7 @@ export default defineConfig({
     "src/pill/index.ts",
     "src/popover/index.ts",
     "src/portal/index.ts",
+    "src/radio-group/index.ts",
     "src/scrollarea/index.ts",
     "src/skeleton/index.ts",
     "src/switch/index.ts",

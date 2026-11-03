@@ -101,20 +101,31 @@ export function Avatar(props: Props) {
   const sizeInfo = getSizeInfo(size);
 
   const fallbackLetter = name?.[0]?.toUpperCase() ?? fallbackText ?? "?";
+  // A numeric size has no matching class, so it must be applied inline. Without
+  // this the wrapper had no width or height at all and collapsed inside flex or
+  // grid parents (the call screen showed a tiny clipped letter).
+  const numericSize = isAValidNumber(size) ? size : undefined;
   return (
     <div
-      className={cn("grid place-items-center overflow-hidden", getBorderRadius(shape), {
-        [sizeInfo.avatarSize]: !isAValidNumber(size),
+      className={cn("grid shrink-0 place-items-center overflow-hidden", getBorderRadius(shape), {
+        [sizeInfo.avatarSize]: numericSize === undefined,
       })}
+      style={numericSize === undefined ? undefined : { width: numericSize, height: numericSize }}
       tabIndex={-1}
     >
       <AvatarPrimitive.Root className={cn("h-full w-full", getBorderRadius(shape), className)}>
-        <AvatarPrimitive.Image src={src} width="48" height="48" />
+        <AvatarPrimitive.Image src={src} width="48" height="48" className="h-full w-full object-cover" />
         <AvatarPrimitive.Fallback
-          className={cn(sizeInfo.fontSize, "grid h-full w-full place-items-center", getBorderRadius(shape), className)}
+          className={cn(
+            numericSize === undefined && sizeInfo.fontSize,
+            "grid h-full w-full place-items-center",
+            getBorderRadius(shape),
+            className
+          )}
           style={{
             backgroundColor: fallbackBackgroundColor ?? "var(--background-color-accent-primary)",
             color: fallbackTextColor ?? "var(--text-color-on-color)",
+            ...(numericSize === undefined ? {} : { fontSize: Math.max(11, Math.round(numericSize * 0.4)) }),
           }}
         >
           {fallbackLetter}

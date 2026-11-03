@@ -13,3 +13,4 @@ export * from "./member.service";
 export * from "./hierarki.service";
 export * from "./activity.service";
 export * from "./divisi-member.service";
+export * from "./email-preview.service";

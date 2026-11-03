@@ -16,7 +16,6 @@ import type { TPowerKContextType } from "./types";
  */
 export const detectContextFromURL = (params: Params): TPowerKContextType | null => {
   if (params.workItem) return "work-item";
-  if (params.cycleId) return "cycle";
   if (params.moduleId) return "module";
   if (params.pageId) return "page";
 

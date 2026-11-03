@@ -5,6 +5,7 @@
  */
 
 import { observer } from "mobx-react";
+import { Input } from "@plane/ui";
 import type { TQuickAddIssueForm } from "../root";
 
 export const CalendarQuickAddIssueForm = observer(function CalendarQuickAddIssueForm(props: TQuickAddIssueForm) {
@@ -22,14 +23,15 @@ export const CalendarQuickAddIssueForm = observer(function CalendarQuickAddIssue
         className="z-50 flex w-full items-center gap-x-2 rounded-sm border-subtle bg-surface-1 px-2 transition-opacity md:border-[0.5px] md:shadow-raised-100"
       >
         <h4 className="text-13 leading-5 text-placeholder md:text-11">{projectDetail?.identifier ?? "..."}</h4>
-        <input
+        <Input
           type="text"
           autoComplete="off"
           placeholder={isEpic ? "Epic Title" : "Work item Title"}
           {...register("name", {
             required: `${isEpic ? "Epic" : "Work item"} title is required.`,
           })}
-          className="w-full rounded-md bg-transparent py-1.5 pr-2 text-13 leading-5 font-medium text-secondary outline-none md:text-11"
+          mode="true-transparent"
+          className="w-full py-1.5 pr-2 pl-0 leading-5 font-medium text-secondary md:text-11"
         />
       </form>
     </div>

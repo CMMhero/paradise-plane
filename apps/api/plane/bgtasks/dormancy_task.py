@@ -38,12 +38,12 @@ import logging
 
 # Third party imports
 from celery import shared_task
-from django.core.mail import EmailMultiAlternatives, get_connection
 from django.utils import timezone
 
 # Module imports
 from plane.db.models import Workspace, WorkspacePlan
 from plane.license.utils.instance_value import get_email_configuration
+from plane.utils.email_merek import bahasa_penerima, base_url, bungkus, buat_pesan, judul_html, kotak, paragraf, tombol
 from plane.utils.plan_limits import (
     TIDUR_BEKU_HARI,
     TIDUR_PERINGATAN_HARI,
@@ -55,47 +55,59 @@ from plane.utils.plan_limits import (
 logger = logging.getLogger("plane")
 
 
-def _kirim_peringatan(workspace, pemilik, hari_menganggur):
-    """Surel peringatan sebelum pembekuan. Kegagalannya tidak menggagalkan task.
+TEKS_TIDUR = {
+    "id": {
+        "subjek": 'Workspace "{nama}" akan dibekukan',
+        "judul": "Workspace ini akan dibekukan",
+        "p1": 'Workspace "{nama}" ({slug}) sudah {hari} hari tidak dipakai siapa pun.',
+        "p2": "Kalau dalam {sisa} hari ke depan masih tidak ada yang masuk, workspace ini akan berhenti "
+        "menerima unggahan baru. Isinya TIDAK dihapus dan tetap bisa dibaca.",
+        "p3": "Untuk membatalkannya, cukup masuk ke workspace-nya sekali.",
+        "tombol": "Buka workspace",
+        "alasan": "Anda menerima email ini karena Anda pemilik workspace ini.",
+    },
+    "en": {
+        "subjek": 'Workspace "{nama}" will be frozen',
+        "judul": "This workspace will be frozen",
+        "p1": 'Nobody has used the "{nama}" workspace ({slug}) for {hari} days.',
+        "p2": "If nobody signs in within the next {sisa} days, it will stop accepting new uploads. "
+        "Its content is NOT deleted and stays readable.",
+        "p3": "To cancel this, just sign in to the workspace once.",
+        "tombol": "Open workspace",
+        "alasan": "You received this email because you own this workspace.",
+    },
+}
 
-    Sengaja teks polos tanpa berkas template: yang dibutuhkan orang di sini cuma
-    tahu apa yang akan terjadi dan bagaimana membatalkannya, dan satu berkas
-    template lagi berarti satu berkas lagi yang harus ikut diterjemahkan.
-    """
+
+def susun_peringatan_tidur(nama, slug, hari, sisa, bahasa="id", email=""):
+    """(subjek, teks, html). Murni: dipakai pengirim dan `kirim_contoh_email`."""
+    s = {k: v.format(nama=nama, slug=slug, hari=hari, sisa=sisa) for k, v in TEKS_TIDUR.get(bahasa, TEKS_TIDUR["id"]).items()}
+    dasar = base_url()
+    isi = (
+        judul_html(s["judul"])
+        + paragraf(s["p1"])
+        + kotak(s["p2"], nada="peringatan")
+        + paragraf(s["p3"])
+        + tombol(s["tombol"], f"{dasar}/{slug}/" if dasar else "")
+    )
+    html = bungkus(isi, bahasa=bahasa, judul=s["subjek"], pratajuk=s["p1"], alasan=s["alasan"], email_penerima=email)
+    return s["subjek"], "\n\n".join([s["p1"], s["p2"], s["p3"]]) + "\n", html
+
+
+def _kirim_peringatan(workspace, pemilik, hari_menganggur):
+    """Surel peringatan sebelum pembekuan. Kegagalannya tidak menggagalkan task."""
     if not getattr(pemilik, "email", None):
         return False
 
     try:
-        host, user, pwd, port, use_tls, use_ssl, efrom = get_email_configuration()
-        if not host:
+        if not get_email_configuration()[0]:
             return False
 
         sisa = max(TIDUR_BEKU_HARI - hari_menganggur, 0)
-        subjek = f"Workspace \"{workspace.name}\" akan dibekukan"
-        isi = (
-            f"Halo,\n\n"
-            f"Workspace \"{workspace.name}\" ({workspace.slug}) sudah "
-            f"{hari_menganggur} hari tidak dipakai siapa pun.\n\n"
-            f"Kalau dalam {sisa} hari ke depan masih tidak ada yang masuk, "
-            f"workspace ini akan berhenti menerima unggahan baru. Isinya TIDAK "
-            f"dihapus dan tetap bisa dibaca.\n\n"
-            f"Untuk membatalkannya, cukup masuk ke workspace-nya sekali.\n"
+        subjek, teks, html = susun_peringatan_tidur(
+            workspace.name, workspace.slug, hari_menganggur, sisa, bahasa_penerima(pemilik), pemilik.email
         )
-        pesan = EmailMultiAlternatives(
-            subject=subjek,
-            body=isi,
-            from_email=efrom,
-            to=[pemilik.email],
-            connection=get_connection(
-                host=host,
-                port=int(port),
-                username=user,
-                password=pwd,
-                use_tls=use_tls == "1",
-                use_ssl=use_ssl == "1",
-            ),
-        )
-        pesan.send()
+        buat_pesan(ke=pemilik.email, subjek=subjek, html=html, teks=teks).send()
         return True
     except Exception as e:
         # Surel gagal tidak boleh menghentikan sapuan untuk workspace lain, dan

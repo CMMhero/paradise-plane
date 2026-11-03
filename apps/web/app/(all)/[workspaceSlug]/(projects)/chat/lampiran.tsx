@@ -30,7 +30,7 @@ export function DaftarLampiran({ lampiran, terang }: Props) {
   const { t } = useTranslation();
   if (lampiran.length === 0) return null;
 
-  const warnaTeks = terang ? "text-white/80" : "text-tertiary";
+  const warnaTeks = terang ? "text-on-color/80" : "text-tertiary";
   const warnaKotak = terang ? "border-white/30" : "border-subtle";
 
   return (
@@ -40,19 +40,35 @@ export function DaftarLampiran({ lampiran, terang }: Props) {
         if (l.tipe.startsWith("image/"))
           return (
             <a key={l.id} href={url} target="_blank" rel="noopener noreferrer">
-              <img src={url} alt={l.nama} className="max-h-64 max-w-full rounded-md" loading="lazy" />
+              {/* Tinggi tetap supaya ruangnya sudah tersedia sebelum gambar termuat:
+                  tanpa itu tiap gambar yang selesai dimuat mendorong isi ke bawah
+                  dan percakapan tidak lagi berhenti di pesan terbaru. */}
+              <img
+                src={url}
+                alt={l.nama}
+                className="h-48 w-auto max-w-full rounded-item object-contain"
+                loading="lazy"
+              />
             </a>
           );
         if (l.tipe.startsWith("video/"))
           // eslint-disable-next-line jsx-a11y/media-has-caption
-          return <video key={l.id} src={url} controls className="max-h-64 max-w-full rounded-md" preload="metadata" />;
+          return (
+            <video
+              key={l.id}
+              src={url}
+              controls
+              className="h-48 w-auto max-w-full rounded-item bg-black"
+              preload="metadata"
+            />
+          );
         return (
           <a
             key={l.id}
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex items-center gap-2 rounded-md border px-2.5 py-2 ${warnaKotak}`}
+            className={`flex items-center gap-2 rounded-item border px-2.5 py-2 ${warnaKotak}`}
           >
             <FileText className="size-4 shrink-0" />
             <span className="min-w-0 flex-1">

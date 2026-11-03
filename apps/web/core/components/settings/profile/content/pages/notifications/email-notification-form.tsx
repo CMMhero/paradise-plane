@@ -16,6 +16,8 @@ import type { IUserEmailNotificationSettings, TNotificationPreferenceKey } from 
 import { ToggleSwitch } from "@plane/ui";
 // components
 import { SettingsControlItem } from "@/components/settings/control-item";
+// hooks
+import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
 import { UserService } from "@/services/user.service";
 
@@ -38,6 +40,10 @@ export const EMAIL_SETTINGS_SWR_KEY = "CURRENT_USER_EMAIL_NOTIFICATION_SETTINGS"
 export const NotificationsProfileSettingsForm = observer(function NotificationsProfileSettingsForm(props: Props) {
   const { data } = props;
   const { t } = useTranslation();
+  // Saklar 16px terlalu kecil untuk jari, dan matriks ini memuat dua lusin
+  // saklar yang berdempetan; tiap salah sentuh langsung menyimpan + toast.
+  const { isMobile } = usePlatformOS();
+  const ukuranSaklar = isMobile ? "lg" : "sm";
   // Salinan lokal supaya saklar langsung bergerak; diganti jawaban server sesudah PATCH.
   const [nilai, setNilai] = useState(data);
   // Kebijakan direktur di God Mode: saklar ini selalu mati dan tak bisa dinyalakan sendiri.
@@ -117,7 +123,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
                       label={`${judul}: ${t("notif_prefs_ui.col_inbox")}`}
                       onChange={(v) => void ubah(ev.inbox, v)}
                       disabled={dikunci.has(ev.inbox)}
-                      size="sm"
+                      size={ukuranSaklar}
                     />
                   </td>
                   <td className="py-3 text-center">
@@ -126,7 +132,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
                       label={`${judul}: ${t("notif_prefs_ui.col_email")}`}
                       onChange={(v) => void ubah(ev.email, v)}
                       disabled={dikunci.has(ev.email)}
-                      size="sm"
+                      size={ukuranSaklar}
                     />
                   </td>
                 </tr>
@@ -149,7 +155,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
               value={!!nilai.daily_digest}
               onChange={(v) => void ubah("daily_digest", v)}
               disabled={dikunci.has("daily_digest")}
-              size="sm"
+              size={ukuranSaklar}
             />
           }
         />
@@ -161,7 +167,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
               value={!!nilai.daily_digest_sore}
               onChange={(v) => void ubah("daily_digest_sore", v)}
               disabled={dikunci.has("daily_digest_sore")}
-              size="sm"
+              size={ukuranSaklar}
             />
           }
         />
@@ -178,7 +184,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
                     value={!!nilai[bagian]}
                     onChange={(v) => void ubah(bagian, v)}
                     disabled={dikunci.has(bagian)}
-                    size="sm"
+                    size={ukuranSaklar}
                   />
                 }
               />

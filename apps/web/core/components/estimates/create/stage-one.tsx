@@ -68,7 +68,6 @@ export function EstimateCreateStageOne(props: TEstimateCreateStageOne) {
           labelClassName="text-13 font-medium text-secondary mb-1.5"
           wrapperClassName="relative flex flex-wrap gap-14"
           fieldClassName="relative flex items-center gap-1.5"
-          buttonClassName="size-4"
           selected={estimateSystem}
           onChange={(value) => handleEstimateSystem(value as TEstimateSystemKeys)}
         />

@@ -7,6 +7,7 @@
 import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
+import { Input } from "@plane/ui";
 // types
 import type { IIssueFilterOptions, TIssueFilterKeys } from "@/types/issue";
 // local imports
@@ -31,9 +32,10 @@ export const FilterSelection = observer(function FilterSelection(props: Props) {
       <div className="p-2.5 pb-0">
         <div className="flex items-center gap-1.5 rounded-sm border-[0.5px] border-subtle bg-surface-2 px-1.5 py-1 text-11">
           <SearchIcon className="text-placeholder" width={12} height={12} strokeWidth={2} />
-          <input
+          <Input
             type="text"
-            className="w-full bg-surface-2 outline-none placeholder:text-placeholder"
+            mode="true-transparent"
+            className="w-full bg-surface-2 p-0 text-11 placeholder:text-placeholder"
             placeholder="Search"
             value={filtersSearchQuery}
             onChange={(e) => setFiltersSearchQuery(e.target.value)}

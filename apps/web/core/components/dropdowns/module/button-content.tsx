@@ -68,7 +68,7 @@ export function ModuleButtonContent(props: ModuleButtonContentProps) {
                 <div
                   key={moduleId}
                   className={cn(
-                    "flex max-w-full items-center gap-1 rounded-sm bg-layer-1 py-1 text-secondary",
+                    "flex max-w-full items-center gap-1 rounded-button bg-layer-1 py-1 text-secondary",
                     className
                   )}
                 >
@@ -81,7 +81,7 @@ export function ModuleButtonContent(props: ModuleButtonContentProps) {
                       isMobile={isMobile}
                       renderByDefault={false}
                     >
-                      <span className="max-w-40 truncate text-11 font-medium">{moduleDetails?.name}</span>
+                      <span className="max-w-40 truncate">{moduleDetails?.name}</span>
                     </Tooltip>
                   )}
                   {!disabled && (

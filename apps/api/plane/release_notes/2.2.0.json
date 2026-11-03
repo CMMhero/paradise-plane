@@ -1,0 +1,182 @@
+{
+  "version": "2.2.0",
+  "date": "2026-11-03",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Approval column in the table view, with Approve and Reject buttons for approvers."
+    },
+    {
+      "type": "Added",
+      "text": "Approval can be hidden per view from Display properties."
+    },
+    {
+      "type": "Added",
+      "text": "Report mode in the Division Dashboard: tasks completed per period, with CSV download."
+    },
+    {
+      "type": "Added",
+      "text": "Done work items can be archived automatically after a set number of days (default 90)."
+    },
+    {
+      "type": "Added",
+      "text": "New look: warm backgrounds, new fonts and softer 3D buttons."
+    },
+    {
+      "type": "Added",
+      "text": "Personal display preferences: color scheme, font, glow, button style and animation."
+    },
+    {
+      "type": "Added",
+      "text": "Chat: Announcements and Changelog channels for everyone, plus activity cards with buttons."
+    },
+    {
+      "type": "Added",
+      "text": "Chat: calls now leave a log in the conversation with a Call back button."
+    },
+    {
+      "type": "Added",
+      "text": "Chat: browse and join channels, and manage names, topics and members from channel settings."
+    },
+    {
+      "type": "Added",
+      "text": "Chat: see who is online, away or offline."
+    },
+    {
+      "type": "Added",
+      "text": "Paste or drag files into chat, comments and descriptions to attach them."
+    },
+    {
+      "type": "Added",
+      "text": "Notification volume slider with a Preview button in Profile > Preferences."
+    },
+    {
+      "type": "Added",
+      "text": "Click any member to see their profile: department, email, phone extension and a Send message button."
+    },
+    {
+      "type": "Changed",
+      "text": "Emails have a new Paradise Perkasa design and follow your language setting."
+    },
+    {
+      "type": "Changed",
+      "text": "The sign-in page has a new look."
+    },
+    {
+      "type": "Fixed",
+      "text": "Super Admins in a department can now be mentioned, assigned and used in filters."
+    },
+    {
+      "type": "Fixed",
+      "text": "Mentions now find people by their full name."
+    },
+    {
+      "type": "Fixed",
+      "text": "Profile pictures now show in emails."
+    },
+    {
+      "type": "Fixed",
+      "text": "An enlarged image can always be zoomed out and closed, and Back closes it."
+    },
+    {
+      "type": "Fixed",
+      "text": "Reactions now work on other people's channel messages."
+    },
+    {
+      "type": "Changed",
+      "text": "Approval emails now say clearly whether you need to decide or your work was decided."
+    },
+    {
+      "type": "Changed",
+      "text": "Super Admins placed in a department or division now appear in that division's projects."
+    },
+    {
+      "type": "Changed",
+      "text": "Table rows alternate in shade so long lists are easier to read."
+    },
+    {
+      "type": "Changed",
+      "text": "Actions that used to appear only on hover now work on phones, tablets and the keyboard."
+    },
+    {
+      "type": "Changed",
+      "text": "Deleting a chat message, leaving a channel or deleting a Wiki file now asks for confirmation."
+    },
+    {
+      "type": "Fixed",
+      "text": "Boards and task edits load faster for managers."
+    },
+    {
+      "type": "Fixed",
+      "text": "Chat no longer jumps away from the latest message while images load."
+    },
+    {
+      "type": "Fixed",
+      "text": "Long channel names and links no longer push buttons off the screen on phones."
+    },
+    {
+      "type": "Fixed",
+      "text": "Rejection reasons are shown under the approval queue row, not only in a tooltip."
+    },
+    {
+      "type": "Changed",
+      "text": "The sidebar groups projects by division only, without repeating the department name."
+    },
+    {
+      "type": "Changed",
+      "text": "Every department always gets its own project, even when its code clashes with an existing one."
+    },
+    {
+      "type": "Added",
+      "text": "The Changelog channel now includes notes from earlier releases."
+    },
+    {
+      "type": "Fixed",
+      "text": "Email accent lines follow the rounded corners, and buttons no longer show an underline."
+    },
+    {
+      "type": "Changed",
+      "text": "Profile: job title is picked from the department list."
+    },
+    {
+      "type": "Changed",
+      "text": "Chat: replies show a WhatsApp-style quote, and incoming messages show the sender name."
+    },
+    {
+      "type": "Changed",
+      "text": "Member profile card always shows the phone extension, or says it is not set."
+    },
+    {
+      "type": "Added",
+      "text": "Chat messages can only be deleted within 24 hours of sending. Super Admins can change the limit in God Mode > Features."
+    },
+    {
+      "type": "Added",
+      "text": "Command palette (Ctrl+K): jump to Chat, Wiki, Division Dashboard, Stickies, Quick links, your calendar and a project's Approvals, or open any account setting."
+    },
+    {
+      "type": "Removed",
+      "text": "Command palette no longer lists Cycles, Billing or the old Documentation shortcut."
+    },
+    {
+      "type": "Added",
+      "text": "Chat: type @ to mention someone in the conversation. In channels, the person you mention also gets a card in their Paradise chat."
+    },
+    {
+      "type": "Added",
+      "text": "Chat: every division and department has its own private channel. Members follow the organization chart in God Mode, so moving someone moves their channels too."
+    },
+    {
+      "type": "Added",
+      "text": "Browser notifications for chat messages and work updates, even when Paradise is behind another window. Turn them on or off and send a test from the sound button in Chat or Notifications."
+    },
+    {
+      "type": "Fixed",
+      "text": "Chat no longer plays the notification sound when you open a system channel or switch conversations."
+    },
+    {
+      "type": "Fixed",
+      "text": "Comment, mention and update cards now reach your Paradise chat."
+    }
+  ]
+}

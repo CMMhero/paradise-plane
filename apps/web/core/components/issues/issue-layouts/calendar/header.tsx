@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 // components
 import type { TSupportedFilterTypeForUpdate } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { Button } from "@plane/propel/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "@plane/propel/icons";
 import type { TSupportedFilterForUpdate } from "@plane/types";
 import { Row } from "@plane/ui";
@@ -109,13 +110,9 @@ export const CalendarHeader = observer(function CalendarHeader(props: ICalendarH
         <CalendarMonthsDropdown issuesFilterStore={issuesFilterStore} />
       </div>
       <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          className="rounded-sm bg-layer-transparent px-2.5 py-1 text-11 font-medium text-secondary hover:bg-layer-transparent-hover hover:text-primary"
-          onClick={handleToday}
-        >
+        <Button variant="ghost" size="sm" onClick={handleToday}>
           {t("common.today")}
-        </button>
+        </Button>
         <CalendarOptionsDropdown issuesFilterStore={issuesFilterStore} updateFilters={updateFilters} />
       </div>
     </Row>

@@ -1,0 +1,426 @@
+/**
+ * Copyright (c) 2023-present Plane Software, Inc. and contributors
+ * Kustomisasi Paradise Task Tracker: sistem tampilan "Bara"
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * See the LICENSE file for details.
+ *
+ * Arah desain yang dipilih user 3 Nov 2026 dari tiga mock (KEP-64): latar
+ * berona per skema, aksen per skema (Ember = merah merek), tombol dan kolom
+ * cari berbentuk pil. Efek 3D dan glow sempat dicoba lalu DICABUT (putaran 7).
+ *
+ * SEMUA nilai visual baru lahir di berkas ini sebagai token. Komponen hanya
+ * memakai kelas yang dihasilkan token (`rounded-control`, `text-highlight`,
+ * `bg-zebra`, `ease-smooth`), tidak pernah warna atau radius mentah.
+ *
+ * Preferensi tampilan per orang (Profile > Preferences, bawaannya di God Mode)
+ * ditulis sebagai atribut di <html> oleh store-wrapper:
+ *   data-skema   -> skema warna (kosong = bara/Ember)
+ *   data-font    -> font antarmuka (kosong = Plus Jakarta Sans)
+ *   data-gerak="kurangi" -> transisi dan animasi dipangkas
+ *
+ * Tema kontras tinggi dan tema kustom sengaja TIDAK ikut rona hangat: kontras
+ * tinggi meminta pemisahan maksimal, tema kustom menulis `--neutral-*`
+ * lewat style inline di <html> yang tetap menang atas aturan di sini.
+ */
+
+/* ==========================================================================
+   1. Skema warna: tangga neutral diberi rona, bukan abu murni
+   ==========================================================================
+
+   Lightness tiap langkah SAMA dengan tangga bawaan Plane, jadi kontras teks,
+   batas, dan permukaan tidak bergeser di skema mana pun. Tangganya ditulis
+   SEKALI; skema cuma mengisi tiga kenop:
+     --skema-h  hue latar
+     --skema-c  chroma dasar (dikali profil per langkah; ujung teks mengecil
+                supaya teks tetap terbaca netral)
+     --highlight  aksen kedua
+   Aksen utama ikut skema (lihat 2b); Bara memakai merah merek.
+
+   Skema (atribut `data-skema` di <html>, kosong = bara):
+     bara   kertas hangat / arang cokelat, aksen merah merek + amber (bawaan)
+     senja  slate keunguan, aksen ungu + magenta
+     sumi   kertas washi / tinta biru tua, aksen indigo + teal
+     hutan  hijau sage, aksen hijau + emas
+     netral abu bawaan Plane tanpa rona, aksen biru + amber */
+:root {
+  --skema-h: 62;
+  --skema-c: 0.01;
+  --skema-h-gelap: 38;
+  --skema-c-gelap: 0.01;
+}
+
+:root[data-skema="senja"] {
+  --skema-h: 285;
+  --skema-c: 0.008;
+  --skema-h-gelap: 285;
+  --skema-c-gelap: 0.016;
+}
+
+:root[data-skema="sumi"] {
+  --skema-h: 95;
+  --skema-c: 0.008;
+  --skema-h-gelap: 245;
+  --skema-c-gelap: 0.016;
+}
+
+:root[data-skema="hutan"] {
+  --skema-h: 140;
+  --skema-c: 0.009;
+  --skema-h-gelap: 160;
+  --skema-c-gelap: 0.013;
+}
+
+:root:not([data-theme*="contrast"]):not([data-skema="netral"]) {
+  --neutral-white: oklch(0.995 calc(var(--skema-c) * 0.4) var(--skema-h));
+  --neutral-100: oklch(0.9848 calc(var(--skema-c) * 0.7) var(--skema-h));
+  --neutral-200: oklch(0.9696 calc(var(--skema-c) * 0.9) var(--skema-h));
+  --neutral-300: oklch(0.9543 calc(var(--skema-c) * 1.1) var(--skema-h));
+  --neutral-400: oklch(0.9389 calc(var(--skema-c) * 1.2) var(--skema-h));
+  --neutral-500: oklch(0.9235 calc(var(--skema-c) * 1.3) var(--skema-h));
+  --neutral-600: oklch(0.8925 calc(var(--skema-c) * 1.4) var(--skema-h));
+  --neutral-700: oklch(0.8612 calc(var(--skema-c) * 1.5) var(--skema-h));
+  --neutral-800: oklch(0.6668 calc(var(--skema-c) * 1.4) var(--skema-h));
+  --neutral-900: oklch(0.6161 calc(var(--skema-c) * 1.4) var(--skema-h));
+  --neutral-1000: oklch(0.5288 calc(var(--skema-c) * 1.3) var(--skema-h));
+  --neutral-1100: oklch(0.4377 calc(var(--skema-c) * 1.2) var(--skema-h));
+  --neutral-1200: oklch(0.2378 var(--skema-c) var(--skema-h));
+  --neutral-black: oklch(0.1472 calc(var(--skema-c) * 0.8) var(--skema-h));
+}
+
+:root[data-theme="dark"]:not([data-skema="netral"]) {
+  --neutral-black: oklch(0.1689 calc(var(--skema-c-gelap) * 1.2) var(--skema-h-gelap));
+  --neutral-100: oklch(0.1932 calc(var(--skema-c-gelap) * 1.3) var(--skema-h-gelap));
+  --neutral-200: oklch(0.2158 calc(var(--skema-c-gelap) * 1.4) var(--skema-h-gelap));
+  --neutral-300: oklch(0.2378 calc(var(--skema-c-gelap) * 1.5) var(--skema-h-gelap));
+  --neutral-400: oklch(0.2593 calc(var(--skema-c-gelap) * 1.6) var(--skema-h-gelap));
+  --neutral-500: oklch(0.3011 calc(var(--skema-c-gelap) * 1.7) var(--skema-h-gelap));
+  --neutral-600: oklch(0.3415 calc(var(--skema-c-gelap) * 1.8) var(--skema-h-gelap));
+  --neutral-700: oklch(0.3999 calc(var(--skema-c-gelap) * 1.8) var(--skema-h-gelap));
+  --neutral-800: oklch(0.5989 calc(var(--skema-c-gelap) * 1.5) var(--skema-h-gelap));
+  --neutral-900: oklch(0.6835 calc(var(--skema-c-gelap) * 1.3) var(--skema-h-gelap));
+  --neutral-1000: oklch(0.7655 calc(var(--skema-c-gelap) * 1.1) var(--skema-h-gelap));
+  --neutral-1100: oklch(0.8455 calc(var(--skema-c-gelap) * 0.9) var(--skema-h-gelap));
+  --neutral-1200: oklch(0.9235 calc(var(--skema-c-gelap) * 0.7) var(--skema-h-gelap));
+  --neutral-white: oklch(0.9702 calc(var(--skema-c-gelap) * 0.6) var(--skema-h-gelap));
+}
+
+/* ==========================================================================
+   1b. Font (atribut `data-font`, kosong = Plus Jakarta Sans)
+   ==========================================================================
+
+   Semua @font-face dimuat di root.tsx, tapi peramban hanya MENGUNDUH berkas
+   font yang benar-benar dipakai halaman, jadi pilihan yang tidak aktif tidak
+   menambah unduhan. */
+:root {
+  --font-ui: "Plus Jakarta Sans Variable";
+}
+
+:root[data-font="inter"] {
+  --font-ui: "Inter Variable";
+}
+
+:root[data-font="geist"] {
+  --font-ui: "Geist Variable";
+}
+
+:root[data-font="figtree"] {
+  --font-ui: "Figtree Variable";
+}
+
+:root[data-font="bricolage"] {
+  --font-ui: "Bricolage Grotesque Variable";
+}
+
+:root[data-font="archivo"] {
+  --font-ui: "Archivo Variable";
+}
+
+:root[data-font="sora"] {
+  --font-ui: "Sora Variable";
+}
+
+:root[data-font="shantell"] {
+  --font-ui: "Shantell Sans Variable";
+}
+
+/* Monospace sebagai font antarmuka, dipilih sadar oleh pengguna. */
+:root[data-font="jetbrains"] {
+  --font-ui: "JetBrains Mono Variable";
+}
+
+/* Satu-satunya pilihan berkait. Fallback sans di --font-body tetap dipakai
+   untuk glif yang tidak ada di Source Serif 4. */
+:root[data-font="serif"] {
+  --font-ui: "Source Serif 4 Variable", Georgia;
+}
+
+:root[data-font="sistem"] {
+  --font-ui: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto;
+}
+
+/* ==========================================================================
+   2. Aksen kedua dan token dasar
+   ==========================================================================
+
+   Efek 3D (kilap, bevel, glow, cekung, kenop) DICABUT 3 Nov sesudah dicoba
+   enam putaran: user meminta tampilan kembali datar dan standar. Yang tersisa
+   hanya token warna, radius, font, dan gerak. */
+:root {
+  --highlight: oklch(0.74 0.15 65);
+  --highlight-subtle: color-mix(in oklch, var(--highlight) 14%, transparent);
+  /* Baris selang-seling di tampilan tabel (spreadsheet work item). */
+  --zebra: color-mix(in oklch, var(--bg-layer-1) 55%, var(--bg-surface-1));
+
+  /* Gerak: satu kurva, dua durasi. */
+  --gerak-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --gerak-cepat: 160ms;
+  --gerak-dasar: 240ms;
+
+  /* Radio dan checkbox bawaan peramban (pemilih tema, pilih departemen, dsb.)
+     tadinya biru sistem. Satu baris ini membuat semuanya ikut aksen. */
+  accent-color: var(--brand-default);
+}
+
+:root[data-theme="dark"] {
+  --highlight: oklch(0.79 0.14 68);
+}
+
+/* ==========================================================================
+   2b. Aksen utama per skema
+   ==========================================================================
+
+   Bara memakai merah merek dari paradise.css apa adanya. Skema lain membangun
+   tangga `--brand-*` sendiri dari tiga kenop, sehingga tombol utama, tautan,
+   cincin fokus, kanvas, dan radio/checkbox semuanya ikut:
+     --aksen-h        hue
+     --aksen-c        chroma pada langkah default
+     --aksen-l(-gelap) lightness default; dipilih supaya teks putih di atas
+                      tombol utama tetap >= 4.5:1 (hijau butuh lebih gelap)
+   Lightness tiap langkah dan perbandingan chroma-nya disalin dari tangga merah
+   merek, jadi kontras permukaan (subtle, hover, teks sekunder) sama dengan
+   Bara. Tema kustom tetap menang karena menulis `--brand-*` inline.
+
+   Aksen kedua (`--highlight`) dipilih supaya berpasangan dengan aksen utama. */
+:root[data-skema="senja"] {
+  --aksen-h: 300;
+  --aksen-c: 0.19;
+  --aksen-l: 0.55;
+  --aksen-l-gelap: 0.66;
+  --highlight: oklch(0.64 0.17 345);
+}
+
+:root[data-skema="sumi"] {
+  --aksen-h: 258;
+  --aksen-c: 0.16;
+  --aksen-l: 0.53;
+  --aksen-l-gelap: 0.66;
+  --highlight: oklch(0.62 0.1 190);
+}
+
+:root[data-skema="hutan"] {
+  --aksen-h: 152;
+  --aksen-c: 0.15;
+  --aksen-l: 0.5;
+  --aksen-l-gelap: 0.68;
+  --highlight: oklch(0.72 0.13 85);
+}
+
+:root[data-skema="netral"] {
+  --aksen-h: 250;
+  --aksen-c: 0.17;
+  --aksen-l: 0.53;
+  --aksen-l-gelap: 0.65;
+}
+
+:root[data-skema]:not([data-skema="bara"]) {
+  --brand-100: oklch(0.9847 calc(var(--aksen-c) * 0.032) var(--aksen-h));
+  --brand-200: oklch(0.9715 calc(var(--aksen-c) * 0.06) var(--aksen-h));
+  --brand-300: oklch(0.9428 calc(var(--aksen-c) * 0.123) var(--aksen-h));
+  --brand-400: oklch(0.9008 calc(var(--aksen-c) * 0.221) var(--aksen-h));
+  --brand-500: oklch(0.8414 calc(var(--aksen-c) * 0.373) var(--aksen-h));
+  --brand-600: oklch(0.7649 calc(var(--aksen-c) * 0.597) var(--aksen-h));
+  --brand-700: oklch(0.6766 calc(var(--aksen-c) * 0.905) var(--aksen-h));
+  --brand-900: oklch(calc(var(--aksen-l) - 0.07) calc(var(--aksen-c) * 0.891) var(--aksen-h));
+  --brand-1000: oklch(calc(var(--aksen-l) - 0.14) calc(var(--aksen-c) * 0.769) var(--aksen-h));
+  --brand-1100: oklch(0.2626 calc(var(--aksen-c) * 0.461) var(--aksen-h));
+  --brand-1200: oklch(0.2093 calc(var(--aksen-c) * 0.369) var(--aksen-h));
+  --brand-default: oklch(var(--aksen-l) var(--aksen-c) var(--aksen-h));
+}
+
+:root[data-skema]:not([data-skema="bara"])[data-theme*="dark"] {
+  --brand-100: oklch(0.2029 calc(var(--aksen-c) * 0.238) var(--aksen-h));
+  --brand-200: oklch(0.2513 calc(var(--aksen-c) * 0.331) var(--aksen-h));
+  --brand-300: oklch(0.3208 calc(var(--aksen-c) * 0.46) var(--aksen-h));
+  --brand-400: oklch(0.4088 calc(var(--aksen-c) * 0.615) var(--aksen-h));
+  --brand-500: oklch(0.4511 calc(var(--aksen-c) * 0.689) var(--aksen-h));
+  --brand-700: oklch(0.7408 calc(var(--aksen-c) * 0.676) var(--aksen-h));
+  --brand-800: oklch(0.8318 calc(var(--aksen-c) * 0.4) var(--aksen-h));
+  --brand-900: oklch(0.8969 calc(var(--aksen-c) * 0.23) var(--aksen-h));
+  --brand-1000: oklch(0.9409 calc(var(--aksen-c) * 0.127) var(--aksen-h));
+  --brand-1100: oklch(0.9704 calc(var(--aksen-c) * 0.062) var(--aksen-h));
+  --brand-1200: oklch(0.9856 calc(var(--aksen-c) * 0.03) var(--aksen-h));
+  --brand-default: oklch(var(--aksen-l-gelap) var(--aksen-c) var(--aksen-h));
+}
+
+/* Aksen kedua versi gelap: sedikit lebih terang supaya terbaca. */
+:root[data-skema="senja"][data-theme="dark"] {
+  --highlight: oklch(0.74 0.15 345);
+}
+:root[data-skema="sumi"][data-theme="dark"] {
+  --highlight: oklch(0.74 0.1 190);
+}
+:root[data-skema="hutan"][data-theme="dark"] {
+  --highlight: oklch(0.8 0.12 88);
+}
+
+/* ---------- Preferensi per orang ---------- */
+
+/* Sama dengan blok prefers-reduced-motion di paradise.css: dipangkas, bukan
+   dimatikan, supaya komponen yang menunggu `transitionend` tidak menggantung. */
+:root[data-gerak="kurangi"] *,
+:root[data-gerak="kurangi"] *::before,
+:root[data-gerak="kurangi"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ==========================================================================
+   3. Token jadi kelas Tailwind
+   ========================================================================== */
+@theme inline {
+  /* `inline` + var(): utilitas `font-body` menulis var(--font-ui), jadi
+     mengganti atribut `data-font` langsung mengganti font seluruh aplikasi. */
+  --font-heading:
+    var(--font-ui), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  --font-body:
+    var(--font-ui), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  --font-code:
+    "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+
+  --color-highlight: var(--highlight);
+  --color-highlight-subtle: var(--highlight-subtle);
+  --color-zebra: var(--zebra);
+
+  /* Radius bernama: komponen memakai PERAN, bukan angka (rounded-overlay,
+     bukan rounded-xl). Mengubah satu baris di sini mengubah semua kotak
+     sejenis. Juga terdaftar di tailwind-merge (`cn`) di packages/utils dan
+     packages/propel supaya tidak bertabrakan dengan rounded-* lain.
+       control  saklar, badge, chip (putaran 10: TIDAK ada lagi yang bulat penuh
+                kecuali foto profil, jadi sama dengan tombol)
+       button   tombol dan tombol ikon (kembali ke radius Plane, putaran 8)
+       item     opsi menu/dropdown, item sidebar, tab
+       field    kolom ketik, kolom cari, textarea, PEMICU dropdown (radius Plane)
+       card     kartu, panel, blok kanban
+       popover  panel dropdown, menu, filter/display, toast
+       overlay  modal, dialog
+     Putaran 5: dropdown dinilai terlalu bulat, jadi pemicu dan panelnya
+     punya token sendiri yang lebih kecil dari tombol dan modal. */
+  --radius-control: 0.375rem;
+  --radius-button: 0.375rem;
+  --radius-item: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-card: 0.75rem;
+  --radius-popover: 0.75rem;
+  --radius-overlay: 1rem;
+
+  --ease-smooth: var(--gerak-ease);
+  --default-transition-duration: var(--gerak-cepat);
+  --default-transition-timing-function: var(--gerak-ease);
+}
+
+/* ==========================================================================
+   4. Sentuhan global yang tidak butuh menyunting berkas upstream
+   ========================================================================== */
+
+/* Angka tabular di mana pun font kode atau tabel dipakai: kolom angka rapi. */
+:where(table, .font-code) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Kolom pencarian: radius kolom ketik biasa (putaran 9: pil penuh dibatalkan).
+   Dipasang di PEMBUNGKUS kolom (yang memuat ikon kaca pembesar + input),
+   bukan di input. Lewat @utility supaya semua kolom cari bisa dicari dan
+   diubah bersama. */
+@utility search-field {
+  border-radius: var(--radius-field);
+}
+
+/* ==========================================================================
+   4. Panel pamer layar masuk (AuthShowcase di @plane/propel)
+   ==========================================================================
+
+   Layar masuk web dan God Mode memamerkan potongan aplikasi (papan, dashboard
+   divisi, detail tugas, chat) di panel kiri. Potongan itu GAMBAR aplikasi,
+   bukan aplikasi, jadi warnanya dipatok ke tampilan terang skema Bara dan
+   TIDAK ikut tema atau skema pengguna: di tema gelap pun gambarnya tetap
+   seperti tangkapan layar. Panelnya sendiri selalu gelap hangat.
+   Dipakai lewat kelas `bg-pamer-*`, `text-pamer-*`, `border-pamer-*`,
+   `pamer-panel`, dan `pamer-jendela`. */
+:root {
+  --pamer-latar: oklch(0.99 0.003 60);
+  --pamer-bilah: oklch(0.955 0.016 50);
+  --pamer-papan: oklch(0.975 0.005 55);
+  --pamer-lapis: oklch(0.965 0.008 55);
+  --pamer-batas: oklch(0.91 0.01 55);
+  --pamer-lampu: oklch(0.86 0.012 50);
+  --pamer-teks: oklch(0.25 0.008 50);
+  --pamer-teks-2: oklch(0.45 0.01 50);
+  --pamer-teks-3: oklch(0.58 0.01 50);
+  --pamer-merah: oklch(0.58 0.2335 27.24);
+  --pamer-merah-lembut: oklch(0.95 0.03 20);
+  --pamer-teal: oklch(0.52 0.1 175);
+  --pamer-jingga: oklch(0.72 0.15 65);
+  --pamer-hijau: oklch(0.62 0.14 150);
+  --pamer-hijau-teks: oklch(0.45 0.12 150);
+  --pamer-hijau-latar: oklch(0.97 0.025 150);
+  --pamer-hijau-batas: oklch(0.85 0.06 150);
+  --pamer-panel-teks: oklch(0.96 0.005 40);
+  --pamer-panel-teks-2: oklch(0.82 0.01 40);
+  --pamer-titik: oklch(1 0 0 / 0.25);
+  --pamer-titik-aktif: oklch(1 0 0 / 0.95);
+}
+
+@theme inline {
+  --color-pamer-latar: var(--pamer-latar);
+  --color-pamer-bilah: var(--pamer-bilah);
+  --color-pamer-papan: var(--pamer-papan);
+  --color-pamer-lapis: var(--pamer-lapis);
+  --color-pamer-batas: var(--pamer-batas);
+  --color-pamer-lampu: var(--pamer-lampu);
+  --color-pamer-teks: var(--pamer-teks);
+  --color-pamer-teks-2: var(--pamer-teks-2);
+  --color-pamer-teks-3: var(--pamer-teks-3);
+  --color-pamer-merah: var(--pamer-merah);
+  --color-pamer-merah-lembut: var(--pamer-merah-lembut);
+  --color-pamer-teal: var(--pamer-teal);
+  --color-pamer-jingga: var(--pamer-jingga);
+  --color-pamer-hijau: var(--pamer-hijau);
+  --color-pamer-hijau-teks: var(--pamer-hijau-teks);
+  --color-pamer-hijau-latar: var(--pamer-hijau-latar);
+  --color-pamer-hijau-batas: var(--pamer-hijau-batas);
+  --color-pamer-panel-teks: var(--pamer-panel-teks);
+  --color-pamer-panel-teks-2: var(--pamer-panel-teks-2);
+  --color-pamer-titik: var(--pamer-titik);
+  --color-pamer-titik-aktif: var(--pamer-titik-aktif);
+}
+
+/* Latar panel: arang hangat dengan cahaya merah merek di pojok kanan atas.
+   Bukan `bg-` supaya tidak bertabrakan dengan utilitas warna latar. */
+@utility pamer-panel {
+  background:
+    radial-gradient(120% 70% at 85% 0%, oklch(0.42 0.14 32 / 0.55), transparent 60%),
+    radial-gradient(90% 60% at 0% 100%, oklch(0.35 0.1 50 / 0.5), transparent 65%),
+    linear-gradient(165deg, oklch(0.27 0.05 30), oklch(0.17 0.02 35) 70%);
+}
+
+/* Jendela aplikasi yang melayang di atas panel. */
+@utility pamer-jendela {
+  box-shadow:
+    0 30px 60px -20px oklch(0 0 0 / 0.6),
+    0 0 0 6px oklch(1 0 0 / 0.04);
+}

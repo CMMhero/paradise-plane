@@ -115,10 +115,7 @@ export function InstanceSignInForm() {
       <AuthHeader />
       <div className="mt-10 flex w-full flex-grow flex-col items-center justify-center py-6">
         <div className="relative flex w-full max-w-[22.5rem] flex-col gap-6">
-          <FormHeader
-            heading="Kelola instance Paradise Task Tracker"
-            subHeading="Configure instance-wide settings to secure it"
-          />
+          <FormHeader eyebrow="God Mode" heading="Sign in" subHeading="Use your Super Admin email and password." />
           {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- form submit/error state tracking, not a click target */}
           <form
             className="space-y-4"
@@ -137,11 +134,11 @@ export function InstanceSignInForm() {
             <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken} />
 
             <div className="w-full space-y-1">
-              <label className="text-13 font-medium text-tertiary" htmlFor="email">
+              <label className="text-13 font-medium text-secondary" htmlFor="email">
                 Email <span className="text-danger-primary">*</span>
               </label>
               <Input
-                className="w-full border border-subtle !bg-surface-1 placeholder:text-placeholder"
+                className="w-full"
                 id="email"
                 name="email"
                 type="email"
@@ -156,12 +153,12 @@ export function InstanceSignInForm() {
             </div>
 
             <div className="w-full space-y-1">
-              <label className="text-13 font-medium text-tertiary" htmlFor="password">
+              <label className="text-13 font-medium text-secondary" htmlFor="password">
                 Password <span className="text-danger-primary">*</span>
               </label>
               <div className="relative">
                 <Input
-                  className="w-full border border-subtle !bg-surface-1 placeholder:text-placeholder"
+                  className="w-full pr-10"
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
@@ -171,23 +168,15 @@ export function InstanceSignInForm() {
                   onChange={(e) => handleFormChange("password", e.target.value)}
                   autoComplete="off"
                 />
-                {showPassword ? (
-                  <button
-                    type="button"
-                    className="absolute top-3.5 right-3 flex items-center justify-center text-placeholder"
-                    onClick={() => setShowPassword(false)}
-                  >
-                    <EyeOff className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="absolute top-3.5 right-3 flex items-center justify-center text-placeholder"
-                    onClick={() => setShowPassword(true)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-button text-tertiary hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-strong focus-visible:outline-none"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
               </div>
             </div>
             <div className="py-2">

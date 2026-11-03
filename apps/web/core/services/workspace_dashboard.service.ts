@@ -56,14 +56,76 @@ export type TDivisionGroup = TDashboardFigures & {
 export type TDivisionDashboard = {
   generated_at: string;
   thresholds: { attention: number; critical: number };
+  /** Jendela `on_time_rate` dalam hari (God Mode DASHBOARD_ON_TIME_WINDOW_DAYS). Tidak ada = server lama, 30. */
+  on_time_window_days?: number;
   totals: TDashboardFigures & {
     projects: number;
-    /** Persen tugas bertenggat yang selesai tepat waktu, 30 hari terakhir. */
+    /** Persen tugas bertenggat yang selesai tepat waktu, `on_time_window_days` hari terakhir. */
     on_time_rate: number | null;
   };
   divisions: TDivisionGroup[];
   /** Urut dari yang paling bermasalah. */
   projects: TDivisionStats[];
+};
+
+/** Periode laporan tugas selesai (KEP-62). Cermin `PERIODE_SAH` di server. */
+export const REPORT_PERIODS = ["7d", "30d", "this_month", "last_month"] as const;
+export type TReportPeriod = (typeof REPORT_PERIODS)[number];
+
+export type TReportTiming = "on_time" | "late" | "no_due_date";
+
+/** Angka selesai untuk satu tingkat (total, pembanding, divisi, project). */
+export type TCompletedFigures = {
+  completed: number;
+  on_time: number;
+  late: number;
+  no_due_date: number;
+  /** Tepat waktu / (tepat waktu + terlambat); null kalau belum ada yang bertenggat. */
+  on_time_rate: number | null;
+};
+
+export type TReportProject = TCompletedFigures & {
+  id: string;
+  identifier: string;
+  name: string;
+  department: { id: string; code: string; name: string } | null;
+};
+
+export type TReportDivision = TCompletedFigures & {
+  /** null = project yang belum dipetakan ke departemen. */
+  id: string | null;
+  code: string;
+  name: string;
+  /** Terbanyak selesai dulu. */
+  projects: TReportProject[];
+};
+
+export type TCompletedItem = {
+  id: string;
+  project_id: string;
+  project_identifier: string;
+  project_name: string;
+  sequence_id: number;
+  name: string;
+  priority: string | null;
+  completed_at: string;
+  /** Tanggal selesai dalam hari kantor (WIB), YYYY-MM-DD. */
+  completed_date: string;
+  target_date: string | null;
+  timing: TReportTiming;
+  assignees: string[];
+};
+
+export type TCompletedReport = {
+  generated_at: string;
+  /** Tanggal inklusif, YYYY-MM-DD. */
+  period: { key: TReportPeriod; start: string; end: string };
+  totals: TCompletedFigures & { created: number };
+  previous: TCompletedFigures;
+  divisions: TReportDivision[];
+  /** Terbaru dulu, dibatasi server; `items_truncated` = ada yang tidak dikirim. */
+  items: TCompletedItem[];
+  items_truncated: boolean;
 };
 
 export class WorkspaceDashboardService extends APIService {
@@ -77,6 +139,18 @@ export class WorkspaceDashboardService extends APIService {
       .catch((e) => {
         throw e?.response?.data;
       });
+  }
+
+  async getCompletedReport(workspaceSlug: string, period: TReportPeriod): Promise<TCompletedReport> {
+    return this.get(`/api/workspaces/${workspaceSlug}/divisi-dashboard/laporan/`, { params: { periode: period } })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  completedReportCsvUrl(workspaceSlug: string, period: TReportPeriod): string {
+    return `${API_BASE_URL}/api/workspaces/${workspaceSlug}/divisi-dashboard/laporan/?periode=${period}&unduh=csv`;
   }
 
   worklogExportUrl(workspaceSlug: string): string {

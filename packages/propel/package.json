@@ -1,12 +1,13 @@
 {
   "name": "@plane/propel",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "license": "AGPL-3.0",
   "type": "module",
   "exports": {
     "./accordion": "./dist/accordion/index.js",
     "./animated-counter": "./dist/animated-counter/index.js",
+    "./auth-showcase": "./dist/auth-showcase/index.js",
     "./avatar": "./dist/avatar/index.js",
     "./badge": "./dist/badge/index.js",
     "./banner": "./dist/banner/index.js",
@@ -35,6 +36,7 @@
     "./pill": "./dist/pill/index.js",
     "./popover": "./dist/popover/index.js",
     "./portal": "./dist/portal/index.js",
+    "./radio-group": "./dist/radio-group/index.js",
     "./scrollarea": "./dist/scrollarea/index.js",
     "./skeleton": "./dist/skeleton/index.js",
     "./switch": "./dist/switch/index.js",

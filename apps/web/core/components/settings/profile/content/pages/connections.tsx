@@ -25,12 +25,21 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
   const { t, currentLocale } = useTranslation();
   const [status, setStatus] = useState<TGoogleCalendarStatus | null>(null);
   const [sibuk, setSibuk] = useState(false);
+  // Dipisah dari `status === null`: dulu memuat dan gagal tampil sama persis,
+  // yaitu tombol "Hubungkan" mati tanpa penjelasan apa pun.
+  const [memuat, setMemuat] = useState(true);
+  const [gagalMuat, setGagalMuat] = useState(false);
 
   const muat = useCallback(async () => {
+    setMemuat(true);
     try {
       setStatus(await layanan.status());
+      setGagalMuat(false);
     } catch {
       setStatus(null);
+      setGagalMuat(true);
+    } finally {
+      setMemuat(false);
     }
   }, []);
 
@@ -101,7 +110,7 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
         <p className="mt-1 text-13 text-secondary">{t("connections_ui.description")}</p>
       </div>
 
-      <div className="rounded-lg border border-subtle p-5">
+      <div className="rounded-card border border-subtle p-5">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
             <h4 className="font-medium">Google Calendar</h4>
@@ -125,6 +134,15 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
               </p>
             )}
 
+            {gagalMuat && !memuat && (
+              <p className="mt-3 flex flex-wrap items-center gap-2 text-13 text-danger-primary">
+                {t("connections_ui.load_failed")}
+                <Button variant="secondary" size="sm" onClick={() => void muat()}>
+                  {t("shared_ui.retry")}
+                </Button>
+              </p>
+            )}
+
             {status && !status.tersedia && (
               // Tanpa penjelasan ini, tombol yang mati terlihat seperti aplikasi
               // yang rusak, dan orang akan melapor ke IT alih-alih ke yang bisa
@@ -139,7 +157,7 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
                 {t("connections_ui.disconnect")}
               </Button>
             ) : (
-              <Button variant="primary" onClick={sambung} disabled={sibuk || !status?.tersedia}>
+              <Button variant="primary" onClick={sambung} loading={memuat} disabled={sibuk || !status?.tersedia}>
                 {t("connections_ui.connect")}
               </Button>
             )}

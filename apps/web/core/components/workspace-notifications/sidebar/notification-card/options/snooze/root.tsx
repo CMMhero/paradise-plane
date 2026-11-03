@@ -122,10 +122,10 @@ export const NotificationItemSnoozeOption = observer(function NotificationItemSn
                 leaveTo="opacity-0 translate-y-1"
               >
                 <Popover.Panel className="absolute right-0 z-10 mt-2 min-w-44 select-none">
-                  <div className="space-y-1 rounded-md border border-subtle bg-surface-1 p-2">
+                  <div className="space-y-1 rounded-popover border border-subtle bg-surface-1 p-2 shadow-raised-200">
                     {data.snoozed_till && (
                       <button
-                        className="w-full cursor-pointer rounded-xs p-1 px-2 text-left text-body-xs-medium text-secondary transition-all hover:bg-layer-1"
+                        className="w-full cursor-pointer rounded-item p-1 px-2 text-left text-body-xs-medium text-secondary transition-all hover:bg-layer-1"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -139,7 +139,7 @@ export const NotificationItemSnoozeOption = observer(function NotificationItemSn
                     {NOTIFICATION_SNOOZE_OPTIONS.map((option) => (
                       <button
                         key={option.key}
-                        className="w-full cursor-pointer rounded-xs p-1 px-2 text-left text-body-xs-medium text-secondary transition-all hover:bg-layer-1"
+                        className="w-full cursor-pointer rounded-item p-1 px-2 text-left text-body-xs-medium text-secondary transition-all hover:bg-layer-1"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();

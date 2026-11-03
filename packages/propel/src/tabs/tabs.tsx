@@ -92,7 +92,7 @@ const TabsTrigger = React.forwardRef(function TabsTrigger(
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "flex w-full min-w-fit cursor-pointer items-center justify-center rounded-md border border-transparent p-1 font-medium text-primary transition-all duration-200 ease-in-out outline-none focus:outline-none",
+        "flex w-full min-w-fit cursor-pointer items-center justify-center rounded-item border border-transparent p-1 font-medium text-primary transition-all duration-200 ease-in-out outline-none focus:outline-none",
         "data-[selected]:shadow-sm data-[selected]:raised-200 data-[selected]:border data-[selected]:border-subtle-1 data-[selected]:bg-layer-2 data-[selected]:text-primary",
         "text-placeholder hover:bg-layer-transparent-hover hover:text-tertiary",
         "disabled:cursor-not-allowed disabled:text-placeholder",

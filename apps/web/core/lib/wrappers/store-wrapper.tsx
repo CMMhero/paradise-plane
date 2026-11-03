@@ -15,6 +15,7 @@ import { applyCustomTheme, clearCustomTheme } from "@plane/utils";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useRouterParams } from "@/hooks/store/use-router-params";
 import { useUserProfile } from "@/hooks/store/user";
+import { bacaTampilan, terapkanTampilan } from "@/lib/tampilan";
 
 type TStoreWrapper = {
   children: ReactNode;
@@ -102,6 +103,18 @@ function StoreWrapper(props: TStoreWrapper) {
     // Update previous theme for next comparison
     previousThemeRef.current = currentTheme;
   }, [userProfile?.theme]);
+
+  /**
+   * Paradise (KEP-64): preferensi tampilan (gerak, font, skema) jadi atribut
+   * di <html>. Bergantung pada nilai primitifnya, bukan objek `theme`: store
+   * mengubah objek itu di tempat, jadi rujukannya tidak pernah berganti.
+   */
+  const gerak = userProfile?.theme?.gerak;
+  const font = userProfile?.theme?.font;
+  const skema = userProfile?.theme?.skema;
+  useEffect(() => {
+    terapkanTampilan(bacaTampilan({ gerak, font, skema }));
+  }, [gerak, font, skema]);
 
   useEffect(() => {
     if (!params) return;

@@ -10,10 +10,10 @@ import { AlertTriangle } from "lucide-react";
 import useSWR from "swr";
 // plane imports
 import { InstanceActivityService, type TRetensi } from "@plane/services";
-import { Loader } from "@plane/ui";
+import { CustomSelect, Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
-import { Callout, NativeSelect, Section, StatCard, StateBox, Toolbar } from "@/components/common/paradise";
+import { Callout, Section, StatCard, StateBox, Toolbar } from "@/components/common/paradise";
 import { formatDateTime } from "@/components/common/paradise-styles";
 import { LogsTabs } from "@/components/common/section-tabs";
 // local
@@ -76,13 +76,19 @@ const ActivityPage = function ActivityPage(_props: Route.ComponentProps) {
 
         <Toolbar>
           <span className="text-13 text-tertiary">{t.range}</span>
-          <NativeSelect value={hari} onChange={(e) => ubahRentang(Number(e.target.value))} aria-label={t.range}>
+          <CustomSelect
+            value={hari}
+            onChange={(n: number) => ubahRentang(Number(n))}
+            label={fill(t.range_days, { n: hari })}
+            placement="bottom-start"
+            input
+          >
             {pilihanRentang.map((n) => (
-              <option key={n} value={n}>
+              <CustomSelect.Option key={n} value={n}>
                 {fill(t.range_days, { n })}
-              </option>
+              </CustomSelect.Option>
             ))}
-          </NativeSelect>
+          </CustomSelect>
         </Toolbar>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -120,15 +126,15 @@ const ActivityPage = function ActivityPage(_props: Route.ComponentProps) {
           ) : (data.teraktif ?? []).length === 0 ? (
             <StateBox>{t.top_empty}</StateBox>
           ) : (
-            <div className="space-y-1.5 rounded-md border border-subtle p-3">
+            <div className="space-y-1.5 rounded-card border border-subtle p-3">
               {data.teraktif.map((x) => (
                 <div key={x.user_id} className="flex items-center gap-2">
                   <span className="w-56 shrink-0 truncate text-11 text-secondary">{x.email}</span>
                   {/* Batang + angka di ujungnya: panjangnya untuk membandingkan
                       sekilas, angkanya supaya tidak perlu menaksir dari panjang. */}
-                  <span className="h-2 flex-1 overflow-hidden rounded-full bg-layer-1">
+                  <span className="h-2 flex-1 overflow-hidden rounded-control bg-layer-1">
                     <span
-                      className="block h-full rounded-full bg-accent-primary"
+                      className="block h-full rounded-control bg-accent-primary"
                       style={{ width: `${Math.max(2, (x.login / maksLogin) * 100)}%` }}
                     />
                   </span>

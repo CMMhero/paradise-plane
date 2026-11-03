@@ -263,7 +263,10 @@ const getLabelsColumns = ({ isWorkspaceLevel }: TGetColumns): IGroupByColumn[] =
     id: label.id,
     name: label.name,
     icon: (
-      <div className="h-[12px] w-[12px] rounded-full" style={{ backgroundColor: label.color ? label.color : "#666" }} />
+      <div
+        className="h-[12px] w-[12px] rounded-control"
+        style={{ backgroundColor: label.color ? label.color : "#666" }}
+      />
     ),
     payload: label?.id === "None" ? {} : { label_ids: [label.id] },
   }));

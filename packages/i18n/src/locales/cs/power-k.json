@@ -105,7 +105,16 @@
       "open_project_setting": "Otevřít nastavení projektu",
       "nav_project_settings": "Přejít do nastavení projektu",
       "nav_workspace_active_cycle": "Přejít na všechny aktivní cykly",
-      "nav_project_overview": "Přejít na přehled projektu"
+      "nav_project_overview": "Přejít na přehled projektu",
+      "nav_chat": "Přejít na chat",
+      "nav_wiki": "Přejít na wiki",
+      "nav_dashboard_divisi": "Přejít na přehled divize",
+      "nav_initiatives": "Přejít na iniciativy",
+      "nav_stickies": "Přejít na poznámky",
+      "nav_quick_links": "Přejít na rychlé odkazy",
+      "nav_your_work_calendar": "Přejít na váš kalendář",
+      "nav_project_approvals": "Přejít na schvalování",
+      "open_account_setting": "Otevřít nastavení účtu"
     },
     "account_actions": {
       "sign_out": "Odhlásit se",
@@ -166,7 +175,8 @@
       "update_theme": "Změnit téma",
       "update_timezone": "Změnit časové pásmo",
       "update_start_of_week": "Změnit první den v týdnu",
-      "update_language": "Změnit jazyk"
+      "update_language": "Změnit jazyk",
+      "open_account_setting": "Otevřít nastavení účtu"
     },
     "search_menu": {
       "no_results": "Nenalezeny žádné výsledky",

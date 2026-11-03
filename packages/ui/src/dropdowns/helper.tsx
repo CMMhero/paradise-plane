@@ -92,6 +92,8 @@ export type ICustomSearchSelectProps = IDropdownProps &
 export interface ICustomMenuItemProps {
   children: React.ReactNode;
   disabled?: boolean;
+  /** Paradise (KEP-64): aksi merusak (hapus, keluarkan) bertulisan merah, tanpa className. */
+  variant?: "default" | "danger";
   onClick?: (args?: any) => void;
   className?: string;
 }

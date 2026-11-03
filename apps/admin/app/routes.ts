@@ -16,6 +16,8 @@ export default [
     // Paradise: bawaan project baru, tab kedua menu Workspaces.
     route("workspace/project-defaults", "./(all)/(dashboard)/bawaan-project/page.tsx"),
     route("email", "./(all)/(dashboard)/email/page.tsx"),
+    // Paradise: pratinjau semua email (baca-saja), tab kedua menu Email.
+    route("email/preview", "./(all)/(dashboard)/email/preview/page.tsx"),
     route("authentication", "./(all)/(dashboard)/authentication/page.tsx"),
     route("authentication/github", "./(all)/(dashboard)/authentication/github/page.tsx"),
     route("authentication/gitlab", "./(all)/(dashboard)/authentication/gitlab/page.tsx"),

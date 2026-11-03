@@ -4,7 +4,8 @@
  * See the LICENSE file for details.
  */
 
-import Link from "next/link";
+// components
+import { MemberProfileTrigger } from "@/components/member-profile";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 
@@ -29,12 +30,9 @@ export function IssueCreatorDisplay(props: TIssueUser) {
       {customUserName ? (
         <span className="font-medium text-primary">{customUserName || "Sistem"}</span>
       ) : (
-        <Link
-          href={`/${activity?.workspace_detail?.slug}/profile/${activity?.actor_detail?.id}`}
-          className="font-medium text-primary hover:underline"
-        >
-          {activity.actor_detail?.display_name}
-        </Link>
+        <MemberProfileTrigger userId={activity.actor_detail?.id}>
+          <span className="font-medium text-primary hover:underline">{activity.actor_detail?.display_name}</span>
+        </MemberProfileTrigger>
       )}
     </>
   );

@@ -5,6 +5,7 @@
  */
 
 import { useTranslation } from "@plane/i18n";
+import { Input } from "@plane/ui";
 type TEstimateNumberInputProps = {
   value?: number;
   handleEstimateInputValue: (value: string) => void;
@@ -17,10 +18,11 @@ export function EstimateNumberInput(props: TEstimateNumberInputProps) {
   const { t } = useTranslation();
 
   return (
-    <input
+    <Input
       value={value}
       onChange={(e) => handleEstimateInputValue(e.target.value)}
-      className="w-full border-none bg-transparent px-2 py-2 text-13 focus:border-0 focus:ring-0 focus:outline-none"
+      mode="true-transparent"
+      className="w-full px-2 focus:border-0 focus:ring-0"
       placeholder={t("project_settings.estimates.create.enter_estimate_point")}
       autoFocus
       step="any"

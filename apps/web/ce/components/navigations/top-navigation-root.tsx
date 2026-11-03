@@ -7,7 +7,7 @@
 // components
 import { observer } from "mobx-react";
 import { useParams, usePathname } from "next/navigation";
-import { cn } from "@plane/utils";
+import { cn, getNumberCount } from "@plane/utils";
 import { TopNavPowerK } from "@/components/navigation";
 import { HelpMenuRoot } from "@/components/workspace/sidebar/help-section/root";
 import { UserMenuRoot } from "@/components/workspace/sidebar/user-menu-root";
@@ -68,7 +68,13 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
                 <div className="relative">
                   <InboxIcon className="size-5" />
                   {totalNotifications > 0 && (
-                    <span className="absolute top-0 right-0 size-2 rounded-full bg-danger-primary" />
+                    <span
+                      aria-label={`${totalNotifications} unread`}
+                      className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-control bg-danger-primary px-1 text-10 leading-none font-semibold text-on-color"
+                    >
+                      {isMentionsEnabled ? "@" : ""}
+                      {getNumberCount(totalNotifications)}
+                    </span>
                   )}
                 </div>
               ),

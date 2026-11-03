@@ -17,92 +17,133 @@ punya tenggat ikut membawa lampiran `.ics`, sama dengan pengingat tenggat.
 """
 
 from celery import shared_task
-from django.core.mail import EmailMultiAlternatives
-from django.utils.html import escape
 
 from plane.bgtasks.daily_digest_task import _koneksi
-from plane.bgtasks.deadline_reminder_email import KANTOR, PRODUK, _base_url, bangun_ics, tanggal_id
-from plane.bgtasks.tugas_ke_dm_task import BATAS_DESKRIPSI, BATAS_JUDUL, PRIORITAS, _potong, _tanggal
+from plane.bgtasks.deadline_reminder_email import _base_url, bangun_ics, tanggal_id
+from plane.bgtasks.tugas_ke_dm_task import BATAS_DESKRIPSI, BATAS_JUDUL, _potong
 from plane.db.models import Issue, User, WorkspaceMember
 from plane.db.models.hierarki import TINGKAT_NAMA
+from plane.utils.email_merek import (
+    WARNA,
+    avatar_untuk,
+    bahasa_penerima,
+    baris_orang,
+    bungkus,
+    buat_pesan,
+    catatan_kecil,
+    judul_html,
+    kartu,
+    paragraf,
+    tanggal,
+    terjemah_data,
+    tombol,
+    url_preferensi,
+)
+from plane.utils.email_teks import PRIORITAS
 from plane.utils.exception_logger import log_exception
 from plane.utils.hierarki import tingkat_anggota
 from plane.utils.preferensi_email import boleh_email
 
-GELAP, ABU, MERAH = "#1f2937", "#6b7280", "#b91c1c"
+TEKS = {
+    "id": {
+        "subjek": "[Tugas baru] {kode} {judul}",
+        "subjek_tenggat": " (tenggat {tenggat})",
+        "sapaan": "Halo {nama},",
+        "kalimat": "{siapa} memberi Anda tugas baru.",
+        "judul": "Tugas baru untuk Anda",
+        "project": "Project",
+        "prioritas": "Prioritas",
+        "status": "Status",
+        "mulai": "Mulai",
+        "tenggat": "Tenggat",
+        "deskripsi": "Deskripsi:",
+        "tombol": "Buka tugas",
+        "buka": "Buka: {url}",
+        "ics": "Berkas .ics terlampir untuk memasukkan tenggat ini ke kalender Anda.",
+        "alasan": "Anda menerima email ini karena Anda ditambahkan sebagai penanggung jawab.",
+    },
+    "en": {
+        "subjek": "[New task] {kode} {judul}",
+        "subjek_tenggat": " (due {tenggat})",
+        "sapaan": "Hi {nama},",
+        "kalimat": "{siapa} gave you a new task.",
+        "judul": "A new task for you",
+        "project": "Project",
+        "prioritas": "Priority",
+        "status": "State",
+        "mulai": "Start",
+        "tenggat": "Due date",
+        "deskripsi": "Description:",
+        "tombol": "Open work item",
+        "buka": "Open: {url}",
+        "ics": "An .ics file is attached so you can add this deadline to your calendar.",
+        "alasan": "You received this email because you were added as an assignee.",
+    },
+}
 
 
 def _nama(user) -> str:
     return (getattr(user, "display_name", "") or getattr(user, "first_name", "") or getattr(user, "email", "")).strip()
 
 
-def susun_email_penugasan(issue, penerima, pemberi, jabatan_pemberi: str = "", tautan: str = ""):
-    """(subjek, teks, html). Murni, tanpa I/O: semua yang dibaca ada di argumen.
+def susun_email_penugasan(
+    issue, penerima, pemberi, jabatan_pemberi: str = "", tautan: str = "", bahasa="id", gambar=None
+):
+    """(subjek, teks, html). Murni kecuali foto pemberi (dibaca dari storage, boleh gagal).
 
     Baris yang kosong (tanpa tenggat, tanpa deskripsi) tidak ditulis sama sekali,
     alasan yang sama dengan DM penugasan: "Tenggat: -" mengajari orang berhenti
     membaca.
     """
+    s = TEKS.get(bahasa, TEKS["id"])
     kode = f"{issue.project.identifier}-{issue.sequence_id}"
     judul = _potong(issue.name, BATAS_JUDUL)
-    siapa = _nama(pemberi) + (f" ({jabatan_pemberi})" if jabatan_pemberi else "")
-    tenggat = _tanggal(issue.target_date)
-    subjek = f"[Tugas baru] {kode} {judul}" + (f" (tenggat {tenggat})" if tenggat else "")
-
-    rincian = [
-        ("Project", issue.project.name),
-        ("Prioritas", PRIORITAS.get(issue.priority or "", "")),
-        ("Status", issue.state.name if getattr(issue, "state", None) else ""),
-        ("Mulai", _tanggal(issue.start_date)),
-        ("Tenggat", tenggat),
-    ]
-    rincian = [(k, v) for k, v in rincian if v]
-    deskripsi = _potong(getattr(issue, "description_stripped", "") or "", BATAS_DESKRIPSI)
-    sapaan = _nama(penerima)
-
-    teks = [f"Halo {sapaan},".strip(), "", f"{siapa} memberi Anda tugas baru.", "", f"  {kode}  {judul}"]
-    teks += [f"  {k:<9}: {v}" for k, v in rincian]
-    if deskripsi:
-        teks += ["", "Deskripsi:", deskripsi]
-    if tautan:
-        teks += ["", f"Buka: {tautan}"]
+    siapa = _nama(pemberi) + (f" ({terjemah_data(jabatan_pemberi, bahasa)})" if jabatan_pemberi else "")
+    tenggat = tanggal(issue.target_date, bahasa)
+    subjek = s["subjek"].format(kode=kode, judul=judul)
     if tenggat:
-        teks += ["", "Lampiran .ics terlampir untuk memasukkan tenggat ini ke kalender Anda."]
-    teks += ["", f"Email otomatis dari {PRODUK}. Atur di Profil > Notifikasi. Tidak perlu dibalas."]
+        subjek += s["subjek_tenggat"].format(tenggat=tenggat)
 
-    sel_kiri = f"padding:4px 12px 4px 0;color:{ABU};vertical-align:top"
-    baris = "".join(
-        f'<tr><td style="{sel_kiri}">{escape(k)}</td><td style="padding:4px 0;'
-        f'{"color:" + MERAH + ";font-weight:bold" if k == "Tenggat" else ""}">{escape(v)}</td></tr>'
-        for k, v in rincian
+    prioritas = PRIORITAS.get(bahasa, PRIORITAS["id"])
+    rincian = [
+        (s["project"], issue.project.name),
+        (s["prioritas"], prioritas.get(issue.priority or "", "")),
+        (s["status"], issue.state.name if getattr(issue, "state", None) else ""),
+        (s["mulai"], tanggal(issue.start_date, bahasa)),
+        (s["tenggat"], tenggat, WARNA["bahaya"]),
+    ]
+    rincian = [r for r in rincian if r[1]]
+    deskripsi = _potong(getattr(issue, "description_stripped", "") or "", BATAS_DESKRIPSI)
+    sapaan = s["sapaan"].format(nama=_nama(penerima)).replace(" ,", ",")
+    kalimat = s["kalimat"].format(siapa=siapa)
+
+    teks = [sapaan, "", kalimat, "", f"  {kode}  {judul}"]
+    teks += [f"  {r[0]:<9}: {r[1]}" for r in rincian]
+    if deskripsi:
+        teks += ["", s["deskripsi"], deskripsi]
+    if tautan:
+        teks += ["", s["buka"].format(url=tautan)]
+    if tenggat:
+        teks += ["", s["ics"]]
+
+    av, _ = avatar_untuk(pemberi, gambar=gambar)
+    jabatan = terjemah_data(jabatan_pemberi, bahasa) if jabatan_pemberi else ""
+    isi = (
+        judul_html(s["judul"])
+        + baris_orang(av, jabatan)
+        + paragraf(f"{sapaan} {kalimat}")
+        + kartu(kode, judul, tautan, rincian, catatan=deskripsi)
+        + tombol(s["tombol"], tautan)
+        + (catatan_kecil(s["ics"]) if tenggat else "")
     )
-    tombol = (
-        f'<p><a href="{escape(tautan)}" style="background:{GELAP};color:#fff;padding:8px 16px;border-radius:4px;'
-        f'text-decoration:none;display:inline-block">Buka tugas</a></p>'
-        if tautan
-        else ""
-    )
-    html = (
-        f'<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:{GELAP};max-width:560px">'
-        f"<p>Halo {escape(sapaan)},</p>"
-        f"<p><strong>{escape(siapa)}</strong> memberi Anda tugas baru.</p>"
-        f'<p style="font-size:16px;margin:16px 0 4px"><strong>{escape(kode)}</strong> {escape(judul)}</p>'
-        f'<table style="border-collapse:collapse;margin:8px 0 16px;font-size:13px">{baris}</table>'
-        + (
-            f'<div style="background:#f9fafb;border-left:3px solid #e5e7eb;padding:8px 12px;margin:0 0 16px;'
-            f'font-size:13px;white-space:pre-wrap">{escape(deskripsi)}</div>'
-            if deskripsi
-            else ""
-        )
-        + tombol
-        + (
-            f'<p style="color:{ABU};font-size:12px">Berkas <strong>.ics</strong> terlampir. Buka sekali untuk '
-            f"memasukkan tenggat ini ke kalender Anda.</p>"
-            if tenggat
-            else ""
-        )
-        + f'<p style="color:#9ca3af;font-size:11px;margin-top:24px">Email otomatis dari {PRODUK}, sistem internal '
-        f"{KANTOR}. Atur di Profil &gt; Notifikasi. Tidak perlu dibalas.</p></div>"
+    html = bungkus(
+        isi,
+        bahasa=bahasa,
+        judul=subjek,
+        pratajuk=kalimat,
+        alasan=s["alasan"],
+        url_preferensi=url_preferensi(getattr(getattr(issue, "workspace", None), "slug", "")),
+        email_penerima=getattr(penerima, "email", ""),
     )
     return subjek, "\n".join(teks), html
 
@@ -148,17 +189,26 @@ def kirim_email_penugasan(issue_id, actor_id, penerima_ids):
         if issue.target_date
         else None
     )
+    lampiran = [(f"{kode}.ics", ics, "text/calendar; method=PUBLISH")] if ics else []
 
     koneksi, efrom = _koneksi()
     terkirim = gagal = 0
     for orang in penerima:
         try:
-            subjek, teks, html = susun_email_penugasan(issue, orang, pemberi, jabatan, tautan)
-            pesan = EmailMultiAlternatives(subject=subjek, body=teks, from_email=efrom, to=[orang.email], connection=koneksi)
-            pesan.attach_alternative(html, "text/html")
-            if ics:
-                pesan.attach(f"{kode}.ics", ics, "text/calendar; method=PUBLISH")
-            pesan.send(fail_silently=False)
+            gambar = []
+            subjek, teks, html = susun_email_penugasan(
+                issue, orang, pemberi, jabatan, tautan, bahasa=bahasa_penerima(orang), gambar=gambar
+            )
+            buat_pesan(
+                ke=orang.email,
+                subjek=subjek,
+                html=html,
+                teks=teks,
+                koneksi=koneksi,
+                dari=efrom,
+                gambar=gambar,
+                lampiran=lampiran,
+            ).send(fail_silently=False)
             terkirim += 1
         except Exception as e:  # noqa: BLE001
             # Satu alamat rusak tidak boleh menahan rekan setugasnya.

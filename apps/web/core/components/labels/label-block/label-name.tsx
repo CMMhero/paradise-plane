@@ -21,7 +21,7 @@ export function LabelName(props: ILabelName) {
         <Component className="h-3.5 w-3.5" color={color} />
       ) : (
         <span
-          className="h-3.5 w-3.5 flex-shrink-0 rounded-full"
+          className="h-3.5 w-3.5 flex-shrink-0 rounded-control"
           style={{
             backgroundColor: color && color !== "" ? color : "#000",
           }}

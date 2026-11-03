@@ -80,7 +80,7 @@ export function AlertModalCore(props: Props) {
         {!hideIcon && (
           <span
             className={cn(
-              "grid size-12 flex-shrink-0 place-items-center rounded-full sm:size-10",
+              "grid size-12 flex-shrink-0 place-items-center rounded-control sm:size-10",
               VARIANT_CLASSES[variant]
             )}
           >

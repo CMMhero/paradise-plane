@@ -34,8 +34,10 @@ export type TAksiOrganisasi = {
     orang: TAnggotaHierarki,
     tujuan: { departemen_id?: string | null; divisi_id?: string | null }
   ) => Promise<void>;
-  /** KEP-32: ganti daftar departemen tambahan seorang supervisor (MENGGANTI, bukan tambah-satu). */
+  /** Ganti SELURUH daftar departemen seseorang (MENGGANTI, bukan tambah-satu). */
   setelEkstra: (orangId: string, departemenIds: string[]) => Promise<void>;
+  /** Ganti SELURUH daftar divisi yang dipimpin seseorang (KEP-76). */
+  setelDivisi: (orangId: string, divisiIds: string[]) => Promise<void>;
   /** Naik/turun jenjang tanpa memindahkan penempatan (mis. staf <-> supervisor). */
   ubahTingkat: (orang: TAnggotaHierarki, tingkat: number) => Promise<void>;
   /**
@@ -74,13 +76,31 @@ export const calonManager = (orang: TAnggotaHierarki[], divisi: TDivisiOrganisas
   return orang.filter((o) => o.tingkat !== null && o.tingkat < TINGKAT_DIREKTUR && !sudah.has(o.id));
 };
 
-/** Calon anggota departemen: staf, supervisor, dan yang belum berjenjang. Manager & direktur tidak ditempatkan di departemen. */
+/**
+ * Calon anggota departemen: semua jenjang di bawah Direktur yang belum di sini
+ * (KEP-76: manager boleh duduk di departemen di luar divisinya). Menambah tidak
+ * memindahkan penempatan lamanya.
+ */
 export const calonAnggota = (orang: TAnggotaHierarki[], dep: TDepartemenOrganisasi): TAnggotaHierarki[] => {
   const sudah = new Set(dep.anggota.map((a) => a.id));
-  return orang.filter((o) => (o.tingkat === null || o.tingkat < TINGKAT_MANAGER) && !sudah.has(o.id));
+  return orang.filter((o) => (o.tingkat === null || o.tingkat < TINGKAT_DIREKTUR) && !sudah.has(o.id));
 };
 
-/** "moved from Finance" untuk daftar calon. Fungsi biasa (bukan hook) karena dipanggil di dalam map. */
+/** Departemen + divisi orang ini sekarang (semua barisnya), untuk penanda di daftar calon. */
+export const tempatOrang = (
+  o: TAnggotaHierarki,
+  namaDepartemen: Record<string, string>,
+  namaDivisi: Record<string, string>
+): string[] => {
+  const dep = o.departemen_ids ?? (o.departemen_id ? [o.departemen_id] : []);
+  const div =
+    o.tingkat !== null && o.tingkat >= TINGKAT_MANAGER ? (o.divisi_ids ?? (o.divisi_id ? [o.divisi_id] : [])) : [];
+  return [...div.map((id) => namaDivisi[id]), ...dep.map((id) => namaDepartemen[id])].filter(
+    (n): n is string => typeof n === "string" && n.length > 0
+  );
+};
+
+/** "also in Finance, IT" untuk daftar calon. Fungsi biasa (bukan hook) karena dipanggil di dalam map. */
 export const asalOrang = (
   o: TAnggotaHierarki,
   namaDepartemen: Record<string, string>,
@@ -88,9 +108,8 @@ export const asalOrang = (
   s: TGodmodeStrings,
   fill: (template: string, vars: Record<string, string | number>) => string
 ): string => {
-  if (o.departemen_id && namaDepartemen[o.departemen_id])
-    return fill(s.org.moved_from_bare, { from: namaDepartemen[o.departemen_id] });
-  if (o.divisi_id && namaDivisi[o.divisi_id]) return fill(s.org.moved_from_bare, { from: namaDivisi[o.divisi_id] });
+  const tempat = tempatOrang(o, namaDepartemen, namaDivisi);
+  if (tempat.length > 0) return fill(s.org.moved_from_bare, { from: tempat.join(", ") });
   return o.tingkat === null ? s.org.not_yet_leveled : "";
 };
 

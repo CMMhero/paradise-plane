@@ -177,6 +177,8 @@ export interface IIssueDisplayProperties {
   modules?: boolean;
   cycle?: boolean;
   issue_type?: boolean;
+  /** Kustomisasi Paradise: chip/kolom status persetujuan (KEP-25). */
+  approval_status?: boolean;
 }
 
 export type TIssueKanbanFilters = {

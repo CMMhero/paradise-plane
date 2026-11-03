@@ -9,6 +9,10 @@ import type { Control } from "react-hook-form";
 import { Controller } from "react-hook-form";
 // plane imports
 import type { IUserTheme } from "@plane/types";
+import { RadioGroup } from "@plane/propel/radio-group";
+
+const MODE_OPTION_CLASS =
+  "border border-subtle-1 bg-layer-2 px-3 py-2 hover:bg-layer-2-hover has-[[data-checked]]:border-accent-strong";
 
 type Props = {
   control: Control<IUserTheme>;
@@ -26,30 +30,17 @@ export const CustomThemeModeSelector = observer(function CustomThemeModeSelector
         control={control}
         name="darkPalette"
         render={({ field: { value, onChange } }) => (
-          <div className="mt-2 flex items-center gap-3">
-            <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-subtle-1 bg-layer-2 px-3 py-2 text-body-sm-regular transition-colors hover:bg-layer-2-hover">
-              <input
-                type="radio"
-                name="darkPalette"
-                value="false"
-                checked={value === false}
-                onChange={() => onChange(false)}
-                className="cursor-pointer"
-              />
-              Light mode
-            </label>
-            <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-subtle-1 bg-layer-2 px-3 py-2 text-body-sm-regular transition-colors hover:bg-layer-2-hover">
-              <input
-                type="radio"
-                name="darkPalette"
-                value="true"
-                checked={value === true}
-                onChange={() => onChange(true)}
-                className="cursor-pointer"
-              />
-              Dark mode
-            </label>
-          </div>
+          <RadioGroup
+            name="darkPalette"
+            aria-label="Choose color mode"
+            orientation="horizontal"
+            className="mt-2 gap-3"
+            value={value === undefined ? null : String(value)}
+            onValueChange={(next) => onChange(next === "true")}
+          >
+            <RadioGroup.Item value="false" label="Light mode" className={MODE_OPTION_CLASS} />
+            <RadioGroup.Item value="true" label="Dark mode" className={MODE_OPTION_CLASS} />
+          </RadioGroup>
         )}
       />
     </div>

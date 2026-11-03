@@ -41,7 +41,7 @@ export const LabelStatComponent = observer(function LabelStatComponent(props: TL
                 title={
                   <div className="flex items-center gap-2 truncate">
                     <span
-                      className="block h-3 w-3 flex-shrink-0 rounded-full"
+                      className="block h-3 w-3 flex-shrink-0 rounded-control"
                       style={{
                         backgroundColor: label.color ?? "transparent",
                       }}
@@ -64,7 +64,7 @@ export const LabelStatComponent = observer(function LabelStatComponent(props: TL
                 title={
                   <div className="flex items-center gap-2">
                     <span
-                      className="block h-3 w-3 rounded-full"
+                      className="block h-3 w-3 rounded-control"
                       style={{
                         backgroundColor: label.color ?? "transparent",
                       }}
@@ -80,7 +80,7 @@ export const LabelStatComponent = observer(function LabelStatComponent(props: TL
         })
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-2">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-layer-1">
+          <div className="flex h-20 w-20 items-center justify-center rounded-control bg-layer-1">
             <img src={emptyLabel} className="h-12 w-12 object-contain" alt="empty label" />
           </div>
           <h6 className="text-14 text-tertiary">{t("no_labels_yet")}</h6>

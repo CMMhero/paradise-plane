@@ -11,7 +11,8 @@ import { ArrowLeft, Download, Pencil } from "lucide-react";
 import { Link, useParams } from "react-router";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
-import { renderFormattedDate } from "@plane/utils";
+import { getButtonStyling } from "@plane/propel/button";
+import { cn, renderFormattedDate } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
 // services
@@ -45,10 +46,7 @@ function WikiMateriPage() {
           <p className="mt-1 text-13 text-tertiary">
             {(error as { error?: string })?.error || t("wiki_ui.material.cannot_open_message")}
           </p>
-          <Link
-            to={`/${slug}/wiki`}
-            className="mt-4 inline-block rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
-          >
+          <Link to={`/${slug}/wiki`} className={cn(getButtonStyling("secondary", "lg"), "mt-4")}>
             {t("wiki_ui.material.back_to_wiki")}
           </Link>
         </div>
@@ -58,8 +56,8 @@ function WikiMateriPage() {
   if (isLoading || !data)
     return (
       <div className="flex h-full w-full flex-col gap-4 px-page-x py-8">
-        <div className="h-6 w-1/3 animate-pulse rounded bg-layer-3" />
-        <div className="h-[60vh] w-full animate-pulse rounded-lg bg-layer-3" />
+        <div className="h-6 w-1/3 animate-pulse rounded-item bg-layer-3" />
+        <div className="h-[60vh] w-full animate-pulse rounded-card bg-layer-3" />
         <p className="text-center text-12 text-tertiary">{t("wiki_ui.material.preparing")}</p>
       </div>
     );
@@ -93,19 +91,12 @@ function WikiMateriPage() {
 
           <div className="flex shrink-0 items-center gap-2">
             {data.can_manage && (
-              <button
-                type="button"
-                onClick={() => setGantiNama(true)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
-              >
+              <button type="button" onClick={() => setGantiNama(true)} className={getButtonStyling("secondary", "lg")}>
                 <Pencil className="size-3.5" />
                 {t("wiki_ui.folder.rename")}
               </button>
             )}
-            <a
-              href={data.download_url}
-              className="inline-flex items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
-            >
+            <a href={data.download_url} className={getButtonStyling("secondary", "lg")}>
               <Download className="size-3.5" />
               {t("wiki_ui.material.download_original")}
             </a>
@@ -116,7 +107,7 @@ function WikiMateriPage() {
           {data.url ? (
             <PenampilMateri pratinjau={data} />
           ) : (
-            <div className="rounded-lg border border-dashed border-subtle px-6 py-16 text-center">
+            <div className="rounded-card border border-dashed border-subtle px-6 py-16 text-center">
               <p className="text-14 font-medium text-secondary">{t("wiki_ui.material.cannot_display_title")}</p>
               <p className="mx-auto mt-1 max-w-md text-12 text-tertiary">
                 {data.reason

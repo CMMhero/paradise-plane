@@ -53,7 +53,7 @@ export const ReadonlyState = observer(function ReadonlyState(props: TReadonlySta
   if (stateLoader) {
     return (
       <Loader className={cn("flex items-center gap-1 text-body-xs-regular", className)}>
-        <Loader.Item height="16px" width="16px" className="rounded-full" />
+        <Loader.Item height="16px" width="16px" className="rounded-control" />
         <Loader.Item height="16px" width="50px" />
       </Loader>
     );

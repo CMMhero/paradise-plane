@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+# Python imports
+import re
+
 # Django imports
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -13,13 +16,24 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.db.models import Profile, Session, User, UserNotificationPreference, Workspace, WorkspaceMember
-from plane.utils.bawaan_member import baca_bawaan, periksa_navigasi, periksa_profil, periksa_work_items
+from plane.utils.bawaan_member import (
+    GAYA_PABRIK,
+    GAYA_SAH,
+    KUNCI_TEMA_PARADISE,
+    baca_bawaan,
+    suara_efektif,
+    periksa_navigasi,
+    periksa_profil,
+    periksa_work_items,
+)
 from plane.utils.preferensi_member import baca_tampilan, ubah_navigasi, ubah_tata_letak
 from plane.utils.preferensi_email import SAKLAR_NOTIFIKASI, dikunci, saklar_efektif, terapkan_perubahan
 from plane.db.models.workspace import ROLE_CHOICES
 from plane.db.superadmin import angkat_super_admin, sinkronkan_super_admin, super_admin_user_ids
 from plane.license.api.views.base import BaseAPIView
 from plane.license.models import Instance, InstanceAdmin
+
+_POLA_EKSTENSI = re.compile(r"[0-9+()#*\-\s]*")
 
 _DEFAULT_PER_PAGE = 50
 _MAX_PER_PAGE = 200
@@ -127,6 +141,32 @@ def _keanggotaan(user_ids):
     return hasil
 
 
+def _periksa_kontak(kontak):
+    """Galat (str) atau None. Aturannya sama dengan validator `Profile`."""
+    for kunci, batas in (("job_title", 120), ("phone_extension", 20)):
+        if kunci not in kontak:
+            continue
+        nilai = kontak[kunci]
+        if not isinstance(nilai, str):
+            return f"{kunci} must be text."
+        nilai = nilai.strip()
+        if len(nilai) > batas:
+            return f"{kunci} must be at most {batas} characters."
+        kontak[kunci] = nilai
+    if not _POLA_EKSTENSI.fullmatch(kontak.get("phone_extension", "")):
+        return "Phone extension may only contain digits, spaces and + ( ) - # *."
+    return None
+
+
+def _kontak(u):
+    """job_title + phone_extension dari Profile; akun tanpa Profile = kosong."""
+    try:
+        profil = u.profile
+    except Profile.DoesNotExist:
+        return {"job_title": "", "phone_extension": ""}
+    return {"job_title": profil.job_title or "", "phone_extension": profil.phone_extension or ""}
+
+
 def _serialize(u, super_admin_ids, ws, sesi_hidup=None, batas_aktif=None):
     """`sesi_hidup` = himpunan user_id (string) yang punya sesi belum kedaluwarsa.
 
@@ -142,6 +182,8 @@ def _serialize(u, super_admin_ids, ws, sesi_hidup=None, batas_aktif=None):
         "last_name": u.last_name,
         "is_active": u.is_active,
         "is_super_admin": u.id in super_admin_ids,
+        # Kontak kantor (kartu profil anggota di apps/web). select_related("profile") di daftar.
+        **_kontak(u),
         "workspace_role": (ws.get(u.id) or (None, None))[0],
         "workspace_slug": (ws.get(u.id) or (None, None))[1],
         # Aktivitas: sudah direkam otomatis oleh alur autentikasi, selama ini
@@ -198,7 +240,7 @@ class InstanceMemberEndpoint(BaseAPIView):
         elif status_filter == "inactive":
             qs = qs.filter(is_active=False)
 
-        qs = qs.order_by(_URUTAN.get(request.GET.get("sort"), "display_name"))
+        qs = qs.order_by(_URUTAN.get(request.GET.get("sort"), "display_name")).select_related("profile")
 
         try:
             per_page = min(int(request.GET.get("per_page", _DEFAULT_PER_PAGE)), _MAX_PER_PAGE)
@@ -398,6 +440,13 @@ class InstanceMemberEndpoint(BaseAPIView):
             if ditolak is not None:
                 return ditolak
 
+        # Kontak diperiksa SEBELUM kolom apa pun ditulis, supaya isian salah tidak
+        # meninggalkan perubahan nama/email yang separuh tersimpan.
+        kontak = {k: request.data[k] for k in ("job_title", "phone_extension") if k in request.data}
+        galat_kontak = _periksa_kontak(kontak)
+        if galat_kontak:
+            return Response({"error": galat_kontak}, status=status.HTTP_400_BAD_REQUEST)
+
         kolom = []  # dikumpulkan dulu, satu `save()` di akhir
         sesi_diakhiri = 0
 
@@ -450,6 +499,13 @@ class InstanceMemberEndpoint(BaseAPIView):
 
         if kolom:
             u.save(update_fields=kolom)
+
+        # --- Kontak kantor (kartu profil anggota) ---
+        if kontak:
+            profil, _ = Profile.objects.get_or_create(user=u)
+            for k, v in kontak.items():
+                setattr(profil, k, v)
+            profil.save(update_fields=list(kontak))
 
         # --- Hak akses workspace ---
         # Dua kunci, masing-masing boleh dikirim sendiri: dulu `workspace_slug`
@@ -551,6 +607,9 @@ def _bentuk_preferensi(u, profil, notif):
             "timezone": u.user_timezone,
             "theme": tema.get("theme") or "system",
             "start_of_the_week": profil.start_of_the_week,
+            # Nilai efektif: kosong = pabrik, sama dengan cara apps/web membacanya.
+            **{kunci: tema.get(kunci) if tema.get(kunci) in GAYA_SAH[kunci] else GAYA_PABRIK[kunci] for kunci in GAYA_SAH},
+            **suara_efektif(tema),
         },
         "notifications": {**saklar_efektif(notif), "ikut_bawaan_jabatan": notif.ikut_bawaan_jabatan},
         # Saklar yang dipaksa mati kebijakan direktur (baris direktur di /members/defaults).
@@ -629,11 +688,13 @@ class InstanceMemberPreferenceEndpoint(BaseAPIView):
                 u.user_timezone = zona
                 u.save(update_fields=["user_timezone"])
             tema = baru_profil.pop("theme", None)
-            if tema is not None:
+            # Preferensi tampilan (KEP-64) tinggal di JSON `theme` yang sama.
+            gaya = {kunci: baru_profil.pop(kunci) for kunci in KUNCI_TEMA_PARADISE if kunci in baru_profil}
+            if tema is not None or gaya:
                 # Gabung, jangan timpa: palet custom (primary/background) tetap
                 # tersimpan kalau orangnya nanti kembali ke tema custom.
                 lama = profil.theme if isinstance(profil.theme, dict) else {}
-                baru_profil["theme"] = {**lama, "theme": tema}
+                baru_profil["theme"] = {**lama, **gaya, **({"theme": tema} if tema is not None else {})}
             for kolom, nilai in baru_profil.items():
                 setattr(profil, kolom, nilai)
             if baru_profil:

@@ -105,7 +105,16 @@
       "open_project_setting": "Buka pengaturan proyek",
       "nav_project_settings": "Ke pengaturan proyek",
       "nav_workspace_active_cycle": "Ke semua siklus aktif",
-      "nav_project_overview": "Ke ikhtisar proyek"
+      "nav_project_overview": "Ke ikhtisar proyek",
+      "nav_chat": "Buka chat",
+      "nav_wiki": "Buka wiki",
+      "nav_dashboard_divisi": "Buka dashboard divisi",
+      "nav_initiatives": "Buka inisiatif",
+      "nav_stickies": "Buka stiki",
+      "nav_quick_links": "Buka tautan cepat",
+      "nav_your_work_calendar": "Buka kalender Anda",
+      "nav_project_approvals": "Buka persetujuan",
+      "open_account_setting": "Buka setelan akun"
     },
     "account_actions": {
       "sign_out": "Keluar",
@@ -166,7 +175,8 @@
       "update_theme": "Ubah tema",
       "update_timezone": "Ubah zona waktu",
       "update_start_of_week": "Ubah hari pertama minggu",
-      "update_language": "Ubah bahasa"
+      "update_language": "Ubah bahasa",
+      "open_account_setting": "Buka setelan akun"
     },
     "search_menu": {
       "no_results": "Tidak ada hasil yang ditemukan",

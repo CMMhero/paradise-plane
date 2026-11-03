@@ -49,8 +49,10 @@ const HARI_MENDESAK = 3;
 
 // Kelas yang sama dengan `tableClass` God Mode (apps/admin/components/common/paradise-styles.ts).
 const TABEL = {
-  wrap: "overflow-x-auto rounded-md border border-subtle",
-  table: "w-full min-w-[720px] text-13",
+  wrap: "gulir-berpenanda overflow-x-auto rounded-card border border-subtle",
+  // 900px: kolom tetap (jenis, penghapus, tanggal, aksi) sudah memakan ~690px;
+  // di bawah ini kolom nama item tinggal belasan piksel.
+  table: "w-full min-w-[900px] text-13",
   head: "bg-layer-1 text-tertiary",
   th: "px-3 py-2 text-left font-medium",
   row: "border-t border-subtle transition-colors hover:bg-layer-1-hover",
@@ -213,13 +215,7 @@ function TrashSettingsPage() {
                 className="w-full pl-8"
               />
             </div>
-            <CustomSelect
-              value={jenis}
-              label={labelFilter}
-              onChange={(v: TTrashType | "") => setJenis(v)}
-              buttonClassName="rounded-md border-subtle bg-layer-2"
-              input
-            >
+            <CustomSelect value={jenis} label={labelFilter} onChange={(v: TTrashType | "") => setJenis(v)} input>
               <CustomSelect.Option value="">
                 {t("trash_ui.all_types")} ({items.length})
               </CustomSelect.Option>
@@ -240,11 +236,11 @@ function TrashSettingsPage() {
             ))}
           </Loader>
         ) : error ? (
-          <div className="rounded-md border border-danger-subtle bg-danger-subtle p-8 text-center text-13 text-danger-primary">
+          <div className="rounded-card border border-danger-subtle bg-danger-subtle p-8 text-center text-13 text-danger-primary">
             {t("trash_ui.load_failed")}
           </div>
         ) : tampil.length === 0 ? (
-          <div className="rounded-md border border-subtle p-8 text-center text-13 text-tertiary">
+          <div className="rounded-card border border-subtle p-8 text-center text-13 text-tertiary">
             {items.length === 0 ? t("trash_ui.empty") : t("trash_ui.no_results")}
           </div>
         ) : (

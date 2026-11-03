@@ -129,7 +129,7 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
     <Combobox.Options data-prevent-outside-click static>
       <div
         className={cn(
-          "z-30 my-1 w-48 rounded-sm border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none",
+          "z-30 my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none",
           optionsClassName
         )}
         ref={setPopperElement}
@@ -138,7 +138,7 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
         }}
         {...attributes.popper}
       >
-        <div className="flex items-center gap-1.5 rounded-sm border border-subtle bg-surface-2 px-2">
+        <div className="flex items-center gap-1.5 search-field border border-subtle bg-surface-2 px-2.5">
           <SearchIcon className="h-3.5 w-3.5 text-placeholder" strokeWidth={1.5} />
           <Combobox.Input
             as="input"
@@ -162,7 +162,7 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
                       value={option.value}
                       className={({ active, selected }) =>
                         cn(
-                          "flex w-full items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none",
+                          "flex w-full items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none",
                           active && "bg-layer-transparent-hover",
                           selected ? "text-primary" : "text-secondary",
                           isUserSuspended(option.value, workspaceSlug?.toString())

@@ -44,7 +44,7 @@ export function BarisProjectLama({ project, semuaDivisi, onJadikan }: Props) {
   return (
     <li className="px-4 py-3">
       <div className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-md border border-subtle bg-layer-2 text-tertiary">
+        <span className="grid size-8 shrink-0 place-items-center rounded-item border border-subtle bg-layer-2 text-tertiary">
           <FolderKanban className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -53,7 +53,7 @@ export function BarisProjectLama({ project, semuaDivisi, onJadikan }: Props) {
         </div>
         <Button
           variant={terbuka ? "ghost" : "secondary"}
-          size="sm"
+          size="base"
           disabled={semuaDivisi.length === 0}
           onClick={() => setTerbuka((t) => !t)}
         >
@@ -85,14 +85,14 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
   };
 
   return (
-    <div className="mt-3 space-y-4 rounded-md border border-subtle bg-surface-1 p-4">
+    <div className="mt-3 space-y-4 rounded-card border border-subtle bg-surface-1 p-4">
       <div className="grid gap-4 sm:grid-cols-[1fr_8rem_1fr]">
         <Field label={s.org.division_of}>
           <CustomSelect
             value={divisiId}
             label={semuaDivisi.find((v) => v.id === divisiId)?.nama}
             onChange={(v: string) => setDivisiId(v)}
-            buttonClassName="w-full rounded-md border-subtle bg-layer-2"
+            buttonClassName="w-full"
             className="w-full"
             input
           >
@@ -134,7 +134,7 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
                 <li key={a.id}>
                   <label
                     htmlFor={`lama-${project.id}-${a.id}`}
-                    className={`flex items-center gap-3 rounded-md px-2 py-1.5 ${
+                    className={`flex items-center gap-3 rounded-item px-2 py-1.5 ${
                       a.bisa_ditempatkan ? "cursor-pointer hover:bg-layer-1-hover" : "opacity-60"
                     }`}
                   >
@@ -160,7 +160,7 @@ function FormJadikan({ project, semuaDivisi, onJadikan }: Props) {
         <span className="text-11 text-tertiary">{s.org.legacy_kept_note}</span>
         <Button
           variant="primary"
-          size="sm"
+          size="base"
           loading={sibuk}
           disabled={!divisiId || !kode.trim() || !nama.trim() || !data}
           onClick={async () => {

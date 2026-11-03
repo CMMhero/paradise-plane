@@ -105,7 +105,16 @@
       "open_project_setting": "プロジェクトの設定を開く",
       "nav_project_settings": "プロジェクトの設定に移動",
       "nav_workspace_active_cycle": "すべてのアクティブサイクルに移動",
-      "nav_project_overview": "プロジェクトの概要に移動"
+      "nav_project_overview": "プロジェクトの概要に移動",
+      "nav_chat": "チャットへ移動",
+      "nav_wiki": "Wikiへ移動",
+      "nav_dashboard_divisi": "部門ダッシュボードへ移動",
+      "nav_initiatives": "イニシアチブへ移動",
+      "nav_stickies": "付箋へ移動",
+      "nav_quick_links": "クイックリンクへ移動",
+      "nav_your_work_calendar": "カレンダーへ移動",
+      "nav_project_approvals": "承認へ移動",
+      "open_account_setting": "アカウント設定を開く"
     },
     "account_actions": {
       "sign_out": "サインアウト",
@@ -166,7 +175,8 @@
       "update_theme": "テーマを変更",
       "update_timezone": "タイムゾーンを変更",
       "update_start_of_week": "週の開始日を変更",
-      "update_language": "言語を変更"
+      "update_language": "言語を変更",
+      "open_account_setting": "アカウント設定を開く"
     },
     "search_menu": {
       "no_results": "結果が見つかりません",

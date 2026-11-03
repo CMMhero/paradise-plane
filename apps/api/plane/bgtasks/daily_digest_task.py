@@ -34,7 +34,7 @@ from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from celery import shared_task
-from django.core.mail import EmailMultiAlternatives, get_connection
+from django.core.mail import get_connection
 
 from plane.bgtasks.daily_digest_email import (
     HARI_KE_DEPAN,
@@ -46,6 +46,7 @@ from plane.bgtasks.daily_digest_email import (
     susun_email,
 )
 from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI
+from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
@@ -266,12 +267,10 @@ def _kirim(sore):
                 if not ringkasan:
                     kosong += 1
                     continue
-                subjek, teks, html = susun_email(orang, ringkasan, hari_ini)
-                pesan = EmailMultiAlternatives(
-                    subject=subjek, body=teks, from_email=efrom, to=[orang.email], connection=koneksi
-                )
-                pesan.attach_alternative(html, "text/html")
-                pesan.send(fail_silently=False)
+                subjek, teks, html = susun_email(orang, ringkasan, hari_ini, bahasa=bahasa_penerima(orang))
+                buat_pesan(
+                    ke=orang.email, subjek=subjek, html=html, teks=teks, koneksi=koneksi, dari=efrom
+                ).send(fail_silently=False)
                 terkirim += 1
             except Exception as e:  # noqa: BLE001
                 # Satu alamat rusak tidak boleh menahan ringkasan orang lain.

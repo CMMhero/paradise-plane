@@ -7,6 +7,8 @@
 import { observer } from "mobx-react";
 import { Expand, Shrink } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
+import { Button } from "@plane/propel/button";
+import { IconButton } from "@plane/propel/icon-button";
 // plane
 import type { TGanttViews } from "@plane/types";
 import { Row } from "@plane/ui";
@@ -65,22 +67,17 @@ export const GanttChartHeader = observer(function GanttChartHeader(props: Props)
       </div>
 
       {showToday && (
-        <button
-          type="button"
-          className="rounded-md bg-layer-transparent p-1 px-2 text-11 hover:bg-layer-transparent-hover"
-          onClick={handleToday}
-        >
+        <Button variant="ghost" size="sm" onClick={handleToday}>
           {t("common.today")}
-        </button>
+        </Button>
       )}
 
-      <button
-        type="button"
-        className="flex items-center justify-center rounded-md border border-subtle bg-layer-transparent p-1 transition-all hover:bg-layer-transparent-hover"
+      <IconButton
+        variant="secondary"
+        size="sm"
         onClick={toggleFullScreenMode}
-      >
-        {fullScreenMode ? <Shrink className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-      </button>
+        icon={fullScreenMode ? Shrink : Expand}
+      />
     </Row>
   );
 });

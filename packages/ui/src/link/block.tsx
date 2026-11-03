@@ -27,7 +27,7 @@ export function LinkItemBlock(props: TLinkItemBlockProps) {
   return (
     <div
       onClick={onClick}
-      className="group flex h-[56px] w-[230px] cursor-pointer items-center gap-4 rounded-md border-[0.5px] border-subtle bg-surface-1 px-4"
+      className="group flex h-[56px] w-[230px] cursor-pointer items-center gap-4 rounded-card border-[0.5px] border-subtle bg-surface-1 px-4"
     >
       <div className="grid size-8 flex-shrink-0 place-items-center rounded-sm bg-surface-2 p-2">
         <Icon className="size-4 stroke-2 text-tertiary group-hover:text-primary" />
@@ -37,7 +37,11 @@ export function LinkItemBlock(props: TLinkItemBlockProps) {
         {createdAt && <div className="text-11 font-medium text-placeholder">{calculateTimeAgo(createdAt)}</div>}
       </div>
       {menuItems && (
-        <div className="hidden group-hover:block">
+        // Paradise: dulu `hidden group-hover:block`. Di layar sentuh hover tak
+        // pernah terjadi, jadi Edit/Hapus tak terjangkau sama sekali; dan
+        // `display:none` juga mengeluarkan tombol menu dari urutan Tab. Dengan
+        // opacity tombolnya tetap bisa difokus papan ketik dan muncul saat itu.
+        <div className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 sentuh:opacity-100">
           <CustomMenu placement="bottom-end" menuItemsClassName="z-20" closeOnSelect verticalEllipsis>
             {menuItems.map((item) => (
               <CustomMenu.MenuItem

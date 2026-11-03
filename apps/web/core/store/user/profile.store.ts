@@ -48,6 +48,11 @@ export class ProfileStore implements IUserProfileStore {
       primary: undefined,
       background: undefined,
       darkPalette: false,
+      gerak: undefined,
+      font: undefined,
+      skema: undefined,
+      volume_suara: undefined,
+      suara_bisu: undefined,
     },
     onboarding_step: {
       workspace_join: false,

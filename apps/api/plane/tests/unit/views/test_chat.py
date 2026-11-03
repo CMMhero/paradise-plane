@@ -99,9 +99,11 @@ class TestChat:
 
         assert res.status_code == 200
         # Empat pesan, dua lawan bicara. Kalau DISTINCT ON hilang, ini jadi 4.
-        assert len(res.data) == 2
+        # Kanal sistem (Announcements, Changelog) ikut di daftar sejak 0159; yang diuji DM.
+        dm = [b for b in res.data if not b["sistem"]]
+        assert len(dm) == 2
         # Budi lebih dulu karena pesannya paling baru, meski Citra lebih dulu masuk.
-        budi_baris, citra_baris = res.data
+        budi_baris, citra_baris = dm
         assert budi_baris["lawan_bicara"] == str(budi.id)
         assert budi_baris["isi"] == "apa kabar"
         assert budi_baris["dari_saya"] is False
@@ -196,7 +198,7 @@ class TestChat:
         assert PesanLangsung.objects.filter(ruang=ruang, dibaca_pada__isnull=True).count() == 0
         assert client.get(f"/api/workspaces/{workspace.slug}/chat/belum-dibaca/").data["jumlah"] == 0
 
-        daftar = client.get(f"/api/workspaces/{workspace.slug}/chat/").data
+        daftar = [b for b in client.get(f"/api/workspaces/{workspace.slug}/chat/").data if not b["sistem"]]
         assert [(b["lawan_bicara"], b["isi"]) for b in daftar] == [(str(aku.id), "dan gula")]
         assert [p["isi"] for p in client.get(url).data] == ["ingat beli kopi", "dan gula"]
 
@@ -322,6 +324,34 @@ class TestChat:
         assert client.delete(f"/api/workspaces/{workspace.slug}/chat/pesan/{pesan.id}/").status_code == 204
         assert PesanLangsung.objects.filter(id=pesan.id).count() == 0, "hilang dari daftar"
         assert PesanLangsung.all_objects.filter(id=pesan.id).count() == 1, "barisnya tetap ada untuk audit"
+
+    @pytest.mark.django_db
+    def test_pesan_lewat_batas_jam_tidak_bisa_dihapus(self, kantor, monkeypatch):
+        """Bawaan 24 jam: pesan kemarin lusa tetap tinggal, pesan barusan boleh dihapus."""
+        monkeypatch.delenv("CHAT_DELETE_WINDOW_HOURS", raising=False)
+        workspace, aku, budi, _ = kantor
+        lama = _pesan(workspace, budi, aku, "kemarin lusa", menit_lalu=25 * 60)
+        baru = _pesan(workspace, budi, aku, "barusan", menit_lalu=5)
+
+        client = APIClient()
+        client.force_authenticate(user=budi)
+        tolak = client.delete(f"/api/workspaces/{workspace.slug}/chat/pesan/{lama.id}/")
+
+        assert tolak.status_code == 403
+        assert PesanLangsung.objects.filter(id=lama.id).exists(), "pesan lama tidak boleh hilang"
+        assert client.delete(f"/api/workspaces/{workspace.slug}/chat/pesan/{baru.id}/").status_code == 204
+
+    @pytest.mark.django_db
+    def test_batas_hapus_nol_berarti_tanpa_batas(self, kantor, monkeypatch):
+        monkeypatch.setenv("CHAT_DELETE_WINDOW_HOURS", "0")
+        monkeypatch.setattr("plane.utils.saklar_instance.settings.SKIP_ENV_VAR", False)
+        workspace, aku, budi, _ = kantor
+        lama = _pesan(workspace, budi, aku, "sebulan lalu", menit_lalu=30 * 24 * 60)
+
+        client = APIClient()
+        client.force_authenticate(user=budi)
+
+        assert client.delete(f"/api/workspaces/{workspace.slug}/chat/pesan/{lama.id}/").status_code == 204
 
     @pytest.mark.django_db
     def test_reaksi_klik_kedua_membatalkan(self, kantor):

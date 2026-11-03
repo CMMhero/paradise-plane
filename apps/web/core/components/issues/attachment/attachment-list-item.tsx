@@ -80,7 +80,7 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
                   } uploaded on ${renderFormattedDate(attachment.updated_at)}`}
                 >
                   <div className="flex items-center justify-center">
-                    <ButtonAvatars showTooltip userIds={attachment?.created_by} />
+                    <ButtonAvatars showProfileCard showTooltip userIds={attachment?.created_by} />
                   </div>
                 </Tooltip>
               </>

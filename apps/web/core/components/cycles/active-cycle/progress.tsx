@@ -78,7 +78,7 @@ export const ActiveCycleProgress = observer(function ActiveCycleProgress(props: 
                   >
                     <div className="flex items-center gap-1.5">
                       <span
-                        className="block h-3 w-3 rounded-full"
+                        className="block h-3 w-3 rounded-control"
                         style={{
                           backgroundColor: PROGRESS_STATE_GROUPS_DETAILS[index].color,
                         }}

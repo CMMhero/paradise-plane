@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import { observer } from "mobx-react";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
 import type { TPageFilterProps, TPageFilters } from "@plane/types";
+import { Input } from "@plane/ui";
 // components
 import { FilterCreatedDate } from "@/components/common/filters/created-at";
 import { FilterCreatedBy } from "@/components/common/filters/created-by";
@@ -59,12 +60,13 @@ export const PageFiltersSelection = observer(function PageFiltersSelection(props
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="bg-layer-transparent p-2.5 pb-0">
-        <div className="flex items-center gap-1.5 rounded-sm border-[0.5px] border-subtle bg-surface-2 px-1.5 py-1 text-11">
+        <div className="flex items-center gap-1.5 search-field border-[0.5px] border-subtle bg-surface-2 px-2.5 py-1 text-11">
           <SearchIcon className="text-placeholder" width={12} height={12} strokeWidth={2} />
-          <input
+          <Input
             ref={inputRef}
             type="text"
-            className="w-full outline-none placeholder:text-placeholder"
+            mode="true-transparent"
+            className="w-full p-0 text-11 placeholder:text-placeholder"
             placeholder="Search"
             value={filtersSearchQuery}
             onChange={(e) => setFiltersSearchQuery(e.target.value)}

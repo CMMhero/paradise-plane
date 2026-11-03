@@ -11,8 +11,9 @@ import { GripVertical, X } from "lucide-react";
 // plane imports
 import { WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { RadioGroup } from "@plane/propel/radio-group";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
-import { Checkbox, EModalPosition, EModalWidth, ModalCore, Sortable } from "@plane/ui";
+import { Checkbox, EModalPosition, EModalWidth, Input, ModalCore, Sortable } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { useUserPermissions } from "@/hooks/store/user";
@@ -26,7 +27,7 @@ import { isNavKeyEnabled } from "@/lib/paradise-modules";
 // helpers
 import { getSidebarNavigationItemIcon } from "@/plane-web/components/workspace/sidebar/helper";
 // types
-import type { TPersonalNavigationItemKey } from "@plane/types";
+import type { TPersonalNavigationItemKey, TProjectNavigationMode } from "@plane/types";
 
 type TCustomizeNavigationDialogProps = {
   isOpen: boolean;
@@ -228,7 +229,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
                 keyExtractor={(item) => item.key}
                 id="personal-enabled-items"
                 render={(item) => (
-                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200 hover:bg-surface-2">
+                  <div className="flex items-center gap-2 rounded-item px-2 py-1.5 transition-colors hover:bg-layer-transparent-hover">
                     <GripVertical className="size-4 cursor-grab text-placeholder transition-colors active:cursor-grabbing" />
                     <Checkbox
                       checked={!!personalPreferences.items[item.key]?.enabled}
@@ -259,7 +260,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
                 render={(item) => {
                   const icon = getSidebarNavigationItemIcon(item.key);
                   return (
-                    <div className="group flex items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200 hover:bg-surface-2">
+                    <div className="group flex items-center gap-2 rounded-item px-2 py-1.5 transition-colors hover:bg-layer-transparent-hover">
                       <GripVertical className="size-4 cursor-grab text-placeholder transition-colors active:cursor-grabbing" />
                       <Checkbox
                         checked={!!workspacePreferences.items[item.key]?.is_pinned}
@@ -283,47 +284,29 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
             <div className="rounded-md border border-subtle bg-surface-2 px-2 py-2">
               <div className="space-y-3">
                 {/* Navigation Mode Radio Buttons */}
-                <div className="space-y-2">
-                  {/* oxlint-disable-next-line jsx-a11y/label-has-associated-control -- input is nested; text lives in child divs */}
-                  <label className="flex cursor-pointer gap-2 rounded-md px-2 py-1.5 hover:bg-surface-2">
-                    <input
-                      type="radio"
-                      name="navigation-mode"
-                      value="ACCORDION"
-                      checked={projectPreferences.navigationMode === "ACCORDION"}
-                      onChange={() => simpanPreferensiProject(updateNavigationMode("ACCORDION"))}
-                      className="mt-1 size-4 text-accent-primary focus:ring-accent-strong"
-                    />
-                    <div className="flex-1">
-                      <div className="text-13 text-primary">{t("accordion_navigation_control")}</div>
-                      <div className="text-11 text-secondary">
-                        Feature tabs will appear as nested items under project and acts as accordion.
-                      </div>
-                    </div>
-                  </label>
-
-                  {/* oxlint-disable-next-line jsx-a11y/label-has-associated-control -- input is nested; text lives in child divs */}
-                  <label className="flex cursor-pointer gap-2 rounded-md px-2 py-1.5 hover:bg-surface-2">
-                    <input
-                      type="radio"
-                      name="navigation-mode"
-                      value="TABBED"
-                      checked={projectPreferences.navigationMode === "TABBED"}
-                      onChange={() => simpanPreferensiProject(updateNavigationMode("TABBED"))}
-                      className="mt-1 size-4 text-accent-primary focus:ring-accent-strong"
-                    />
-                    <div className="flex-1">
-                      <div className="text-13 text-primary">{t("horizontal_navigation_bar")}</div>
-                      <div className="text-11 text-secondary">
-                        Feature tabs will appear as horizontal tabs inside a project.
-                      </div>
-                    </div>
-                  </label>
-                </div>
+                <RadioGroup
+                  name="navigation-mode"
+                  aria-label={t("projects")}
+                  value={projectPreferences.navigationMode}
+                  onValueChange={(mode) =>
+                    simpanPreferensiProject(updateNavigationMode(mode as TProjectNavigationMode))
+                  }
+                >
+                  <RadioGroup.Item
+                    value="ACCORDION"
+                    label={t("accordion_navigation_control")}
+                    description="Feature tabs will appear as nested items under project and acts as accordion."
+                  />
+                  <RadioGroup.Item
+                    value="TABBED"
+                    label={t("horizontal_navigation_bar")}
+                    description="Feature tabs will appear as horizontal tabs inside a project."
+                  />
+                </RadioGroup>
 
                 {/* Limited Projects Checkbox */}
                 <div className="space-y-1">
-                  <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-2">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-item px-2 py-1.5 transition-colors hover:bg-layer-transparent-hover">
                     <Checkbox
                       checked={projectPreferences.showLimitedProjects}
                       onChange={(e) => simpanPreferensiProject(updateShowLimitedProjects(e.target.checked))}
@@ -336,20 +319,21 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
                       <div className="flex w-full flex-col gap-1">
                         <div className="flex w-full flex-col gap-2 pb-1.5">
                           <label className="w-full text-11 text-secondary">{t("enter_number_of_projects")}</label>
-                          <input
+                          <Input
                             type="number"
                             min="1"
                             step="1"
                             value={projectCountInput}
                             onKeyDown={handleKeyDown}
                             onChange={(e) => handleProjectCountChange(e.target.value)}
+                            mode="primary"
+                            inputSize="xs"
+                            hasError={!(parseInt(projectCountInput) >= 1)}
                             className={cn(
-                              "w-full rounded-md px-2 py-1 text-13",
-                              "border bg-surface-2",
-                              "text-secondary",
+                              "w-full px-2 text-secondary",
                               parseInt(projectCountInput) >= 1
                                 ? "border-strong focus:border-accent-strong focus:ring-1 focus:ring-accent-strong"
-                                : "border-danger-strong focus:border-danger-strong focus:ring-1 focus:ring-danger-strong"
+                                : "focus:border-danger-strong focus:ring-1 focus:ring-danger-strong"
                             )}
                           />
                         </div>

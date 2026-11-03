@@ -17,12 +17,79 @@ from django.utils import timezone
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import Issue, Project, State
 from plane.utils.exception_logger import log_exception
+from plane.utils.saklar_instance import AUTO_ARCHIVE_DONE_DAYS, setelan_angka
+
+# Jumlah baris per UPDATE saat mengarsipkan, supaya putaran pertama sesudah
+# setelan dinyalakan (bisa ribuan work item lama) tidak jadi satu kueri raksasa.
+_UKURAN_BATCH_ARSIP = 500
 
 
 @shared_task
 def archive_and_close_old_issues():
     archive_old_issues()
+    archive_done_issues_instance()
     close_old_issues()
+
+
+def _filter_intake_selesai(queryset):
+    """Work item intake yang masih menunggu keputusan tidak boleh ikut diarsipkan."""
+    return queryset.filter(
+        Q(issue_intake__status=1)
+        | Q(issue_intake__status=-1)
+        | Q(issue_intake__status=2)
+        | Q(issue_intake__isnull=True)
+    )
+
+
+def archive_done_issues_instance():
+    """Arsipkan work item Done yang sudah `AUTO_ARCHIVE_DONE_DAYS` hari selesai.
+
+    Setelan instance dari God Mode > Features, berlaku di semua project. Hitungan
+    harinya dari `completed_at` (saat work item masuk grup completed). Baris lama
+    yang `completed_at`-nya kosong memakai `updated_at`. Cancelled TIDAK ikut:
+    yang diminta hanya work item yang benar-benar selesai.
+
+    Aktivitas dicatat tanpa notifikasi: putaran pertama bisa menyentuh ribuan
+    work item, dan arsip otomatis bukan kabar yang perlu sampai ke inbox orang.
+    """
+    try:
+        hari = setelan_angka(AUTO_ARCHIVE_DONE_DAYS)
+        if hari <= 0:
+            return 0
+        batas = timezone.now() - timedelta(days=hari)
+        kandidat = _filter_intake_selesai(
+            Issue.issue_objects.filter(state__group="completed").filter(
+                Q(completed_at__lte=batas) | Q(completed_at__isnull=True, updated_at__lte=batas)
+            )
+        )
+        baris = list(kandidat.values_list("id", "project_id", "project__created_by_id").distinct())
+        if not baris:
+            return 0
+
+        archive_at = timezone.now().date()
+        for awal in range(0, len(baris), _UKURAN_BATCH_ARSIP):
+            potong = baris[awal : awal + _UKURAN_BATCH_ARSIP]
+            # archived_at__isnull diulang: work item yang diarsipkan manual di
+            # antara SELECT dan UPDATE tidak ditimpa tanggalnya.
+            Issue.objects.filter(id__in=[b[0] for b in potong], archived_at__isnull=True).update(
+                archived_at=archive_at
+            )
+            for issue_id, project_id, actor_id in potong:
+                issue_activity.delay(
+                    type="issue.activity.updated",
+                    requested_data=json.dumps({"archived_at": str(archive_at), "automation": True}),
+                    actor_id=str(actor_id) if actor_id else None,
+                    issue_id=str(issue_id),
+                    project_id=str(project_id),
+                    current_instance=json.dumps({"archived_at": None}),
+                    subscriber=False,
+                    epoch=int(timezone.now().timestamp()),
+                    notification=False,
+                )
+        return len(baris)
+    except Exception as e:
+        log_exception(e)
+        return 0
 
 
 def archive_old_issues():

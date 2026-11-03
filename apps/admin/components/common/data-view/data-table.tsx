@@ -73,7 +73,7 @@ export function DataTable<Row>({
   }
 
   return (
-    <div className="max-h-[calc(100vh-17rem)] overflow-auto rounded-md border border-subtle">
+    <div className="max-h-[calc(100vh-17rem)] overflow-auto rounded-card border border-subtle">
       <table className="w-full text-13" style={{ minWidth }}>
         <thead className="sticky top-0 z-[1] bg-layer-1 text-tertiary">
           <tr>
@@ -153,7 +153,7 @@ function KepalaKolom<Row>({
         <button
           type="button"
           onClick={() => onSort({ key: c.key, dir: aktif && sort.dir === "asc" ? "desc" : "asc" })}
-          className={cn("group -mx-1 inline-flex items-center gap-1 rounded-sm px-1 hover:text-secondary", {
+          className={cn("group -mx-1 inline-flex items-center gap-1 rounded-item px-1 hover:text-secondary", {
             "text-primary": aktif,
           })}
         >

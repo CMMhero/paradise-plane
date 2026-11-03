@@ -10,6 +10,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IFormattedInstanceConfiguration, TInstanceImageConfigurationKeys } from "@plane/types";
 // components
 import { ControllerInput } from "@/components/common/controller-input";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 // hooks
 import { useInstance } from "@/hooks/store";
 
@@ -27,7 +28,8 @@ export function InstanceImageConfigForm(props: IInstanceImageConfigForm) {
   const {
     handleSubmit,
     control,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<ImageConfigFormValues>({
     defaultValues: {
       UNSPLASH_ACCESS_KEY: config["UNSPLASH_ACCESS_KEY"],
@@ -38,18 +40,25 @@ export function InstanceImageConfigForm(props: IInstanceImageConfigForm) {
     const payload: Partial<ImageConfigFormValues> = { ...formData };
 
     await updateInstanceConfigurations(payload)
-      .then(() =>
-        setToast({
+      .then(() => {
+        reset(formData);
+        return setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "Success",
           message: "Image Configuration Settings updated successfully",
-        })
-      )
+        });
+      })
       .catch((err) => console.error(err));
   };
 
   return (
     <div className="space-y-8">
+      <UnsavedBar
+        isDirty={isDirty}
+        isSaving={isSubmitting}
+        onSave={() => handleSubmit(onSubmit)()}
+        onDiscard={() => reset()}
+      />
       <div className="grid-col grid w-full grid-cols-1 items-center justify-between gap-x-16 gap-y-8 lg:grid-cols-2">
         <ControllerInput
           control={control}

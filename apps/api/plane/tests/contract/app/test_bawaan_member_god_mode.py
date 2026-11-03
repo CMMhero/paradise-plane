@@ -112,6 +112,12 @@ class TestEndpointBawaanMember:
             {"profile": {"theme": "custom"}},
             {"profile": {"start_of_the_week": True}},
             {"profile": {"warna": "merah"}},
+            # KEP-64: nilai tampilan di luar pilihannya.
+            {"profile": {"gerak": "terang"}},
+            {"profile": {"skema": True}},
+            {"profile": {"gerak": None}},
+            {"profile": {"skema": "pelangi"}},
+            {"profile": {"font": "Comic Sans"}},
             {"email": {"komisaris": {}}},
             {"email": {"staf": {"spam": True}}},
             {"email": {"staf": {"comment": "ya"}}},
@@ -165,11 +171,34 @@ class TestBawaanDiterapkan:
         assert baru.user_timezone == "Asia/Jakarta"
         assert profil.language == "id"
         assert profil.start_of_the_week == 1
-        assert profil.theme == {"theme": "dark"}
+        assert profil.theme == {
+            "theme": "dark",
+            "skema": "bara",
+            "font": "jakarta",
+            "gerak": "halus",
+            "volume_suara": 80,
+            "suara_bisu": False,
+        }
 
         lama.refresh_from_db()
         assert lama.user_timezone == "UTC"
         assert Profile.objects.get(user=lama).language == "en"
+
+    @pytest.mark.django_db
+    def test_akun_baru_memakai_bawaan_tampilan(self, super_admin):
+        """KEP-64: bawaan skema/font/gerak dari God Mode ikut ke akun baru."""
+        response = _ubah(super_admin, {"profile": {"skema": "sumi", "font": "inter", "gerak": "kurangi"}})
+        assert response.status_code == status.HTTP_200_OK, response.data
+        profil = Profile.objects.create(user=_buat_user("tampilan"))
+        profil.refresh_from_db()
+        assert profil.theme == {
+            "theme": "system",
+            "skema": "sumi",
+            "font": "inter",
+            "gerak": "kurangi",
+            "volume_suara": 80,
+            "suara_bisu": False,
+        }
 
     @pytest.mark.django_db
     def test_nilai_yang_diberikan_pemanggil_menang(self, super_admin):

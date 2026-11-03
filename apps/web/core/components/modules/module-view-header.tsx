@@ -15,6 +15,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
+import { Input } from "@plane/ui";
 import type { TModuleFilters } from "@plane/types";
 // ui
 import { cn, calculateTotalFilters } from "@plane/utils";
@@ -115,16 +116,17 @@ export const ModuleViewHeader = observer(function ModuleViewHeader() {
         )}
         <div
           className={cn(
-            "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden rounded-md border border-transparent bg-surface-1 text-placeholder opacity-0 transition-[width] ease-linear",
+            "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden search-field border border-transparent bg-surface-1 text-placeholder opacity-0 transition-[width] ease-linear",
             {
               "w-64 border-subtle px-2.5 py-1.5 opacity-100": isSearchOpen,
             }
           )}
         >
           <SearchIcon className="h-3.5 w-3.5" />
-          <input
+          <Input
             ref={inputRef}
-            className="w-full max-w-[234px] border-none bg-transparent text-13 text-primary placeholder:text-placeholder focus:outline-none"
+            mode="true-transparent"
+            className="w-full max-w-[234px] p-0 text-primary placeholder:text-placeholder"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => updateSearchQuery(e.target.value)}
@@ -170,13 +172,13 @@ export const ModuleViewHeader = observer(function ModuleViewHeader() {
           memberIds={workspaceMemberIds ?? undefined}
         />
       </FiltersDropdown>
-      <div className="hidden items-center gap-1 rounded-sm bg-layer-3 p-1 md:flex">
+      <div className="hidden h-8 items-center gap-1 rounded-button bg-layer-3 p-1 md:flex">
         {MODULE_VIEW_LAYOUTS.map((layout) => (
           <Tooltip key={layout.key} tooltipContent={t(layout.i18n_title)} isMobile={isMobile}>
             <button
               type="button"
               className={cn(
-                "group grid h-5.5 w-7 place-items-center overflow-hidden rounded-sm transition-all hover:bg-layer-transparent-hover",
+                "group grid h-6 w-7 place-items-center overflow-hidden rounded-sm transition-all hover:bg-layer-transparent-hover",
                 {
                   "bg-layer-transparent-active hover:bg-layer-transparent-active":
                     displayFilters?.layout === layout.key,

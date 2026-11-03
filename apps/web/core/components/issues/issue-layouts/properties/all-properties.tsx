@@ -242,7 +242,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
         // merambat, dan menambahkannya justru membuatnya terlihat bisa diklik.
         <div className="h-5">
           <Tooltip tooltipContent={t("shared_ui.assigned_by", { name: pemberiTugas })} isMobile={isMobile}>
-            <span className="inline-flex h-5 max-w-40 items-center gap-1 rounded border-[0.5px] border-subtle bg-layer-2 px-2 text-11 text-secondary">
+            <span className="inline-flex h-5 max-w-40 items-center gap-1 rounded-button border-[0.5px] border-strong px-1.5 text-caption-sm-medium text-secondary">
               <UserCirclePropertyIcon className="size-3 shrink-0 text-tertiary" />
               <span className="truncate">{pemberiTugas}</span>
             </span>
@@ -336,7 +336,6 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             disabled={isReadOnly}
             renderByDefault={isMobile}
             showTooltip
-            labelClassName="text-caption-sm-regular"
           />
         </div>
       </WithDisplayPropertiesHOC>
@@ -363,7 +362,6 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             disabled={isReadOnly || !bisaGantiTenggat(issue)}
             renderByDefault={isMobile}
             showTooltip
-            labelClassName="text-caption-sm-regular"
           />
         </div>
       </WithDisplayPropertiesHOC>
@@ -372,6 +370,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
       <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="assignee">
         <div className="h-5" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
           <MemberDropdown
+            showProfileCard
             projectId={issue?.project_id}
             value={issue?.assignee_ids}
             onChange={handleAssignee}
@@ -471,14 +470,14 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
                 if (subIssueCount) redirectToIssueDetail();
               }}
               className={cn(
-                "flex h-5 flex-shrink-0 items-center justify-center gap-2 overflow-hidden rounded-sm border-[0.5px] border-strong px-2.5 py-1",
+                "flex h-5 flex-shrink-0 items-center justify-center gap-2 overflow-hidden rounded-button border-[0.5px] border-strong px-1.5 py-1",
                 {
                   "cursor-pointer hover:bg-layer-1": subIssueCount,
                 }
               )}
             >
               <ViewsIcon className="h-3 w-3 flex-shrink-0" strokeWidth={2} />
-              <div className="text-caption-sm-regular">{subIssueCount}</div>
+              <div className="text-caption-sm-medium">{subIssueCount}</div>
             </div>
           </Tooltip>
         </WithDisplayPropertiesHOC>
@@ -497,12 +496,12 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
           renderByDefault={false}
         >
           <div
-            className="flex h-5 flex-shrink-0 items-center justify-center gap-2 overflow-hidden rounded-sm border-[0.5px] border-strong px-2.5 py-1"
+            className="flex h-5 flex-shrink-0 items-center justify-center gap-2 overflow-hidden rounded-button border-[0.5px] border-strong px-1.5 py-1"
             onFocus={handleEventPropagation}
             onClick={handleEventPropagation}
           >
             <Paperclip className="h-3 w-3 flex-shrink-0" strokeWidth={2} />
-            <div className="text-caption-sm-regular">{issue.attachment_count}</div>
+            <div className="text-caption-sm-medium">{issue.attachment_count}</div>
           </div>
         </Tooltip>
       </WithDisplayPropertiesHOC>
@@ -520,12 +519,12 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
           renderByDefault={false}
         >
           <div
-            className="flex h-5 flex-shrink-0 items-center justify-center gap-2 overflow-hidden rounded-sm border-[0.5px] border-strong px-2.5 py-1"
+            className="flex h-5 flex-shrink-0 items-center justify-center gap-2 overflow-hidden rounded-button border-[0.5px] border-strong px-1.5 py-1"
             onFocus={handleEventPropagation}
             onClick={handleEventPropagation}
           >
             <LinkIcon className="h-3 w-3 flex-shrink-0" strokeWidth={2} />
-            <div className="text-caption-sm-regular">{issue.link_count}</div>
+            <div className="text-caption-sm-medium">{issue.link_count}</div>
           </div>
         </Tooltip>
       </WithDisplayPropertiesHOC>

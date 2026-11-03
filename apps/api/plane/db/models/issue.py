@@ -277,51 +277,61 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         if not self._state.adding and not self.has_changed("state_id"):
             return kwargs
 
-        from plane.utils.tanggal_otomatis import mulai_otomatis, selesai_otomatis, tanggal_lokal
+        from plane.utils.tanggal_otomatis import aturan_tanggal, mulai_otomatis, tanggal_lokal
 
         group = self.state.group
         if group == StateGroup.STARTED.value:
+            if not aturan_tanggal().isi_mulai:
+                return kwargs
             baru = mulai_otomatis(self.start_date, self.target_date, tanggal_lokal(None, self.project.timezone))
             field = "start_date"
         elif group == StateGroup.COMPLETED.value and not getattr(self, "_tahan_tanggal_selesai", False):
-            baru = selesai_otomatis(
-                self.start_date, self.target_date, tanggal_lokal(self.completed_at, self.project.timezone)
-            )
+            baru = self._tanggal_selesai_baru()
             field = "target_date"
         else:
             return kwargs
         if baru is None:
             return kwargs
 
+        self._tanggal_otomatis = [(field, baru, getattr(self, field))]
         setattr(self, field, baru)
-        self._tanggal_otomatis = [(field, baru)]
         update_fields = kwargs.get("update_fields")
         if update_fields is not None:
             kwargs["update_fields"] = list(set(update_fields) | {field})
         return kwargs
 
     def isi_tanggal_selesai(self, actor_id=None):
-        """Isi target_date yang kosong untuk tugas yang SUDAH selesai.
+        """Isi (atau majukan, lihat `_tanggal_selesai_baru`) target_date tugas yang SUDAH selesai.
 
         Dipakai saat atasan menyetujui tugas yang sejak diajukan sudah berstatus
         selesai (statusnya tidak berpindah, jadi `save()` tidak memicu apa pun).
         Tanggalnya = hari tugas digeser ke selesai (`completed_at`), bukan hari
         disetujui: lamanya menunggu atasan bukan lamanya pengerjaan.
         """
-        from plane.utils.tanggal_otomatis import selesai_otomatis, tanggal_lokal
-
         if not self.state or self.state.group != StateGroup.COMPLETED.value:
             return
-        baru = selesai_otomatis(
-            self.start_date, self.target_date, tanggal_lokal(self.completed_at, self.project.timezone)
-        )
+        baru = self._tanggal_selesai_baru()
         if baru is None:
             return
+        lama = self.target_date
         self.target_date = baru
         # Lewat induk: status tidak berpindah, hook `save()` milik Issue tak relevan.
         super(Issue, self).save(update_fields=["target_date", "updated_at"])
-        self._tanggal_otomatis = [("target_date", baru)]
+        self._tanggal_otomatis = [("target_date", baru, lama)]
         self.catat_tanggal_otomatis(actor_id=actor_id)
+
+    def _tanggal_selesai_baru(self):
+        """Due date yang diisi/dimajukan saat selesai, menurut setelan God Mode."""
+        from plane.utils.tanggal_otomatis import aturan_tanggal, selesai_otomatis, tanggal_lokal
+
+        aturan = aturan_tanggal()
+        return selesai_otomatis(
+            self.start_date,
+            self.target_date,
+            tanggal_lokal(self.completed_at, self.project.timezone),
+            isi_kosong=aturan.isi_selesai,
+            majukan_rencana=aturan.majukan_rencana,
+        )
 
     def catat_tanggal_otomatis(self, actor_id=None):
         """Tulis aktivitas untuk tanggal yang diisi sistem, supaya tidak tampak
@@ -337,15 +347,21 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
                     issue_id=self.id,
                     actor_id=actor_id or self.updated_by_id,
                     verb="updated",
-                    old_value="",
+                    # Due date yang dimajukan (DUE_DATE_ON_EARLY_DONE) menyimpan
+                    # rencana lamanya di sini: satu-satunya jejak tanggal semula.
+                    old_value=str(lama) if lama else "",
                     new_value=str(nilai),
                     field=field,
                     project_id=self.project_id,
                     workspace_id=self.workspace_id,
-                    comment=f"automatically set the {label[field]} to ",
+                    comment=(
+                        f"automatically moved the {label[field]} from {lama} to "
+                        if lama
+                        else f"automatically set the {label[field]} to "
+                    ),
                     epoch=timezone.now().timestamp(),
                 )
-                for field, nilai in isian
+                for field, nilai, lama in isian
             ]
         )
 

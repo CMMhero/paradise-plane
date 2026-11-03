@@ -17,6 +17,7 @@ import type { TCommentsOperations, TIssueComment } from "@plane/types";
 import { calculateTimeAgo, cn, getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
 import { LiteTextEditor } from "@/components/editor/lite-text";
+import { MemberProfileTrigger } from "@/components/member-profile";
 // local imports
 import { CommentReactions } from "../comment-reaction";
 import { CommentCardEditForm } from "./edit-form";
@@ -117,9 +118,13 @@ export const CommentCardDisplay = observer(function CommentCardDisplay(props: TC
         </div>
       )}
       <div className="relative mb-3 flex w-full items-center gap-2">
-        <Avatar size="sm" name={displayName} src={getFileURL(avatarUrl)} className="shrink-0" />
+        <MemberProfileTrigger userId={comment?.actor} className="shrink-0">
+          <Avatar size="sm" name={displayName} src={getFileURL(avatarUrl)} className="shrink-0" />
+        </MemberProfileTrigger>
         <div className="flex flex-1 flex-wrap items-center gap-1">
-          <div className="text-caption-sm-medium">{displayName}</div>
+          <MemberProfileTrigger userId={comment?.actor}>
+            <span className="text-caption-sm-medium hover:underline">{displayName}</span>
+          </MemberProfileTrigger>
           <div className="text-caption-sm-regular text-tertiary">
             commented{" "}
             <Tooltip

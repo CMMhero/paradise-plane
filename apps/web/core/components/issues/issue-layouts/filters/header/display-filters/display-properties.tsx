@@ -10,8 +10,11 @@ import { observer } from "mobx-react";
 import { ISSUE_DISPLAY_PROPERTIES, isDisplayPropertyAvailable } from "@plane/constants";
 // plane i18n
 import { useTranslation } from "@plane/i18n";
+import { Button } from "@plane/propel/button";
 // types
 import type { IIssueDisplayProperties } from "@plane/types";
+// helpers
+import { shouldRenderColumn } from "@/helpers/issue-filter.helper";
 // components
 import { FilterHeader } from "../helpers/filter-header";
 
@@ -43,6 +46,8 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
   const filteredDisplayProperties = ISSUE_DISPLAY_PROPERTIES.filter((property) => {
     if (!displayPropertiesToRender.includes(property.key)) return false;
     if (!isDisplayPropertyAvailable(property.key)) return false;
+    // Kustomisasi Paradise: aturan yang sama dengan kolom spreadsheet (mis. project tanpa estimasi).
+    if (!shouldRenderColumn(property.key)) return false;
     switch (property.key) {
       case "cycle":
         return !cycleViewDisabled;
@@ -69,14 +74,11 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {filteredDisplayProperties.map((displayProperty) => (
             <>
-              <button
+              <Button
                 key={displayProperty.key}
-                type="button"
-                className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
-                  displayProperties?.[displayProperty.key]
-                    ? "border-accent-strong bg-accent-primary text-on-color"
-                    : "border-subtle hover:bg-layer-1"
-                }`}
+                size="chip"
+                shape="pill"
+                variant={displayProperties?.[displayProperty.key] ? "primary" : "secondary"}
                 onClick={() =>
                   handleUpdate({
                     [displayProperty.key]: !displayProperties?.[displayProperty.key],
@@ -84,7 +86,7 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
                 }
               >
                 {t(displayProperty.titleTranslationKey)}
-              </button>
+              </Button>
             </>
           ))}
         </div>

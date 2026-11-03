@@ -337,7 +337,7 @@ export const ActiveCycleStats = observer(function ActiveCycleStats(props: Active
                     title={
                       <div className="flex items-center gap-2 truncate">
                         <span
-                          className="block h-3 w-3 flex-shrink-0 rounded-full"
+                          className="block h-3 w-3 flex-shrink-0 rounded-control"
                           style={{
                             backgroundColor: label.color ?? "#000000",
                           }}

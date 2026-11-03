@@ -13,7 +13,7 @@ import { useTranslation } from "@plane/i18n";
 import { SearchIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { ISearchIssueResponse } from "@plane/types";
-import { Loader, EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+import { Loader, EModalPosition, EModalWidth, ModalCore, Input } from "@plane/ui";
 // assets
 import darkIssuesAsset from "@/app/assets/empty-state/search/issues-dark.webp?url";
 import lightIssuesAsset from "@/app/assets/empty-state/search/issues-light.webp?url";
@@ -99,7 +99,7 @@ export function SelectDuplicateInboxIssueModal(props: Props) {
                 as="div"
                 value={issue.id}
                 className={({ active, selected }) =>
-                  `flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-secondary select-none ${
+                  `flex w-full cursor-pointer items-center gap-2 rounded-item px-3 py-2 text-secondary select-none ${
                     active || selected ? "bg-layer-1 text-primary" : ""
                   } `
                 }
@@ -139,9 +139,10 @@ export function SelectDuplicateInboxIssueModal(props: Props) {
             className="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-placeholder"
             aria-hidden="true"
           />
-          <input
+          <Input
             type="text"
-            className="h-12 w-full border-0 bg-transparent pr-4 pl-11 text-primary outline-none focus:ring-0 sm:text-13"
+            mode="true-transparent"
+            className="h-12 w-full py-0 pr-4 pl-11 text-primary focus:ring-0 sm:text-13"
             placeholder="Search..."
             onChange={(e) => setQuery(e.target.value)}
           />

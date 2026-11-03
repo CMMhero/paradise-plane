@@ -7,7 +7,13 @@
 
 // plane imports
 import { API_BASE_URL } from "@plane/constants";
-import type { TNotificationPreferenceKey, TNotificationPreferences } from "@plane/types";
+import type {
+  TNotificationPreferenceKey,
+  TNotificationPreferences,
+  TTampilanFont,
+  TTampilanGerak,
+  TTampilanSkema,
+} from "@plane/types";
 // api service
 import { APIService } from "../api.service";
 
@@ -33,6 +39,9 @@ export type TInstanceMember = {
   masih_login: boolean;
   /** Sesi hidup DAN ada request beberapa menit terakhir, benar-benar di depan layar. */
   sedang_memakai: boolean;
+  /** Kontak kantor di kartu profil anggota (apps/web). Kosong = belum diisi. */
+  job_title: string;
+  phone_extension: string;
 };
 
 export type TInstanceMemberResponse = {
@@ -52,6 +61,10 @@ export type TMemberUpdate = {
   workspace_role?: number;
   /** Slug workspace yang perannya diatur. Kosong = workspace pertama. */
   workspace_slug?: string;
+  /** Maks. 120 karakter. */
+  job_title?: string;
+  /** Maks. 20 karakter: angka, spasi, + ( ) - # *. */
+  phone_extension?: string;
   is_active?: boolean;
   is_super_admin?: boolean;
   /**
@@ -110,6 +123,16 @@ export type TMemberPreferences = {
     theme: TMemberTheme;
     /** 0 Minggu · 1 Senin · ... · 6 Sabtu. */
     start_of_the_week: number;
+    /** KEP-64: skema warna latar + aksen kedua. */
+    skema: TTampilanSkema;
+    /** KEP-64: font antarmuka. */
+    font: TTampilanFont;
+    /** KEP-64: "kurangi" memangkas transisi. */
+    gerak: TTampilanGerak;
+    /** Volume suara pemberitahuan 0..100. */
+    volume_suara: number;
+    /** Semua suara pemberitahuan dibisukan. */
+    suara_bisu: boolean;
   };
   /** Saklar notifikasi: email + inbox per jenis kabar, dan bagian ringkasan harian. */
   notifications: TNotificationPreferences & {

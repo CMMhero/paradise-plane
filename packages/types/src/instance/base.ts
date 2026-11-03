@@ -59,6 +59,10 @@ export interface IInstanceConfig {
   is_control_plane_enabled?: boolean;
   /** Modul yang dinyalakan/dimatikan Super Admin di God Mode > Features. Tidak ada = server lama, anggap menyala. */
   paradise_modules?: Partial<Record<TParadiseModule, boolean>>;
+  /** Hari tenggang sesudah Due date sebelum terlambat (God Mode > Features). Tidak ada = server lama, 0. */
+  paradise_overdue_grace_days?: number;
+  /** Jam sesudah dikirim, pesan obrolan masih bisa dihapus pengirimnya. 0 = tanpa batas. Tidak ada = server lama, tanpa batas. */
+  paradise_chat_delete_window_hours?: number;
   /** Bawaan project baru dari God Mode. Tidak ada = server lama, pakai bawaan formulir. */
   paradise_project_defaults?: {
     /** 2 = Public, 0 = Private. */

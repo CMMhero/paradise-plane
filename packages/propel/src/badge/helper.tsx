@@ -17,9 +17,11 @@ export const badgeVariants = cva("inline-flex items-center justify-center gap-1 
       danger: "bg-danger-subtle text-danger-primary",
     },
     size: {
-      sm: "h-4 rounded-sm px-1 text-caption-sm-medium",
-      base: "h-5 rounded-md px-1.5 text-caption-sm-medium",
-      lg: "h-6 rounded-md px-2 text-caption-md-medium",
+      // Paradise (KEP-64): radius dari token; base = ukuran chip properti work item
+      // (tinggi 20px, px-1.5, teks 11px) supaya badge dan chip di kartu seragam.
+      sm: "h-4 rounded-control px-1.5 text-caption-sm-medium",
+      base: "h-5 rounded-control px-1.5 text-caption-sm-medium",
+      lg: "h-6 rounded-control px-2.5 text-caption-md-medium",
     },
   },
   defaultVariants: {
@@ -39,7 +41,7 @@ export type TBadgeSize = NonNullable<BadgeProps["size"]>;
 
 const badgeIconStyling: Record<TBadgeSize, string> = {
   sm: "size-3.5",
-  base: "size-3.5",
+  base: "size-3",
   lg: "size-4",
 };
 

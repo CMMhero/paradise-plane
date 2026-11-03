@@ -4,7 +4,6 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
 import { isEmpty } from "lodash-es";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -15,7 +14,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IFormattedInstanceConfiguration, TInstanceGitlabAuthenticationConfigurationKeys } from "@plane/types";
 // components
 import { CodeBlock } from "@/components/common/code-block";
-import { ConfirmDiscardModal } from "@/components/common/confirm-discard-modal";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 import type { TControllerInputFormField } from "@/components/common/controller-input";
 import type { TControllerSwitchFormField } from "@/components/common/controller-switch";
 import { ControllerSwitch } from "@/components/common/controller-switch";
@@ -33,8 +32,6 @@ type GitlabConfigFormValues = Record<TInstanceGitlabAuthenticationConfigurationK
 
 export function InstanceGitlabConfigForm(props: Props) {
   const { config } = props;
-  // states
-  const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] = useState(false);
   // store hooks
   const { updateInstanceConfigurations } = useInstance();
   // form data
@@ -165,19 +162,14 @@ export function InstanceGitlabConfigForm(props: Props) {
     }
   };
 
-  const handleGoBack = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-    if (isDirty) {
-      e.preventDefault();
-      setIsDiscardChangesModalOpen(true);
-    }
-  };
-
   return (
     <>
-      <ConfirmDiscardModal
-        isOpen={isDiscardChangesModalOpen}
-        onDiscardHref="/authentication"
-        handleClose={() => setIsDiscardChangesModalOpen(false)}
+      {/* Paradise: the dashboard-wide unsaved bar replaces the old discard modal; it also guards "Go back". */}
+      <UnsavedBar
+        isDirty={isDirty}
+        isSaving={isSubmitting}
+        onSave={() => handleSubmit(onSubmit)()}
+        onDiscard={() => reset()}
       />
       <div className="flex flex-col gap-8">
         <div className="grid w-full grid-cols-2 gap-x-12 gap-y-8">
@@ -208,14 +200,14 @@ export function InstanceGitlabConfigForm(props: Props) {
                 >
                   {isSubmitting ? "Saving" : "Save changes"}
                 </Button>
-                <Link href="/authentication" className={getButtonStyling("secondary", "lg")} onClick={handleGoBack}>
+                <Link href="/authentication" className={getButtonStyling("secondary", "lg")}>
                   Go back
                 </Link>
               </div>
             </div>
           </div>
           <div className="col-span-2 md:col-span-1">
-            <div className="flex flex-col gap-y-4 rounded-lg bg-layer-3 px-6 pt-1.5 pb-4">
+            <div className="flex flex-col gap-y-4 rounded-card bg-layer-3 px-6 pt-1.5 pb-4">
               <div className="pt-2 text-18 font-medium">Paradise Task Tracker details for GitLab</div>
               {GITLAB_SERVICE_FIELD.map((field) => (
                 <CopyField key={field.key} label={field.label} url={field.url} description={field.description} />

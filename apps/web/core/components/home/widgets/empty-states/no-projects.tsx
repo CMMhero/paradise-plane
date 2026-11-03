@@ -96,7 +96,7 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
       icon:
         currentUser?.avatar_url && currentUser?.avatar_url.trim() !== "" ? (
           <Link href={`/${workspaceSlug}/profile/${currentUser?.id}`}>
-            <span className="relative flex size-4 items-center justify-center rounded-full p-4 text-on-color capitalize">
+            <span className="relative flex size-4 items-center justify-center rounded-control p-4 text-on-color capitalize">
               <img
                 src={getFileURL(currentUser?.avatar_url)}
                 className="absolute top-0 left-0 h-full w-full rounded-full object-cover"
@@ -106,7 +106,7 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
           </Link>
         ) : (
           <Link href={`/${workspaceSlug}/profile/${currentUser?.id}`}>
-            <span className="relative flex size-4 items-center justify-center rounded-full bg-[#028375] p-4 text-13 text-on-color capitalize">
+            <span className="relative flex size-4 items-center justify-center rounded-control bg-[#028375] p-4 text-13 text-on-color capitalize">
               {(currentUser?.email ?? currentUser?.display_name ?? "?")[0]}
             </span>
           </Link>
@@ -155,7 +155,7 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
           return (
             <div key={item.id} className="flex flex-col rounded-xl border border-subtle bg-layer-2 p-4">
               <div
-                className={cn("mb-3 grid size-9 place-items-center rounded-full bg-surface-2 text-placeholder", {
+                className={cn("mb-3 grid size-9 place-items-center rounded-control bg-surface-2 text-placeholder", {
                   "bg-accent-primary/10 text-accent-primary": !isStateComplete,
                 })}
               >
@@ -164,7 +164,7 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
               <h3 className="mb-2 text-13 font-medium text-primary">{t(item.title)}</h3>
               <p className="mb-2 text-11 text-tertiary">{t(item.description)}</p>
               {isStateComplete ? (
-                <div className="flex w-fit items-center gap-2 rounded-full bg-[#17a34a] p-1">
+                <div className="flex w-fit items-center gap-2 rounded-control bg-[#17a34a] p-1">
                   <CheckIcon className="size-3 text-accent-primary text-on-color" />
                 </div>
               ) : (

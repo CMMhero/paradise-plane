@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: sidebar project per divisi -> departemen (KEP-29)
+ * Kustomisasi Paradise Task Tracker: sidebar project per divisi (KEP-29)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -22,37 +22,30 @@ type Props = {
   handleCopyText: (projectId: string) => void;
 };
 
-/** Sidebar hanya memakai nama; kode divisi/departemen tetap ada di God Mode. */
+/**
+ * Satu label grup saja: nama divisi. Project sudah khusus per departemen, jadi
+ * label departemen di atasnya hanya mengulang nama project.
+ */
 type TGrup = {
   id: string;
   nama: string;
-  departemen: { id: string; nama: string; projectIds: string[] }[];
+  projectIds: string[];
 };
 
 /** Gabungkan struktur dengan project yang benar-benar ada di store; sisanya ke "Lainnya". */
 function susunGrup(struktur: TStrukturOrganisasi, joinedProjectIds: string[], namaLainnya: string): TGrup[] {
   const terpakai = new Set<string>();
   const grup: TGrup[] = struktur.divisi
-    .map((divisi) => ({
-      id: divisi.id,
-      nama: divisi.nama,
-      departemen: divisi.departemen
-        .map((dep) => {
-          const projectIds = joinedProjectIds.filter((pid) => dep.project_ids.includes(pid));
-          projectIds.forEach((pid) => terpakai.add(pid));
-          return { id: dep.id, nama: dep.nama, projectIds };
-        })
-        .filter((dep) => dep.projectIds.length > 0),
-    }))
-    .filter((divisi) => divisi.departemen.length > 0);
+    .map((divisi) => {
+      const milikDivisi = new Set(divisi.departemen.flatMap((dep) => dep.project_ids));
+      const projectIds = joinedProjectIds.filter((pid) => milikDivisi.has(pid) && !terpakai.has(pid));
+      projectIds.forEach((pid) => terpakai.add(pid));
+      return { id: divisi.id, nama: divisi.nama, projectIds };
+    })
+    .filter((divisi) => divisi.projectIds.length > 0);
 
   const sisa = joinedProjectIds.filter((pid) => !terpakai.has(pid));
-  if (sisa.length > 0)
-    grup.push({
-      id: "lainnya",
-      nama: namaLainnya,
-      departemen: [{ id: "lainnya", nama: "", projectIds: sisa }],
-    });
+  if (sisa.length > 0) grup.push({ id: "lainnya", nama: namaLainnya, projectIds: sisa });
   return grup;
 }
 
@@ -83,30 +76,27 @@ export const SidebarProjectsGrouped = observer(function SidebarProjectsGrouped({
               type="button"
               onClick={() => toggle(divisi.id)}
               aria-expanded={terbuka}
-              className="flex w-full items-center gap-1 rounded-sm px-2 py-1 text-left text-11 font-semibold tracking-wide text-placeholder uppercase hover:bg-layer-transparent-hover"
+              className="flex w-full items-center gap-1 rounded-item px-2 py-1.5 text-left text-caption-md-medium text-tertiary hover:bg-layer-transparent-hover"
             >
               <ChevronRightIcon className={cn("size-3 flex-shrink-0 transition-transform", { "rotate-90": terbuka })} />
               <span className="truncate">{divisi.nama}</span>
             </button>
-            {terbuka &&
-              divisi.departemen.map((dep) => (
-                <div key={dep.id} className="flex flex-col gap-0.5 pl-2">
-                  {/* Sidebar menampilkan nama saja, tanpa kode divisi/departemen. */}
-                  {dep.nama && <span className="truncate px-2 pt-1 text-11 font-medium text-tertiary">{dep.nama}</span>}
-                  {/* Seret-urut dimatikan: urutan lintas grup tidak punya arti di sini. */}
-                  {dep.projectIds.map((projectId, index) => (
-                    <SidebarProjectsListItem
-                      key={projectId}
-                      projectId={projectId}
-                      handleCopyText={() => handleCopyText(projectId)}
-                      projectListType="JOINED"
-                      disableDrag
-                      disableDrop
-                      isLastChild={index === dep.projectIds.length - 1}
-                    />
-                  ))}
-                </div>
-              ))}
+            {terbuka && (
+              <div className="flex flex-col gap-0.5 pl-2">
+                {/* Seret-urut dimatikan: urutan lintas grup tidak punya arti di sini. */}
+                {divisi.projectIds.map((projectId, index) => (
+                  <SidebarProjectsListItem
+                    key={projectId}
+                    projectId={projectId}
+                    handleCopyText={() => handleCopyText(projectId)}
+                    projectListType="JOINED"
+                    disableDrag
+                    disableDrop
+                    isLastChild={index === divisi.projectIds.length - 1}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         );
       })}

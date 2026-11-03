@@ -105,7 +105,16 @@
       "open_project_setting": "Deschide o setare a proiectului",
       "nav_project_settings": "Mergi la setările proiectului",
       "nav_workspace_active_cycle": "Mergi la toate ciclurile active",
-      "nav_project_overview": "Mergi la prezentarea generală a proiectului"
+      "nav_project_overview": "Mergi la prezentarea generală a proiectului",
+      "nav_chat": "Mergi la chat",
+      "nav_wiki": "Mergi la wiki",
+      "nav_dashboard_divisi": "Mergi la panoul diviziei",
+      "nav_initiatives": "Mergi la inițiative",
+      "nav_stickies": "Mergi la notițe",
+      "nav_quick_links": "Mergi la linkuri rapide",
+      "nav_your_work_calendar": "Mergi la calendarul tău",
+      "nav_project_approvals": "Mergi la aprobări",
+      "open_account_setting": "Deschide o setare a contului"
     },
     "account_actions": {
       "sign_out": "Deconectează-te",
@@ -166,7 +175,8 @@
       "update_theme": "Schimbă tema",
       "update_timezone": "Schimbă fusul orar",
       "update_start_of_week": "Schimbă prima zi a săptămânii",
-      "update_language": "Schimbă limba"
+      "update_language": "Schimbă limba",
+      "open_account_setting": "Deschide o setare a contului"
     },
     "search_menu": {
       "no_results": "Niciun rezultat găsit",

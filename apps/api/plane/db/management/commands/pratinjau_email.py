@@ -19,16 +19,17 @@ from types import SimpleNamespace as NS
 from uuid import uuid4
 
 from django.core.management import BaseCommand
-from django.template.loader import render_to_string
 from django.test import override_settings
 from django.utils import timezone
 
 from plane.bgtasks import daily_digest_email as dd
 from plane.bgtasks import direktur_digest_email as dr
 from plane.bgtasks.deadline_reminder_email import susun_email_pengingat
-from plane.bgtasks.email_notification_task import _STRINGS_APPROVAL_ID, konteks_persetujuan
+from plane.bgtasks.email_notification_task import _STRINGS_APPROVAL_ID, konteks_persetujuan, render_approval
 from plane.bgtasks.penugasan_email import susun_email_penugasan
 from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email_merek import render_email
+from plane.utils.email_pembaruan import konteks_pembaruan
 from plane.utils.preferensi_email import BAWAAN_PIMPINAN, BAWAAN_STAF
 
 URL = "https://tasks.paradise.example"
@@ -241,40 +242,28 @@ class Command(BaseCommand):
             k = konteks_persetujuan(
                 _STRINGS_APPROVAL_ID, verb, aktor, "GDG-52", baru.name, alasan, f"{URL}/x", f"{URL}/x/persetujuan"
             )
-            html = render_to_string("emails/notifications/approval.html", k)
+            html, _ = render_approval(k, "id", _orang(aktor), "", WS.slug)
             ket = "Bawaan pimpinan mati: pengajuan menunggu tidak diemail ke atasan." if verb == "submitted" else ""
             hasil.append((penerima, judul, k["subject"], generate_plain_text_from_html(html), html, ket))
 
-        konteks = {
-            "data": [
-                {
-                    "actor_detail": {"avatar_url": "", "first_name": "Budi", "last_name": ""},
-                    "changes": {"state": {"old_value": ["In Progress"], "new_value": ["Done"]}},
-                    "issue_details": {"name": t1.name, "identifier": "GDG-41"},
-                    "activity_time": "09:12 AM",
-                }
-            ],
-            "summary": "Updates were made to the issue by",
-            "actors_involved": 1,
-            "issue": {"issue_identifier": "GDG-41", "name": t1.name, "issue_url": f"{URL}/x"},
-            "receiver": {"email": staf.email},
-            "issue_url": f"{URL}/x",
-            "project_url": f"{URL}/x",
-            "workspace": WS.slug,
-            "project": "Gudang",
-            "user_preference": f"{URL}/settings",
-            "comments": [],
-            "entity_type": "issue",
-        }
-        html = render_to_string("emails/notifications/issue-updates.html", konteks)
+        k = konteks_pembaruan(
+            {"issue_identifier": "GDG-41", "name": t1.name, "issue_url": f"{URL}/x"},
+            [{"nama": "Budi", "waktu": "09:12", "changes": {"state": {"old_value": ["In Progress"], "new_value": ["Done"]}}}],
+            "id",
+        )
+        html, _ = render_email(
+            "emails/notifications/issue-updates.html",
+            {**k, "judul": f"GDG-41 {t1.name}", "alasan": k["t"]["alasan"], "url_preferensi": f"{URL}/settings"},
+            "id",
+        )
         hasil.append(
             (
                 "Staf (Andi)",
-                "Tugas selesai (templat Plane)",
+                "Pembaruan work item",
                 f"GDG-41 {t1.name}",
                 generate_plain_text_from_html(html),
                 html,
-                "Templat bawaan Plane, berbahasa Inggris. Dipakai juga untuk komentar/properti kalau dinyalakan.",
+                "Dipakai juga untuk komentar/properti kalau dinyalakan.",
             )
         )
         return hasil

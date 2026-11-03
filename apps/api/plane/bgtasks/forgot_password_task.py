@@ -2,21 +2,24 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-# Python imports
 import logging
 
-# Third party imports
 from celery import shared_task
 
-# Django imports
-# Third party imports
-from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
-
-# Module imports
-from plane.license.utils.instance_value import get_email_configuration
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email_merek import bahasa_untuk_alamat, buat_pesan, render_email
+from plane.utils.email_teks import teks
 from plane.utils.exception_logger import log_exception
+
+
+def susun_lupa_sandi(email, url, bahasa):
+    """(subjek, html, teks)."""
+    t = teks("lupa_sandi", bahasa, email=email)
+    html, polos = render_email(
+        "emails/auth/forgot_password.html",
+        {"t": t, "forgot_password_url": url, "judul": t["judul"], "pratajuk": t["intro"], "email_penerima": email},
+        bahasa,
+    )
+    return t["subjek"], html, polos
 
 
 @shared_task
@@ -24,47 +27,8 @@ def forgot_password(first_name, email, uidb64, token, current_site):
     try:
         relative_link = f"/accounts/reset-password/?uidb64={uidb64}&token={token}&email={email}"
         abs_url = str(current_site) + relative_link
-
-        (
-            EMAIL_HOST,
-            EMAIL_HOST_USER,
-            EMAIL_HOST_PASSWORD,
-            EMAIL_PORT,
-            EMAIL_USE_TLS,
-            EMAIL_USE_SSL,
-            EMAIL_FROM,
-        ) = get_email_configuration()
-
-        subject = "Permintaan kata sandi baru untuk akun Paradise Task Tracker"
-
-        context = {
-            "first_name": first_name,
-            "forgot_password_url": abs_url,
-            "email": email,
-        }
-
-        html_content = render_to_string("emails/auth/forgot_password.html", context)
-
-        text_content = generate_plain_text_from_html(html_content)
-
-        connection = get_connection(
-            host=EMAIL_HOST,
-            port=int(EMAIL_PORT),
-            username=EMAIL_HOST_USER,
-            password=EMAIL_HOST_PASSWORD,
-            use_tls=EMAIL_USE_TLS == "1",
-            use_ssl=EMAIL_USE_SSL == "1",
-        )
-
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_content,
-            from_email=EMAIL_FROM,
-            to=[email],
-            connection=connection,
-        )
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
+        subjek, html, polos = susun_lupa_sandi(email, abs_url, bahasa_untuk_alamat(email))
+        buat_pesan(ke=email, subjek=subjek, html=html, teks=polos).send()
         logging.getLogger("plane.worker").info("Email sent successfully")
         return
     except Exception as e:

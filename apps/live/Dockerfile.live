@@ -35,13 +35,16 @@ COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN corepack enable pnpm
 
-# Copy full directory structure before fetch to ensure all package.json files are available
-COPY --from=builder /app/out/full/ .
-COPY turbo.json turbo.json
-
-# Fetch dependencies to cache store, then install offline with dev deps
+# Paradise: fetch + install run BEFORE the source copy. out/json already holds
+# every package.json plus pnpm-workspace.yaml (overrides, catalog), which is all
+# pnpm needs. With the source copied first, any code change invalidated both
+# layers and CI re-downloaded every dependency on each build.
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --store-dir=/pnpm/store
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store CI=true pnpm install --offline --frozen-lockfile --store-dir=/pnpm/store
+
+# Source last, so code-only commits reuse the dependency layers above.
+COPY --from=builder /app/out/full/ .
+COPY turbo.json turbo.json
 
 ENV TURBO_TELEMETRY_DISABLED=1
 

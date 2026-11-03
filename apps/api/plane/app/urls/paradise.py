@@ -15,8 +15,11 @@ from plane.app.views.issue.cross_division import (
     RingkasanLintasDivisiEndpoint,
 )
 from plane.app.views.penempatan_saya import PenempatanSayaEndpoint
+from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAnggotaEndpoint
+from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
 from plane.app.views.workspace.organisasi import StrukturOrganisasiEndpoint
+from plane.app.views.workspace.profil_anggota import ProfilAnggotaEndpoint
 from plane.app.views import (
     ProjectTrashEndpoint,
     ChatAnggotaEndpoint,
@@ -32,6 +35,7 @@ from plane.app.views import (
     ChatReaksiEndpoint,
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
+    CompletedReportEndpoint,
     DivisionDashboardEndpoint,
     WorkLogExportEndpoint,
     GoogleCalendarCallbackEndpoint,
@@ -160,6 +164,21 @@ urlpatterns = [
         name="chat-ruang-anggota",
     ),
     path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/anggota/<uuid:user_id>/",
+        ChatKeluarkanAnggotaEndpoint.as_view(),
+        name="chat-ruang-keluarkan",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/panggilan-log/",
+        ChatPanggilanLogEndpoint.as_view(),
+        name="chat-ruang-panggilan-log",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/kelola/",
+        ChatKelolaRuangEndpoint.as_view(),
+        name="chat-ruang-kelola",
+    ),
+    path(
         "workspaces/<str:slug>/chat/<uuid:user_id>/",
         ChatThreadEndpoint.as_view(),
         name="chat-thread",
@@ -169,6 +188,11 @@ urlpatterns = [
         DivisionDashboardEndpoint.as_view(),
         name="divisi-dashboard",
     ),
+    path(
+        "workspaces/<str:slug>/divisi-dashboard/laporan/",
+        CompletedReportEndpoint.as_view(),
+        name="divisi-dashboard-laporan",
+    ),
     # Permintaan tugas lintas divisi. "tujuan" dan "ringkasan" ditaruh sebelum
     # "permintaan" (yang tidak punya segmen variabel) supaya niatnya terbaca;
     # tidak akan bentrok karena ketiganya literal.
@@ -177,6 +201,12 @@ urlpatterns = [
         "workspaces/<str:slug>/struktur-organisasi/",
         StrukturOrganisasiEndpoint.as_view(),
         name="struktur-organisasi",
+    ),
+    # Kartu profil anggota (direktori karyawan workspace).
+    path(
+        "workspaces/<str:slug>/member-profile/<uuid:user_id>/",
+        ProfilAnggotaEndpoint.as_view(),
+        name="member-profile",
     ),
     path(
         "workspaces/<str:slug>/cross-division/tujuan/",

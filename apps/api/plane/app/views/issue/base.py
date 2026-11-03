@@ -745,7 +745,10 @@ class IssueViewSet(BaseViewSet):
             issue,
             data=request.data,
             partial=True,
-            context={"project_id": project_id, "actor": request.user},
+            # `akses_ubah_diperiksa`: `galat_ubah_tugas` baru saja dijalankan di
+            # atas dengan masukan yang sama. Tanpa penanda ini validate() serializer
+            # menjalankannya lagi, dan tiap ubah properti membayar kuerinya dua kali.
+            context={"project_id": project_id, "actor": request.user, "akses_ubah_diperiksa": True},
         )
         if serializer.is_valid():
             serializer.save()

@@ -58,6 +58,10 @@ def _orang(workspace, prefix):
         email=f"{prefix}-{unik}@uji.id", username=f"{prefix}_{unik}", display_name=prefix.capitalize()
     )
     WorkspaceMember.objects.create(workspace=workspace, member=user, role=15)
+    # Email ikut `Profile.language` penerima (3 Nov 2026); tes di sini memeriksa teks Indonesia.
+    from plane.db.models import Profile
+
+    Profile.objects.update_or_create(user=user, defaults={"language": "id"})
     return user
 
 

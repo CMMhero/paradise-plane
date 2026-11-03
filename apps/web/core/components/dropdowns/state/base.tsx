@@ -17,7 +17,7 @@ import { ComboDropDown, Spinner } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { DropdownButton } from "@/components/dropdowns/buttons";
-import { BUTTON_VARIANTS_WITH_TEXT } from "@/components/dropdowns/constants";
+import { BUTTON_VARIANTS_WITH_TEXT, BORDER_BUTTON_VARIANTS } from "@/components/dropdowns/constants";
 import type { TDropdownProps } from "@/components/dropdowns/types";
 // hooks
 import { useDropdown } from "@/hooks/use-dropdown";
@@ -58,7 +58,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
     dropdownArrowClassName = "",
     getStateById,
     hideIcon = false,
-    iconSize = "size-4",
+    iconSize,
     isInitializing = false,
     onChange,
     onClose,
@@ -82,6 +82,8 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
   const [isOpen, setIsOpen] = useState(false);
   // store hooks
   const { t } = useTranslation();
+  // Paradise (KEP-64): ikon di chip properti (varian border) = size-3, sama dengan ikon chip lain.
+  const triggerIconSize = BORDER_BUTTON_VARIANTS.includes(buttonVariant) ? "size-3" : "size-4";
   const statesList = stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state);
   const defaultState = statesList?.find((state) => state?.default);
   const stateValue = value ? value : showDefaultState ? defaultState?.id : undefined;
@@ -118,7 +120,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
         <StateGroupIcon
           stateGroup={state?.group ?? "backlog"}
           color={state?.color}
-          className={cn("flex-shrink-0", iconSize)}
+          className={cn("flex-shrink-0", iconSize ?? "size-4")}
           percentage={state?.order}
         />
         <span className="flex-grow truncate text-left">{state?.name}</span>
@@ -182,7 +184,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
                   <StateGroupIcon
                     stateGroup={selectedState?.group ?? "backlog"}
                     color={selectedState?.color ?? "var(--text-color-tertiary)"}
-                    className={cn("flex-shrink-0", iconSize)}
+                    className={cn("flex-shrink-0", iconSize ?? triggerIconSize)}
                     percentage={selectedState?.order}
                   />
                 )}
@@ -218,12 +220,12 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
       {isOpen && (
         <Combobox.Options className="fixed z-10" static>
           <div
-            className="my-1 w-48 rounded-sm border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
+            className="my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
             ref={setPopperElement}
             style={styles.popper}
             {...attributes.popper}
           >
-            <div className="flex items-center gap-1.5 rounded-sm border border-subtle bg-surface-2 px-2">
+            <div className="flex items-center gap-1.5 search-field border border-subtle bg-surface-2 px-2.5">
               <SearchIcon className="h-3.5 w-3.5 text-placeholder" strokeWidth={1.5} />
               <Combobox.Input
                 as="input"
@@ -245,7 +247,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
                       key={option.value}
                       option={option}
                       selectedValue={value}
-                      className="flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none"
+                      className="flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none"
                     />
                   ))
                 ) : (

@@ -186,7 +186,7 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
         <div className={`sticky top-0 z-10 flex items-center justify-between bg-surface-1 pt-5 pb-5`}>
           <div>
             <button
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-layer-3"
+              className="flex h-5 w-5 items-center justify-center rounded-control bg-layer-3"
               onClick={() => handleClose()}
             >
               <ChevronRightIcon className="h-3 w-3 stroke-2 text-on-color" />
@@ -297,6 +297,7 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
               render={({ field: { value } }) => (
                 <div className="h-7 w-3/5">
                   <MemberDropdown
+                    showProfileCard
                     value={value ?? null}
                     onChange={(val) => {
                       submitChanges({ lead_id: val });
@@ -324,6 +325,7 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
               render={({ field: { value } }) => (
                 <div className="h-7 w-3/5">
                   <MemberDropdown
+                    showProfileCard
                     value={value ?? []}
                     onChange={(val: string[]) => {
                       submitChanges({ member_ids: val });

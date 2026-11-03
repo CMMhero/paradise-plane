@@ -10,6 +10,7 @@ import Link from "next/link";
 import { AUTH_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { PlaneLockup } from "@plane/propel/icons";
+import { cn } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
 import { EAuthModes } from "@/helpers/authentication.helper";
 import { useInstance } from "@/hooks/store/use-instance";
@@ -31,9 +32,11 @@ const authContentMap = {
 
 type AuthHeaderProps = {
   type: EAuthModes;
+  /** Paradise: hides the lockup where the brand panel already shows the logo. */
+  logoClassName?: string;
 };
 
-export const AuthHeader = observer(function AuthHeader({ type }: AuthHeaderProps) {
+export const AuthHeader = observer(function AuthHeader({ type, logoClassName }: AuthHeaderProps) {
   const { t } = useTranslation();
   // store
   const { config } = useInstance();
@@ -43,6 +46,7 @@ export const AuthHeader = observer(function AuthHeader({ type }: AuthHeaderProps
   return (
     <AuthHeaderBase
       pageTitle={t(authContentMap[type].pageTitle)}
+      logoClassName={logoClassName}
       additionalAction={
         enableSignUpConfig && (
           <div className="flex flex-col items-end text-center text-13 font-medium text-tertiary sm:flex-row sm:items-center sm:gap-2">
@@ -64,15 +68,23 @@ export const AuthHeader = observer(function AuthHeader({ type }: AuthHeaderProps
 type TAuthHeaderBase = {
   pageTitle: string;
   additionalAction?: React.ReactNode;
+  logoClassName?: string;
 };
 
 export function AuthHeaderBase(props: TAuthHeaderBase) {
-  const { pageTitle, additionalAction } = props;
+  const { pageTitle, additionalAction, logoClassName } = props;
   return (
     <>
-      <PageHead title={pageTitle + " - Paradise Task Tracker"} />
+      <PageHead title={pageTitle + " - Space Paradise Perkasa"} />
       <div className="sticky top-0 flex w-full flex-shrink-0 items-center justify-between gap-6">
-        <Link href="/">
+        <Link
+          href="/"
+          aria-label="Space Paradise Perkasa"
+          className={cn(
+            "rounded-button focus-visible:ring-2 focus-visible:ring-accent-strong focus-visible:outline-none",
+            logoClassName
+          )}
+        >
           <PlaneLockup height={20} width={95} className="text-primary" />
         </Link>
         {additionalAction}

@@ -8,14 +8,11 @@
  * the component files (same reason as members/constants.ts).
  */
 
-export const selectClass =
-  "rounded-md border border-subtle bg-layer-1 px-2 py-1.5 text-13 text-primary outline-none focus:border-accent-strong";
-
 export const inputClass =
-  "rounded-md border border-subtle bg-layer-1 px-2 py-1.5 text-13 text-primary outline-none placeholder:text-placeholder focus:border-accent-strong";
+  "rounded-field border border-subtle bg-layer-1 px-2 py-1.5 text-13 text-primary outline-none placeholder:text-placeholder focus:border-accent-strong";
 
 export const tableClass = {
-  wrap: "overflow-x-auto rounded-md border border-subtle",
+  wrap: "overflow-x-auto rounded-card border border-subtle",
   table: "w-full text-13",
   head: "bg-layer-1 text-tertiary",
   th: "px-3 py-2 text-left font-medium",

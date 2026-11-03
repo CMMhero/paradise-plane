@@ -295,7 +295,7 @@ export function ProjectDetailsForm(props: IProjectDetailsForm) {
                 value={value}
                 onChange={onChange}
                 hasError={Boolean(errors.name)}
-                className="rounded-md !p-3 font-medium"
+                className="!p-3 font-medium"
                 placeholder={t("common.project_name")}
                 disabled={!isAdmin}
               />
@@ -392,7 +392,7 @@ export function ProjectDetailsForm(props: IProjectDetailsForm) {
                         )}
                       </div>
                     }
-                    buttonClassName="!border-subtle !shadow-none font-medium rounded-md"
+                    buttonClassName="!border-subtle font-medium"
                     input
                     disabled={!isAdmin}
                     // optionsClassName="w-full"
@@ -427,7 +427,7 @@ export function ProjectDetailsForm(props: IProjectDetailsForm) {
                       onChange(value);
                     }}
                     error={Boolean(errors.timezone)}
-                    buttonClassName="!border-subtle !shadow-none font-medium rounded-md"
+                    buttonClassName="!border-subtle font-medium"
                     disabled={!isAdmin}
                   />
                 </>

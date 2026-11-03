@@ -214,7 +214,7 @@ export function GptAssistantPopover(props: Props) {
       >
         <Popover.Panel
           as="div"
-          className={`shadow fixed z-10 flex w-full max-w-full min-w-[50rem] flex-col space-y-4 overflow-hidden rounded-[10px] border border-subtle bg-surface-1 p-4 ${className}`}
+          className={`shadow fixed z-10 flex w-full max-w-full min-w-[50rem] flex-col space-y-4 overflow-hidden rounded-popover border border-subtle bg-surface-1 p-4 ${className}`}
           ref={setPopperElement as Ref<HTMLDivElement>}
           style={styles.popper}
           {...attributes.popper}

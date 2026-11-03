@@ -2,86 +2,62 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-# Python imports
 import logging
 
-# Third party imports
 from celery import shared_task
 
-# Third party imports
-from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
-
-
-# Module imports
-from plane.license.utils.instance_value import get_email_configuration
-from plane.utils.email import generate_plain_text_from_html
+from plane.db.models import ProjectMember, User
+from plane.utils.email_merek import avatar_untuk, bahasa_penerima, buat_pesan, render_email
+from plane.utils.email_teks import teks
 from plane.utils.exception_logger import log_exception
-from plane.db.models import ProjectMember
-from plane.db.models import User
+
+
+def susun_tambah_project(email, pengundang, nama_project, nama_workspace, url, bahasa, gambar=None):
+    """(subjek, html, teks). `pengundang` = User (fotonya ikut) atau nama."""
+    user = pengundang if isinstance(pengundang, User) else None
+    av, _ = avatar_untuk(user, nama="" if user else str(pengundang), gambar=gambar)
+    t = teks("tambah_project", bahasa, pengundang=av["nama"], project=nama_project, workspace=nama_workspace)
+    html, polos = render_email(
+        "emails/notifications/project_addition.html",
+        {
+            "t": t,
+            "project_url": url,
+            "pengundang_avatar": av,
+            "judul": t["judul"],
+            "pratajuk": t["intro"],
+            "email_penerima": email,
+        },
+        bahasa,
+    )
+    return t["subjek"], html, polos
 
 
 @shared_task
 def project_add_user_email(current_site, project_member_id, invitor_id):
     try:
-        # Get the invitor
         invitor = User.objects.get(pk=invitor_id)
-        inviter_first_name = invitor.first_name
-        # Get the project member
-        project_member = ProjectMember.objects.get(pk=project_member_id)
-        # Get the project member details
-        project_name = project_member.project.name
-        workspace_name = project_member.workspace.name
-        member_email = project_member.member.email
+        project_member = ProjectMember.objects.select_related("project", "workspace", "member").get(
+            pk=project_member_id
+        )
+        # Kustomisasi Paradise: kartu "ditambahkan ke project" di ruang "Paradise"
+        # obrolan, sebelum email (yang bisa gagal karena konfigurasi SMTP).
+        # Menelan galatnya sendiri.
+        from plane.utils.kartu_obrolan import kartu_ditambahkan_ke_project  # noqa: PLC0415
+
+        kartu_ditambahkan_ke_project(project_member, invitor_id)
+        member = project_member.member
         project_url = f"{current_site}/{project_member.workspace.slug}/projects/{project_member.project_id}/issues"
-        # set the context
-        context = {
-            "project_name": project_name,
-            "workspace_name": workspace_name,
-            "email": member_email,
-            "inviter_first_name": inviter_first_name,
-            "project_url": project_url,
-        }
-
-        # Get the email configuration
-        (
-            EMAIL_HOST,
-            EMAIL_HOST_USER,
-            EMAIL_HOST_PASSWORD,
-            EMAIL_PORT,
-            EMAIL_USE_TLS,
-            EMAIL_USE_SSL,
-            EMAIL_FROM,
-        ) = get_email_configuration()
-
-        # Set the subject
-        subject = "Anda diundang ke sebuah project di Paradise Task Tracker"
-
-        # Render the email template
-        html_content = render_to_string("emails/notifications/project_addition.html", context)
-        text_content = generate_plain_text_from_html(html_content)
-        # Initialize the connection
-        connection = get_connection(
-            host=EMAIL_HOST,
-            port=int(EMAIL_PORT),
-            username=EMAIL_HOST_USER,
-            password=EMAIL_HOST_PASSWORD,
-            use_tls=EMAIL_USE_TLS == "1",
-            use_ssl=EMAIL_USE_SSL == "1",
+        gambar = []
+        subjek, html, polos = susun_tambah_project(
+            member.email,
+            invitor,
+            project_member.project.name,
+            project_member.workspace.name,
+            project_url,
+            bahasa_penerima(member),
+            gambar,
         )
-        # Send the email
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_content,
-            from_email=EMAIL_FROM,
-            to=[member_email],
-            connection=connection,
-        )
-        # Attach the html content
-        msg.attach_alternative(html_content, "text/html")
-        # Send the email
-        msg.send()
-        # Log the success
+        buat_pesan(ke=member.email, subjek=subjek, html=html, teks=polos, gambar=gambar).send()
         logging.getLogger("plane.worker").info("Email sent successfully.")
         return
     except Exception as e:

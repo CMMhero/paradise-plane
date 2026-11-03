@@ -150,7 +150,7 @@ export function InstanceSetupForm() {
       <div className="mt-10 flex w-full flex-grow flex-col items-center justify-center py-6">
         <div className="relative flex w-full max-w-[22.5rem] flex-col gap-6">
           <FormHeader
-            heading="Siapkan instance Paradise Task Tracker"
+            heading="Set up your Paradise Task Tracker instance"
             subHeading="After this you can manage the instance from God Mode."
           />
           {errorData.type &&
@@ -175,7 +175,7 @@ export function InstanceSetupForm() {
                   First name <span className="text-danger-primary">*</span>
                 </label>
                 <Input
-                  className="w-full border border-subtle !bg-surface-1 placeholder:text-placeholder"
+                  className="w-full"
                   id="first_name"
                   name="first_name"
                   type="text"
@@ -199,7 +199,7 @@ export function InstanceSetupForm() {
                   Last name <span className="text-danger-primary">*</span>
                 </label>
                 <Input
-                  className="w-full border border-subtle !bg-surface-1 placeholder:text-placeholder"
+                  className="w-full"
                   id="last_name"
                   name="last_name"
                   type="text"
@@ -223,7 +223,7 @@ export function InstanceSetupForm() {
                 Email <span className="text-danger-primary">*</span>
               </label>
               <Input
-                className="w-full border border-subtle !bg-surface-1 placeholder:text-placeholder"
+                className="w-full"
                 id="email"
                 name="email"
                 type="email"
@@ -244,7 +244,7 @@ export function InstanceSetupForm() {
                 Company name <span className="text-danger-primary">*</span>
               </label>
               <Input
-                className="w-full border border-subtle !bg-surface-1 placeholder:text-placeholder"
+                className="w-full"
                 id="company_name"
                 name="company_name"
                 type="text"
@@ -267,7 +267,7 @@ export function InstanceSetupForm() {
               </label>
               <div className="relative">
                 <Input
-                  className="w-full border border-subtle !bg-surface-1 placeholder:text-placeholder"
+                  className="w-full"
                   id="password"
                   name="password"
                   type={showPassword.password ? "text" : "password"}
@@ -354,8 +354,6 @@ export function InstanceSetupForm() {
             <div className="relative flex gap-2">
               <div>
                 <Checkbox
-                  className="h-4 w-4"
-                  iconClassName="w-3 h-3"
                   id="is_telemetry_enabled"
                   onChange={() => handleFormChange("is_telemetry_enabled", !formData.is_telemetry_enabled)}
                   checked={formData.is_telemetry_enabled}

@@ -100,7 +100,8 @@ function CustomSelect(props: ICustomSelectProps) {
                 ref={setReferenceElement}
                 type="button"
                 className={cn(
-                  "flex w-full items-center justify-between gap-1 rounded border border-strong",
+                  // Paradise (KEP-64): pemicu tampil sama dengan Input (garis tipis, latar layer-2).
+                  "flex w-full items-center justify-between gap-1 rounded-field border-[0.5px] border-subtle-1 bg-layer-2",
                   {
                     "px-3 py-2 text-13": input,
                     "px-2 py-1 text-11": !input,
@@ -122,7 +123,7 @@ function CustomSelect(props: ICustomSelectProps) {
             <Combobox.Options data-prevent-outside-click>
               <div
                 className={cn(
-                  "z-30 my-1 min-w-48 overflow-y-scroll rounded-md border-[0.5px] border-subtle-1 bg-surface-1 px-2 py-2.5 text-11 whitespace-nowrap focus:outline-none",
+                  "z-30 my-1 min-w-48 overflow-y-scroll rounded-popover border-[0.5px] border-subtle-1 bg-surface-1 px-2 py-2.5 text-11 whitespace-nowrap focus:outline-none",
                   optionsClassName
                 )}
                 ref={setPopperElement}
@@ -166,7 +167,7 @@ function Option(props: ICustomSelectItemProps) {
       value={value}
       className={({ active }) =>
         cn(
-          "flex cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 text-secondary select-none",
+          "flex cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 text-secondary select-none",
           {
             "bg-layer-transparent-hover": active,
           },

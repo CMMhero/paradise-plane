@@ -102,7 +102,7 @@ export const InboxSidebar = observer(function InboxSidebar(props: IInboxSidebarP
             >
               <div>{t(option?.i18n_label)}</div>
               {option?.key === "open" && currentTab === option?.key && (
-                <div className="rounded-full bg-accent-primary/20 p-1.5 py-0.5 text-11 font-semibold text-accent-primary">
+                <div className="rounded-control bg-accent-primary/20 p-1.5 py-0.5 text-11 font-semibold text-accent-primary">
                   {inboxIssuePaginationInfo?.total_results || 0}
                 </div>
               )}

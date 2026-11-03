@@ -701,6 +701,11 @@ def notifications(
             # Bulk create notifications
             Notification.objects.bulk_create(bulk_notifications, batch_size=100)
             EmailNotificationLog.objects.bulk_create(bulk_email_logs, batch_size=100, ignore_conflicts=True)
+            # Kustomisasi Paradise: baris inbox yang sama juga jadi kartu di ruang
+            # "Paradise" obrolan. Menelan galatnya sendiri.
+            from plane.utils.kartu_obrolan import kirim_kartu_notifikasi  # noqa: PLC0415
+
+            kirim_kartu_notifikasi(bulk_notifications)
         return
     except Exception as e:
         print(e)

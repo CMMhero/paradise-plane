@@ -10,7 +10,7 @@ import { LIVE_BASE_PATH, LIVE_BASE_URL } from "@plane/constants";
 
 /** Kejadian yang disiarkan Django lewat Redis. */
 export type TKejadian = {
-  tipe: "siap" | "pesan" | "sunting" | "hapus" | "reaksi" | "sinyal" | "pergi";
+  tipe: "siap" | "pesan" | "sunting" | "hapus" | "reaksi" | "sinyal" | "pergi" | "ruang" | "anggota";
   ruang?: string;
   saya?: string;
   oleh?: string | null;
@@ -30,7 +30,7 @@ type Opsi = {
   ruangId?: string | null;
   /** Dipanggil saat ada perubahan isi ruang. Yang memanggil menarik ulang
    * sendiri; muatan pesannya sengaja tidak dikirim lewat soket. */
-  onPerubahan?: () => void;
+  onPerubahan?: (kejadian: TKejadian) => void;
   /** Sinyal panggilan dari orang lain di ruang yang sama. */
   onSinyal?: (dari: string, muatan: unknown) => void;
   /** Lawan bicara menutup tab atau berpindah ruang. */
@@ -102,7 +102,7 @@ export function useObrolanLangsung({ slug, ruangId, onPerubahan, onSinyal, onPer
           cbRef.current.onPergi?.(kejadian.dari);
           return;
         }
-        cbRef.current.onPerubahan?.();
+        cbRef.current.onPerubahan?.(kejadian);
       });
 
       ws.addEventListener("close", () => {

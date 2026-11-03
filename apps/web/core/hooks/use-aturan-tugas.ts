@@ -6,7 +6,7 @@
  */
 
 import { useContext } from "react";
-import useSWR from "swr";
+import useSWR, { type SWRConfiguration } from "swr";
 import { EUserPermissionsLevel } from "@plane/constants";
 import type { TIssue } from "@plane/types";
 import { EUserProjectRoles } from "@plane/types";
@@ -17,6 +17,22 @@ import { StoreContext } from "@/lib/store-context";
 import { IssueService } from "@/services/issue";
 import { PersetujuanService, type TBisaDitugaskan } from "@/services/persetujuan.service";
 import { UserService } from "@/services/user.service";
+
+/**
+ * Opsi SWR untuk hak akses yang dibaca per kartu/baris papan.
+ *
+ * Satu papan bisa memasang puluhan langganan ke kunci yang sama, dan kartu
+ * di dalam `RenderIfVisible` dipasang ulang saat digulir. Dengan opsi global
+ * (revalidate saat mount + saat fokus) itu berarti request baru tiap kali
+ * jendela dedupe 2 detik lewat, dan satu request per project tiap tab kembali
+ * difokus. Hak akses jarang berubah, jadi cukup diambil sekali lalu dipakai
+ * bersama; perubahan jabatan terbaca sesudah muat ulang.
+ */
+const OPSI_HAK_AKSES: SWRConfiguration = {
+  revalidateOnMount: undefined,
+  revalidateIfStale: false,
+  revalidateOnFocus: false,
+};
 
 const userService = new UserService();
 const issueService = new IssueService();
@@ -67,7 +83,11 @@ export const BELUM_DIMUAT = null;
 export const BELUM_DIISI = -1;
 export const useTingkatSaya = (workspaceSlug: string | undefined, projectId: string | null | undefined) => {
   const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
-  const { data, isLoading } = useSWR(kunci, () => ambilBisaDitugaskan(workspaceSlug as string, projectId as string));
+  const { data, isLoading } = useSWR(
+    kunci,
+    () => ambilBisaDitugaskan(workspaceSlug as string, projectId as string),
+    OPSI_HAK_AKSES
+  );
   if (!kunci || isLoading) return null;
   return data?.tingkat_saya ?? BELUM_DIISI;
 };
@@ -169,7 +189,11 @@ export const useBisaDitugaskan = (
   bawahanIds: string[];
 } => {
   const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
-  const { data, isLoading } = useSWR(kunci, () => ambilBisaDitugaskan(workspaceSlug as string, projectId as string));
+  const { data, isLoading } = useSWR(
+    kunci,
+    () => ambilBisaDitugaskan(workspaceSlug as string, projectId as string),
+    OPSI_HAK_AKSES
+  );
   if (!kunci || isLoading || !data)
     return { mode: null, userIds: [], memuat: true, tingkat: null, gerbangAktif: true, bawahanIds: [] };
   const users = (data.users ?? []).map((u) => u.id);
@@ -221,8 +245,10 @@ export const usePenilaiUbahTugas = (
   projectId: string | null | undefined
 ): ((issue: (TugasKepemilikan & { project_id?: string | null }) | undefined | null) => boolean) => {
   const { data: currentUser } = useUser();
-  const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>
-    userService.currentUserInstanceAdminStatus()
+  const { data: statusAdmin } = useSWR(
+    currentUser?.id ? "STATUS_SUPER_ADMIN" : null,
+    () => userService.currentUserInstanceAdminStatus(),
+    OPSI_HAK_AKSES
   );
   const wewenang = useBisaDitugaskan(workspaceSlug, projectId);
   const bawahan = new Set(wewenang.bawahanIds);
@@ -271,8 +297,10 @@ export const useAturanTugas = () => {
   // Status Super Admin tidak ikut di payload `me`, jadi diambil dari endpoint
   // khususnya. Kuncinya tetap, jadi SWR menyimpannya untuk seluruh sesi dan
   // ini bukan permintaan per layar.
-  const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>
-    userService.currentUserInstanceAdminStatus()
+  const { data: statusAdmin } = useSWR(
+    currentUser?.id ? "STATUS_SUPER_ADMIN" : null,
+    () => userService.currentUserInstanceAdminStatus(),
+    OPSI_HAK_AKSES
   );
 
   const adalahPembuat = (issue: PembuatTugas | undefined | null) =>
@@ -337,8 +365,10 @@ export const useBolehHapus = (
 ): { boleh: boolean; terkunci: boolean } => {
   const { allowPermissions } = useUserPermissions();
   const { data: currentUser } = useUser();
-  const { data: statusAdmin } = useSWR(currentUser?.id ? "STATUS_SUPER_ADMIN" : null, () =>
-    userService.currentUserInstanceAdminStatus()
+  const { data: statusAdmin } = useSWR(
+    currentUser?.id ? "STATUS_SUPER_ADMIN" : null,
+    () => userService.currentUserInstanceAdminStatus(),
+    OPSI_HAK_AKSES
   );
   const bolehUbah = useBolehUbahTugas(workspaceSlug, projectId, issue);
   const { memuat, gerbangAktif } = useBisaDitugaskan(workspaceSlug, projectId);

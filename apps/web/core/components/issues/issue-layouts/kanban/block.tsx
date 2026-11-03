@@ -34,7 +34,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
-import { ApprovalCardBadge } from "@/components/issues/approval-card-badge";
+import { ApprovalCardBadge, getVisibleApprovalStatus } from "@/components/issues/approval-card-badge";
 import { IssueStats } from "@/plane-web/components/issues/issue-layouts/issue-stats";
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { IssueProperties } from "../properties/all-properties";
@@ -131,7 +131,12 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
           <span>{issue.name}</span>
         </div>
       </Tooltip>
-      <ApprovalCardBadge issue={issue} />
+      {/* Kustomisasi Paradise: chip persetujuan ikut Display properties & modul Approvals. */}
+      {displayProperties && (
+        <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="approval_status">
+          <ApprovalCardBadge issue={issue} />
+        </WithDisplayPropertiesHOC>
+      )}
 
       <IssueProperties
         className="flex flex-wrap items-center gap-2 pt-1.5 whitespace-nowrap text-tertiary"
@@ -280,7 +285,7 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
           href={workItemLink}
           ref={cardRef}
           className={cn(
-            "block w-full rounded-lg border border-subtle bg-layer-2 p-3 text-13 shadow-raised-100 outline-[0.5px] outline-transparent transition-all hover:border-strong hover:shadow-raised-200",
+            "block w-full rounded-card border border-subtle bg-layer-2 p-3 text-13 shadow-raised-100 outline-[0.5px] outline-transparent transition-all hover:border-strong hover:shadow-raised-200",
             { "hover:cursor-pointer": isDragAllowed },
             { "border border-accent-strong hover:border-accent-strong": getIsIssuePeeked(issue.id) },
             { "z-[100] bg-layer-1": isCurrentBlockDragging },
@@ -289,11 +294,11 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
             // antrean sekilas di papan yang ramai.
             {
               "border-warning-subtle bg-warning-primary/[0.04] hover:border-warning-strong":
-                issue.approval_status === "menunggu",
+                getVisibleApprovalStatus(issue) === "menunggu",
             },
             {
               "border-danger-subtle bg-danger-primary/[0.04] hover:border-danger-strong":
-                issue.approval_status === "ditolak",
+                getVisibleApprovalStatus(issue) === "ditolak",
             }
           )}
           onClick={() => handleIssuePeekOverview(issue)}

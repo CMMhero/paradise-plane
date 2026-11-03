@@ -19,6 +19,7 @@ import { CustomSearchSelect, CustomSelect, Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Field } from "@/components/common/paradise-ui";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 import { WorkspacesTabs } from "@/components/common/section-tabs";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
@@ -27,7 +28,6 @@ import type { Route } from "./+types/page";
 
 const memberService = new InstanceMemberService();
 
-const TOMBOL_SELECT = "w-full rounded-md border-subtle bg-layer-2";
 const BULAN = Array.from({ length: 13 }, (_, i) => i);
 
 const sama = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -39,7 +39,7 @@ function Bagian({ title, note, children }: { title: string; note: string; childr
         <h3 className="text-11 font-medium tracking-wide text-secondary uppercase">{title}</h3>
         <p className="text-12 text-tertiary">{note}</p>
       </div>
-      <div className="space-y-3 rounded-md border border-subtle px-4 py-3">{children}</div>
+      <div className="space-y-3 rounded-card border border-subtle px-4 py-3">{children}</div>
     </section>
   );
 }
@@ -53,7 +53,7 @@ function PilihBulan({ label, nilai, onUbah }: { label: string; nilai: number; on
         value={nilai}
         label={teks(nilai)}
         onChange={(v: number) => onUbah(Number(v))}
-        buttonClassName={TOMBOL_SELECT}
+        buttonClassName="w-full"
         className="w-full"
         maxHeight="lg"
         input
@@ -127,6 +127,7 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
   return (
     <PageWrapper header={{ title: "Workspaces on this instance", description: t.description }}>
       <WorkspacesTabs />
+      <UnsavedBar isDirty={isDirty} isSaving={isSaving} onSave={simpan} onDiscard={() => setDraf(null)} />
       {error && <p className="text-13 text-danger-primary">{t.load_failed}</p>}
       {!error && !nilai && (
         <Loader className="space-y-4">
@@ -142,7 +143,7 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
                 value={nilai.network}
                 label={labelVisibilitas(nilai.network)}
                 onChange={(v: 0 | 2) => ubah({ network: Number(v) as 0 | 2 })}
-                buttonClassName={TOMBOL_SELECT}
+                buttonClassName="w-full"
                 className="w-full"
                 input
               >
@@ -167,7 +168,7 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
                   value={nilai.timezone}
                   label={opsiZona.find((z) => z.value === nilai.timezone)?.label ?? nilai.timezone}
                   onChange={(v: string) => ubah({ timezone: v })}
-                  buttonClassName={TOMBOL_SELECT}
+                  buttonClassName="w-full"
                   className="w-full"
                   input
                   maxHeight="lg"
@@ -190,12 +191,12 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
           </Bagian>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-subtle pt-4">
-            <Button variant="primary" size="sm" disabled={!isDirty || isSaving} onClick={() => void simpan()}>
+            <Button variant="primary" size="base" disabled={!isDirty || isSaving} onClick={() => void simpan()}>
               {t.save}
             </Button>
             <Button
               variant="secondary"
-              size="sm"
+              size="base"
               disabled={isSaving || sama(nilai, data.pabrik)}
               onClick={() => setDraf(data.pabrik)}
             >

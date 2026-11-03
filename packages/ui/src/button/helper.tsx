@@ -29,10 +29,10 @@ export interface IButtonStyling {
 }
 
 enum buttonSizeStyling {
-  sm = `px-3 py-1.5 font-medium text-11 rounded-sm flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
-  md = `px-4 py-1.5 font-medium text-13 rounded-sm flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
-  lg = `px-5 py-2 font-medium text-13 rounded-sm flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
-  xl = `px-5 py-3.5 font-medium text-13 rounded-sm flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
+  sm = `h-6 px-2.5 font-medium text-11 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
+  md = `h-7 px-3 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
+  lg = `h-8 px-4 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
+  xl = `h-9 px-5 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
 }
 
 enum buttonIconStyling {
@@ -46,7 +46,7 @@ export const buttonStyling: IButtonStyling = {
   primary: {
     default: `text-on-color bg-accent-primary`,
     hover: `hover:bg-accent-primary/80`,
-    pressed: `focus:text-custom-brand-40 focus:bg-accent-primary/80`,
+    pressed: `focus:bg-accent-primary/80`,
     disabled: `cursor-not-allowed !bg-layer-1 !text-on-color-disabled`,
   },
   "accent-primary": {

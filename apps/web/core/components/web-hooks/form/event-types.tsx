@@ -7,6 +7,7 @@
 // types
 import { useTranslation } from "@plane/i18n";
 import type { TWebhookEventTypes } from "@plane/types";
+import { RadioGroup } from "@plane/propel/radio-group";
 
 type Props = {
   value: string;
@@ -31,22 +32,17 @@ export function WebhookOptions(props: Props) {
   return (
     <>
       <h6 className="text-13 font-medium">{t("workspace_settings.settings.webhooks.modal.question")}</h6>
-      <div className="space-y-3">
+      <RadioGroup
+        name="webhook-event-types"
+        aria-label={t("workspace_settings.settings.webhooks.modal.question")}
+        className="-mx-2"
+        value={value}
+        onValueChange={(next) => onChange(next as TWebhookEventTypes)}
+      >
         {WEBHOOK_EVENT_TYPES.map((option) => (
-          <div key={option.key} className="flex items-center gap-2">
-            <input
-              id={option.key}
-              type="radio"
-              value={option.key}
-              checked={value == option.key}
-              onChange={() => onChange(option.key)}
-            />
-            <label className="text-13" htmlFor={option.key}>
-              {t(option.i18n_label)}
-            </label>
-          </div>
+          <RadioGroup.Item key={option.key} value={option.key} label={t(option.i18n_label)} />
         ))}
-      </div>
+      </RadioGroup>
     </>
   );
 }

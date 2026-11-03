@@ -92,7 +92,7 @@ export const InboxIssueListItem = observer(function InboxIssueListItem(props: In
                 <div className="text-11 text-secondary">{renderFormattedDate(issue.created_at ?? "")}</div>
               </Tooltip>
 
-              <div className="rounded-full border-2 border-strong-1" />
+              <div className="rounded-control border-2 border-strong-1" />
 
               {issue.priority && (
                 <Tooltip tooltipHeading="Priority" tooltipContent={`${issue.priority ?? "None"}`}>
@@ -132,7 +132,7 @@ export const InboxIssueListItem = observer(function InboxIssueListItem(props: In
             {createdByDetails && createdByDetails.email?.includes("intake@plane.so") ? (
               <Avatar src={getFileURL("")} name={"Sistem"} size="md" showTooltip />
             ) : createdByDetails ? (
-              <ButtonAvatars showTooltip={false} userIds={createdByDetails?.id} />
+              <ButtonAvatars showProfileCard showTooltip={false} userIds={createdByDetails?.id} />
             ) : null}
           </div>
         </Row>

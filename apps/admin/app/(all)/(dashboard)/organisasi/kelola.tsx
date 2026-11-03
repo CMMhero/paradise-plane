@@ -30,7 +30,6 @@ import {
   type TPerintahKelola,
 } from "./util";
 
-const TOMBOL_SELECT = "w-full rounded-md border-subtle bg-layer-2";
 const TANPA_KODE: string[] = [];
 
 // ---------------------------------------------------------------------------
@@ -97,10 +96,10 @@ export function ModalKodeNama({
       closeLabel={s.editor.close}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onTutup}>
+          <Button variant="secondary" size="base" onClick={onTutup}>
             {s.org.cancel}
           </Button>
-          <Button variant="primary" size="sm" loading={sibuk} disabled={!siap} onClick={simpan}>
+          <Button variant="primary" size="base" loading={sibuk} disabled={!siap} onClick={simpan}>
             {labelSimpan}
           </Button>
         </>
@@ -182,7 +181,7 @@ function ModalTambahOrang({
       subtitle={catatan}
       closeLabel={s.editor.close}
       footer={
-        <Button variant="secondary" size="sm" onClick={onTutup}>
+        <Button variant="secondary" size="base" onClick={onTutup}>
           {s.editor.close}
         </Button>
       }
@@ -200,7 +199,7 @@ function ModalTambahOrang({
             {calon.length === 0 ? s.org.no_candidates : s.members.empty}
           </p>
         ) : (
-          <ul className="divide-y divide-subtle rounded-md border border-subtle">
+          <ul className="divide-y divide-subtle rounded-card border border-subtle">
             {tampil.map((o) => {
               const ket = keterangan(o);
               return (
@@ -211,7 +210,7 @@ function ModalTambahOrang({
                   <BadgeJabatan tingkat={o.tingkat} size="sm" />
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="base"
                     loading={sibuk === o.id}
                     disabled={sibuk !== null && sibuk !== o.id}
                     onClick={() => void tambah(o)}
@@ -280,10 +279,10 @@ function ModalSetelanDepartemen({
       footerNote={berubah ? s.org.department_settings_note : s.org.nothing_changed}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onTutup}>
+          <Button variant="secondary" size="base" onClick={onTutup}>
             {s.org.cancel}
           </Button>
-          <Button variant="primary" size="sm" loading={sibuk} disabled={!berubah || sibuk} onClick={simpan}>
+          <Button variant="primary" size="base" loading={sibuk} disabled={!berubah || sibuk} onClick={simpan}>
             {s.org.save}
           </Button>
         </>
@@ -295,7 +294,7 @@ function ModalSetelanDepartemen({
             value={divisi}
             label={semuaDivisi.find((v) => v.id === divisi)?.nama ?? ""}
             onChange={(v: string) => setDivisi(v)}
-            buttonClassName={TOMBOL_SELECT}
+            buttonClassName="w-full"
             className="w-full"
             input
           >
@@ -314,7 +313,7 @@ function ModalSetelanDepartemen({
             value={project}
             label={semuaProject.find((p) => p.id === project)?.name ?? s.org.project_picker}
             onChange={(v: string) => setProject(v)}
-            buttonClassName={TOMBOL_SELECT}
+            buttonClassName="w-full"
             className="w-full"
             input
             maxHeight="lg"

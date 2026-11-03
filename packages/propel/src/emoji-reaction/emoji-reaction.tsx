@@ -82,7 +82,7 @@ const EmojiReaction = React.forwardRef(function EmojiReaction(
       ref={ref}
       onClick={handleClick}
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full border px-1.5 text-11 transition-all duration-200",
+        "inline-flex items-center gap-0.5 rounded-control border px-1.5 text-11 transition-all duration-200",
         reacted
           ? "border-accent-strong bg-accent-primary/10 text-accent-primary"
           : "border-subtle bg-surface-1 text-tertiary hover:border-strong hover:bg-surface-2",

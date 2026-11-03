@@ -11,7 +11,7 @@ import { ArrowUpRight, ChevronRight, Lock, Pencil, Trash2, Upload } from "lucide
 import { Link } from "react-router";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
-import { Button } from "@plane/propel/button";
+import { Button, getButtonStyling } from "@plane/propel/button";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TPage } from "@plane/types";
@@ -19,6 +19,7 @@ import { cn, getPageName, renderFormattedDate } from "@plane/utils";
 // components
 import { GridKartu, KartuKerangka, KartuMateri } from "@/components/wiki/kartu";
 // hooks
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import useLocalStorage from "@/hooks/use-local-storage";
 // services
 import { WikiMaterialService } from "@/services/wiki_material.service";
@@ -143,13 +144,15 @@ export function TombolUnggah({
       aria-label={t("wiki_ui.folder.upload_to_named", { name: namaTopik })}
     >
       <Upload className="size-3.5" />
-      {t("wiki_ui.folder.upload_material")}
+      {/* Versi ringkas (judul sub-topik) cuma ikon di HP: barisnya juga memuat
+          nama, jumlah materi, dan tautan buka. */}
+      <span className={ringkas ? "hidden sm:inline" : undefined}>{t("wiki_ui.folder.upload_material")}</span>
     </Button>
   );
 }
 
 const KELAS_AKSI =
-  "grid size-7 place-items-center rounded-md bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100";
+  "grid size-7 place-items-center rounded-button bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100 sentuh:size-9 sentuh:opacity-100";
 
 /** Grid kartu materi berikut tombol ganti judul dan hapus, kalau orangnya berhak. */
 export function GridMateri({
@@ -164,6 +167,7 @@ export function GridMateri({
   const { t } = useTranslation();
   const { workspaceSlug, projectId, onJumlahBerubah } = konteks;
   const [materiDiganti, setMateriDiganti] = useState<{ id: string; title: string; name: string } | null>(null);
+  const { minta, dialog: dialogKonfirmasi } = useKonfirmasi();
 
   const hapus = async (assetId: string, judul: string) => {
     try {
@@ -207,7 +211,15 @@ export function GridMateri({
                     type="button"
                     title={t("wiki_ui.folder.delete")}
                     aria-label={t("wiki_ui.folder.delete_named", { title: m.title })}
-                    onClick={() => void hapus(m.id, m.title)}
+                    onClick={() =>
+                      minta(
+                        {
+                          judul: t("wiki_ui.folder.confirm_delete_title"),
+                          isi: t("wiki_ui.folder.confirm_delete_body", { title: m.title }),
+                        },
+                        () => hapus(m.id, m.title)
+                      )
+                    }
                     className={KELAS_AKSI}
                   >
                     <Trash2 className="size-3.5" />
@@ -218,6 +230,8 @@ export function GridMateri({
           />
         ))}
       </GridKartu>
+
+      {dialogKonfirmasi}
 
       {materiDiganti && (
         <GantiNamaMateri
@@ -275,7 +289,7 @@ export const SeksiSubtopik = observer(function SeksiSubtopik({
   };
 
   return (
-    <section className={cn("rounded-lg border border-subtle bg-surface-1", kedalaman > 0 && "bg-layer-1")}>
+    <section className={cn("rounded-card border border-subtle bg-surface-1", kedalaman > 0 && "bg-layer-1")}>
       <div className="flex items-center gap-2 px-3 py-2.5">
         <button
           type="button"
@@ -283,7 +297,7 @@ export const SeksiSubtopik = observer(function SeksiSubtopik({
           aria-expanded={terbuka}
           aria-controls={idIsi}
           aria-label={t(terbuka ? "wiki_ui.folder.collapse_named" : "wiki_ui.folder.expand_named", { name: nama })}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-layer-1-hover focus-visible:bg-layer-1-hover"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-item px-1 py-1 text-left transition-colors hover:bg-layer-1-hover focus-visible:bg-layer-1-hover"
         >
           <ChevronRight
             className={cn("size-4 shrink-0 text-tertiary transition-transform duration-150", terbuka && "rotate-90")}
@@ -294,7 +308,7 @@ export const SeksiSubtopik = observer(function SeksiSubtopik({
             </span>
           )}
           <span className="truncate text-14 font-semibold text-primary">{nama}</span>
-          <span className="shrink-0 rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
+          <span className="shrink-0 rounded-control bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
             {t("wiki_ui.folder.material_count", { count: total })}
           </span>
         </button>
@@ -303,9 +317,10 @@ export const SeksiSubtopik = observer(function SeksiSubtopik({
         <Link
           to={`/${konteks.workspaceSlug}/wiki/${topik.id}`}
           title={t("wiki_ui.folder.open_topic")}
-          className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-12 font-medium text-tertiary transition-colors hover:bg-layer-1-hover hover:text-secondary"
+          aria-label={t("wiki_ui.folder.open_topic")}
+          className={cn(getButtonStyling("ghost", "base"), "shrink-0")}
         >
-          {t("wiki_ui.folder.open_topic")}
+          <span className="hidden sm:inline">{t("wiki_ui.folder.open_topic")}</span>
           <ArrowUpRight className="size-3.5" />
         </Link>
       </div>

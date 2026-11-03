@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 // local
+import { StateBox } from "@/components/common/paradise";
 import { SERI } from "./constants";
 
 type Titik = { tgl: string; login: number; orang: number };
@@ -40,12 +41,12 @@ export function GrafikHarian({ harian }: Props) {
 
   if (titik.length === 0) {
     return (
-      <div className="rounded-md border border-subtle p-8 text-center text-13 text-tertiary">
+      <StateBox>
         No sign-ins recorded in this range.
         <div className="mt-1 text-11 text-placeholder">
           History is only recorded since this feature was installed, so earlier days are empty, not quiet.
         </div>
-      </div>
+      </StateBox>
     );
   }
 
@@ -62,7 +63,7 @@ export function GrafikHarian({ harian }: Props) {
   const t = aktif !== null ? titik[aktif] : null;
 
   return (
-    <div className="rounded-md border border-subtle p-3">
+    <div className="rounded-card border border-subtle p-3">
       {/* Legenda selalu ada untuk 2 seri, identitas tidak boleh bersandar pada warna saja. */}
       <div className="mb-2 flex items-center gap-4 px-1">
         {(["login", "orang"] as const).map((k) => (
@@ -175,7 +176,7 @@ export function GrafikHarian({ harian }: Props) {
 
         {t ? (
           <div
-            className="shadow-sm pointer-events-none absolute top-0 rounded-md border border-subtle bg-layer-1 px-2 py-1 text-11"
+            className="pointer-events-none absolute top-0 rounded-popover border border-subtle bg-layer-1 px-2 py-1 text-11"
             style={{ left: `${(x(aktif ?? 0) / W) * 100}%`, transform: "translateX(-50%)" }}
           >
             <div className="font-medium text-primary">{tanggalPendek(t.tgl)}</div>

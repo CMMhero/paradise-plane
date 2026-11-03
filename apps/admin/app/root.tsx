@@ -17,8 +17,8 @@ import { AppProviders } from "@/providers";
 import type { Route } from "./+types/root";
 // fonts (side-effect imports, memuat font global)
 // oxlint-disable no-unassigned-import
-import "@fontsource-variable/inter";
-import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+import "@fontsource-variable/plus-jakarta-sans";
+import uiFontWoff2 from "@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url";
 // Berat 400 SAJA, bukan seluruh paket.
 //
 // `@fontsource/material-symbols-rounded` polos menarik EMPAT berat (100, 200,
@@ -35,11 +35,11 @@ import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wgh
 // ketebalan 400. Untuk huruf IKON itu justru yang diinginkan, karena ketebalan
 // goresnya jadi seragam di seluruh aplikasi.
 import "@fontsource/material-symbols-rounded/400.css";
-import "@fontsource/ibm-plex-mono";
+import "@fontsource-variable/geist-mono";
 // oxlint-enable no-unassigned-import
 
 const APP_TITLE = "God Mode, Paradise Task Tracker";
-const APP_DESCRIPTION = "Panel administrasi instance Paradise Task Tracker.";
+const APP_DESCRIPTION = "Admin panel for the Paradise Task Tracker instance.";
 
 export const links: LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon },
@@ -50,7 +50,7 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: globalStyles },
   {
     rel: "preload",
-    href: interVariableWoff2,
+    href: uiFontWoff2,
     as: "font",
     type: "font/woff2",
     crossOrigin: "anonymous",

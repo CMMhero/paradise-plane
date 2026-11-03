@@ -90,7 +90,17 @@ from .superadmin_visibility import SuperAdminTerlihatDiProject
 from .akun_terhapus import AkunTerhapus, DOMAIN_AKUN_TERHAPUS, NAMA_AKUN_TERHAPUS, adalah_akun_terhapus, email_akun_terhapus
 from .deadline_reminder import PengingatTenggat, SEMUA_TITIK, TITIK_OVERDUE, TITIK_SEBELUM
 from .google_calendar import AcaraKalender, KalenderGoogle, SCOPE_KALENDER
-from .chat import Langganan, PesanLangsung, ReaksiPesan, Ruang, BATAS_ISI
+from .chat import (
+    AWALAN_KABAR,
+    BATAS_ISI,
+    KUNCI_CHANGELOG,
+    KUNCI_PENGUMUMAN,
+    JenisPesan,
+    Langganan,
+    PesanLangsung,
+    ReaksiPesan,
+    Ruang,
+)
 from .login_activity import LoginActivity, AMBANG_AKTIF_MENIT, RETENSI_HARI
 from .permintaan_lintas_divisi import PermintaanLintasDivisi
 from .persetujuan_penugasan import (

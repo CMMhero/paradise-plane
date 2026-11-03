@@ -27,6 +27,7 @@ from rest_framework.response import Response
 from . import BaseAPIView
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.db.models import Departemen, JabatanOrganisasi, TINGKAT_MEMBER, TINGKAT_SUPERVISOR, Workspace
+from plane.db.penempatan import setel_penempatan
 from plane.db.superadmin import is_super_admin
 from plane.utils.hierarki import struktur_aktif
 
@@ -62,7 +63,12 @@ class PenempatanSayaEndpoint(BaseAPIView):
     def get(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
         perlu = perlu_pilih_departemen(request.user, workspace.id)
-        return Response({"perlu_pilih": perlu, "departemen": self._daftar(workspace.id) if perlu else []})
+        # `?daftar=1`: daftar departemen selalu ikut, untuk pilihan Job title di
+        # profil. Nama departemen bukan rahasia bagi anggota workspace.
+        minta_daftar = request.query_params.get("daftar") == "1"
+        return Response(
+            {"perlu_pilih": perlu, "departemen": self._daftar(workspace.id) if perlu or minta_daftar else []}
+        )
 
     def post(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
@@ -75,21 +81,9 @@ class PenempatanSayaEndpoint(BaseAPIView):
             return Response({"error": "Departemen tidak ditemukan."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            # all_objects + hidupkan: baris yang pernah dicabut menempati slot unik (jebakan A21).
-            baris = JabatanOrganisasi.all_objects.filter(workspace_id=workspace.id, member=request.user).first()
-            if baris is None:
-                JabatanOrganisasi.objects.create(
-                    workspace_id=workspace.id,
-                    member=request.user,
-                    tingkat=TINGKAT_MEMBER,
-                    sumber=SUMBER_MANDIRI,
-                    departemen=departemen,
-                )
-            else:
-                baris.deleted_at = None
-                baris.tingkat = TINGKAT_MEMBER
-                baris.sumber = SUMBER_MANDIRI
-                baris.departemen = departemen
-                baris.divisi = None
-                baris.save(update_fields=["deleted_at", "tingkat", "sumber", "departemen", "divisi", "updated_at"])
+            # Satu penulis penempatan (KEP-76): hidupkan baris lama kalau ada (A21),
+            # baris "tanpa tempat" diganti departemen yang dipilih.
+            setel_penempatan(
+                workspace, request.user, TINGKAT_MEMBER, {str(departemen.id)}, set(), sumber=SUMBER_MANDIRI
+            )
         return Response({"perlu_pilih": False, "departemen": []}, status=status.HTTP_201_CREATED)

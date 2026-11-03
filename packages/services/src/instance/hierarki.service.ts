@@ -36,14 +36,23 @@ export type TAnggotaHierarki = {
   /** Identifier divisi yang ia awasi (baris eksplisit). */
   divisi_diawasi: string[];
   punya_atasan: boolean;
-  /** Penempatan KEP-29 (id record). Staf/supervisor: departemen; manager: divisi. */
+  /** Penempatan KEP-29 (id record). Yang pertama dari daftar di bawah, untuk tampilan ringkas. */
   departemen_id?: string | null;
   divisi_id?: string | null;
-  /** KEP-32: semua departemen dalam jangkauan (utama dulu, lalu tambahan supervisor). */
+  /** KEP-76: SEMUA departemen orang ini (jenjang apa pun boleh banyak). */
   departemen_ids?: string[];
+  /** KEP-76: SEMUA divisi yang ia pimpin (manager ke atas). */
+  divisi_ids?: string[];
 };
 
-export type TPilihanDepartemen = { id: string; kode: string; nama: string; divisi_id: string };
+export type TPilihanDepartemen = {
+  id: string;
+  kode: string;
+  nama: string;
+  divisi_id: string;
+  /** Identifier project departemen ini (KEP-76). Boleh tidak ada di server lama. */
+  projects?: string[];
+};
 export type TPilihanDivisi = { id: string; kode: string; nama: string };
 
 /** Badan POST /api/instances/hierarki/. Kunci tidak dikirim = jangan sentuh; null = kosongkan. */
@@ -53,10 +62,26 @@ export type TSetJabatan = {
   sumber?: string;
   catatan?: string;
   pengawasan?: string[];
+  /** Singkatan: TAMBAH satu departemen (tidak memindahkan); null = cabut semua departemen. */
   departemen_id?: string | null;
+  /** Singkatan: TAMBAH satu divisi; null = cabut semua divisi. */
   divisi_id?: string | null;
-  /** KEP-32: MENGGANTI departemen tambahan supervisor (tidak dikirim = jangan sentuh). */
+  /** MENGGANTI seluruh departemen orang ini (tidak dikirim = jangan sentuh). */
   departemen_ids?: string[];
+  /** MENGGANTI seluruh divisi yang dipimpin (tidak dikirim = jangan sentuh). */
+  divisi_ids?: string[];
+};
+
+export type THasilSetJabatan = {
+  member: {
+    id: string;
+    tingkat: number | null;
+    pengawasan: string[];
+    departemen_ids: string[];
+    divisi_ids: string[];
+    /** Divisi yang dicabut otomatis karena jenjang turun di bawah Manager. */
+    divisi_dilepas: string[];
+  };
 };
 
 export type TProjectOrganisasi = { id: string; identifier: string; name: string };
@@ -151,7 +176,7 @@ export class InstanceHierarkiService extends APIService {
       });
   }
 
-  async setel(data: TSetJabatan): Promise<{ member: { id: string; tingkat: number | null; pengawasan: string[] } }> {
+  async setel(data: TSetJabatan): Promise<THasilSetJabatan> {
     return this.post("/api/instances/hierarki/", data)
       .then((response) => response?.data)
       .catch((error) => {

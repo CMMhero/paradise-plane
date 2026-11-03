@@ -14,6 +14,7 @@ import { getTextContent } from "@plane/utils";
 // components
 import { DescriptionVersionsRoot } from "@/components/core/description-versions";
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
+import { StatusLampiranTempel, useLampiranTempel } from "@/components/issues/attachment/lampiran-tempel";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -64,6 +65,8 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
   } = useIssueDetail();
   const { getProjectById } = useProject();
   const { setShowAlert } = useReloadConfirmations(isSubmitting === "submitting");
+  // pasted/dropped non-image files in the description become attachments
+  const lampiran = useLampiranTempel(workspaceSlug, projectId, issueId);
   // derived values
   const projectDetails = getProjectById(projectId);
   const issue = issueId ? getIssueById(issueId) : undefined;
@@ -153,7 +156,9 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           projectId={issue.project_id}
           setIsSubmitting={(value) => setIsSubmitting(value)}
           workspaceSlug={workspaceSlug}
+          attachFiles={lampiran.attachFiles}
         />
+        <StatusLampiranTempel {...lampiran.status} />
 
         <div className="flex items-center justify-between gap-2">
           {currentUser && (

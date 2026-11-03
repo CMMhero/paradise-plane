@@ -12,7 +12,7 @@ import { Button } from "@plane/propel/button";
 import { EmojiIconPickerTypes, EmojiPicker, Logo } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TLogoProps, TPage } from "@plane/types";
-import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+import { EModalPosition, EModalWidth, Input, ModalCore } from "@plane/ui";
 import { getPageName } from "@plane/utils";
 // services
 import { ProjectPageService } from "@/services/page";
@@ -142,7 +142,7 @@ export function KelolaFolder({
               handleToggle={setIkonTerbuka}
               closeOnSelect
               label={
-                <span className="grid size-9 shrink-0 place-items-center rounded-md border border-subtle bg-layer-2">
+                <span className="grid size-9 shrink-0 place-items-center rounded-item border border-subtle bg-layer-2">
                   {folder.logo_props?.in_use ? (
                     <Logo logo={folder.logo_props} size={18} type="lucide" />
                   ) : (
@@ -153,12 +153,12 @@ export function KelolaFolder({
               onChange={(nilai) => void gantiIkon(nilai)}
               defaultOpen={EmojiIconPickerTypes.EMOJI}
             />
-            <input
+            <Input
               id="wiki-nama-folder"
               type="text"
               value={nama}
               onChange={(e) => setNama(e.target.value)}
-              className="flex-1 rounded-md border border-subtle bg-layer-2 px-3 py-2 text-13 text-primary outline-none focus:border-accent-strong"
+              className="flex-1 border border-subtle text-primary focus:border-accent-strong"
             />
             <Button variant="primary" size="sm" onClick={simpanNama} loading={sedangSimpan}>
               {t("save")}
@@ -170,7 +170,7 @@ export function KelolaFolder({
         {adalahDivisi && (
           <div className="space-y-2">
             <p className="text-12 font-medium text-secondary">{t("wiki_ui.manage.who_can_add")}</p>
-            <p className="rounded-md border border-subtle px-3 py-2 text-12 text-tertiary">
+            <p className="rounded-card border border-subtle px-3 py-2 text-12 text-tertiary">
               {izinFolder?.is_general
                 ? t("wiki_ui.manage.status_general")
                 : izinFolder?.divisions.length
@@ -186,7 +186,7 @@ export function KelolaFolder({
         {/* Hapus */}
         <div className="space-y-2 border-t border-subtle pt-4">
           {konfirmasiHapus ? (
-            <div className="rounded-md border border-danger-strong bg-danger-subtle p-3">
+            <div className="rounded-card border border-danger-strong bg-danger-subtle p-3">
               <p className="text-12 text-primary">
                 {t("wiki_ui.manage.confirm_delete", { name: getPageName(folder.name) })}
               </p>

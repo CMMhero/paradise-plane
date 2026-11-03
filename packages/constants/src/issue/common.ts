@@ -139,6 +139,11 @@ export const ISSUE_ORDER_BY_OPTIONS: {
   { key: "-priority", titleTranslationKey: "common.priority" },
 ];
 
+/**
+ * Properti yang benar-benar digambar layout list & kanban. Kustomisasi Paradise:
+ * created_on/updated_on dikeluarkan karena hanya spreadsheet yang punya kolomnya,
+ * dan approval_status ditambahkan (chip persetujuan, KEP-25).
+ */
 export const ISSUE_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = [
   "assignee",
   "start_date",
@@ -147,15 +152,21 @@ export const ISSUE_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = 
   "key",
   "priority",
   "state",
+  "approval_status",
   "sub_issue_count",
   "link",
   "attachment_count",
   "estimate",
-  "created_on",
-  "updated_on",
   "modules",
   "cycle",
   "issue_type",
+];
+
+/** Spreadsheet: semua properti list/kanban plus kolom tanggal dibuat & diperbarui. */
+export const SPREADSHEET_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = [
+  ...ISSUE_DISPLAY_PROPERTIES_KEYS,
+  "created_on",
+  "updated_on",
 ];
 
 export const SUB_ISSUES_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = [
@@ -193,6 +204,8 @@ export const ISSUE_DISPLAY_PROPERTIES: {
     titleTranslationKey: "common.priority",
   },
   { key: "state", titleTranslationKey: "common.state" },
+  // Kustomisasi Paradise: status persetujuan, ikut modul Approvals di God Mode.
+  { key: "approval_status", titleTranslationKey: "issue.approval.filter.label" },
   {
     key: "sub_issue_count",
     titleTranslationKey: "issue.display.properties.sub_issue_count",
@@ -208,10 +221,14 @@ export const ISSUE_DISPLAY_PROPERTIES: {
   },
   { key: "modules", titleTranslationKey: "common.module" },
   { key: "cycle", titleTranslationKey: "common.cycle" },
+  // Kustomisasi Paradise: kolom spreadsheet ini dulu selalu tampil tanpa bisa dimatikan.
+  { key: "created_on", titleTranslationKey: "common.sort.created_on" },
+  { key: "updated_on", titleTranslationKey: "common.sort.updated_on" },
 ];
 
 export const SPREADSHEET_PROPERTY_LIST: (keyof IIssueDisplayProperties)[] = [
   "state",
+  "approval_status",
   "priority",
   "assignee",
   "labels",
@@ -227,16 +244,29 @@ export const SPREADSHEET_PROPERTY_LIST: (keyof IIssueDisplayProperties)[] = [
   "sub_issue_count",
 ];
 
+type TSpreadsheetSortOrder = {
+  ascendingOrderKey: TIssueOrderByOptions;
+  ascendingOrderTitle: string;
+  descendingOrderKey: TIssueOrderByOptions;
+  descendingOrderTitle: string;
+};
+
+/**
+ * Kustomisasi Paradise: kolom yang tak punya urutan di server (approval_status)
+ * cukup memberi judul dan ikon; header-nya tampil tanpa menu sortir.
+ */
+export type TSpreadsheetPropertyDetail = { i18n_title: string; icon: string } & (
+  | TSpreadsheetSortOrder
+  | { [K in keyof TSpreadsheetSortOrder]?: never }
+);
+
 export const SPREADSHEET_PROPERTY_DETAILS: {
-  [key in keyof IIssueDisplayProperties]: {
-    i18n_title: string;
-    ascendingOrderKey: TIssueOrderByOptions;
-    ascendingOrderTitle: string;
-    descendingOrderKey: TIssueOrderByOptions;
-    descendingOrderTitle: string;
-    icon: string;
-  };
+  [key in keyof IIssueDisplayProperties]: TSpreadsheetPropertyDetail;
 } = {
+  approval_status: {
+    i18n_title: "issue.approval.filter.label",
+    icon: "ApprovalPropertyIcon",
+  },
   assignee: {
     i18n_title: "common.assignees",
     ascendingOrderKey: "assignees__first_name",

@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Hash, MessageSquare, X } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
+import { IconButton } from "@plane/propel/icon-button";
 import { Avatar } from "@plane/ui";
 import { cn, getFileURL } from "@plane/utils";
 
@@ -102,7 +103,7 @@ const KartuPopup = ({
       onMouseEnter={() => setBerjalan(false)}
       onMouseLeave={() => setBerjalan(true)}
       className={cn(
-        "group pointer-events-auto relative w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl",
+        "group pointer-events-auto relative w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-popover",
         "border border-subtle bg-surface-1 shadow-overlay-200",
         "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
         "motion-reduce:translate-x-0 motion-reduce:transition-opacity",
@@ -121,13 +122,13 @@ const KartuPopup = ({
           {punyaAvatar ? (
             <Avatar name={data.namaOrang} src={getFileURL(data.avatarUrl ?? "")} size={36} shape="circle" />
           ) : (
-            <span className="grid size-9 place-items-center rounded-full bg-accent-primary/10">
+            <span className="grid size-9 place-items-center rounded-control bg-accent-primary/10">
               <Ikon className="size-4 text-accent-primary" />
             </span>
           )}
           {/* Lencana kecil di sudut avatar: dari jauh orang tahu ini pesan atau
               tugas tanpa membaca satu kata pun. */}
-          <span className="absolute -right-0.5 -bottom-0.5 grid size-4 place-items-center rounded-full bg-surface-1">
+          <span className="absolute -right-0.5 -bottom-0.5 grid size-4 place-items-center rounded-control bg-surface-1">
             <Ikon className="size-2.5 text-accent-primary" />
           </span>
         </span>
@@ -138,14 +139,14 @@ const KartuPopup = ({
         </span>
       </button>
 
-      <button
-        type="button"
+      <IconButton
+        variant="ghost"
+        size="sm"
+        icon={X}
         aria-label={t("notification_ui.dismiss")}
         onClick={tutup}
-        className="absolute top-2 right-2 grid size-6 place-items-center rounded-md text-tertiary opacity-0 transition-opacity group-hover:opacity-100 hover:bg-layer-2 hover:text-primary focus-visible:opacity-100"
-      >
-        <X className="size-3.5" />
-      </button>
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 sentuh:opacity-100"
+      />
 
       {/* Sisa waktunya terlihat, jadi kartu yang menghilang tidak terasa seperti
           gangguan yang tiba-tiba dicabut. Menyusut lewat scaleX supaya tetap

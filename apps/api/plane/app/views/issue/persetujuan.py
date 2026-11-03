@@ -190,7 +190,6 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         from plane.db.models import ProjectMember, User  # noqa: PLC0415
         from plane.utils.hierarki import (  # noqa: PLC0415
             _bawahan_ids,
-            divisi_anggota,
             gerbang_aktif,
             tingkat_anggota,
         )
@@ -240,13 +239,11 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             )
         if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
             bawahan = _bawahan_ids(saya, project.workspace_id, project_id)
-            # BUG 2026-10-16: tadinya `u in divisi_anggota(u, …)` — id USER
-            # dibandingkan ke himpunan id PROJECT, jadi selalu False dan
-            # dropdown atasan selalu kosong. Yang benar: bawahan itu anggota
-            # PROJECT INI.
-            boleh = {saya} | {
-                u for u in bawahan if str(project_id) in {str(p) for p in divisi_anggota(u, project.workspace_id)}
-            }
+            # `_bawahan_ids` sudah hanya memuat anggota project ini, dan baris
+            # `boleh &= anggota` di bawah menyaring sekali lagi. Pemeriksaan
+            # keanggotaan per bawahan yang dulu ada di sini (satu kueri per
+            # orang) jadi berlebih dan dibuang.
+            boleh = {saya} | bawahan
             # Batasi ke anggota project ini (bawahan di divisi lain tak relevan).
             anggota = set(
                 ProjectMember.objects.filter(project_id=project_id, is_active=True).values_list(
@@ -414,6 +411,10 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         from plane.utils.notifikasi_persetujuan import beritahu_diputuskan  # noqa: PLC0415
 
         beritahu_diputuskan(baris, aksi)
+        # Kartu permintaan di obrolan para atasan kehilangan tombolnya.
+        from plane.utils.kartu_obrolan import tandai_persetujuan_diputuskan  # noqa: PLC0415
+
+        tandai_persetujuan_diputuskan(baris.id, baris.status)
         from plane.utils.hierarki import (  # noqa: PLC0415
             AKTIVITAS_DISETUJUI,
             AKTIVITAS_DITOLAK,

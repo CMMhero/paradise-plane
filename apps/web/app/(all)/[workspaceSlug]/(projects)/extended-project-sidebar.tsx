@@ -14,6 +14,7 @@ import { EmptyStateCompact } from "@plane/propel/empty-state";
 import { PlusIcon, SearchIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
+import { Input } from "@plane/ui";
 import { copyUrlToClipboard, orderJoinedProjects } from "@plane/utils";
 // components
 import { CreateProjectModal } from "@/components/project/create-project-modal";
@@ -129,8 +130,9 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
           </div>
           <div className="ml-auto flex w-full items-center gap-1.5 rounded-md border border-subtle bg-surface-1 px-2.5 py-1">
             <SearchIcon className="h-3.5 w-3.5 text-placeholder" />
-            <input
-              className="w-full max-w-[234px] border-none bg-transparent text-13 outline-none placeholder:text-placeholder"
+            <Input
+              mode="true-transparent"
+              className="w-full max-w-[234px] p-0 placeholder:text-placeholder"
               placeholder={t("search")}
               value={searchQuery}
               // oxlint-disable-next-line jsx-a11y/no-autofocus -- search field in a user-opened panel should take focus

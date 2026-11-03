@@ -5,16 +5,17 @@
  * See the LICENSE file for details.
  */
 
-import { PARADISE_REMOVED, isParadiseGateActive } from "@plane/constants";
+import { isParadiseGateActive } from "@plane/constants";
 import type { TParadiseGate } from "@plane/constants";
 
 /**
  * Perintah Power K -> modul pemiliknya (atau `PARADISE_REMOVED` untuk fitur yang
  * dicabut, KEP-50). Modul mati = perintahnya hilang dari
  * palet, dari modal pintasan, dan pintasan kuncinya (mis. `gx`, `ga`) tak
- * jalan. Perintah cycle/module/page/view per project sudah membaca flag
- * `*_view` yang dipaksa false, tapi tetap didaftarkan di sini supaya modal
- * pintasan (yang tak punya konteks project) ikut bersih.
+ * jalan. Perintah module/page/view per project sudah membaca flag `*_view`,
+ * tapi tetap didaftarkan di sini supaya modal pintasan (yang tak punya konteks
+ * project) ikut bersih. Perintah Cycles dihapus seluruhnya dari Power K (KEP-53),
+ * jadi tak butuh entri `PARADISE_REMOVED` lagi.
  */
 const MODUL_PER_PERINTAH: Record<string, TParadiseGate> = {
   nav_inbox: "inbox",
@@ -27,12 +28,7 @@ const MODUL_PER_PERINTAH: Record<string, TParadiseGate> = {
   nav_workspace_drafts: "drafts",
   nav_workspace_archives: "archives",
   nav_project_archives: "archives",
-  nav_project_cycles: PARADISE_REMOVED,
-  open_project_cycle: PARADISE_REMOVED,
-  create_cycle: PARADISE_REMOVED,
-  add_work_item_to_cycle: PARADISE_REMOVED,
-  copy_cycle_url: PARADISE_REMOVED,
-  toggle_cycle_favorite: PARADISE_REMOVED,
+  nav_project_work_items: "work_items",
   nav_project_modules: "modules",
   open_project_module: "modules",
   create_module: "modules",
@@ -53,7 +49,15 @@ const MODUL_PER_PERINTAH: Record<string, TParadiseGate> = {
   toggle_page_lock: "pages",
   nav_project_intake: "intake",
   change_work_item_estimate: "estimates",
-  open_plane_documentation: "wiki",
+  // Fitur Paradise
+  nav_chat: "chat",
+  nav_wiki: "wiki",
+  nav_dashboard_divisi: "dashboards",
+  nav_initiatives: "initiatives",
+  nav_stickies: "stickies",
+  nav_quick_links: "quick_links",
+  nav_your_work_calendar: "your_work",
+  nav_project_approvals: "approvals",
 };
 
 export const isPowerKCommandModuleActive = (commandId: string): boolean =>
