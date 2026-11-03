@@ -89,7 +89,9 @@ def _data_issue(issue):
     }
 
 
-def _tulis(workspace_id, project_id, issue, penerima_id, pemicu, sender, verb, keputusan=None, alasan=""):
+def _tulis(
+    workspace_id, project_id, issue, penerima_id, pemicu, sender, verb, keputusan=None, alasan="", persetujuan=None
+):
     """Satu baris inbox + (kalau saklar email penerima hidup) satu baris email."""
     from plane.db.models import EmailNotificationLog, Notification, Project, Workspace
 
@@ -114,7 +116,7 @@ def _tulis(workspace_id, project_id, issue, penerima_id, pemicu, sender, verb, k
             },
         }
         if _boleh(penerima_id, "inbox_approval"):
-            Notification.objects.create(
+            notif = Notification.objects.create(
                 workspace=workspace,
                 project=project,
                 sender=sender,
@@ -126,6 +128,11 @@ def _tulis(workspace_id, project_id, issue, penerima_id, pemicu, sender, verb, k
                 message={"keputusan": keputusan, "alasan": alasan},
                 data=data,
             )
+            # Kartu di ruang "Paradise" obrolan, dengan tombol Approve/Reject
+            # untuk atasan. Ikut saklar inbox yang sama; menelan galatnya sendiri.
+            from plane.utils.kartu_obrolan import kirim_kartu_notifikasi  # noqa: PLC0415
+
+            kirim_kartu_notifikasi([notif], persetujuan=persetujuan)
         if _boleh(penerima_id, "approval"):
             EmailNotificationLog.objects.create(
                 receiver_id=penerima_id,
@@ -139,6 +146,17 @@ def _tulis(workspace_id, project_id, issue, penerima_id, pemicu, sender, verb, k
             )
     except Exception:  # noqa: BLE001
         logger.exception("Gagal menulis pemberitahuan persetujuan untuk %s", penerima_id)
+
+
+def _data_persetujuan(baris):
+    """Bagian `persetujuan` kartu obrolan: cukup untuk memanggil endpoint keputusan."""
+    return {
+        "id": baris.id,
+        "project_id": baris.project_id,
+        "status": baris.status,
+        "pemohon": baris.pemohon_id,
+        "alasan": getattr(baris, "alasan", "") or "",
+    }
 
 
 def _muat_issue(issue_id):
@@ -177,6 +195,7 @@ def beritahu_diajukan(baris, issue=None):
             baris.pemohon,
             SENDER_DIAJUKAN,
             "submitted",
+            persetujuan=_data_persetujuan(baris),
         )
 
 
@@ -201,6 +220,7 @@ def beritahu_diputuskan(baris, aksi, issue=None):
             "approved" if aksi == "setujui" else "rejected",
             keputusan="disetujui" if aksi == "setujui" else "ditolak",
             alasan=getattr(baris, "alasan", "") or "",
+            persetujuan=_data_persetujuan(baris),
         )
     except Exception:  # noqa: BLE001
         logger.exception("Gagal memberitahu keputusan persetujuan %s", getattr(baris, "id", "?"))

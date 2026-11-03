@@ -433,3 +433,41 @@ class TestSelesaiDitahanJadiPengajuan:
         res = _klien(bos).get(f"{dasar}?tugas={issue.id}")
         assert res.status_code == status.HTTP_200_OK, getattr(res, "data", None)
         assert [b["status"] for b in res.json()["hasil"]] == ["ditolak"]
+
+
+@pytest.mark.unit
+class TestTeksEmailPersetujuanTidakAmbigu:
+    """Laporan user 3 Nov 2026: email pengajuan (ke atasan) dan keputusan (ke staf)
+    terlihat sama. Subjek wajib menyebut peran penerima, dan teks tidak boleh lagi
+    memakai alur lama KEP-28 (terkunci / draft pribadi)."""
+
+    @staticmethod
+    def _konteks(s, verb):
+        from plane.bgtasks.email_notification_task import konteks_persetujuan
+
+        return konteks_persetujuan(s, verb, "Andi", "GDG-52", "Stok opname", "Alasan", "/tugas", "/antrean")
+
+    @pytest.mark.parametrize("bahasa", ["id", "en"])
+    def test_subjek_menyebut_peran_penerima(self, bahasa):
+        from plane.bgtasks import email_notification_task as t
+
+        s = t._STRINGS_APPROVAL_ID if bahasa == "id" else t._STRINGS_APPROVAL_EN
+        minta, setuju, tolak = (self._konteks(s, v)["subject"] for v in ("submitted", "approved", "rejected"))
+        awalan_minta, awalan_kabar = ("Perlu persetujuanmu", "Pekerjaanmu") if bahasa == "id" else (
+            "Needs your approval",
+            "Your work",
+        )
+        assert minta.startswith(awalan_minta) and "Andi" in minta
+        assert setuju.startswith(awalan_kabar) and tolak.startswith(awalan_kabar)
+        assert len({minta, setuju, tolak}) == 3
+
+    @pytest.mark.parametrize("bahasa", ["id", "en"])
+    def test_tidak_memakai_alur_lama(self, bahasa):
+        from plane.bgtasks import email_notification_task as t
+
+        s = t._STRINGS_APPROVAL_ID if bahasa == "id" else t._STRINGS_APPROVAL_EN
+        teks = " ".join(str(v) for v in s.values()).lower()
+        for kata in ("terkunci", "draft pribadi", "locked", "private draft"):
+            assert kata not in teks
+        assert self._konteks(s, "submitted")["cta_url"] == "/antrean"
+        assert self._konteks(s, "rejected")["cta_url"] == "/tugas"

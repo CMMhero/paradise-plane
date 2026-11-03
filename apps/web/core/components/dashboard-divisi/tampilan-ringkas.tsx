@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
+import { Button } from "@plane/propel/button";
 import { cn } from "@plane/utils";
 import type { TDivisionDashboard, TDivisionGroup } from "@/services/workspace_dashboard.service";
 import { HealthPill, ProgressBar, TrendNote, divisionLabel, formatPercent } from "./bagian";
@@ -59,11 +60,11 @@ export function SummaryView({ workspaceSlug, data, onShowDetail }: Props) {
           {t("division_dashboard_ui.section_attention")}
         </h2>
         {attention.length === 0 ? (
-          <p className="rounded-md border border-subtle px-4 py-3 text-13 text-tertiary">
+          <p className="rounded-card border border-subtle px-4 py-3 text-13 text-tertiary">
             {t("division_dashboard_ui.section_attention_empty")}
           </p>
         ) : (
-          <ul className="divide-y divide-subtle rounded-md border border-subtle">
+          <ul className="divide-y divide-subtle rounded-card border border-subtle">
             {attention.map((item) => (
               <AttentionRow key={item.key} item={item} workspaceSlug={workspaceSlug} />
             ))}
@@ -71,13 +72,9 @@ export function SummaryView({ workspaceSlug, data, onShowDetail }: Props) {
         )}
       </section>
 
-      <button
-        type="button"
-        onClick={onShowDetail}
-        className="self-start rounded-md border border-dashed border-subtle px-3 py-2 text-left text-12 text-tertiary hover:bg-layer-2 hover:text-secondary"
-      >
+      <Button variant="link" size="base" className="self-start" onClick={onShowDetail}>
         {t("division_dashboard_ui.detail_hint")}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -91,7 +88,7 @@ function Headline({ divisions }: { divisions: TDivisionGroup[] }) {
   }
   if (headline.kind === "all_ok") {
     return (
-      <p className="rounded-md bg-success-subtle px-4 py-3 text-14 text-primary">
+      <p className="rounded-card bg-success-subtle px-4 py-3 text-14 text-primary">
         {t("division_dashboard_ui.headline_all_ok")}
       </p>
     );
@@ -100,7 +97,7 @@ function Headline({ divisions }: { divisions: TDivisionGroup[] }) {
   return (
     <p
       className={cn(
-        "rounded-md px-4 py-3 text-14 leading-relaxed text-primary",
+        "rounded-card px-4 py-3 text-14 leading-relaxed text-primary",
         isCritical ? "bg-danger-subtle" : "bg-warning-subtle"
       )}
     >
@@ -123,7 +120,10 @@ function KpiRow({ data }: { data: TDivisionDashboard }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Kpi value={formatPercent(totals.on_time_rate)} label={t("division_dashboard_ui.kpi_on_time")} />
+      <Kpi
+        value={formatPercent(totals.on_time_rate)}
+        label={t("tanggal_ui.kpi_on_time", { days: data.on_time_window_days ?? 30 })}
+      />
       <Kpi value={String(totals.completed_7d)} label={t("division_dashboard_ui.kpi_done_7d")}>
         <TrendNote delta={doneDelta} tone={trendTone(doneDelta, true)} />
       </Kpi>
@@ -147,7 +147,7 @@ type TKpiProps = { value: string; label: string; isAlert?: boolean; children?: R
 
 function Kpi({ value, label, isAlert = false, children }: TKpiProps) {
   return (
-    <div className="rounded-md border border-subtle bg-layer-1 px-4 py-3">
+    <div className="rounded-card border border-subtle bg-layer-1 px-4 py-3">
       <p className={cn("text-24 leading-tight font-semibold", isAlert ? "text-danger-primary" : "text-primary")}>
         {value}
       </p>
@@ -161,7 +161,7 @@ function DivisionCard({ division }: { division: TDivisionGroup }) {
   const { t } = useTranslation();
   const name = divisionLabel(division.name, t);
   return (
-    <div className="rounded-md border border-subtle bg-layer-1 px-4 py-3">
+    <div className="rounded-card border border-subtle bg-layer-1 px-4 py-3">
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-14 font-semibold text-primary" title={name}>
           {name}

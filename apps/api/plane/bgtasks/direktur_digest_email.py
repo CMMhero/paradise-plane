@@ -10,20 +10,95 @@ dari manager/supervisor, BUKAN rincian staf. Karena itu laporan ini hanya berisi
 ANGKA per divisi (dengan nama manager) dan per departemen (dengan nama
 supervisor). Tidak ada judul tugas dan tidak ada nama staf: rincian per tugas
 sudah ada di ringkasan harian manager dan supervisor masing-masing.
+
+Bahasa (3 Nov 2026): `susun_email(..., bahasa="en")`; bawaan Indonesia.
 """
 
 from dataclasses import dataclass, field
 
-from django.utils.html import escape
+from plane.utils.email_merek import (
+    MEREK,
+    WARNA,
+    bungkus,
+    catatan_kecil,
+    judul_bagian,
+    judul_html,
+    kotak,
+    sapaan_html,
+    tabel_angka,
+    tanggal,
+    terjemah_data,
+    tombol,
+    ubin_angka,
+    url_preferensi,
+)
 
-from plane.bgtasks.deadline_reminder_email import KANTOR, PRODUK, tanggal_id
-
-MERAH, JINGGA, HIJAU, GELAP, ABU = "#b91c1c", "#b45309", "#15803d", "#1f2937", "#6b7280"
+MERAH, JINGGA, HIJAU, GELAP, ABU = WARNA["bahaya"], WARNA["peringatan"], WARNA["sukses"], WARNA["teks"], WARNA["teks_3"]
 # Terlambat lebih dari ini = macet, bukan sekadar telat sehari.
 HARI_MACET = 7
 # "Perlu perhatian" cukup beberapa unit teratas, bukan daftar kedua.
 BATAS_PERHATIAN = 3
 
+T = {
+    "id": {
+        "subjek": "[Laporan direktur] {tgl}: {lewat} terlambat, {hari} jatuh tempo hari ini, {selesai} selesai",
+        "sapaan": "Halo {nama},",
+        "judul": "Laporan direktur, {tgl}",
+        "selesai": "Selesai",
+        "terlambat": "Terlambat",
+        "hari": "Jatuh tempo hari ini",
+        "depan": "7 hari ke depan",
+        "depan_pendek": "7 hari",
+        "hari_pendek": "Hari ini",
+        "macet": "{n} lebih dari {h} hari",
+        "macet_unit": ", {n} di antaranya lebih dari {h} hari",
+        "unit": "{unit} ({divisi}, {orang}): {lewat} terlambat{macet}",
+        "belum_diisi": "{peran} belum diisi",
+        "perhatian": "Perlu perhatian",
+        "per_divisi": "Per divisi",
+        "per_divisi_teks": "PER DIVISI (selesai / terlambat / hari ini / 7 hari)",
+        "kolom": "Divisi / departemen",
+        "rincian": "Rincian per tugas ada di ringkasan harian manager dan supervisor masing-masing.",
+        "tombol": "Buka {merek}",
+        "buka": "Buka: {url}",
+        "alasan": "Anda menerima laporan ini karena Anda direktur di workspace ini.",
+        "baris_selesai": "  Selesai ({jendela}) : {n}",
+        "baris_terlambat": "  Terlambat                    : {n} ({macet} lebih dari {h} hari)",
+        "baris_hari": "  Jatuh tempo hari ini         : {n}",
+        "baris_depan": "  Jatuh tempo 7 hari ke depan  : {n}",
+    },
+    "en": {
+        "subjek": "[Director report] {tgl}: {lewat} overdue, {hari} due today, {selesai} done",
+        "sapaan": "Hi {nama},",
+        "judul": "Director report, {tgl}",
+        "selesai": "Done",
+        "terlambat": "Overdue",
+        "hari": "Due today",
+        "depan": "Next 7 days",
+        "depan_pendek": "7 days",
+        "hari_pendek": "Today",
+        "macet": "{n} more than {h} days",
+        "macet_unit": ", {n} of them more than {h} days",
+        "unit": "{unit} ({divisi}, {orang}): {lewat} overdue{macet}",
+        "belum_diisi": "{peran} not set",
+        "perhatian": "Needs attention",
+        "per_divisi": "By division",
+        "per_divisi_teks": "BY DIVISION (done / overdue / today / 7 days)",
+        "kolom": "Division / department",
+        "rincian": "Per-task details are in each manager's and supervisor's daily summary.",
+        "tombol": "Open {merek}",
+        "buka": "Open: {url}",
+        "alasan": "You received this report because you are a director in this workspace.",
+        "baris_selesai": "  Done ({jendela}) : {n}",
+        "baris_terlambat": "  Overdue                : {n} ({macet} more than {h} days)",
+        "baris_hari": "  Due today              : {n}",
+        "baris_depan": "  Due in the next 7 days : {n}",
+    },
+}
+
+
+def _t(bahasa):
+    return T.get(bahasa, T["id"])
 
 
 @dataclass
@@ -90,137 +165,115 @@ class Laporan:
         return calon[:BATAS_PERHATIAN]
 
 
-def _orang(nama, peran) -> str:
-    return f"{peran} {', '.join(nama)}" if nama else f"{peran} belum diisi"
+def _orang(nama, peran, bahasa="id") -> str:
+    return f"{peran} {', '.join(nama)}" if nama else _t(bahasa)["belum_diisi"].format(peran=peran)
 
 
-def _ket_unit(divisi, unit) -> str:
+def _ket_unit(divisi, unit, bahasa="id") -> str:
+    s = _t(bahasa)
     a = unit.angka
-    macet = f", {a.macet} di antaranya lebih dari {HARI_MACET} hari" if a.macet else ""
-    return f"{unit.nama} ({divisi.nama}, {_orang(unit.pimpinan, 'spv')}): {a.lewat} terlambat{macet}"
+    macet = s["macet_unit"].format(n=a.macet, h=HARI_MACET) if a.macet else ""
+    return s["unit"].format(
+        unit=unit.nama, divisi=divisi.nama, orang=_orang(unit.pimpinan, "spv", bahasa), lewat=a.lewat, macet=macet
+    )
 
 
-# ---------------------------------------------------------------- teks
+def _sapaan(penerima, s):
+    nama = getattr(penerima, "display_name", "") or getattr(penerima, "first_name", "") or ""
+    return s["sapaan"].format(nama=nama).replace(" ,", ",")
 
 
-def _teks(penerima, laporan, hari_ini, tautan):
+def _teks(penerima, laporan, hari_ini, tautan, bahasa="id"):
+    s = _t(bahasa)
     a = laporan.angka
-    sapaan = getattr(penerima, "display_name", "") or getattr(penerima, "first_name", "") or ""
     baris = [
-        f"Halo {sapaan},".strip(),
+        _sapaan(penerima, s),
         "",
-        f"Laporan direktur, {tanggal_id(hari_ini, pendek=True)}.",
+        s["judul"].format(tgl=tanggal(hari_ini, bahasa, pendek=True)) + ".",
         "",
-        f"  Selesai ({laporan.jendela}) : {a.selesai}",
-        f"  Terlambat                    : {a.lewat} ({a.macet} lebih dari {HARI_MACET} hari)",
-        f"  Jatuh tempo hari ini         : {a.hari}",
-        f"  Jatuh tempo 7 hari ke depan  : {a.depan}",
+        s["baris_selesai"].format(jendela=terjemah_data(laporan.jendela, bahasa), n=a.selesai),
+        s["baris_terlambat"].format(n=a.lewat, macet=a.macet, h=HARI_MACET),
+        s["baris_hari"].format(n=a.hari),
+        s["baris_depan"].format(n=a.depan),
         "",
     ]
     perhatian = laporan.perlu_perhatian()
     if perhatian:
-        baris += ["PERLU PERHATIAN"] + [f"  - {_ket_unit(d, u)}" for d, u in perhatian] + [""]
-    baris += ["PER DIVISI (selesai / terlambat / hari ini / 7 hari)", ""]
+        baris += [s["perhatian"].upper()] + [f"  - {_ket_unit(d, u, bahasa)}" for d, u in perhatian] + [""]
+    baris += [s["per_divisi_teks"], ""]
     for d in laporan.divisi:
         x = d.angka
-        baris.append(f"{d.nama} - {_orang(d.pimpinan, 'Manager')}: {x.selesai} / {x.lewat} / {x.hari} / {x.depan}")
+        baris.append(f"{d.nama} - {_orang(d.pimpinan, 'Manager', bahasa)}: {x.selesai} / {x.lewat} / {x.hari} / {x.depan}")
         for u in d.unit:
             y = u.angka
-            baris.append(f"    {u.nama} - {_orang(u.pimpinan, 'spv')}: {y.selesai} / {y.lewat} / {y.hari} / {y.depan}")
+            baris.append(
+                f"    {u.nama} - {_orang(u.pimpinan, 'spv', bahasa)}: {y.selesai} / {y.lewat} / {y.hari} / {y.depan}"
+            )
         baris.append("")
-    baris.append("Rincian per tugas ada di ringkasan harian manager dan supervisor masing-masing.")
+    baris.append(s["rincian"])
     if tautan:
-        baris += ["", f"Buka: {tautan}"]
-    baris += ["", f"Email otomatis dari {PRODUK}. Tidak perlu dibalas."]
+        baris += ["", s["buka"].format(url=tautan)]
     return "\n".join(baris)
 
 
-# ---------------------------------------------------------------- html
+def _angka(a):
+    return [a.selesai, a.lewat, a.hari, a.depan]
 
 
-def _ubin(label, nilai, warna, catatan=""):
-    kecil = f'<div style="color:{ABU};font-size:11px">{escape(catatan)}</div>' if catatan else ""
-    return (
-        f'<td style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;width:25%;vertical-align:top">'
-        f'<div style="color:{ABU};font-size:12px">{escape(label)}</div>'
-        f'<div style="font-size:24px;font-weight:bold;color:{warna}">{nilai}</div>{kecil}</td>'
-    )
-
-
-def _sel(nilai, warna=GELAP, tebal=False):
-    gaya = f"padding:5px 8px;text-align:right;color:{warna if nilai else '#d1d5db'}"
-    return f'<td style="{gaya}{";font-weight:bold" if tebal else ""}">{nilai}</td>'
-
-
-def _baris_angka(a, tebal=False):
-    return (
-        _sel(a.selesai, HIJAU, tebal) + _sel(a.lewat, MERAH, tebal) + _sel(a.hari, JINGGA, tebal) + _sel(a.depan, GELAP, tebal)
-    )
-
-
-def _html(penerima, laporan, hari_ini, tautan):
+def _html_isi(penerima, laporan, hari_ini, tautan, bahasa="id"):
+    s = _t(bahasa)
     a = laporan.angka
-    sapaan = getattr(penerima, "display_name", "") or getattr(penerima, "first_name", "") or ""
-    ubin = (
-        '<table style="border-collapse:separate;border-spacing:6px;width:100%;margin:8px -6px"><tr>'
-        + _ubin("Selesai", a.selesai, HIJAU, laporan.jendela)
-        + _ubin("Terlambat", a.lewat, MERAH, f"{a.macet} lebih dari {HARI_MACET} hari" if a.macet else "")
-        + _ubin("Jatuh tempo hari ini", a.hari, JINGGA)
-        + _ubin("7 hari ke depan", a.depan, GELAP)
-        + "</tr></table>"
+    ubin = ubin_angka(
+        [
+            (s["selesai"], a.selesai, HIJAU, terjemah_data(laporan.jendela, bahasa)),
+            (s["terlambat"], a.lewat, MERAH, s["macet"].format(n=a.macet, h=HARI_MACET) if a.macet else ""),
+            (s["hari"], a.hari, JINGGA, ""),
+            (s["depan"], a.depan, GELAP, ""),
+        ]
     )
     perhatian = laporan.perlu_perhatian()
+    # Butir, bukan teks bergaris baru: Outlook klasik merapatkan "- a\n- b" jadi satu baris.
     blok_perhatian = (
-        f'<div style="background:#fef2f2;border-left:3px solid {MERAH};padding:8px 12px;margin:16px 0;font-size:13px">'
-        f'<strong style="color:{MERAH}">Perlu perhatian</strong><ul style="margin:6px 0 0;padding-left:18px">'
-        + "".join(f"<li>{escape(_ket_unit(d, u))}</li>" for d, u in perhatian)
-        + "</ul></div>"
+        kotak(judul=s["perhatian"], nada="bahaya", butir=[_ket_unit(d, u, bahasa) for d, u in perhatian])
         if perhatian
         else ""
     )
-    th = f"padding:5px 8px;text-align:right;color:{ABU};font-weight:normal;font-size:12px"
-    kepala = (
-        f'<tr><th style="padding:5px 8px 5px 0;text-align:left;color:{ABU};font-weight:normal;font-size:12px">'
-        f'Divisi / departemen</th><th style="{th}">Selesai</th><th style="{th}">Terlambat</th>'
-        f'<th style="{th}">Hari ini</th><th style="{th}">7 hari</th></tr>'
-    )
-    isi = ""
+    kolom = [(s["selesai"], HIJAU), (s["terlambat"], MERAH), (s["hari_pendek"], JINGGA), (s["depan_pendek"], GELAP)]
+    baris = []
     for d in laporan.divisi:
-        isi += (
-            f'<tr style="background:#f3f4f6"><td style="padding:6px 8px 6px 4px"><strong>{escape(d.nama)}</strong>'
-            f'<br><span style="color:{ABU};font-size:11px">{escape(_orang(d.pimpinan, "Manager"))}</span></td>'
-            f"{_baris_angka(d.angka, tebal=True)}</tr>"
-        )
-        for u in d.unit:
-            isi += (
-                f'<tr><td style="padding:5px 8px 5px 18px">{escape(u.nama)}'
-                f'<br><span style="color:{ABU};font-size:11px">{escape(_orang(u.pimpinan, "spv"))}</span></td>'
-                f"{_baris_angka(u.angka)}</tr>"
-            )
-    tombol = (
-        f'<p><a href="{escape(tautan)}" style="background:{GELAP};color:#fff;padding:8px 16px;border-radius:4px;'
-        f'text-decoration:none;display:inline-block">Buka {PRODUK}</a></p>'
-        if tautan
-        else ""
-    )
+        manager = _orang(d.pimpinan, "Manager", bahasa)
+        baris.append({"nama": d.nama, "sub": manager, "angka": _angka(d.angka), "grup": True})
+        baris += [
+            {"nama": u.nama, "sub": _orang(u.pimpinan, "spv", bahasa), "angka": _angka(u.angka), "menjorok": True}
+            for u in d.unit
+        ]
     return (
-        f'<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:{GELAP};max-width:640px">'
-        f"<p>Halo {escape(sapaan)},</p><p>Laporan direktur, <strong>{tanggal_id(hari_ini, pendek=True)}</strong></p>"
+        judul_html(s["judul"].format(tgl=tanggal(hari_ini, bahasa, pendek=True)))
+        + sapaan_html(_sapaan(penerima, s))
         + ubin
         + blok_perhatian
-        + f'<h3 style="margin:20px 0 4px;font-size:15px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">'
-        f"Per divisi</h3>"
-        f'<table style="border-collapse:collapse;font-size:13px;width:100%">{kepala}{isi}</table>'
-        f'<p style="color:{ABU};font-size:12px;margin-top:12px">Rincian per tugas ada di ringkasan harian '
-        f"manager dan supervisor masing-masing.</p>"
-        + tombol
-        + f'<p style="color:#9ca3af;font-size:11px;margin-top:24px">Email otomatis dari {PRODUK}, sistem internal '
-        f"{KANTOR}. Tidak perlu dibalas.</p></div>"
+        + judul_bagian(s["per_divisi"])
+        + tabel_angka(s["kolom"], kolom, baris)
+        + catatan_kecil(s["rincian"])
+        + tombol(s["tombol"].format(merek=MEREK), tautan)
     )
 
 
-def susun_email(penerima, laporan, hari_ini, tautan=""):
+def susun_email(penerima, laporan, hari_ini, tautan="", bahasa="id"):
     """(subjek, teks, html) untuk satu direktur."""
+    s = _t(bahasa)
     a = laporan.angka
-    subjek = f"[Laporan direktur] {tanggal_id(hari_ini, pendek=True)}: {a.lewat} terlambat, {a.hari} jatuh tempo hari ini, {a.selesai} selesai"
-    return subjek, _teks(penerima, laporan, hari_ini, tautan), _html(penerima, laporan, hari_ini, tautan)
+    subjek = s["subjek"].format(
+        tgl=tanggal(hari_ini, bahasa, pendek=True), lewat=a.lewat, hari=a.hari, selesai=a.selesai
+    )
+    slug = tautan.rstrip("/").rsplit("/", 1)[-1] if tautan else ""
+    html = bungkus(
+        _html_isi(penerima, laporan, hari_ini, tautan, bahasa),
+        bahasa=bahasa,
+        judul=subjek,
+        pratajuk=subjek,
+        alasan=s["alasan"],
+        url_preferensi=url_preferensi(slug) if slug else "",
+        email_penerima=getattr(penerima, "email", ""),
+    )
+    return subjek, _teks(penerima, laporan, hari_ini, tautan, bahasa), html

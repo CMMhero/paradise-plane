@@ -24,14 +24,33 @@ Ada dua edisi (keputusan user 2026-11-02), masing-masing dengan saklarnya sendir
   memuat yang SELESAI hari ini dan yang tenggatnya hari ini tapi BELUM selesai;
   jendela depan menyempit ke hari kerja berikutnya (besok, atau sampai Senin
   kalau hari ini Jumat). Bagian yang dimuat ikut saklar SAKLAR_RINGKASAN yang sama.
+
+Bahasa (3 Nov 2026): `susun_email(..., bahasa="en")` untuk penerima yang profilnya
+berbahasa Inggris. Bawaan tetap Indonesia supaya pemanggil lama tidak berubah.
 """
 
 from dataclasses import dataclass, field
 from datetime import timedelta
 
-from django.utils.html import escape
-
-from plane.bgtasks.deadline_reminder_email import KANTOR, PRODUK, _base_url, tanggal_id
+from plane.bgtasks.deadline_reminder_email import _base_url
+from plane.utils.email_merek import (
+    MEREK,
+    RUANG,
+    UKURAN,
+    WARNA,
+    bungkus,
+    daftar_tugas,
+    judul_bagian,
+    judul_html,
+    label_daftar,
+    paragraf,
+    sapaan_html,
+    tabel_angka,
+    tanggal,
+    terjemah_data,
+    tombol,
+    url_preferensi,
+)
 
 HARI_KE_DEPAN = 7
 # Orang dengan 80 tugas terlambat butuh tahu angkanya, bukan 80 baris.
@@ -39,9 +58,111 @@ BATAS_BARIS = 15
 # Per project di bagian tim. Direktur bisa melihat 30+ project sekaligus.
 BATAS_BARIS_TIM = 5
 
-MERAH, JINGGA, GELAP, ABU, HIJAU = "#b91c1c", "#b45309", "#1f2937", "#6b7280", "#15803d"
+MERAH, JINGGA, GELAP, ABU, HIJAU = WARNA["bahaya"], WARNA["peringatan"], WARNA["teks"], WARNA["teks_3"], WARNA["sukses"]
 
-NAMA_HARI = ("Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu")
+NAMA_HARI = {
+    "id": ("Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"),
+    "en": ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+}
+
+T = {
+    "id": {
+        "hari_ini": "Jatuh tempo hari ini",
+        "depan": "Jatuh tempo {n} hari ke depan",
+        "depan_pendek": "{n} hari",
+        "sore_hari": "Belum selesai, tenggat hari ini",
+        "besok": "Jatuh tempo besok",
+        "besok_pendek": "Besok",
+        "sampai": "Jatuh tempo sampai {hari}",
+        "sampai_pendek": "s.d. {hari}",
+        "ket_selesai": "selesai",
+        "ket_tanpa": "tanpa tenggat",
+        "ket_lewat": "terlambat {n} hari",
+        "ket_hari_ini": "hari ini",
+        "ket_lagi": "{n} hari lagi",
+        "tanpa_pj": "belum ada penanggung jawab",
+        "lainnya": "+{n} lainnya",
+        "selesai_hari_ini": "Selesai hari ini",
+        "terlambat": "Terlambat",
+        "n_selesai": "{n} selesai hari ini",
+        "n_belum": "{n} belum selesai (tenggat hari ini)",
+        "n_terlambat": "{n} terlambat",
+        "n_hari_ini": "{n} hari ini",
+        "n_depan_pagi": "{n} 7 hari ke depan",
+        "awalan_sore": "[Ringkasan sore] ",
+        "awalan_pagi": "[Ringkasan pagi] ",
+        "subjek_kosong": "tugas Anda",
+        "subjek_tim": " · tim: {n} terlambat",
+        "kosong_pilihan": "Tidak ada tugas Anda di bagian yang Anda pilih.",
+        "kosong_sore": "Tidak ada tugas Anda yang selesai hari ini, terlambat, atau {depan}.",
+        "kosong_pagi": "Tidak ada tugas Anda yang jatuh tempo dalam 7 hari ke depan.",
+        "judul_sore": "Ringkasan akhir hari",
+        "judul_pagi": "Ringkasan tugas",
+        "sapaan": "Halo {nama},",
+        "tugas_anda": "Tugas Anda",
+        "diberikan": "Tugas yang Anda berikan",
+        "tim_baris": "{nama}: {selesai}{lewat} terlambat, {hari} hari ini, {depan} {label}",
+        "tim_selesai": "{n} selesai hari ini, ",
+        "depan_tim": "7 hari ke depan",
+        "kolom_project": "Project",
+        "kolom_selesai": "Selesai",
+        "kolom_terlambat": "Terlambat",
+        "kolom_hari": "Hari ini",
+        "tombol": "Buka aplikasi",
+        "alasan": "Anda menerima email ini karena ringkasan harian Anda menyala.",
+        "kaki_teks": "Email otomatis dari {merek}. Atur di Profil > Notifikasi. Tidak perlu dibalas.",
+    },
+    "en": {
+        "hari_ini": "Due today",
+        "depan": "Due in the next {n} days",
+        "depan_pendek": "{n} days",
+        "sore_hari": "Not done, due today",
+        "besok": "Due tomorrow",
+        "besok_pendek": "Tomorrow",
+        "sampai": "Due through {hari}",
+        "sampai_pendek": "through {hari}",
+        "ket_selesai": "done",
+        "ket_tanpa": "no due date",
+        "ket_lewat": "{n} days late",
+        "ket_hari_ini": "today",
+        "ket_lagi": "in {n} days",
+        "tanpa_pj": "no assignee yet",
+        "lainnya": "+{n} more",
+        "selesai_hari_ini": "Done today",
+        "terlambat": "Overdue",
+        "n_selesai": "{n} done today",
+        "n_belum": "{n} not done (due today)",
+        "n_terlambat": "{n} overdue",
+        "n_hari_ini": "{n} today",
+        "n_depan_pagi": "{n} in the next 7 days",
+        "awalan_sore": "[Evening summary] ",
+        "awalan_pagi": "[Morning summary] ",
+        "subjek_kosong": "your tasks",
+        "subjek_tim": " · team: {n} overdue",
+        "kosong_pilihan": "You have no tasks in the sections you chose.",
+        "kosong_sore": "You have no tasks done today, overdue, or {depan}.",
+        "kosong_pagi": "You have no tasks due in the next 7 days.",
+        "judul_sore": "End-of-day summary",
+        "judul_pagi": "Task summary",
+        "sapaan": "Hi {nama},",
+        "tugas_anda": "Your tasks",
+        "diberikan": "Tasks you assigned",
+        "tim_baris": "{nama}: {selesai}{lewat} overdue, {hari} today, {depan} {label}",
+        "tim_selesai": "{n} done today, ",
+        "depan_tim": "in the next 7 days",
+        "kolom_project": "Project",
+        "kolom_selesai": "Done",
+        "kolom_terlambat": "Overdue",
+        "kolom_hari": "Today",
+        "tombol": "Open app",
+        "alasan": "You received this email because your daily summary is turned on.",
+        "kaki_teks": "Automated email from {merek}. Manage it in Profile > Notifications. No need to reply.",
+    },
+}
+
+
+def _t(bahasa):
+    return T.get(bahasa, T["id"])
 
 
 def hari_ke_hari_kerja_berikutnya(hari_ini) -> int:
@@ -115,13 +236,14 @@ class Label:
     depan_pendek: str
 
 
-def label_untuk(ringkasan, hari_ini) -> Label:
+def label_untuk(ringkasan, hari_ini, bahasa="id") -> Label:
+    s = _t(bahasa)
     if not ringkasan.sore:
-        return Label("Jatuh tempo hari ini", f"Jatuh tempo {HARI_KE_DEPAN} hari ke depan", f"{HARI_KE_DEPAN} hari")
+        return Label(s["hari_ini"], s["depan"].format(n=HARI_KE_DEPAN), s["depan_pendek"].format(n=HARI_KE_DEPAN))
     if ringkasan.hari_ke_depan == 1:
-        return Label("Belum selesai, tenggat hari ini", "Jatuh tempo besok", "Besok")
-    hari = NAMA_HARI[(hari_ini + timedelta(days=ringkasan.hari_ke_depan)).weekday()]
-    return Label("Belum selesai, tenggat hari ini", f"Jatuh tempo sampai {hari}", f"s.d. {hari}")
+        return Label(s["sore_hari"], s["besok"], s["besok_pendek"])
+    hari = NAMA_HARI.get(bahasa, NAMA_HARI["id"])[(hari_ini + timedelta(days=ringkasan.hari_ke_depan)).weekday()]
+    return Label(s["sore_hari"], s["sampai"].format(hari=hari), s["sampai_pendek"].format(hari=hari))
 
 
 def _awal_kecil(teks):
@@ -129,15 +251,16 @@ def _awal_kecil(teks):
     return teks[:1].lower() + teks[1:]
 
 
-def _ket(issue, hari_ini):
+def _ket(issue, hari_ini, bahasa="id"):
+    s = _t(bahasa)
     if getattr(getattr(issue, "state", None), "group", None) == "completed":
-        return "selesai"
+        return s["ket_selesai"]
     if not issue.target_date:
-        return "tanpa tenggat"
+        return s["ket_tanpa"]
     selisih = (issue.target_date - hari_ini).days
     if selisih < 0:
-        return f"terlambat {-selisih} hari"
-    return "hari ini" if selisih == 0 else f"{selisih} hari lagi"
+        return s["ket_lewat"].format(n=-selisih)
+    return s["ket_hari_ini"] if selisih == 0 else s["ket_lagi"].format(n=selisih)
 
 
 def _kode(issue):
@@ -149,198 +272,226 @@ def _tautan(issue):
     return f"{url}/{issue.workspace.slug}/projects/{issue.project_id}/issues/{issue.id}" if url else ""
 
 
-def _nama_penanggung(issue, ringkasan):
+def _nama_penanggung(issue, ringkasan, bahasa="id"):
     if ringkasan is None:
         return None
     nama = ringkasan.penanggung.get(issue.id)
-    return ", ".join(nama) if nama else "belum ada penanggung jawab"
+    return ", ".join(nama) if nama else _t(bahasa)["tanpa_pj"]
 
 
 # ---------------------------------------------------------------- teks
 
 
-def _baris_teks(issue, hari_ini, siapa=None):
+def _baris_teks(issue, hari_ini, siapa=None, bahasa="id"):
     tambahan = f" [{siapa}]" if siapa else ""
-    return f"  {_kode(issue)}  {issue.name}  ({tanggal_id(issue.target_date, pendek=True)}, {_ket(issue, hari_ini)}){tambahan}"
+    tgl = tanggal(issue.target_date, bahasa, pendek=True)
+    return f"  {_kode(issue)}  {issue.name}  ({tgl}, {_ket(issue, hari_ini, bahasa)}){tambahan}"
 
 
-def _daftar_teks(judul, daftar, hari_ini, batas=BATAS_BARIS, ringkasan=None):
+def _daftar_teks(judul, daftar, hari_ini, batas=BATAS_BARIS, ringkasan=None, bahasa="id"):
     if not daftar:
         return []
     baris = [f"{judul} ({len(daftar)})"]
-    baris += [_baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan)) for i in daftar[:batas]]
+    baris += [_baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan, bahasa), bahasa) for i in daftar[:batas]]
     if len(daftar) > batas:
-        baris.append(f"  ... +{len(daftar) - batas} lainnya")
+        baris.append("  ... " + _t(bahasa)["lainnya"].format(n=len(daftar) - batas))
     return baris + [""]
 
 
-def _kelompok_teks(kelompok, hari_ini, label, ringkasan=None):
+def _kelompok_teks(kelompok, hari_ini, label, ringkasan=None, bahasa="id"):
+    s = _t(bahasa)
     return (
-        _daftar_teks("SELESAI HARI INI", kelompok.selesai, hari_ini, ringkasan=ringkasan)
-        + _daftar_teks("TERLAMBAT", kelompok.lewat, hari_ini, ringkasan=ringkasan)
-        + _daftar_teks(label.hari.upper(), kelompok.hari, hari_ini, ringkasan=ringkasan)
-        + _daftar_teks(label.depan.upper(), kelompok.depan, hari_ini, ringkasan=ringkasan)
+        _daftar_teks(s["selesai_hari_ini"].upper(), kelompok.selesai, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
+        + _daftar_teks(s["terlambat"].upper(), kelompok.lewat, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
+        + _daftar_teks(label.hari.upper(), kelompok.hari, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
+        + _daftar_teks(label.depan.upper(), kelompok.depan, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
     )
 
 
-def _tim_teks(ringkasan, hari_ini, label):
+def _tim_teks(ringkasan, hari_ini, label, bahasa="id"):
+    s = _t(bahasa)
     grup = [g for g in ringkasan.tim if g.tugas]
     if not grup:
         return []
-    baris = [f"== {ringkasan.judul_tim.upper()} ==", ""]
+    baris = [f"== {terjemah_data(ringkasan.judul_tim, bahasa).upper()} ==", ""]
     for g in grup:
         t = g.tugas
-        selesai = f"{len(t.selesai)} selesai hari ini, " if ringkasan.sore else ""
-        depan = _awal_kecil(label.depan_pendek) if ringkasan.sore else f"{HARI_KE_DEPAN} hari ke depan"
-        baris.append(f"{g.nama}: {selesai}{len(t.lewat)} terlambat, {len(t.hari)} hari ini, {len(t.depan)} {depan}")
+        selesai = s["tim_selesai"].format(n=len(t.selesai)) if ringkasan.sore else ""
+        depan = _awal_kecil(label.depan_pendek) if ringkasan.sore else s["depan_tim"]
+        baris.append(
+            s["tim_baris"].format(
+                nama=g.nama, selesai=selesai, lewat=len(t.lewat), hari=len(t.hari), depan=len(t.depan), label=depan
+            )
+        )
         perlu = t.lewat + t.hari
-        baris += [_baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan)) for i in perlu[:BATAS_BARIS_TIM]]
+        baris += [_baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan, bahasa), bahasa) for i in perlu[:BATAS_BARIS_TIM]]
         if len(perlu) > BATAS_BARIS_TIM:
-            baris.append(f"  ... +{len(perlu) - BATAS_BARIS_TIM} lainnya")
+            baris.append("  ... " + s["lainnya"].format(n=len(perlu) - BATAS_BARIS_TIM))
         baris.append("")
     return baris
 
 
 # ---------------------------------------------------------------- html
 
-
-def _baris_html(issue, hari_ini, warna, siapa=None):
-    nama = f"<strong>{escape(_kode(issue))}</strong> {escape(issue.name)}"
-    tautan = _tautan(issue)
-    if tautan:
-        nama = f'<a href="{escape(tautan)}" style="color:{GELAP};text-decoration:none">{nama}</a>'
-    if siapa:
-        nama += f'<br><span style="color:{ABU};font-size:12px">{escape(siapa)}</span>'
-    return (
-        f'<tr><td style="padding:4px 12px 4px 0;vertical-align:top">{nama}</td>'
-        f'<td style="padding:4px 0;color:{warna};white-space:nowrap;vertical-align:top">'
-        f"{tanggal_id(issue.target_date, pendek=True)} ({_ket(issue, hari_ini)})</td></tr>"
-    )
+def _warna_ket(issue, hari_ini):
+    """Warna status di kolom kanan: hijau selesai, merah terlambat, jingga hari ini."""
+    if getattr(getattr(issue, "state", None), "group", None) == "completed":
+        return HIJAU
+    if not issue.target_date:
+        return ABU
+    selisih = (issue.target_date - hari_ini).days
+    return MERAH if selisih < 0 else (JINGGA if selisih == 0 else ABU)
 
 
-def _tabel_html(daftar, hari_ini, warna, batas, ringkasan=None):
-    baris = [_baris_html(i, hari_ini, warna, _nama_penanggung(i, ringkasan)) for i in daftar[:batas]]
-    if len(daftar) > batas:
-        baris.append(f'<tr><td colspan="2" style="padding:4px 0;color:{ABU}">+{len(daftar) - batas} lainnya</td></tr>')
-    return f'<table style="border-collapse:collapse;font-size:13px;width:100%">{"".join(baris)}</table>'
+def _daftar_tugas_html(daftar, hari_ini, batas, ringkasan=None, bahasa="id"):
+    """Satu daftar dua kolom (kiri tugas + penanggung jawab, kanan tanggal + status)."""
+    baris = [
+        {
+            "kode": _kode(i),
+            "judul": i.name,
+            "url": _tautan(i),
+            "meta": _nama_penanggung(i, ringkasan, bahasa) or "",
+            "tanggal": tanggal(i.target_date, bahasa, pendek=True),
+            "ket": _ket(i, hari_ini, bahasa),
+            "warna": _warna_ket(i, hari_ini),
+        }
+        for i in daftar[:batas]
+    ]
+    lain = _t(bahasa)["lainnya"].format(n=len(daftar) - batas) if len(daftar) > batas else ""
+    return daftar_tugas(baris, lain)
 
 
-def _daftar_html(judul, daftar, hari_ini, warna, ringkasan=None):
+def _daftar_html(judul, daftar, hari_ini, warna, ringkasan=None, bahasa="id"):
     if not daftar:
         return ""
-    return f'<h4 style="margin:14px 0 4px;color:{warna};font-size:13px">{judul} ({len(daftar)})</h4>' + _tabel_html(
-        daftar, hari_ini, warna, BATAS_BARIS, ringkasan
+    return label_daftar(f"{judul} ({len(daftar)})", warna) + _daftar_tugas_html(
+        daftar, hari_ini, BATAS_BARIS, ringkasan, bahasa
     )
 
 
-def _kelompok_html(judul, kelompok, hari_ini, label, ringkasan=None):
+def _kelompok_html(judul, kelompok, hari_ini, label, ringkasan=None, bahasa="id"):
     if not kelompok:
         return ""
+    s = _t(bahasa)
     return (
-        f'<h3 style="margin:24px 0 4px;font-size:15px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">{judul}</h3>'
-        + _daftar_html("Selesai hari ini", kelompok.selesai, hari_ini, HIJAU, ringkasan)
-        + _daftar_html("Terlambat", kelompok.lewat, hari_ini, MERAH, ringkasan)
-        + _daftar_html(escape(label.hari), kelompok.hari, hari_ini, JINGGA, ringkasan)
-        + _daftar_html(escape(label.depan), kelompok.depan, hari_ini, GELAP, ringkasan)
+        judul_bagian(judul)
+        + _daftar_html(s["selesai_hari_ini"], kelompok.selesai, hari_ini, HIJAU, ringkasan, bahasa)
+        + _daftar_html(s["terlambat"], kelompok.lewat, hari_ini, MERAH, ringkasan, bahasa)
+        + _daftar_html(label.hari, kelompok.hari, hari_ini, JINGGA, ringkasan, bahasa)
+        + _daftar_html(label.depan, kelompok.depan, hari_ini, GELAP, ringkasan, bahasa)
     )
 
 
-def _tim_html(ringkasan, hari_ini, label):
+def _tim_html(ringkasan, hari_ini, label, bahasa="id"):
+    s = _t(bahasa)
     grup = [g for g in ringkasan.tim if g.tugas]
     if not grup:
         return ""
-    sel = "padding:4px 8px;text-align:right"
-
-    def kolom_selesai(g):
-        return f'<td style="{sel};color:{HIJAU}">{len(g.tugas.selesai)}</td>' if ringkasan.sore else ""
-
-    rekap = "".join(
-        f'<tr><td style="padding:4px 8px 4px 0">{escape(g.nama)}</td>'
-        + kolom_selesai(g)
-        + f'<td style="{sel};color:{MERAH}">{len(g.tugas.lewat)}</td>'
-        f'<td style="{sel};color:{JINGGA}">{len(g.tugas.hari)}</td>'
-        f'<td style="{sel}">{len(g.tugas.depan)}</td></tr>'
+    kolom = ([(s["kolom_selesai"], HIJAU)] if ringkasan.sore else []) + [
+        (s["kolom_terlambat"], MERAH),
+        (s["kolom_hari"], JINGGA),
+        (label.depan_pendek, GELAP),
+    ]
+    baris = [
+        {
+            "nama": g.nama,
+            "angka": ([len(g.tugas.selesai)] if ringkasan.sore else [])
+            + [len(g.tugas.lewat), len(g.tugas.hari), len(g.tugas.depan)],
+        }
         for g in grup
-    )
-    kepala = (
-        f'<tr style="color:{ABU};font-size:12px"><th style="text-align:left;padding:4px 8px 4px 0">Project</th>'
-        + (f'<th style="{sel}">Selesai</th>' if ringkasan.sore else "")
-        + f'<th style="{sel}">Terlambat</th><th style="{sel}">Hari ini</th>'
-        f'<th style="{sel}">{escape(label.depan_pendek)}</th></tr>'
-    )
+    ]
     rinci = ""
     for g in grup:
         perlu = g.tugas.lewat + g.tugas.hari
         if perlu:
-            rinci += f'<h4 style="margin:14px 0 4px;font-size:13px">{escape(g.nama)}</h4>' + _tabel_html(
-                perlu, hari_ini, MERAH, BATAS_BARIS_TIM, ringkasan
+            rinci += label_daftar(g.nama, huruf_besar=False) + _daftar_tugas_html(
+                perlu, hari_ini, BATAS_BARIS_TIM, ringkasan, bahasa
             )
-    return (
-        f'<h3 style="margin:24px 0 4px;font-size:15px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">'
-        f"{escape(ringkasan.judul_tim)}</h3>"
-        f'<table style="border-collapse:collapse;font-size:13px">{kepala}{rekap}</table>{rinci}'
-    )
+    judul = judul_bagian(terjemah_data(ringkasan.judul_tim, bahasa))
+    return judul + tabel_angka(s["kolom_project"], kolom, baris) + rinci
 
 
 # ---------------------------------------------------------------- email
 
 
-def susun_email(penerima, ringkasan, hari_ini):
+def _subjek(ringkasan, label, s, nyala):
+    k = ringkasan.sendiri
+    if ringkasan.sore:
+        potong = [
+            s["n_selesai"].format(n=len(k.selesai)) if nyala("digest_hari_ini") else "",
+            s["n_belum"].format(n=len(k.hari)) if nyala("digest_hari_ini") else "",
+            f"{len(k.depan)} {_awal_kecil(label.depan_pendek)}" if nyala("digest_depan") else "",
+            s["n_terlambat"].format(n=len(k.lewat)) if nyala("digest_terlambat") else "",
+        ]
+        awalan = s["awalan_sore"]
+    else:
+        potong = [
+            s["n_hari_ini"].format(n=len(k.hari)) if nyala("digest_hari_ini") else "",
+            s["n_depan_pagi"].format(n=len(k.depan)) if nyala("digest_depan") else "",
+            s["n_terlambat"].format(n=len(k.lewat)) if nyala("digest_terlambat") else "",
+        ]
+        awalan = s["awalan_pagi"]
+    subjek = awalan + (", ".join(p for p in potong if p) or s["subjek_kosong"])
+    if ringkasan.tim:
+        subjek += s["subjek_tim"].format(n=sum(len(g.tugas.lewat) for g in ringkasan.tim))
+    return subjek
+
+
+def susun_email(penerima, ringkasan, hari_ini, bahasa="id"):
     """(subjek, teks, html) untuk satu penerima."""
-    s = ringkasan.sendiri
-    label = label_untuk(ringkasan, hari_ini)
+    s = _t(bahasa)
+    k = ringkasan.sendiri
+    label = label_untuk(ringkasan, hari_ini, bahasa)
 
     def nyala(kunci):
         return ringkasan.bagian.get(kunci, True)
 
-    if ringkasan.sore:
-        potong = [
-            f"{len(s.selesai)} selesai hari ini" if nyala("digest_hari_ini") else "",
-            f"{len(s.hari)} belum selesai (tenggat hari ini)" if nyala("digest_hari_ini") else "",
-            f"{len(s.depan)} {_awal_kecil(label.depan_pendek)}" if nyala("digest_depan") else "",
-            f"{len(s.lewat)} terlambat" if nyala("digest_terlambat") else "",
-        ]
-        awalan = "[Ringkasan sore] "
-    else:
-        potong = [
-            f"{len(s.hari)} hari ini" if nyala("digest_hari_ini") else "",
-            f"{len(s.depan)} 7 hari ke depan" if nyala("digest_depan") else "",
-            f"{len(s.lewat)} terlambat" if nyala("digest_terlambat") else "",
-        ]
-        awalan = "[Ringkasan pagi] "
-    subjek = awalan + (", ".join(p for p in potong if p) or "tugas Anda")
-    if ringkasan.tim:
-        tim_lewat = sum(len(g.tugas.lewat) for g in ringkasan.tim)
-        subjek += f" · tim: {tim_lewat} terlambat"
-    sapaan = penerima.display_name or penerima.first_name or ""
-    peran = ringkasan.peran + (f" · {ringkasan.cakupan}" if ringkasan.cakupan else "")
-    if not all(nyala(k) for k in ("digest_terlambat", "digest_hari_ini", "digest_depan")):
-        kosong = "Tidak ada tugas Anda di bagian yang Anda pilih."
+    subjek = _subjek(ringkasan, label, s, nyala)
+    sapaan = s["sapaan"].format(nama=penerima.display_name or penerima.first_name or "").replace(" ,", ",")
+    cakupan = terjemah_data(ringkasan.cakupan, bahasa)
+    peran = terjemah_data(ringkasan.peran, bahasa) + (f" · {cakupan}" if cakupan else "")
+    if not all(nyala(x) for x in ("digest_terlambat", "digest_hari_ini", "digest_depan")):
+        kosong = s["kosong_pilihan"]
     elif ringkasan.sore:
-        kosong = f"Tidak ada tugas Anda yang selesai hari ini, terlambat, atau {_awal_kecil(label.depan)}."
+        kosong = s["kosong_sore"].format(depan=_awal_kecil(label.depan))
     else:
-        kosong = "Tidak ada tugas Anda yang jatuh tempo dalam 7 hari ke depan."
-    judul = "Ringkasan akhir hari" if ringkasan.sore else "Ringkasan tugas"
+        kosong = s["kosong_pagi"]
+    judul = s["judul_sore"] if ringkasan.sore else s["judul_pagi"]
+    tgl = tanggal(hari_ini, bahasa)
 
-    teks = [f"Halo {sapaan},".strip(), "", f"{judul}, {tanggal_id(hari_ini)} ({peran}).", ""]
-    teks += ["== TUGAS ANDA ==", ""] + (_kelompok_teks(s, hari_ini, label) or [kosong, ""])
+    teks = [sapaan, "", f"{judul}, {tgl} ({peran}).", ""]
+    teks += [f"== {s['tugas_anda'].upper()} ==", ""] + (_kelompok_teks(k, hari_ini, label, bahasa=bahasa) or [kosong, ""])
     if ringkasan.diberikan:
-        teks += ["== TUGAS YANG ANDA BERIKAN ==", ""] + _kelompok_teks(ringkasan.diberikan, hari_ini, label, ringkasan)
-    teks += _tim_teks(ringkasan, hari_ini, label)
-    teks.append(f"Email otomatis dari {PRODUK}. Atur di Profil > Notifikasi. Tidak perlu dibalas.")
-
-    html = (
-        f'<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:{GELAP};max-width:640px">'
-        f"<p>Halo {escape(sapaan)},</p>"
-        f"<p>{judul}, <strong>{tanggal_id(hari_ini)}</strong>"
-        f'<br><span style="color:{ABU};font-size:12px">{escape(peran)}</span></p>'
-        + (
-            _kelompok_html("Tugas Anda", s, hari_ini, label)
-            or f'<h3 style="font-size:15px">Tugas Anda</h3><p>{escape(kosong)}</p>'
+        teks += [f"== {s['diberikan'].upper()} ==", ""] + _kelompok_teks(
+            ringkasan.diberikan, hari_ini, label, ringkasan, bahasa
         )
-        + _kelompok_html("Tugas yang Anda berikan", ringkasan.diberikan, hari_ini, label, ringkasan)
-        + _tim_html(ringkasan, hari_ini, label)
-        + f'<p style="color:#9ca3af;font-size:11px;margin-top:24px">Email otomatis dari {PRODUK}, '
-        f"sistem internal {KANTOR}. Atur di Profil &gt; Notifikasi. Tidak perlu dibalas.</p></div>"
+    teks += _tim_teks(ringkasan, hari_ini, label, bahasa)
+    teks.append(s["kaki_teks"].format(merek=MEREK))
+
+    url = _base_url()
+    slug = ""
+    for kelompok in (k, ringkasan.diberikan, *[g.tugas for g in ringkasan.tim]):
+        for daftar in (kelompok.lewat, kelompok.hari, kelompok.depan, kelompok.selesai):
+            if daftar and not slug:
+                slug = getattr(getattr(daftar[0], "workspace", None), "slug", "") or ""
+    isi = (
+        judul_html(f"{judul}, {tgl}")
+        + sapaan_html(sapaan, peran)
+        + (
+            _kelompok_html(s["tugas_anda"], k, hari_ini, label, bahasa=bahasa)
+            or judul_bagian(s["tugas_anda"]) + paragraf(kosong, WARNA["teks_2"], UKURAN["isi_2"], jarak=RUANG["blok"])
+        )
+        + _kelompok_html(s["diberikan"], ringkasan.diberikan, hari_ini, label, ringkasan, bahasa)
+        + _tim_html(ringkasan, hari_ini, label, bahasa)
+        + tombol(s["tombol"], f"{url}/{slug}/" if url and slug else url)
+    )
+    html = bungkus(
+        isi,
+        bahasa=bahasa,
+        judul=subjek,
+        pratajuk=subjek,
+        alasan=s["alasan"],
+        url_preferensi=url_preferensi(slug),
+        email_penerima=getattr(penerima, "email", ""),
     )
     return subjek, "\n".join(teks), html

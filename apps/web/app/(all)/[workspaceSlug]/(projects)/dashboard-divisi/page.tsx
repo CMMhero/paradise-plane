@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Dua mode (KEP-60): "Ringkas" untuk pimpinan yang hanya perlu tahu bagian mana
- * yang bermasalah, "Rinci" untuk angka lengkap per departemen. Semua orang
+ * Tiga mode: "Ringkas" (KEP-60) untuk pimpinan yang hanya perlu tahu bagian mana
+ * yang bermasalah, "Rinci" untuk angka lengkap per departemen, "Laporan" (KEP-62)
+ * untuk tugas yang selesai dalam satu periode, lengkap dengan judulnya. Semua orang
  * mulai di Ringkas; pilihan terakhir diingat per peramban.
  */
 
@@ -18,6 +19,7 @@ import { cn } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
 import { SummaryView } from "@/components/dashboard-divisi/tampilan-ringkas";
+import { ReportView } from "@/components/dashboard-divisi/tampilan-laporan";
 import { DetailView } from "@/components/dashboard-divisi/tampilan-rinci";
 // hooks
 import useLocalStorage from "@/hooks/use-local-storage";
@@ -26,9 +28,14 @@ import { WorkspaceDashboardService } from "@/services/workspace_dashboard.servic
 
 const dashboardService = new WorkspaceDashboardService();
 
-type TMode = "ringkas" | "rinci";
+type TMode = "ringkas" | "rinci" | "laporan";
 const MODE_STORAGE_KEY = "paradise:dashboard-divisi:mode";
-const MODES: TMode[] = ["ringkas", "rinci"];
+const MODES: TMode[] = ["ringkas", "rinci", "laporan"];
+const MODE_LABEL: Record<TMode, string> = {
+  ringkas: "division_dashboard_ui.mode_summary",
+  rinci: "division_dashboard_ui.mode_detail",
+  laporan: "division_dashboard_ui.mode_report",
+};
 
 function DivisionDashboardPage() {
   const { t } = useTranslation();
@@ -36,7 +43,7 @@ function DivisionDashboardPage() {
   const isTimeTrackingEnabled = isParadiseFeatureEnabled("timeTracking");
   const { workspaceSlug } = useParams();
   const { storedValue, setValue: setMode } = useLocalStorage<TMode>(MODE_STORAGE_KEY, "ringkas");
-  const mode: TMode = storedValue === "rinci" ? "rinci" : "ringkas";
+  const mode: TMode = storedValue && MODES.includes(storedValue) ? storedValue : "ringkas";
   // Gagal memuat -> `data` tetap kosong dan halaman menampilkan pesan gagal.
   const { data, isLoading } = useSWR(
     workspaceSlug ? ["DIVISION_DASHBOARD", workspaceSlug] : null,
@@ -61,7 +68,7 @@ function DivisionDashboardPage() {
           </div>
           <fieldset
             aria-label={t("division_dashboard_ui.mode_label")}
-            className="m-0 flex overflow-hidden rounded-md border border-subtle p-0 text-12"
+            className="m-0 flex overflow-hidden rounded-button border border-subtle p-0 text-12"
           >
             {MODES.map((m) => (
               <button
@@ -71,16 +78,20 @@ function DivisionDashboardPage() {
                 onClick={() => setMode(m)}
                 className={cn(
                   "px-3 py-1.5 font-medium transition-colors",
-                  mode === m ? "bg-layer-3 text-primary" : "text-tertiary hover:bg-layer-2 hover:text-secondary"
+                  mode === m
+                    ? "bg-layer-transparent-active text-primary"
+                    : "text-tertiary hover:bg-layer-transparent-hover hover:text-secondary"
                 )}
               >
-                {t(m === "ringkas" ? "division_dashboard_ui.mode_summary" : "division_dashboard_ui.mode_detail")}
+                {t(MODE_LABEL[m])}
               </button>
             ))}
           </fieldset>
         </div>
 
-        {isLoading ? (
+        {mode === "laporan" ? (
+          <ReportView workspaceSlug={workspaceSlug} />
+        ) : isLoading ? (
           <p className="text-13 text-tertiary">{t("chat_ui.loading")}</p>
         ) : !data ? (
           <p className="text-13 text-tertiary">{t("division_dashboard_ui.load_failed")}</p>

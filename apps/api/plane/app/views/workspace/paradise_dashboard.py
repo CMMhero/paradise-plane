@@ -18,6 +18,7 @@ from rest_framework import status
 from .. import BaseAPIView
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.db.models import IssueWorkLog
+from plane.utils.laporan_selesai import PERIODE_BAWAAN, PERIODE_SAH, baris_csv, susun_laporan
 from plane.utils.ringkasan_divisi import hitung_ringkasan, project_terjangkau
 
 
@@ -31,6 +32,35 @@ class DivisionDashboardEndpoint(BaseAPIView):
 
     def get(self, request, slug):
         return Response(hitung_ringkasan(request.user, slug), status=status.HTTP_200_OK)
+
+
+class CompletedReportEndpoint(BaseAPIView):
+    """Laporan tugas selesai per periode (KEP-62). `?unduh=csv` = semua baris sebagai CSV.
+
+    Cakupan sama dengan Dashboard Divisi: hanya project yang user anggotai.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug):
+        periode = request.query_params.get("periode", PERIODE_BAWAAN)
+        if periode not in PERIODE_SAH:
+            return Response(
+                {"error": f"periode harus salah satu dari: {', '.join(PERIODE_SAH)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if request.query_params.get("unduh") != "csv":
+            return Response(susun_laporan(request.user, slug, periode), status=status.HTTP_200_OK)
+
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            f'attachment; filename="laporan-selesai-{periode}-{timezone.now().date().isoformat()}.csv"'
+        )
+        response.write("﻿")  # BOM agar Excel membaca UTF-8 dengan benar
+        writer = csv.writer(response)
+        for baris in baris_csv(request.user, slug, periode):
+            writer.writerow(baris)
+        return response
 
 
 class WorkLogExportEndpoint(BaseAPIView):

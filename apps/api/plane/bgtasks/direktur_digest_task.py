@@ -28,7 +28,6 @@ from collections import defaultdict
 from datetime import timedelta
 
 from celery import shared_task
-from django.core.mail import EmailMultiAlternatives
 from django.db.models import Count, Q
 from django.utils import timezone
 
@@ -37,6 +36,7 @@ from plane.bgtasks.daily_digest_task import _koneksi
 from plane.bgtasks.deadline_reminder_email import _base_url
 from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI
 from plane.bgtasks.direktur_digest_email import HARI_MACET, Angka, DivisiLaporan, Laporan, Unit, susun_email
+from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
@@ -168,10 +168,10 @@ def kirim_ringkasan_direktur():
                     kosong += 1
                     continue
                 tautan = f"{url}/{slug.get(workspace_id, '')}" if url else ""
-                subjek, teks, html = susun_email(orang, laporan, hari_ini, tautan)
-                pesan = EmailMultiAlternatives(subject=subjek, body=teks, from_email=efrom, to=[orang.email], connection=koneksi)
-                pesan.attach_alternative(html, "text/html")
-                pesan.send(fail_silently=False)
+                subjek, teks, html = susun_email(orang, laporan, hari_ini, tautan, bahasa=bahasa_penerima(orang))
+                buat_pesan(
+                    ke=orang.email, subjek=subjek, html=html, teks=teks, koneksi=koneksi, dari=efrom
+                ).send(fail_silently=False)
                 terkirim += 1
             except Exception as e:  # noqa: BLE001
                 gagal += 1

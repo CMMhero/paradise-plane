@@ -43,9 +43,11 @@ from plane.db.models import (
 from plane.utils.hierarki import project_boleh_diputuskan
 from plane.utils.saklar_instance import (
     DASHBOARD_KRITIS_PERSEN,
+    DASHBOARD_ON_TIME_WINDOW_DAYS,
     DASHBOARD_PERHATIAN_PERSEN,
     setelan_angka,
 )
+from plane.utils.tanggal_otomatis import batas_terlambat
 
 LANCAR = "lancar"
 PERHATIAN = "perhatian"
@@ -54,7 +56,9 @@ _URUTAN_STATUS = {KRITIS: 0, PERHATIAN: 1, LANCAR: 2}
 
 _SELESAI = "completed"
 _BATAL = "cancelled"
-_JENDELA_TEPAT_WAKTU_HARI = 30
+# Jendela "Selesai tepat waktu" kini setelan God Mode DASHBOARD_ON_TIME_WINDOW_DAYS
+# (bawaan 30). Kunci internal `_bertenggat_30` / `_tepat_waktu_30` tetap bernama
+# lama; angkanya mengikuti setelan.
 
 
 def project_terjangkau(user, slug):
@@ -94,15 +98,19 @@ def _persen(bagian, keseluruhan):
     return round(bagian * 100 / keseluruhan) if keseluruhan > 0 else None
 
 
-def _angka_tugas(project_ids, hari_ini, sekarang):
-    """{project_id: angka tugas} dalam satu kueri."""
+def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu):
+    """{project_id: angka tugas} dalam satu kueri.
+
+    Terlambat memakai `batas_terlambat` (tenggang `OVERDUE_GRACE_DAYS` dari God
+    Mode), jadi angkanya sama dengan Due date yang tampil merah di aplikasi.
+    """
     tujuh_hari = sekarang - timedelta(days=7)
     empat_belas_hari = sekarang - timedelta(days=14)
     sepekan_lalu = hari_ini - timedelta(days=7)
-    awal_jendela = sekarang - timedelta(days=_JENDELA_TEPAT_WAKTU_HARI)
+    awal_jendela = sekarang - timedelta(days=jendela_tepat_waktu)
 
     belum_tuntas = ~Q(state__group__in=[_SELESAI, _BATAL])
-    terlambat = Q(target_date__lt=hari_ini) & belum_tuntas
+    terlambat = Q(target_date__lt=batas_terlambat(hari_ini)) & belum_tuntas
     selesai = Q(state__group=_SELESAI)
     selesai_bertenggat = selesai & Q(completed_at__gte=awal_jendela, target_date__isnull=False)
 
@@ -123,7 +131,7 @@ def _angka_tugas(project_ids, hari_ini, sekarang):
             # tugasnya belum selesai saat itu (atau sampai sekarang).
             terlambat_lalu=Count(
                 "id",
-                filter=Q(target_date__lt=sepekan_lalu)
+                filter=Q(target_date__lt=batas_terlambat(sepekan_lalu))
                 & ~Q(state__group=_BATAL)
                 & (Q(completed_at__isnull=True) | Q(completed_at__date__gte=sepekan_lalu)),
             ),
@@ -293,7 +301,8 @@ def hitung_ringkasan(user, slug, sekarang=None):
 
     projects = list(project_terjangkau(user, slug))
     ids = [p.id for p in projects]
-    tugas = _angka_tugas(ids, hari_ini, sekarang)
+    jendela_tepat_waktu = setelan_angka(DASHBOARD_ON_TIME_WINDOW_DAYS)
+    tugas = _angka_tugas(ids, hari_ini, sekarang, jendela_tepat_waktu)
     kerja = _menit_kerja(ids, awal_bulan)
     anggota = _jumlah_anggota(ids)
     persetujuan = _persetujuan_untuk_saya(user, projects)
@@ -313,6 +322,8 @@ def hitung_ringkasan(user, slug, sekarang=None):
     return {
         "generated_at": sekarang,
         "thresholds": {"attention": ambang[0], "critical": ambang[1]},
+        # Label "Selesai tepat waktu (N hari terakhir)" di apps/web membaca ini.
+        "on_time_window_days": jendela_tepat_waktu,
         "totals": totals,
         "divisions": divisions,
         "projects": sorted(rows, key=_kunci_urut),
