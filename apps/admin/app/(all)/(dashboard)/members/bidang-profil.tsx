@@ -19,7 +19,7 @@ import { Field } from "@/components/common/paradise-ui";
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { BAHASA_PROFIL } from "./constants";
 
-const TOMBOL_SELECT = "w-full rounded-md border-subtle bg-layer-2";
+const TOMBOL_SELECT = "w-full border-subtle bg-layer-2";
 
 const memberService = new InstanceMemberService();
 
@@ -153,7 +153,103 @@ export function BidangProfil({ profile, onProfil }: Props) {
           ))}
         </CustomSelect>
       </Field>
+      {/* KEP-64: preferensi tampilan. Pilihan pertama tiap baris = bawaan pabrik. */}
+      <PilihGaya
+        label={t.scheme}
+        value={profile.skema}
+        opsi={[
+          ["bara", t.scheme_bara],
+          ["senja", t.scheme_senja],
+          ["sumi", t.scheme_sumi],
+          ["hutan", t.scheme_hutan],
+          ["netral", t.scheme_netral],
+        ]}
+        onUbah={(skema) => onProfil({ skema })}
+      />
+      <PilihGaya
+        label={t.font}
+        value={profile.font}
+        opsi={[
+          ["jakarta", "Plus Jakarta Sans"],
+          ["inter", "Inter"],
+          ["geist", "Geist"],
+          ["figtree", "Figtree"],
+          ["bricolage", "Bricolage Grotesque"],
+          ["archivo", "Archivo"],
+          ["sora", "Sora"],
+          ["shantell", "Shantell Sans"],
+          ["jetbrains", "JetBrains Mono"],
+          ["serif", "Source Serif 4"],
+          ["sistem", t.font_system],
+        ]}
+        onUbah={(font) => onProfil({ font })}
+      />
+      <PilihGaya
+        label={t.motion}
+        value={profile.gerak}
+        opsi={[
+          ["halus", t.motion_smooth],
+          ["kurangi", t.motion_reduce],
+        ]}
+        onUbah={(gerak) => onProfil({ gerak })}
+      />
+      {/* Suara pemberitahuan: volume 0..100 dan bisu. Orangnya bisa mengubah
+          sendiri di Profile > Preferences. */}
+      <Field label={`${t.sound_volume} (${profile.volume_suara ?? 80}%)`}>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={profile.volume_suara ?? 80}
+          onChange={(e) => onProfil({ volume_suara: Number(e.target.value) })}
+          aria-label={t.sound_volume}
+          className="h-9 w-full cursor-pointer"
+        />
+      </Field>
+      <Field label={t.sound_mute}>
+        <div className="flex h-9 items-center">
+          <ToggleSwitch
+            value={profile.suara_bisu ?? false}
+            label={t.sound_mute}
+            onChange={() => onProfil({ suara_bisu: !(profile.suara_bisu ?? false) })}
+          />
+        </div>
+      </Field>
     </div>
+  );
+}
+
+/** Satu pilihan tampilan (skema, font, gerak): select daftar nilai. */
+function PilihGaya<T extends string>({
+  label,
+  value,
+  opsi,
+  onUbah,
+}: {
+  label: string;
+  value: T;
+  opsi: [T, string][];
+  onUbah: (v: T) => void;
+}) {
+  const terpilih = opsi.find(([v]) => v === value) ?? opsi[0];
+  return (
+    <Field label={label}>
+      <CustomSelect
+        value={terpilih[0]}
+        label={terpilih[1]}
+        onChange={(v: T) => onUbah(v)}
+        buttonClassName={TOMBOL_SELECT}
+        className="w-full"
+        input
+      >
+        {opsi.map(([v, teks]) => (
+          <CustomSelect.Option key={v} value={v}>
+            {teks}
+          </CustomSelect.Option>
+        ))}
+      </CustomSelect>
+    </Field>
   );
 }
 

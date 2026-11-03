@@ -11,6 +11,7 @@ import pytz
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 
 # Django imports
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
@@ -260,6 +261,18 @@ class Profile(TimeAuditModel):
     has_marketing_email_consent = models.BooleanField(default=False)
     is_subscribed_to_changelog = models.BooleanField(default=False)
     product_tour = models.JSONField(default=get_default_product_tour)
+
+    # Kustomisasi Paradise: kontak kantor di kartu profil anggota. Bukan `role`
+    # di atas: kolom itu sisa onboarding Plane dan form profil mengisinya dengan
+    # "Product / Project Manager" saat kosong, jadi tidak bisa dipercaya sebagai
+    # jabatan. Diubah oleh orangnya sendiri atau Super Admin di God Mode.
+    job_title = models.CharField(max_length=120, blank=True, default="")
+    phone_extension = models.CharField(
+        max_length=20,
+        blank=True,
+        default="",
+        validators=[RegexValidator(r"^[0-9+()#*\-\s]*$", "Only digits, spaces and + ( ) - # * are allowed.")],
+    )
 
     class Meta:
         verbose_name = "Profile"
