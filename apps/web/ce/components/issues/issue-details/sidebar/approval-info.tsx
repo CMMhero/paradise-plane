@@ -64,12 +64,9 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
   const pemutus = terkini?.status === status ? terkini?.diputuskan_oleh_nama : null;
 
   return (
-    <SidebarPropertyListItem icon={ShieldCheck} label={t("issue.approval.sidebar.label")} childrenClassName="px-2">
+    <SidebarPropertyListItem icon={ShieldCheck} label={t("issue.approval.sidebar.label")}>
       {status ? (
-        // Setinggi baris properti lain (h-7.5) supaya chip 20px sejajar label.
-        <span className="flex h-7.5 min-w-0 items-center">
-          <ApprovalStatusChip status={status} decidedBy={pemutus} />
-        </span>
+        <ApprovalStatusChip status={status} decidedBy={pemutus} />
       ) : (
         <span className="flex h-7.5 items-center text-body-xs-medium text-placeholder">-</span>
       )}

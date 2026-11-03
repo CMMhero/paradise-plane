@@ -244,7 +244,7 @@ export const ApprovalDecisionButtons = observer(function ApprovalDecisionButtons
     // TERMASUK klik di dalam dialog: portal tetap merambat lewat pohon React.
     // Hanya stopPropagation, supaya tombol submit dialog tetap jalan.
     <span
-      className="flex shrink-0 items-center gap-1"
+      className="flex shrink-0 items-center gap-1 sentuh:gap-3"
       onClick={(e) => {
         e.stopPropagation();
         if (e.target === e.currentTarget) e.preventDefault();
@@ -277,7 +277,7 @@ export const ApprovalDecisionButtons = observer(function ApprovalDecisionButtons
           <Tooltip tooltipContent={t("issue.approval.actions.approve")} isMobile={isMobile}>
             <IconButton
               variant="primary"
-              size="sm"
+              size={isMobile ? "lg" : "sm"}
               icon={Check}
               loading={sedangProses}
               onClick={setujui}
@@ -287,7 +287,7 @@ export const ApprovalDecisionButtons = observer(function ApprovalDecisionButtons
           <Tooltip tooltipContent={t("issue.approval.menu.reject")} isMobile={isMobile}>
             <IconButton
               variant="error-outline"
-              size="sm"
+              size={isMobile ? "lg" : "sm"}
               icon={X}
               disabled={sedangProses}
               onClick={bukaTolak}

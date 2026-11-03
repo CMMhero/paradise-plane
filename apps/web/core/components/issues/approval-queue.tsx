@@ -75,7 +75,7 @@ function ApprovalTabNavigation(props: TApprovalTabNavigationProps) {
           >
             {item.label}
             {!!item.jumlah && (
-              <span className="rounded-full bg-layer-3 px-1.5 text-11 text-secondary">{item.jumlah}</span>
+              <span className="rounded-control bg-layer-3 px-1.5 text-11 text-secondary">{item.jumlah}</span>
             )}
           </div>
           <div
