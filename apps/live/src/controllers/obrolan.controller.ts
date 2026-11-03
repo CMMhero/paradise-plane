@@ -5,6 +5,7 @@
  * See the LICENSE file for details.
  */
 
+import { randomUUID } from "node:crypto";
 import type { Request } from "express";
 import type Redis from "ioredis";
 import type { RawData, WebSocket } from "ws";
@@ -15,6 +16,17 @@ import { logger } from "@plane/logger";
 import { env } from "@/env";
 // redis
 import { redisManager } from "@/redis";
+// kehadiran
+import {
+  AWALAN_KANAL_HADIR,
+  POLA_KANAL_HADIR,
+  PenyimpanMemori,
+  PenyimpanRedis,
+  ringkasKehadiran,
+  statusSah,
+  type PenyimpanKehadiran,
+  type TStatusHadir,
+} from "./kehadiran";
 
 /** Kanal Redis yang dipakai Django. Polanya disamakan dengan
  * `plane/utils/obrolan_siaran.py`; mengubah salah satu tanpa yang lain membuat
@@ -27,6 +39,16 @@ type Klien = {
   ws: WebSocket;
   userId: string;
   ruang: string;
+};
+
+/** Satu tab yang melaporkan kehadirannya di satu workspace. */
+type KlienHadir = {
+  ws: WebSocket;
+  userId: string;
+  slug: string;
+  /** Acak per sambungan: satu orang bisa membuka banyak tab. */
+  tab: string;
+  status: TStatusHadir;
 };
 
 /**
@@ -59,6 +81,9 @@ export class ObrolanController {
    * proses cukup tahu soketnya sendiri. Dengan begitu menambah replika `live`
    * tidak menuntut satu pun perubahan di sini. */
   private klien = new Map<string, Set<Klien>>();
+  /** Tab yang melaporkan kehadiran, per workspace, di proses INI. */
+  private klienHadir = new Map<string, Set<KlienHadir>>();
+  private penyimpanMemori = new PenyimpanMemori();
   private pelanggan: Redis | null = null;
 
   @WSDecorator("/")
@@ -66,6 +91,12 @@ export class ObrolanController {
     const slug = String(req.query.workspace ?? "");
     const ruang = String(req.query.ruang ?? "");
     const cookie = req.headers.cookie;
+
+    // Soket kehadiran: satu per tab, tanpa ruang. Lihat `kehadiran.ts`.
+    if (req.query.mode === "kehadiran") {
+      await this.sambungKehadiran(ws, slug, cookie);
+      return;
+    }
 
     if (!slug || !ruang || !cookie) {
       ws.close(1008, "Parameter tidak lengkap");
@@ -152,12 +183,127 @@ export class ObrolanController {
     // Koneksi terpisah: klien yang sedang berlangganan tidak bisa dipakai
     // perintah biasa lagi, dan klien utama masih dipakai bagian lain.
     this.pelanggan = dasar.duplicate();
-    await this.pelanggan.psubscribe(POLA_KANAL);
-    this.pelanggan.on("pmessage", (_pola: string, kanal: string, muatan: string) => {
+    await this.pelanggan.psubscribe(POLA_KANAL, POLA_KANAL_HADIR);
+    this.pelanggan.on("pmessage", (pola: string, kanal: string, muatan: string) => {
+      if (pola === POLA_KANAL_HADIR) {
+        this.teruskanKehadiran(kanal.slice(AWALAN_KANAL_HADIR.length), muatan);
+        return;
+      }
       const ruang = kanal.slice(AWALAN_KANAL.length);
       this.teruskan(ruang, muatan);
     });
-    logger.info("OBROLAN: berlangganan " + POLA_KANAL);
+    logger.info(`OBROLAN: berlangganan ${POLA_KANAL} dan ${POLA_KANAL_HADIR}`);
+  }
+
+  // ------------------------------------------------------------------------
+  // Kehadiran (online / away / offline)
+  // ------------------------------------------------------------------------
+
+  private penyimpan(): PenyimpanKehadiran {
+    const redis = redisManager.getClient();
+    return redis ? new PenyimpanRedis(redis) : this.penyimpanMemori;
+  }
+
+  private async sambungKehadiran(ws: WebSocket, slug: string, cookie: string | undefined) {
+    if (!slug || !cookie) {
+      ws.close(1008, "Parameter tidak lengkap");
+      return;
+    }
+    let userId: string;
+    try {
+      userId = await this.periksaHakWorkspace(slug, cookie);
+    } catch {
+      ws.close(1008, "Tidak berhak");
+      return;
+    }
+
+    const klien: KlienHadir = { ws, userId, slug, tab: randomUUID(), status: "online" };
+    const isi = this.klienHadir.get(slug) ?? new Set<KlienHadir>();
+    isi.add(klien);
+    this.klienHadir.set(slug, isi);
+    await this.pastikanBerlangganan();
+
+    ws.on("message", (data: RawData) => void this.terimaDetak(klien, data));
+    ws.on("close", () => void this.lepaskanKehadiran(klien));
+    ws.on("error", (error: Error) => {
+      logger.error("OBROLAN: galat soket kehadiran:", error);
+      ws.close(1011, "Internal server error");
+    });
+
+    await this.catatDetak(klien);
+  }
+
+  /** Anggota aktif workspace = boleh melihat dan dilihat kehadirannya.
+   * Endpoint belum-dibaca dipakai karena ringan dan sudah menolak bukan anggota. */
+  private async periksaHakWorkspace(slug: string, cookie: string): Promise<string> {
+    const kepala = { headers: { Cookie: cookie } };
+    const saya = await fetch(`${env.API_BASE_URL}/api/users/me/`, kepala);
+    if (!saya.ok) throw new Error("belum login");
+    const user = (await saya.json()) as { id?: string };
+    if (!user?.id) throw new Error("tanpa id");
+    const anggota = await fetch(`${env.API_BASE_URL}/api/workspaces/${slug}/chat/belum-dibaca/`, kepala);
+    if (!anggota.ok) throw new Error("bukan anggota");
+    return user.id;
+  }
+
+  private async terimaDetak(klien: KlienHadir, data: RawData) {
+    let masuk: { tipe?: string; status?: unknown };
+    try {
+      masuk = JSON.parse(data.toString());
+    } catch {
+      return;
+    }
+    if (masuk.tipe !== "hadir") return;
+    if (statusSah(masuk.status)) klien.status = masuk.status;
+    await this.catatDetak(klien);
+  }
+
+  /** Simpan detak tab ini, siarkan kalau status ORANGNYA berubah, lalu kirim
+   * potret lengkap ke tab ini (penambal siaran yang terlewat). */
+  private async catatDetak(klien: KlienHadir) {
+    try {
+      const penyimpan = this.penyimpan();
+      const sebelum = ringkasKehadiran(await penyimpan.semua(klien.slug), Date.now()).peta[klien.userId];
+      await penyimpan.catat(klien.slug, `${klien.userId}:${klien.tab}`, `${klien.status}:${Date.now()}`);
+      const { peta, basi } = ringkasKehadiran(await penyimpan.semua(klien.slug), Date.now());
+      if (basi.length > 0) await penyimpan.hapus(klien.slug, ...basi);
+      if (peta[klien.userId] !== sebelum) await this.umumkanKehadiran(klien.slug, klien.userId, peta[klien.userId]);
+      if (klien.ws.readyState === klien.ws.OPEN) klien.ws.send(JSON.stringify({ tipe: "kehadiran_semua", peta }));
+    } catch (error) {
+      // Kehadiran adalah hiasan: galatnya tidak boleh memutus apa pun.
+      logger.warn("OBROLAN: gagal mencatat kehadiran", error);
+    }
+  }
+
+  private async lepaskanKehadiran(klien: KlienHadir) {
+    const isi = this.klienHadir.get(klien.slug);
+    isi?.delete(klien);
+    if (isi && isi.size === 0) this.klienHadir.delete(klien.slug);
+    try {
+      const penyimpan = this.penyimpan();
+      await penyimpan.hapus(klien.slug, `${klien.userId}:${klien.tab}`);
+      // Tab lain milik orang yang sama mungkin masih hidup: status dihitung ulang.
+      const { peta } = ringkasKehadiran(await penyimpan.semua(klien.slug), Date.now());
+      await this.umumkanKehadiran(klien.slug, klien.userId, peta[klien.userId]);
+    } catch (error) {
+      logger.warn("OBROLAN: gagal melepas kehadiran", error);
+    }
+  }
+
+  private async umumkanKehadiran(slug: string, userId: string, status: TStatusHadir | undefined) {
+    const muatan = JSON.stringify({ tipe: "kehadiran", user: userId, status: status ?? "offline" });
+    const redis = redisManager.getClient();
+    if (!redis) {
+      this.teruskanKehadiran(slug, muatan);
+      return;
+    }
+    await redis.publish(`${AWALAN_KANAL_HADIR}${slug}`, muatan);
+  }
+
+  private teruskanKehadiran(slug: string, muatan: string) {
+    for (const klien of this.klienHadir.get(slug) ?? []) {
+      if (klien.ws.readyState === klien.ws.OPEN) klien.ws.send(muatan);
+    }
   }
 
   /** Teruskan satu siaran ke soket lokal yang berhak menerimanya. */

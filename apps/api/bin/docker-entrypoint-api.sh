@@ -70,6 +70,17 @@ call_command("configure_instance")
 call_command("create_bucket")
 call_command("clear_cache")
 call_command("collectstatic", interactive=False)
+
+# Catatan rilis ke kanal Changelog (3 Nov 2026). Sengaja DI LUAR rantai di
+# atas: galat apa pun di sini dicatat lalu ditelan, karena changelog yang
+# gagal terbit tidak boleh menahan gunicorn. Perintahnya idempoten dan dijaga
+# advisory lock, jadi beberapa container yang start bersamaan aman.
+try:
+    call_command("terbitkan_changelog")
+except Exception:  # noqa: BLE001
+    import logging
+
+    logging.getLogger("plane.api").exception("changelog: gagal terbit saat start, dilewati")
 PYTHON
 
 exec gunicorn -w "$GUNICORN_WORKERS" -k uvicorn.workers.UvicornWorker plane.asgi:application --bind 0.0.0.0:"${PORT:-8000}" --max-requests 1200 --max-requests-jitter 1000 --access-logfile -

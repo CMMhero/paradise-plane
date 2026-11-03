@@ -14,6 +14,29 @@ from .base import BaseModel
 # pemuatan percakapan ikut menyeretnya.
 BATAS_ISI = 5000
 
+# Kanal sistem (3 Nov 2026). Dua kanal per workspace yang diikuti SEMUA anggota,
+# plus satu ruang kabar "Paradise" per orang untuk kartu aktivitas. Kunci kabar
+# memuat id pemiliknya: `kabar:<user_id>`.
+KUNCI_PENGUMUMAN = "pengumuman"
+KUNCI_CHANGELOG = "changelog"
+AWALAN_KABAR = "kabar:"
+
+
+class JenisPesan(models.TextChoices):
+    """Bentuk sebuah pesan. `teks` = pesan biasa; sisanya kartu yang dirender
+    peramban dari `muatan`. `isi` tetap diisi ringkasan teks untuk pencarian,
+    email, dan peramban lama yang belum mengenal kartu."""
+
+    TEKS = "teks", "Teks"
+    PANGGILAN = "panggilan", "Log panggilan"
+    CHANGELOG = "changelog", "Catatan rilis"
+    TUGAS = "tugas", "Ditugaskan"
+    PROJECT = "project", "Ditambahkan ke project"
+    PERSETUJUAN = "persetujuan", "Persetujuan"
+    MENTION = "mention", "Disebut"
+    KOMENTAR = "komentar", "Komentar"
+    PEMBARUAN = "pembaruan", "Pembaruan work item"
+
 
 class Ruang(BaseModel):
     """Tempat pesan hidup: obrolan berdua, kanal publik, atau kanal privat.
@@ -52,6 +75,13 @@ class Ruang(BaseModel):
     # lebih sering daripada pesan dikirim.
     pesan_terakhir_pada = models.DateTimeField(null=True, blank=True)
 
+    # Ruang milik sistem: tidak bisa ditinggalkan, dihapus, atau diganti nama oleh
+    # orang biasa. `kunci_sistem` membedakan perannya (pengumuman, changelog,
+    # kabar:<user_id>) dan unik per workspace, jadi pembuatan ulang yang berjalan
+    # bersamaan tidak bisa menghasilkan dua kanal Changelog.
+    sistem = models.BooleanField(default=False)
+    kunci_sistem = models.CharField(max_length=64, null=True, blank=True)
+
     class Meta:
         verbose_name = "Ruang Obrolan"
         verbose_name_plural = "Ruang Obrolan"
@@ -61,9 +91,21 @@ class Ruang(BaseModel):
             models.Index(fields=["workspace", "tipe"], name="ruang_ws_tipe_idx"),
             models.Index(fields=["workspace", "pesan_terakhir_pada"], name="ruang_ws_terakhir_idx"),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["workspace", "kunci_sistem"],
+                condition=models.Q(kunci_sistem__isnull=False, deleted_at__isnull=True),
+                name="ruang_ws_kunci_sistem_unik",
+            )
+        ]
 
     def __str__(self):
         return self.nama or f"dm:{self.kunci_dm}"
+
+    @property
+    def is_system(self) -> bool:
+        """Alias `sistem`, dibaca `chat_kelola.py`."""
+        return self.sistem
 
     @staticmethod
     def buat_kunci_dm(user_a_id, user_b_id) -> str:
@@ -142,7 +184,12 @@ class PesanLangsung(BaseModel):
     ruang = models.ForeignKey(
         "db.Ruang", related_name="pesan", on_delete=models.CASCADE, null=True, blank=True
     )
-    pengirim = models.ForeignKey("db.User", related_name="pesan_terkirim", on_delete=models.CASCADE)
+    # Kosong = dikirim sistem ("Paradise"): catatan rilis dan kartu kabar. Bukan
+    # akun bot sungguhan, karena akun bot ikut muncul di daftar anggota, dan
+    # penyaringan akun bot di setiap daftar adalah tempat yang mudah terlewat.
+    pengirim = models.ForeignKey(
+        "db.User", related_name="pesan_terkirim", on_delete=models.CASCADE, null=True, blank=True
+    )
     # Kosong untuk pesan kanal: penerimanya adalah seluruh anggota ruang, dan itu
     # sudah tercatat di Langganan. Tetap diisi untuk DM karena tanda terima,
     # email pemberitahuan, dan penjaga lampiran semuanya bersandar padanya.
@@ -150,6 +197,10 @@ class PesanLangsung(BaseModel):
         "db.User", related_name="pesan_diterima", on_delete=models.CASCADE, null=True, blank=True
     )
     isi = models.TextField()
+    # Kartu: `jenis` memilih cara merender, `muatan` membawa datanya. Lihat
+    # `JenisPesan`. Kartu tidak bisa disunting lewat endpoint pesan.
+    jenis = models.CharField(max_length=20, choices=JenisPesan.choices, default=JenisPesan.TEKS)
+    muatan = models.JSONField(default=dict, blank=True)
     # Tanda terima, dan HANYA berarti untuk DM. Lihat alasannya di Langganan.
     dibaca_pada = models.DateTimeField(null=True, blank=True)
     # Diisi saat pesan ini sudah pernah masuk email pemberitahuan. Ditaruh di

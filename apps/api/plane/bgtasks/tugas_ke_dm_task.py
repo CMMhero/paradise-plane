@@ -238,6 +238,21 @@ def kirim_tugas_ke_dm(issue_id, actor_id, penerima_ids):
         if pengirim is None:
             return
 
+        # Kartu (3 Nov 2026): `isi` tetap teks lengkap untuk email, pencarian,
+        # dan peramban lama; `muatan` yang dirender peramban sebagai kartu.
+        from plane.db.models import IssueAssignee, JenisPesan  # noqa: PLC0415
+        from plane.utils.kartu_obrolan import data_tugas  # noqa: PLC0415
+
+        muatan = {
+            "aksi": JenisPesan.TUGAS,
+            "aktor": str(actor_id),
+            "workspace_slug": issue.workspace.slug,
+            **data_tugas(
+                issue, IssueAssignee.objects.filter(issue_id=issue.id).values_list("assignee_id", flat=True)
+            ),
+            "detail": {"deskripsi": _potong(issue.description_stripped or "", 280)},
+        }
+
         for penerima_id in aktif:
             ruang = ruang_dm(issue.workspace_id, actor_id, penerima_id)
             pesan = PesanLangsung.objects.create(
@@ -246,6 +261,8 @@ def kirim_tugas_ke_dm(issue_id, actor_id, penerima_ids):
                 pengirim=pengirim,
                 penerima_id=penerima_id,
                 isi=isi,
+                jenis=JenisPesan.TUGAS,
+                muatan=muatan,
             )
             # Denormalisasi yang membuat daftar percakapan bisa diurutkan tanpa
             # subquery, sama seperti jalur kirim biasa.

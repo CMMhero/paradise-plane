@@ -1,0 +1,14 @@
+{
+  "version": "1.5.0",
+  "date": "2026-10-22",
+  "entries": [
+    { "type": "Added", "text": "Approval queue: leads approve or reject finished work, with a reason." },
+    { "type": "Added", "text": "Approval notifications in the inbox and by email, in the recipient's language." },
+    { "type": "Added", "text": "Filter for work items waiting for approval." },
+    { "type": "Added", "text": "God Mode: manage members and the organisation structure." },
+    {
+      "type": "Changed",
+      "text": "Granting Super Admin asks you to type a confirmation phrase instead of a passphrase."
+    }
+  ]
+}

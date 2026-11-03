@@ -31,6 +31,9 @@ python manage.py create_bucket
 # Clear Cache before starting to remove stale values
 python manage.py clear_cache
 
+# Catatan rilis ke kanal Changelog. Gagal = dicatat, start jalan terus.
+python manage.py terbitkan_changelog --settings=plane.settings.local || echo "changelog: gagal terbit, dilewati"
+
 # Tanda pembuat (tamper-evident), cetak banner ke log startup
 python -c "from plane.builder import verify_builder_mark; verify_builder_mark()" || true
 

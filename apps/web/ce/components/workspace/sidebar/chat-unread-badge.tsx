@@ -7,6 +7,7 @@
 
 import { observer } from "mobx-react";
 import useSWR from "swr";
+import { getNumberCount } from "@plane/utils";
 // components
 import { CountChip } from "@/components/common/count-chip";
 // services
@@ -40,7 +41,7 @@ export const ChatUnreadBadge = observer(function ChatUnreadBadge({ workspaceSlug
 
   return (
     <div className="ml-auto">
-      <CountChip count={jumlah > 99 ? "99+" : `${jumlah}`} />
+      <CountChip count={getNumberCount(jumlah)} />
     </div>
   );
 });

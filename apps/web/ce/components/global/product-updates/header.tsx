@@ -18,7 +18,7 @@ export const ProductUpdatesHeader = observer(function ProductUpdatesHeader() {
         <div className="flex gap-2 text-18 font-medium">{t("whats_new")}</div>
         <div
           className={cn(
-            "mx-2 rounded-full bg-accent-primary/20 px-2 py-0.5 text-center text-11 font-medium text-accent-primary"
+            "mx-2 rounded-control bg-accent-primary/20 px-2 py-0.5 text-center text-11 font-medium text-accent-primary"
           )}
         >
           {t("version")}: v{packageJson.version}

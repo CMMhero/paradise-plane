@@ -68,6 +68,22 @@ class TestEmailPenugasan:
         assert [a[0] for a in m.attachments] == [f"GDG-{dunia.t_staf.sequence_id}.ics"]
 
     @pytest.mark.django_db
+    def test_penerima_berbahasa_inggris_menerima_email_inggris_berlogo(self, dunia, settings):
+        from email import message_from_bytes
+
+        from plane.db.models import Profile
+        from plane.utils.email_merek import LOGO_CID
+
+        settings.EMAIL_BACKEND = LOCMEM
+        Profile.objects.filter(user=dunia.staf).update(language="en")
+        _kirim_penugasan(dunia, dunia.t_staf, dunia.sup, [dunia.staf])
+        (m,) = mail.outbox
+        assert m.subject.startswith("[New task] GDG-")
+        assert "gave you a new task" in m.alternatives[0][0] and "Anda" not in m.body
+        mime = message_from_bytes(m.message().as_bytes())
+        assert any(b.get("Content-ID") == f"<{LOGO_CID}>" for b in mime.walk())
+
+    @pytest.mark.django_db
     def test_pimpinan_pemberi_sendiri_dan_nonaktif_tidak_dikirimi(self, dunia, settings):
         settings.EMAIL_BACKEND = LOCMEM
         keluar = _orang(dunia.ws, "keluar")

@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "date": "2026-10-30",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Divisions and departments: every project now sits under a department, and access follows your placement."
+    },
+    { "type": "Added", "text": "Division Dashboard for leaders, with a summary and a detailed mode." },
+    { "type": "Added", "text": "Per-type notification switches for inbox and email in Profile > Notifications." },
+    { "type": "Added", "text": "Deadline and overdue reminders in the inbox, plus an end-of-day summary." },
+    { "type": "Added", "text": "Chat: notes to yourself, shown at the top of the conversation list." },
+    { "type": "Added", "text": "Quick links get their own sidebar menu and page." },
+    { "type": "Added", "text": "Deleted accounts can be restored from Trash." },
+    {
+      "type": "Changed",
+      "text": "Moving your task to Done now requests approval; it moves to Done once your lead approves."
+    },
+    { "type": "Changed", "text": "Other people's tasks are view-only, except for comments." },
+    { "type": "Changed", "text": "Directors only receive mentions, chat and summaries." },
+    { "type": "Changed", "text": "New members and projects open in Board layout by default." },
+    { "type": "Changed", "text": "Super Admins manage every setting and menu from God Mode." },
+    {
+      "type": "Changed",
+      "text": "Cycles, Work item types and Templates were removed; all other project features are on."
+    },
+    { "type": "Fixed", "text": "Channel attachments can be opened by every channel member, not only the sender." },
+    { "type": "Fixed", "text": "Sub work items in the detail view no longer flash and disappear." }
+  ]
+}

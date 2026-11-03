@@ -19,6 +19,8 @@ yang menyiarkan pesan baru, dan endpoint ini tetap jadi satu-satunya penulis.
 
 # Python imports
 import logging
+import uuid
+from datetime import timedelta
 
 # Django imports
 from django.db.models import Count, Q
@@ -36,6 +38,10 @@ from plane.utils.ice import daftar_ice
 from plane.utils.inbox_chat import catat_pesan_dm, tandai_chat_terbaca
 from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, url_livekit
 from plane.utils.obrolan_siaran import siarkan
+from plane.utils.kanal_sistem import adalah_admin_workspace, boleh_kirim, ikutkan_jika_belum
+from plane.utils.kartu_obrolan import kartu_disebut_di_obrolan
+from plane.utils.saklar_instance import CHAT_DELETE_WINDOW_HOURS, setelan_angka
+from plane.db.models import KUNCI_PENGUMUMAN
 
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
@@ -71,6 +77,9 @@ JUMLAH_HASIL_CARI = 50
 
 # Berapa lampiran boleh menempel pada satu pesan.
 BATAS_LAMPIRAN = 5
+
+# Berapa orang boleh disebut dalam satu pesan. Lebih dari ini sudah pengumuman.
+BATAS_SEBUT = 20
 
 
 def _peta_lampiran(pesan_ids, slug):
@@ -123,7 +132,7 @@ def _peta_kutipan(pesan_list):
     return {
         str(i["id"]): {
             "id": str(i["id"]),
-            "pengirim": str(i["pengirim_id"]),
+            "pengirim": str(i["pengirim_id"]) if i["pengirim_id"] else "",
             # Dipotong di server: yang dibutuhkan UI cuma cuplikan, dan
             # mengirim pesan panjang dua kali membengkakkan tiap muatan.
             "isi": (i["isi"] or "")[:120],
@@ -186,8 +195,12 @@ def _jumlah_belum_dibaca(langganan):
 def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None):
     return {
         "id": str(pesan.id),
-        "pengirim": str(pesan.pengirim_id),
+        # Kosong = pesan sistem ("Paradise"): catatan rilis dan kartu kabar.
+        "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
         "isi": pesan.isi,
+        # Kartu: `jenis` selain "teks" dirender peramban dari `muatan`.
+        "jenis": pesan.jenis,
+        "muatan": pesan.muatan or {},
         "created_at": pesan.created_at,
         "lampiran": lampiran or [],
         "disunting": pesan.disunting_pada is not None,
@@ -240,8 +253,29 @@ def _lawan_bicara(ruang, saya_id):
     return next((x for x in dua if x != str(saya_id)), dua[0])
 
 
-def _bentuk_ruang(ruang, saya_id, belum_dibaca=0, ikut=True):
+class _HakTulis:
+    """`boleh_kirim` per ruang dengan status admin dihitung paling banyak SEKALI
+    per permintaan, bukan per baris daftar kanal."""
+
+    def __init__(self, user):
+        self.user = user
+        self._admin = {}
+
+    def __call__(self, ruang) -> bool:
+        if not ruang.sistem:
+            return True
+        if ruang.workspace_id not in self._admin:
+            self._admin[ruang.workspace_id] = adalah_admin_workspace(self.user, ruang.workspace_id)
+        return boleh_kirim(ruang, self.user, admin=self._admin[ruang.workspace_id])
+
+
+def _bentuk_ruang(ruang, saya_id, belum_dibaca=0, ikut=True, boleh_tulis=True):
     return {
+        # Kanal sistem: tanpa tombol keluar/ganti nama, berlencana "System".
+        # `kunci_sistem` = pengumuman | changelog | kabar:<user_id>.
+        "sistem": ruang.sistem,
+        "kunci_sistem": ruang.kunci_sistem,
+        "boleh_kirim": boleh_tulis,
         "id": str(ruang.id),
         "tipe": ruang.tipe,
         "nama": ruang.nama,
@@ -267,6 +301,12 @@ class ChatConversationsEndpoint(BaseAPIView):
     permission_classes = [WorkspaceEntityPermission]
 
     def get(self, request, slug):
+        # Jaring malas kanal sistem: menutup jalur pendaftaran anggota yang tidak
+        # memancarkan signal (bulk_create undangan). Satu COUNT kalau sudah beres.
+        ws_id = Workspace.objects.filter(slug=slug).values_list("id", flat=True).first()
+        if ws_id:
+            ikutkan_jika_belum(ws_id, request.user.id)
+
         daftar = list(
             Langganan.objects.filter(ruang__workspace__slug=slug, user=request.user)
             .select_related("ruang")
@@ -276,6 +316,7 @@ class ChatConversationsEndpoint(BaseAPIView):
             return Response([], status=status.HTTP_200_OK)
 
         belum = _peta_belum_dibaca(daftar)
+        hak_tulis = _HakTulis(request.user)
 
         # Pesan terakhir tiap ruang, satu kueri untuk semuanya.
         terakhir = {}
@@ -297,7 +338,7 @@ class ChatConversationsEndpoint(BaseAPIView):
             if pesan is None and ruang.tipe == Ruang.Tipe.DM:
                 continue
 
-            baris = _bentuk_ruang(ruang, request.user.id, belum.get(ruang.id, 0))
+            baris = _bentuk_ruang(ruang, request.user.id, belum.get(ruang.id, 0), boleh_tulis=hak_tulis(ruang))
             baris["isi"] = pesan.isi if pesan else ""
             baris["dari_saya"] = bool(pesan and pesan.pengirim_id == request.user.id)
             baris["created_at"] = pesan.created_at if pesan else ruang.created_at
@@ -396,7 +437,11 @@ class ChatPesanEndpoint(BaseAPIView):
         adalah membaca; mengubah tulisan orang lain adalah hal yang sama sekali
         berbeda, dan tidak pernah diminta.
         """
-        return PesanLangsung.objects.filter(id=pesan_id, workspace__slug=slug, pengirim=request.user).first()
+        # Kartu (log panggilan, kartu tugas) bukan tulisan orang: tidak bisa
+        # disunting atau dihapus lewat sini.
+        return PesanLangsung.objects.filter(
+            id=pesan_id, workspace__slug=slug, pengirim=request.user, jenis="teks"
+        ).first()
 
     def patch(self, request, slug, pesan_id):
         pesan = self._pesan_saya(request, slug, pesan_id)
@@ -426,6 +471,14 @@ class ChatPesanEndpoint(BaseAPIView):
         pesan = self._pesan_saya(request, slug, pesan_id)
         if pesan is None:
             return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
+        # Pesan lama sudah dibaca dan ditanggapi orang; menghapusnya merobek
+        # percakapan. Batasnya dari God Mode > Features, 0 = tanpa batas.
+        batas_jam = setelan_angka(CHAT_DELETE_WINDOW_HOURS)
+        if batas_jam and pesan.created_at < timezone.now() - timedelta(hours=batas_jam):
+            return Response(
+                {"error": f"Pesan yang lebih lama dari {batas_jam} jam tidak bisa dihapus."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         # Soft delete: barisnya tetap ada untuk audit, tapi hilang dari semua
         # daftar karena manager bawaan menyaring deleted_at.
         ruang_id = pesan.ruang_id
@@ -445,10 +498,20 @@ class ChatReaksiEndpoint(BaseAPIView):
             return Response({"error": "Emoji tidak sah."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Boleh bereaksi hanya pada percakapan yang kita ikuti, bukan pada
-        # sembarang id pesan yang ditebak.
-        pesan = PesanLangsung.objects.filter(id=pesan_id, workspace__slug=slug).filter(
-            Q(pengirim=request.user) | Q(penerima=request.user)
-        ).first()
+        # sembarang id pesan yang ditebak. Penjaganya Langganan, sama dengan hak
+        # baca: aturan lama "pengirim/penerima" membuat pesan kanal (tanpa
+        # penerima), termasuk Announcements, tidak bisa direaksi siapa pun selain
+        # pengirimnya.
+        pesan = (
+            PesanLangsung.objects.filter(id=pesan_id, workspace__slug=slug)
+            .filter(
+                Q(pengirim=request.user)
+                | Q(penerima=request.user)
+                | Q(ruang__langganan__user=request.user, ruang__langganan__deleted_at__isnull=True)
+            )
+            .distinct()
+            .first()
+        )
         if pesan is None:
             return Response({"error": "Pesan tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -577,6 +640,27 @@ def _muat_isi_ruang(request, slug, ruang, batas=None):
     ]
 
 
+def _saring_sebutan(mentah, ruang, saya_id) -> list:
+    """Id yang disebut, disaring ke anggota ruang ini, tanpa diri sendiri.
+
+    Peramban mengirim id, bukan nama: nama tampilan bisa kembar dan bisa
+    berganti. Disaring di server karena hanya anggota ruang yang boleh disebut;
+    tanpa itu, sebutan jadi jalan mengirim kartu ke siapa pun di workspace.
+    """
+    if not isinstance(mentah, list):
+        return []
+    calon = set()
+    for nilai in mentah[:BATAS_SEBUT]:
+        try:
+            calon.add(uuid.UUID(str(nilai)))
+        except (TypeError, ValueError):
+            continue
+    calon.discard(saya_id)
+    if not calon:
+        return []
+    return list(Langganan.objects.filter(ruang=ruang, user_id__in=calon).values_list("user_id", flat=True))
+
+
 def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     """Tulis satu pesan ke ruang. Kembalikan Response, sukses maupun gagal.
 
@@ -610,6 +694,7 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     # Catatan untuk diri sendiri lahir sudah terbaca. Tanpa ini ia jadi kandidat
     # email pemberitahuan, dan orang dikirimi email berisi tulisannya sendiri.
     ke_diri_sendiri = penerima_id is not None and str(penerima_id) == str(request.user.id)
+    sebut = _saring_sebutan(request.data.get("sebut"), ruang, request.user.id)
     pesan = PesanLangsung.objects.create(
         workspace_id=ruang.workspace_id,
         ruang=ruang,
@@ -618,6 +703,7 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
         isi=isi,
         balasan_ke_id=balasan_ke_id,
         dibaca_pada=timezone.now() if ke_diri_sendiri else None,
+        muatan={"sebut": [str(u) for u in sebut]} if sebut else {},
     )
 
     # Denormalisasi yang membuat daftar percakapan bisa diurutkan tanpa subquery.
@@ -631,6 +717,11 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     # DM juga ditulis ke inbox penerima (saklar inbox_chat). Sesudah tersimpan, sama alasannya.
     if penerima_id is not None:
         catat_pesan_dm(pesan)
+
+    # Yang disebut di kanal mendapat kartu di ruang "Paradise"-nya, supaya
+    # sebutan tetap sampai walau kanalnya dibisukan atau jarang dibuka.
+    if sebut and ruang.tipe != Ruang.Tipe.DM:
+        kartu_disebut_di_obrolan(pesan, ruang, sebut)
 
     if lampiran_ids:
         # Yang boleh ditempel HANYA berkas yang diunggah orang ini sendiri, di
@@ -799,10 +890,22 @@ class ChatRuangEndpoint(BaseAPIView):
             Langganan.objects.filter(user=request.user, ruang_id__in=[r.id for r in daftar])
         )
         belum = _peta_belum_dibaca(langganan_saya)
+        hak_tulis = _HakTulis(request.user)
+        # Jumlah anggota untuk direktori kanal, satu kueri untuk semuanya.
+        jumlah = dict(
+            Langganan.objects.filter(ruang_id__in=[r.id for r in daftar])
+            .values_list("ruang_id")
+            .annotate(n=Count("id"))
+        )
 
         return Response(
             [
-                _bentuk_ruang(r, request.user.id, belum.get(r.id, 0), ikut=r.id in milik_saya)
+                {
+                    **_bentuk_ruang(
+                        r, request.user.id, belum.get(r.id, 0), ikut=r.id in milik_saya, boleh_tulis=hak_tulis(r)
+                    ),
+                    "jumlah_anggota": jumlah.get(r.id, 0),
+                }
                 for r in daftar
             ],
             status=status.HTTP_200_OK,
@@ -838,6 +941,9 @@ class ChatRuangEndpoint(BaseAPIView):
         if (
             Ruang.objects.filter(workspace=workspace, nama__iexact=nama)
             .exclude(tipe=Ruang.Tipe.DM)
+            # Ruang kabar "Paradise" milik tiap orang tidak terlihat orang lain,
+            # jadi namanya tidak boleh menghalangi kanal bernama sama.
+            .exclude(kunci_sistem__startswith="kabar:")
             .exists()
         ):
             return Response(
@@ -905,6 +1011,15 @@ class ChatRuangThreadEndpoint(BaseAPIView):
         # DM tetap membawa `penerima` supaya tanda terima, email pemberitahuan,
         # dan penjaga lampiran terus bekerja. Kanal tidak punya penerima tunggal.
         penerima_id = _lawan_bicara(ruang, request.user.id) if ruang.tipe == Ruang.Tipe.DM else None
+        # Kanal sistem: Changelog dan ruang kabar hanya ditulis sistem,
+        # Announcements hanya Super Admin dan admin workspace.
+        if not boleh_kirim(ruang, request.user):
+            pesan_galat = (
+                "Hanya admin yang bisa menulis pengumuman."
+                if ruang.kunci_sistem == KUNCI_PENGUMUMAN
+                else "Kanal ini hanya bisa dibaca."
+            )
+            return Response({"error": pesan_galat}, status=status.HTTP_403_FORBIDDEN)
         return _kirim_ke_ruang(request, slug, ruang, penerima_id=penerima_id)
 
 
@@ -939,6 +1054,11 @@ class ChatGabungEndpoint(BaseAPIView):
         if ruang.tipe == Ruang.Tipe.DM:
             return Response(
                 {"error": "Percakapan berdua tidak bisa ditinggalkan."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if ruang.sistem:
+            return Response(
+                {"error": "Kanal sistem tidak bisa ditinggalkan."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -981,6 +1101,22 @@ class ChatAnggotaEndpoint(BaseAPIView):
                 {"error": "Percakapan berdua tidak bisa ditambahi orang."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if ruang.sistem:
+            # Announcements & Changelog sudah diikuti semua anggota; ruang kabar
+            # "Paradise" milik satu orang saja.
+            return Response(
+                {"error": "Anggota kanal sistem diatur otomatis."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Kanal privat: hanya pengelola (pembuat, admin workspace, Super Admin)
+        # yang mengundang. Kanal publik bebas, karena siapa pun bisa masuk sendiri.
+        from .chat_kelola import boleh_kelola
+
+        if ruang.tipe == Ruang.Tipe.PRIVAT and not boleh_kelola(request.user, ruang, anggota=True):
+            return Response(
+                {"error": "Hanya pembuat kanal atau admin yang bisa mengundang ke kanal privat."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         user_id = request.data.get("user")
         if not user_id:
@@ -997,6 +1133,8 @@ class ChatAnggotaEndpoint(BaseAPIView):
             )
 
         _, dibuat = Langganan.objects.get_or_create(ruang=ruang, user_id=user_id)
+        if dibuat:
+            siarkan(ruang.id, "anggota", request.user.id)
         return Response(
             {"ditambahkan": dibuat},
             status=status.HTTP_201_CREATED if dibuat else status.HTTP_200_OK,
