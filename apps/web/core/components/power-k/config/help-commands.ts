@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { FileText, Rocket } from "lucide-react";
+import { Rocket } from "lucide-react";
 // components
 import type { TPowerKCommandConfig } from "@/components/power-k/core/types";
 // hooks
@@ -16,7 +16,8 @@ import { usePowerK } from "@/hooks/store/use-power-k";
  * Tiga perintah upstream dibuang: docs.plane.so, forum.plane.so, dan pelaporan
  * bug ke issue tracker makeplane/plane. Semuanya saluran dukungan vendor yang
  * tidak melayani PT Paradise Perkasa, mengarahkan karyawan ke sana bukan cuma
- * tak berguna, tapi menyesatkan. "Dokumentasi" kini menunjuk Wiki internal.
+ * tak berguna, tapi menyesatkan. Perintah "Dokumentasi" (pernah menunjuk Wiki)
+ * juga dibuang: Wiki sekarang punya perintah navigasi sendiri, `nav_wiki` (gw).
  */
 export const usePowerKHelpCommands = (): TPowerKCommandConfig[] => {
   // store
@@ -31,22 +32,6 @@ export const usePowerKHelpCommands = (): TPowerKCommandConfig[] => {
       icon: Rocket,
       modifierShortcut: "cmd+/",
       action: () => toggleShortcutsListModal(true),
-      isEnabled: () => true,
-      isVisible: () => true,
-      closeOnSelect: true,
-    },
-    {
-      id: "open_plane_documentation",
-      type: "action",
-      group: "help",
-      i18n_title: "power_k.help_actions.open_plane_documentation",
-      icon: FileText,
-      action: () => {
-        // Wiki internal. Slug workspace diambil dari URL supaya tidak perlu
-        // hook tambahan di config yang dipakai lintas-workspace.
-        const slug = window.location.pathname.split("/").find(Boolean);
-        if (slug) window.location.assign(`/${slug}/wiki/`);
-      },
       isEnabled: () => true,
       isVisible: () => true,
       closeOnSelect: true,

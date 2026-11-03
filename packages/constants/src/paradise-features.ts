@@ -66,6 +66,21 @@ export const isParadiseModuleActive = (module: TParadiseModule): boolean =>
   modulDariServer[module] ?? PARADISE_MODULE_DEFAULTS[module];
 
 /**
+ * Hari tenggang sesudah Due date sebelum work item dihitung terlambat
+ * (`paradise_overdue_grace_days`, God Mode > Features > OVERDUE_GRACE_DAYS).
+ * Disalin ke sini dengan alasan yang sama seperti modul: `shouldHighlightIssueDueDate`
+ * di @plane/utils dipanggil dari banyak komponen yang tak memegang store instance.
+ */
+let tenggangTerlambat = 0;
+
+/** Dipanggil instance store tiap kali `paradise_overdue_grace_days` diterima. Nilai liar = 0. */
+export const setParadiseOverdueGraceDays = (days: number | undefined): void => {
+  tenggangTerlambat = Number.isInteger(days) && (days as number) > 0 ? (days as number) : 0;
+};
+
+export const getParadiseOverdueGraceDays = (): number => tenggangTerlambat;
+
+/**
  * Penanda fitur yang dicabut (KEP-53, 2 Nov 2026: cycles, work item types,
  * templates). Di peta gerbang mana pun nilai ini berarti "selalu mati", apa pun
  * isi God Mode. Data lama di server tidak dihapus, hanya tak punya pintu lagi.
@@ -99,6 +114,7 @@ const MODUL_PER_PROPERTI_TAMPILAN: Partial<Record<keyof IIssueDisplayProperties,
   cycle: PARADISE_REMOVED,
   modules: "modules",
   issue_type: PARADISE_REMOVED,
+  approval_status: "approvals",
 };
 
 const MODUL_PER_GROUP_BY: Partial<Record<NonNullable<TIssueGroupByOptions>, TParadiseGate>> = {

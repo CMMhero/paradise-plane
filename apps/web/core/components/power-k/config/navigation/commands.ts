@@ -7,13 +7,14 @@
 import { BarChart2, Briefcase, FileText, Home, Inbox, Layers, PenSquare, Settings } from "lucide-react";
 // plane imports
 import { EUserPermissionsLevel } from "@plane/constants";
-import { ArchiveIcon, UserActivityIcon, LayersIcon, ContrastIcon, DiceIcon, Intake } from "@plane/propel/icons";
-import type { ICycle, IModule, IPartialProject, IProjectView, IWorkspace } from "@plane/types";
+import { ArchiveIcon, UserActivityIcon, LayersIcon, DiceIcon, Intake } from "@plane/propel/icons";
+import type { IModule, IPartialProject, IProjectView, IWorkspace } from "@plane/types";
 import { EUserProjectRoles, EUserWorkspaceRoles } from "@plane/types";
 // components
 import type { TPowerKCommandConfig, TPowerKContext } from "@/components/power-k/core/types";
 import { handlePowerKNavigate } from "@/components/power-k/utils/navigation";
 // hooks
+import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser } from "@/hooks/store/user";
 
@@ -35,8 +36,6 @@ export type TPowerKNavigationCommandKeys =
   | "open_workspace_setting"
   | "nav_workspace_settings"
   | "nav_project_work_items"
-  | "open_project_cycle"
-  | "nav_project_cycles"
   | "open_project_module"
   | "nav_project_modules"
   | "open_project_view"
@@ -57,6 +56,7 @@ export const usePowerKNavigationCommandsRecord = (): Record<TPowerKNavigationCom
     permission: { allowPermissions },
   } = useUser();
   const { getPartialProjectById } = useProject();
+  const { toggleProfileSettingsModal } = useCommandPalette();
   // derived values
   const hasWorkspaceMemberLevelPermissions = (ctx: TPowerKContext) =>
     allowPermissions(
@@ -135,9 +135,11 @@ export const usePowerKNavigationCommandsRecord = (): Record<TPowerKNavigationCom
       group: "navigation",
       i18n_title: "power_k.navigation_actions.nav_account_settings",
       icon: Settings,
-      action: (ctx) => handlePowerKNavigate(ctx, [ctx.params.workspaceSlug?.toString(), "settings", "account"]),
-      isEnabled: (ctx) => baseWorkspaceConditions(ctx),
-      isVisible: (ctx) => baseWorkspaceConditions(ctx),
+      // Kustomisasi Paradise: `/:slug/settings/account` tidak punya halaman, setelan
+      // akun hidup di modal profil (sama dengan menu akun di sidebar).
+      action: () => toggleProfileSettingsModal({ activeTab: "general", isOpen: true }),
+      isEnabled: () => true,
+      isVisible: () => true,
       closeOnSelect: true,
     },
     open_project: {
@@ -296,50 +298,6 @@ export const usePowerKNavigationCommandsRecord = (): Record<TPowerKNavigationCom
         ]),
       isEnabled: (ctx) => baseProjectConditions(ctx),
       isVisible: (ctx) => baseProjectConditions(ctx),
-      closeOnSelect: true,
-    },
-    open_project_cycle: {
-      id: "open_project_cycle",
-      type: "change-page",
-      group: "navigation",
-      i18n_title: "power_k.navigation_actions.open_project_cycle",
-      icon: ContrastIcon,
-      keySequence: "oc",
-      page: "open-project-cycle",
-      onSelect: (data, ctx) => {
-        const cycleDetails = data as ICycle;
-        handlePowerKNavigate(ctx, [
-          ctx.params.workspaceSlug?.toString(),
-          "projects",
-          ctx.params.projectId?.toString(),
-          "cycles",
-          cycleDetails.id,
-        ]);
-      },
-      isEnabled: (ctx) =>
-        baseProjectConditions(ctx) && hasProjectMemberLevelPermissions(ctx) && !!getContextProject(ctx)?.cycle_view,
-      isVisible: (ctx) =>
-        baseProjectConditions(ctx) && hasProjectMemberLevelPermissions(ctx) && !!getContextProject(ctx)?.cycle_view,
-      closeOnSelect: true,
-    },
-    nav_project_cycles: {
-      id: "nav_project_cycles",
-      type: "action",
-      group: "navigation",
-      i18n_title: "power_k.navigation_actions.nav_project_cycles",
-      icon: ContrastIcon,
-      keySequence: "gc",
-      action: (ctx) =>
-        handlePowerKNavigate(ctx, [
-          ctx.params.workspaceSlug?.toString(),
-          "projects",
-          ctx.params.projectId?.toString(),
-          "cycles",
-        ]),
-      isEnabled: (ctx) =>
-        baseProjectConditions(ctx) && hasProjectMemberLevelPermissions(ctx) && !!getContextProject(ctx)?.cycle_view,
-      isVisible: (ctx) =>
-        baseProjectConditions(ctx) && hasProjectMemberLevelPermissions(ctx) && !!getContextProject(ctx)?.cycle_view,
       closeOnSelect: true,
     },
     open_project_module: {

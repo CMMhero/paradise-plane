@@ -12,7 +12,7 @@ import type {
   TPowerKSearchResultsKeysExtended,
 } from "@/plane-web/components/command-palette/power-k/types";
 
-export type TPowerKContextType = "work-item" | "page" | "cycle" | "module" | TPowerKContextTypeExtended;
+export type TPowerKContextType = "work-item" | "page" | "module" | TPowerKContextTypeExtended;
 
 export type TPowerKContext = {
   // Route information
@@ -37,16 +37,15 @@ export type TPowerKPageType =
   | "open-workspace"
   | "open-project"
   | "open-workspace-setting"
-  | "open-project-cycle"
   | "open-project-module"
   | "open-project-view"
   | "open-project-setting"
+  | "open-account-setting"
   // work item context based actions
   | "update-work-item-state"
   | "update-work-item-priority"
   | "update-work-item-assignee"
   | "update-work-item-estimate"
-  | "update-work-item-cycle"
   | "update-work-item-module"
   | "update-work-item-labels"
   // module context based actions

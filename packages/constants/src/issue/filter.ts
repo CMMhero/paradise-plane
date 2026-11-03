@@ -12,7 +12,11 @@ import type {
 } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 import type { TIssueFilterPriorityObject } from "./common";
-import { ISSUE_DISPLAY_PROPERTIES_KEYS, SUB_ISSUES_DISPLAY_PROPERTIES_KEYS } from "./common";
+import {
+  ISSUE_DISPLAY_PROPERTIES_KEYS,
+  SPREADSHEET_DISPLAY_PROPERTIES_KEYS,
+  SUB_ISSUES_DISPLAY_PROPERTIES_KEYS,
+} from "./common";
 
 import type { TIssueLayout } from "./layout";
 
@@ -181,7 +185,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
     ],
     layoutOptions: {
       spreadsheet: {
-        display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
+        display_properties: SPREADSHEET_DISPLAY_PROPERTIES_KEYS,
         display_filters: {
           order_by: [],
           type: ["active", "backlog"],
@@ -256,7 +260,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         },
       },
       spreadsheet: {
-        display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
+        display_properties: SPREADSHEET_DISPLAY_PROPERTIES_KEYS,
         display_filters: {
           order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority"],
           type: ["active", "backlog"],

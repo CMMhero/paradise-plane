@@ -6,7 +6,7 @@
 
 import { observer } from "mobx-react";
 // plane types
-import { EUserPermissionsLevel, WORKSPACE_SETTINGS } from "@plane/constants";
+import { EUserPermissionsLevel, GROUPED_WORKSPACE_SETTINGS } from "@plane/constants";
 // components
 import { useTranslation } from "@plane/i18n";
 import type { TPowerKContext } from "@/components/power-k/core/types";
@@ -27,11 +27,15 @@ export const PowerKOpenWorkspaceSettingsMenu = observer(function PowerKOpenWorks
   // store hooks
   const { allowPermissions } = useUserPermissions();
   // derived values
-  const settingsList = Object.values(WORKSPACE_SETTINGS).filter(
-    (setting) =>
-      context.params.workspaceSlug &&
-      allowPermissions(setting.access, EUserPermissionsLevel.WORKSPACE, context.params.workspaceSlug?.toString())
-  );
+  // Kustomisasi Paradise: sumbernya daftar yang sama dengan sidebar setelan
+  // workspace, bukan WORKSPACE_SETTINGS mentah yang masih memuat Billing (tanpa halaman).
+  const settingsList = Object.values(GROUPED_WORKSPACE_SETTINGS)
+    .flat()
+    .filter(
+      (setting) =>
+        context.params.workspaceSlug &&
+        allowPermissions(setting.access, EUserPermissionsLevel.WORKSPACE, context.params.workspaceSlug?.toString())
+    );
   const settingsListWithIcons = settingsList.map((setting) => ({
     ...setting,
     label: t(setting.i18n_label),

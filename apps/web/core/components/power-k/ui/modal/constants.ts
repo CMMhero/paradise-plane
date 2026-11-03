@@ -23,9 +23,6 @@ export const POWER_K_MODAL_PAGE_DETAILS: Record<TPowerKPageType, TPowerKModalPag
   "open-workspace-setting": {
     i18n_placeholder: "power_k.page_placeholders.open_workspace_setting",
   },
-  "open-project-cycle": {
-    i18n_placeholder: "power_k.page_placeholders.open_project_cycle",
-  },
   "open-project-module": {
     i18n_placeholder: "power_k.page_placeholders.open_project_module",
   },
@@ -34,6 +31,9 @@ export const POWER_K_MODAL_PAGE_DETAILS: Record<TPowerKPageType, TPowerKModalPag
   },
   "open-project-setting": {
     i18n_placeholder: "power_k.page_placeholders.open_project_setting",
+  },
+  "open-account-setting": {
+    i18n_placeholder: "power_k.page_placeholders.open_account_setting",
   },
   "update-work-item-state": {
     i18n_placeholder: "power_k.page_placeholders.update_work_item_state",
@@ -46,9 +46,6 @@ export const POWER_K_MODAL_PAGE_DETAILS: Record<TPowerKPageType, TPowerKModalPag
   },
   "update-work-item-estimate": {
     i18n_placeholder: "power_k.page_placeholders.update_work_item_estimate",
-  },
-  "update-work-item-cycle": {
-    i18n_placeholder: "power_k.page_placeholders.update_work_item_cycle",
   },
   "update-work-item-module": {
     i18n_placeholder: "power_k.page_placeholders.update_work_item_module",
