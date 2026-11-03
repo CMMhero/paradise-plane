@@ -40,7 +40,11 @@ fi
 setsid nohup bash -c '
   echo $$ > logs/deploy.lock
   trap "rm -f logs/deploy.lock" EXIT
-  ./paradise/bin/deploy.sh
+  # Baris penutup ini dibaca paradise/bin/rilis.sh di laptop: tanpa kode keluar
+  # yang tertulis, pemanggil yang sudah putus tidak bisa membedakan berhasil
+  # dari gagal.
+  ./paradise/bin/deploy.sh && kode=0 || kode=$?
+  echo "DEPLOY_EXIT=$kode"
 ' >"$log" 2>&1 < /dev/null &
 
 echo "Deploy dilepas. Log: $log"

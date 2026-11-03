@@ -66,7 +66,36 @@ else
   "${compose[@]}" up -d
 fi
 
+# ---------------------------------------------------------------------------
+# Migrasi WAJIB diperiksa, bukan diandaikan.
+#
+# `migrator` menjalankan `manage.py migrate` lalu keluar, dan tidak ada service
+# yang menunggunya. Dulu tidak ada yang membaca kode keluarnya, jadi migrasi
+# yang gagal tetap diakhiri "SEHAT": `docker compose ps` tidak menampilkan
+# container yang sudah berhenti, dan `api` tetap menjawab 200 di atas skema
+# lama. `docker wait` mengembalikan kode keluar container itu; kalau sudah
+# berhenti sebelumnya, ia langsung menjawab kode yang lama.
+# ---------------------------------------------------------------------------
+if docker inspect plane-migrator >/dev/null 2>&1; then
+  echo "== Menunggu migrasi =="
+  kode_migrasi=$(docker wait plane-migrator)
+  docker logs --tail 15 plane-migrator 2>&1 | sed 's/^/  migrator: /'
+  if [ "$kode_migrasi" != "0" ]; then
+    echo "MIGRASI GAGAL (exit $kode_migrasi). Lihat: docker logs plane-migrator"
+    exit 1
+  fi
+  echo "Migrasi selesai."
+fi
+
 paradise/bin/healthcheck.sh
+
+# Versi yang benar-benar dilayani, dibaca dari API (register_instance mengambilnya
+# dari apps/api/package.json saat api start). Ini bukti perubahan sudah naik,
+# bukan sekadar container hidup.
+web_url="$(grep -m1 '^WEB_URL=' .env | cut -d= -f2- | tr -d "\"'")"
+versi=$(curl -fsSL --max-time 15 "${web_url:-http://localhost}/api/instances/" 2>/dev/null |
+  grep -o '"current_version": *"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)
+echo "== Versi berjalan: ${versi:-tidak terbaca} =="
 
 # ---------------------------------------------------------------------------
 # Buang image versi lama yang tertinggal di mesin.
