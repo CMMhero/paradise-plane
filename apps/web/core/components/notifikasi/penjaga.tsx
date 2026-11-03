@@ -22,6 +22,7 @@ import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { ChatService, KUNCI_BELUM_DIBACA } from "@/services/chat.service";
 import { WorkspaceNotificationService } from "@/services/workspace-notification.service";
 // local imports
+import { KUNCI_SPANDUK, izinPeramban, tampilkanNotifPeramban } from "./peramban";
 import { TumpukanPopup, type TPopup } from "./popup";
 import { ringkasNotifikasi, ringkasPercakapan } from "./teks";
 
@@ -39,9 +40,6 @@ const notifService = new WorkspaceNotificationService();
 const SELANG = 15000;
 
 const KUNCI_JUMLAH_NOTIF = "WORKSPACE_UNREAD_NOTIFICATION_COUNT";
-/** Penolakan spanduk izin disimpan, karena menawarkan hal yang sama tiap kali
- * halaman dibuka adalah cara membuat orang membenci fiturnya. */
-const KUNCI_SPANDUK = "spanduk_izin_notifikasi_ditutup";
 
 /** Sebanyak ini kartu boleh menumpuk sekaligus. Lebih dari itu bukan lagi
  * pemberitahuan melainkan dinding. Yang tergeser tidak hilang: angkanya tetap di
@@ -90,39 +88,32 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
   const tutup = useCallback((id: string) => setAntrean((lama) => lama.filter((p) => p.id !== id)), []);
 
   /**
-   * Memberi tahu satu kali, lewat jalur yang paling mungkin sampai.
+   * Memberi tahu lewat DUA jalur: kartu peramban (sistem operasi) dan kartu di
+   * dalam aplikasi.
    *
-   * Tab yang sedang dilihat mendapat kartu di dalam aplikasi; tab yang
-   * tersembunyi mendapat kartu sistem operasi. Sengaja BUKAN keduanya sekaligus:
-   * memunculkan kartu Windows untuk pesan yang barusan muncul sendiri di layar
-   * adalah gangguan, dan gangguan adalah alasan orang mematikan pemberitahuan.
+   * Permintaan user 3 Nov 2026: pemberitahuan obrolan & inbox JUGA lewat
+   * peramban. Dulu kartu peramban hanya untuk tab tersembunyi, sehingga orang
+   * yang membuka Paradise di belakang aplikasi lain (tab "visible", jendela
+   * tidak fokus) tidak mendapat apa-apa di luar bunyi. Sekarang kartu peramban
+   * selalu dikirim kalau diizinkan dan saklarnya menyala (Chat atau panel
+   * Pemberitahuan > tombol suara > Browser notifications).
    *
-   * Bunyi tetap dibunyikan di kedua keadaan, karena orang bisa sedang melihat
-   * layar lain dengan tab ini masih "visible" di monitor kedua.
+   * Kartu dalam aplikasi tetap muncul saat tab terlihat. Saat tab tersembunyi
+   * ia dilewati kalau kartu peramban berhasil (tujuh detiknya habis sebelum
+   * orangnya kembali), tapi TETAP dipakai sebagai cadangan kalau peramban
+   * menolak, mis. Chrome Android yang melempar untuk `new Notification()`.
    */
   const tampilkan = useCallback(
     (calon: TCalon, penanda: string) => {
       bunyikan("pesan");
 
-      const tersembunyi = document.visibilityState !== "visible";
-      const bisaSistem = "Notification" in window && Notification.permission === "granted";
-
-      if (tersembunyi && bisaSistem) {
-        // `tag` membuat pemberitahuan berikutnya MENGGANTI yang sebelumnya,
-        // bukan menumpuk. Meninggalkan tab semalam lalu menemukan 40 kartu di
-        // Pusat Tindakan bukan pemberitahuan, itu hukuman.
-        const kartu = new Notification(calon.judul, {
-          body: calon.isi,
-          icon: "/favicon/android-chrome-192x192.png",
-          tag: penanda,
-        });
-        kartu.addEventListener("click", () => {
-          window.focus();
-          navigate(calon.tautan);
-          kartu.close();
-        });
-        return;
-      }
+      const lewatPeramban = tampilkanNotifPeramban({
+        judul: calon.judul,
+        isi: calon.isi,
+        tag: penanda,
+        onKlik: () => navigate(calon.tautan),
+      });
+      if (lewatPeramban && document.visibilityState !== "visible") return;
 
       nomor.current += 1;
       const baru: TPopup = { ...calon, id: `popup-${nomor.current}` };
@@ -265,19 +256,19 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
 function SpandukIzin() {
   const { t } = useTranslation();
   const { storedValue: ditutup, setValue: setDitutup } = useLocalStorage<boolean>(KUNCI_SPANDUK, false);
-  const [izin, setIzin] = useState<NotificationPermission | "tidak-ada">("tidak-ada");
+  const [izin, setIzin] = useState<ReturnType<typeof izinPeramban>>("tidak-didukung");
 
   useEffect(() => {
     // oxlint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only Notification API after mount (SSR-safe)
-    if ("Notification" in window) setIzin(Notification.permission);
+    setIzin(izinPeramban());
   }, []);
 
   if (ditutup || izin !== "default") return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-[60] w-80 rounded-lg border border-subtle bg-surface-1 p-4 shadow-overlay-200">
+    <div className="fixed bottom-4 left-4 z-[60] w-80 rounded-popover border border-subtle bg-surface-1 p-4 shadow-overlay-200">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-accent-primary/10">
+        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-control bg-accent-primary/10">
           <Bell className="size-4 text-accent-primary" />
         </span>
         <div className="min-w-0 flex-1">
