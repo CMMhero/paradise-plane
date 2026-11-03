@@ -105,7 +105,16 @@
       "open_project_setting": "Відкрити налаштування проєкту",
       "nav_project_settings": "Перейти до налаштувань проєкту",
       "nav_workspace_active_cycle": "Перейти до всіх активних циклів",
-      "nav_project_overview": "Перейти до огляду проєкту"
+      "nav_project_overview": "Перейти до огляду проєкту",
+      "nav_chat": "Перейти до чату",
+      "nav_wiki": "Перейти до вікі",
+      "nav_dashboard_divisi": "Перейти до панелі відділу",
+      "nav_initiatives": "Перейти до ініціатив",
+      "nav_stickies": "Перейти до нотаток",
+      "nav_quick_links": "Перейти до швидких посилань",
+      "nav_your_work_calendar": "Перейти до вашого календаря",
+      "nav_project_approvals": "Перейти до погоджень",
+      "open_account_setting": "Відкрити налаштування облікового запису"
     },
     "account_actions": {
       "sign_out": "Вийти",
@@ -166,7 +175,8 @@
       "update_theme": "Змінити тему",
       "update_timezone": "Змінити часовий пояс",
       "update_start_of_week": "Змінити перший день тижня",
-      "update_language": "Змінити мову"
+      "update_language": "Змінити мову",
+      "open_account_setting": "Відкрити налаштування облікового запису"
     },
     "search_menu": {
       "no_results": "Не знайдено результатів",

@@ -244,9 +244,9 @@
         "resubmit_hint": "Back in progress. Finish the work, then move it to Done again to resubmit."
       },
       "inbox": {
-        "submitted": "requested approval",
-        "approved": "approved your request",
-        "rejected": "rejected your request"
+        "submitted": "needs your approval to mark this as done",
+        "approved": "approved your work. It is now Done",
+        "rejected": "rejected your work and moved it back to In Progress"
       },
       "activity": {
         "requested": "requested approval to mark this work item as done.",

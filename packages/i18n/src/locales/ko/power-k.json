@@ -105,7 +105,16 @@
       "open_project_setting": "프로젝트 설정 열기",
       "nav_project_settings": "프로젝트 설정으로 이동",
       "nav_workspace_active_cycle": "모든 활성 주기로 이동",
-      "nav_project_overview": "프로젝트 개요로 이동"
+      "nav_project_overview": "프로젝트 개요로 이동",
+      "nav_chat": "채팅으로 이동",
+      "nav_wiki": "위키로 이동",
+      "nav_dashboard_divisi": "부서 대시보드로 이동",
+      "nav_initiatives": "이니셔티브로 이동",
+      "nav_stickies": "스티키로 이동",
+      "nav_quick_links": "빠른 링크로 이동",
+      "nav_your_work_calendar": "내 캘린더로 이동",
+      "nav_project_approvals": "승인으로 이동",
+      "open_account_setting": "계정 설정 열기"
     },
     "account_actions": {
       "sign_out": "로그아웃",
@@ -166,7 +175,8 @@
       "update_theme": "테마 변경",
       "update_timezone": "시간대 변경",
       "update_start_of_week": "주 시작 요일 변경",
-      "update_language": "언어 변경"
+      "update_language": "언어 변경",
+      "open_account_setting": "계정 설정 열기"
     },
     "search_menu": {
       "no_results": "결과를 찾을 수 없습니다",

@@ -244,9 +244,9 @@
         "resubmit_hint": "Kembali ke In Progress. Selesaikan pekerjaannya, lalu geser ke Done lagi untuk mengajukan ulang."
       },
       "inbox": {
-        "submitted": "meminta persetujuan",
-        "approved": "menyetujui pengajuanmu",
-        "rejected": "menolak pengajuanmu"
+        "submitted": "perlu persetujuan Anda untuk menandai tugas ini selesai",
+        "approved": "menyetujui pekerjaan Anda. Tugas ini sekarang Done",
+        "rejected": "menolak pekerjaan Anda dan mengembalikannya ke In Progress"
       },
       "activity": {
         "requested": "mengajukan persetujuan untuk menandai tugas ini selesai.",

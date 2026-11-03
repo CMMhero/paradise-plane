@@ -105,7 +105,16 @@
       "open_project_setting": "Abrir uma configuração do projeto",
       "nav_project_settings": "Ir para configurações do projeto",
       "nav_workspace_active_cycle": "Ir para todos os ciclos ativos",
-      "nav_project_overview": "Ir para visão geral do projeto"
+      "nav_project_overview": "Ir para visão geral do projeto",
+      "nav_chat": "Ir para o chat",
+      "nav_wiki": "Ir para a wiki",
+      "nav_dashboard_divisi": "Ir para o painel da divisão",
+      "nav_initiatives": "Ir para iniciativas",
+      "nav_stickies": "Ir para notas",
+      "nav_quick_links": "Ir para links rápidos",
+      "nav_your_work_calendar": "Ir para seu calendário",
+      "nav_project_approvals": "Ir para aprovações",
+      "open_account_setting": "Abrir uma configuração da conta"
     },
     "account_actions": {
       "sign_out": "Sair",
@@ -166,7 +175,8 @@
       "update_theme": "Alterar tema",
       "update_timezone": "Alterar fuso horário",
       "update_start_of_week": "Alterar primeiro dia da semana",
-      "update_language": "Alterar idioma"
+      "update_language": "Alterar idioma",
+      "open_account_setting": "Abrir uma configuração da conta"
     },
     "search_menu": {
       "no_results": "Nenhum resultado encontrado",

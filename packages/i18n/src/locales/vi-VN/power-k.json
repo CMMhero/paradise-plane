@@ -105,7 +105,16 @@
       "open_project_setting": "Mở một cài đặt dự án",
       "nav_project_settings": "Đi đến cài đặt dự án",
       "nav_workspace_active_cycle": "Đi đến tất cả chu kỳ đang hoạt động",
-      "nav_project_overview": "Đi đến tổng quan dự án"
+      "nav_project_overview": "Đi đến tổng quan dự án",
+      "nav_chat": "Đi tới trò chuyện",
+      "nav_wiki": "Đi tới wiki",
+      "nav_dashboard_divisi": "Đi tới bảng điều khiển bộ phận",
+      "nav_initiatives": "Đi tới sáng kiến",
+      "nav_stickies": "Đi tới ghi chú dán",
+      "nav_quick_links": "Đi tới liên kết nhanh",
+      "nav_your_work_calendar": "Đi tới lịch của bạn",
+      "nav_project_approvals": "Đi tới phê duyệt",
+      "open_account_setting": "Mở một cài đặt tài khoản"
     },
     "account_actions": {
       "sign_out": "Đăng xuất",
@@ -166,7 +175,8 @@
       "update_theme": "Thay đổi chủ đề",
       "update_timezone": "Thay đổi múi giờ",
       "update_start_of_week": "Thay đổi ngày đầu tuần",
-      "update_language": "Thay đổi ngôn ngữ"
+      "update_language": "Thay đổi ngôn ngữ",
+      "open_account_setting": "Mở một cài đặt tài khoản"
     },
     "search_menu": {
       "no_results": "Không tìm thấy kết quả",
