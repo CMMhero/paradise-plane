@@ -197,6 +197,22 @@ def divisi_anggota(user_id, workspace_id):
     )
 
 
+def anggota_project_ids(workspace_id, project_id):
+    """Set id member yang keanggotaannya di project ini hidup. Satu kueri.
+
+    Dipakai sebagai pengganti `project_id in divisi_anggota(uid, ...)` di dalam
+    loop per orang: bentuk lama menembak satu kueri per orang (1+N).
+    """
+    return set(
+        ProjectMember.objects.filter(
+            workspace_id=workspace_id,
+            project_id=project_id,
+            is_active=True,
+            deleted_at__isnull=True,
+        ).values_list("member_id", flat=True)
+    )
+
+
 def struktur_aktif(workspace_id):
     """True kalau workspace ini sudah memakai struktur divisi -> departemen (KEP-29).
 
@@ -262,6 +278,23 @@ def project_divisi(divisi_id):
     )
 
 
+def project_penempatan(baris, tingkat):
+    """Project yang dijangkau satu orang dari SEMUA baris penempatannya (KEP-76).
+
+    Satu orang boleh di banyak departemen (jenjang apa pun), dan manager boleh
+    memimpin banyak divisi sekaligus duduk di departemen di luar divisinya.
+    Jangkauan = gabungan. Baris divisi hanya berlaku untuk manager ke atas:
+    endpoint God Mode membuangnya saat jenjang turun, ini penjaga keduanya.
+    """
+    pids = set()
+    for _, dep_id, div_id in baris:
+        if dep_id:
+            pids |= project_departemen(dep_id)
+        if div_id and tingkat >= TINGKAT_MANAGER:
+            pids |= project_divisi(div_id)
+    return pids
+
+
 def _semua_project(workspace_id):
     from plane.db.models import Project  # noqa: PLC0415 — hindari impor melingkar
 
@@ -274,9 +307,9 @@ def jangkauan_hierarki(user_id, workspace_id):
     Ini sisi LIHAT, bukan sisi wewenang (itu `divisi_diawasi`):
 
         direktur   -> semua project, role 20
-        manager    -> semua project di divisinya (semua baris divisinya), role 20
+        manager    -> semua project di divisinya + departemennya, role 20
         supervisor -> project SEMUA departemennya, role 20
-        staf       -> project departemennya, role 15 (lihat semua, edit hanya
+        staf       -> project SEMUA departemennya, role 15 (lihat semua, edit hanya
                       tugas miliknya: `galat_ubah_tugas`)
 
     Kosong kalau struktur belum aktif atau jenjangnya belum diisi.
@@ -289,23 +322,8 @@ def jangkauan_hierarki(user_id, workspace_id):
     tingkat = max(t for t, _, _ in baris)
     if tingkat >= TINGKAT_DIREKTUR:
         return {pid: 20 for pid in _semua_project(workspace_id)}
-    if tingkat >= TINGKAT_MANAGER:
-        pids = set()
-        for div_id in semua_divisi_ids(user_id, workspace_id):
-            pids |= project_divisi(div_id)
-        return {pid: 20 for pid in pids}
     role = 20 if tingkat >= TINGKAT_SUPERVISOR else 15
-    if tingkat >= TINGKAT_SUPERVISOR:
-        # Supervisor boleh ditempatkan di beberapa departemen (2026-10-23):
-        # satu baris jabatan per departemen, jangkauan = gabungan semuanya.
-        pids = set()
-        for dep_id in semua_departemen_ids(user_id, workspace_id):
-            pids |= project_departemen(dep_id)
-        return {pid: role for pid in pids}
-    pids = set()
-    for dep_id in semua_departemen_ids(user_id, workspace_id):
-        pids |= project_departemen(dep_id)
-    return {pid: role for pid in pids}
+    return {pid: role for pid in project_penempatan(baris, tingkat)}
 
 
 def divisi_diawasi(user_id, workspace_id):
@@ -357,16 +375,8 @@ def divisi_diawasi(user_id, workspace_id):
         return set()
 
     if struktur_aktif(workspace_id):
-        if tingkat >= TINGKAT_MANAGER:
-            pids = set()
-            for div_id in semua_divisi_ids(user_id, workspace_id):
-                pids |= project_divisi(div_id)
-            return pids
         if tingkat >= TINGKAT_SUPERVISOR:
-            pids = set()
-            for dep_id in semua_departemen_ids(user_id, workspace_id):
-                pids |= project_departemen(dep_id)
-            return pids
+            return project_penempatan(baris, tingkat)
         return set()
 
     # Supervisor DAN manager: HANYA divisi tempat ia memang anggota.
@@ -567,12 +577,11 @@ def rekan_staf_ids(actor_id, workspace_id, project_id):
             "member_id", flat=True
         )
     )
+    anggota = anggota_project_ids(workspace_id, project_id)
     return {
         uid
         for uid in kandidat
-        if uid != actor_id
-        and peta.get(uid, TINGKAT_MEMBER) == tingkat
-        and project_id in divisi_anggota(uid, workspace_id)
+        if uid != actor_id and peta.get(uid, TINGKAT_MEMBER) == tingkat and uid in anggota
     }
 
 
@@ -605,12 +614,12 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
     # `diawasi_actor` hanya berisi project workspace ini (resolver memfilter
     # workspace_id), jadi lolos dari cek di atas berarti project-nya valid —
     # tidak perlu fetch Project tambahan.
+    # Satu kueri keanggotaan untuk kedua sumber di bawah. Dulu sumber (a)
+    # memanggil `divisi_anggota` per orang di peta: satu kueri per orang yang
+    # tingkatnya lebih rendah, di jalur yang dipanggil tiap papan dibuka.
+    anggota = anggota_project_ids(workspace_id, target)
     for uid, tingkat in peta.items():
-        if (
-            uid != actor_id
-            and tingkat < tingkat_actor
-            and target in {str(p) for p in divisi_anggota(uid, workspace_id)}
-        ):
+        if uid != actor_id and tingkat < tingkat_actor and uid in anggota:
             # Syarat DUA arah yang benar: penerima (a) tingkatnya di bawah
             # actor, (b) ANGGOTA divisi ini, (c) divisi ini diawasi actor
             # (diperiksa sekali di atas). Sebelumnya (b) salah memeriksa
@@ -620,11 +629,6 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
     # Anggota divisi ini yang jenjangnya BELUM DIISI: bukan atasan (tidak ada
     # di peta), bukan actor, dan hanya kalau actornya supervisor+ di divisi
     # yang dia awasi (diperiksa di atas). Lihat docstring kenapa termasuk.
-    anggota = set(
-        ProjectMember.objects.filter(
-            workspace_id=workspace_id, project_id=project_id, is_active=True, deleted_at__isnull=True
-        ).values_list("member_id", flat=True)
-    )
     for uid in anggota:
         if uid != actor_id and uid not in peta:
             bawahan.add(uid)

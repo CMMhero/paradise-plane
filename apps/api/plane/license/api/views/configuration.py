@@ -12,7 +12,7 @@ from smtplib import (
 )
 
 # Django imports
-from django.core.mail import BadHeaderError, EmailMultiAlternatives, get_connection
+from django.core.mail import BadHeaderError, get_connection
 from django.db.models import Q, Case, When, Value
 
 # Third party imports
@@ -28,7 +28,7 @@ from plane.license.utils.encryption import encrypt_data
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.instance_config_variables import instance_config_variables
-from plane.utils.saklar_instance import SAKLAR_BAWAAN, SETELAN_ANGKA, nilai_angka_sah
+from plane.utils.saklar_instance import SAKLAR_BAWAAN, SETELAN_ANGKA, SETELAN_PILIHAN, nilai_angka_sah
 from plane.utils.bawaan_member import KUNCI as BAWAAN_MEMBER_KUNCI
 from plane.utils.bawaan_project import KUNCI as BAWAAN_PROJECT_KUNCI
 
@@ -73,7 +73,12 @@ class InstanceConfigurationEndpoint(BaseAPIView):
         # 0 hari berarti task harian menghapus seluruh riwayat.
         di_luar = [k for k in request.data.keys() if k in SETELAN_ANGKA and not nilai_angka_sah(k, request.data[k])]
         if di_luar:
-            rentang = ", ".join(f"{k} ({SETELAN_ANGKA[k][1]}-{SETELAN_ANGKA[k][2]})" for k in di_luar)
+            rentang = ", ".join(
+                f"{k} ({'/'.join(map(str, SETELAN_PILIHAN[k]))})"
+                if k in SETELAN_PILIHAN
+                else f"{k} ({SETELAN_ANGKA[k][1]}-{SETELAN_ANGKA[k][2]})"
+                for k in di_luar
+            )
             return Response(
                 {"error": f"Value out of range: {rentang}"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -164,16 +169,23 @@ class EmailCredentialCheckEndpoint(BaseAPIView):
             use_ssl=EMAIL_USE_SSL == "1",
         )
         # Prepare email details
-        subject = "Notifikasi email dari Paradise Task Tracker"
-        message = "Ini contoh notifikasi email yang dikirim dari Paradise Task Tracker."
+        subject = "Test email from Paradise Task Tracker"
+        message = "This is a test email sent from Paradise Task Tracker God Mode. Your SMTP settings work."
         # Send the email
         try:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=message,
-                from_email=EMAIL_FROM,
-                to=[receiver_email],
-                connection=connection,
+            # Tata letak bersama (logo CID, header, footer): email uji harus
+            # memperlihatkan rupa email sungguhan, bukan teks polos.
+            from plane.utils.email_merek import buat_pesan, render_email
+            from plane.utils.email_teks import teks
+
+            t = teks("uji", "en")
+            html, _ = render_email(
+                "emails/test_email.html",
+                {"t": t, "judul": subject, "pratajuk": message, "email_penerima": receiver_email},
+                "en",
+            )
+            msg = buat_pesan(
+                ke=receiver_email, subjek=subject, html=html, teks=message, koneksi=connection, dari=EMAIL_FROM
             )
             msg.send(fail_silently=False)
             return Response({"message": "Email successfully sent."}, status=status.HTTP_200_OK)

@@ -1785,6 +1785,18 @@ class TestPenempatanMandiriDanWiki:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.django_db
+    def test_daftar_departemen_untuk_job_title_walau_sudah_ditempatkan(self, workspace, staf_a, struktur, jenjang):
+        JabatanOrganisasi.objects.filter(workspace=workspace, member=staf_a).update(departemen=struktur)
+        url = f"/api/workspaces/{workspace.slug}/penempatan-saya/"
+
+        polos = _klien(staf_a).get(url)
+        dengan_daftar = _klien(staf_a).get(url, {"daftar": "1"})
+
+        assert polos.data == {"perlu_pilih": False, "departemen": []}
+        assert dengan_daftar.data["perlu_pilih"] is False
+        assert "Dept 9" in [d["nama"] for d in dengan_daftar.data["departemen"]]
+
+    @pytest.mark.django_db
     def test_direktur_tanpa_tempat_tidak_diminta_memilih(self, workspace, direktur, struktur, jenjang):
         from plane.app.views.penempatan_saya import perlu_pilih_departemen  # noqa: PLC0415
 

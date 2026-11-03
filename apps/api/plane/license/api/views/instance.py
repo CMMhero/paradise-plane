@@ -22,7 +22,7 @@ from plane.license.models import Instance
 from plane.license.utils.instance_value import get_configuration_value
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.utils import google_calendar as gcal
-from plane.utils.saklar_instance import modul_aktif
+from plane.utils.saklar_instance import CHAT_DELETE_WINDOW_HOURS, OVERDUE_GRACE_DAYS, modul_aktif, setelan_angka
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 
@@ -147,6 +147,14 @@ class InstanceEndpoint(BaseAPIView):
         # Modul yang dinyalakan/dimatikan Super Admin di God Mode > Features.
         # apps/web menyembunyikan menu dan menjaga halamannya berdasarkan ini.
         data["paradise_modules"] = modul_aktif()
+
+        # Tenggang terlambat (God Mode > Features). apps/web memakainya untuk
+        # menentukan kapan Due date tampil merah, sama dengan hitungan server.
+        data["paradise_overdue_grace_days"] = setelan_angka(OVERDUE_GRACE_DAYS)
+
+        # Umur maksimum pesan obrolan yang masih bisa dihapus (God Mode > Features).
+        # apps/web menyembunyikan tombol hapus sesudahnya; server tetap menolak.
+        data["paradise_chat_delete_window_hours"] = setelan_angka(CHAT_DELETE_WINDOW_HOURS)
 
         # Bawaan project baru (God Mode > Workspaces > New project defaults).
         # Formulir "Create project" di apps/web mengisi dirinya dari sini.

@@ -32,6 +32,7 @@ from plane.license.api.views.bawaan_member import (
     InstanceProjectDefaultsEndpoint,
 )
 from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
+from plane.license.api.views.email_preview import InstanceEmailPreviewEndpoint
 from plane.license.api.views.divisi import InstanceDivisiAnggotaEndpoint
 from plane.license.api.views.organisasi import (
     InstanceDepartemenDariProjectEndpoint,
@@ -85,6 +86,9 @@ urlpatterns = [
         EmailCredentialCheckEndpoint.as_view(),
         name="email-credential-check",
     ),
+    # Pratinjau semua email (baca-saja, tanpa SMTP) untuk God Mode > Email > Preview.
+    path("email-preview/", InstanceEmailPreviewEndpoint.as_view(), name="instance-email-preview"),
+    path("email-preview/<str:key>/", InstanceEmailPreviewEndpoint.as_view(), name="instance-email-preview-detail"),
     path(
         "workspace-slug-check/",
         InstanceWorkSpaceAvailabilityCheckEndpoint.as_view(),

@@ -26,6 +26,15 @@ export class PenempatanService extends APIService {
       });
   }
 
+  /** Semua departemen workspace, juga untuk orang yang sudah ditempatkan (pilihan Job title). */
+  async daftarDepartemen(workspaceSlug: string): Promise<TPilihanDepartemen[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/penempatan-saya/`, { params: { daftar: "1" } })
+      .then((res) => (res?.data as TPenempatanSaya | undefined)?.departemen ?? [])
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async pilih(workspaceSlug: string, departemenId: string): Promise<TPenempatanSaya> {
     return this.post(`/api/workspaces/${workspaceSlug}/penempatan-saya/`, { departemen_id: departemenId })
       .then((res) => res?.data)

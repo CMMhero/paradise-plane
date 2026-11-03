@@ -53,9 +53,10 @@ from plane.db.models import (
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_NAMA,
-    TINGKAT_SUPERVISOR,
+    User,
     Workspace,
 )
+from plane.db.penempatan import penempatan_sekarang, setel_penempatan
 from plane.license.api.views.base import BaseAPIView
 
 BATAS_KODE = 20
@@ -113,6 +114,34 @@ def _identifier_dari_kode(kode):
     return ident, None
 
 
+BATAS_IDENTIFIER = 12
+
+
+def _identifier_bebas(workspace, dasar):
+    """Identifier `dasar` + angka pertama yang belum dipakai project mana pun
+    (termasuk yang diarsipkan/dihapus), dipotong agar muat 12 karakter."""
+    from plane.db.models import ProjectIdentifier  # noqa: PLC0415
+
+    terpakai = set(Project.all_objects.filter(workspace=workspace).values_list("identifier", flat=True))
+    terpakai |= set(ProjectIdentifier.objects.filter(workspace=workspace).values_list("name", flat=True))
+    for angka in range(2, 1000):
+        akhiran = str(angka)
+        calon = dasar[: BATAS_IDENTIFIER - len(akhiran)] + akhiran
+        if calon not in terpakai:
+            return calon
+    raise ValueError(f"No free project identifier left for {dasar}. Use another department code.")
+
+
+def lengkapi_project_departemen(workspace, actor):
+    """KEP-32: tiap departemen tepat satu project. Departemen yang kehilangan
+    project-nya (project dipindah ke departemen lain, atau data sebelum KEP-32)
+    dibuatkan/diadopsikan satu. Kembalikan daftar project yang ditambahkan."""
+    tanpa_project = Departemen.objects.filter(workspace=workspace).exclude(
+        pk__in=DepartemenProject.objects.filter(workspace=workspace).values("departemen_id")
+    )
+    return [_adopsi_atau_buat_project(dep, actor, workspace) for dep in tanpa_project.order_by("kode")]
+
+
 def _adopsi_atau_buat_project(dep, actor, workspace):
     """Pastikan departemen baru punya tepat satu project (KEP-32: project ikut departemen).
 
@@ -133,20 +162,17 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
 
     semua = list(Project.all_objects.filter(workspace=workspace, identifier=ident))
     aktif = next((p for p in semua if p.deleted_at is None and p.archived_at is None), None)
-    if aktif is not None:
-        pemetaan = DepartemenProject.objects.filter(project=aktif).first()
-        if pemetaan is not None:
-            raise ValueError(f"Project {ident} already belongs to department {pemetaan.departemen.kode}.")
+    if aktif is not None and not DepartemenProject.objects.filter(project=aktif).exists():
         DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=aktif)
         jadikan_anggota_project(aktif.pk, actor.id, ROLE.ADMIN.value, workspace_id=workspace.id)
         return aktif
 
+    # Identifier dipakai project lain (milik departemen lain, diarsipkan, atau
+    # dihapus): departemen tetap dapat project baru dengan akhiran angka,
+    # mis. SMQA -> SMQA2. Project arsip tidak diadopsi diam-diam -- pemetaannya
+    # akan menempati slot 1:1 departemen padahal projectnya tidak hidup.
     if semua:
-        raise ValueError(
-            f"Identifier {ident} is used by an archived or deleted project. Unarchive it first or use another code."
-        )
-    # NOTE: project arsip tidak bisa diadopsi diam-diam -- selain membingungkan,
-    # pemetaannya akan menempati slot 1:1 departemen padahal projectnya tidak hidup.
+        ident = _identifier_bebas(workspace, ident)
 
     ser = ProjectSerializer(
         data={
@@ -202,14 +228,13 @@ def pohon_organisasi(workspace):
             "tingkat": j.tingkat,
             "tingkat_nama": TINGKAT_NAMA.get(j.tingkat),
         }
-        # Tempat yang BERLAKU menurut jenjang (lihat `jangkauan_hierarki`): manager
-        # dihitung di divisinya, yang lain di departemennya. Isian sisa tidak ditampilkan
-        # sebagai keanggotaan supaya layar tidak menjanjikan akses yang tidak ada.
+        # Tempat yang BERLAKU menurut jenjang (lihat `project_penempatan`, KEP-76):
+        # departemen berlaku untuk semua jenjang, divisi hanya untuk manager.
+        # Direktur menjangkau semuanya, jadi tidak didaftar di satu tempat.
         if j.tingkat >= TINGKAT_DIREKTUR:
             continue
-        if j.tingkat >= TINGKAT_MANAGER:
-            if j.divisi_id:
-                manager_div.setdefault(j.divisi_id, []).append(baris)
+        if j.divisi_id and j.tingkat >= TINGKAT_MANAGER:
+            manager_div.setdefault(j.divisi_id, []).append(baris)
         elif j.departemen_id:
             orang_dep.setdefault(j.departemen_id, []).append(baris)
 
@@ -351,7 +376,7 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             diminta = request.data.get("project_ids")
             if not isinstance(diminta, list):
                 return Response({"error": "project_ids must be a list of project ids."}, status=400)
-            if len(diminta) > 1:
+            if len(diminta) != 1:
                 # KEP-32: satu departemen tepat satu project. Project lama yang
                 # digabung (payung) diarsipkan dulu lewat skrip D4/pengaturan
                 # project, bukan ditumpuk di sini.
@@ -389,6 +414,13 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             dep.save(update_fields=["kode", "nama", "divisi", "updated_at"])
             if project_ids is not None:
                 _ganti_project(dep, project_ids)
+                # Departemen asal project yang dipindah ke sini langsung dapat
+                # project pengganti: tidak ada departemen tanpa project.
+                try:
+                    lengkapi_project_departemen(dep.workspace, request.user)
+                except ValueError as e:
+                    transaction.set_rollback(True)
+                    return Response({"error": str(e)}, status=400)
         sinkronkan_workspace(dep.workspace_id)
         _sinkron_wiki(dep.workspace, request.user)
         return Response(pohon_organisasi(dep.workspace))
@@ -535,20 +567,21 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
         with transaction.atomic(), tunda_sinkron():
             dep = Departemen.objects.create(workspace=workspace, divisi=divisi, kode=kode, nama=nama)
             DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=project)
+            pengguna = {str(u.id): u for u in User.objects.filter(id__in=list(diminta))}
             for uid in {str(u) for u in diminta}:
-                baris = JabatanOrganisasi.all_objects.filter(workspace=workspace, member_id=uid).first()
-                if baris is not None and baris.deleted_at is None and baris.tingkat >= TINGKAT_MANAGER:
+                tingkat, deps, divs = penempatan_sekarang(workspace.id, uid)
+                if tingkat is not None and tingkat >= TINGKAT_MANAGER:
                     dilewati.append(uid)
                     continue
-                if baris is None:
-                    JabatanOrganisasi.objects.create(
-                        workspace=workspace, member_id=uid, tingkat=TINGKAT_MEMBER, departemen=dep, sumber="impor-project"
-                    )
-                else:
-                    if baris.deleted_at is not None:
-                        baris.deleted_at, baris.tingkat, baris.divisi_id = None, TINGKAT_MEMBER, None
-                    baris.departemen = dep
-                    baris.save(update_fields=["deleted_at", "tingkat", "divisi", "departemen", "updated_at"])
+                # KEP-76: departemen baru DITAMBAHKAN, penempatan lama tetap.
+                setel_penempatan(
+                    workspace,
+                    pengguna[uid],
+                    tingkat if tingkat is not None else TINGKAT_MEMBER,
+                    deps | {str(dep.id)},
+                    divs,
+                    sumber="impor-project",
+                )
                 tandai_otomatis(workspace.id, project.id, uid)
                 ditempatkan.append(uid)
         sinkronkan_workspace(workspace.id)

@@ -51,7 +51,18 @@ def _ditunda():
 
 
 def sinkronkan_satu(workspace_id, user_id):
-    """Samakan keanggotaan otomatis satu orang dengan jangkauannya. Kembalikan jumlah perubahan."""
+    """Samakan keanggotaan otomatis satu orang dengan jangkauannya. Kembalikan jumlah perubahan.
+
+    Kanal obrolan divisi/departemen ikut disamakan di sini, supaya semua jalur yang
+    mengubah penempatan otomatis memperbarui keanggotaan kanalnya juga.
+    """
+    from plane.utils.kanal_organisasi import sinkronkan_kanal_organisasi
+
+    sinkronkan_kanal_organisasi(workspace_id, user_id)
+    return _sinkronkan_project(workspace_id, user_id)
+
+
+def _sinkronkan_project(workspace_id, user_id):
     from plane.db.membership import jadikan_anggota_project
     from plane.db.models import AksesHierarki, ProjectMember
     from plane.utils.hierarki import jangkauan_hierarki, struktur_aktif
@@ -107,7 +118,11 @@ def sinkronkan_workspace(workspace_id):
     ids = set(JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list("member_id", flat=True))
     # Orang yang jenjangnya sudah dicabut tetap disapu, supaya aksesnya ikut dicabut.
     ids |= set(AksesHierarki.objects.filter(workspace_id=workspace_id).values_list("member_id", flat=True))
-    return sum(sinkronkan_satu(workspace_id, uid) for uid in ids)
+    # Kanal obrolan disamakan SEKALI untuk seluruh workspace, bukan per orang.
+    from plane.utils.kanal_organisasi import sinkronkan_kanal_organisasi
+
+    sinkronkan_kanal_organisasi(workspace_id)
+    return sum(_sinkronkan_project(workspace_id, uid) for uid in ids)
 
 
 @receiver(post_save, sender="db.JabatanOrganisasi")

@@ -12,6 +12,8 @@ export type TInstanceParadiseToggleKeys =
   | "ENABLE_GOOGLE_CALENDAR_SYNC"
   | "ENABLE_TUGAS_KE_DM"
   | "HIERARKI_GERBANG_TUGAS"
+  | "AUTO_START_DATE_ON_START"
+  | "AUTO_DUE_DATE_ON_DONE"
   | TInstanceParadiseModuleKeys;
 
 /** Saklar modul selalu `ENABLE_<NAMA MODUL>`, sama seperti `MODUL_APLIKASI` di server. */
@@ -24,7 +26,12 @@ export type TInstanceParadiseNumberKeys =
   | "LOGIN_HISTORY_RETENTION_DAYS"
   | "TRASH_RETENTION_DAYS"
   | "DASHBOARD_PERHATIAN_PERSEN"
-  | "DASHBOARD_KRITIS_PERSEN";
+  | "DASHBOARD_KRITIS_PERSEN"
+  | "AUTO_ARCHIVE_DONE_DAYS"
+  | "DUE_DATE_ON_EARLY_DONE"
+  | "OVERDUE_GRACE_DAYS"
+  | "DASHBOARD_ON_TIME_WINDOW_DAYS"
+  | "CHAT_DELETE_WINDOW_HOURS";
 
 export type TInstanceGoogleCalendarConfigurationKeys = "GOOGLE_CALENDAR_CLIENT_ID" | "GOOGLE_CALENDAR_CLIENT_SECRET";
 

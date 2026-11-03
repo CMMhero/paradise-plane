@@ -125,6 +125,63 @@ class TestMemberPreferensiGodMode:
         assert Profile.objects.get(user=staf).theme == {**palet, "theme": "light"}
 
     @pytest.mark.django_db
+    def test_preferensi_tampilan_kosong_dibaca_sebagai_pabrik(self, super_admin, staf):
+        """KEP-64: profil lama tanpa kunci tampilan = pabrik, sama dengan apps/web."""
+        Profile.objects.create(user=staf, theme={"theme": "dark"})
+        profil = _get(super_admin, staf.id).data["profile"]
+        assert (profil["skema"], profil["font"], profil["gerak"]) == ("bara", "jakarta", "halus")
+
+    @pytest.mark.django_db
+    def test_ubah_tampilan_digabung_ke_theme_tanpa_menghapus_palet(self, super_admin, staf):
+        palet = {"theme": "custom", "primary": "#ff0000", "background": "#000000", "darkPalette": True}
+        Profile.objects.create(user=staf, theme=palet)
+        response = _patch(super_admin, staf.id, {"profile": {"skema": "hutan", "font": "geist"}})
+        assert response.status_code == status.HTTP_200_OK, getattr(response, "data", None)
+        assert Profile.objects.get(user=staf).theme == {**palet, "skema": "hutan", "font": "geist"}
+        assert response.data["profile"]["skema"] == "hutan"
+        assert response.data["profile"]["gerak"] == "halus"
+
+    @pytest.mark.django_db
+    def test_volume_suara_dibaca_pabrik_lalu_bisa_diubah(self, super_admin, staf):
+        """Volume & bisu suara pemberitahuan tinggal di theme, sama seperti KEP-64."""
+        Profile.objects.create(user=staf, theme={"theme": "dark"})
+        profil = _get(super_admin, staf.id).data["profile"]
+        assert (profil["volume_suara"], profil["suara_bisu"]) == (80, False)
+
+        response = _patch(super_admin, staf.id, {"profile": {"volume_suara": 35, "suara_bisu": True}})
+        assert response.status_code == status.HTTP_200_OK, getattr(response, "data", None)
+        assert Profile.objects.get(user=staf).theme == {"theme": "dark", "volume_suara": 35, "suara_bisu": True}
+
+    @pytest.mark.django_db
+    @pytest.mark.parametrize(
+        "badan",
+        [{"volume_suara": 101}, {"volume_suara": -1}, {"volume_suara": True}, {"volume_suara": "50"}, {"suara_bisu": 1}],
+    )
+    def test_volume_suara_tak_sah_ditolak(self, super_admin, staf, badan):
+        Profile.objects.create(user=staf, theme={"theme": "light"})
+        response = _patch(super_admin, staf.id, {"profile": badan})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Profile.objects.get(user=staf).theme == {"theme": "light"}
+
+    @pytest.mark.django_db
+    def test_kunci_tampilan_lama_glow_tombol_diabaikan(self, super_admin, staf):
+        """glow & tombol dicabut: sisa kunci itu di theme lama tidak ikut dibaca."""
+        Profile.objects.create(user=staf, theme={"theme": "dark", "glow": "mati", "tombol": "datar"})
+        profil = _get(super_admin, staf.id).data["profile"]
+        assert "glow" not in profil and "tombol" not in profil
+        assert profil["gerak"] == "halus"
+
+    @pytest.mark.django_db
+    @pytest.mark.parametrize(
+        "badan", [{"gerak": "mati"}, {"skema": 1}, {"gerak": ["kurangi"]}, {"skema": "BARA"}, {"font": ""}]
+    )
+    def test_nilai_tampilan_tak_sah_ditolak(self, super_admin, staf, badan):
+        Profile.objects.create(user=staf, theme={"theme": "light"})
+        response = _patch(super_admin, staf.id, {"profile": badan})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Profile.objects.get(user=staf).theme == {"theme": "light"}
+
+    @pytest.mark.django_db
     def test_tema_kosong_dibaca_sebagai_system(self, super_admin, staf):
         assert _get(super_admin, staf.id).data["profile"]["theme"] == "system"
 
@@ -157,7 +214,19 @@ class TestMemberPreferensiGodMode:
         profil = Profile.objects.get(user=staf)
         assert profil.notification_view_mode == "full"
         assert profil.is_app_rail_docked is True and profil.is_smooth_cursor_enabled is False
-        assert set(response.data["profile"]) == {"language", "timezone", "theme", "start_of_the_week"}
+        assert set(response.data["profile"]) == {
+            "language",
+            "timezone",
+            "theme",
+            "start_of_the_week",
+            # KEP-64: preferensi tampilan.
+            "skema",
+            "font",
+            "gerak",
+            # Suara pemberitahuan.
+            "volume_suara",
+            "suara_bisu",
+        }
 
     @pytest.mark.django_db
     @pytest.mark.parametrize(

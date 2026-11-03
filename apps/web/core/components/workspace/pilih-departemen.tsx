@@ -5,11 +5,12 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
+import { RadioGroup } from "@plane/propel/radio-group";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // services
 import { penempatanService } from "@/services/penempatan.service";
@@ -40,7 +41,26 @@ export function PilihDepartemen() {
     penempatanService.saya(slug as string)
   );
 
-  if (!slug || !data?.perlu_pilih || ditunda) return null;
+  const tampil = !!slug && !!data?.perlu_pilih && !ditunda;
+
+  // Escape = "Nanti saja", sama seperti tombolnya; layar ini tidak boleh jadi
+  // jalan buntu bagi yang memakai papan ketik.
+  useEffect(() => {
+    if (!tampil) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      try {
+        sessionStorage.setItem(KUNCI_NANTI, "1");
+      } catch {
+        // sessionStorage bisa diblokir; penundaan cukup untuk layar ini.
+      }
+      setDitunda(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tampil]);
+
+  if (!tampil || !slug || !data) return null;
 
   const simpan = async () => {
     if (!terpilih) return;
@@ -88,37 +108,35 @@ export function PilihDepartemen() {
       aria-labelledby="pilih-departemen-judul"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
-      <div className="shadow-xl flex max-h-[85vh] w-full max-w-md flex-col gap-4 rounded-lg border border-subtle bg-surface-1 p-5">
+      <div className="flex max-h-[85vh] w-full max-w-md flex-col gap-4 rounded-overlay border border-subtle bg-surface-1 p-5">
         <div>
           <h2 id="pilih-departemen-judul" className="text-16 font-semibold">
             {t("department_picker_ui.title")}
           </h2>
           <p className="mt-1 text-13 text-secondary">{t("department_picker_ui.description")}</p>
         </div>
-        <div className="flex flex-col gap-3 overflow-y-auto">
+        {/* Satu grup untuk semua divisi supaya tombol panah berpindah lintas divisi. */}
+        <RadioGroup
+          name="departemen"
+          aria-labelledby="pilih-departemen-judul"
+          className="gap-3 overflow-y-auto"
+          value={terpilih}
+          onValueChange={setTerpilih}
+        >
           {Object.entries(perDivisi).map(([divisi, daftar]) => (
             <fieldset key={divisi} className="flex flex-col gap-1">
               <legend className="mb-1 text-12 font-medium tracking-wide text-tertiary uppercase">{divisi}</legend>
               {daftar.map((d) => (
-                <label
+                <RadioGroup.Item
                   key={d.id}
-                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-13 ${
-                    terpilih === d.id ? "border-accent-strong bg-accent-subtle" : "border-subtle hover:bg-layer-1"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="departemen"
-                    value={d.id}
-                    checked={terpilih === d.id}
-                    onChange={() => setTerpilih(d.id)}
-                  />
-                  <span>{d.nama}</span>
-                </label>
+                  value={d.id}
+                  label={d.nama}
+                  className="border border-subtle px-3 py-2 has-[[data-checked]]:border-accent-strong has-[[data-checked]]:bg-accent-subtle"
+                />
               ))}
             </fieldset>
           ))}
-        </div>
+        </RadioGroup>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={nanti} disabled={menyimpan}>
             {t("notification_ui.later")}

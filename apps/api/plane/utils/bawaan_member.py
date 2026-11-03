@@ -85,6 +85,48 @@ ZONA_WAKTU_SAH = pytz.all_timezones_set
 # admin, jadi dicabut dari God Mode (30 Okt 2026). Nilai lama yang masih
 # tersimpan di bawaan ikut terbuang sendiri oleh `_gabung` (hanya kunci PABRIK).
 KOLOM_PROFIL = ("language", "start_of_the_week")
+# Preferensi tampilan (KEP-64). Disimpan di `Profile.theme` (JSONField) di samping
+# `theme`, bukan kolom sendiri, jadi tanpa migrasi. Cermin `TAMPILAN_PABRIK` di
+# apps/web/core/lib/tampilan.ts; nilai pertama tiap himpunan = bawaan pabrik.
+GAYA_SAH = {
+    "skema": ("bara", "senja", "sumi", "hutan", "netral"),
+    "font": (
+        "jakarta",
+        "inter",
+        "geist",
+        "figtree",
+        "bricolage",
+        "archivo",
+        "sora",
+        "shantell",
+        "jetbrains",
+        "serif",
+        "sistem",
+    ),
+    "gerak": ("halus", "kurangi"),
+}
+GAYA_PABRIK = {kunci: pilihan[0] for kunci, pilihan in GAYA_SAH.items()}
+# Suara pemberitahuan: volume 0..100 dan bisu. Tinggal di `Profile.theme` yang
+# sama dengan GAYA_SAH (tanpa migrasi), tapi bukan pilihan dari daftar, jadi
+# diperiksa tipenya. Cermin `SUARA_PABRIK` di apps/web/core/lib/suara.ts.
+SUARA_PABRIK = {"volume_suara": 80, "suara_bisu": False}
+
+
+def suara_sah(kunci: str, nilai) -> bool:
+    if kunci == "suara_bisu":
+        return isinstance(nilai, bool)
+    # bool adalah int di Python; True tidak boleh lolos sebagai volume 1.
+    return isinstance(nilai, int) and not isinstance(nilai, bool) and 0 <= nilai <= 100
+
+
+def suara_efektif(tema) -> dict:
+    """Nilai suara yang berlaku: kosong atau rusak = pabrik."""
+    tema = tema if isinstance(tema, dict) else {}
+    return {k: tema[k] if suara_sah(k, tema.get(k)) else v for k, v in SUARA_PABRIK.items()}
+
+
+# Semua kunci yang disimpan di `Profile.theme` selain `theme` itu sendiri.
+KUNCI_TEMA_PARADISE = (*GAYA_SAH, *SUARA_PABRIK)
 
 # Hanya Member dan Guest. Admin workspace untuk SETIAP akun baru adalah lubang,
 # bukan bawaan; Admin tetap diberikan per orang di halaman Member.
@@ -113,6 +155,8 @@ PABRIK = {
         "timezone": "UTC",
         "theme": "system",
         "start_of_the_week": 0,
+        **GAYA_PABRIK,
+        **SUARA_PABRIK,
     },
     # "pimpinan" = leader (supervisor, manager). Baris direktur juga batas atas.
     "email": {"staf": dict(BAWAAN_STAF), "pimpinan": dict(BAWAAN_PIMPINAN), "direktur": dict(BAWAAN_DIREKTUR)},
@@ -175,6 +219,16 @@ def periksa_profil(profil) -> tuple[dict, str | None]:
         if profil["theme"] not in TEMA_SAH:
             return {}, "Invalid theme."
         baru["theme"] = profil["theme"]
+    for kunci, pilihan in GAYA_SAH.items():
+        if kunci in profil:
+            if profil[kunci] not in pilihan:
+                return {}, f"Invalid {kunci}."
+            baru[kunci] = profil[kunci]
+    for kunci in SUARA_PABRIK:
+        if kunci in profil:
+            if not suara_sah(kunci, profil[kunci]):
+                return {}, f"Invalid {kunci}."
+            baru[kunci] = profil[kunci]
     return baru, None
 
 
@@ -294,7 +348,7 @@ def terapkan_ke_profil_baru(profil) -> None:
         if getattr(profil, kolom) == profil._meta.get_field(kolom).get_default():
             setattr(profil, kolom, bawaan[kolom])
     if not profil.theme:
-        profil.theme = {"theme": bawaan["theme"]}
+        profil.theme = {"theme": bawaan["theme"], **{kunci: bawaan[kunci] for kunci in KUNCI_TEMA_PARADISE}}
 
 
 def terapkan_ke_user_baru(user) -> None:

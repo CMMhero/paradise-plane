@@ -44,6 +44,30 @@ from plane.db.models import (
 )
 
 
+def _q_cari_anggota(query):
+    """Q pencarian orang untuk pemilih mention: SETIAP kata harus cocok di salah
+    satu kolom nama.
+
+    Kustomisasi Paradise (3 Nov): versi upstream mencocokkan seluruh teks ke tiap
+    kolom, jadi mengetik nama lengkap ("Budi Santoso") tidak menemukan siapa pun,
+    karena tidak ada satu kolom yang memuat keduanya. Orang mengetik nama lengkap
+    rekan yang ingin di-mention, dan hasilnya terbaca "orang ini tidak bisa
+    di-mention".
+
+    Akun terhapus (KEP-50) tidak pernah ditawarkan sebagai mention.
+    """
+    from plane.db.models import DOMAIN_AKUN_TERHAPUS  # noqa: PLC0415
+
+    q = ~Q(member__email__endswith=f"@{DOMAIN_AKUN_TERHAPUS}")
+    for kata in (query or "").split():
+        q &= (
+            Q(member__first_name__icontains=kata)
+            | Q(member__last_name__icontains=kata)
+            | Q(member__display_name__icontains=kata)
+        )
+    return q
+
+
 class GlobalSearchEndpoint(BaseAPIView):
     """Endpoint to search across multiple fields in the workspace and
     also show related workspace if found
@@ -318,16 +342,7 @@ class SearchEndpoint(BaseAPIView):
         if project_id:
             for query_type in query_types:
                 if query_type == "user_mention":
-                    fields = [
-                        "member__first_name",
-                        "member__last_name",
-                        "member__display_name",
-                    ]
-                    q = Q()
-
-                    if query:
-                        for field in fields:
-                            q |= Q(**{f"{field}__icontains": query})
+                    q = _q_cari_anggota(query)
 
                     # sembunyikan(): pemilih mention "@" ini mengirim
                     # display_name langsung ke browser, jadi tanpa penyaring
@@ -539,16 +554,7 @@ class SearchEndpoint(BaseAPIView):
         else:
             for query_type in query_types:
                 if query_type == "user_mention":
-                    fields = [
-                        "member__first_name",
-                        "member__last_name",
-                        "member__display_name",
-                    ]
-                    q = Q()
-
-                    if query:
-                        for field in fields:
-                            q |= Q(**{f"{field}__icontains": query})
+                    q = _q_cari_anggota(query)
                     # SENGAJA TANPA sembunyikan(): ini mention di luar konteks
                     # project, jadi lingkupnya direktori karyawan workspace.
                     # Menyaring di sini akan menyembunyikan orang dari daftar

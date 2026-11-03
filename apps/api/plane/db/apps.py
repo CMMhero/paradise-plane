@@ -30,3 +30,7 @@ class DbConfig(AppConfig):
 
         # Anggota workspace baru otomatis anggota Wiki (keputusan user 2026-10-26).
         from plane.db import wiki_default as _wiki_default_signal  # noqa: F401
+
+        # Anggota workspace baru otomatis ikut kanal sistem obrolan
+        # (Announcements, Changelog), 3 Nov 2026.
+        from plane.db import kanal_sistem as _kanal_sistem_signal  # noqa: F401

@@ -86,6 +86,66 @@ def is_super_admin(user):
     return user.id in super_admin_user_ids()
 
 
+def _q_penempatan_di_project(project_ref):
+    """Q atas `JabatanOrganisasi`: penempatan orang ini mencakup project `project_ref`.
+
+    `project_ref` boleh id biasa atau `OuterRef`. Cakupan dibaca dari struktur
+    organisasi (KEP-29), bukan dari keanggotaan project:
+
+        penempatan departemen -> project milik departemen itu
+        penempatan divisi     -> project di semua departemen divisi itu
+
+    Direktur (baris tanpa departemen & divisi) sengaja TIDAK dihitung. Ia
+    mengawasi semua project, tapi tidak "berada di" departemen mana pun, jadi
+    perlakuannya sama dengan Super Admin pengawas: tidak muncul.
+
+    Tabel yang di-join tidak disaring manager soft-delete, jadi `deleted_at`
+    tiap sambungan ditulis eksplisit.
+    """
+    from django.db.models import Q
+
+    lewat_departemen = Q(
+        departemen__deleted_at__isnull=True,
+        departemen__divisi__deleted_at__isnull=True,
+        departemen__project_departemen__deleted_at__isnull=True,
+        departemen__project_departemen__project_id=project_ref,
+    )
+    lewat_divisi = Q(
+        divisi__deleted_at__isnull=True,
+        divisi__departemen__deleted_at__isnull=True,
+        divisi__departemen__project_departemen__deleted_at__isnull=True,
+        divisi__departemen__project_departemen__project_id=project_ref,
+    )
+    return lewat_departemen | lewat_divisi
+
+
+def terlihat_di_project(project_id, ids=None):
+    """Id Super Admin yang TIDAK disembunyikan di satu project.
+
+    Dua jalan, salah satu cukup:
+
+    1. Baris `SuperAdminTerlihatDiProject` (penanda manual "anggota asli").
+    2. Penempatan God Mode-nya (departemen/divisi) mencakup project ini.
+       Super Admin yang juga staf/supervisor/manager di sebuah departemen
+       adalah rekan kerja di sana: ia harus bisa ditugaskan dan muncul di
+       filter Created by, Assignees, Mentions, dan seterusnya.
+    """
+    from plane.db.models import JabatanOrganisasi, SuperAdminTerlihatDiProject  # noqa: PLC0415
+
+    ids = super_admin_user_ids() if ids is None else ids
+    if not ids or not project_id:
+        return set()
+    manual = SuperAdminTerlihatDiProject.objects.filter(project_id=project_id, member_id__in=ids).values_list(
+        "member_id", flat=True
+    )
+    ditempatkan = (
+        JabatanOrganisasi.objects.filter(_q_penempatan_di_project(project_id), member_id__in=ids)
+        .values_list("member_id", flat=True)
+        .distinct()
+    )
+    return set(manual) | set(ditempatkan)
+
+
 def sembunyikan(queryset, field="member_id", project_id=None):
     """Buang Super Admin dari queryset keanggotaan SEBUAH PROJECT.
 
@@ -98,8 +158,9 @@ def sembunyikan(queryset, field="member_id", project_id=None):
     dari SEMUA project ikut hilang dari project tempat ia benar-benar bekerja,
     sehingga tim IT tak bisa diberi tugas di project IT sendiri.
 
-    Super Admin yang punya baris `SuperAdminTerlihatDiProject` untuk project
-    tersebut TIDAK disembunyikan: di situ ia anggota asli, bukan pengawas.
+    Super Admin yang anggota asli project itu TIDAK disembunyikan: lewat baris
+    `SuperAdminTerlihatDiProject` atau lewat penempatan departemen/divisinya
+    (lihat `terlihat_di_project`).
 
     CATATAN PENTING: jangan pernah memakai fungsi ini pada daftar anggota
     WORKSPACE. Nama setiap orang di seluruh aplikasi diresolusi dari daftar itu;
@@ -112,16 +173,7 @@ def sembunyikan(queryset, field="member_id", project_id=None):
         return queryset
 
     if project_id:
-        # Impor di dalam fungsi: models mengimpor modul ini lewat apps.ready,
-        # jadi impor di tingkat modul akan melingkar.
-        from plane.db.models import SuperAdminTerlihatDiProject  # noqa: PLC0415
-
-        terlihat = set(
-            SuperAdminTerlihatDiProject.objects.filter(
-                project_id=project_id, member_id__in=ids
-            ).values_list("member_id", flat=True)
-        )
-        ids = ids - terlihat
+        ids = ids - terlihat_di_project(project_id, ids)
 
     return queryset.exclude(**{f"{field}__in": ids}) if ids else queryset
 
@@ -139,17 +191,18 @@ def sembunyikan_lintas_project(queryset, field="member_id"):
     """
     from django.db.models import Exists, OuterRef
 
-    from plane.db.models import SuperAdminTerlihatDiProject  # noqa: PLC0415
+    from plane.db.models import JabatanOrganisasi, SuperAdminTerlihatDiProject  # noqa: PLC0415
 
     ids = super_admin_user_ids()
     if not ids:
         return queryset
 
-    terlihat = SuperAdminTerlihatDiProject.objects.filter(
-        project_id=OuterRef("project_id"), member_id=OuterRef(field)
+    manual = SuperAdminTerlihatDiProject.objects.filter(project_id=OuterRef("project_id"), member_id=OuterRef(field))
+    ditempatkan = JabatanOrganisasi.objects.filter(
+        _q_penempatan_di_project(OuterRef("project_id")), member_id=OuterRef(field)
     )
-    return queryset.annotate(_terlihat_di_project=Exists(terlihat)).exclude(
-        **{f"{field}__in": ids, "_terlihat_di_project": False}
+    return queryset.annotate(_terlihat_manual=Exists(manual), _terlihat_penempatan=Exists(ditempatkan)).exclude(
+        **{f"{field}__in": ids, "_terlihat_manual": False, "_terlihat_penempatan": False}
     )
 
 
