@@ -27,30 +27,30 @@ type TAuthHeader = {
 const Titles = {
   [EAuthModes.SIGN_IN]: {
     [EAuthSteps.EMAIL]: {
-      header: "Selamat datang.",
-      subHeader: "Welcome back to Paradise Task Tracker.",
+      header: "Sign in",
+      subHeader: "Use your Space Paradise Perkasa account.",
     },
     [EAuthSteps.PASSWORD]: {
-      header: "Selamat datang.",
-      subHeader: "Welcome back to Paradise Task Tracker.",
+      header: "Sign in",
+      subHeader: "Use your Space Paradise Perkasa account.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
-      header: "Selamat datang.",
-      subHeader: "Welcome back to Paradise Task Tracker.",
+      header: "Sign in",
+      subHeader: "Use your Space Paradise Perkasa account.",
     },
   },
   [EAuthModes.SIGN_UP]: {
     [EAuthSteps.EMAIL]: {
-      header: "Selamat datang.",
-      subHeader: "Create your Paradise Task Tracker account.",
+      header: "Create your account",
+      subHeader: "Set up your Space Paradise Perkasa account.",
     },
     [EAuthSteps.PASSWORD]: {
-      header: "Selamat datang.",
-      subHeader: "Create your Paradise Task Tracker account.",
+      header: "Create your account",
+      subHeader: "Set up your Space Paradise Perkasa account.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
-      header: "Selamat datang.",
-      subHeader: "Create your Paradise Task Tracker account.",
+      header: "Create your account",
+      subHeader: "Set up your Space Paradise Perkasa account.",
     },
   },
 };
@@ -81,11 +81,11 @@ export const AuthHeader = observer(function AuthHeader(props: TAuthHeader) {
       const workspace = memberInvitation.workspace;
       return {
         header: (
-          <div className="relative inline-flex items-center gap-2">
+          <span className="relative inline-flex items-center gap-2">
             {t("common.join")}{" "}
             <WorkspaceLogo logo={workspace?.logo_url} name={workspace?.name} classNames="size-9 flex-shrink-0" />{" "}
             {workspace.name}
-          </div>
+          </span>
         ),
         subHeader:
           mode == EAuthModes.SIGN_UP
@@ -114,11 +114,15 @@ type TAuthHeaderBase = {
   subHeader: string;
 };
 
-export function AuthHeaderBase(props: TAuthHeaderBase) {
+// Paradise: small "Internal task tracker" label, a large heading, then a plain
+// line under it (was two equal-weight headings).
+export function AuthHeaderBase({ header, subHeader }: TAuthHeaderBase) {
+  const { t } = useTranslation();
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-h4-semibold text-primary">{props.header}</span>
-      <span className="text-h4-semibold text-placeholder">{props.subHeader}</span>
+    <div className="flex flex-col">
+      <span className="text-13 font-medium text-accent-primary">{t("login_ui.eyebrow")}</span>
+      <h1 className="mt-2 text-32 leading-tight font-semibold tracking-tight text-primary">{header}</h1>
+      <p className="mt-2 text-14 text-secondary">{subHeader}</p>
     </div>
   );
 }

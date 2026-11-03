@@ -20,7 +20,7 @@ export function AuthBanner(props: TAuthBanner) {
 
   if (!bannerData) return <></>;
   return (
-    <div className="relative flex items-center gap-2 rounded-md border border-accent-strong/50 bg-accent-primary/10 p-2">
+    <div className="relative flex items-center gap-2 rounded-card border border-accent-strong/50 bg-accent-primary/10 p-2">
       <div className="relative flex h-4 w-4 flex-shrink-0 items-center justify-center">
         <Info size={16} className="text-accent-primary" />
       </div>

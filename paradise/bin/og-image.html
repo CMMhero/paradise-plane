@@ -1,0 +1,343 @@
+<!doctype html>
+<!--
+  Copyright (c) 2023-present Plane Software, Inc. and contributors
+  Kustomisasi Paradise Task Tracker: gambar pratinjau tautan (Open Graph)
+  SPDX-License-Identifier: AGPL-3.0-only
+  See the LICENSE file for details.
+
+  Templat untuk paradise/bin/buat-og-image.mjs. Jangan dibuka langsung: skrip
+  mengganti {{...}} dengan lokasi font dan logo, lalu memotretnya 1200x630.
+
+  Tampilannya cermin panel layar masuk (AuthShowcase, KEP-70) di skema Bara
+  (KEP-64): panel arang hangat `pamer-panel`, font Plus Jakarta Sans + Geist
+  Mono, radius bernama, dan potongan papan project yang sama dengan
+  SlidePapan. Nilai warna DISALIN dari packages/tailwind-config/
+  paradise-tampilan.css; kalau token di sana berubah, samakan di sini.
+  Datar: tanpa 3D, kilap, atau glow.
+-->
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: "Plus Jakarta Sans Variable";
+        font-weight: 200 800;
+        src: url("{{FONT_UI}}") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist Mono Variable";
+        font-weight: 100 900;
+        src: url("{{FONT_MONO}}") format("woff2");
+      }
+
+      :root {
+        /* paradise-tampilan.css bagian 4 (panel pamer) */
+        --pamer-latar: oklch(0.99 0.003 60);
+        --pamer-bilah: oklch(0.955 0.016 50);
+        --pamer-papan: oklch(0.975 0.005 55);
+        --pamer-batas: oklch(0.91 0.01 55);
+        --pamer-lampu: oklch(0.86 0.012 50);
+        --pamer-teks: oklch(0.25 0.008 50);
+        --pamer-teks-2: oklch(0.45 0.01 50);
+        --pamer-teks-3: oklch(0.58 0.01 50);
+        --pamer-merah: oklch(0.58 0.2335 27.24);
+        --pamer-teal: oklch(0.52 0.1 175);
+        --pamer-jingga: oklch(0.72 0.15 65);
+        --pamer-hijau: oklch(0.62 0.14 150);
+        --pamer-hijau-teks: oklch(0.45 0.12 150);
+        --pamer-hijau-latar: oklch(0.97 0.025 150);
+        --pamer-hijau-batas: oklch(0.85 0.06 150);
+        --pamer-panel-teks: oklch(0.96 0.005 40);
+        --pamer-panel-teks-2: oklch(0.82 0.01 40);
+        --highlight-gelap: oklch(0.79 0.14 68);
+
+        --radius-control: 0.375rem;
+        --radius-item: 0.5rem;
+        --radius-card: 0.75rem;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+
+      body {
+        position: relative;
+        font-family: "Plus Jakarta Sans Variable", sans-serif;
+        color: var(--pamer-panel-teks);
+        /* @utility pamer-panel */
+        background:
+          radial-gradient(120% 70% at 85% 0%, oklch(0.42 0.14 32 / 0.55), transparent 60%),
+          radial-gradient(90% 60% at 0% 100%, oklch(0.35 0.1 50 / 0.5), transparent 65%),
+          linear-gradient(165deg, oklch(0.27 0.05 30), oklch(0.17 0.02 35) 70%);
+      }
+
+      /* ---------- kolom teks ---------- */
+
+      .teks {
+        position: absolute;
+        inset: 72px auto 64px 80px;
+        width: 500px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .merek {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .merek img {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+      }
+
+      h1 {
+        margin-top: 64px;
+        font-size: 68px;
+        line-height: 1.02;
+        font-weight: 700;
+        letter-spacing: -0.035em;
+      }
+
+      .sub {
+        margin-top: 22px;
+        font-size: 24px;
+        line-height: 1.4;
+        color: var(--pamer-panel-teks-2);
+      }
+
+      .alamat {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "Geist Mono Variable", monospace;
+        font-size: 19px;
+        color: var(--pamer-panel-teks-2);
+      }
+
+      .alamat i {
+        width: 8px;
+        height: 8px;
+        border-radius: 9999px;
+        background: var(--highlight-gelap);
+      }
+
+      /* ---------- jendela aplikasi (Jendela + SlidePapan) ---------- */
+
+      .jendela {
+        position: absolute;
+        top: 92px;
+        left: 632px;
+        width: 680px;
+        overflow: hidden;
+        border-radius: var(--radius-card);
+        border: 1px solid oklch(1 0 0 / 0.15);
+        background: var(--pamer-latar);
+        color: var(--pamer-teks);
+        font-size: 16px;
+        line-height: 1.35;
+        /* @utility pamer-jendela */
+        box-shadow:
+          0 30px 60px -20px oklch(0 0 0 / 0.6),
+          0 0 0 6px oklch(1 0 0 / 0.04);
+      }
+
+      .bilah {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--pamer-batas);
+        background: var(--pamer-bilah);
+        white-space: nowrap;
+      }
+
+      .lampu {
+        display: flex;
+        gap: 7px;
+        margin-right: 4px;
+      }
+
+      .lampu i {
+        width: 11px;
+        height: 11px;
+        border-radius: 9999px;
+        background: var(--pamer-lampu);
+      }
+
+      .bilah b {
+        font-weight: 600;
+      }
+
+      .papan {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        padding: 18px;
+        background: var(--pamer-papan);
+        font-size: 15px;
+      }
+
+      .kolom-judul {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px 2px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .kolom-judul span {
+        font-weight: 400;
+        color: var(--pamer-teks-3);
+      }
+
+      .status {
+        width: 12px;
+        height: 12px;
+        border-radius: 9999px;
+        border: 2px solid currentColor;
+      }
+      .status.jalan {
+        border: 2.5px solid var(--pamer-jingga);
+      }
+      .status.selesai {
+        border-color: var(--pamer-hijau);
+        background: var(--pamer-hijau);
+      }
+
+      .kartu {
+        margin-bottom: 10px;
+        padding: 11px;
+        border-radius: var(--radius-item);
+        border: 1px solid var(--pamer-batas);
+        background: var(--pamer-latar);
+      }
+
+      .kartu .id {
+        font-size: 13px;
+        color: var(--pamer-teks-3);
+      }
+
+      .kartu .judul {
+        margin: 3px 0 10px;
+        font-weight: 500;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .kartu .meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 7px;
+      }
+
+      .pil {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 1px 6px;
+        border-radius: var(--radius-control);
+        border: 1px solid var(--pamer-batas);
+        font-size: 13px;
+        color: var(--pamer-teks-2);
+        white-space: nowrap;
+      }
+      .pil.setuju {
+        border-color: var(--pamer-hijau-batas);
+        background: var(--pamer-hijau-latar);
+        color: var(--pamer-hijau-teks);
+      }
+
+      .avatar {
+        display: inline-grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 9999px;
+        border: 2px solid var(--pamer-latar);
+        background: var(--pamer-teal);
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="teks">
+      <div class="merek">
+        <img src="{{LOGO}}" alt="" />
+        PT Paradise Perkasa
+      </div>
+      <h1>Paradise<br />Task Tracker</h1>
+      <p class="sub">Manajemen proyek &amp; tugas internal</p>
+      <div class="alamat"><i></i>space.paradiseperkasa.com</div>
+    </section>
+
+    <!-- Data demo project Marketing dan Promosi, sama dengan SlidePapan. -->
+    <div class="jendela" aria-hidden="true">
+      <div class="bilah">
+        <span class="lampu"><i></i><i></i><i></i></span>
+        <b>Marketing dan Promosi</b>
+      </div>
+      <div class="papan">
+        <div>
+          <div class="kolom-judul"><i class="status"></i>Todo <span>10</span></div>
+          <div class="kartu">
+            <div class="id">MKT-17</div>
+            <div class="judul">Koordinasi dengan tim IT</div>
+            <div class="meta"><span class="pil">Oct 28 - Nov 26</span><span class="avatar">R</span></div>
+          </div>
+          <div class="kartu">
+            <div class="id">MKT-16</div>
+            <div class="judul">Wireframe halaman</div>
+            <div class="meta"><span class="pil">Oct 26 - Nov 16</span><span class="avatar">R</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="kolom-judul"><i class="status jalan"></i>In Progress <span>2</span></div>
+          <div class="kartu">
+            <div class="id">MKT-8</div>
+            <div class="judul">Laporan performa iklan digital Oktober</div>
+            <div class="meta"><span class="pil">Oct 21 - Nov 24</span><span class="avatar">N</span></div>
+          </div>
+          <div class="kartu">
+            <div class="id">MKT-19</div>
+            <div class="judul">Atur ulang hak akses Marketing</div>
+            <div class="meta"><span class="pil">Oct 14 - Nov 25</span><span class="avatar">M</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="kolom-judul"><i class="status selesai"></i>Done <span>5</span></div>
+          <div class="kartu">
+            <div class="id">MKT-14</div>
+            <div class="judul">Olah hasil survei</div>
+            <div class="meta"><span class="pil setuju">✓ Approved</span></div>
+          </div>
+          <div class="kartu">
+            <div class="id">MKT-12</div>
+            <div class="judul">Riset kepuasan pelanggan 2026</div>
+            <div class="meta"><span class="pil setuju">✓ Approved</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

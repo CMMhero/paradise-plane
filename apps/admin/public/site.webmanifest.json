@@ -1,7 +1,7 @@
 {
   "name": "God Mode - Paradise Task Tracker",
   "short_name": "God Mode",
-  "description": "Manajemen proyek & issue internal PT Paradise Perkasa.",
+  "description": "Admin panel for the Paradise Task Tracker instance of PT Paradise Perkasa.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f9fafb",

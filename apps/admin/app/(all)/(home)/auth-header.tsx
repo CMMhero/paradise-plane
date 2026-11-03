@@ -16,7 +16,12 @@ import { PlaneLockup } from "@plane/propel/icons";
 export function AuthHeader() {
   return (
     <div className="sticky top-0 flex w-full flex-shrink-0 items-center justify-between gap-6">
-      <Link href="/">
+      {/* lg:invisible: the brand panel already shows the logo there; the row keeps its height. */}
+      <Link
+        href="/"
+        aria-label="Space Paradise Perkasa God Mode"
+        className="rounded-button focus-visible:ring-2 focus-visible:ring-accent-strong focus-visible:outline-none lg:invisible"
+      >
         <PlaneLockup height={20} width={95} className="text-primary" />
       </Link>
     </div>
