@@ -11,9 +11,9 @@ import { ArrowLeft, Plus, Settings2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useSWRConfig } from "swr";
 import { useTranslation } from "@plane/i18n";
-import { Button } from "@plane/propel/button";
+import { Button, getButtonStyling } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { getPageName } from "@plane/utils";
+import { cn, getPageName } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
 import { GridKartu, KartuKerangka } from "@/components/wiki/kartu";
@@ -117,10 +117,7 @@ function WikiFolderPage() {
         <div className="max-w-md">
           <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.folder.gone_title")}</h2>
           <p className="mt-1 text-13 text-tertiary">{t("wiki_ui.folder.gone_description")}</p>
-          <Link
-            to={`/${slug}/wiki`}
-            className="mt-4 inline-block rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
-          >
+          <Link to={`/${slug}/wiki`} className={cn(getButtonStyling("secondary", "lg"), "mt-4")}>
             {t("wiki_ui.common.back_to_home")}
           </Link>
         </div>
@@ -176,7 +173,7 @@ function WikiFolderPage() {
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-baseline gap-2">
               <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.folder.material_list")}</h2>
-              <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
+              <span className="rounded-control bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
                 {t("wiki_ui.folder.material_count", { count: totalMateri })}
               </span>
             </div>
@@ -195,7 +192,7 @@ function WikiFolderPage() {
             )}
 
             {tampilkanKosong && (
-              <div className="rounded-lg border border-dashed border-subtle px-6 py-14 text-center">
+              <div className="rounded-card border border-dashed border-subtle px-6 py-14 text-center">
                 <p className="text-14 font-medium text-secondary">{t("wiki_ui.folder.empty_title")}</p>
                 <p className="mt-1 text-12 text-tertiary">
                   {unggahan.bolehUnggah

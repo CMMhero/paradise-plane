@@ -5,7 +5,7 @@
  */
 
 import { observer } from "mobx-react";
-import Link from "next/link";
+import { MemberProfileTrigger } from "@/components/member-profile";
 import { Controller, useForm } from "react-hook-form";
 
 import { Disclosure } from "@headlessui/react";
@@ -43,7 +43,7 @@ type AccountTypeProps = {
 };
 
 export function NameColumn(props: NameProps) {
-  const { rowData, workspaceSlug, isAdmin, currentUser, setRemoveMemberModal } = props;
+  const { rowData, isAdmin, currentUser, setRemoveMemberModal } = props;
   // derived values
   const { avatar_url, display_name, email, first_name, id, last_name } = rowData.member;
   const isSuspended = rowData.is_active === false;
@@ -59,7 +59,7 @@ export function NameColumn(props: NameProps) {
                   <SuspendedUserIcon className="size-6 text-placeholder" />
                 </div>
               ) : avatar_url && avatar_url.trim() !== "" ? (
-                <Link href={`/${workspaceSlug}/profile/${id}`}>
+                <MemberProfileTrigger userId={id}>
                   <span className="relative flex size-6 items-center justify-center rounded-full text-on-color capitalize">
                     <img
                       src={getFileURL(avatar_url)}
@@ -67,17 +67,25 @@ export function NameColumn(props: NameProps) {
                       alt={display_name || email}
                     />
                   </span>
-                </Link>
+                </MemberProfileTrigger>
               ) : (
-                <Link href={`/${workspaceSlug}/profile/${id}`}>
+                <MemberProfileTrigger userId={id}>
                   <span className="relative flex size-6 items-center justify-center rounded-full bg-layer-3 text-11 text-tertiary capitalize">
                     {(email ?? display_name ?? "?")[0]}
                   </span>
-                </Link>
+                </MemberProfileTrigger>
               )}
-              <span className={isSuspended ? "text-placeholder" : ""}>
-                {first_name} {last_name}
-              </span>
+              {isSuspended ? (
+                <span className="text-placeholder">
+                  {first_name} {last_name}
+                </span>
+              ) : (
+                <MemberProfileTrigger userId={id}>
+                  <span className="hover:underline">
+                    {first_name} {last_name}
+                  </span>
+                </MemberProfileTrigger>
+              )}
             </div>
 
             {!isSuspended && (isAdmin || id === currentUser?.id) && (

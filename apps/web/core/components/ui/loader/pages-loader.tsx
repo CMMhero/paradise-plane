@@ -14,7 +14,7 @@ export function PagesLoader() {
       </div>
       <div className="flex items-center gap-3">
         {range(5).map((i) => (
-          <span key={i} className="h-8 w-20 rounded-full bg-layer-1" />
+          <span key={i} className="h-8 w-20 rounded-control bg-layer-1" />
         ))}
       </div>
       <div className="divide-y divide-subtle-1">

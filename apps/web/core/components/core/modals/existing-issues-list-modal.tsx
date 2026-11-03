@@ -16,7 +16,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { ISearchIssueResponse, TProjectIssuesSearchParams } from "@plane/types";
 // ui
-import { Loader, ToggleSwitch, EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+import { Checkbox, Loader, ToggleSwitch, EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 import { generateWorkItemLink, getTabIndex } from "@plane/utils";
 // helpers
 // hooks
@@ -261,7 +261,7 @@ export function ExistingIssuesListModal(props: Props) {
                         }
                       >
                         <div className="flex items-center gap-2 truncate">
-                          <input type="checkbox" checked={selected} readOnly />
+                          <Checkbox checked={selected} readOnly />
                           <span
                             className="block h-1.5 w-1.5 flex-shrink-0 rounded-full"
                             style={{

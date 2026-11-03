@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
+import { Input } from "@plane/ui";
 // components
 import { GridKartu, KartuKerangka, KartuMateri } from "@/components/wiki/kartu";
 // services
@@ -62,12 +63,12 @@ export function PencarianWiki({
     <>
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-placeholder" />
-        <input
+        <Input
           type="text"
           value={kueri}
           onChange={(e) => setKueri(e.target.value)}
           placeholder={t("wiki_ui.search.placeholder")}
-          className="w-full rounded-full border border-subtle bg-layer-2 py-2 pr-3 pl-9 text-13 text-primary transition-colors outline-none placeholder:text-placeholder focus:border-accent-strong"
+          className="w-full search-field border border-subtle py-2 pr-3 pl-9 text-primary transition-colors placeholder:text-placeholder focus:border-accent-strong"
         />
       </div>
 
@@ -75,7 +76,7 @@ export function PencarianWiki({
         <div className="mt-6">
           <div className="mb-4 flex items-baseline gap-2">
             <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.search.results")}</h2>
-            <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
+            <span className="rounded-control bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
               {isLoading ? t("wiki_ui.search.searching") : t("wiki_ui.folder.material_count", { count: hasil.length })}
             </span>
           </div>
@@ -87,7 +88,7 @@ export function PencarianWiki({
               ))}
             </GridKartu>
           ) : hasil.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-subtle px-6 py-14 text-center">
+            <div className="rounded-card border border-dashed border-subtle px-6 py-14 text-center">
               <p className="text-14 font-medium text-secondary">
                 {t("wiki_ui.search.no_results", { query: tertunda })}
               </p>

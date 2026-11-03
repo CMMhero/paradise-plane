@@ -39,7 +39,7 @@ export function PasswordInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "w-full rounded-md border bg-surface-1 px-3 py-2 pr-10 text-secondary transition-all duration-200 placeholder:text-placeholder focus:border-transparent focus:ring-2 focus:ring-accent-strong focus:outline-none",
+          "w-full rounded-field border bg-surface-1 px-3 py-2 pr-10 text-secondary transition-all duration-200 placeholder:text-placeholder focus:border-transparent focus:ring-2 focus:ring-accent-strong focus:outline-none",
           {
             "border-strong": !error,
             "border-danger-strong": error,

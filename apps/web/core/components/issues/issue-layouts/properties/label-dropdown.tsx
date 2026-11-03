@@ -205,7 +205,7 @@ export function LabelDropdown(props: ILabelDropdownProps) {
       <button
         ref={setReferenceElement}
         type="button"
-        className={`clickable flex h-full w-full items-center justify-center gap-1 text-caption-sm-regular ${fullWidth && "hover:bg-layer-1"} ${
+        className={`clickable flex h-full w-full items-center justify-center gap-1 text-caption-sm-medium ${fullWidth && "hover:bg-layer-1"} ${
           disabled
             ? "cursor-not-allowed text-secondary"
             : value.length <= maxRender
@@ -254,12 +254,12 @@ export function LabelDropdown(props: ILabelDropdownProps) {
         {isOpen && (
           <Combobox.Options className="fixed z-10" static>
             <div
-              className={`z-10 my-1 h-auto w-48 rounded-sm border border-strong bg-surface-1 px-2 py-2.5 text-caption-sm-regular whitespace-nowrap shadow-raised-200 focus:outline-none ${optionsClassName}`}
+              className={`z-10 my-1 h-auto w-48 rounded-popover border border-strong bg-surface-1 px-2 py-2.5 text-caption-sm-regular whitespace-nowrap shadow-raised-200 focus:outline-none ${optionsClassName}`}
               ref={setPopperElement}
               style={styles.popper}
               {...attributes.popper}
             >
-              <div className="flex w-full items-center justify-start rounded-sm border border-subtle bg-surface-2 px-2">
+              <div className="flex w-full items-center justify-start search-field border border-subtle bg-surface-2 px-2.5">
                 <SearchIcon className="h-3.5 w-3.5 text-tertiary" />
                 <Combobox.Input
                   ref={inputRef}

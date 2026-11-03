@@ -10,6 +10,7 @@ import { ListFilter } from "lucide-react";
 // plane imports
 import type { TButtonSize, TButtonVariant } from "@plane/propel/button";
 import { getButtonStyling } from "@plane/propel/button";
+import { getIconButtonStyling } from "@plane/propel/icon-button";
 import type { IFilterInstance } from "@plane/shared-state";
 import type { TExternalFilter, TFilterProperty, TSupportedOperators } from "@plane/types";
 import { LOGICAL_OPERATOR } from "@plane/types";
@@ -23,6 +24,8 @@ export type TAddFilterButtonProps<P extends TFilterProperty, E extends TExternal
     variant?: TButtonVariant;
     size?: TButtonSize;
     className?: string;
+    // Paradise (KEP-64): tampil sebagai IconButton (kotak), untuk pemicu tanpa label.
+    iconOnly?: boolean;
     defaultOpen?: boolean;
     iconConfig?: {
       shouldShowIcon: boolean;
@@ -45,6 +48,7 @@ export const AddFilterButton = observer(function AddFilterButton<P extends TFilt
     label,
     iconConfig = { shouldShowIcon: true },
     isDisabled = false,
+    iconOnly = false,
   } = buttonConfig || {};
   // derived values
   const FilterIcon = iconConfig.iconComponent || ListFilter;
@@ -68,7 +72,9 @@ export const AddFilterButton = observer(function AddFilterButton<P extends TFilt
       {...props}
       buttonConfig={{
         ...buttonConfig,
-        className: cn(getButtonStyling(variant, size), "py-[5px]", className),
+        className: iconOnly
+          ? cn(getIconButtonStyling(variant === "link" ? "ghost" : variant, size === "chip" ? "sm" : size), className)
+          : cn(getButtonStyling(variant, size), "py-[5px]", className),
       }}
       handleFilterSelect={handleFilterSelect}
       customButton={

@@ -195,11 +195,7 @@ export const DateRangeDropdown = observer(function DateRangeDropdown(props: Prop
           <div className="flex w-full items-center gap-1.5">
             {!hideIcon.from && <CalendarDays className="h-3 w-3 flex-shrink-0" />}
             {dateRange.from || dateRange.to ? (
-              <MergedDateDisplay
-                startDate={dateRange.from}
-                endDate={dateRange.to}
-                className="flex-grow truncate text-11"
-              />
+              <MergedDateDisplay startDate={dateRange.from} endDate={dateRange.to} className="flex-grow truncate" />
             ) : (
               renderPlaceholder && (
                 <>
@@ -263,13 +259,13 @@ export const DateRangeDropdown = observer(function DateRangeDropdown(props: Prop
   const comboOptions = (
     <Combobox.Options data-prevent-outside-click static>
       <div
-        className="z-30 my-1 overflow-hidden rounded-md border-[0.5px] border-subtle-1 bg-surface-1"
+        className="z-30 my-1 overflow-hidden rounded-popover border-[0.5px] border-subtle-1 bg-surface-1"
         ref={setPopperElement}
         style={styles.popper}
         {...attributes.popper}
       >
         <Calendar
-          className="rounded-md border border-subtle p-3 text-12"
+          className="rounded-popover border border-subtle p-3 text-12"
           captionLayout="dropdown"
           selected={dateRange}
           onSelect={(val: DateRange | undefined) => {

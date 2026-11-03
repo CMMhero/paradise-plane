@@ -13,6 +13,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 // helpers
 import { useTranslation } from "@plane/i18n";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
+import { Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 import { useSticky } from "@/hooks/use-stickies";
 import { IconButton } from "@plane/propel/icon-button";
@@ -68,16 +69,17 @@ export const StickySearch = observer(function StickySearch() {
       )}
       <div
         className={cn(
-          "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden rounded-md border border-transparent text-placeholder opacity-0 transition-[width] ease-linear",
+          "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden search-field border border-transparent text-placeholder opacity-0 transition-[width] ease-linear",
           {
             "w-30 border-subtle px-2.5 py-1.5 opacity-100 md:w-64": isSearchOpen,
           }
         )}
       >
         <SearchIcon className="size-3.5 shrink-0" />
-        <input
+        <Input
           ref={inputRef}
-          className="w-full max-w-[234px] border-none bg-transparent text-13 text-primary placeholder:text-placeholder focus:outline-none"
+          mode="true-transparent"
+          className="w-full max-w-[234px] p-0 text-primary placeholder:text-placeholder"
           placeholder={t("stickies.search_placeholder")}
           value={searchQuery}
           onChange={(e) => {

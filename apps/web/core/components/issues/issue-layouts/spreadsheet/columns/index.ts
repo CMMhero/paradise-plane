@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+export * from "./approval-column";
 export * from "./assignee-column";
 export * from "./attachment-column";
 export * from "./created-on-column";

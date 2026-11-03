@@ -112,7 +112,7 @@ export const ViewListItemAction = observer(function ViewListItemAction(props: Pr
       )}
 
       {/* created by */}
-      {<ButtonAvatars showTooltip={false} userIds={ownedByDetails?.id ?? []} />}
+      {<ButtonAvatars showProfileCard showTooltip={false} userIds={ownedByDetails?.id ?? []} />}
 
       {isEditingAllowed && (
         <FavoriteStar

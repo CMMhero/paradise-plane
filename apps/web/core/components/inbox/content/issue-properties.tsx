@@ -100,6 +100,7 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
                 <span>Assignees</span>
               </div>
               <MemberDropdown
+                showProfileCard
                 value={issue?.assignee_ids ?? []}
                 onChange={(val) =>
                   issue?.id && issueOperations.update(workspaceSlug, projectId, issue?.id, { assignee_ids: val })

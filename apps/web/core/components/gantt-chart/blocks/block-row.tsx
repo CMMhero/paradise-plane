@@ -101,7 +101,7 @@ export const BlockRow = observer(function BlockRow(props: Props) {
           ? isHidden && (
               <button
                 type="button"
-                className="sticky z-[5] grid h-8 w-8 translate-y-1.5 cursor-pointer place-items-center rounded-sm border border-strong bg-layer-1 text-secondary hover:text-primary"
+                className="sticky z-[5] grid h-8 w-8 translate-y-1.5 cursor-pointer place-items-center rounded-button border border-strong bg-layer-1 text-secondary hover:text-primary"
                 style={{
                   left: `${SIDEBAR_WIDTH + 4}px`,
                 }}

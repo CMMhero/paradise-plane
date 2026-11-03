@@ -12,6 +12,8 @@ export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElemen
   containerClassName?: string;
   iconClassName?: string;
   indeterminate?: boolean;
+  // Paradise (KEP-64): "circle" untuk pilihan tunggal (tampil seperti radio), dipakai FilterOption.
+  shape?: "square" | "circle";
 }
 
 const Checkbox = React.forwardRef(function Checkbox(props: CheckboxProps, ref: React.ForwardedRef<HTMLInputElement>) {
@@ -20,6 +22,7 @@ const Checkbox = React.forwardRef(function Checkbox(props: CheckboxProps, ref: R
     name,
     checked,
     indeterminate = false,
+    shape = "square",
     disabled,
     containerClassName,
     iconClassName,
@@ -36,11 +39,13 @@ const Checkbox = React.forwardRef(function Checkbox(props: CheckboxProps, ref: R
         name={name}
         checked={checked}
         className={cn(
-          "size-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border focus:outline-1 focus:outline-offset-4 focus:outline-accent-strong",
+          "size-4 shrink-0 cursor-pointer appearance-none border transition-[background-color,box-shadow] focus:outline-1 focus:outline-offset-4 focus:outline-accent-strong",
           {
+            "rounded-[5px]": shape === "square",
+            "rounded-control": shape === "circle",
             "cursor-not-allowed border-subtle bg-layer-1": disabled,
-            "border-strong bg-transparent hover:border-strong-1": !disabled,
-            "border-accent-strong-40 hover:border-accent-strong-40 bg-accent-primary hover:bg-accent-primary/80":
+            "border-strong bg-surface-1 hover:border-strong-1": !disabled,
+            "border-accent-strong-40 hover:border-accent-strong-40 bg-accent-primary hover:bg-accent-primary/90":
               !disabled && (checked || indeterminate),
 
             "border-none": checked,

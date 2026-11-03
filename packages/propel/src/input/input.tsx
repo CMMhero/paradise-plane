@@ -35,12 +35,12 @@ const Input = React.forwardRef(function Input(props: InputProps, ref: React.Forw
       type={type}
       name={name}
       className={cn(
-        "placeholder-tertiary block rounded-md border-subtle-1 bg-layer-2 text-13 focus:outline-none",
+        "placeholder-tertiary block rounded-field border-subtle-1 bg-layer-2 text-13 focus:outline-none",
         {
-          "rounded-md border-[0.5px]": mode === "primary",
-          "rounded-sm border-none bg-transparent ring-0 transition-all focus:ring-1 focus:ring-accent-strong":
+          "border-[0.5px]": mode === "primary",
+          "border-none bg-transparent ring-0 transition-all focus:ring-1 focus:ring-accent-strong":
             mode === "transparent",
-          "rounded-sm border-none bg-transparent ring-0": mode === "true-transparent",
+          "border-none bg-transparent ring-0": mode === "true-transparent",
           "border-danger-strong": hasError,
           "px-1.5 py-1": inputSize === "xs",
           "px-3 py-2": inputSize === "sm",

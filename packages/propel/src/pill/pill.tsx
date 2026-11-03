@@ -47,25 +47,27 @@ export interface PillProps extends React.HTMLAttributes<HTMLSpanElement> {
   radius?: TRadius;
 }
 
+// Paradise (KEP-64): palet mentah (green-50, amber-700, blue-50) tidak ada di tema ini, diganti token.
 const pillVariants = {
-  [EPillVariant.DEFAULT]: "bg-surface-2 text-secondary border border-subtle-1",
-  [EPillVariant.PRIMARY]: "bg-accent-primary/10 text-accent-primary border border-accent-strong/20",
-  [EPillVariant.SUCCESS]: "bg-green-50 text-success-primary border border-success-subtle",
-  [EPillVariant.WARNING]: "bg-amber-50 text-amber-700 border border-amber-200",
-  [EPillVariant.ERROR]: "bg-red-50 text-danger-primary border border-danger-subtle",
-  [EPillVariant.INFO]: "bg-blue-50 text-blue-700 border border-blue-200",
+  [EPillVariant.DEFAULT]: "bg-layer-2 text-secondary border border-subtle-1",
+  [EPillVariant.PRIMARY]: "bg-accent-subtle text-accent-primary border border-accent-subtle",
+  [EPillVariant.SUCCESS]: "bg-success-subtle text-success-primary border border-success-subtle",
+  [EPillVariant.WARNING]: "bg-warning-subtle text-warning-primary border border-warning-subtle",
+  [EPillVariant.ERROR]: "bg-danger-subtle text-danger-primary border border-danger-subtle",
+  [EPillVariant.INFO]: "bg-label-indigo-bg text-label-indigo-text border border-label-indigo-border",
 };
 
+// Paradise (KEP-64): tinggi tetap, sejajar skala Badge (16/20/24/28px).
 const pillSizes = {
-  [EPillSize.XS]: "px-1.5 py-0.5 text-11",
-  [EPillSize.SM]: "px-2 py-0.5 text-11",
-  [EPillSize.MD]: "px-2.5 py-1 text-13",
-  [EPillSize.LG]: "px-3 py-1.5 text-14",
+  [EPillSize.XS]: "h-4 px-1.5 text-caption-sm-medium",
+  [EPillSize.SM]: "h-5 px-2 text-caption-sm-medium",
+  [EPillSize.MD]: "h-6 px-2.5 text-caption-md-medium",
+  [EPillSize.LG]: "h-7 px-3 text-body-xs-medium",
 };
 
 const pillRadius = {
-  [ERadius.SQUARE]: "rounded",
-  [ERadius.CIRCLE]: "rounded-full",
+  [ERadius.SQUARE]: "rounded-sm",
+  [ERadius.CIRCLE]: "rounded-control",
 };
 
 const Pill = React.forwardRef(function Pill(
@@ -84,7 +86,7 @@ const Pill = React.forwardRef(function Pill(
       ref={ref}
       className={cn(
         // Base styles
-        "inline-flex items-center justify-center rounded-full font-medium whitespace-nowrap",
+        "inline-flex items-center justify-center font-medium whitespace-nowrap",
         // Variant styles
         pillVariants[variant],
         // Size styles

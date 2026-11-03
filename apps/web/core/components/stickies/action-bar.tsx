@@ -56,14 +56,14 @@ export const StickyActionBar = observer(function StickyActionBar() {
   return (
     <div
       ref={ref}
-      className="sticky-action-bar__item flex flex-col overflow-hidden rounded-full border-2 border-accent-strong/10 bg-surface-2 p-[2px]"
+      className="sticky-action-bar__item flex flex-col overflow-hidden rounded-control border-2 border-accent-strong/10 bg-surface-2 p-[2px]"
     >
       <div
         className={`flex origin-bottom flex-col gap-2 transition-all duration-300 ease-in-out ${isExpanded ? "mb-2 scale-y-100 opacity-100 " : "h-0 scale-y-0 opacity-0"}`}
       >
         <Tooltip tooltipContent="All stickies" isMobile={false} position="left">
           <button
-            className="btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-full bg-surface-1"
+            className="btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-control bg-surface-1"
             onClick={() => toggleAllStickiesModal(true)}
           >
             <RecentStickyIcon className="size-5 rotate-90 text-tertiary" />
@@ -92,7 +92,7 @@ export const StickyActionBar = observer(function StickyActionBar() {
             disabled={showRecentSticky}
           >
             <button
-              className="btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-full bg-surface-1"
+              className="btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-control bg-surface-1"
               onClick={() => setShowRecentSticky(true)}
               style={{ color: recentStickyBackgroundColor }}
             >
@@ -102,7 +102,7 @@ export const StickyActionBar = observer(function StickyActionBar() {
         )}
         <Tooltip tooltipContent="Add sticky" isMobile={false} position="left">
           <button
-            className="btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-full bg-surface-1"
+            className="btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-control bg-surface-1"
             onClick={() => {
               updateActiveStickyId("");
               toggleShowNewSticky(true);
@@ -115,7 +115,7 @@ export const StickyActionBar = observer(function StickyActionBar() {
       </div>
 
       <button
-        className={`btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-full bg-surface-1 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+        className={`btn btn--icon shadow-sm flex h-10 w-10 items-center justify-center rounded-control bg-surface-1 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {isExpanded ? (

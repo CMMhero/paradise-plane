@@ -6,7 +6,7 @@
 
 import { observable, action, makeObservable, runInAction } from "mobx";
 // plane imports
-import { setParadiseFeatureState } from "@plane/constants";
+import { setParadiseFeatureState, setParadiseOverdueGraceDays } from "@plane/constants";
 // types
 import type { IInstance, IInstanceConfig } from "@plane/types";
 // services
@@ -67,6 +67,7 @@ export class InstanceStore implements IInstanceStore {
         this.config = instanceInfo.config;
         // Fitur God Mode yang dibaca helper & store di luar React (paradise-features.ts).
         setParadiseFeatureState(instanceInfo.config?.paradise_modules);
+        setParadiseOverdueGraceDays(instanceInfo.config?.paradise_overdue_grace_days);
       });
     } catch (error) {
       runInAction(() => {

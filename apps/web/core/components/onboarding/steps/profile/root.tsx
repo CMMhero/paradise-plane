@@ -15,6 +15,7 @@ import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IUser } from "@plane/types";
 import { EOnboardingSteps } from "@plane/types";
+import { Input } from "@plane/ui";
 import { cn, getFileURL, getPasswordStrength, validatePersonName } from "@plane/utils";
 // components
 import { UserImageUploadModal } from "@/components/core/modals/user-image-upload-modal";
@@ -224,18 +225,19 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
               },
             }}
             render={({ field: { value, onChange, ref } }) => (
-              <input
+              <Input
                 ref={ref}
                 id="first_name"
                 name="first_name"
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                mode="primary"
+                hasError={Boolean(errors.first_name)}
                 className={cn(
-                  "w-full rounded-md border border-strong bg-surface-1 px-3 py-2 text-secondary transition-all duration-200 placeholder:text-placeholder focus:border-transparent focus:ring-2 focus:ring-accent-strong focus:outline-none",
+                  "w-full text-secondary transition-all duration-200 placeholder:text-placeholder focus:border-transparent focus:ring-2 focus:ring-accent-strong",
                   {
                     "border-strong": !errors.first_name,
-                    "border-danger-strong": errors.first_name,
                   }
                 )}
                 placeholder="Enter your full name"

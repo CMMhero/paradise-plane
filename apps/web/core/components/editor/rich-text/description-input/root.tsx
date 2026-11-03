@@ -9,7 +9,7 @@ import { debounce } from "lodash-es";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
 // plane imports
-import type { EditorRefApi, TExtensions } from "@plane/editor";
+import type { EditorRefApi, TExtensions, TFileHandler } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import type { EFileAssetType, TNameDescriptionLoader } from "@plane/types";
 import { getDescriptionPlaceholderI18n } from "@plane/utils";
@@ -99,6 +99,10 @@ type Props = {
    * @description Issue sequence id, this will be used to get the issue sequence id
    */
   issueSequenceId?: number;
+  /**
+   * @description Paradise: pasted/dropped non-image files become attachments of the entity
+   */
+  attachFiles?: TFileHandler["attachFiles"];
 };
 
 /**
@@ -107,6 +111,7 @@ type Props = {
  */
 export const DescriptionInput = observer(function DescriptionInput(props: Props) {
   const {
+    attachFiles,
     containerClassName,
     disabled,
     disabledExtensions,
@@ -259,6 +264,7 @@ export const DescriptionInput = observer(function DescriptionInput(props: Props)
             })
           }
           containerClassName={containerClassName}
+          attachFiles={attachFiles}
           uploadFile={async (blockId, file) => {
             try {
               const { asset_id } = await uploadEditorAsset({

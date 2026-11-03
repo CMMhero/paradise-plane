@@ -19,7 +19,7 @@ export function CycleModuleListLayoutLoader() {
               <div className="relative flex w-full items-center justify-between gap-3 overflow-hidden">
                 <div className="relative flex w-full items-center gap-3 overflow-hidden">
                   <div className="flex items-center gap-4 truncate">
-                    <span className="h-10 w-10 rounded-full bg-layer-1" />
+                    <span className="h-10 w-10 rounded-control bg-layer-1" />
                     <span className="h-5 w-20 rounded-sm bg-layer-1" />
                   </div>
                 </div>

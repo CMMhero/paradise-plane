@@ -14,7 +14,7 @@ import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IUser, IWorkspace } from "@plane/types";
-import { Spinner } from "@plane/ui";
+import { Input, Spinner } from "@plane/ui";
 import { cn, validateWorkspaceName, validateSlug } from "@plane/utils";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
@@ -154,7 +154,7 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
             }}
             render={({ field: { value, ref, onChange } }) => (
               <div className="relative flex items-center rounded-md">
-                <input
+                <Input
                   id="name"
                   name="name"
                   type="text"
@@ -168,11 +168,12 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
                   }}
                   placeholder="Enter workspace name"
                   ref={ref}
+                  mode="primary"
+                  hasError={Boolean(errors.name)}
                   className={cn(
-                    "w-full rounded-md border border-strong bg-surface-1 px-3 py-2 text-secondary transition-all duration-200 placeholder:text-placeholder focus:border-transparent focus:ring-2 focus:ring-accent-strong focus:outline-none",
+                    "w-full text-secondary transition-all duration-200 placeholder:text-placeholder focus:border-transparent focus:ring-2 focus:ring-accent-strong",
                     {
                       "border-strong": !errors.name,
-                      "border-danger-strong": errors.name,
                     }
                   )}
                   // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -213,7 +214,7 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
                 <span className={cn("rounded-md pr-0 whitespace-nowrap text-secondary")}>
                   {window && window.location.host}/
                 </span>
-                <input
+                <Input
                   id="slug"
                   name="slug"
                   type="text"
@@ -226,9 +227,8 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
                   }}
                   ref={ref}
                   placeholder={t("workspace_creation.form.url.placeholder")}
-                  className={cn(
-                    "ring-none w-full rounded-md border-none bg-surface-1 px-3 py-0 pl-0 text-secondary outline-none placeholder:text-placeholder"
-                  )}
+                  mode="true-transparent"
+                  className="w-full px-3 py-0 pl-0 text-secondary placeholder:text-placeholder"
                 />
               </div>
             )}

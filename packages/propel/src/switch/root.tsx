@@ -25,7 +25,7 @@ function Switch({ value, onChange, label, size = "sm", disabled, className }: IT
       onCheckedChange={onChange}
       aria-label={label}
       className={cn(
-        "relative inline-flex flex-shrink-0 cursor-pointer rounded-full border border-subtle transition-colors duration-200 ease-in-out focus:outline-none",
+        "relative inline-flex flex-shrink-0 cursor-pointer rounded-full border border-subtle transition-[background-color,box-shadow] duration-200 ease-smooth focus:outline-none",
         // size
         size === "sm" ? "h-4 w-6" : size === "md" ? "h-5 w-8" : "h-6 w-10",
         // state
@@ -41,7 +41,9 @@ function Switch({ value, onChange, label, size = "sm", disabled, className }: IT
       <BaseSwitch.Thumb
         aria-hidden="true"
         className={cn(
-          "shadow inline-block self-center rounded-full ring-0 transition-transform duration-200 ease-in-out",
+          // Paradise (KEP-64): kenop timbul di lintasan cekung. Saklar bulat penuh,
+          // pengecualian kedua sesudah avatar (permintaan user 3 Nov).
+          "shadow inline-block self-center rounded-full ring-0 transition-transform duration-200 ease-smooth",
           // size
           size === "sm" ? "h-3 w-3" : size === "md" ? "h-4 w-4" : "h-5 w-5",
           // position + color by state

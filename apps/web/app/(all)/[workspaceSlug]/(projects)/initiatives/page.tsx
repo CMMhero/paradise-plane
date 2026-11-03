@@ -12,7 +12,12 @@ import { Link2, Plus, Target, Trash2, X } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { Badge } from "@plane/propel/badge";
+import type { TBadgeVariant } from "@plane/propel/badge";
+import { Button } from "@plane/propel/button";
+import { IconButton } from "@plane/propel/icon-button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import { CustomSearchSelect, CustomSelect, Input } from "@plane/ui";
 // components
 import { TintedIconBox, tintHueFromKey } from "@/components/common/tint";
 import { PageHead } from "@/components/core/page-title";
@@ -25,14 +30,15 @@ import { InitiativeService, type TInitiative, type TInitiativeStatus } from "@/s
 const initiativeService = new InitiativeService();
 
 // `label` adalah KUNCI i18n, diterjemahkan saat dirender.
-const STATUS: { value: TInitiativeStatus; label: string; cls: string }[] = [
-  { value: "PLANNED", label: "initiatives_ui.status.planned", cls: "bg-label-indigo-bg text-label-indigo-text" },
-  { value: "ACTIVE", label: "initiatives_ui.status.active", cls: "bg-warning-subtle text-warning-primary" },
-  { value: "ON_HOLD", label: "initiatives_ui.status.on_hold", cls: "bg-layer-3 text-tertiary" },
-  { value: "COMPLETED", label: "initiatives_ui.status.completed", cls: "bg-success-subtle text-success-primary" },
+const STATUS: { value: TInitiativeStatus; label: string; variant: TBadgeVariant }[] = [
+  { value: "PLANNED", label: "initiatives_ui.status.planned", variant: "brand" },
+  { value: "ACTIVE", label: "initiatives_ui.status.active", variant: "warning" },
+  { value: "ON_HOLD", label: "initiatives_ui.status.on_hold", variant: "neutral" },
+  { value: "COMPLETED", label: "initiatives_ui.status.completed", variant: "success" },
 ];
 
-const inputClass = "rounded border border-subtle bg-layer-1 px-2 py-1 text-12 outline-none focus:border-accent-strong";
+const inputClass =
+  "rounded-field border border-subtle bg-layer-1 px-2 py-1 text-12 outline-none focus:border-accent-strong";
 
 function InitiativesPage() {
   const { t } = useTranslation();
@@ -153,7 +159,7 @@ function InitiativesPage() {
 
         {isWorkspaceAdmin && (
           <div className="flex items-center gap-2">
-            <input
+            <Input
               type="text"
               placeholder={t("initiatives_ui.name_placeholder")}
               value={newName}
@@ -163,13 +169,9 @@ function InitiativesPage() {
               }}
               className={`${inputClass} w-80`}
             />
-            <button
-              type="button"
-              onClick={handleCreate}
-              className="flex items-center gap-1 rounded bg-accent-primary px-2.5 py-1 text-12 font-medium text-on-color hover:bg-accent-primary-hover"
-            >
-              <Plus className="size-3.5" /> {t("initiatives_ui.create")}
-            </button>
+            <Button variant="primary" size="base" prependIcon={<Plus />} onClick={handleCreate}>
+              {t("initiatives_ui.create")}
+            </Button>
           </div>
         )}
 
@@ -185,7 +187,7 @@ function InitiativesPage() {
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-2.5 rounded-md border border-subtle bg-layer-1 px-4 py-3"
+                  className="flex flex-col gap-2.5 rounded-card border border-subtle bg-layer-1 px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
@@ -196,38 +198,37 @@ function InitiativesPage() {
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       {isWorkspaceAdmin ? (
-                        <select
+                        <CustomSelect
                           value={item.status}
-                          onChange={(e) => void handleStatusChange(item, e.target.value as TInitiativeStatus)}
-                          className={`rounded px-1.5 py-0.5 text-11 font-medium outline-none ${statusInfo.cls}`}
+                          onChange={(v: TInitiativeStatus) => void handleStatusChange(item, v)}
+                          customButton={<Badge variant={statusInfo.variant}>{t(statusInfo.label)}</Badge>}
+                          placement="bottom-end"
                         >
                           {STATUS.map((s) => (
-                            <option key={s.value} value={s.value}>
+                            <CustomSelect.Option key={s.value} value={s.value}>
                               {t(s.label)}
-                            </option>
+                            </CustomSelect.Option>
                           ))}
-                        </select>
+                        </CustomSelect>
                       ) : (
-                        <span className={`rounded px-1.5 py-0.5 text-11 font-medium ${statusInfo.cls}`}>
-                          {t(statusInfo.label)}
-                        </span>
+                        <Badge variant={statusInfo.variant}>{t(statusInfo.label)}</Badge>
                       )}
                       {isWorkspaceAdmin && (
-                        <button
-                          type="button"
+                        <IconButton
+                          variant="ghost"
+                          size="base"
+                          icon={Trash2}
                           onClick={() => handleDelete(item)}
                           aria-label={t("initiatives_ui.delete_named", { name: item.name })}
-                        >
-                          <Trash2 className="size-4 text-tertiary hover:text-danger-primary" />
-                        </button>
+                        />
                       )}
                     </div>
                   </div>
 
                   {/* Progress */}
                   <div className="flex items-center gap-2">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-layer-3">
-                      <div className="h-full rounded-full bg-accent-primary" style={{ width: `${pct}%` }} />
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-control bg-layer-1">
+                      <div className="h-full rounded-control bg-accent-primary" style={{ width: `${pct}%` }} />
                     </div>
                     <span className="shrink-0 text-12 text-tertiary">
                       {item.issues_completed}/{item.issues_total} · {pct}%
@@ -242,7 +243,7 @@ function InitiativesPage() {
                       return (
                         <span
                           key={pid}
-                          className="flex items-center gap-1 rounded-full border border-subtle px-2 py-0.5 text-11 text-secondary"
+                          className="flex items-center gap-1 rounded-control border border-subtle px-2 py-0.5 text-11 text-secondary"
                         >
                           {proj.name}
                           {isWorkspaceAdmin && (
@@ -259,30 +260,25 @@ function InitiativesPage() {
                     })}
                     {isWorkspaceAdmin && availableProjects(item).length > 0 && (
                       <span className="flex items-center gap-1">
-                        <select
+                        <CustomSearchSelect
                           value={linkDrafts[item.id] ?? ""}
-                          onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          className={`${inputClass} text-11`}
-                        >
-                          <option value="">{t("initiatives_ui.link_placeholder")}</option>
-                          {availableProjects(item).map((pid) => {
+                          onChange={(v: string) => setLinkDrafts((prev) => ({ ...prev, [item.id]: v }))}
+                          label={
+                            getProjectById(linkDrafts[item.id] ?? "")?.name ?? t("initiatives_ui.link_placeholder")
+                          }
+                          options={availableProjects(item).flatMap((pid) => {
                             const proj = getProjectById(pid);
-                            if (!proj) return null;
-                            return (
-                              <option key={pid} value={pid}>
-                                {proj.name}
-                              </option>
-                            );
+                            return proj ? [{ value: pid, query: proj.name, content: proj.name }] : [];
                           })}
-                        </select>
-                        <button
-                          type="button"
+                          placement="bottom-start"
+                        />
+                        <IconButton
+                          variant="secondary"
+                          size="sm"
+                          icon={Link2}
                           onClick={() => handleLink(item)}
                           aria-label={t("initiatives_ui.link_division")}
-                          className="rounded border border-subtle p-1 text-secondary hover:bg-layer-2"
-                        >
-                          <Link2 className="size-3.5" />
-                        </button>
+                        />
                       </span>
                     )}
                   </div>

@@ -57,6 +57,11 @@ const twMerge = extendTailwindMerge<"custom-typography" | "custom-text-color">({
     },
   },
   extend: {
+    // Paradise (KEP-64): token radius bernama (rounded-control, rounded-overlay, dst.)
+    // harus dikenali supaya cn("rounded-full", "rounded-overlay") menyisakan satu.
+    theme: {
+      radius: ["control", "button", "item", "field", "card", "popover", "overlay"],
+    },
     classGroups: {
       // Custom typography in its own group
       "custom-typography": [{ text: [isCustomTypography] }],

@@ -105,7 +105,7 @@ function WikiBerandaPage() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">
                 <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.home.pick_division")}</h2>
-                <span className="rounded-full bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
+                <span className="rounded-control bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
                   {t("wiki_ui.home.division_count", { count: divisi.length })}
                 </span>
               </div>
@@ -124,7 +124,7 @@ function WikiBerandaPage() {
                 ))}
               </GridKartu>
             ) : divisi.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-subtle px-6 py-14 text-center">
+              <div className="rounded-card border border-dashed border-subtle px-6 py-14 text-center">
                 <p className="text-14 font-medium text-secondary">{t("wiki_ui.home.empty_title")}</p>
                 <p className="mt-1 text-12 text-tertiary">{t("wiki_ui.home.empty_message")}</p>
               </div>

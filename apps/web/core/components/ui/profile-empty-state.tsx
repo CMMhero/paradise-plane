@@ -16,7 +16,7 @@ export function ProfileEmptyState({ title, description, image }: Props) {
   return (
     <div className={`mx-auto grid h-full w-full place-items-center p-8`}>
       <div className="flex w-full flex-col items-center text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-2">
+        <div className="flex h-14 w-14 items-center justify-center rounded-control bg-surface-2">
           <img src={image} width="32" height="32" className="h-full w-full object-cover" alt={title} />
         </div>
         <h6 className="mt-3.5 mb-3 text-14 font-semibold">{title}</h6>

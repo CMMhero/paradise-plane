@@ -9,7 +9,12 @@ import { isEmpty } from "lodash-es";
 import { v4 as uuidv4 } from "uuid";
 // plane imports
 import type { TIssueFilterPriorityObject, TIssuePriorities } from "@plane/constants";
-import { ISSUE_DISPLAY_FILTERS_BY_PAGE, ISSUE_PRIORITY_FILTERS, STATE_GROUPS } from "@plane/constants";
+import {
+  getParadiseOverdueGraceDays,
+  ISSUE_DISPLAY_FILTERS_BY_PAGE,
+  ISSUE_PRIORITY_FILTERS,
+  STATE_GROUPS,
+} from "@plane/constants";
 import type {
   IGanttBlock,
   IIssueDisplayFilterOptions,
@@ -180,10 +185,14 @@ export const shouldHighlightIssueDueDate = (
   const parsedDate = getDate(date);
   if (!parsedDate) return false;
 
-  const targetDateDistance = differenceInCalendarDays(parsedDate, new Date());
+  const daysPastDue = differenceInCalendarDays(new Date(), parsedDate);
 
-  // if the issue is overdue, highlight the due date
-  return targetDateDistance <= 0;
+  // Kustomisasi Paradise: tenggang terlambat dari God Mode (OVERDUE_GRACE_DAYS).
+  // Tanpa tenggang = perilaku upstream, Due date hari ini pun sudah merah. Dengan
+  // tenggang N, merah mulai hari ke-N+1 sesudah Due date, sama dengan hitungan
+  // terlambat server (`batas_terlambat` di plane/utils/tanggal_otomatis.py).
+  const graceDays = getParadiseOverdueGraceDays();
+  return graceDays === 0 ? daysPastDue >= 0 : daysPastDue > graceDays;
 };
 
 export const getIssueBlocksStructure = (block: TIssue): IGanttBlock => ({
@@ -310,6 +319,7 @@ export const getComputedDisplayProperties = (
   modules: displayProperties?.modules ?? true,
   cycle: displayProperties?.cycle ?? true,
   issue_type: displayProperties?.issue_type ?? true,
+  approval_status: displayProperties?.approval_status ?? true,
 });
 
 export const generateWorkItemLink = ({

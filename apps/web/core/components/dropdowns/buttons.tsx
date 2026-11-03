@@ -80,7 +80,7 @@ function BorderButton(props: ButtonProps) {
     >
       <Button
         variant="ghost"
-        size="sm"
+        size="chip"
         className={cn(
           "flex h-full w-full items-center justify-start gap-1.5 border-[0.5px] border-strong",
           {
@@ -108,7 +108,7 @@ function BackgroundButton(props: ButtonProps) {
     >
       <Button
         variant="ghost"
-        size="sm"
+        size="chip"
         className={cn(
           "flex h-full w-full items-center justify-between gap-1.5 bg-layer-3 hover:bg-layer-1-hover",
           className
@@ -133,7 +133,7 @@ function TransparentButton(props: ButtonProps) {
     >
       <Button
         variant="ghost"
-        size="sm"
+        size="chip"
         className={cn(
           "flex h-full w-full items-center justify-between gap-1.5",
           {

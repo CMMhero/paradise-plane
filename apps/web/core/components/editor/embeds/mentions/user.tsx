@@ -5,13 +5,10 @@
  */
 
 import { observer } from "mobx-react";
-import { useParams } from "next/navigation";
-import { Link } from "react-router";
 // plane imports
-import { ROLE } from "@plane/constants";
-import { Popover } from "@plane/propel/popover";
-import { Avatar } from "@plane/ui";
-import { cn, getFileURL } from "@plane/utils";
+import { cn } from "@plane/utils";
+// components
+import { MemberProfileTrigger } from "@/components/member-profile";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
@@ -20,22 +17,15 @@ type Props = {
   id: string;
 };
 
+// Paradise: chip mention membuka kartu profil anggota (MemberProfileTrigger),
+// menggantikan popover hover upstream yang hanya memuat nama dan peran project.
 export const EditorUserMention = observer(function EditorUserMention(props: Props) {
   const { id } = props;
-  // router
-  const { projectId } = useParams();
-  // params
-  const { workspaceSlug } = useParams();
   // store hooks
   const { data: currentUser } = useUser();
-  const {
-    getUserDetails,
-    project: { getProjectMemberDetails },
-  } = useMember();
+  const { getUserDetails } = useMember();
   // derived values
   const userDetails = getUserDetails(id);
-  const roleDetails = projectId ? getProjectMemberDetails(id, projectId.toString())?.role : null;
-  const profileLink = `/${workspaceSlug}/profile/${id}`;
 
   if (!userDetails) {
     return (
@@ -54,32 +44,9 @@ export const EditorUserMention = observer(function EditorUserMention(props: Prop
         }
       )}
     >
-      <Popover delay={100} openOnHover>
-        <Popover.Button>
-          <Link to={profileLink}>@{userDetails?.display_name}</Link>
-        </Popover.Button>
-        <Popover.Panel side="bottom" align="start">
-          <div className="w-60 rounded-lg border-[0.5px] border-strong bg-surface-1 p-3 shadow-raised-200">
-            <div className="flex items-center gap-3">
-              <div className="grid size-10 flex-shrink-0 place-items-center">
-                <Avatar
-                  src={getFileURL(userDetails?.avatar_url ?? "")}
-                  name={userDetails?.display_name}
-                  size={40}
-                  className="text-18"
-                  showTooltip={false}
-                />
-              </div>
-              <div>
-                <Link to={profileLink} className="not-prose text-13 font-medium text-primary hover:underline">
-                  {userDetails?.first_name} {userDetails?.last_name}
-                </Link>
-                {roleDetails && <p className="text-11 text-secondary">{ROLE[roleDetails]}</p>}
-              </div>
-            </div>
-          </div>
-        </Popover.Panel>
-      </Popover>
+      <MemberProfileTrigger userId={id}>
+        <span className="hover:underline">@{userDetails?.display_name}</span>
+      </MemberProfileTrigger>
     </div>
   );
 });

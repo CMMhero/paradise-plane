@@ -89,7 +89,7 @@ function BorderButton(props: ButtonProps) {
     >
       <div
         className={cn(
-          "flex h-full items-center gap-1.5 rounded-sm border-[0.5px] px-2 py-0.5",
+          "flex h-full items-center gap-1.5 rounded-button border-[0.5px] px-1.5 py-0.5",
           priorityClasses[priority ?? "none"],
           {
             // compact the icons if text is hidden
@@ -127,7 +127,7 @@ function BorderButton(props: ButtonProps) {
           ))}
         {!hideText && (
           <span
-            className={cn("flex-grow truncate text-body-xs-medium", {
+            className={cn("flex-grow truncate text-caption-sm-medium", {
               "text-secondary": priority && priority !== "none",
               "text-placeholder": !priority || priority === "none",
             })}
@@ -180,7 +180,7 @@ function BackgroundButton(props: ButtonProps) {
     >
       <div
         className={cn(
-          "flex h-full items-center gap-1.5 rounded-sm px-2 py-0.5",
+          "flex h-full items-center gap-1.5 rounded-button px-1.5 py-0.5",
           priorityClasses[priority ?? "none"],
           {
             // compact the icons if text is hidden
@@ -218,7 +218,7 @@ function BackgroundButton(props: ButtonProps) {
           ))}
         {!hideText && (
           <span
-            className={cn("flex-grow truncate text-body-xs-medium", {
+            className={cn("flex-grow truncate text-caption-sm-medium", {
               "text-secondary": priority && priority !== "none",
               "text-placeholder": !priority || priority === "none",
             })}
@@ -264,7 +264,7 @@ function TransparentButton(props: ButtonProps) {
     >
       <div
         className={cn(
-          "flex h-full w-full items-center gap-1.5 rounded-sm px-2 hover:bg-layer-transparent-hover",
+          "flex h-full w-full items-center gap-1.5 rounded-button px-2 hover:bg-layer-transparent-hover",
           {
             // compact the icons if text is hidden
             "px-0.5": hideText,
@@ -302,7 +302,7 @@ function TransparentButton(props: ButtonProps) {
           ))}
         {!hideText && (
           <span
-            className={cn("flex-grow truncate text-body-xs-medium", {
+            className={cn("flex-grow truncate text-caption-sm-medium", {
               "text-secondary": priority && priority !== "none",
               "text-placeholder": !priority || priority === "none",
             })}
@@ -465,12 +465,12 @@ export function PriorityDropdown(props: Props) {
       {isOpen && (
         <Combobox.Options className="fixed z-10" static>
           <div
-            className="my-1 w-48 rounded-sm border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
+            className="my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
             ref={setPopperElement}
             style={styles.popper}
             {...attributes.popper}
           >
-            <div className="flex items-center gap-1.5 rounded-sm border border-subtle bg-surface-2 px-2">
+            <div className="flex items-center gap-1.5 search-field border border-subtle bg-surface-2 px-2.5">
               <SearchIcon className="h-3.5 w-3.5 text-placeholder" strokeWidth={1.5} />
               <Combobox.Input
                 as="input"
@@ -491,7 +491,7 @@ export function PriorityDropdown(props: Props) {
                     value={option.value}
                     className={({ active, selected }) =>
                       cn(
-                        `flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-sm px-1 py-1.5 select-none ${
+                        `flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none ${
                           active ? "bg-layer-transparent-hover" : ""
                         } ${selected ? "text-primary" : "text-secondary"}`
                       )

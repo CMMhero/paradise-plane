@@ -21,6 +21,8 @@ type TArgs = {
   projectId?: string;
   uploadFile: TFileHandler["upload"];
   duplicateFile: TFileHandler["duplicate"];
+  /** Paradise: non-image paste/drop goes to the host, see TFileHandler.attachFiles */
+  attachFiles?: TFileHandler["attachFiles"];
   workspaceId: string;
   workspaceSlug: string;
 };
@@ -34,7 +36,7 @@ export const useEditorConfig = () => {
 
   const getEditorFileHandlers = useCallback(
     (args: TArgs): TFileHandler => {
-      const { projectId, uploadFile, duplicateFile, workspaceId, workspaceSlug } = args;
+      const { projectId, uploadFile, duplicateFile, attachFiles, workspaceId, workspaceSlug } = args;
 
       return {
         assetsUploadStatus: assetsUploadPercentage,
@@ -93,6 +95,7 @@ export const useEditorConfig = () => {
         },
         upload: uploadFile,
         duplicate: duplicateFile,
+        attachFiles,
         validation: {
           maxFileSize,
         },

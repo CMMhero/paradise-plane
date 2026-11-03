@@ -82,11 +82,11 @@ export function SwitchAccountModal(props: Props) {
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-surface-1 text-left shadow-raised-200 transition-all sm:my-8 sm:w-[40rem]">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-overlay bg-surface-1 text-left shadow-raised-200 transition-all sm:my-8 sm:w-[40rem]">
                 <div className="p-6 pb-1">
                   <div className="flex gap-x-4">
                     <div className="flex items-start">
-                      <div className="grid place-items-center rounded-full bg-accent-primary/20 p-4">
+                      <div className="grid place-items-center rounded-control bg-accent-primary/20 p-4">
                         <ArrowRightLeft className="h-5 w-5 text-accent-primary" aria-hidden="true" />
                       </div>
                     </div>

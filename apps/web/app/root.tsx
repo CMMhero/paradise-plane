@@ -30,8 +30,19 @@ import { CustomErrorComponent } from "./error";
 import { AppProvider } from "./provider";
 // fonts (side-effect imports, memuat font global)
 // oxlint-disable no-unassigned-import
+import "@fontsource-variable/plus-jakarta-sans";
+// Font pilihan di Preferences (KEP-64). Hanya @font-face; berkasnya baru diunduh
+// kalau orangnya memilih font itu.
 import "@fontsource-variable/inter";
-import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/figtree";
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource-variable/archivo";
+import "@fontsource-variable/sora";
+import "@fontsource-variable/shantell-sans";
+import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/source-serif-4";
+import uiFontWoff2 from "@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url";
 // Berat 400 SAJA, bukan seluruh paket.
 //
 // `@fontsource/material-symbols-rounded` polos menarik EMPAT berat (100, 200,
@@ -48,7 +59,7 @@ import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wgh
 // ketebalan 400. Untuk huruf IKON itu justru yang diinginkan, karena ketebalan
 // goresnya jadi seragam di seluruh aplikasi.
 import "@fontsource/material-symbols-rounded/400.css";
-import "@fontsource/ibm-plex-mono";
+import "@fontsource-variable/geist-mono";
 // oxlint-enable no-unassigned-import
 
 const APP_TITLE = "Paradise Task Tracker | Manajemen proyek & issue internal kantor.";
@@ -64,7 +75,7 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: globalStyles },
   {
     rel: "preload",
-    href: interVariableWoff2,
+    href: uiFontWoff2,
     as: "font",
     type: "font/woff2",
     crossOrigin: "anonymous",
@@ -122,7 +133,7 @@ export const meta: Route.MetaFunction = () => [
   { property: "og:title", content: APP_TITLE },
   {
     property: "og:description",
-    content: "Manajemen proyek & issue internal PT Paradise Perkasa",
+    content: "Manajemen proyek & tugas internal PT Paradise Perkasa",
   },
   { property: "og:image", content: ogImage },
   { property: "og:image:width", content: "1200" },

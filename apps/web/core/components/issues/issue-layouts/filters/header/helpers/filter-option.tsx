@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { CheckIcon } from "@plane/propel/icons";
+import { Checkbox } from "@plane/ui";
 
 type Props = {
   icon?: React.ReactNode;
@@ -21,16 +21,18 @@ export function FilterOption(props: Props) {
   return (
     <button
       type="button"
-      className="flex w-full items-center gap-2 rounded-sm p-1.5 hover:bg-layer-transparent-hover"
+      className="flex w-full items-center gap-2 rounded-item p-1.5 hover:bg-layer-transparent-hover"
       onClick={onClick}
     >
-      <div
-        className={`grid h-3 w-3 flex-shrink-0 place-items-center border ${
-          isChecked ? "border-accent-strong bg-accent-primary text-on-color" : "border-strong"
-        } ${multiple ? "rounded-xs" : "rounded-full"}`}
-      >
-        {isChecked && <CheckIcon width={10} height={10} strokeWidth={3} />}
-      </div>
+      {/* Paradise (KEP-64): indikator memakai Checkbox bersama; klik ditangani tombol induk. */}
+      <Checkbox
+        checked={isChecked}
+        shape={multiple ? "square" : "circle"}
+        readOnly
+        tabIndex={-1}
+        aria-hidden
+        containerClassName="pointer-events-none"
+      />
       <div className="flex items-center gap-2 truncate">
         {icon && <div className="grid w-5 flex-shrink-0 place-items-center">{icon}</div>}
         <div className="flex-grow truncate text-caption-sm-regular text-secondary">{title}</div>

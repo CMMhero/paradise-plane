@@ -42,7 +42,7 @@ export function EmojiRoot(props: EmojiRootProps) {
           <EmojiPicker.Search
             placeholder={searchPlaceholder}
             disabled={searchDisabled}
-            className="block h-full w-full flex-grow-0 rounded-md border-[0.5px] border-subtle bg-transparent p-0 px-3 py-2 text-16 placeholder-(--text-color-placeholder) focus:border-accent-strong focus:outline-none"
+            className="block h-full w-full flex-grow-0 search-field border-[0.5px] border-subtle bg-transparent p-0 px-3 py-2 text-16 placeholder-(--text-color-placeholder) focus:border-accent-strong focus:outline-none"
           />
         </div>
         <EmojiPicker.SkinToneSelector

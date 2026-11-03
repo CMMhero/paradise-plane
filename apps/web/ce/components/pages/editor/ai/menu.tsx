@@ -144,7 +144,7 @@ export function EditorAIMenu(props: Props) {
   return (
     <div
       className={cn(
-        "flex w-[210px] flex-col rounded-md border-[0.5px] border-strong bg-surface-1 shadow-raised-200 transition-all",
+        "flex w-[210px] flex-col rounded-popover border-[0.5px] border-strong bg-surface-1 shadow-raised-200 transition-all",
         {
           "w-[700px]": activeTask,
         }
@@ -209,7 +209,7 @@ export function EditorAIMenu(props: Props) {
                   "items-start": response,
                 })}
               >
-                <span className="grid size-7 flex-shrink-0 place-items-center rounded-full border border-subtle text-secondary">
+                <span className="grid size-7 flex-shrink-0 place-items-center rounded-control border border-subtle text-secondary">
                   <Sparkles className="size-3" />
                 </span>
                 {response ? (

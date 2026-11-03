@@ -4,10 +4,11 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { createPortal } from "react-dom";
 // plane imports
+import { useCloseOnBack } from "@plane/hooks";
 // components
 import type { ChartDataType, IBlockUpdateData, IBlockUpdateDependencyData, TGanttViews } from "@plane/types";
 import { cn } from "@plane/utils";
@@ -81,6 +82,21 @@ export const ChartViewRoot = observer(function ChartViewRoot(props: ChartViewRoo
   // states
   const [itemsContainerWidth, setItemsContainerWidth] = useState(0);
   const [fullScreenMode, setFullScreenMode] = useState(false);
+  // Paradise: full screen covers the whole app, so Back and Escape must leave it
+  // instead of leaving the page (only the header toggle used to work)
+  const exitFullScreen = useCallback(() => setFullScreenMode(false), []);
+  useCloseOnBack(fullScreenMode, exitFullScreen);
+  useEffect(() => {
+    if (!fullScreenMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // a modal, peek or image viewer on top of the chart handles its own Escape
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (document.querySelector("[role='dialog'], [data-peek-overview]")) return;
+      setFullScreenMode(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [fullScreenMode]);
   // hooks
   const {
     currentView,

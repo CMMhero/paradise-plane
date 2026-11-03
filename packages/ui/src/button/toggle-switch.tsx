@@ -26,7 +26,7 @@ function ToggleSwitch(props: IToggleSwitchProps) {
       disabled={disabled}
       onChange={onChange}
       className={cn(
-        "relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border border-subtle bg-layer-1 transition-colors duration-200 ease-in-out focus:outline-none",
+        "relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border border-subtle bg-layer-1 transition-[background-color,box-shadow] duration-200 ease-smooth focus:outline-none",
         {
           "h-4 w-7": size === "sm",
           "h-5 w-9": size === "md",
@@ -42,7 +42,9 @@ function ToggleSwitch(props: IToggleSwitchProps) {
       <span
         aria-hidden="true"
         className={cn(
-          "inline-block h-5 w-5 transform self-center rounded-full bg-(--text-color-icon-on-color) ring-0 transition duration-200 ease-in-out",
+          // Paradise (KEP-64): kenop timbul di lintasan cekung. Saklar bulat penuh,
+          // pengecualian kedua sesudah avatar (permintaan user 3 Nov).
+          "inline-block h-5 w-5 transform self-center rounded-full bg-(--text-color-icon-on-color) ring-0 transition duration-200 ease-smooth",
           {
             "h-3 w-3 translate-x-3.5": size === "sm" && value,
             "h-3 w-3 translate-x-0.5": size === "sm" && !value,

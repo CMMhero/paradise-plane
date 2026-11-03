@@ -13,6 +13,7 @@ import { Button } from "@plane/propel/button";
 import { SearchIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IWorkspaceBulkInviteFormData } from "@plane/types";
+import { Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
@@ -123,8 +124,9 @@ const WorkspaceMembersSettingsPage = observer(function WorkspaceMembersSettingsP
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 rounded-md border border-subtle bg-surface-1 px-2.5 py-1.5">
               <SearchIcon className="h-3.5 w-3.5 text-placeholder" />
-              <input
-                className="w-full max-w-[234px] border-none bg-transparent text-body-xs-regular outline-none placeholder:text-placeholder"
+              <Input
+                mode="true-transparent"
+                className="w-full max-w-[234px] p-0 text-body-xs-regular placeholder:text-placeholder"
                 placeholder={`${t("search")}...`}
                 value={searchQuery}
                 // eslint-disable-next-line jsx-a11y/no-autofocus

@@ -7,6 +7,9 @@
 import { observer } from "mobx-react";
 // components
 import { ThemeSwitcher } from "@/plane-web/components/preferences/theme-switcher";
+// local
+import { PreferensiSuara } from "./suara";
+import { PreferensiTampilan } from "./tampilan";
 
 export const ProfileSettingsDefaultPreferencesList = observer(function ProfileSettingsDefaultPreferencesList() {
   return (
@@ -18,6 +21,10 @@ export const ProfileSettingsDefaultPreferencesList = observer(function ProfileSe
           description: "select_or_customize_your_interface_color_scheme",
         }}
       />
+      {/* Paradise (KEP-64): glow, gaya tombol, animasi. */}
+      <PreferensiTampilan />
+      {/* Paradise: volume & bisu suara pemberitahuan (per akun). */}
+      <PreferensiSuara />
     </div>
   );
 });

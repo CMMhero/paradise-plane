@@ -11,6 +11,8 @@ import { useParams } from "next/navigation";
 import { ListFilter } from "lucide-react";
 import { useOutsideClickDetector } from "@plane/hooks";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
+import { IconButton } from "@plane/propel/icon-button";
+import { Input } from "@plane/ui";
 // plane helpers
 // types
 import type { TModuleFilters } from "@plane/types";
@@ -88,29 +90,30 @@ export const ArchivedModulesHeader = observer(function ArchivedModulesHeader() {
       {/* filter options */}
       <div className="flex h-full items-center gap-3 self-end px-8">
         {!isSearchOpen && (
-          <button
-            type="button"
-            className="-mr-5 grid place-items-center rounded-sm p-2 text-placeholder hover:bg-layer-1"
+          <IconButton
+            variant="ghost"
+            size="lg"
+            className="-mr-5"
             onClick={() => {
               setIsSearchOpen(true);
               inputRef.current?.focus();
             }}
-          >
-            <SearchIcon className="h-3.5 w-3.5" />
-          </button>
+            icon={SearchIcon}
+          />
         )}
         <div
           className={cn(
-            "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden rounded-md border border-transparent bg-surface-1 text-placeholder opacity-0 transition-[width] ease-linear",
+            "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden search-field border border-transparent bg-surface-1 text-placeholder opacity-0 transition-[width] ease-linear",
             {
               "w-64 border-subtle px-2.5 py-1.5 opacity-100": isSearchOpen,
             }
           )}
         >
           <SearchIcon className="h-3.5 w-3.5" />
-          <input
+          <Input
             ref={inputRef}
-            className="w-full max-w-[234px] border-none bg-transparent text-13 text-primary placeholder:text-placeholder focus:outline-none"
+            mode="true-transparent"
+            className="w-full max-w-[234px] p-0 text-primary placeholder:text-placeholder"
             placeholder="Search"
             value={archivedModulesSearchQuery}
             onChange={(e) => updateArchivedModulesSearchQuery(e.target.value)}

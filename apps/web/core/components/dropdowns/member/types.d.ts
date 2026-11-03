@@ -21,6 +21,12 @@ export type MemberDropdownProps = TDropdownProps & {
    * lewat jangkauan hierarki. Dipakai lead & anggota module.
    */
   sertakanDiriSendiri?: boolean;
+  /**
+   * Avatar anggota terpilih membuka kartu profilnya saat diklik (seperti di
+   * chat); sisa tombol tetap membuka pemilih. Nyalakan di tempat yang
+   * menampilkan orang sebagai data (tabel, kartu, daftar), bukan di formulir.
+   */
+  showProfileCard?: boolean;
 } & (
     | {
         multiple: false;

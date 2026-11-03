@@ -9,7 +9,7 @@ import { cva } from "class-variance-authority";
 import type React from "react";
 
 export const iconButtonVariants = cva(
-  "inline-flex aspect-square items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none disabled:pointer-events-none",
+  "inline-flex aspect-square items-center justify-center gap-1 whitespace-nowrap transition-[color,background-color,border-color,box-shadow,transform] focus-visible:outline-none disabled:pointer-events-none disabled:shadow-none",
   {
     variants: {
       variant: {
@@ -20,17 +20,18 @@ export const iconButtonVariants = cva(
         "error-outline":
           "border border-danger-strong bg-layer-2 text-danger-primary hover:bg-danger-subtle focus:bg-danger-subtle-hover active:bg-danger-subtle-hover disabled:border-subtle-1 disabled:bg-layer-2 disabled:text-disabled",
         secondary:
-          "border border-strong bg-layer-2 text-secondary shadow-raised-100 hover:bg-layer-2-hover focus:bg-layer-2-active active:bg-layer-2-active disabled:border-subtle-1 disabled:bg-layer-transparent disabled:text-disabled",
+          "border border-strong bg-layer-2 text-secondary hover:bg-layer-2-hover focus:bg-layer-2-active active:bg-layer-2-active disabled:border-subtle-1 disabled:bg-layer-transparent disabled:text-disabled",
         tertiary:
           "bg-layer-3 text-secondary hover:bg-layer-3-hover focus:bg-layer-3-active active:bg-layer-3-active disabled:bg-layer-transparent disabled:text-disabled",
         ghost:
           "bg-layer-transparent text-secondary hover:bg-layer-transparent-hover focus:bg-layer-transparent-active active:bg-layer-transparent-active disabled:bg-layer-transparent disabled:text-disabled",
       },
       size: {
-        sm: "size-5 rounded-sm",
-        base: "size-6 rounded-md",
-        lg: "size-7 rounded-md",
-        xl: "size-8 rounded-md",
+        // Paradise (KEP-64): sama tinggi dengan Button (24/28/32/36px).
+        sm: "size-6 rounded-button",
+        base: "size-7 rounded-button",
+        lg: "size-8 rounded-button",
+        xl: "size-9 rounded-button",
       },
     },
     defaultVariants: {

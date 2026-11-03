@@ -30,6 +30,7 @@ import { useInstance } from "@/hooks/store/use-instance";
 import { useUser, useUserProfile } from "@/hooks/store/user";
 // utils
 import { validatePersonName, validateDisplayName } from "@plane/utils";
+// local imports
 
 type TUserProfileForm = {
   avatar_url: string;
@@ -41,9 +42,13 @@ type TUserProfileForm = {
   display_name: string;
   email: string;
   role: string;
+  phone_extension: string;
   language: string;
   user_timezone: string;
 };
+
+// Paradise: aturan yang sama dengan validator `Profile.phone_extension` di server.
+const POLA_EKSTENSI = /^[0-9+()#*\-\s]*$/;
 
 type Props = {
   user: IUser;
@@ -76,6 +81,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
       display_name: user.display_name || "",
       email: user.email || "",
       role: profile.role || "Product / Project Manager",
+      phone_extension: profile.phone_extension ?? "",
       language: profile.language || "en",
       user_timezone: user.user_timezone || "Asia/Kolkata",
     },
@@ -148,11 +154,14 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
 
     const profilePayload: Partial<TUserProfile> = {
       role: formData.role,
+      phone_extension: formData.phone_extension.trim(),
     };
+    const isProfileChanged =
+      profilePayload.role !== profile.role || profilePayload.phone_extension !== (profile.phone_extension ?? "");
 
     const updateCurrentUserDetail = updateCurrentUser(userPayload);
     const promises: Promise<IUser | TUserProfile | undefined>[] = [updateCurrentUserDetail];
-    if (profilePayload.role !== profile.role) {
+    if (isProfileChanged) {
       const updateCurrentUserProfile = updateUserProfile(profilePayload);
       promises.push(updateCurrentUserProfile);
     }
@@ -288,7 +297,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                       ref={ref}
                       hasError={Boolean(errors.first_name)}
                       placeholder="Enter your first name"
-                      className={`w-full rounded-md ${errors.first_name ? "border-danger-strong" : ""}`}
+                      className={`w-full ${errors.first_name ? "border-danger-strong" : ""}`}
                       maxLength={50}
                       autoComplete="on"
                     />
@@ -314,7 +323,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                       ref={ref}
                       hasError={Boolean(errors.last_name)}
                       placeholder="Enter your last name"
-                      className="w-full rounded-md"
+                      className="w-full"
                       maxLength={50}
                       autoComplete="on"
                     />
@@ -373,7 +382,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                       ref={ref}
                       hasError={Boolean(errors.email)}
                       placeholder="Enter your email"
-                      className={`w-full cursor-not-allowed rounded-md !bg-surface-2 ${
+                      className={`w-full cursor-not-allowed !bg-surface-2 ${
                         errors.email ? "border-danger-strong" : ""
                       }`}
                       autoComplete="on"
@@ -389,6 +398,35 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                   >
                     {t("account_settings.profile.change_email_modal.title")}
                   </button>
+                )}
+              </div>
+              {/* Paradise: kontak kantor yang tampil di kartu profil anggota. */}
+              <div className="flex flex-col gap-1">
+                <h4 className="text-13 font-medium text-secondary">{t("profil_ui.phone_extension")}</h4>
+                <Controller
+                  control={control}
+                  name="phone_extension"
+                  rules={{
+                    validate: (v) => POLA_EKSTENSI.test(v) || t("profil_ui.phone_extension_invalid"),
+                  }}
+                  render={({ field: { value, onChange, ref } }) => (
+                    <Input
+                      id="phone_extension"
+                      name="phone_extension"
+                      type="text"
+                      inputMode="tel"
+                      value={value}
+                      onChange={onChange}
+                      ref={ref}
+                      hasError={Boolean(errors.phone_extension)}
+                      placeholder={t("profil_ui.phone_extension_placeholder")}
+                      className={`w-full ${errors.phone_extension ? "border-danger-strong" : ""}`}
+                      maxLength={20}
+                    />
+                  )}
+                />
+                {errors.phone_extension && (
+                  <span className="text-11 text-danger-primary">{errors.phone_extension.message}</span>
                 )}
               </div>
             </div>

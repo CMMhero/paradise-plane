@@ -173,7 +173,7 @@ export const CreateUpdateLabelInline = observer(
                     }`}
                   >
                     <span
-                      className="h-4 w-4 rounded-full"
+                      className="h-4 w-4 rounded-control"
                       style={{
                         backgroundColor: watch("color"),
                       }}

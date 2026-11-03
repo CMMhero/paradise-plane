@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 import { useTranslation } from "@plane/i18n";
+import { getButtonStyling } from "@plane/propel/button";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import type { TLogoProps } from "@plane/types";
 import { cn } from "@plane/utils";
@@ -52,7 +53,7 @@ type TKartuMateri = TKartuDasar & {
 
 const SAMPUL = "relative flex h-[132px] items-center justify-center overflow-hidden";
 const KARTU =
-  "group relative flex flex-col overflow-hidden rounded-lg border border-subtle bg-layer-2 transition-shadow duration-200 hover:border-strong hover:shadow-raised-200 focus-visible:border-strong";
+  "group relative flex flex-col overflow-hidden rounded-card border border-subtle bg-layer-2 transition-shadow duration-200 hover:border-strong hover:shadow-raised-200 focus-visible:border-strong";
 
 /** Rona chip jenis berkas: lembar kerja hijau, presentasi oranye, dst., supaya jenisnya terbaca sekilas. */
 function ronaBerkas(tipe: string): TTintHue {
@@ -92,7 +93,7 @@ export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satu
     <Link to={to} className={KARTU}>
       <div className={SAMPUL} style={{ backgroundImage: gradienUntuk(judul) }}>
         {logoProps?.in_use ? (
-          <span className="grid size-16 place-items-center rounded-2xl bg-white/20 text-white backdrop-blur-[1px]">
+          <span className="grid size-16 place-items-center rounded-card bg-white/20 text-white backdrop-blur-[1px]">
             <Logo logo={logoProps} size={34} type="lucide" />
           </span>
         ) : (
@@ -101,7 +102,7 @@ export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satu
           </span>
         )}
         {terbuka && (
-          <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-11 font-medium text-white backdrop-blur-[1px]">
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-control bg-white/20 px-2 py-0.5 text-11 font-medium text-white backdrop-blur-[1px]">
             <Users className="size-3" /> {t("wiki_ui.card.open")}
           </span>
         )}
@@ -112,7 +113,7 @@ export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satu
         <p className="mt-1 line-clamp-1 text-12 text-tertiary">{keterangan || t("wiki_ui.card.no_description")}</p>
 
         <div className="mt-4 flex items-center justify-between border-t border-subtle pt-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-subtle px-2.5 py-1 text-11 font-medium text-accent-primary">
+          <span className="inline-flex items-center gap-1.5 rounded-control bg-accent-subtle px-2.5 py-1 text-11 font-medium text-accent-primary">
             <BookOpen className="size-3.5" />
             {jumlahAnak} {satuanAnak}
           </span>
@@ -150,15 +151,13 @@ export function KartuMateri({ to, judul, keterangan, tipe, label, ukuran, aksi }
           <div className="mt-4 flex items-center justify-between border-t border-subtle pt-3">
             <span
               className={cn(
-                "rounded-md px-2 py-1 text-11 font-medium tracking-wide",
+                "rounded-control px-2 py-1 text-11 font-medium tracking-wide",
                 TINT_CHIP_CLASS[ronaBerkas(tipe)]
               )}
             >
               {label} · {ukuran}
             </span>
-            <span className="rounded-md border border-accent-strong px-3 py-1 text-12 font-medium text-accent-primary transition-colors group-hover:bg-accent-primary group-hover:text-on-color">
-              {t("wiki_ui.card.open_material")}
-            </span>
+            <span className={getButtonStyling("secondary", "base")}>{t("wiki_ui.card.open_material")}</span>
           </div>
         </div>
       </Link>
@@ -172,12 +171,12 @@ export function KartuMateri({ to, judul, keterangan, tipe, label, ukuran, aksi }
 /** Kerangka kartu selagi datanya dimuat. Ukurannya sengaja sama persis supaya tidak ada lompatan tata letak. */
 export function KartuKerangka() {
   return (
-    <div className="overflow-hidden rounded-lg border border-subtle bg-layer-2">
+    <div className="overflow-hidden rounded-card border border-subtle bg-layer-2">
       <div className="h-[132px] animate-pulse bg-layer-3" />
       <div className="space-y-2 p-4">
-        <div className="h-4 w-2/3 animate-pulse rounded bg-layer-3" />
-        <div className="h-3 w-1/2 animate-pulse rounded bg-layer-3" />
-        <div className="mt-4 h-6 w-full animate-pulse rounded bg-layer-3" />
+        <div className="h-4 w-2/3 animate-pulse rounded-item bg-layer-3" />
+        <div className="h-3 w-1/2 animate-pulse rounded-item bg-layer-3" />
+        <div className="mt-4 h-6 w-full animate-pulse rounded-item bg-layer-3" />
       </div>
     </div>
   );

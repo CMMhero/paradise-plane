@@ -15,6 +15,7 @@ import { getTextContent } from "@plane/utils";
 // components
 import { DescriptionVersionsRoot } from "@/components/core/description-versions";
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
+import { StatusLampiranTempel, useLampiranTempel } from "@/components/issues/attachment/lampiran-tempel";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -75,6 +76,8 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
   // derived values
   const issue = issueId ? getIssueById(issueId) : undefined;
   const projectDetails = issue?.project_id ? getProjectById(issue?.project_id) : undefined;
+  // pasted/dropped non-image files in the description become attachments
+  const lampiran = useLampiranTempel(workspaceSlug, issue?.project_id ?? "", issueId);
   // debounced duplicate issues swr
   const { duplicateIssues } = useDebouncedDuplicateIssues(
     workspaceSlug,
@@ -150,7 +153,9 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         setIsSubmitting={(value) => setIsSubmitting(value)}
         projectId={issue.project_id}
         workspaceSlug={workspaceSlug}
+        attachFiles={lampiran.attachFiles}
       />
+      <StatusLampiranTempel {...lampiran.status} />
 
       <div className="flex items-center justify-between gap-2">
         {currentUser && (

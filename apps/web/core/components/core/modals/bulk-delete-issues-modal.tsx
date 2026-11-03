@@ -18,7 +18,7 @@ import { SearchIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { ISearchIssueResponse, IUser } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
-import { Loader, EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+import { Loader, EModalPosition, EModalWidth, ModalCore, Input } from "@plane/ui";
 // assets
 import darkIssuesAsset from "@/app/assets/empty-state/search/issues-dark.webp?url";
 import lightIssuesAsset from "@/app/assets/empty-state/search/issues-light.webp?url";
@@ -175,9 +175,10 @@ export const BulkDeleteIssuesModal = observer(function BulkDeleteIssuesModal(pro
               className="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-placeholder"
               aria-hidden="true"
             />
-            <input
+            <Input
               type="text"
-              className="h-12 w-full border-0 bg-transparent pr-4 pl-11 text-primary outline-none focus:ring-0 sm:text-13"
+              mode="true-transparent"
+              className="h-12 w-full py-0 pr-4 pl-11 text-primary focus:ring-0 sm:text-13"
               placeholder="Search..."
               onChange={(event) => setQuery(event.target.value)}
             />

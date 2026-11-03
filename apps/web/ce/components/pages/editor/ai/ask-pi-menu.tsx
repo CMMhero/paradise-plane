@@ -8,6 +8,7 @@ import { useState } from "react";
 import { CircleArrowUp, CornerDownRight, RefreshCcw, Sparkles } from "lucide-react";
 // ui
 import { Tooltip } from "@plane/propel/tooltip";
+import { Input } from "@plane/ui";
 // components
 import { cn } from "@plane/utils";
 import { RichTextEditor } from "@/components/editor/rich-text";
@@ -39,7 +40,7 @@ export function AskPiMenu(props: Props) {
           "items-start": response,
         })}
       >
-        <span className="grid size-7 flex-shrink-0 place-items-center rounded-full border border-subtle text-secondary">
+        <span className="grid size-7 flex-shrink-0 place-items-center rounded-control border border-subtle text-secondary">
           <Sparkles className="size-3" />
         </span>
         {response ? (
@@ -102,9 +103,10 @@ export function AskPiMenu(props: Props) {
           <span className="grid size-3 flex-shrink-0 place-items-center">
             <Sparkles className="size-3 text-secondary" />
           </span>
-          <input
+          <Input
             type="text"
-            className="w-full border-none bg-transparent text-13 outline-none placeholder:text-placeholder"
+            mode="true-transparent"
+            className="w-full p-0 placeholder:text-placeholder"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tell AI what to do..."

@@ -24,7 +24,8 @@ export interface ICardProperties {
   [key: string]: string;
 }
 
-const DEFAULT_STYLE = "bg-surface-1 rounded-lg border-[0.5px] border-subtle w-full flex flex-col";
+// Paradise (KEP-64): radius kartu dari token (rounded-card).
+const DEFAULT_STYLE = "bg-surface-1 rounded-card border-[0.5px] border-subtle w-full flex flex-col";
 export const containerStyle: ICardProperties = {
   [ECardVariant.WITHOUT_SHADOW]: "",
   [ECardVariant.WITH_SHADOW]: "hover:shadow-raised-200 duration-300",

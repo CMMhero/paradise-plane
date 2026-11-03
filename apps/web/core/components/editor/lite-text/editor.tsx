@@ -53,6 +53,8 @@ type LiteTextEditorWrapperProps = MakeOptional<
         editable: true;
         uploadFile: TFileHandler["upload"];
         duplicateFile: TFileHandler["duplicate"];
+        /** pasted/dropped non-image files become attachments of the host entity */
+        attachFiles?: TFileHandler["attachFiles"];
       }
   );
 
@@ -142,6 +144,7 @@ export const LiteTextEditor = React.forwardRef(function LiteTextEditor(
               projectId,
               uploadFile: editable ? props.uploadFile : async () => "",
               duplicateFile: editable ? props.duplicateFile : async () => "",
+              attachFiles: editable ? props.attachFiles : undefined,
               workspaceId,
               workspaceSlug,
             })}

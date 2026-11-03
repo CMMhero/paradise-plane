@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { createPortal } from "react-dom";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
+import { useCloseOnBack } from "@plane/hooks";
 import type { TNameDescriptionLoader } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 import { cn } from "@plane/utils";
@@ -76,6 +77,9 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
     setPeekIssue(undefined);
     if (embedIssue && embedRemoveCurrentNotification) embedRemoveCurrentNotification();
   };
+  // Paradise: the peek lives in the store, not the URL, so the browser/Android
+  // Back button used to leave the whole list page. Back now closes the peek.
+  useCloseOnBack(!embedIssue && !!issueId, removeRoutePeekId);
 
   const toggleDeleteIssueModal = (value: boolean) => setIsDeleteIssueModalOpen(value);
   const toggleArchiveIssueModal = (value: boolean) => setIsArchiveIssueModalOpen(value);
@@ -138,6 +142,8 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
       {issueId && (
         <div
           ref={issuePeekOverviewRef}
+          // lets full-screen hosts (gantt) leave Escape to the open peek
+          data-peek-overview
           className={peekOverviewIssueClassName}
           style={{
             boxShadow:

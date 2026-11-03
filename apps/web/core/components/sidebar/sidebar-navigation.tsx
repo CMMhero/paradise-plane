@@ -17,9 +17,10 @@ export function SidebarNavItem(props: TSidebarNavItem) {
   return (
     <div
       className={cn(
-        "group relative flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-md px-2 py-1 outline-none",
+        "group relative flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-item px-2 py-1.5 transition-colors outline-none",
+        // Paradise (KEP-64): aktif = tampilan project terpilih di sidebar (projects-list-item).
         {
-          "!bg-layer-transparent-active text-primary": isActive,
+          "bg-layer-transparent-active text-primary": isActive,
           "text-secondary hover:bg-layer-transparent-hover active:bg-layer-transparent-active": !isActive,
         },
         className

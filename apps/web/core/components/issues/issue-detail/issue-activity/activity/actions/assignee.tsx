@@ -7,6 +7,8 @@
 import { observer } from "mobx-react";
 // icons
 import { MembersPropertyIcon } from "@plane/propel/icons";
+// components
+import { MemberProfileTrigger } from "@/components/member-profile";
 // hooks;
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
@@ -32,14 +34,11 @@ export const IssueAssigneeActivity = observer(function IssueAssigneeActivity(pro
     >
       <>
         {activity.old_value === "" ? `added a new assignee ` : `removed the assignee `}
-        <a
-          href={`/${activity.workspace_detail?.slug}/profile/${activity.new_identifier ?? activity.old_identifier}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center font-medium text-primary capitalize hover:underline"
-        >
-          {activity.new_value && activity.new_value !== "" ? activity.new_value : activity.old_value}
-        </a>
+        <MemberProfileTrigger userId={activity.new_identifier ?? activity.old_identifier}>
+          <span className="inline-flex items-center font-medium text-primary capitalize hover:underline">
+            {activity.new_value && activity.new_value !== "" ? activity.new_value : activity.old_value}
+          </span>
+        </MemberProfileTrigger>
         {showIssue && (activity.old_value === "" ? ` to ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}.
       </>

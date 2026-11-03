@@ -11,7 +11,9 @@ import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { Clock, Plus, Trash2 } from "lucide-react";
 // plane imports
+import { IconButton } from "@plane/propel/icon-button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import { Input } from "@plane/ui";
 // hooks
 import { useUser } from "@/hooks/store/user";
 // services
@@ -124,7 +126,7 @@ const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyConten
           <span>{t("worklog_ui.title")}</span>
         </div>
         {total > 0 && (
-          <span className="rounded bg-layer-3 px-1.5 py-0.5 text-12 font-medium text-primary">
+          <span className="rounded-control bg-layer-3 px-1.5 py-0.5 text-12 font-medium text-primary">
             {formatDuration(total, t)}
           </span>
         )}
@@ -137,7 +139,7 @@ const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyConten
             return (
               <div
                 key={log.id}
-                className="group flex items-start justify-between gap-2 rounded px-1 py-1 hover:bg-layer-2"
+                className="group flex items-start justify-between gap-2 rounded-item px-1 py-1 hover:bg-layer-2"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 text-12">
@@ -148,14 +150,14 @@ const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyConten
                   {log.description && <p className="truncate text-12 text-tertiary">{log.description}</p>}
                 </div>
                 {canDelete && (
-                  <button
-                    type="button"
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    icon={Trash2}
                     onClick={() => handleDelete(log)}
-                    className="opacity-0 transition group-hover:opacity-100"
+                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                     aria-label={t("worklog_ui.delete")}
-                  >
-                    <Trash2 className="size-3.5 text-tertiary hover:text-danger-primary" />
-                  </button>
+                  />
                 )}
               </div>
             );
@@ -165,39 +167,44 @@ const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyConten
 
       {!disabled && (
         <div className="flex items-center gap-1.5">
-          <input
+          <Input
             type="number"
             min={0}
             placeholder={t("worklog_ui.hours")}
             value={hours}
             onChange={(e) => setHours(e.target.value)}
-            className="w-14 rounded border border-subtle bg-layer-1 px-1.5 py-1 text-12 outline-none focus:border-accent-strong"
+            mode="primary"
+            inputSize="xs"
+            className="w-14 text-12 focus:border-accent-strong"
           />
-          <input
+          <Input
             type="number"
             min={0}
             max={59}
             placeholder={t("worklog_ui.minutes")}
             value={minutes}
             onChange={(e) => setMinutes(e.target.value)}
-            className="w-16 rounded border border-subtle bg-layer-1 px-1.5 py-1 text-12 outline-none focus:border-accent-strong"
+            mode="primary"
+            inputSize="xs"
+            className="w-16 text-12 focus:border-accent-strong"
           />
-          <input
+          <Input
             type="text"
             placeholder={t("worklog_ui.note_placeholder")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="min-w-0 flex-1 rounded border border-subtle bg-layer-1 px-1.5 py-1 text-12 outline-none focus:border-accent-strong"
+            mode="primary"
+            inputSize="xs"
+            className="min-w-0 flex-1 text-12 focus:border-accent-strong"
           />
-          <button
-            type="button"
+          <IconButton
+            variant="primary"
+            size="base"
+            icon={Plus}
             disabled={isSubmitting}
             onClick={handleAdd}
-            className="flex items-center gap-1 rounded bg-accent-primary px-2 py-1 text-12 font-medium text-on-color hover:bg-accent-primary-hover disabled:opacity-50"
             aria-label={t("worklog_ui.add")}
-          >
-            <Plus className="size-3.5" />
-          </button>
+          />
         </div>
       )}
     </div>

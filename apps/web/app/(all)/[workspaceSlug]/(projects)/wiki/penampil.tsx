@@ -7,7 +7,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+import { useCloseOnBack } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
+import { getButtonStyling } from "@plane/propel/button";
+import { IconButton } from "@plane/propel/icon-button";
 import { cn } from "@plane/utils";
 // services
 import type { TPratinjauMateri } from "@/services/wiki_material.service";
@@ -37,6 +40,8 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
   const { kind, url, title } = pratinjau;
   const [layarPenuh, setLayarPenuh] = useState(false);
   const [zoom, setZoom] = useState(1);
+  // lebar gambar saat pas-bingkai (zoom 100%), dasar perhitungan zoom
+  const [lebarDasar, setLebarDasar] = useState(0);
 
   const bisaZoom = kind === "image";
 
@@ -44,6 +49,10 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
     setLayarPenuh(false);
     setZoom(1);
   }, []);
+
+  // Tombol Kembali peramban/Android menutup layar penuh, bukan meninggalkan
+  // halaman materi (dulu orang terlempar ke daftar materi).
+  useCloseOnBack(layarPenuh, keluar);
 
   // Escape harus bekerja, karena itu yang pertama dicoba orang untuk keluar
   // dari layar penuh, sebelum mencari tombol.
@@ -69,12 +78,23 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
   const isi = () => {
     if (kind === "image")
       return (
-        <div className={cn("flex w-full items-center justify-center overflow-auto", tinggi)}>
+        // Zoom lewat LEBAR, bukan transform scale: scale tidak menambah area
+        // gulir, jadi tepi kiri dan atas gambar yang diperbesar terpotong dan
+        // tidak bisa dijangkau. `m-auto` di dalam grid memusatkan gambar saat
+        // lebih kecil dari bingkai dan membiarkannya bergulir saat lebih besar.
+        <div className={cn("grid w-full overflow-auto", tinggi)}>
           <img
             src={url}
             alt={title}
-            style={{ transform: `scale(${zoom})`, transformOrigin: "center center" }}
-            className="max-h-full w-auto max-w-full rounded-lg object-contain transition-transform duration-150"
+            onLoad={(e) => {
+              if (zoom === 1) setLebarDasar(e.currentTarget.clientWidth);
+            }}
+            style={
+              zoom !== 1 && lebarDasar > 0
+                ? { width: `${lebarDasar * zoom}px`, maxWidth: "none", maxHeight: "none" }
+                : undefined
+            }
+            className="m-auto max-h-full w-auto max-w-full rounded-card object-contain"
           />
         </div>
       );
@@ -82,7 +102,7 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
     if (kind === "video")
       return (
         // oxlint-disable-next-line jsx-a11y/media-has-caption
-        <video src={url} controls preload="metadata" className={cn("w-full rounded-lg bg-black", tinggi)} />
+        <video src={url} controls preload="metadata" className={cn("w-full rounded-card bg-black", tinggi)} />
       );
 
     if (kind === "audio")
@@ -101,7 +121,7 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
         // bawaannya di dalam iframe ber-sandbox, apa pun kombinasi tokennya.
         // Berkas teks justru dikunci penuh, karena isinya unggahan orang.
         sandbox={kind === "pdf" ? undefined : ""}
-        className={cn("w-full rounded-lg border border-subtle bg-layer-1", tinggi)}
+        className={cn("w-full rounded-card border border-subtle bg-layer-1", tinggi)}
       />
     );
   };
@@ -111,31 +131,31 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
       <div className="flex items-center gap-1">
         {bisaZoom ? (
           <>
-            <button
+            <IconButton
               type="button"
               aria-label={t("wiki_ui.viewer.zoom_out")}
               onClick={() => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_LANGKAH))}
-              className="grid size-8 place-items-center rounded-md border border-subtle text-secondary transition-colors hover:border-strong hover:text-primary"
-            >
-              <ZoomOut className="size-4" />
-            </button>
+              variant="secondary"
+              size="lg"
+              icon={ZoomOut}
+            />
             <span className="min-w-14 text-center text-12 text-tertiary tabular-nums">{Math.round(zoom * 100)}%</span>
-            <button
+            <IconButton
               type="button"
               aria-label={t("wiki_ui.viewer.zoom_in")}
               onClick={() => setZoom((z) => Math.min(ZOOM_MAKS, z + ZOOM_LANGKAH))}
-              className="grid size-8 place-items-center rounded-md border border-subtle text-secondary transition-colors hover:border-strong hover:text-primary"
-            >
-              <ZoomIn className="size-4" />
-            </button>
-            <button
+              variant="secondary"
+              size="lg"
+              icon={ZoomIn}
+            />
+            <IconButton
               type="button"
               aria-label={t("wiki_ui.viewer.reset_zoom")}
               onClick={() => setZoom(1)}
-              className="grid size-8 place-items-center rounded-md border border-subtle text-secondary transition-colors hover:border-strong hover:text-primary"
-            >
-              <RotateCcw className="size-4" />
-            </button>
+              variant="secondary"
+              size="lg"
+              icon={RotateCcw}
+            />
           </>
         ) : (
           <span className="text-11 text-tertiary">
@@ -150,8 +170,13 @@ export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
 
       <button
         type="button"
-        onClick={() => (layarPenuh ? keluar() : setLayarPenuh(true))}
-        className="inline-flex items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
+        onClick={() => {
+          if (layarPenuh) return keluar();
+          // bingkai berubah ukuran, jadi zoom dihitung ulang dari 100%
+          setZoom(1);
+          setLayarPenuh(true);
+        }}
+        className={getButtonStyling("secondary", "lg")}
       >
         {layarPenuh ? (
           <>

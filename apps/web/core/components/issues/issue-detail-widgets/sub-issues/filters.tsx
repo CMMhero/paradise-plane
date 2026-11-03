@@ -10,6 +10,7 @@ import { ListFilter } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
 import type { IIssueFilterOptions, IState } from "@plane/types";
+import { Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 import {
   FilterAssignees,
@@ -53,18 +54,19 @@ export const SubIssueFilters = observer(function SubIssueFilters(props: TSubIssu
               isFilterApplied && "bg-accent-primary/20"
             )}
           >
-            {isFilterApplied && <span className="absolute -top-1 -right-1 rounded-full bg-accent-primary p-1" />}
+            {isFilterApplied && <span className="absolute -top-1 -right-1 rounded-control bg-accent-primary p-1" />}
             <ListFilter className="h-3.5 w-3.5 text-primary" />
           </div>
         }
       >
         <div className="flex max-h-[350px] flex-col overflow-hidden">
           <div className="bg-surface-1 p-2.5 pb-0">
-            <div className="flex items-center gap-1.5 rounded-sm border-[0.5px] border-subtle bg-surface-2 px-1.5 py-1 text-11">
+            <div className="flex items-center gap-1.5 search-field border-[0.5px] border-subtle bg-surface-2 px-2.5 py-1 text-11">
               <SearchIcon className="text-placeholder" width={12} height={12} strokeWidth={2} />
-              <input
+              <Input
                 type="text"
-                className="w-full bg-surface-2 outline-none placeholder:text-placeholder"
+                mode="true-transparent"
+                className="w-full bg-surface-2 p-0 text-11 placeholder:text-placeholder"
                 placeholder={t("common.search.label")}
                 value={filtersSearchQuery}
                 onChange={(e) => setFiltersSearchQuery(e.target.value)}

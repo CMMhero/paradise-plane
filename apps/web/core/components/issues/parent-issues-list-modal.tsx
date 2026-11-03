@@ -151,7 +151,7 @@ export function ParentIssuesListModal({
                       key={issue.id}
                       value={issue}
                       className={({ active, selected }) =>
-                        `group my-0.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 text-secondary select-none ${
+                        `group my-0.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-item px-3 py-2 text-secondary select-none ${
                           active ? "bg-layer-1 text-primary" : ""
                         } ${selected ? "text-primary" : ""}`
                       }

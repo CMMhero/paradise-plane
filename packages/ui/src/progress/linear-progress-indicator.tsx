@@ -37,25 +37,26 @@ export function LinearProgressIndicator({
       backgroundColor: item.color,
     };
     progress += item.value;
-    if (noTooltip) return <div style={style} key={item.id} />;
+    if (noTooltip) return <div style={style} key={item.id} className="first:rounded-l-full last:rounded-r-full" />;
     else
       return (
         <Tooltip key={item.id} tooltipContent={`${item.name} ${Math.round(item.value)}${inPercentage ? "%" : ""}`}>
-          <div style={style} className={cn("first:rounded-l-xs last:rounded-r-xs", barClassName)} />
+          <div style={style} className={cn("first:rounded-l-full last:rounded-r-full", barClassName)} />
         </Tooltip>
       );
   });
 
   return (
     <div
-      className={cn("flex w-full items-center justify-between gap-[1px] rounded-xs", {
+      className={cn("flex w-full items-center justify-between gap-[1px] rounded-control", {
         "h-2": size === "sm",
         "h-3": size === "md",
         "h-3.5": size === "lg",
         "h-[14px]": size === "xl",
       })}
     >
-      <div className={cn("flex h-full w-full gap-[1.5px] rounded-xs bg-surface-2 p-[2px]", className)}>{bars}</div>
+      {/* Paradise (KEP-64): lintasan cekung, isian berkilap. */}
+      <div className={cn("flex h-full w-full gap-[1.5px] rounded-control bg-surface-2 p-[2px]", className)}>{bars}</div>
     </div>
   );
 }

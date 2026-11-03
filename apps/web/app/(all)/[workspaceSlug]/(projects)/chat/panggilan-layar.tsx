@@ -16,6 +16,10 @@ type Props = {
   status: TStatusPanggilan;
   koneksi: string;
   judul: string;
+  /** Foto profil untuk judul (lawan bicara di DM). Kosong = inisial. */
+  avatarJudul?: string;
+  /** Foto profil peserta dari identitas LiveKit (= id pengguna). */
+  cariAvatar?: (id: string) => string | undefined;
   pakaiVideo: boolean;
   mikMati: boolean;
   kameraMati: boolean;
@@ -59,14 +63,14 @@ function Media({ stream, className, bisu = false }: { stream: MediaStream | null
 }
 
 /** Satu kotak peserta: gambarnya kalau ada, avatar kalau hanya suara. */
-function Peserta({ peserta }: { peserta: TPesertaJauh }) {
+function Peserta({ peserta, avatar }: { peserta: TPesertaJauh; avatar?: string }) {
   return (
-    <div className="relative flex min-h-0 items-center justify-center overflow-hidden rounded-lg bg-black/60">
+    <div className="relative flex min-h-0 items-center justify-center overflow-hidden rounded-card bg-black/60">
       {/* Elemen media SELALU terpasang, juga saat peserta hanya mengirim suara.
           Kalau ia ikut dirender bersyarat, audionya tidak punya tempat keluar. */}
       <Media stream={peserta.stream} className={peserta.adaVideo ? "h-full w-full object-contain" : "hidden"} />
-      {!peserta.adaVideo ? <Avatar name={peserta.nama} size={64} shape="circle" /> : null}
-      <span className="absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-12 text-white/90">
+      {!peserta.adaVideo ? <Avatar name={peserta.nama} src={avatar} size={64} shape="circle" /> : null}
+      <span className="absolute bottom-2 left-2 rounded-item bg-black/60 px-1.5 py-0.5 text-12 text-white/90">
         {peserta.nama}
       </span>
     </div>
@@ -77,6 +81,8 @@ export function PanggilanLayar({
   status,
   koneksi,
   judul,
+  avatarJudul,
+  cariAvatar,
   pakaiVideo,
   mikMati,
   kameraMati,
@@ -117,11 +123,11 @@ export function PanggilanLayar({
           // layar 375px, masing-masing 160px.
           <div className="grid h-full w-full grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-2">
             {pesertaJauh.map((p) => (
-              <Peserta key={p.id} peserta={p} />
+              <Peserta key={p.id} peserta={p} avatar={cariAvatar?.(p.id)} />
             ))}
           </div>
         ) : (
-          <Avatar name={judul} size={80} shape="circle" />
+          <Avatar name={judul} src={avatarJudul} size={80} shape="circle" />
         )}
 
         {/* Pratinjau diri tampil SEJAK MEMANGGIL, bukan setelah tersambung.
@@ -132,7 +138,7 @@ export function PanggilanLayar({
           <Media
             stream={streamLokal}
             bisu
-            className="shadow-lg absolute right-2 bottom-2 w-24 rounded-md border border-white/20 bg-black object-cover sm:right-3 sm:bottom-3 sm:w-32"
+            className="absolute right-2 bottom-2 w-24 rounded-item border border-white/20 bg-black object-cover shadow-overlay-200 sm:right-3 sm:bottom-3 sm:w-32"
           />
         ) : null}
       </div>
@@ -166,7 +172,7 @@ export function PanggilanLayar({
               type="button"
               onClick={onAngkat}
               aria-label={t("chat_ui.call.accept")}
-              className="flex size-14 items-center justify-center rounded-full bg-success-primary text-white hover:opacity-90"
+              className="flex size-14 items-center justify-center rounded-control bg-success-primary text-white hover:opacity-90"
             >
               <Phone className="size-6" />
             </button>
@@ -174,7 +180,7 @@ export function PanggilanLayar({
               type="button"
               onClick={onTutup}
               aria-label={t("chat_ui.call.decline")}
-              className="flex size-14 items-center justify-center rounded-full bg-danger-primary text-white hover:bg-danger-primary-hover"
+              className="flex size-14 items-center justify-center rounded-control bg-danger-primary text-white hover:bg-danger-primary-hover"
             >
               <PhoneOff className="size-6" />
             </button>
@@ -185,7 +191,7 @@ export function PanggilanLayar({
               type="button"
               onClick={() => onSetelMik(!mikMati)}
               aria-label={mikMati ? t("chat_ui.call.mic_on") : t("chat_ui.call.mic_off")}
-              className="flex size-12 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
+              className="flex size-12 items-center justify-center rounded-control bg-white/15 text-white hover:bg-white/25"
             >
               {mikMati ? <MicOff className="size-5" /> : <Mic className="size-5" />}
             </button>
@@ -194,7 +200,7 @@ export function PanggilanLayar({
                 type="button"
                 onClick={() => onSetelKamera(!kameraMati)}
                 aria-label={kameraMati ? t("chat_ui.call.camera_on") : t("chat_ui.call.camera_off")}
-                className="flex size-12 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
+                className="flex size-12 items-center justify-center rounded-control bg-white/15 text-white hover:bg-white/25"
               >
                 {kameraMati ? <VideoOff className="size-5" /> : <Video className="size-5" />}
               </button>
@@ -203,7 +209,7 @@ export function PanggilanLayar({
               type="button"
               onClick={onTutup}
               aria-label={t("chat_ui.call.end")}
-              className="flex size-14 items-center justify-center rounded-full bg-danger-primary text-white hover:bg-danger-primary-hover"
+              className="flex size-14 items-center justify-center rounded-control bg-danger-primary text-white hover:bg-danger-primary-hover"
             >
               <PhoneOff className="size-6" />
             </button>

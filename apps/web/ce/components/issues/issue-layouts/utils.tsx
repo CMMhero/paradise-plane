@@ -5,7 +5,7 @@
  */
 
 import type { FC } from "react";
-import { CalendarDays, LayersIcon, Paperclip } from "lucide-react";
+import { CalendarDays, LayersIcon, Paperclip, Stamp } from "lucide-react";
 // types
 import { ISSUE_GROUP_BY_OPTIONS } from "@plane/constants";
 import type { ISvgIcons } from "@plane/propel/icons";
@@ -30,6 +30,7 @@ import type {
 } from "@plane/types";
 // components
 import {
+  SpreadsheetApprovalColumn,
   SpreadsheetAssigneeColumn,
   SpreadsheetAttachmentColumn,
   SpreadsheetCreatedOnColumn,
@@ -92,9 +93,12 @@ export const SpreadSheetPropertyIconMap: Record<string, FC<ISvgIcons>> = {
   Link2: LinkIcon,
   Paperclip: Paperclip,
   LayersIcon: LayersIcon,
+  // Kustomisasi Paradise: ikon yang sama dengan tab Persetujuan.
+  ApprovalPropertyIcon: Stamp,
 };
 
 export const SPREADSHEET_COLUMNS: { [key in keyof IIssueDisplayProperties]: TSpreadsheetColumn } = {
+  approval_status: SpreadsheetApprovalColumn,
   assignee: SpreadsheetAssigneeColumn,
   created_on: SpreadsheetCreatedOnColumn,
   due_date: SpreadsheetDueDateColumn,

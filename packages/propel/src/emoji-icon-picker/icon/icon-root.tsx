@@ -42,7 +42,7 @@ export function IconRoot(props: IconRootProps) {
         {!searchDisabled && (
           <div className="flex w-full items-center px-2 py-[15px]">
             <div
-              className={cn("relative flex h-10 w-full items-center gap-2 rounded-lg border bg-surface-2 px-[30px]", {
+              className={cn("relative flex h-10 w-full items-center gap-2 search-field border bg-surface-2 px-[30px]", {
                 "border-accent-strong": isInputFocused,
                 "border-transparent": !isInputFocused,
               })}
@@ -55,7 +55,7 @@ export function IconRoot(props: IconRootProps) {
                 placeholder="Search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="block h-full w-full rounded-md border-[0.5px] border-none border-subtle bg-transparent p-0 px-3 py-2 text-16 placeholder-(--text-color-placeholder) focus:outline-none"
+                className="block h-full w-full border-[0.5px] border-none border-subtle bg-transparent p-0 px-3 py-2 text-16 placeholder-(--text-color-placeholder) focus:outline-none"
               />
             </div>
           </div>
@@ -64,7 +64,7 @@ export function IconRoot(props: IconRootProps) {
           {showHexInput ? (
             <div className="col-span-8 ml-2 flex items-center gap-1 justify-self-stretch">
               <span
-                className="mr-1 h-4 w-4 flex-shrink-0 rounded-full"
+                className="mr-1 h-4 w-4 flex-shrink-0 rounded-control"
                 style={{
                   backgroundColor: `#${hexValue}`,
                 }}
@@ -79,7 +79,7 @@ export function IconRoot(props: IconRootProps) {
                   setHexValue(value);
                   if (/^[0-9A-Fa-f]{6}$/.test(value)) setActiveColor(adjustColorForContrast(`#${value}`));
                 }}
-                className="block flex-grow rounded-sm border-[0.5px] border-none border-subtle bg-transparent px-3 py-2 pl-0 text-11 text-secondary placeholder-(--text-color-placeholder) ring-0 focus:outline-none"
+                className="block flex-grow rounded-field border-[0.5px] border-none border-subtle bg-transparent px-3 py-2 pl-0 text-11 text-secondary placeholder-(--text-color-placeholder) ring-0 focus:outline-none"
                 autoFocus
               />
             </div>
@@ -94,13 +94,13 @@ export function IconRoot(props: IconRootProps) {
                   setHexValue(curCol.slice(1, 7));
                 }}
               >
-                <span className="h-4 w-4 cursor-pointer rounded-full" style={{ backgroundColor: curCol }} />
+                <span className="h-4 w-4 cursor-pointer rounded-control" style={{ backgroundColor: curCol }} />
               </button>
             ))
           )}
           <button
             type="button"
-            className={cn("grid h-4 w-4 place-items-center rounded-full border border-transparent", {
+            className={cn("grid h-4 w-4 place-items-center rounded-control border border-transparent", {
               "border-strong-1": !showHexInput,
             })}
             onClick={() => {
@@ -109,7 +109,7 @@ export function IconRoot(props: IconRootProps) {
             }}
           >
             {showHexInput ? (
-              <span className="h-4 w-4 rounded-full conical-gradient" />
+              <span className="h-4 w-4 rounded-control conical-gradient" />
             ) : (
               <span className="grid place-items-center text-10 text-tertiary">#</span>
             )}

@@ -12,6 +12,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 import { IconButton } from "@plane/propel/icon-button";
 import { useTranslation } from "@plane/i18n";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
+import { Input } from "@plane/ui";
 import type { TCycleFilters } from "@plane/types";
 import { cn, calculateTotalFilters } from "@plane/utils";
 // components
@@ -90,16 +91,17 @@ export const CyclesViewHeader = observer(function CyclesViewHeader(props: Props)
       ) : (
         <div
           className={cn(
-            "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden rounded-md border border-transparent bg-surface-1 text-placeholder opacity-0 transition-[width] ease-linear",
+            "ml-auto flex w-0 items-center justify-start gap-1 overflow-hidden search-field border border-transparent bg-surface-1 text-placeholder opacity-0 transition-[width] ease-linear",
             {
               "w-64 border-subtle px-2.5 py-1.5 opacity-100": isSearchOpen,
             }
           )}
         >
           <SearchIcon className="h-3.5 w-3.5" />
-          <input
+          <Input
             ref={inputRef}
-            className="w-full max-w-[234px] border-none bg-transparent text-13 text-primary placeholder:text-placeholder focus:outline-none"
+            mode="true-transparent"
+            className="w-full max-w-[234px] p-0 text-primary placeholder:text-placeholder"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => updateSearchQuery(e.target.value)}

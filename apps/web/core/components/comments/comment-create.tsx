@@ -5,11 +5,12 @@
  */
 
 import { useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useForm, Controller } from "react-hook-form";
 // plane imports
 import { EIssueCommentAccessSpecifier } from "@plane/constants";
-import type { EditorRefApi } from "@plane/editor";
+import type { EditorRefApi, TFileHandler } from "@plane/editor";
 import type { TIssueComment, TCommentsOperations } from "@plane/types";
 import { cn, isCommentEmpty } from "@plane/utils";
 // components
@@ -26,6 +27,10 @@ type TCommentCreate = {
   showToolbarInitially?: boolean;
   projectId?: string;
   onSubmitCallback?: (elementId: string) => void;
+  /** pasted/dropped non-image files become attachments of the entity */
+  attachFiles?: TFileHandler["attachFiles"];
+  /** rendered under the editor, e.g. attachment upload progress and errors */
+  attachmentStatus?: ReactNode;
 };
 
 // services
@@ -39,6 +44,8 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
     showToolbarInitially = false,
     projectId,
     onSubmitCallback,
+    attachFiles,
+    attachmentStatus,
   } = props;
   // states
   const [uploadedAssetIds, setUploadedAssetIds] = useState<string[]>([]);
@@ -143,6 +150,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
                   setUploadedAssetIds((prev) => [...prev, asset_id]);
                   return asset_id;
                 }}
+                attachFiles={attachFiles}
                 showToolbarInitially={showToolbarInitially}
                 parentClassName="p-2"
                 displayConfig={{
@@ -153,6 +161,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
           />
         )}
       />
+      {attachmentStatus}
     </div>
   );
 });

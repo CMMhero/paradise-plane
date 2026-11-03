@@ -6,13 +6,26 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ConnectionState, Room, RoomEvent, Track } from "livekit-client";
+import type { ConnectionState, Room } from "livekit-client";
 import { useTranslation } from "@plane/i18n";
 import { ChatService } from "@/services/chat.service";
 import { pesanGalatMedia } from "./galat-media";
 import { statusSesudahPeristiwa } from "./tata-panggilan";
 
 const chatService = new ChatService();
+
+type TLivekit = typeof import("livekit-client");
+
+/**
+ * SDK LiveKit dimuat saat panggilan PERTAMA dimulai, bukan saat halaman chat
+ * dibuka. Panggilan jarang terjadi, sedangkan chat dibuka berkali-kali sehari;
+ * impor statis membuat tiap kunjungan chat mengunduh dan mengurai SDK-nya.
+ */
+let livekitTermuat: TLivekit | null = null;
+const muatLivekit = async (): Promise<TLivekit> => {
+  livekitTermuat ??= await import("livekit-client");
+  return livekitTermuat;
+};
 
 /**
  * Panggilan lewat LiveKit, bukan peer ke peer.
@@ -92,7 +105,32 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
   const gagalRef = useRef(onGagal);
   gagalRef.current = onGagal;
 
+  /** Log panggilan di linimasa (kartu "Voice call 1:23" / "Missed call").
+   * Ruang dicatat saat panggilan dimulai, bukan dibaca dari `ruangId` saat
+   * selesai: orang bisa pindah percakapan sementara panggilan masih jalan.
+   * Kedua pihak melapor; server memakai log `berlangsung` terbaru di ruang itu
+   * dan laporan kedua tidak mengubah apa pun. Gagal melapor ditelan: log yang
+   * hilang tidak boleh memutus panggilan. */
+  const logRef = useRef<{ slug: string; ruang: string; tersambung: boolean } | null>(null);
+  const lapor = useCallback((peristiwa: "mulai" | "tersambung" | "selesai", video = false) => {
+    const log = logRef.current;
+    if (!log) return;
+    void chatService.logPanggilan(log.slug, log.ruang, peristiwa, video).catch(() => undefined);
+  }, []);
+  const mulaiLog = useCallback(
+    (laporMulai: boolean, video: boolean) => {
+      if (!slug || !ruangId) return;
+      logRef.current = { slug, ruang: ruangId, tersambung: false };
+      if (laporMulai) lapor("mulai", video);
+    },
+    [slug, ruangId, lapor]
+  );
+
   const bereskan = useCallback(() => {
+    if (logRef.current) {
+      lapor("selesai");
+      logRef.current = null;
+    }
     // `disconnect()` menghentikan track lokal, menutup sambungan, dan melepas
     // seluruh listener sekaligus. Satu panggilan yang menggantikan pembersihan
     // manual yang dulu panjang dan mudah terlewat separuh, meninggalkan lampu
@@ -109,7 +147,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
     setMikMati(false);
     setKameraMati(false);
     setByteMasuk({ audio: 0, video: 0 });
-  }, []);
+  }, [lapor]);
 
   /** Rakit ulang daftar peserta dari seluruh track yang sedang berlangganan.
    *
@@ -127,7 +165,8 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
         const mst = pub.track?.mediaStreamTrack;
         if (!mst) return;
         track.push(mst);
-        if (pub.kind === Track.Kind.Video) adaVideo = true;
+        // `susunPeserta` hanya dipanggil dari peristiwa ruang, jadi SDK pasti sudah termuat.
+        if (livekitTermuat && pub.kind === livekitTermuat.Track.Kind.Video) adaVideo = true;
       });
       if (track.length === 0) return;
       daftar.push({
@@ -159,6 +198,16 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       // `adaptiveStream` dan `dynacast` menurunkan kualitas otomatis saat
       // jaringan memburuk, alih-alih memutus panggilan. Untuk dua orang
       // biayanya nyaris nol.
+      let livekit: TLivekit;
+      try {
+        livekit = await muatLivekit();
+      } catch {
+        // Potongan bundel gagal diunduh (jaringan putus, atau deploy baru
+        // mengganti nama berkasnya).
+        gagalRef.current?.(tRef.current("chat_ui.call_error.cannot_start"));
+        return null;
+      }
+      const { Room, RoomEvent } = livekit;
       const room = new Room({ adaptiveStream: true, dynacast: true });
       roomRef.current = room;
 
@@ -247,6 +296,9 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       const room = await masukRuang(video);
       if (!room) return;
 
+      // Log dimulai SEBELUM sinyal dikirim: penolakan yang datang sangat cepat
+      // tidak boleh tiba lebih dulu daripada log yang hendak ditutupnya.
+      mulaiLog(true, video);
       if (!kirimSinyal(ke, { jenis: "panggil", video })) {
         gagalRef.current?.(tRef.current("chat_ui.call_error.connection_down"));
         bereskan();
@@ -258,7 +310,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       // status yang tertimpa di baris ini tidak akan pernah pulih.
       setStatus((s) => (s === "tersambung" ? s : "memanggil"));
     },
-    [status, masukRuang, kirimSinyal, bereskan]
+    [status, masukRuang, kirimSinyal, bereskan, mulaiLog]
   );
 
   /** Mulai atau ikut panggilan di sebuah kanal.
@@ -272,19 +324,23 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
   const mulaiKonferensi = useCallback(
     async (video: boolean) => {
       if (status !== "diam") return;
+      // Yang IKUT konferensi berjalan tidak membuat log baru: satu panggilan
+      // kanal = satu kartu, milik yang memulainya.
+      const ikutYangBerjalan = konferensiBerjalan;
       setPakaiVideo(video);
       setStatus("menyambungkan");
 
       const room = await masukRuang(video);
       if (!room) return;
 
+      if (!ikutYangBerjalan) mulaiLog(true, video);
       // Disiarkan tanpa tujuan tertentu: server meneruskannya ke semua orang di
       // ruang itu kecuali pengirimnya.
       kirimSinyal("", { jenis: "konferensi", video });
       setStatus("tersambung");
       setKonferensiBerjalan(false);
     },
-    [status, masukRuang, kirimSinyal]
+    [status, konferensiBerjalan, masukRuang, kirimSinyal, mulaiLog]
   );
 
   const angkat = useCallback(async () => {
@@ -320,6 +376,8 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
         setLawan(dari);
         setPakaiVideo(sinyal.video);
         setStatus("berdering");
+        // Yang ditelepon ikut melapor (tersambung/selesai) ke log milik penelepon.
+        mulaiLog(false, sinyal.video);
         return;
       }
 
@@ -335,7 +393,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
 
       if (sinyal.jenis === "tolak" || sinyal.jenis === "tutup") bereskan();
     },
-    [status, kirimSinyal, bereskan]
+    [status, kirimSinyal, bereskan, mulaiLog]
   );
 
   const lawanPergi = useCallback(
@@ -354,6 +412,15 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
     void roomRef.current?.localParticipant.setCameraEnabled(!mati);
     setKameraMati(mati);
   }, []);
+
+  // "tersambung" di sini berarti lawan benar-benar hadir (lihat tata-panggilan),
+  // jadi aman dipakai sebagai awal durasi di log panggilan. Sekali per panggilan.
+  useEffect(() => {
+    const log = logRef.current;
+    if (status !== "tersambung" || !log || log.tersambung) return;
+    log.tersambung = true;
+    lapor("tersambung");
+  }, [status, lapor]);
 
   /** Byte yang BENAR-BENAR masuk, dibaca dari statistik WebRTC.
    *

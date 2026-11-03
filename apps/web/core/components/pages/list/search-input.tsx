@@ -9,6 +9,7 @@ import { useRef, useState } from "react";
 import { useOutsideClickDetector } from "@plane/hooks";
 import { IconButton } from "@plane/propel/icon-button";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
+import { Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 
 type Props = {
@@ -54,16 +55,17 @@ export function PageSearchInput(props: Props) {
       )}
       <div
         className={cn(
-          "flex w-0 items-center justify-start overflow-hidden rounded-md border border-transparent text-placeholder opacity-0 transition-[width] ease-linear",
+          "flex w-0 items-center justify-start overflow-hidden search-field border border-transparent text-placeholder opacity-0 transition-[width] ease-linear",
           {
             "w-64 border-subtle px-2.5 py-1.5 opacity-100": isSearchOpen,
           }
         )}
       >
         <SearchIcon className="h-3.5 w-3.5" />
-        <input
+        <Input
           ref={inputRef}
-          className="ml-2 w-full max-w-[234px] border-none bg-transparent text-13 text-primary placeholder:text-placeholder focus:outline-none"
+          mode="true-transparent"
+          className="ml-2 w-full max-w-[234px] p-0 text-primary placeholder:text-placeholder"
           placeholder="Search pages"
           value={searchQuery}
           onChange={(e) => updateSearchQuery(e.target.value)}
