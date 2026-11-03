@@ -85,6 +85,7 @@ export const UtilityExtension = (props: Props) => {
           disabledExtensions,
           flaggedExtensions,
           editor: this.editor,
+          fileHandler,
         }),
       ];
     },

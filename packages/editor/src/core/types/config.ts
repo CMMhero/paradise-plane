@@ -24,7 +24,20 @@ export type TFileHandler = {
      */
     maxFileSize: number;
   };
+  /**
+   * Paradise: when set, pasted or dropped files that are NOT inline images are
+   * handed to the host app (for example to become work item attachments)
+   * instead of becoming an in-editor file block. The editor inserts a link for
+   * every file the host reports as attached. Upload progress and errors are the
+   * host's job, it owns the attachment store.
+   */
+  attachFiles?: (files: File[]) => Promise<TAttachedFile[]>;
 } & TExtendedFileHandler;
+
+export type TAttachedFile = {
+  name: string;
+  url: string;
+};
 
 export type TEditorFontStyle = "sans-serif" | "serif" | "monospace";
 
