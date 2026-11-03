@@ -117,7 +117,7 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
     >
       {formattedConfig ? (
         <div className="space-y-3">
-          <div className={cn("flex w-full items-center gap-14 rounded-sm")}>
+          <div className={cn("flex w-full items-center gap-14 rounded-card")}>
             <div className="flex grow items-center gap-4">
               <div className="grow">
                 <div className="pb-1 text-16 font-medium">Allow anyone to sign up even without an invite</div>
@@ -143,7 +143,7 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
               </div>
             </div>
           </div>
-          <div className="text-lg pt-6 font-medium">Available authentication modes</div>
+          <div className="pt-6 text-16 font-medium">Available authentication modes</div>
           {authenticationModes.map((method) => (
             <AuthenticationMethodCard
               key={method.key}

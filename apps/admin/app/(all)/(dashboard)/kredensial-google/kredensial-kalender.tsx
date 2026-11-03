@@ -11,6 +11,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IFormattedInstanceConfiguration, TInstanceGoogleCalendarConfigurationKeys } from "@plane/types";
 // components
 import { ControllerInput } from "@/components/common/controller-input";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 // hooks
 import { useInstance } from "@/hooks/store";
 // local
@@ -50,6 +51,13 @@ export function KredensialKalender({ config }: Props) {
 
   return (
     <div className="space-y-4 py-4">
+      <UnsavedBar
+        label={t.gcal_name}
+        isDirty={isDirty}
+        isSaving={isSubmitting}
+        onSave={() => handleSubmit(simpan)()}
+        onDiscard={() => reset()}
+      />
       <div className="grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-2">
         <ControllerInput
           control={control}

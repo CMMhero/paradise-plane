@@ -81,7 +81,7 @@ function BarisPohon({
         onClick={onClick}
         aria-current={aktif ? "true" : undefined}
         className={cn(
-          "flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-13 transition-colors",
+          "flex min-w-0 flex-1 items-center gap-2 rounded-item px-2 py-1.5 text-left text-13 transition-colors",
           aktif
             ? "bg-layer-transparent-active text-primary"
             : "text-secondary hover:bg-layer-transparent-hover active:bg-layer-transparent-active"
@@ -94,7 +94,7 @@ function BarisPohon({
         {trailing}
       </button>
       {menu && (
-        <div className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+        <div className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sentuh:opacity-100">
           {menu}
         </div>
       )}
@@ -150,7 +150,7 @@ export function PohonNavigasi({
           <Tooltip tooltipContent={semuaTerbuka ? s.org.collapse_all : s.org.expand_all}>
             <IconButton
               variant="ghost"
-              size="sm"
+              size="base"
               icon={semuaTerbuka ? ChevronsDownUp : ChevronsUpDown}
               aria-label={semuaTerbuka ? s.org.collapse_all : s.org.expand_all}
               onClick={() => setDibuka(semuaTerbuka ? new Set() : new Set(bisaDilipat.map((v) => v.id)))}
@@ -188,7 +188,7 @@ export function PohonNavigasi({
                     aria-expanded={buka}
                     aria-label={v.nama}
                     disabled={v.departemen.length === 0}
-                    className="grid size-5 shrink-0 place-items-center rounded-sm text-placeholder hover:text-secondary disabled:invisible"
+                    className="grid size-5 shrink-0 place-items-center rounded-item text-placeholder hover:text-secondary disabled:invisible"
                   >
                     <ChevronRight className={cn("size-3.5 transition-transform", buka && "rotate-90")} />
                   </button>
@@ -277,7 +277,7 @@ function KotakBagan({
   return (
     <div
       className={cn(
-        "relative w-full rounded-lg border bg-surface-1 px-3 py-2.5 text-left shadow-raised-100 transition-all",
+        "relative w-full rounded-card border bg-surface-1 px-3 py-2.5 text-left shadow-raised-100 transition-all",
         tone === "accent" ? "border-accent-subtle" : "border-subtle",
         onClick &&
           "hover:border-strong hover:shadow-raised-200 has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-accent-strong"
@@ -288,7 +288,7 @@ function KotakBagan({
           <button
             type="button"
             onClick={onClick}
-            className="flex min-w-0 flex-1 items-center gap-2 text-left outline-none after:absolute after:inset-0 after:rounded-lg"
+            className="flex min-w-0 flex-1 items-center gap-2 text-left outline-none after:absolute after:inset-0 after:rounded-card"
           >
             {judul}
           </button>
@@ -393,7 +393,7 @@ function KolomDivisi({
           <button
             type="button"
             onClick={() => onKelola({ jenis: "buat-departemen", divisiId: v.id })}
-            className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-subtle py-1.5 text-11 text-tertiary transition-colors hover:border-strong hover:text-primary"
+            className="flex w-full items-center justify-center gap-1 rounded-card border border-dashed border-subtle py-1.5 text-11 text-tertiary transition-colors hover:border-strong hover:text-primary"
           >
             <Plus className="size-3" aria-hidden />
             {s.org.new_department}

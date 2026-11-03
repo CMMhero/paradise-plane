@@ -22,7 +22,7 @@ export function AuthenticationMethodCard(props: Props) {
 
   return (
     <div
-      className={cn("flex w-full items-center gap-14 rounded-lg bg-layer-2", {
+      className={cn("flex w-full items-center gap-14 rounded-card bg-layer-2", {
         "border border-subtle px-4 py-3": withBorder,
       })}
     >
@@ -32,7 +32,7 @@ export function AuthenticationMethodCard(props: Props) {
         })}
       >
         <div className="shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-layer-1">{icon}</div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-control bg-layer-1">{icon}</div>
         </div>
         <div className="grow">
           <div

@@ -35,13 +35,13 @@ function MenuAksi({ nama, items, className }: { nama: string; items: TItem[]; cl
         placement="bottom-end"
         ariaLabel={fill(s.org.actions_for, { name: nama })}
         portalElement={typeof document === "undefined" ? undefined : document.body}
-        buttonClassName="size-6"
       >
         {items.map((it) => (
           <CustomMenu.MenuItem
             key={it.kunci}
             onClick={it.onClick}
-            className={cn("flex items-center gap-2", it.bahaya && "text-danger-primary")}
+            variant={it.bahaya ? "danger" : "default"}
+            className="flex items-center gap-2"
           >
             <span className="shrink-0 [&>svg]:size-3.5">{it.icon}</span>
             {it.label}

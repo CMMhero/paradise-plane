@@ -19,6 +19,7 @@ import { Building2, ChevronRight, FolderKanban, Pencil, Plus, Settings2, Trash2,
 import { Badge } from "@plane/propel/badge";
 import { Button } from "@plane/propel/button";
 import {
+  TINGKAT_MANAGER,
   TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
   type TAnggotaHierarki,
@@ -30,6 +31,7 @@ import {
 import { CustomSearchSelect, CustomSelect } from "@plane/ui";
 // components
 import { Field, Panel, PersonCell } from "@/components/common/paradise-ui";
+import { useUnsavedChanges } from "@/components/common/unsaved-changes";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { BadgeJabatan } from "../members/jabatan";
@@ -41,12 +43,11 @@ import {
   calonAnggota,
   calonManager,
   cocokOrang,
+  tempatOrang,
   type TAksiOrganisasi,
   type TKelola,
   type TPilihan,
 } from "./util";
-
-const TOMBOL_SELECT = "w-full rounded-md border-subtle bg-layer-2";
 
 // ---------------------------------------------------------------------------
 // Kepala node: ikon, nama, kode, remah roti, ubah, hapus
@@ -76,7 +77,7 @@ function KepalaNode({
     <div className="space-y-3">
       {remah}
       <div className="flex flex-wrap items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-subtle bg-layer-2 text-secondary">
+        <span className="grid size-10 shrink-0 place-items-center rounded-item border border-subtle bg-layer-2 text-secondary">
           <Ikon className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -90,10 +91,10 @@ function KepalaNode({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button variant="secondary" size="sm" prependIcon={<Pencil />} onClick={onUbah}>
+          <Button variant="secondary" size="base" prependIcon={<Pencil />} onClick={onUbah}>
             {s.org.edit}
           </Button>
-          <Button variant="error-outline" size="sm" prependIcon={<Trash2 />} onClick={onHapus}>
+          <Button variant="error-outline" size="base" prependIcon={<Trash2 />} onClick={onHapus}>
             {s.org.delete}
           </Button>
         </div>
@@ -196,8 +197,13 @@ export function DetailDivisi({
                 label: fill(s.org.remove_person, { name: m.nama }),
                 icon: IKON_AKSI.cabut,
                 onClick: async () => {
+                  // Lepas divisi INI saja; divisi & departemen lain tetap (KEP-76).
                   const o = cariOrang(m.id);
-                  if (o) await aksi.tempatkan(o, { divisi_id: null });
+                  if (o)
+                    await aksi.setelDivisi(
+                      o.id,
+                      (o.divisi_ids ?? []).filter((d) => d !== divisi.id)
+                    );
                 },
               },
             ]}
@@ -220,7 +226,7 @@ export function DetailDivisi({
         actions={
           <Button
             variant="secondary"
-            size="sm"
+            size="base"
             prependIcon={<Plus />}
             onClick={() => onKelola({ jenis: "buat-departemen", divisiId: divisi.id })}
           >
@@ -300,24 +306,35 @@ export function DetailDepartemen({
   const [dipilih, setDipilih] = useState<string>(awal);
   const [sibukProject, setSibukProject] = useState(false);
   const berubah = dipilih !== awal;
+  const simpanProject = async () => {
+    setSibukProject(true);
+    try {
+      await aksi.simpanProject(dep.id, dipilih ? [dipilih] : []);
+    } finally {
+      setSibukProject(false);
+    }
+  };
+  useUnsavedChanges({
+    label: `${dep.nama}: ${s.org.project}`,
+    isDirty: berubah,
+    isSaving: sibukProject,
+    onSave: simpanProject,
+    onDiscard: () => setDipilih(awal),
+  });
   const cariOrang = (id: string) => orang.find((x) => x.id === id);
   const calon = calonAnggota(orang, dep);
-  // Satu orang bisa ditempatkan di beberapa departemen (satu baris jabatan per
-  // departemen, 2026-10-23): ekstra = yang multi-departemen.
-  const jmlDept = new Map(orang.map((o) => [o.id, (o.departemen_ids ?? []).length]));
-  const utama = dep.anggota.filter((a) => (jmlDept.get(a.id) ?? 1) <= 1 && cocokOrang(q, a));
-  const ekstra = dep.anggota.filter((a) => (jmlDept.get(a.id) ?? 0) > 1 && cocokOrang(q, a));
-  // Calon tambahan = supervisor yang sudah ditempatkan di departemen LAIN dan belum
-  // mengawasi departemen ini. Manager/direktur tidak masuk: jangkauan mereka lebih luas.
-  const calonEkstra = orang.filter(
-    (o) =>
-      o.tingkat === TINGKAT_SUPERVISOR &&
-      o.departemen_id &&
-      o.departemen_id !== dep.id &&
-      !(o.departemen_ids ?? []).includes(dep.id)
-  );
-  const supervisor = utama.filter((o) => o.tingkat >= TINGKAT_SUPERVISOR);
+  // KEP-76: satu daftar. Orang yang juga di departemen lain tampil biasa dengan
+  // penanda "also in …", tidak ada lagi panel "tambahan" terpisah.
+  const utama = dep.anggota.filter((a) => cocokOrang(q, a));
+  const manager = utama.filter((o) => o.tingkat >= TINGKAT_MANAGER);
+  const supervisor = utama.filter((o) => o.tingkat >= TINGKAT_SUPERVISOR && o.tingkat < TINGKAT_MANAGER);
   const staf = utama.filter((o) => o.tingkat < TINGKAT_SUPERVISOR);
+  const juga = (id: string): string | undefined => {
+    const penuh = cariOrang(id);
+    if (!penuh) return undefined;
+    const lain = tempatOrang(penuh, namaDepartemen, namaDivisi).filter((n) => n !== dep.nama);
+    return lain.length > 0 ? fill(s.org.moved_from_bare, { from: lain.join(", ") }) : undefined;
+  };
 
   /** Cabut dari departemen ini saja: kirim himpunan minus departemen ini (kosong = keluar). */
   const cabut = async (id: string) => {
@@ -333,28 +350,37 @@ export function DetailDepartemen({
     if (penuh) await aksi.ubahTingkat(penuh, tingkat);
   };
 
-  const barisUtama = (o: TOrangOrganisasi) => (
-    <BarisOrang
-      key={o.id}
-      nama={o.nama}
-      email={o.email}
-      tingkat={o.tingkat}
-      aksi={[
-        o.tingkat >= TINGKAT_SUPERVISOR
-          ? {
-              label: `${s.org.make_staff}: ${o.nama}`,
-              icon: IKON_AKSI.turun,
-              onClick: () => ubahJenjang(o.id, TINGKAT_MEMBER),
-            }
-          : {
-              label: `${s.org.make_supervisor}: ${o.nama}`,
-              icon: IKON_AKSI.naik,
-              onClick: () => ubahJenjang(o.id, TINGKAT_SUPERVISOR),
-            },
-        { label: fill(s.org.remove_person, { name: o.nama }), icon: IKON_AKSI.cabut, onClick: () => cabut(o.id) },
-      ]}
-    />
-  );
+  const cabutAksi = (o: TOrangOrganisasi) => ({
+    label: fill(s.org.remove_person, { name: o.nama }),
+    icon: IKON_AKSI.cabut,
+    onClick: () => cabut(o.id),
+  });
+  const jenjangAksi = (o: TOrangOrganisasi) =>
+    o.tingkat >= TINGKAT_SUPERVISOR
+      ? {
+          label: `${s.org.make_staff}: ${o.nama}`,
+          icon: IKON_AKSI.turun,
+          onClick: () => ubahJenjang(o.id, TINGKAT_MEMBER),
+        }
+      : {
+          label: `${s.org.make_supervisor}: ${o.nama}`,
+          icon: IKON_AKSI.naik,
+          onClick: () => ubahJenjang(o.id, TINGKAT_SUPERVISOR),
+        };
+  const barisUtama = (o: TOrangOrganisasi) => {
+    const lain = juga(o.id);
+    return (
+      <BarisOrang
+        key={o.id}
+        nama={o.nama}
+        email={lain ? `${o.email} · ${lain}` : o.email}
+        tingkat={o.tingkat}
+        // Jenjang manager diubah di editor Member: menurunkannya dari sini akan
+        // ikut melepas divisinya, terlalu besar untuk satu klik di menu baris.
+        aksi={o.tingkat >= TINGKAT_MANAGER ? [cabutAksi(o)] : [jenjangAksi(o), cabutAksi(o)]}
+      />
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -385,7 +411,7 @@ export function DetailDepartemen({
               onChange={(v: string) => {
                 if (v !== divisi.id) void aksi.ubahDepartemen(dep.id, { divisi_id: v });
               }}
-              buttonClassName={TOMBOL_SELECT}
+              buttonClassName="w-full"
               className="w-full"
               input
             >
@@ -406,7 +432,7 @@ export function DetailDepartemen({
                   value={dipilih}
                   label={semuaProject.find((p) => p.id === dipilih)?.name ?? s.org.project_picker}
                   onChange={(v: string) => setDipilih(v)}
-                  buttonClassName={TOMBOL_SELECT}
+                  buttonClassName="w-full"
                   className="w-full"
                   input
                   maxHeight="lg"
@@ -414,19 +440,7 @@ export function DetailDepartemen({
                 />
               </div>
               {berubah && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  loading={sibukProject}
-                  onClick={async () => {
-                    setSibukProject(true);
-                    try {
-                      await aksi.simpanProject(dep.id, dipilih ? [dipilih] : []);
-                    } finally {
-                      setSibukProject(false);
-                    }
-                  }}
-                >
+                <Button variant="primary" size="base" loading={sibukProject} onClick={() => void simpanProject()}>
                   {s.org.save}
                 </Button>
               )}
@@ -450,6 +464,12 @@ export function DetailDepartemen({
           />
         }
       >
+        {manager.length > 0 && (
+          <SubjudulKelompok>
+            {s.org.managers} · {manager.length}
+          </SubjudulKelompok>
+        )}
+        {manager.map(barisUtama)}
         {supervisor.length > 0 && (
           <SubjudulKelompok>
             {s.org.supervisors} · {supervisor.length}
@@ -462,43 +482,6 @@ export function DetailDepartemen({
           </SubjudulKelompok>
         )}
         {staf.map(barisUtama)}
-      </PanelOrang>
-
-      <PanelOrang
-        icon={<UserCog className="size-4" />}
-        judul={s.org.extra_supervisors}
-        catatan={s.org.extra_note}
-        jumlah={ekstra.length}
-        kosong={s.org.extra_supervisor_hint}
-        tambah={
-          <PemilihOrang
-            label={s.org.add_extra}
-            calon={calonEkstra}
-            keterangan={(o) => asalOrang(o, namaDepartemen, namaDivisi, s, fill)}
-            onTambah={(o) => aksi.setelEkstra(o.id, [...(o.departemen_ids ?? []), dep.id])}
-          />
-        }
-      >
-        {ekstra.map((o) => (
-          <BarisOrang
-            key={o.id}
-            nama={o.nama}
-            email={o.email}
-            tingkat={o.tingkat}
-            badges={
-              <Badge variant="brand" size="sm">
-                {s.org.extra_badge}
-              </Badge>
-            }
-            aksi={[
-              {
-                label: fill(s.org.remove_extra, { name: o.nama, dept: dep.nama }),
-                icon: IKON_AKSI.cabut,
-                onClick: () => cabut(o.id),
-              },
-            ]}
-          />
-        ))}
       </PanelOrang>
     </div>
   );
@@ -601,7 +584,7 @@ export function DetailBelumDitempatkan({
                 {o.tingkat === null && (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="base"
                     disabled={sibuk === o.id}
                     onClick={async () => {
                       setSibuk(o.id);
@@ -624,7 +607,7 @@ export function DetailBelumDitempatkan({
                       </span>
                     }
                     onChange={(v: string) => setTujuan((t) => ({ ...t, [o.id]: v }))}
-                    buttonClassName={TOMBOL_SELECT}
+                    buttonClassName="w-full"
                     className="w-full"
                     input
                     maxHeight="lg"
@@ -633,7 +616,7 @@ export function DetailBelumDitempatkan({
                 </div>
                 <Button
                   variant="primary"
-                  size="sm"
+                  size="base"
                   loading={sibuk === o.id}
                   disabled={!tujuan[o.id]}
                   onClick={() => tempatkan(o)}

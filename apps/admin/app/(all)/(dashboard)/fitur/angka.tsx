@@ -7,8 +7,10 @@
 
 import { useState } from "react";
 import { Button } from "@plane/propel/button";
+import { Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 import { inputClass } from "@/components/common/paradise-styles";
+import { useUnsavedChanges } from "@/components/common/unsaved-changes";
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 
 type Props = {
@@ -40,10 +42,19 @@ export function InputAngka({ value, min, max, unit, label, isDisabled, onSave }:
   const isValid = /^\d+$/.test(draft.trim()) && angka >= min && angka <= max;
   const isDirty = draft.trim() !== String(value);
 
+  // Each edited number shows its own row in the dashboard unsaved bar.
+  useUnsavedChanges({
+    label,
+    isDirty,
+    canSave: isValid && !isDisabled,
+    onSave: () => (isValid ? onSave(angka) : undefined),
+    onDiscard: () => setDraft(String(value)),
+  });
+
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type="number"
           inputMode="numeric"
           min={min}
@@ -60,7 +71,7 @@ export function InputAngka({ value, min, max, unit, label, isDisabled, onSave }:
         <span className="w-14 text-13 text-tertiary">{unit}</span>
         <Button
           variant="secondary"
-          size="sm"
+          size="base"
           disabled={isDisabled || !isValid || !isDirty}
           onClick={() => void onSave(angka)}
         >

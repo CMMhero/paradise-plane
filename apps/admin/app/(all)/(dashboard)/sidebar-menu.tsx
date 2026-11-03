@@ -38,7 +38,7 @@ export const AdminSidebarMenu = observer(function AdminSidebarMenu() {
               <Tooltip tooltipContent={item.name} position="right" className="ml-2" disabled={!isSidebarCollapsed}>
                 <div
                   className={cn(
-                    "group flex w-full items-center gap-3 rounded-md px-3 py-2 transition-colors outline-none",
+                    "group flex w-full items-center gap-3 rounded-item px-3 py-2 transition-colors outline-none",
                     {
                       "!bg-layer-transparent-active text-primary": isActive,
                       "text-secondary hover:bg-layer-transparent-hover active:bg-layer-transparent-active": !isActive,

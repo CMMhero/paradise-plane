@@ -59,10 +59,10 @@ export function TerapkanKeSemua({ isDirty }: Props) {
         <p className="text-12 text-tertiary">{isDirty ? t.apply_unsaved : t.apply_note}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" size="sm" disabled={isDirty} onClick={() => setBagian("navigasi")}>
+        <Button variant="secondary" size="base" disabled={isDirty} onClick={() => setBagian("navigasi")}>
           {t.apply_navigation}
         </Button>
-        <Button variant="secondary" size="sm" disabled={isDirty} onClick={() => setBagian("work_items")}>
+        <Button variant="secondary" size="base" disabled={isDirty} onClick={() => setBagian("work_items")}>
           {t.apply_work_items}
         </Button>
       </div>

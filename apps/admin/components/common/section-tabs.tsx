@@ -62,3 +62,15 @@ export function ApiKeysTabs() {
     />
   );
 }
+
+export function EmailTabs() {
+  const { s } = useGodmodeStrings();
+  return (
+    <PageTabs
+      tabs={[
+        { label: s.nav.email_settings, href: "/email/" },
+        { label: s.nav.email_preview, href: "/email/preview/" },
+      ]}
+    />
+  );
+}

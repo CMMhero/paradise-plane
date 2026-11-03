@@ -32,7 +32,7 @@ export function CopyField(props: Props) {
       <Button
         variant="secondary"
         size="lg"
-        className="flex items-center justify-between py-2"
+        className="flex items-center justify-between"
         onClick={() => {
           navigator.clipboard.writeText(url);
           setToast({

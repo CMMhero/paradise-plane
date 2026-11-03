@@ -12,6 +12,7 @@ import type { IFormattedInstanceConfiguration, TInstanceAIConfigurationKeys } fr
 // components
 import type { TControllerInputFormField } from "@/components/common/controller-input";
 import { ControllerInput } from "@/components/common/controller-input";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 // hooks
 import { useInstance } from "@/hooks/store";
 
@@ -29,7 +30,8 @@ export function InstanceAIForm(props: IInstanceAIForm) {
   const {
     handleSubmit,
     control,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<AIFormValues>({
     defaultValues: {
       LLM_API_KEY: config["LLM_API_KEY"],
@@ -86,18 +88,25 @@ export function InstanceAIForm(props: IInstanceAIForm) {
     const payload: Partial<AIFormValues> = { ...formData };
 
     await updateInstanceConfigurations(payload)
-      .then(() =>
-        setToast({
+      .then(() => {
+        reset(formData);
+        return setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "Success",
           message: "AI Settings updated successfully",
-        })
-      )
+        });
+      })
       .catch((err) => console.error(err));
   };
 
   return (
     <div className="space-y-8">
+      <UnsavedBar
+        isDirty={isDirty}
+        isSaving={isSubmitting}
+        onSave={() => handleSubmit(onSubmit)()}
+        onDiscard={() => reset()}
+      />
       <div className="space-y-3">
         <div>
           <div className="pb-1 text-18 font-medium text-primary">OpenAI</div>
@@ -128,7 +137,7 @@ export function InstanceAIForm(props: IInstanceAIForm) {
         {/* Ajakan "hubungi kami" DIBUANG: tautannya ke formulir kontak penjualan
             vendor (`plane.so/contact`), yang tidak melayani instance kantor ini.
             Vendor model AI di sini ditentukan IT sendiri lewat kolom di atas. */}
-        <div className="relative inline-flex items-center gap-1.5 rounded-sm border border-accent-subtle bg-accent-subtle px-4 py-2 text-caption-sm-regular text-accent-secondary">
+        <div className="relative inline-flex items-center gap-1.5 rounded-card border border-accent-subtle bg-accent-subtle px-4 py-2 text-caption-sm-regular text-accent-secondary">
           <Lightbulb className="size-4" />
           <div>These credentials are shared by every workspace on this instance.</div>
         </div>

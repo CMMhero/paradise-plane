@@ -8,6 +8,7 @@ import { observer } from "mobx-react";
 import { usePathname } from "next/navigation";
 import { Menu, Settings } from "lucide-react";
 // icons
+import { IconButton } from "@plane/propel/icon-button";
 import { Breadcrumbs } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "../breadcrumb-link";
@@ -20,18 +21,26 @@ import { EXTENDED_HEADER_SEGMENT_LABELS } from "./extended";
 export const HamburgerToggle = observer(function HamburgerToggle() {
   const { isSidebarCollapsed, toggleSidebar } = useTheme();
   return (
-    <button
-      className="group flex size-7 cursor-pointer items-center justify-center rounded-sm bg-layer-1 transition-all hover:bg-layer-1-hover md:hidden"
+    <IconButton
+      variant="ghost"
+      size="base"
+      icon={Menu}
+      aria-label="Toggle sidebar"
+      className="md:hidden"
       onClick={() => toggleSidebar(!isSidebarCollapsed)}
-    >
-      <Menu size={14} className="text-secondary transition-all group-hover:text-primary" />
-    </button>
+    />
   );
 });
 
 const HEADER_SEGMENT_LABELS = {
   ...CORE_HEADER_SEGMENT_LABELS,
   ...EXTENDED_HEADER_SEGMENT_LABELS,
+};
+
+// Paradise: unlabeled segments read as sentence case, not caps.
+const toSentenceCase = (segment: string): string => {
+  const words = segment.replace(/[-_]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
 export const AdminHeader = observer(function AdminHeader() {
@@ -46,7 +55,7 @@ export const AdminHeader = observer(function AdminHeader() {
     const breadcrumbItems = pathSegments.map((segment) => {
       currentUrl += "/" + segment;
       return {
-        title: HEADER_SEGMENT_LABELS[segment] ?? segment.toUpperCase(),
+        title: HEADER_SEGMENT_LABELS[segment] ?? toSentenceCase(segment),
         href: currentUrl,
       };
     });

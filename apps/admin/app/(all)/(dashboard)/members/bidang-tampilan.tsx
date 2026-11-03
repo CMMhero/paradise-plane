@@ -12,7 +12,7 @@
 import { useState } from "react";
 // plane imports
 import type { TMemberNavigation, TNavItemKey, TProjectNavMode, TWorkItemLayout } from "@plane/services";
-import { CustomSelect } from "@plane/ui";
+import { CustomSelect, Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { Field } from "@/components/common/paradise-ui";
@@ -20,8 +20,6 @@ import { inputClass } from "@/components/common/paradise-styles";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { Saklar } from "./bidang-profil";
-
-const TOMBOL_SELECT = "w-full rounded-md border-subtle bg-layer-2";
 
 /** Urutan dan kelompok sama dengan dialog "Customize navigation" di apps/web. */
 const NAV_PRIBADI: TNavItemKey[] = ["your_work", "stickies", "drafts", "quick_links"];
@@ -58,7 +56,7 @@ function BatasProject({ nilai, onUbah }: { nilai: number; onUbah: (v: number) =>
 
   return (
     <Field label={s.tampilan.project_limit} hint={s.tampilan.project_limit_hint}>
-      <input
+      <Input
         type="number"
         inputMode="numeric"
         min={0}
@@ -109,7 +107,7 @@ export function BidangNavigasi({ nilai, onUbah }: TNavProps) {
           <span className="block text-12 font-medium text-secondary">{t.pinned}</span>
           <span className="block text-11 text-tertiary">{t.pinned_note}</span>
         </div>
-        <div className="grid gap-x-8 gap-y-3 rounded-md border border-subtle px-3 py-2 sm:grid-cols-2">
+        <div className="grid gap-x-8 gap-y-3 rounded-card border border-subtle px-3 py-2 sm:grid-cols-2">
           {kelompok(t.group_personal, NAV_PRIBADI)}
           {kelompok(t.group_workspace, NAV_WORKSPACE)}
         </div>
@@ -120,7 +118,7 @@ export function BidangNavigasi({ nilai, onUbah }: TNavProps) {
             value={nilai.project_mode}
             label={labelMode[nilai.project_mode]}
             onChange={(v: TProjectNavMode) => onUbah({ project_mode: v })}
-            buttonClassName={TOMBOL_SELECT}
+            buttonClassName="w-full"
             className="w-full"
             input
           >
@@ -152,7 +150,7 @@ export function BidangTataLetak({ nilai, onUbah, hint }: TLayoutProps) {
         value={nilai}
         label={t.layouts[nilai]}
         onChange={(v: TWorkItemLayout) => onUbah(v)}
-        buttonClassName={TOMBOL_SELECT}
+        buttonClassName="w-full"
         className="w-full sm:w-1/2"
         input
       >

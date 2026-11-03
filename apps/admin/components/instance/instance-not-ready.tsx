@@ -14,7 +14,7 @@ export function InstanceNotReady() {
     <div className="relative container mx-auto flex h-full w-full items-center justify-center px-5">
       <div className="relative w-auto max-w-2xl space-y-8 py-10">
         <div className="relative flex flex-col items-center justify-center space-y-4">
-          <h1 className="pb-3 text-24 font-bold">Selamat datang di Paradise Task Tracker!</h1>
+          <h1 className="pb-3 text-24 font-bold">Welcome to Paradise Task Tracker!</h1>
           {/* `alt` dikosongkan, bukan diterjemahkan: gambar ini hiasan sambutan,
               bukan informasi. Pembaca layar melewatinya, lebih baik daripada
               mengumumkan nama berkas atau merek yang tidak menambah apa pun. */}

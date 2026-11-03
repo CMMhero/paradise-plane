@@ -86,7 +86,7 @@ const WorkspaceManagementPage = observer(function WorkspaceManagementPage(_props
       <WorkspacesTabs />
       <div className="space-y-3">
         {formattedConfig ? (
-          <div className={cn("flex w-full items-center gap-14 rounded-sm")}>
+          <div className={cn("flex w-full items-center gap-14 rounded-card")}>
             <div className="flex grow items-center gap-4">
               <div className="grow">
                 <div className="pb-1 text-16 font-medium">Prevent anyone else from creating a workspace.</div>

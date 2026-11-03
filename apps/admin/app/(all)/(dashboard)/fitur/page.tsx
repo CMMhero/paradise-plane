@@ -23,7 +23,7 @@ import type {
   TInstanceParadiseToggleKeys,
   TParadiseModule,
 } from "@plane/types";
-import { Loader, ToggleSwitch } from "@plane/ui";
+import { CustomSelect, Loader, ToggleSwitch } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Section, SettingRow } from "@/components/common/paradise";
@@ -44,6 +44,8 @@ const BAWAAN = {
   ENABLE_GOOGLE_CALENDAR_SYNC: "0",
   ENABLE_TUGAS_KE_DM: "1",
   HIERARKI_GERBANG_TUGAS: "0",
+  AUTO_START_DATE_ON_START: "1",
+  AUTO_DUE_DATE_ON_DONE: "1",
   ...Object.fromEntries(
     Object.entries(PARADISE_MODULE_DEFAULTS).map(([modul, nyala]) => [
       kunciModul(modul as TParadiseModule),
@@ -74,7 +76,15 @@ const ANGKA: Record<TInstanceParadiseNumberKeys, [number, number, number]> = {
   TRASH_RETENTION_DAYS: [60, 1, 3650],
   DASHBOARD_PERHATIAN_PERSEN: [5, 1, 100],
   DASHBOARD_KRITIS_PERSEN: [15, 1, 100],
+  AUTO_ARCHIVE_DONE_DAYS: [90, 0, 365],
+  DUE_DATE_ON_EARLY_DONE: [0, 0, 1],
+  OVERDUE_GRACE_DAYS: [0, 0, 30],
+  DASHBOARD_ON_TIME_WINDOW_DAYS: [30, 7, 365],
+  CHAT_DELETE_WINDOW_HOURS: [24, 0, 8760],
 };
+
+/** Pilihan hari arsip otomatis, 0 = mati. Cermin `SETELAN_PILIHAN` di server, yang menolak nilai lain. */
+const PILIHAN_ARSIP_HARI = [0, 7, 14, 30, 60, 90, 180, 365] as const;
 
 type TKunci = TInstanceParadiseToggleKeys | TInstanceParadiseNumberKeys;
 
@@ -150,6 +160,70 @@ const FiturPage = observer(function FiturPage(_props: Route.ComponentProps) {
     );
   };
 
+  const hariArsip = angka("AUTO_ARCHIVE_DONE_DAYS");
+  const teksHariArsip = (n: number) => (n === 0 ? t.auto_archive_off : fill(t.auto_archive_after, { count: n }));
+  const pilihArsip = (
+    <SettingRow
+      title={t.auto_archive_name}
+      description={t.auto_archive_desc}
+      control={
+        <CustomSelect
+          value={hariArsip}
+          label={teksHariArsip(hariArsip)}
+          onChange={(v: number) =>
+            void simpan(
+              "AUTO_ARCHIVE_DONE_DAYS",
+              String(v),
+              `${t.auto_archive_name}: ${teksHariArsip(v)}`,
+              t.auto_archive_name
+            )
+          }
+          disabled={sedangSimpan !== null}
+          input
+        >
+          {PILIHAN_ARSIP_HARI.map((n) => (
+            <CustomSelect.Option key={n} value={n}>
+              {teksHariArsip(n)}
+            </CustomSelect.Option>
+          ))}
+        </CustomSelect>
+      }
+    />
+  );
+
+  // 0 = Due date rencana dibiarkan, 1 = dimajukan ke hari selesai. Cermin
+  // `SETELAN_PILIHAN[DUE_DATE_ON_EARLY_DONE]` di server.
+  const majuSaatSelesaiAwal = angka("DUE_DATE_ON_EARLY_DONE");
+  const teksSelesaiAwal = (n: number) => (n === 1 ? t.early_done_move : t.early_done_keep);
+  const pilihSelesaiAwal = (
+    <SettingRow
+      title={t.early_done_name}
+      description={t.early_done_desc}
+      control={
+        <CustomSelect
+          value={majuSaatSelesaiAwal}
+          label={teksSelesaiAwal(majuSaatSelesaiAwal)}
+          onChange={(v: number) =>
+            void simpan(
+              "DUE_DATE_ON_EARLY_DONE",
+              String(v),
+              `${t.early_done_name}: ${teksSelesaiAwal(v)}`,
+              t.early_done_name
+            )
+          }
+          disabled={sedangSimpan !== null}
+          input
+        >
+          {[0, 1].map((n) => (
+            <CustomSelect.Option key={n} value={n}>
+              {teksSelesaiAwal(n)}
+            </CustomSelect.Option>
+          ))}
+        </CustomSelect>
+      }
+    />
+  );
+
   const kredensialLengkap = Boolean(
     formattedConfig?.GOOGLE_CALENDAR_CLIENT_ID && formattedConfig?.GOOGLE_CALENDAR_CLIENT_SECRET
   );
@@ -176,6 +250,14 @@ const FiturPage = observer(function FiturPage(_props: Route.ComponentProps) {
           <Section title={t.group_tugas} bordered>
             {saklar("ENABLE_TUGAS_KE_DM", t.dm_name, t.dm_desc)}
             {saklar("HIERARKI_GERBANG_TUGAS", t.gerbang_name, t.gerbang_desc)}
+            {pilihArsip}
+          </Section>
+
+          <Section title={t.group_tanggal} description={t.group_tanggal_hint} bordered>
+            {saklar("AUTO_START_DATE_ON_START", t.auto_start_name, t.auto_start_desc)}
+            {saklar("AUTO_DUE_DATE_ON_DONE", t.auto_due_name, t.auto_due_desc)}
+            {pilihSelesaiAwal}
+            {setelanAngka("OVERDUE_GRACE_DAYS", t.grace_name, t.grace_desc, t.unit_days)}
           </Section>
 
           <Section title={t.group_email} bordered>
@@ -183,6 +265,10 @@ const FiturPage = observer(function FiturPage(_props: Route.ComponentProps) {
             {saklar("ENABLE_CHAT_EMAIL", t.chat_name, t.chat_desc)}
             {setelanAngka("CHAT_EMAIL_QUIET_MINUTES", t.chat_quiet_name, t.chat_quiet_desc, t.unit_minutes)}
             {setelanAngka("CHAT_EMAIL_INTERVAL_MINUTES", t.chat_interval_name, t.chat_interval_desc, t.unit_minutes)}
+          </Section>
+
+          <Section title={t.group_chat} bordered>
+            {setelanAngka("CHAT_DELETE_WINDOW_HOURS", t.chat_delete_name, t.chat_delete_desc, t.unit_hours)}
           </Section>
 
           <Section title={t.group_kalender} bordered>
@@ -216,6 +302,7 @@ const FiturPage = observer(function FiturPage(_props: Route.ComponentProps) {
           <Section title={t.group_dashboard} description={t.group_dashboard_hint} bordered>
             {setelanAngka("DASHBOARD_PERHATIAN_PERSEN", t.dash_attention_name, t.dash_attention_desc, t.unit_percent)}
             {setelanAngka("DASHBOARD_KRITIS_PERSEN", t.dash_critical_name, t.dash_critical_desc, t.unit_percent)}
+            {setelanAngka("DASHBOARD_ON_TIME_WINDOW_DAYS", t.dash_on_time_name, t.dash_on_time_desc, t.unit_days)}
           </Section>
 
           <Section title={t.group_retention} description={t.group_retention_hint} bordered>

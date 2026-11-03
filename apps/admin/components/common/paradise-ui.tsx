@@ -112,7 +112,7 @@ export function Panel({
 }) {
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border bg-layer-1", {
+      className={cn("overflow-hidden rounded-card border bg-layer-1", {
         "border-subtle": tone === "neutral",
         "border-warning-subtle": tone === "warning",
         "border-danger-subtle": tone === "danger",
@@ -209,7 +209,7 @@ export function ParadiseModal({
         </div>
         <div className="vertical-scrollbar scrollbar-sm flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-lg border-t border-subtle bg-layer-1 px-5 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-overlay border-t border-subtle bg-layer-1 px-5 py-3">
             <div className="min-w-0 flex-1 text-11 text-tertiary">{footerNote}</div>
             <div className="flex shrink-0 items-center gap-2">{footer}</div>
           </div>

@@ -14,6 +14,7 @@ import type { IInstance, IInstanceAdmin } from "@plane/types";
 import { Input, ToggleSwitch } from "@plane/ui";
 // components
 import { ControllerInput } from "@/components/common/controller-input";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 // hooks
 import { useInstance } from "@/hooks/store";
 
@@ -31,7 +32,8 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
   const {
     handleSubmit,
     control,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<Partial<IInstance>>({
     defaultValues: {
       instance_name: instance?.instance_name,
@@ -43,18 +45,25 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
     const payload: Partial<IInstance> = { ...formData };
 
     await updateInstanceInfo(payload)
-      .then(() =>
-        setToast({
+      .then(() => {
+        reset(formData);
+        return setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "Success",
           message: "Settings updated successfully",
-        })
-      )
+        });
+      })
       .catch((err) => console.error(err));
   };
 
   return (
     <div className="space-y-8">
+      <UnsavedBar
+        isDirty={isDirty}
+        isSaving={isSubmitting}
+        onSave={() => handleSubmit(onSubmit)()}
+        onDiscard={() => reset()}
+      />
       <div className="space-y-4">
         <div className="text-16 font-medium text-primary">Instance details</div>
         <div className="grid-col grid w-full grid-cols-1 items-center justify-between gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -77,7 +86,7 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
               type="email"
               value={instanceAdmins[0]?.user_detail?.email ?? ""}
               placeholder="Admin email"
-              className="w-full cursor-not-allowed !text-placeholder"
+              className="w-full"
               autoComplete="on"
               disabled
             />
@@ -90,7 +99,7 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
               name="instance_id"
               type="text"
               value={instance.instance_id}
-              className="w-full cursor-not-allowed rounded-md font-medium !text-placeholder"
+              className="w-full"
               disabled
             />
           </div>
@@ -102,7 +111,7 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
         <div className="flex items-center gap-14">
           <div className="flex grow items-center gap-4">
             <div className="shrink-0">
-              <div className="flex size-11 items-center justify-center rounded-lg bg-layer-1">
+              <div className="flex size-11 items-center justify-center rounded-item bg-layer-1">
                 <Telescope className="size-5 text-tertiary" />
               </div>
             </div>

@@ -39,7 +39,7 @@ export const AdminSidebarDropdown = observer(function AdminSidebarDropdown() {
   const getSidebarMenuItems = () => (
     <Menu.Items
       className={cn(
-        "shadow-lg absolute left-0 z-20 mt-1.5 flex w-52 flex-col divide-y divide-subtle rounded-md border border-subtle bg-surface-1 px-1 py-2 text-11 outline-none",
+        "shadow-lg absolute left-0 z-20 mt-1.5 flex w-52 flex-col divide-y divide-subtle rounded-popover border border-subtle bg-surface-1 px-1 py-2 text-11 outline-none",
         {
           "left-4": isSidebarCollapsed,
         }
@@ -52,7 +52,7 @@ export const AdminSidebarDropdown = observer(function AdminSidebarDropdown() {
         <Menu.Item
           as="button"
           type="button"
-          className="flex w-full items-center gap-2 rounded-sm px-2 py-1 hover:bg-layer-1-hover"
+          className="flex w-full items-center gap-2 rounded-item px-2 py-1 hover:bg-layer-1-hover"
           onClick={handleThemeSwitch}
         >
           <Palette className="h-4 w-4 stroke-[1.5]" />
@@ -65,7 +65,7 @@ export const AdminSidebarDropdown = observer(function AdminSidebarDropdown() {
           <Menu.Item
             as="button"
             type="submit"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1 hover:bg-layer-1-hover"
+            className="flex w-full items-center gap-2 rounded-item px-2 py-1 hover:bg-layer-1-hover"
           >
             <LogOut className="h-4 w-4 stroke-[1.5]" />
             Sign out
@@ -84,7 +84,7 @@ export const AdminSidebarDropdown = observer(function AdminSidebarDropdown() {
     <div className="flex max-h-header items-center gap-x-5 gap-y-2 border-b border-subtle px-4 py-2.5">
       <div className="h-full w-full truncate">
         <div
-          className={`flex flex-grow items-center gap-x-2 truncate rounded-sm ${
+          className={`flex flex-grow items-center gap-x-2 truncate rounded-item ${
             isSidebarCollapsed ? "justify-center" : ""
           }`}
         >
@@ -94,7 +94,7 @@ export const AdminSidebarDropdown = observer(function AdminSidebarDropdown() {
                 "cursor-default": !isSidebarCollapsed,
               })}
             >
-              <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-sm bg-layer-1">
+              <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-item bg-layer-1">
                 <UserCog2 className="size-5 text-primary" />
               </div>
             </Menu.Button>

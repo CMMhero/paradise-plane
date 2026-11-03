@@ -125,7 +125,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
         <button
           type="button"
           onClick={() => setSedangEdit(r.id)}
-          className="block w-full min-w-0 rounded-md text-left focus-visible:ring-1 focus-visible:ring-accent-strong focus-visible:outline-none"
+          className="block w-full min-w-0 rounded-item text-left focus-visible:ring-1 focus-visible:ring-accent-strong focus-visible:outline-none"
         >
           <PersonCell
             name={r.display_name}
@@ -287,7 +287,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
         title: m.title,
         description: m.description,
         actions: (
-          <Button variant="primary" size="sm" prependIcon={<UserPlus />} onClick={() => setBuatTerbuka(true)}>
+          <Button variant="primary" size="lg" prependIcon={<UserPlus />} onClick={() => setBuatTerbuka(true)}>
             {m.new_account}
           </Button>
         ),
@@ -428,10 +428,10 @@ function ModalAkunBaru({
       footerNote={s.members.smtp_note}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={tutup}>
+          <Button variant="secondary" size="base" onClick={tutup}>
             {s.members.cancel}
           </Button>
-          <Button variant="primary" size="sm" disabled={!siap} loading={sibuk} onClick={handleBuat}>
+          <Button variant="primary" size="base" disabled={!siap} loading={sibuk} onClick={handleBuat}>
             {s.members.create_account}
           </Button>
         </>

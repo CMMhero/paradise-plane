@@ -31,7 +31,6 @@ import {
   InstanceOrganisasiService,
   TINGKAT_DIREKTUR,
   TINGKAT_MANAGER,
-  TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
   type TAnggotaHierarki,
   type TPohonOrganisasi,
@@ -139,28 +138,13 @@ export default function OrganisasiPage() {
         );
       return ok;
     },
-    tambahKeDepartemen: (o, departemenId) => {
-      // Yang sudah memegang departemen lain tetap memegangnya (multi-departemen).
-      const ids = (hierarki?.anggota.find((x) => x.id === o.id) ?? o).departemen_ids ?? [];
-      if (ids.length > 0) return aksi.setelEkstra(o.id, [...ids, departemenId]);
-      return aksi.tempatkan(o, { departemen_id: departemenId });
-    },
+    // KEP-76: `departemen_id` / `divisi_id` di server = TAMBAH satu tempat,
+    // penempatan lama tetap. Server juga yang menetapkan jenjang (tanpa jenjang
+    // -> Staf; memimpin divisi -> Manager), jadi tidak ditebak di sini.
+    tambahKeDepartemen: (o, departemenId) => aksi.tempatkan(o, { departemen_id: departemenId }),
     tempatkan: async (orang: TAnggotaHierarki, tujuan) => {
       try {
-        // Penempatan ke divisi = peran manager: naikkan jenjang sekalian bila
-        // masih di bawah Manager (supervisor/staf/belum-diisi). Satu panggilan =
-        // satu sinkron akses di server.
-        const naikKeManager =
-          tujuan.divisi_id !== undefined &&
-          tujuan.divisi_id !== null &&
-          orang.tingkat !== null &&
-          orang.tingkat < TINGKAT_MANAGER;
-        await hierarkiService.setel({
-          member_id: orang.id,
-          ...(orang.tingkat === null && tujuan.departemen_id ? { tingkat: TINGKAT_MEMBER } : {}),
-          ...(naikKeManager ? { tingkat: TINGKAT_MANAGER } : {}),
-          ...tujuan,
-        });
+        await hierarkiService.setel({ member_id: orang.id, ...tujuan });
         await Promise.all([mutate(), mutateHierarki()]);
         const keluar = tujuan.departemen_id === null || tujuan.divisi_id === null;
         setToast({
@@ -190,13 +174,22 @@ export default function OrganisasiPage() {
         setToast({ type: TOAST_TYPE.ERROR, title: s.org.failed, message: pesanGagal(err, s.org.save_failed_message) });
       }
     },
+    setelDivisi: async (orangId: string, divisiIds: string[]) => {
+      try {
+        await hierarkiService.setel({ member_id: orangId, divisi_ids: divisiIds });
+        await Promise.all([mutate(), mutateHierarki()]);
+        setToast({ type: TOAST_TYPE.SUCCESS, title: s.org.department_saved });
+      } catch (err) {
+        setToast({ type: TOAST_TYPE.ERROR, title: s.org.failed, message: pesanGagal(err, s.org.save_failed_message) });
+      }
+    },
   };
 
   const header = {
     title: s.members.title,
     description: s.org.description,
     actions: (
-      <Button variant="primary" size="sm" prependIcon={<Plus />} onClick={() => setPerintah({ jenis: "buat-divisi" })}>
+      <Button variant="primary" size="lg" prependIcon={<Plus />} onClick={() => setPerintah({ jenis: "buat-divisi" })}>
         {s.org.new_division}
       </Button>
     ),
@@ -357,12 +350,14 @@ export default function OrganisasiPage() {
               adaLama={data.tanpa_departemen.length > 0}
             />
           ) : (
-            <aside className="space-y-3 rounded-lg border border-subtle bg-layer-1 p-3 lg:sticky lg:top-4">
+            <aside className="space-y-3 rounded-card border border-subtle bg-layer-1 p-3 lg:sticky lg:top-4">
               <div className="flex items-center gap-1.5">
-                <div className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-placeholder" />
+                <div className="flex h-8 min-w-0 flex-1 items-center gap-1.5 search-field border border-subtle bg-layer-2 px-2.5 focus-within:border-accent-strong">
+                  <Search className="size-3.5 shrink-0 text-placeholder" aria-hidden />
                   <Input
-                    className="w-full pl-8"
+                    type="text"
+                    mode="true-transparent"
+                    className="w-full min-w-0 p-0 text-primary placeholder:text-placeholder"
                     placeholder={s.org.search_tree}
                     aria-label={s.org.search_tree}
                     value={cari}
@@ -422,7 +417,7 @@ function TombolRel({
         aria-current={aktif ? "true" : undefined}
         onClick={onClick}
         className={cn(
-          "relative grid size-8 place-items-center rounded-md transition-colors",
+          "relative grid size-8 place-items-center rounded-item transition-colors",
           aktif
             ? "bg-layer-transparent-active text-primary"
             : "text-tertiary hover:bg-layer-transparent-hover hover:text-primary"
@@ -451,7 +446,7 @@ function RelPohon({
 }) {
   const { s } = useGodmodeStrings();
   return (
-    <aside className="flex flex-row items-center gap-1 rounded-lg border border-subtle bg-layer-1 p-1.5 lg:sticky lg:top-4 lg:flex-col">
+    <aside className="flex flex-row items-center gap-1 rounded-card border border-subtle bg-layer-1 p-1.5 lg:sticky lg:top-4 lg:flex-col">
       <TombolRel label={s.org.expand_tree} icon={PanelLeftOpen} onClick={onBuka} />
       <div className="mx-1 h-5 w-px bg-layer-3 lg:mx-0 lg:my-1 lg:h-px lg:w-5" aria-hidden />
       <TombolRel

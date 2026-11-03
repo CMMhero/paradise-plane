@@ -12,6 +12,7 @@ import { Outlet } from "react-router";
 import { AdminHeader } from "@/components/common/header";
 import { LogoSpinner } from "@/components/common/logo-spinner";
 import { NewUserPopup } from "@/components/common/new-user-popup";
+import { UnsavedChangesBar, UnsavedChangesProvider } from "@/components/common/unsaved-changes";
 // hooks
 import { useUser } from "@/hooks/store";
 // local components
@@ -38,16 +39,20 @@ function AdminLayout(_props: Route.ComponentProps) {
 
   if (isUserLoggedIn) {
     return (
-      <div className="relative flex h-screen w-screen overflow-hidden">
-        <AdminSidebar />
-        <main className="relative flex h-full w-full flex-col overflow-hidden bg-surface-1">
-          <AdminHeader />
-          <div className="vertical-scrollbar scrollbar-md h-full w-full overflow-hidden overflow-y-scroll">
-            <Outlet />
-          </div>
-        </main>
-        <NewUserPopup />
-      </div>
+      <UnsavedChangesProvider>
+        <div className="relative flex h-screen w-screen overflow-hidden">
+          <AdminSidebar />
+          <main className="relative flex h-full w-full flex-col overflow-hidden bg-surface-1">
+            <AdminHeader />
+            <div className="vertical-scrollbar scrollbar-md min-h-0 w-full flex-1 overflow-hidden overflow-y-scroll">
+              <Outlet />
+            </div>
+            {/* Paradise: outside the scroll area, so Save / Discard never scroll away. */}
+            <UnsavedChangesBar />
+          </main>
+          <NewUserPopup />
+        </div>
+      </UnsavedChangesProvider>
     );
   }
 

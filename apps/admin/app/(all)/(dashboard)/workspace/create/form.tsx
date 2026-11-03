@@ -123,7 +123,7 @@ export function WorkspaceCreateForm() {
         </div>
         <div className="flex flex-col gap-1">
           <h4 className="text-13 text-tertiary">Set your workspace&apos;s URL</h4>
-          <div className="flex w-full items-center gap-0.5 rounded-md border-[0.5px] border-subtle px-3">
+          <div className="flex w-full items-center gap-0.5 rounded-field border-[0.5px] border-subtle px-3">
             <span className="text-13 whitespace-nowrap text-secondary">{workspaceBaseURL}</span>
             <Controller
               control={control}
@@ -144,7 +144,7 @@ export function WorkspaceCreateForm() {
                   ref={ref}
                   hasError={Boolean(errors.slug)}
                   placeholder="workspace-name"
-                  className="block w-full rounded-md border-none bg-transparent !px-0 py-2 text-13"
+                  className="block w-full rounded-field border-none bg-transparent !px-0 py-2 text-13"
                 />
               )}
             />
@@ -171,7 +171,6 @@ export function WorkspaceCreateForm() {
                       <span className="text-placeholder">Select a range</span>
                     )
                   }
-                  buttonClassName="!border-[0.5px] !border-subtle !shadow-none"
                   input
                 >
                   {ORGANIZATION_SIZE.map((item) => (

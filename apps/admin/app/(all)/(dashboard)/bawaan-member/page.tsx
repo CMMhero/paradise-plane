@@ -19,6 +19,7 @@ import { CustomSelect, Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Field } from "@/components/common/paradise-ui";
+import { UnsavedBar } from "@/components/common/unsaved-changes";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { MembersTabs } from "@/components/common/section-tabs";
@@ -45,7 +46,7 @@ function Bagian({ title, note, children }: { title: string; note: string; childr
         <h3 className="text-11 font-medium tracking-wide text-secondary uppercase">{title}</h3>
         <p className="text-12 text-tertiary">{note}</p>
       </div>
-      <div className="space-y-3 rounded-md border border-subtle px-4 py-3">{children}</div>
+      <div className="space-y-3 rounded-card border border-subtle px-4 py-3">{children}</div>
     </section>
   );
 }
@@ -122,6 +123,7 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
       }}
     >
       <MembersTabs />
+      <UnsavedBar isDirty={berubah} isSaving={sedangSimpan} onSave={simpan} onDiscard={() => setDraf(null)} />
       {error && <p className="text-13 text-danger-primary">{t.load_failed}</p>}
       {!error && !nilai && (
         <Loader className="space-y-4">
@@ -157,7 +159,7 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
                   value={nilai.keanggotaan.workspace_role}
                   label={nilai.keanggotaan.workspace_role === 5 ? s.members.role_guest : s.members.role_member}
                   onChange={(v: 5 | 15) => ubahKeanggotaan({ workspace_role: Number(v) as 5 | 15 })}
-                  buttonClassName="w-full rounded-md border-subtle bg-layer-2"
+                  buttonClassName="w-full"
                   className="w-full"
                   input
                 >
@@ -170,7 +172,7 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
                   value={tingkatTerpilih}
                   label={tingkatPilihan.find((p) => p.value === tingkatTerpilih)?.label}
                   onChange={(v: number) => ubahKeanggotaan({ tingkat: Number(v) as 10 | 20 | 30 })}
-                  buttonClassName="w-full rounded-md border-subtle bg-layer-2"
+                  buttonClassName="w-full"
                   className="w-full"
                   input
                 >
@@ -199,12 +201,12 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
           </Bagian>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-subtle pt-4">
-            <Button variant="primary" size="sm" disabled={!berubah || sedangSimpan} onClick={() => void simpan()}>
+            <Button variant="primary" size="base" disabled={!berubah || sedangSimpan} onClick={() => void simpan()}>
               {t.save}
             </Button>
             <Button
               variant="secondary"
-              size="sm"
+              size="base"
               disabled={sedangSimpan || sama(nilai, data.pabrik)}
               onClick={() => setDraf(data.pabrik)}
             >

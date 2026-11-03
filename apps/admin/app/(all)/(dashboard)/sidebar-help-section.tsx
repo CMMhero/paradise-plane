@@ -58,7 +58,7 @@ export const AdminSidebarHelpSection = observer(function AdminSidebarHelpSection
         >
           <a
             href={redirectionLink}
-            className={`relative flex items-center gap-1 rounded-sm bg-layer-1 px-2 py-1 text-body-xs-medium whitespace-nowrap text-secondary`}
+            className={`relative flex items-center gap-1 rounded-button bg-layer-1 px-2 py-1 text-body-xs-medium whitespace-nowrap text-secondary`}
           >
             <NewTabIcon width={14} height={14} />
             {!isSidebarCollapsed && "Buka Paradise Task Tracker"}
@@ -67,7 +67,7 @@ export const AdminSidebarHelpSection = observer(function AdminSidebarHelpSection
         <Tooltip tooltipContent="Versi instance" position={isSidebarCollapsed ? "right" : "top"} className="ml-4">
           <button
             type="button"
-            className={`ml-auto grid place-items-center rounded-md p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary ${
+            className={`ml-auto grid place-items-center rounded-button p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary ${
               isSidebarCollapsed ? "w-full" : ""
             }`}
             onClick={() => setIsNeedHelpOpen((prev) => !prev)}
@@ -78,7 +78,7 @@ export const AdminSidebarHelpSection = observer(function AdminSidebarHelpSection
         <Tooltip tooltipContent="Toggle sidebar" position={isSidebarCollapsed ? "right" : "top"} className="ml-4">
           <button
             type="button"
-            className={`grid place-items-center rounded-md p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary ${
+            className={`grid place-items-center rounded-button p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary ${
               isSidebarCollapsed ? "w-full" : ""
             }`}
             onClick={() => toggleSidebar(!isSidebarCollapsed)}
@@ -101,7 +101,7 @@ export const AdminSidebarHelpSection = observer(function AdminSidebarHelpSection
           <div
             className={`absolute bottom-2 z-[15] min-w-[10rem] ${
               isSidebarCollapsed ? "left-full" : "-left-[75px]"
-            } rounded-sm bg-surface-1 p-1 whitespace-nowrap shadow-raised-100`}
+            } rounded-popover bg-surface-1 p-1 whitespace-nowrap shadow-raised-100`}
             ref={helpOptionsRef}
           >
             {/* `divide-y` ikut dilepas dari pembungkus di atas: pemisah garis

@@ -14,7 +14,7 @@ import { ArrowDownWideNarrow, ArrowUpNarrowWide, Search, SlidersHorizontal, X } 
 // plane imports
 import { Button } from "@plane/propel/button";
 import { Popover } from "@plane/propel/popover";
-import { CustomSelect } from "@plane/ui";
+import { CustomSelect, Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 // local
 import { AddFilterButton, FiltersRow } from "./filter-bar";
@@ -35,16 +35,17 @@ export function SearchBox({
   placeholder: string;
 }) {
   return (
-    <div className="flex h-7 min-w-[220px] flex-1 items-center gap-1.5 rounded-md border border-subtle bg-layer-2 px-2 focus-within:border-accent-strong sm:max-w-sm">
+    <div className="flex h-8 min-w-[220px] flex-1 items-center gap-1.5 search-field border border-subtle bg-layer-2 px-2 focus-within:border-accent-strong sm:max-w-sm">
       <Search className="size-3.5 shrink-0 text-placeholder" aria-hidden />
-      <input
+      <Input
         type="text"
+        mode="true-transparent"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && onChange("")}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="w-full bg-transparent text-13 text-primary outline-none placeholder:text-placeholder"
+        className="w-full p-0 text-primary placeholder:text-placeholder"
       />
       {value && (
         <button
@@ -65,7 +66,7 @@ function JudulBagian({ children }: { children: ReactNode }) {
 }
 
 const pil = (aktif: boolean) =>
-  cn("rounded-sm border px-2 py-0.5 text-11 transition-all", {
+  cn("rounded-control border px-2 py-0.5 text-11 transition-all", {
     "border-accent-strong bg-accent-primary text-on-color": aktif,
     "border-subtle text-secondary hover:bg-layer-1": !aktif,
   });
@@ -89,9 +90,8 @@ export function DisplayMenu({
     <Popover>
       <Popover.Button
         render={
-          <Button variant="secondary" size="base" prependIcon={<SlidersHorizontal />} className="relative">
+          <Button variant="secondary" size="lg" prependIcon={<SlidersHorizontal />}>
             Display
-            {diubah && <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-accent-primary" />}
           </Button>
         }
       />
@@ -99,7 +99,7 @@ export function DisplayMenu({
         side="bottom"
         align="end"
         positionerClassName="z-30"
-        className="w-[18.75rem] space-y-4 rounded-sm border border-subtle bg-surface-1 p-3 shadow-raised-100"
+        className="w-[18.75rem] space-y-4 rounded-popover border border-subtle bg-surface-1 p-3 shadow-raised-200"
       >
         {sortOptions.length > 0 && (
           <div className="space-y-1.5">
@@ -109,7 +109,6 @@ export function DisplayMenu({
                 value={view.sort.key}
                 label={urutan?.label ?? "—"}
                 onChange={(key: string) => view.setSort({ ...view.sort, key })}
-                buttonClassName="rounded-md border-subtle bg-layer-2"
                 className="flex-1"
                 input
               >
@@ -119,7 +118,7 @@ export function DisplayMenu({
                   </CustomSelect.Option>
                 ))}
               </CustomSelect>
-              <div className="flex overflow-hidden rounded-md border border-subtle">
+              <div className="flex overflow-hidden rounded-button border border-subtle">
                 {(["asc", "desc"] as const).map((dir) => {
                   const Ikon = dir === "asc" ? ArrowUpNarrowWide : ArrowDownWideNarrow;
                   return (
@@ -130,7 +129,7 @@ export function DisplayMenu({
                       aria-pressed={view.sort.dir === dir}
                       onClick={() => arah(dir)}
                       className={cn("grid size-7 place-items-center", {
-                        "bg-layer-1-active text-primary": view.sort.dir === dir,
+                        "bg-layer-transparent-active text-primary": view.sort.dir === dir,
                         "text-tertiary hover:bg-layer-1-hover": view.sort.dir !== dir,
                       })}
                     >

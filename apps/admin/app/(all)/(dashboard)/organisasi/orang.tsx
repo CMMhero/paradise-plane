@@ -17,6 +17,7 @@ import { Badge } from "@plane/propel/badge";
 import { getButtonStyling } from "@plane/propel/button";
 import type { TAnggotaHierarki } from "@plane/services";
 import { CustomSearchSelect } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
 import { IconAction, Panel, PersonCell } from "@/components/common/paradise-ui";
 // local
@@ -99,13 +100,13 @@ export function PemilihOrang({
       maxHeight="lg"
       placement="bottom-end"
       noResultsMessage={calon.length === 0 ? s.org.no_candidates : s.members.empty}
-      customButtonClassName="w-auto rounded-md hover:bg-transparent"
+      customButtonClassName={cn(getButtonStyling("secondary", "base"), "w-auto")}
       customButton={
-        // Span, bukan Button: CustomSearchSelect sudah membungkusnya dengan <button>.
-        <span className={getButtonStyling("secondary", "sm")}>
+        // Gaya tombol dipasang di <button> milik CustomSearchSelect, isinya cuma ikon + label.
+        <>
           <UserPlus className="size-3.5" aria-hidden />
           {label}
-        </span>
+        </>
       }
       onChange={async (id: string) => {
         const o = calon.find((x) => x.id === id);

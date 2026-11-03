@@ -32,7 +32,7 @@ export function SuperAdminCell({ member, sibuk, onMintaAngkat, onCabut }: Props)
         disabled={sibuk}
         onClick={onCabut}
         title={s.supercell.revoke_hint}
-        className="mx-auto flex items-center gap-1.5 rounded-full bg-warning-subtle px-2.5 py-1 text-11 font-medium text-warning-primary transition-colors hover:bg-danger-subtle hover:text-danger-primary disabled:opacity-50"
+        className="mx-auto flex items-center gap-1.5 rounded-button bg-warning-subtle px-2.5 py-1 text-11 font-medium text-warning-primary transition-colors hover:bg-danger-subtle hover:text-danger-primary disabled:opacity-50"
       >
         <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
         {s.supercell.label}
@@ -46,7 +46,7 @@ export function SuperAdminCell({ member, sibuk, onMintaAngkat, onCabut }: Props)
       disabled={sibuk}
       onClick={onMintaAngkat}
       title={s.supercell.grant_hint}
-      className="hover:border-warning-primary mx-auto flex items-center gap-1.5 rounded-full border border-subtle px-2.5 py-1 text-11 text-placeholder transition-colors hover:text-warning-primary disabled:opacity-50"
+      className="mx-auto flex items-center gap-1.5 rounded-button border border-subtle px-2.5 py-1 text-11 text-placeholder transition-colors hover:border-warning-strong hover:text-warning-primary disabled:opacity-50"
     >
       <Shield className="size-3.5 shrink-0" aria-hidden />
       {s.supercell.grant_label}

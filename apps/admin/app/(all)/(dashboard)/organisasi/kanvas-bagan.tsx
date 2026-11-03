@@ -65,7 +65,7 @@ export function KanvasBagan({ children, judul }: { children: ReactNode; judul?: 
     <div
       className={cn(
         "flex flex-col overflow-hidden border-subtle bg-layer-1",
-        layarPenuh ? "fixed inset-0 z-20 border-0" : "relative h-[calc(100vh-18rem)] min-h-[440px] rounded-lg border"
+        layarPenuh ? "fixed inset-0 z-20 border-0" : "relative h-[calc(100vh-18rem)] min-h-[440px] rounded-card border"
       )}
     >
       <div
@@ -74,14 +74,14 @@ export function KanvasBagan({ children, judul }: { children: ReactNode; judul?: 
       >
         <div className="min-w-0 flex-1 truncate text-13 font-medium text-primary">{judul}</div>
         <span className="hidden text-11 text-tertiary md:inline">{s.org.canvas_hint}</span>
-        <div className="flex items-center gap-0.5 rounded-md border border-subtle bg-layer-1 p-0.5">
+        <div className="flex items-center gap-0.5 rounded-button border border-subtle bg-layer-1 p-0.5">
           <TombolAlat label={s.org.zoom_out} icon={Minus} onClick={zoomKeluar} />
           <Tooltip tooltipContent={s.org.zoom_reset}>
             <button
               type="button"
               onClick={zoomAsli}
               aria-label={s.org.zoom_reset}
-              className="min-w-12 rounded-sm px-1.5 py-1 text-center text-11 font-medium text-secondary tabular-nums hover:bg-layer-transparent-hover hover:text-primary"
+              className="min-w-12 rounded-button px-1.5 py-1 text-center text-11 font-medium text-secondary tabular-nums hover:bg-layer-transparent-hover hover:text-primary"
             >
               {Math.round(tampilan.k * 100)}%
             </button>

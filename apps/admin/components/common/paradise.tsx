@@ -9,12 +9,12 @@
  * and like each other. Add a variant here instead of restyling inline.
  */
 
-import type { ReactNode, SelectHTMLAttributes } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@plane/propel/button";
 import { cn } from "@plane/utils";
-import { selectClass } from "./paradise-styles";
 
 /** Sub-navigation for a sidebar entry that groups several pages. */
 export type TPageTab = { label: string; href: string };
@@ -69,7 +69,7 @@ export function Section({
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
-      {bordered ? <div className="divide-y divide-subtle rounded-md border border-subtle">{children}</div> : children}
+      {bordered ? <div className="divide-y divide-subtle rounded-card border border-subtle">{children}</div> : children}
     </section>
   );
 }
@@ -98,10 +98,6 @@ export function SettingRow({
   );
 }
 
-export function NativeSelect({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={cn(selectClass, className)} />;
-}
-
 /** Filter bar above a list or table. */
 export function Toolbar({ children, trailing }: { children: ReactNode; trailing?: ReactNode }) {
   return (
@@ -116,7 +112,7 @@ export function Toolbar({ children, trailing }: { children: ReactNode; trailing?
 export function StateBox({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "danger" }) {
   return (
     <div
-      className={cn("rounded-md border p-8 text-center text-13", {
+      className={cn("rounded-card border p-8 text-center text-13", {
         "border-subtle text-tertiary": tone === "neutral",
         "border-danger-subtle bg-danger-subtle text-danger-primary": tone === "danger",
       })}
@@ -129,7 +125,7 @@ export function StateBox({ children, tone = "neutral" }: { children: ReactNode; 
 /** Warning banner with an icon slot. */
 export function Callout({ icon, title, children }: { icon?: ReactNode; title: string; children?: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-md border border-warning-subtle bg-warning-subtle p-3">
+    <div className="flex items-start gap-3 rounded-card border border-warning-subtle bg-warning-subtle p-3">
       {icon && <span className="mt-0.5 shrink-0 text-warning-primary">{icon}</span>}
       <div className="text-13">
         <div className="font-medium text-primary">{title}</div>
@@ -142,7 +138,7 @@ export function Callout({ icon, title, children }: { icon?: ReactNode; title: st
 /** Small stat tile used on overview pages. */
 export function StatCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="rounded-md border border-subtle bg-layer-1 px-4 py-3">
+    <div className="rounded-card border border-subtle bg-layer-1 px-4 py-3">
       <div className="text-h5-semibold text-primary">{value}</div>
       <div className="mt-0.5 text-13 text-secondary">{label}</div>
       {hint && <div className="mt-1 text-11 text-placeholder">{hint}</div>}
@@ -166,30 +162,29 @@ export function Pagination({
   prevLabel?: string;
   nextLabel?: string;
 }) {
-  const button =
-    "rounded-md border border-subtle p-1 text-secondary hover:bg-layer-1-hover disabled:cursor-not-allowed disabled:opacity-40";
+  // KEP-64: tombol standar propel ukuran normal, bukan tombol buatan sendiri.
   return (
-    <div className="flex items-center justify-between text-13 text-tertiary">
+    <div className="flex items-center justify-between gap-3 text-13 text-tertiary">
       <span>{summary}</span>
-      <div className="flex gap-1">
-        <button
-          type="button"
+      <div className="flex gap-2">
+        <Button
+          variant="secondary"
+          size="lg"
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
-          className={button}
-          aria-label={prevLabel}
+          prependIcon={<ChevronLeft />}
         >
-          <ChevronLeft className="size-4" />
-        </button>
-        <button
-          type="button"
+          {prevLabel}
+        </Button>
+        <Button
+          variant="secondary"
+          size="lg"
           disabled={page >= totalPages}
           onClick={() => onChange(page + 1)}
-          className={button}
-          aria-label={nextLabel}
+          appendIcon={<ChevronRight />}
         >
-          <ChevronRight className="size-4" />
-        </button>
+          {nextLabel}
+        </Button>
       </div>
     </div>
   );

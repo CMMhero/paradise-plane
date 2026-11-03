@@ -11,6 +11,7 @@ import { ShieldAlert } from "lucide-react";
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { InstanceMemberService, type TInstanceMember } from "@plane/services";
+import { Input } from "@plane/ui";
 // local
 import { cocokKonfirmasiGrant, useGodmodeStrings } from "@/app/i18n/godmode";
 import { inputClass } from "./constants";
@@ -66,14 +67,14 @@ export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
           <p className="text-11 text-secondary">{s.grant.description}</p>
           <p className="text-11 text-secondary">
             {fill(s.grant.confirm_instruction, { phrase: s.grant.confirm_phrase }).split(s.grant.confirm_phrase)[0]}
-            <code className="font-mono rounded bg-layer-2 px-1 py-0.5 text-primary">{s.grant.confirm_phrase}</code>
+            <code className="font-mono rounded-item bg-layer-2 px-1 py-0.5 text-primary">{s.grant.confirm_phrase}</code>
             {fill(s.grant.confirm_instruction, { phrase: s.grant.confirm_phrase }).split(s.grant.confirm_phrase)[1]}
           </p>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <input
+        <Input
           className={`${inputClass} min-w-[240px]`}
           type="text"
           autoComplete="off"
@@ -86,10 +87,10 @@ export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
             if (e.key === "Enter" && frasaCocok && !sibuk) handleKonfirmasi();
           }}
         />
-        <Button variant="primary" size="sm" disabled={sibuk || !frasaCocok} onClick={handleKonfirmasi}>
+        <Button variant="primary" size="base" disabled={sibuk || !frasaCocok} onClick={handleKonfirmasi}>
           {s.grant.confirm}
         </Button>
-        <Button variant="secondary" size="sm" disabled={sibuk} onClick={onTutup}>
+        <Button variant="secondary" size="base" disabled={sibuk} onClick={onTutup}>
           {s.grant.cancel}
         </Button>
       </div>
