@@ -97,8 +97,16 @@ jobs:
       # dari source (Dockerfile.minio) karena registry publik MinIO sudah tidak
       # bisa ditarik tanpa login.
       #
-      # ponytail: tanpa cache layer, build ~25 menit, dan menit Actions gratis untuk
-      # repo public. Tambahkan cache-from/to type=gha kalau waktunya mulai mengganggu.
+      # Cache layer lewat GitHub Actions cache (type=gha), satu scope per image
+      # supaya ketujuh image tidak saling menimpa indeks cache-nya. Tanpa cache,
+      # build ~25 menit. Dengan cache, commit yang hanya mengubah kode memakai
+      # ulang lapisan dependensi: pip di backend, dan pnpm fetch + install di
+      # web/admin/space/live (Dockerfile-nya sengaja memasang dependensi SEBELUM
+      # menyalin source). mode=max wajib: mode=min hanya menyimpan stage akhir
+      # (nginx + aset statis), padahal yang mahal ada di stage installer.
+      # Batas cache GHA 10 GB per repo; kalau penuh, entri lama dibuang otomatis
+      # (LRU) dan build tetap jalan, hanya lebih lambat.
+      #
       # AGPL-3.0 pasal 13 mewajibkan setiap pengguna yang mengakses lewat jaringan
       # ditawari Corresponding Source dari versi yang SEDANG BERJALAN. Karena itu
       # arsipnya dibuat dari commit yang sedang di-build, bukan dari cabang
@@ -118,11 +126,22 @@ jobs:
           git archive --format=tar.gz --prefix="source-${{ github.sha }}/" -o apps/api/plane/agpl-source/corresponding-source.tar.gz HEAD
           ls -lh apps/api/plane/agpl-source/corresponding-source.tar.gz
 
+      # Cache type=gha butuh ACTIONS_RUNTIME_TOKEN dan ACTIONS_CACHE_URL. GitHub
+      # hanya memberikannya ke action, bukan ke langkah `run:` seperti bake di
+      # bawah. Tanpa langkah ini bake gagal dengan "missing ACTIONS_CACHE_URL".
+      - name: Ekspos token cache Actions ke bake
+        uses: crazy-max/ghaction-github-runtime@v3
+
       - name: Build & push (tag = commit sha)
         env:
           APP_RELEASE: ${{ github.sha }}
         run: |
-          docker buildx bake -f docker-compose.yml -f docker-compose.ghcr.yml --push \
+          cache=()
+          for t in web admin space live api proxy plane-minio; do
+            cache+=(--set "$t.cache-from=type=gha,scope=$t")
+            cache+=(--set "$t.cache-to=type=gha,scope=$t,mode=max")
+          done
+          docker buildx bake -f docker-compose.yml -f docker-compose.ghcr.yml --push "${cache[@]}" \
             web admin space live api proxy plane-minio
 
       # Manifest copy, bukan rebuild, hitungan detik.
