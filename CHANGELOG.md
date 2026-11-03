@@ -6,6 +6,366 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-03
+
+### Versi 2.2.0
+
+- **Naik 2.1.0 ke 2.2.0, minor.** Awalnya 2.1.1 (patch teks email), lalu naik
+  ke minor karena rilis yang sama menambah properti tampilan baru. Tetap
+  minor sesudah gelombang 3 Nov sore (kanal sistem, kartu chat, profil,
+  email bermerek): dua migrasi aditif (`0159_obrolan_kartu_sistem`,
+  `0160_profil_kontak`) dengan nilai bawaan, data lama tetap jalan. Filter
+  tampilan lama tetap jalan (properti baru bawaannya menyala).
+  - **DM penugasan lama ikut jadi kartu.** Migrasi `0161_kartu_tugas_lama`
+    mengubah DM "📋 Tugas baru untuk Anda" berbentuk teks dari sebelum 2.2.0
+    menjadi kartu tugas bertombol. Hanya `jenis`/`muatan` yang berubah, `isi`
+    tetap; tugas yang sudah dihapus dibiarkan teks. Bisa dibalik, tanpa langkah
+    operator, jadi tetap minor. Jenis kartu lain (sebutan, komentar, pembaruan,
+    persetujuan, project) belum pernah dikirim ke obrolan sebelum 2.2.0.
+  - **Penempatan: menambah, bukan memindah (KEP-76).** Satu orang = satu
+    jenjang + satu daftar tempat. Staf dan supervisor boleh di banyak
+    departemen; manager boleh memimpin banyak divisi dan sekaligus duduk di
+    departemen di luar divisinya. Galat "Only supervisors can hold multiple
+    departments", "Lowering the level requires a single department first", dan
+    "Set a level before placing this person" dihapus: turun di bawah Manager
+    melepas divisinya otomatis (editor menampilkannya sebelum Simpan),
+    departemennya tetap. Empat jalur tulis yang dulu menimpa baris penempatan
+    PERTAMA (editor jenjang, "Jadikan departemen dari project", pilih
+    departemen sendiri) sekarang lewat satu penulis, `plane/db/penempatan.py`.
+    Editor Member: satu pemilih "Departments & divisions"; "Other project
+    access" hanya menampilkan project yang belum otomatis. Halaman Organisasi:
+    panel "Multi-department supervisors" dilebur ke Members, label calon
+    "moved from" jadi "also in". Tetap minor: tanpa migrasi, data lama tetap
+    berlaku. **Cek sebelum deploy:** baris manager yang menempel di departemen
+    dulu diabaikan dan sekarang memberi akses ke project departemen itu.
+    Hitung dulu di produksi:
+    `JabatanOrganisasi.objects.filter(tingkat__gte=30, tingkat__lt=40, departemen__isnull=False).count()`.
+  - **Cek sebelum deploy.** Bahasa email sekarang mengikuti
+    `Profile.language`, dan bawaannya `en`. Periksa nilai itu di produksi
+    dulu, kalau tidak seluruh kantor menerima email berbahasa Inggris.
+    Indikator online butuh `apps/live` dan Redis.
+  - **Gambar pratinjau tautan ikut tampilan Bara.** `og-image.png` (yang
+    muncul saat tautan dibagikan di WhatsApp, Slack, Teams) sekarang memakai
+    panel arang hangat layar masuk, Plus Jakarta Sans + Geist Mono, dan
+    potongan papan project yang sama dengan `AuthShowcase`. Pembangkitnya
+    pindah dari Pillow ke `paradise/bin/buat-og-image.mjs` +
+    `og-image.html` (dipotret Chrome headless), jadi font dan warnanya sama
+    persis dengan aplikasi. `og:description` ikut jadi "tugas", bukan "issue".
+  - **Sebutan @ di obrolan & kanal divisi/departemen (KEP-74).** Ketik `@` di
+    kotak tulis untuk menyebut orang di percakapan itu (DM: lawan bicara; kanal:
+    anggotanya). Peramban mengirim ID (`sebut`), server menyaringnya ke anggota
+    ruang, menyimpannya di `muatan.sebut`, dan untuk kanal mengirim kartu
+    "menyebut Anda di #kanal" ke ruang Paradise orang itu (saklar
+    `inbox_mention`). Tiap divisi dan departemen otomatis punya kanal privat
+    (`kunci_sistem` `divisi:<id>` / `departemen:<id>`); anggotanya mengikuti
+    penempatan God Mode lewat `plane/db/jangkauan.py`, tanpa tombol
+    undang/keluar. Tanpa migrasi.
+    Sebutan ke diri sendiri sekarang ikut tersorot dan bisa diklik seperti
+    sebutan yang kita kirim. Dulu nama pencocoknya "Anda", bukan nama tampilan
+    asli, jadi `@NamaSaya` di pesan orang lain tetap teks biasa.
+  - **Kutipan balasan bisa diklik.** Mengklik kutipan di gelembung melompat ke
+    pesan aslinya dan menyorotnya sebentar. Kalau pesan itu belum termuat,
+    riwayat lama ditarik sampai 10 halaman; kalau sudah dihapus, muncul kabar
+    "pesan aslinya sudah tidak tersedia".
+  - **Kartu profil: data kosong cukup "Not set".** Awalan "Job title:" dan
+    sejenisnya dibuang; ikon barisnya sudah menunjukkan datanya apa.
+  - **Notifikasi peramban untuk obrolan & inbox.** Dulu kartu sistem operasi
+    hanya untuk tab tersembunyi, jadi Paradise yang terbuka di belakang aplikasi
+    lain cuma berbunyi. Sekarang tiap pesan obrolan dan pemberitahuan inbox
+    juga dikirim lewat peramban (kalau diizinkan), di samping kartu dalam
+    aplikasi. Saklar + tombol uji di popup suara (Chat & panel Notifications),
+    disimpan per peramban (`notif_peramban_nyala`). Gagal di Chrome Android
+    (`new Notification` melempar) jatuh ke kartu dalam aplikasi. Peramban yang
+    ditutup tetap tidak menerima apa pun (itu butuh Web Push).
+  - **Perbaikan: bunyi saat membuka kanal sistem.** Penanda pesan terakhir di
+    halaman Obrolan tidak dikunci per percakapan, jadi berpindah ke percakapan
+    yang sudah ada di cache SWR terbaca sebagai pesan baru dan berbunyi.
+  - **Perbaikan: kartu komentar/sebutan/pembaruan tidak pernah terkirim.**
+    `notification_task` membangun Notification di memori dengan id string,
+    sedangkan `_muat_tugas` memakai kunci UUID, jadi semua kartu dari jalur
+    Celery terlewat diam-diam. Kunci sekarang string, ada uji penjaganya.
+  - **Nama orang bisa diklik (KEP-73).** Assignee di sidebar & peek, Created by
+    di peek, nama pengirim gelembung chat, kutipan balasan, dan `@sebutan`
+    membuka kartu profil. Sebutan chat punya tiga gaya (saya disebut, saya
+    menyebut, orang lain). Data profil kosong tampil satu baris "Not set".
+    Avatar assignee di tabel (spreadsheet), kartu list/kanban, sub-issue,
+    relasi, inbox, dan antrean persetujuan juga membuka kartu profil; sisa sel
+    tetap membuka pemilih assignee. Sel baca-saja dirender tanpa tombol
+    `disabled`, karena tombol itu menelan klik avatar di dalamnya.
+  - **Command palette (Power K) mengikuti fitur yang ada.** Perintah baru:
+    Chat (`gc`), Wiki (`gw`), Dashboard Divisi (`gb`), Stickies (`gt`), Quick
+    links (`gl`), Approvals project (`gq`), Initiatives, kalender Your Work,
+    dan "Open an account setting" (`oa`, tab modal profil termasuk
+    Connections). Semuanya ikut saklar modul God Mode dan akses yang sama
+    dengan sidebar. Dibuang: semua perintah Cycles (KEP-53; `gc` kini milik
+    Chat), Billing di daftar setelan workspace (tak punya halaman), perintah
+    "Documentation" (diganti `gw`), dan "Go to account settings" yang
+    menunjuk `/settings/account` yang tak ada, kini membuka modal profil.
+  - **Batas hapus pesan obrolan.** Pengirim hanya bisa menghapus pesannya
+    sendiri dalam 24 jam; sesudahnya server menjawab 403 dan tombol hapus
+    hilang. Angkanya setelan baru `CHAT_DELETE_WINDOW_HOURS` di God Mode >
+    Features > Chat (0 = tanpa batas), dibenihkan otomatis oleh
+    `configure_instance`, tanpa migrasi.
+  - **Job title dari daftar departemen.** Profile > General memakai pilihan
+    departemen (`GET penempatan-saya/?daftar=1`), bukan kolom bebas. Isian
+    lama yang bukan nama departemen tetap terlihat dan tidak terhapus.
+  - **Obrolan ala WhatsApp.** Kutipan balasan berlatar tipis dengan garis
+    aksen kiri yang ikut sudut kotak, nama pengirim di gelembung masuk, dan
+    avatar di kanal kini milik pengirim tiap pesan (sebelumnya selalu lawan
+    bicara DM, jadi kosong di kanal).
+  - **Ekstensi telepon di kartu profil anggota** selalu tampil berlabel,
+    atau "Not set" kalau belum diisi.
+  - **Popup suara di Obrolan dan panel Pemberitahuan.** Tombol speaker tidak
+    lagi sekadar saklar bisu: klik membuka popup berisi penggeser volume,
+    saklar bisu, dan tombol Pratinjau. Logikanya dipakai bersama dengan
+    Profile > Preferences (`useVolumeSuara`), jadi keduanya menyimpan ke akun
+    yang sama.
+  - **Avatar di layar panggilan.** `Avatar` propel mengabaikan ukuran angka,
+    jadi avatarnya kempis jadi huruf kecil terpotong. Ukuran angka sekarang
+    dipasang inline, dan layar panggilan menampilkan foto profil asli (lawan
+    bicara di DM, tiap peserta dari identitas LiveKit).
+  - **Layar masuk baru (web dan God Mode).** Satu kartu berbingkai: panel
+    kiri memutar empat gambar aplikasi (papan, dashboard divisi, detail
+    tugas, chat) dengan keterangan satu baris, panel kanan form masuk.
+    Daftar fitur bernomor, slogan, tekstur titik, dan baris hak cipta
+    dibuang; merek tampil sebagai "Space Paradise Perkasa", judul form
+    berbahasa Inggris ("Sign in"). Pernyataan "Sistem internal PT Paradise
+    Perkasa" di bawah form ikut dibuang. Komponennya satu, `AuthShowcase` di
+    `@plane/propel/auth-showcase`; warnanya token `--pamer-*` di
+    `paradise-tampilan.css`. Kunci i18n `login_ui.*` diganti di 19 bahasa.
+  - **Sidebar tanpa label ganda.** Grup project di sidebar hanya memakai nama
+    divisi; label departemen di atas tiap project dibuang karena project
+    sudah khusus per departemen dan namanya sama.
+  - **Departemen selalu punya project (KEP-32 dikuatkan).** Kode yang
+    identifier-nya bentrok tidak lagi ditolak: project baru dapat akhiran
+    angka (`P1` -> `P3`). Memindahkan project ke departemen lain langsung
+    membuatkan project pengganti untuk departemen asalnya, dan `project_ids`
+    kosong ditolak. Data lama disusulkan lewat
+    `manage.py lengkapi_project_departemen [--dry-run]` (manual, idempoten).
+  - **Changelog lama ikut tampil.** `release_notes/` sekarang memuat 1.5.0,
+    1.6.0, 2.0.0, dan 2.1.0. Rilis lama yang menyusul diberi tanggal
+    rilisnya, jadi kanal tetap urut versi dan tidak menyalakan lencana
+    belum-dibaca. Di produksi semuanya terbit otomatis saat container API
+    2.2.0 pertama kali start.
+  - **Gaya email.** Garis aksen callout dan catatan kartu ikut lengkung
+    sudut kartu (sel bertingkat, bukan `border-left`). Tombol tidak lagi
+    bergaris bawah di klien yang membuang `!important` inline.
+  - **Saklar bulat penuh.** Lintasan dan kenop toggle (`@plane/ui`
+    ToggleSwitch, `@plane/propel` Switch, saklar channel Slack) kembali
+    `rounded-full`. Pengecualian kedua dari aturan "tidak ada yang bulat penuh
+    kecuali avatar" di KEP-64.
+  - **Breadcrumb God Mode tanpa huruf kapital semua.** Segmen tanpa label
+    dulu tampil `PROJECT-DEFAULTS`; sekarang berlabel ("New project defaults",
+    "Preview", "Workspaces") dan cadangannya kalimat biasa, bukan kapital.
+  - **Toast tanpa garis aksen.** Pita 2px berwarna per jenis di tepi atas
+    toast (`toast-garis`) dibuang. Jenis toast cukup terbaca dari ikonnya.
+  - **Kolom Approval di tampilan tabel.** Status persetujuan punya kolom
+    sendiri di spreadsheet, bukan lagi chip yang menumpang di sel judul.
+    Pemutus tetap melihat tombol Setujui/Tolak di sel itu. Tugas yang tak
+    pernah butuh persetujuan menampilkan strip.
+  - **Display properties mengikuti apa yang ada.** Properti baru `Approval`
+    bisa dimatikan per tampilan dan berlaku di list, kanban, dan tabel. Modul
+    Approvals mati di God Mode = chip, kolom, dan warna baris persetujuan
+    hilang. Menu Setujui/Tolak di titik-tiga sengaja tetap ada supaya tugas
+    yang masih menunggu tidak terkunci selamanya. Estimate tidak ditawarkan di project tanpa
+    estimasi. Created on/Updated on sekarang bisa dimatikan, tapi hanya
+    ditawarkan di tabel karena list dan kanban memang tak menggambarnya.
+  - **Laporan tugas selesai di Dashboard Divisi (KEP-62).** Mode ketiga,
+    "Laporan", di samping Ringkas dan Rinci. Pilih periode (7 hari, 30 hari,
+    bulan ini, bulan lalu), lalu lihat empat angka (selesai dengan pembanding
+    periode sebelumnya, persen tepat waktu, selesai terlambat, work item baru),
+    bilah selesai per divisi, dan judul setiap tugas yang selesai per divisi >
+    project lengkap dengan penanggung jawab, tanggal selesai, dan label tepat
+    waktu/terlambat/tanpa tenggat. Hari dihitung dalam WIB. Daftar di layar
+    dibatasi 500 baris terbaru; CSV (`?unduh=csv`) memuat semuanya. Cakupan
+    sama dengan dashboard: hanya project yang user anggotai. Endpoint baru
+    `GET /api/workspaces/<slug>/divisi-dashboard/laporan/?periode=`, tanpa
+    migrasi.
+  - **Arsip otomatis work item Done (God Mode > Features > Work items).**
+    Super Admin memilih Off / 7 / 14 / 30 / 60 / 90 / 180 / 365 hari; bawaan 90. Task harian 01:00 UTC mengarsipkan work item di grup completed yang
+    sudah selesai selama itu, di semua project. Hitungan dari `completed_at`,
+    baris lama tanpa `completed_at` memakai `updated_at`. Cancelled tidak
+    ikut, intake yang belum diputuskan tidak ikut. Aktivitas dicatat tanpa
+    notifikasi. Setelan "Auto-archive" per project milik upstream tetap jalan
+    di sampingnya. Kunci baru `AUTO_ARCHIVE_DONE_DAYS`, PATCH menolak nilai di
+    luar daftar. Tanpa migrasi. **Catatan deploy:** karena bawaannya 90 hari,
+    putaran pertama sesudah deploy langsung mengarsipkan semua tugas Done
+    yang selesai lebih dari 90 hari lalu. Setel ke Off di God Mode sebelum
+    01:00 UTC kalau itu belum diinginkan. Semuanya bisa dipulihkan dari
+    Archives.
+- Perbaikan teks email persetujuan (rencana 2.1.1):
+  - Email persetujuan tidak lagi tertukar antara atasan dan staf. Subjek untuk
+    atasan diawali "Perlu persetujuanmu: Andi menandai ... selesai", subjek
+    untuk staf diawali "Pekerjaanmu disetujui/ditolak". Isi, tombol, dan kaki
+    email menyebut peran penerima.
+  - Teks email masih memakai alur lama KEP-28 ("tidak lagi terkunci",
+    "kembali ke draft pribadimu"). Sekarang mengikuti KEP-55: disetujui = Done,
+    ditolak = kembali ke In Progress lalu geser ke Done lagi untuk mengajukan
+    ulang.
+  - Kartu inbox ikut diperjelas ("perlu persetujuan Anda untuk menandai tugas
+    ini selesai", "menyetujui pekerjaan Anda"), dan setelan notifikasi
+    "Persetujuan penugasan" berganti nama jadi "Persetujuan selesai".
+  - Super Admin yang ditempatkan di sebuah departemen atau divisi (God Mode >
+    Organization) sekarang muncul di project departemen/divisinya: filter
+    Created by, Assignees, Mentions, dropdown assignee, pemilih mention, dan
+    daftar anggota. Di project lain ia tetap tersembunyi. Satu perbaikan di
+    `plane/db/superadmin.py`, jadi kelima endpoint daftar anggota ikut (KEP-61).
+- Performa dan pemakaian di layar sentuh (ikut 2.2.0, tidak menaikkan versi
+  lagi; semuanya perbaikan tanpa migrasi dan tanpa langkah operator):
+  - **Papan lebih ringan untuk atasan.** `_bawahan_ids` dan `rekan_staf_ids`
+    dulu menembak satu kueri keanggotaan per orang (`bisa-ditugaskan/`, tiap
+    papan dibuka, dan tiap ubah properti). Sekarang satu kueri. Endpoint
+    `bisa-ditugaskan` juga membuang pemeriksaan keanggotaan kedua per bawahan.
+  - **Ubah properti tugas tidak lagi memeriksa izin dua kali.** View PATCH
+    menandai konteks serializer, jadi `galat_ubah_tugas` cukup jalan sekali.
+    Jalur tulis lain (bulk, API token, intake) tetap diperiksa di serializer.
+  - **Daftar Initiatives**: dua kueri agregat untuk seluruh daftar, bukan tiga
+    kueri per initiative.
+  - **Hak akses per kartu tidak diambil ulang terus.** `bisa-ditugaskan` dan
+    status Super Admin tidak lagi dimuat ulang tiap kartu digulir kembali ke
+    layar atau tiap tab difokus; perubahan jabatan terbaca sesudah muat ulang.
+  - **Chat**: SDK panggilan (LiveKit) baru diunduh saat panggilan pertama,
+    bukan tiap chat dibuka. Gema soket dari aksi tab sendiri tidak memicu
+    tarik ulang kedua. Gambar dan video lampiran punya tinggi tetap, jadi
+    percakapan tetap berhenti di pesan terbaru saat gambar selesai dimuat.
+  - **Aksi yang dulu cuma muncul saat hover sekarang terjangkau di HP/tablet**
+    dan lewat papan ketik: tombol pesan chat, ganti nama/hapus materi Wiki,
+    menu Quick Links, tutup pop-up notifikasi, menu bagan organisasi God Mode.
+    Varian Tailwind baru `sentuh:` (= `pointer: coarse`, sama dengan
+    `isMobile`) di `paradise.css`.
+  - **Konfirmasi sebelum menghapus** pesan chat, keluar kanal, dan menghapus
+    materi Wiki (hook `useKonfirmasi`). Sebelumnya satu sentuhan meleset
+    langsung menghapus.
+  - **Persetujuan**: alasan penolakan dan peringatan "belum ada penyetuju"
+    tampil di bawah baris antrean, tidak hanya di tooltip yang tak pernah
+    muncul di layar sentuh. Tombol Setujui/Tolak di kartu kanban lebih besar
+    dan berjarak di layar sentuh.
+  - Tata letak HP: nama kanal/DM panjang terpotong rapi alih-alih mendorong
+    tombol panggilan keluar layar, URL panjang di gelembung chat dipatahkan,
+    kontrol judul sub-topik Wiki jadi ikon saja di bawah `sm`, tabel Trash
+    project memberi ruang untuk nama item, saklar matriks notifikasi lebih
+    besar di layar sentuh, kepala divisi di sidebar lebih kontras.
+  - Halaman Sambungan membedakan "memuat" dari "gagal memuat" dan memberi
+    tombol coba lagi. Tiga kelas mati di God Mode (`text-sm`, `text-lg`,
+    `text-custom-text-300`) diganti token tema.
+  - **Sistem tampilan (KEP-64).** Semua nilai visual jadi token di
+    `packages/tailwind-config/paradise-tampilan.css`; komponen hanya memakai
+    kelas token dan prop komponen (`variant`, `size`), tidak menulis warna,
+    radius, atau padding sendiri.
+    - Latar berona per skema warna, bukan putih/hitam polos. Lima skema:
+      Ember (bawaan, aksen merah merek), Dusk (ungu), Ink (indigo),
+      Forest (hijau), Neutral (abu bawaan Plane, aksen biru). Aksen utama
+      dan aksen kedua ikut skema; tangga `--brand-*` dibangun dari tiga
+      kenop per skema.
+    - Font Plus Jakarta Sans (bawaan) dan Geist Mono untuk kode, dimuat
+      lokal dari fontsource.
+    - Radius bernama, terdaftar juga di tailwind-merge: `control`,
+      `button`, `field`, `item` 0.375 sampai 0.5rem, `card`/`popover`
+      0.75rem, `overlay` 1rem. Tidak ada yang bulat penuh kecuali foto
+      profil, spinner, dan titik status kecil.
+    - Tombol ukuran 24/28/32/36px, tombol ikon setinggi tombol biasa,
+      ukuran `chip` (20px, teks 11px) untuk properti di kartu work item.
+    - Badge persetujuan memakai `Badge` propel dengan varian per status.
+    - Satu kurva gerak untuk semua transisi; tampilan tabel work item
+      berselang-seling (`bg-zebra`); garis aksen toast di tepi atas.
+    - Efek 3D, kilap, dan glow sempat dicoba lalu dicabut atas permintaan
+      user; tampilan kembali datar.
+  - **Preferensi tampilan per orang.** Profile > Preferences: skema warna,
+    font (Plus Jakarta Sans, Inter, Geist, Figtree, Bricolage Grotesque,
+    Archivo, Sora, Shantell Sans, JetBrains Mono, Source Serif 4, font sistem), dan
+    animasi (halus/kurangi). Disimpan di `Profile.theme`, tanpa migrasi.
+    Mengikuti KEP-57: bawaan akun baru di God Mode > Members > Defaults,
+    nilai per orang di panel member.
+  - **Komponen standar di seluruh aplikasi.** `<select>` bawaan peramban,
+    tombol buatan tangan, dan lencana warna sendiri di halaman Paradise
+    dan God Mode diganti `Button`/`IconButton`/`Badge`/`CustomSelect`.
+    `CustomSelect` tampil sama dengan `Input`; `CustomMenu.MenuItem` punya
+    varian `danger`. Pagination God Mode memakai `Button`. Lencana belum
+    dibaca di Chat memakai `CountChip` yang sama dengan Inbox. Nama divisi
+    dan departemen di sidebar tidak lagi huruf kapital semua.
+  - Tombol Filters/Display kadang berganti ukuran dan kadang tidak
+    membuka panel: dua tombol (penuh dan ikon saja) ditukar container query
+    di dalam `<div>` yang dijadikan tombol. Sekarang satu tombol nyata.
+  - **Kanal sistem Announcements dan Changelog.** Ada di tiap workspace,
+    semua anggota otomatis bergabung (migrasi mengisi anggota lama, sinyal
+    dan pengecekan saat daftar chat dibuka menangani yang baru). Tidak bisa
+    ditinggalkan, diganti nama, atau dihapus. Announcements hanya bisa
+    diisi Super Admin dan admin workspace; Changelog hanya-baca.
+  - **Changelog otomatis saat deploy.** Catatan rilis per versi di
+    `apps/api/plane/release_notes/<versi>.json` (Added/Changed/Fixed).
+    `terbitkan_changelog` jalan di entrypoint API sesudah migrasi, tidak
+    pernah memposting dua kali, tidak memposting versi di atas
+    `apps/api/package.json`, dan gagalnya tidak menahan gunicorn.
+  - **Kartu di chat, bukan tautan.** Tiap orang punya ruang pribadi
+    "Paradise" berisi kartu dengan tombol: persetujuan (Setujui/Tolak
+    langsung, tombol hilang begitu ada keputusan), mention, komentar,
+    pembaruan tugas, ditambahkan ke project. Pemicunya baris Notification
+    yang sudah ada, jadi aturan dan setelan inbox tetap berlaku. Penugasan
+    tetap di DM pemberi tugas, sekarang sebagai kartu.
+  - **Log panggilan suara/video** muncul di percakapan (tersambung dengan
+    durasi, atau tak terjawab) dengan tombol Telepon balik.
+  - **Kelola kanal**: direktori kanal dengan pencarian dan pratinjau,
+    panel setelan (ganti nama, topik, anggota, undang, keluarkan, keluar,
+    hapus). Undangan ke kanal privat sekarang hanya oleh pengelola.
+  - **Indikator online/away/offline** di daftar DM, kepala DM, dan daftar
+    anggota kanal, lewat WebSocket `apps/live` (bukan polling).
+  - **Tempel atau seret berkas** ke chat jadi lampiran (maks 5 per pesan).
+    Di komentar dan deskripsi work item, berkas bukan gambar jadi lampiran
+    work item; gambar tetap di dalam teks.
+  - **Volume notifikasi**: slider, bisukan, dan tombol Preview di Profile >
+    Preferences; bawaan untuk akun baru di God Mode.
+  - **Profil anggota.** Klik nama/avatar di mention, aktivitas, komentar,
+    daftar anggota, dan chat membuka kartu: jabatan, departemen/divisi,
+    email, ekstensi telepon, status online, tombol Kirim pesan. Field baru
+    `job_title` dan `phone_extension`, diisi sendiri atau lewat God Mode.
+    Guest tidak melihat email dan ekstensi.
+  - **Super Admin bisa di-mention dan dipilih di filter** bila ditempatkan
+    di departemen (KEP-61). Pencarian mention sekarang menemukan nama
+    lengkap (dulu "Budi Santoso" tidak cocok dengan siapa pun). Akun
+    terhapus tidak lagi ditawarkan.
+  - **Email bermerek.** Ke-26 jenis email memakai satu tata letak: logo
+    Paradise Perkasa (disematkan, karena server hanya LAN), warna dan font
+    aplikasi, tombol gaya aplikasi, versi teks polos. Foto profil di email
+    diperbaiki (`http://hostNone` dan tautan MinIO yang kedaluwarsa),
+    dengan cadangan inisial. Bahasa mengikuti profil penerima. Perintah
+    `kirim_contoh_email` mengirim semua contoh, hanya ke
+    it.ai1@itechmandiri.com. God Mode > Email > Preview menampilkan semua
+    template (ID/EN, desktop/ponsel) tanpa mengirim apa pun.
+  - **Tanggal dan overdue di God Mode > Features.** Isi otomatis start
+    date saat In Progress, isi due date saat Done, perlakuan due date saat
+    selesai lebih awal (tetap, atau mundur ke hari selesai; tugas terlambat
+    tidak pernah digeser), masa tenggang overdue (hari), dan jendela "tepat
+    waktu" Dashboard Divisi. Bawaannya sama dengan perilaku lama.
+  - **God Mode**: bilah "Unsaved changes" dengan Save/Discard yang selalu
+    terlihat di semua formulir, plus peringatan sebelum meninggalkan
+    halaman. Sisa teks Indonesia di God Mode jadi Inggris.
+  - **Layar masuk dirombak** (aplikasi dan God Mode): panel merek di kiri
+    untuk desktop, satu kolom di ponsel. Alur autentikasi tidak berubah.
+  - **Selalu ada jalan kembali.** Penampil gambar punya tombol tutup, Esc,
+    klik latar, Back peramban, dan kontrol zoom (termasuk cubit). Back
+    menutup peek work item, layar penuh Gantt, dan penampil Wiki, bukan
+    meninggalkan halaman.
+  - Reaksi di pesan kanal milik orang lain dulu ditolak (dicek ke pengirim
+    atau penerima saja), sekarang dicek ke keanggotaan kanal.
+  - **Tidak ada lagi kontrol bawaan peramban.** Pilihan bulan/tahun di semua
+    kalender (tanggal work item, rentang tanggal, filter, snooze) dulu
+    `<select>` asli dengan daftar gambaran OS; sekarang `Combobox` propel.
+    Checkbox asli jadi `Checkbox` `@plane/ui`; radio jadi `RadioGroup` propel
+    baru (titik, bukan centang; panah berpindah pilihan; seluruh baris bisa
+    diklik), contohnya mode navigasi Accordion/Tabbed. Kolom tanggal di filter God Mode jadi `Calendar` di `Popover`,
+    dan input/textarea mentah jadi `Input`/`TextArea`. Slider volume tetap
+    `<input type="range">` karena belum ada komponen slider.
+  - **Build dan deploy lebih cepat.** CI memakai cache layer GitHub Actions
+    per image, dan Dockerfile web/admin/space/live memasang dependensi
+    sebelum menyalin source, jadi commit yang hanya mengubah kode tidak
+    mengunduh ulang paket. Rilis sekarang satu perintah dari laptop,
+    `paradise/bin/rilis.sh`. `deploy.sh` gagal kalau migrasi gagal; dulu
+    tetap berakhir SEHAT karena container migrator yang berhenti tidak
+    terlihat di `compose ps`.
+  - **Bahasa email diputuskan: Inggris.** Semua 100 profil produksi
+    `language=en`, jadi email ikut Inggris, sama dengan UI. Tidak ada
+    perubahan data; siapa pun bisa memilih Indonesia di Profile.
+
 ## 2026-11-02
 
 ### Versi 2.1.0

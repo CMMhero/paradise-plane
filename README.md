@@ -41,6 +41,18 @@ tidak diam-diam menimpa akun lama; untuk navigasi dan tata letak ada tombol
 Workspaces > New project defaults (visibilitas, zona waktu, arsip/tutup
 otomatis, akses guest), dan pembuatnya masih bisa mengubahnya di formulir.
 
+**Sistem tampilan (KEP-64).** Semua warna, radius, font, dan gerak berupa token
+di `packages/tailwind-config/paradise-tampilan.css`. Komponen memakai kelas
+token dan prop komponen (`variant`, `size`), tidak menulis warna, radius, atau
+padding sendiri. Latarnya berona sesuai skema, bukan putih atau hitam polos.
+Ada lima skema: Ember (bawaan, aksen merah merek), Dusk, Ink, Forest, dan
+Neutral, masing-masing dengan aksennya sendiri. Hurufnya Plus Jakarta Sans dan
+Geist Mono. Tidak ada yang bulat penuh kecuali foto profil. Di Profile >
+Preferences tiap orang bisa memilih skema warna, font (Plus Jakarta Sans,
+Inter, Geist, Figtree, Bricolage Grotesque, Archivo, Sora, Shantell Sans,
+JetBrains Mono, Source Serif 4, atau font sistem), dan mengurangi animasi; bawaannya
+untuk akun baru ikut aturan God Mode di atas.
+
 **Wiki perusahaan.** Ini yang paling panjang, dikerjain tiga tahap:
 
 Tahap A, halaman bisa nerima semua tipe file, pdf, docx, mp4, zip, sampai
@@ -65,8 +77,19 @@ angka (selesai tepat waktu, selesai 7 hari, terlambat, nunggu persetujuanmu)
 dengan pembanding minggu lalu, status tiap divisi (Lancar / Perlu perhatian /
 Kritis), dan maksimal lima hal yang perlu dilihat. Angka lengkap per departemen,
 jam kerja, dan ekspor CSV (langsung bisa dibuka Excel) ada di mode Rinci.
+Mode ketiga, Laporan, menjawab "apa saja yang sudah selesai": pilih 7 hari, 30
+hari, bulan ini, atau bulan lalu, lalu lihat jumlah selesai (dibanding periode
+sebelumnya), persen tepat waktu, bilah per divisi, dan judul tiap tugas yang
+selesai per divisi > project beserta penanggung jawab dan tanggalnya. Daftar
+lengkapnya bisa diunduh sebagai CSV.
 Ambang statusnya diatur di God Mode > Features. Yang dihitung cuma project yang
 kamu ikuti.
+
+**Arsip otomatis.** Work item Done yang sudah lama selesai pindah sendiri ke
+Archives. Lamanya dipilih Super Admin di God Mode > Features > Work items: Off,
+7, 14, 30, 60, 90 (bawaan), 180, atau 365 hari. Berlaku di semua project,
+dicek sekali sehari, dan yang dibatalkan nggak ikut. Yang sudah diarsipkan
+bisa dipulihkan dari Archives.
 
 **Initiatives.** Sasaran tingkat workspace yang nyambungin beberapa project
 divisi, progresnya dihitung dari semua work item di project yang ketaut.
@@ -95,6 +118,42 @@ Mode, baik untuk satu orang maupun untuk bawaan staf dan pimpinan. Daftar
 saklarnya cuma ditulis sekali di tiap sisi (`preferensi_email.py` dan
 `notification-preferences.ts`), jadi tiga layar itu nggak bisa beda isi.
 
+**Chat yang jadi pusat kabar.** Tiap workspace punya kanal sistem
+Announcements dan Changelog, semua orang otomatis jadi anggota. Changelog terisi
+sendiri tiap deploy dari `apps/api/plane/release_notes/<versi>.json`: tulis
+berkas versi baru (entri Added/Changed/Fixed) bareng bump versinya, API yang
+memposting saat start, sekali saja. Kabar tugas (persetujuan, mention,
+komentar, pembaruan) datang sebagai kartu bertombol di ruang pribadi
+"Paradise", dan Setujui/Tolak bisa langsung dari kartunya. Ada juga log
+panggilan, indikator online, kelola kanal, dan tempel/seret lampiran.
+
+Ketik `@` di kotak tulis untuk menyebut orang yang ada di percakapan itu. Di
+kanal, orang yang disebut juga dapat kartu di ruang Paradise-nya. Tiap divisi
+dan departemen punya kanal privat sendiri yang anggotanya ikut penempatan di God
+Mode (`plane/utils/kanal_organisasi.py`, dipanggil dari `plane/db/jangkauan.py`):
+tambahkan orang ke departemen lain, ia ikut masuk kanalnya; cabut, ia keluar.
+Direktur tidak diikutkan otomatis.
+
+**Penempatan orang (KEP-76).** Tiap orang punya satu jenjang (Staf, Supervisor,
+Manager, Direktur) dan satu daftar tempat. Semua jenjang boleh di banyak
+departemen; manager juga memimpin satu atau beberapa divisi. Menambah tempat tidak
+pernah memindahkan tempat lama, dan menurunkan manager melepas divisinya saja.
+Semua tulisan penempatan lewat `plane/db/penempatan.py`. Contoh, menambah Ani ke
+departemen kedua dari God Mode:
+
+```
+POST /api/instances/hierarki/
+{ "member_id": "<ani>", "departemen_id": "<dep IT-SAP>" }   # tambah satu
+{ "member_id": "<ani>", "departemen_ids": ["<IT-AI>", "<IT-SAP>"] }  # daftar penuh
+{ "member_id": "<budi>", "divisi_ids": ["<Sales>", "<HRGA>"] }       # manager 2 divisi
+```
+
+**Email satu desain.** Semua email lewat `plane/utils/email_merek.py` dan
+`templates/emails/base.html`, logo dan foto disematkan karena server cuma ada
+di LAN. Buat ngecek tampilannya: God Mode > Email > Preview, atau kirim semua
+contoh ke kotak uji dengan `python manage.py kirim_contoh_email --kirim` (cuma
+mau ngirim ke it.ai1@itechmandiri.com).
+
 **ACL per folder Wiki.** Pemetaan folder ke divisi, sub-halaman mewarisi dari
 induknya, admin bisa override. Sengaja nggak nambah dependency: keanggotaan
 divisi itu berubah-ubah, jadi grant statis malah gampang melenceng dari
@@ -107,8 +166,13 @@ pelajaran:
 
 - **CI/CD**, tiap push ke `main` bikin 6 image ke GHCR. Tag-nya pakai commit
   SHA, terus `latest` digeser pakai `imagetools create` (nyalin manifest, bukan
-  build ulang). Deploy di server manual lewat `paradise/bin/deploy.sh`, rollback
-  tinggal `APP_RELEASE=<sha>`.
+  build ulang). Build-nya pakai cache layer GitHub Actions, dan Dockerfile
+  Node-nya memasang dependensi sebelum menyalin source, jadi commit yang cuma
+  mengubah kode nggak mengunduh ulang semua paket. Rilis cukup satu perintah
+  dari laptop, `paradise/bin/rilis.sh`: nunggu `latest` di GHCR geser ke
+  commit itu, backup, deploy terlepas dari SSH, lalu nyocokin versi yang
+  dilayani. `deploy.sh` gagal kalau migrasi gagal (dulu tetap bilang SEHAT).
+  Rollback tinggal `APP_RELEASE=<sha>`.
 - **Backup**, `pg_dump` terkompresi, ada retensi, hasilnya dicek nggak kosong.
   Dan dia **nunggu** Postgres beneran siap, bukan langsung nyerah pas Docker
   belum naik. Ini hasil dua pagi berturut-turut backup gagal.
