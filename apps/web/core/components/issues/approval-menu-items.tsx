@@ -51,6 +51,8 @@ export const useMenuPersetujuan = (workspaceSlug: string | undefined, issue: TIs
 
   const modal = (
     <ApprovalRejectModal
+      workspaceSlug={workspaceSlug}
+      projectId={issue.project_id ?? undefined}
       isOpen={modalTolak}
       isSubmitting={!!baris && prosesId === baris.id}
       onClose={() => setModalTolak(false)}

@@ -235,7 +235,10 @@ ul[data-type="taskList"] li[data-checked="true"] {
 
 /* code block, inline code */
 .ProseMirror pre {
-  font-family: JetBrainsMono, monospace;
+  /* Paradise: "JetBrainsMono" tidak pernah dimuat (fontsource bernama
+     "JetBrains Mono Variable"), jadi blok kode jatuh ke monospace sistem.
+     Pakai font kode aplikasi, yang tidak ikut pilihan font antarmuka. */
+  font-family: var(--font-kode, monospace);
   tab-size: 2;
 }
 

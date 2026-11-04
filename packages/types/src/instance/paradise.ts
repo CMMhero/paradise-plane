@@ -14,6 +14,9 @@ export type TInstanceParadiseToggleKeys =
   | "HIERARKI_GERBANG_TUGAS"
   | "AUTO_START_DATE_ON_START"
   | "AUTO_DUE_DATE_ON_DONE"
+  | "ENABLE_EMAIL_BATCH"
+  | "ENABLE_EMAIL_THREADING"
+  | "ENABLE_EMAIL_ACTIVE_ONLY"
   | TInstanceParadiseModuleKeys;
 
 /** Saklar modul selalu `ENABLE_<NAMA MODUL>`, sama seperti `MODUL_APLIKASI` di server. */
@@ -31,7 +34,9 @@ export type TInstanceParadiseNumberKeys =
   | "DUE_DATE_ON_EARLY_DONE"
   | "OVERDUE_GRACE_DAYS"
   | "DASHBOARD_ON_TIME_WINDOW_DAYS"
-  | "CHAT_DELETE_WINDOW_HOURS";
+  | "CHAT_DELETE_WINDOW_HOURS"
+  | "EMAIL_BATCH_DELAY_MINUTES"
+  | "EMAIL_ACTIVE_DAYS";
 
 export type TInstanceGoogleCalendarConfigurationKeys = "GOOGLE_CALENDAR_CLIENT_ID" | "GOOGLE_CALENDAR_CLIENT_SECRET";
 
@@ -65,3 +70,39 @@ export type TParadiseModule =
   // Fitur di dalam work item & setelan project
   | "time_tracking"
   | "estimates";
+
+/**
+ * Settings registry served by `GET /api/instances/settings/`. The server is the
+ * only place that knows defaults, ranges, choices and which rules are sensitive;
+ * God Mode renders whatever the registry says and never mirrors it.
+ */
+export type TInstanceSettingKind = "toggle" | "number" | "choice" | "time" | "day_list" | "weekday_set" | "timezone";
+
+export type TInstanceSetting = {
+  key: string;
+  kind: TInstanceSettingKind;
+  /** Always a string: "0"/"1", "30", "08:30", "-3,0,3", "1,2,3,4,5", "Asia/Jakarta". */
+  default: string;
+  value: string;
+  /** Number kind only. */
+  min: number | null;
+  max: number | null;
+  /** Choice kind only: the allowed integer values. */
+  choices: number[] | null;
+  /** Changing it needs the typed confirmation phrase and is written to the audit log. */
+  sensitive: boolean;
+};
+
+export type TInstanceSettingsResponse = { settings: TInstanceSetting[] };
+
+export type TInstanceSettingsUpdate = {
+  values: Record<string, string>;
+  /** Required by the server when a sensitive key changes. */
+  confirm?: string;
+};
+
+/** Error body of `PATCH /api/instances/settings/`: per-key messages, or `confirm_required`. */
+export type TInstanceSettingsError = {
+  errors?: Record<string, string>;
+  error?: string;
+};

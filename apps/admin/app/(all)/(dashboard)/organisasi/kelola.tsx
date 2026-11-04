@@ -5,8 +5,8 @@
  * See the LICENSE file for details.
  *
  * Satu tempat untuk semua modal kelola: buat/ubah/hapus divisi & departemen,
- * tambah manager atau anggota, pindah departemen + ganti project. Bagan, pohon,
- * dan panel detail hanya mengirim `TPerintahKelola`; aturan penempatan tetap di
+ * tambah manager atau anggota, pindah departemen + ganti project. Papan dan menu
+ * "..." hanya mengirim `TPerintahKelola`; aturan penempatan tetap di
  * `aksi` halaman, jadi tidak ada salinan kedua.
  */
 
@@ -205,7 +205,7 @@ function ModalTambahOrang({
               return (
                 <li key={o.id} className="flex items-center gap-3 px-3 py-2">
                   <div className="min-w-0 flex-1">
-                    <PersonCell name={o.display_name} email={ket || o.email} size="sm" />
+                    <PersonCell userId={o.id} name={o.display_name} email={ket || o.email} size="sm" />
                   </div>
                   <BadgeJabatan tingkat={o.tingkat} size="sm" />
                   <Button

@@ -18,7 +18,7 @@ from drf_spectacular.utils import OpenApiExample, OpenApiRequest
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
-from plane.utils.plan_limits import batas_ukuran_unggahan
+from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.db.models import FileAsset, User, Workspace
 from plane.app.permissions import WorkspaceUserPermission
 from plane.api.views.base import BaseAPIView
@@ -119,11 +119,11 @@ class UserAssetEndpoint(BaseAPIView):
         # get the asset key
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
         entity_type = request.data.get("entity_type", False)
 
         # Check if the file size is within the limit
-        size_limit = min(size, settings.FILE_SIZE_LIMIT)
+        size_limit = min(size, batas_unggah_byte())
 
         #  Check if the entity type is allowed
         if not entity_type or entity_type not in ["USER_AVATAR", "USER_COVER"]:
@@ -292,11 +292,11 @@ class UserServerAssetEndpoint(BaseAPIView):
         # get the asset key
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
         entity_type = request.data.get("entity_type", False)
 
         # Check if the file size is within the limit
-        size_limit = min(size, settings.FILE_SIZE_LIMIT)
+        size_limit = min(size, batas_unggah_byte())
 
         #  Check if the entity type is allowed
         if not entity_type or entity_type not in ["USER_AVATAR", "USER_COVER"]:
@@ -518,7 +518,7 @@ class GenericAssetEndpoint(BaseAPIView):
         """
         name = sanitize_filename(request.data.get("name"))
         type = request.data.get("type")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
         project_id = request.data.get("project_id")
         external_id = request.data.get("external_id")
         external_source = request.data.get("external_source")

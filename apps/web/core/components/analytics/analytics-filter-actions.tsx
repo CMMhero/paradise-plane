@@ -14,7 +14,7 @@ import { ProjectSelect } from "./select/project";
 
 const AnalyticsFilterActions = observer(function AnalyticsFilterActions() {
   const { selectedProjects, updateSelectedProjects } = useAnalytics();
-  const { joinedProjectIds } = useProject();
+  const { sidebarProjectIds } = useProject();
   return (
     <div className="flex items-center justify-end gap-2">
       <ProjectSelect
@@ -22,7 +22,7 @@ const AnalyticsFilterActions = observer(function AnalyticsFilterActions() {
         onChange={(val) => {
           updateSelectedProjects(val ?? []);
         }}
-        projectIds={joinedProjectIds}
+        projectIds={sidebarProjectIds}
       />
       {/* <DurationDropdown
         buttonVariant="border-with-text"

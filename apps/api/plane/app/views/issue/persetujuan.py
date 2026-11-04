@@ -49,13 +49,46 @@ from plane.db.models import (
     STATUS_PERSETUJUAN_DITOLAK,
     STATUS_PERSETUJUAN_MENUNGGU,
 )
-from plane.utils.hierarki import boleh_memutuskan, calon_penyetuju, gerbang_aktif, peta_tingkat, tingkat_anggota
+from plane.db.models import TINGKAT_SUPERVISOR
+from plane.utils.hierarki import (
+    boleh_memutuskan,
+    calon_penyetuju,
+    gerbang_aktif,
+    peta_tingkat,
+    saring_penyetuju,
+    tingkat_anggota,
+)
+from plane.utils.saklar_instance import (
+    APPROVAL_REJECT_REASON_REQUIRED,
+    APPROVAL_REQUIRED_BELOW_LEVEL,
+    ASSIGN_DOWN_ONLY,
+    DUE_DATE_CHANGE_RULE,
+    TASK_DELETE_RULE,
+    saklar_aktif,
+    setelan_angka,
+)
 
 # Batas baris yang SUDAH diputuskan dalam satu balasan GET. Baris menunggu tidak
 # pernah dipotong (itu pekerjaan yang harus dilihat); riwayat keputusan
 # (`peran=pemohon`, tanpa `peran`, `?tugas=`) diambil 200 terbaru saja. Tanpa batas,
 # staf yang rajin mengajukan membuat daftarnya tumbuh selamanya.
 BATAS_RIWAYAT = 200
+
+
+def _aturan_tugas():
+    """Aturan kerja God Mode (KEP-83) yang perlu dicerminkan tampilan.
+
+    Klien memakainya untuk menyembunyikan tombol yang pasti ditolak server
+    (`use-aturan-tugas.ts`); penegaknya tetap `task_access` dan `hierarki`.
+    Nilai pilihan = konstanta di `plane/utils/saklar_instance.py`.
+    """
+    return {
+        "hapus_tugas": setelan_angka(TASK_DELETE_RULE),
+        "ganti_tenggat": setelan_angka(DUE_DATE_CHANGE_RULE),
+        "persetujuan_di_bawah": setelan_angka(APPROVAL_REQUIRED_BELOW_LEVEL),
+        "alasan_tolak_wajib": saklar_aktif(APPROVAL_REJECT_REASON_REQUIRED),
+        "tugaskan_ke_bawah_saja": saklar_aktif(ASSIGN_DOWN_ONLY),
+    }
 
 
 def _q_daftar(user):
@@ -92,11 +125,29 @@ class _Wewenang:
             )
         return self._cache[kunci]
 
+    def _sah_untuk(self, baris):
+        """Calon penyetuju yang sah untuk pemohon baris ini (`saring_penyetuju`).
+
+        Pengajuan staf: daftar project apa adanya, tanpa kueri tambahan. Pengajuan
+        atasan (APPROVAL_REQUIRED_BELOW_LEVEL dinaikkan, KEP-83): hanya yang lebih
+        tinggi dari pemohon, dan "boleh" dihitung ulang dari daftar yang tersaring.
+        """
+        calon, boleh = self._hitung(baris.workspace_id, baris.project_id)
+        peta = self._peta[str(baris.workspace_id)]
+        tingkat_pemohon = peta.get(baris.pemohon_id)
+        if tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR:
+            return calon, boleh
+        calon_ids = {c["id"] for c in calon}
+        sah = saring_penyetuju([uid for uid in peta if str(uid) in calon_ids], peta, baris.pemohon_id)
+        sah_str = {str(uid) for uid in sah}
+        tersaring = [c for c in calon if c["id"] in sah_str]
+        return tersaring, boleh_memutuskan(self.user, baris.workspace_id, baris.project_id, penyetuju=sah)
+
     def penyetuju(self, baris):
-        return self._hitung(baris.workspace_id, baris.project_id)[0]
+        return self._sah_untuk(baris)[0]
 
     def boleh(self, baris):
-        return self._hitung(baris.workspace_id, baris.project_id)[1]
+        return self._sah_untuk(baris)[1]
 
 
 def _serial(baris, peran, boleh_memutuskan, penyetuju=None):
@@ -215,6 +266,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     # Klien memakai dua kunci ini untuk mencerminkan `galat_ubah_tugas`:
                     # gerbang mati = tidak ada kunci edit; Super Admin dibaca klien sendiri.
                     "gerbang_aktif": gerbang_aktif(),
+                    "aturan": _aturan_tugas(),
                     "bawahan_ids": [],
                 }
             )
@@ -232,6 +284,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "tingkat_saya": tingkat,
                     "user_ids": [str(u) for u in anggota],
                     "gerbang_aktif": True,
+                    "aturan": _aturan_tugas(),
                     # Hak UBAH direktur tetap "assignee-nya bawahan saya" (`galat_ubah_tugas`),
                     # lebih sempit daripada hak menugaskan "semua anggota".
                     "bawahan_ids": [str(u) for u in _bawahan_ids(saya, project.workspace_id, project_id)],
@@ -250,6 +303,14 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "member_id", flat=True
                 )
             )
+            # KEP-83: ASSIGN_DOWN_ONLY dimatikan = `galat_penugasan` tidak lagi
+            # memeriksa jenjang penerima di divisi yang saya awasi, jadi seluruh
+            # anggotanya boleh dipilih. Hak UBAH (`bawahan_ids`) tetap per jenjang.
+            if not saklar_aktif(ASSIGN_DOWN_ONLY):
+                from plane.utils.hierarki import divisi_diawasi  # noqa: PLC0415
+
+                if str(project_id) in {str(p) for p in divisi_diawasi(saya, project.workspace_id)}:
+                    boleh |= anggota
             boleh &= anggota
             users = {u.id: u for u in User.objects.filter(id__in=boleh)}
             return Response(
@@ -257,6 +318,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "mode": "bawahan",
                     "tingkat_saya": tingkat,
                     "gerbang_aktif": True,
+                    "aturan": _aturan_tugas(),
                     # Tanpa saringan anggota project: sama persis dengan yang dibaca `galat_ubah_tugas`.
                     "bawahan_ids": [str(u) for u in bawahan],
                     "users": [
@@ -279,6 +341,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 "mode": "rekan" if len(boleh) > 1 else "diri-sendiri",
                 "tingkat_saya": tingkat,
                 "gerbang_aktif": True,
+                "aturan": _aturan_tugas(),
                 # Rekan boleh DIAJAK, bukan disunting tugasnya: staf hanya mengubah tugas yang melibatkan dirinya.
                 "bawahan_ids": [],
                 "users": [
@@ -294,6 +357,45 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
     """`GET` daftar · `POST` putuskan (setujui/tolak)."""
 
     permission_classes = [ProjectEntityPermission]
+
+    @staticmethod
+    def _boleh_putuskan(user, baris, wewenang):
+        """Predikat TUNGGAL "user ini boleh memutuskan baris ini".
+
+        Dipakai tombol di daftar, penyaring antrean, dan (lewat `wewenang.boleh`)
+        pemeriksaan 403 di POST, jadi antrean tidak pernah menampilkan baris yang
+        akan ditolak server.
+        """
+        return (
+            baris.pemohon_id != user.id
+            and baris.status == STATUS_PERSETUJUAN_MENUNGGU
+            and wewenang.boleh(baris)
+        )
+
+    def _saring_antrean(self, user, semua, wewenang, hanya_putusan=False):
+        """Buang baris orang lain yang tidak boleh saya putuskan; satu baris terbaru per tugas.
+
+        * Milik saya (pemohon) selalu tampil, apa pun statusnya.
+        * Milik orang lain hanya tampil kalau menunggu DAN saya penyetujunya yang sah.
+        * Per tugas hanya baris TERBARU yang tampil: tugas yang ditolak lalu diajukan
+          ulang punya baris `ditolak` lama dan baris `menunggu` baru, dan yang lama
+          cuma riwayat (riwayat lengkap tetap ada lewat `?tugas=`).
+        `hanya_putusan` (`peran=penyetuju`, tab "perlu keputusan saya"): hanya baris
+        yang boleh saya putuskan, jadi pengajuan saya sendiri tidak ikut.
+        `semua` sudah terurut terbaru dulu; `wewenang` men-cache per project, jadi
+        tidak ada kueri per baris.
+        """
+        terlihat = set()
+        hasil = []
+        for baris in semua:
+            kunci = baris.issue_id or baris.id
+            if kunci in terlihat:
+                continue
+            terlihat.add(kunci)
+            boleh = self._boleh_putuskan(user, baris, wewenang)
+            if boleh or (not hanya_putusan and baris.pemohon_id == user.id):
+                hasil.append(baris)
+        return hasil
 
     def get(self, request, slug, project_id):
         sudut = request.query_params.get("peran")
@@ -333,15 +435,13 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             semua.sort(key=lambda b: b.created_at, reverse=True)
 
         wewenang = _Wewenang(request.user)
+        if not tugas:
+            semua = self._saring_antrean(request.user, semua, wewenang, hanya_putusan=sudut == "penyetuju")
         hasil = []
         for baris in semua:
             # Atasan yang sah saja; Super Admin hanya kalau divisi tanpa atasan sama
             # sekali (lihat `boleh_memutuskan`). Dihitung sekali per project.
-            boleh = (
-                baris.pemohon_id != request.user.id
-                and baris.status == STATUS_PERSETUJUAN_MENUNGGU
-                and wewenang.boleh(baris)
-            )
+            boleh = self._boleh_putuskan(request.user, baris, wewenang)
             hasil.append(
                 _serial(
                     baris,
@@ -354,6 +454,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         return Response(
             {
                 "gerbang_aktif": gerbang_aktif(),
+                "aturan": _aturan_tugas(),
                 "tingkat_saya": tingkat_anggota(request.user.id, project.workspace_id),
                 "jumlah": len(hasil),
                 "hasil": hasil,
@@ -398,9 +499,10 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             )
 
         alasan = (request.data.get("alasan") or "").strip()
-        if aksi == "tolak" and not alasan:
+        if aksi == "tolak" and not alasan and saklar_aktif(APPROVAL_REJECT_REASON_REQUIRED):
             # Penolakan tanpa alasan memaksa orang menebak, dan tebakan atas alasan orang
-            # lain adalah cara termurah kehilangan kepercayaan.
+            # lain adalah cara termurah kehilangan kepercayaan. KEP-83: wajibnya diatur
+            # di God Mode (bawaan menyala = perilaku lama).
             return Response({"error": "Alasan penolakan wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
 
         baris.status = STATUS_PERSETUJUAN_DISETUJUI if aksi == "setujui" else STATUS_PERSETUJUAN_DITOLAK
@@ -442,23 +544,34 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
     def _selesaikan_tugas(self, request, baris):
         """Pindahkan tugas ke status selesai setelah atasan menyetujui.
 
-        Tugas biasanya SUDAH berstatus selesai selagi menunggu (hanya ditandai);
-        ini memastikannya kalau ada yang memindahkannya keluar di tengah jalan.
-        Status tujuan: status `completed` pertama di project (urut sequence).
+        Sejak KEP-55 tugas TETAP di status semula selama menunggu, jadi jalur
+        biasanya memindahkan tugas ke status `completed` pertama di project (urut
+        sequence). Waktu selesainya (`completed_at`, dan Due date otomatis yang
+        dihitung darinya) mengikuti APPROVAL_FINISH_TIME (KEP-84): bawaan = saat
+        pengajuan ini dibuat (`baris.created_at`; ajukan ulang = baris baru, jadi
+        waktu pengajuan TERAKHIR), atau saat disetujui.
         """
         from plane.db.models import Issue, State  # noqa: PLC0415
+        from plane.utils.saklar_instance import (  # noqa: PLC0415
+            APPROVAL_FINISH_TIME,
+            SELESAI_SAAT_DIAJUKAN,
+            setelan_angka,
+        )
 
         issue = Issue.objects.filter(pk=baris.issue_id).select_related("state", "project").first()
         if issue is None:
             return
-        # Masih berstatus selesai sejak diajukan (jalur biasa): statusnya tak
-        # berpindah, jadi tanggal selesai otomatis (KEP-41) diisi di sini.
+        # Data lama (sebelum KEP-55): tugas sudah berstatus selesai sejak diajukan.
+        # Statusnya tak berpindah, jadi tanggal selesai otomatis (KEP-41) diisi di
+        # sini dari `completed_at` yang sudah ada. Tidak diubah oleh KEP-84.
         if issue.state is not None and issue.state.group == "completed":
             issue.isi_tanggal_selesai(actor_id=request.user.id)
             return
         selesai = State.objects.filter(project_id=baris.project_id, group="completed").order_by("sequence").first()
         if selesai is None:
             return
+        if setelan_angka(APPROVAL_FINISH_TIME) == SELESAI_SAAT_DIAJUKAN:
+            issue._completed_at_override = baris.created_at
         _pindahkan_tugas(request.user, issue, selesai)
 
     def _kembalikan_tugas(self, request, baris):

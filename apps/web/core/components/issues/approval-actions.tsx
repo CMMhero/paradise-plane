@@ -29,7 +29,7 @@ import { Tooltip } from "@plane/propel/tooltip";
 import type { TIssue } from "@plane/types";
 import { EModalPosition, EModalWidth, ModalCore, TextArea } from "@plane/ui";
 // hooks
-import { ambilPerubahanKeputusan, useSetelStatusPersetujuan } from "@/hooks/use-aturan-tugas";
+import { ambilPerubahanKeputusan, useAturanInstance, useSetelStatusPersetujuan } from "@/hooks/use-aturan-tugas";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
 import { PersetujuanService, type TPersetujuanPenugasan } from "@/services/persetujuan.service";
@@ -156,11 +156,16 @@ type TApprovalRejectModalProps = {
   onClose: () => void;
   /** Kembalikan true kalau berhasil, supaya isian dibersihkan. */
   onConfirm: (alasan: string) => Promise<boolean>;
+  /** Project tugasnya; kosong = dibaca dari URL. Aturan wajib-alasan berlaku se-instance. */
+  workspaceSlug?: string;
+  projectId?: string;
 };
 
 export function ApprovalRejectModal(props: TApprovalRejectModalProps) {
-  const { isOpen, isSubmitting, onClose, onConfirm } = props;
+  const { isOpen, isSubmitting, onClose, onConfirm, workspaceSlug, projectId } = props;
   const { t } = useTranslation();
+  // God Mode: alasan penolakan wajib atau opsional (bawaan wajib, sama dengan server lama).
+  const { alasan_tolak_wajib: alasanWajib } = useAturanInstance(workspaceSlug, projectId);
   const [alasan, setAlasan] = useState("");
 
   const handleClose = () => {
@@ -170,7 +175,7 @@ export function ApprovalRejectModal(props: TApprovalRejectModalProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!alasan.trim()) return;
+    if (alasanWajib && !alasan.trim()) return;
     if (await onConfirm(alasan)) setAlasan("");
   };
 
@@ -180,14 +185,26 @@ export function ApprovalRejectModal(props: TApprovalRejectModalProps) {
         <div className="space-y-5 p-5">
           <div className="space-y-1">
             <h3 className="text-18 font-medium text-primary">{t("issue.approval.modal.reject_title")}</h3>
-            <p className="text-13 text-secondary">{t("issue.approval.modal.reject_description")}</p>
+            <p className="text-13 text-secondary">
+              {alasanWajib
+                ? t("issue.approval.modal.reject_description")
+                : t("aturan_tugas_ui.reject_description_optional")}
+            </p>
           </div>
           <TextArea
             value={alasan}
             onChange={(e) => setAlasan(e.target.value)}
             maxLength={2000}
-            placeholder={t("issue.approval.modal.reason_placeholder")}
-            aria-label={t("issue.approval.modal.reason_placeholder")}
+            placeholder={
+              alasanWajib
+                ? t("issue.approval.modal.reason_placeholder")
+                : t("aturan_tugas_ui.reason_placeholder_optional")
+            }
+            aria-label={
+              alasanWajib
+                ? t("issue.approval.modal.reason_placeholder")
+                : t("aturan_tugas_ui.reason_placeholder_optional")
+            }
             className="min-h-24 w-full resize-none text-13"
           />
         </div>
@@ -195,7 +212,13 @@ export function ApprovalRejectModal(props: TApprovalRejectModalProps) {
           <Button variant="secondary" size="lg" onClick={handleClose}>
             {t("issue.approval.actions.cancel")}
           </Button>
-          <Button variant="error-fill" size="lg" type="submit" loading={isSubmitting} disabled={!alasan.trim()}>
+          <Button
+            variant="error-fill"
+            size="lg"
+            type="submit"
+            loading={isSubmitting}
+            disabled={alasanWajib && !alasan.trim()}
+          >
             {t("issue.approval.actions.reject")}
           </Button>
         </div>
@@ -297,6 +320,8 @@ export const ApprovalDecisionButtons = observer(function ApprovalDecisionButtons
         </>
       )}
       <ApprovalRejectModal
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
         isOpen={modalTolak}
         isSubmitting={sedangProses}
         onClose={() => setModalTolak(false)}

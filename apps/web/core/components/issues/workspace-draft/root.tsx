@@ -20,6 +20,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { useWorkspaceIssueProperties } from "@/hooks/use-workspace-issue-properties";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 // components
 import { DraftIssueBlock } from "./draft-issue-block";
 import { WorkspaceDraftEmptyState } from "./empty-state";
@@ -43,6 +44,8 @@ export const WorkspaceDraftIssuesRoot = observer(function WorkspaceDraftIssuesRo
     [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     EUserPermissionsLevel.WORKSPACE
   );
+  // Paradise: staf / member biasa tidak boleh membuat project.
+  const bolehBuatProject = useBolehBuatProject(workspaceSlug);
 
   //swr hook for fetching issue properties
   useWorkspaceIssueProperties(workspaceSlug);
@@ -77,7 +80,7 @@ export const WorkspaceDraftIssuesRoot = observer(function WorkspaceDraftIssuesRo
             onClick: () => {
               toggleCreateProjectModal(true);
             },
-            disabled: !hasMemberLevelPermission,
+            disabled: !hasMemberLevelPermission || !bolehBuatProject,
             variant: "primary",
           },
         ]}
@@ -99,15 +102,19 @@ export const WorkspaceDraftIssuesRoot = observer(function WorkspaceDraftIssuesRo
           {loader === "pagination" && issueIds.length >= 0 ? (
             <WorkspaceDraftIssuesLoader items={1} />
           ) : (
-            <div
-              className={cn("h-11 border-b border-subtle bg-surface-1 p-3 pl-6 text-13 font-medium transition-all", {
-                "cursor-pointer text-accent-primary underline-offset-2 hover:text-accent-secondary hover:underline":
-                  paginationInfo?.next_page_results,
-              })}
+            <button
+              type="button"
+              className={cn(
+                "h-11 w-full border-b border-subtle bg-surface-1 p-3 pl-6 text-left text-13 font-medium transition-all",
+                {
+                  "cursor-pointer text-accent-primary underline-offset-2 hover:text-accent-secondary hover:underline":
+                    paginationInfo?.next_page_results,
+                }
+              )}
               onClick={handleNextIssues}
             >
               Load More &darr;
-            </div>
+            </button>
           )}
         </Fragment>
       )}

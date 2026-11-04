@@ -15,9 +15,9 @@ import { CustomSelect, Loader } from "@plane/ui";
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Callout, Section, StatCard, StateBox, Toolbar } from "@/components/common/paradise";
 import { formatDateTime } from "@/components/common/paradise-styles";
-import { LogsTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // local
-import { useGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
 import { RENTANG, SKELETON_ROWS } from "./constants";
 import { GrafikHarian } from "./grafik-harian";
 import { RiwayatMasuk } from "./riwayat";
@@ -68,8 +68,10 @@ const ActivityPage = function ActivityPage(_props: Route.ComponentProps) {
   const maksLogin = Math.max(...(data?.teraktif ?? []).map((x) => x.login), 1);
 
   return (
-    <PageWrapper header={{ title: s.logs.title, description: fill(t.description, { days: retensiHari }) }}>
-      <LogsTabs />
+    <PageWrapper
+      header={{ title: s.settings.tabs.logs_activity.title, description: fill(t.description, { days: retensiHari }) }}
+    >
+      <MenuTabs menu="logs" />
       <div className="space-y-8">
         {error ? <StateBox tone="danger">{t.load_failed}</StateBox> : null}
         {data?.retensi ? <PeringatanRetensi retensi={data.retensi} /> : null}
@@ -151,6 +153,8 @@ const ActivityPage = function ActivityPage(_props: Route.ComponentProps) {
   );
 };
 
-export const meta: Route.MetaFunction = () => [{ title: "Activity - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.logs_activity.title} - God Mode` },
+];
 
 export default ActivityPage;

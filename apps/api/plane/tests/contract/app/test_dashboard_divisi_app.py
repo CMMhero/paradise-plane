@@ -187,6 +187,13 @@ class TestDashboardDivisi:
         assert data["totals"]["issues_overdue"] == 1
 
     @pytest.mark.django_db
+    def test_wiki_tidak_dihitung(self, klien, workspace, direktur, organisasi):
+        wiki, _ = _project(workspace, "Wiki", "WIKI", [direktur])
+        data = klien.get(URL.format(slug=workspace.slug)).data
+        assert str(wiki.id) not in {p["id"] for p in data["projects"]}
+        assert data["totals"]["projects"] == 3
+
+    @pytest.mark.django_db
     def test_field_lama_tetap_ada(self, klien, workspace, organisasi):
         data = klien.get(URL.format(slug=workspace.slug)).data
         for kunci in ("projects", "issues_total", "issues_open", "issues_completed", "worklog_minutes_month"):

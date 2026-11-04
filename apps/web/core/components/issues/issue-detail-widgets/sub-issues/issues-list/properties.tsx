@@ -40,6 +40,11 @@ type Props = {
   issue: TIssue;
 };
 
+const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
+
 export const SubIssuesListItemProperties = observer(function SubIssuesListItemProperties(props: Props) {
   const { workspaceSlug, parentIssueId, issueId, canEdit, updateSubIssue, displayProperties, issue } = props;
   const { t } = useTranslation();
@@ -48,11 +53,6 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
   // pembuatnya atau Super Admin yang boleh menggesernya. Server menegakkannya; kontrol
   // di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
   const { bisaGantiTenggat } = useAturanTugas();
-
-  const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
 
   const handleStartDate = (date: Date | null) => {
     if (issue.project_id) {
@@ -73,8 +73,8 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
   //derived values
   const stateDetails = useMemo(() => getStateById(issue.state_id), [getStateById, issue.state_id]);
   const shouldHighlight = useMemo(
-    () => shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group),
-    [issue.target_date, stateDetails?.group]
+    () => shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group, issue.approval_status),
+    [issue.target_date, stateDetails?.group, issue.approval_status]
   );
   // date range is enabled only when both dates are available and both dates are enabled
   const isDateRangeEnabled: boolean = Boolean(
@@ -138,7 +138,7 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
         displayPropertyKey={["start_date", "due_date"]}
         shouldRenderProperty={() => isDateRangeEnabled}
       >
-        <div className="h-5" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
+        <div role="presentation" className="h-5" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
           <DateRangeDropdown
             value={{
               from: getDate(issue.start_date) || undefined,

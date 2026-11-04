@@ -88,7 +88,8 @@ from .wiki_access import WikiGovernedProject, WikiFolderAccess
 from .plan import WorkspacePlan
 from .superadmin_visibility import SuperAdminTerlihatDiProject
 from .akun_terhapus import AkunTerhapus, DOMAIN_AKUN_TERHAPUS, NAMA_AKUN_TERHAPUS, adalah_akun_terhapus, email_akun_terhapus
-from .deadline_reminder import PengingatTenggat, SEMUA_TITIK, TITIK_OVERDUE, TITIK_SEBELUM
+from .deadline_reminder import PengingatTenggat
+from .jadwal_kantor import JadwalTerlaksana
 from .google_calendar import AcaraKalender, KalenderGoogle, SCOPE_KALENDER
 from .chat import (
     AWALAN_KABAR,
@@ -121,6 +122,7 @@ from .hierarki import (
     TINGKAT_SUPERVISOR,
 )
 from .organisasi import AksesHierarki, Departemen, DepartemenProject, Divisi
+from .quick_link_bersama import QuickLinkBersama, CAKUPAN_SEMUA as CAKUPAN_QUICK_LINK_SEMUA, CAKUPAN_ORGANISASI as CAKUPAN_QUICK_LINK_ORGANISASI
 
 from .recent_visit import UserRecentVisit
 

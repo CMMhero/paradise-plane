@@ -19,10 +19,23 @@ from plane.db.models import Workspace
 from plane.license.api.permissions import InstanceAdminPermission
 from plane.license.api.serializers import InstanceSerializer
 from plane.license.models import Instance
-from plane.license.utils.instance_value import get_configuration_value
+from plane.license.utils.instance_value import email_aktif, get_configuration_value
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.utils import google_calendar as gcal
-from plane.utils.saklar_instance import CHAT_DELETE_WINDOW_HOURS, OVERDUE_GRACE_DAYS, modul_aktif, setelan_angka
+from plane.utils.saklar_instance import (
+    APPROVAL_PENDING_NOT_LATE,
+    AUTO_ARCHIVE_DONE_DAYS,
+    CHAT_ATTACHMENTS_MAX,
+    CHAT_DELETE_WINDOW_HOURS,
+    CHAT_EDIT_WINDOW_HOURS,
+    CHAT_MESSAGE_MAX_LENGTH,
+    OVERDUE_GRACE_DAYS,
+    UPLOAD_MAX_MB,
+    modul_aktif,
+    saklar_aktif,
+    setelan_angka,
+)
+from plane.utils.setelan_instance import OFFICE_TIMEZONE, efektif
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 
@@ -69,7 +82,7 @@ class InstanceEndpoint(BaseAPIView):
             [
                 {
                     "key": "ENABLE_SIGNUP",
-                    "default": os.environ.get("ENABLE_SIGNUP", "0"),
+                    "default": os.environ.get("ENABLE_SIGNUP", "1"),
                 },
                 {
                     "key": "DISABLE_WORKSPACE_CREATION",
@@ -98,7 +111,7 @@ class InstanceEndpoint(BaseAPIView):
                 {"key": "EMAIL_HOST", "default": os.environ.get("EMAIL_HOST", "")},
                 {
                     "key": "ENABLE_MAGIC_LINK_LOGIN",
-                    "default": os.environ.get("ENABLE_MAGIC_LINK_LOGIN", "1"),
+                    "default": os.environ.get("ENABLE_MAGIC_LINK_LOGIN", "0"),
                 },
                 {
                     "key": "ENABLE_EMAIL_PASSWORD",
@@ -152,9 +165,34 @@ class InstanceEndpoint(BaseAPIView):
         # menentukan kapan Due date tampil merah, sama dengan hitungan server.
         data["paradise_overdue_grace_days"] = setelan_angka(OVERDUE_GRACE_DAYS)
 
+        # KEP-84: tugas yang menunggu persetujuan selesai tidak dihitung terlambat.
+        # apps/web memakainya supaya Due date tugas seperti itu tidak merah.
+        data["paradise_approval_pending_not_late"] = saklar_aktif(APPROVAL_PENDING_NOT_LATE)
+
         # Umur maksimum pesan obrolan yang masih bisa dihapus (God Mode > Features).
         # apps/web menyembunyikan tombol hapus sesudahnya; server tetap menolak.
         data["paradise_chat_delete_window_hours"] = setelan_angka(CHAT_DELETE_WINDOW_HOURS)
+
+        # Batas yang dijaga server dan perlu diketahui web sebelum mengirim
+        # (KEP-83, God Mode). Server tetap yang menolak; ini hanya supaya web
+        # memberi tahu lebih dulu, bukan sesudah unggahan 40 MB gagal.
+        # Batas byte yang benar-benar dijaga server (plan_limits.batas_unggah_byte):
+        # di bawaan = settings.FILE_SIZE_LIMIT apa adanya, termasuk env yang bukan
+        # kelipatan MiB. `upload_max_mb` = angka God Mode untuk ditampilkan;
+        # `file_size_limit` di bawah adalah batas byte yang dipakai web.
+        from plane.utils.plan_limits import batas_unggah_byte
+
+        batas_unggah = batas_unggah_byte()
+        upload_max_mb = setelan_angka(UPLOAD_MAX_MB)
+        data["paradise_limits"] = {
+            "upload_max_mb": upload_max_mb,
+            "chat_message_max_length": setelan_angka(CHAT_MESSAGE_MAX_LENGTH),
+            "chat_attachments_max": setelan_angka(CHAT_ATTACHMENTS_MAX),
+            "chat_edit_window_hours": setelan_angka(CHAT_EDIT_WINDOW_HOURS),
+            "auto_archive_done_days": setelan_angka(AUTO_ARCHIVE_DONE_DAYS),
+            "chat_delete_window_hours": setelan_angka(CHAT_DELETE_WINDOW_HOURS),
+            "office_timezone": efektif(OFFICE_TIMEZONE),
+        }
 
         # Bawaan project baru (God Mode > Workspaces > New project defaults).
         # Formulir "Create project" di apps/web mengisi dirinya dari sini.
@@ -184,11 +222,12 @@ class InstanceEndpoint(BaseAPIView):
         gcal_id, gcal_secret = gcal.kredensial()
         data["has_google_calendar_configured"] = bool(gcal_id and gcal_secret)
 
-        # File size settings
-        data["file_size_limit"] = float(os.environ.get("FILE_SIZE_LIMIT", 5242880))
+        # File size settings. Paradise: batas byte yang sama dengan yang ditolak
+        # server (UPLOAD_MAX_MB dari God Mode, dijepit batas proxy FILE_SIZE_LIMIT).
+        data["file_size_limit"] = float(batas_unggah)
 
-        # is smtp configured
-        data["is_smtp_configured"] = bool(EMAIL_HOST)
+        # is smtp configured. Paradise: `email_aktif()` = EMAIL_HOST terisi.
+        data["is_smtp_configured"] = email_aktif()
 
         # Base URL
         data["admin_base_url"] = settings.ADMIN_BASE_URL

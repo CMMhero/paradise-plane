@@ -200,7 +200,7 @@ export function InstanceGitlabConfigForm(props: Props) {
                 >
                   {isSubmitting ? "Saving" : "Save changes"}
                 </Button>
-                <Link href="/authentication" className={getButtonStyling("secondary", "lg")}>
+                <Link href="/access/providers" className={getButtonStyling("secondary", "lg")}>
                   Go back
                 </Link>
               </div>

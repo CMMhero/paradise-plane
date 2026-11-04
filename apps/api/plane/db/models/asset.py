@@ -6,7 +6,6 @@
 from uuid import uuid4
 
 # Django import
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -24,8 +23,13 @@ def get_upload_path(instance, filename):
 
 
 def file_size(value):
-    if value.size > settings.FILE_SIZE_LIMIT:
-        raise ValidationError("File too large. Size should not exceed 5 MB.")
+    # Paradise (KEP-83): batas dari God Mode (UPLOAD_MAX_MB), diimpor di sini
+    # karena modul model dimuat sebelum utilitas siap.
+    from plane.utils.plan_limits import batas_unggah_byte  # noqa: PLC0415
+
+    batas = batas_unggah_byte()
+    if value.size > batas:
+        raise ValidationError(f"File too large. Size should not exceed {batas // (1024 * 1024)} MB.")
 
 
 class FileAsset(BaseModel):

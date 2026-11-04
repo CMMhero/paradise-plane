@@ -47,15 +47,19 @@ export const PageDetailsHeader = observer(function PageDetailsHeader() {
 
   const switcherOptions = projectPageIds
     .map((id) => {
-      const _page = id === pageId ? page : getPageById(id);
-      if (!_page) return;
+      const optionPage = id === pageId ? page : getPageById(id);
+      if (!optionPage) return;
       return {
-        value: _page.id,
-        query: _page.name,
+        value: optionPage.id,
+        query: optionPage.name,
         content: (
           <div className="flex items-center justify-between gap-2">
-            <SwitcherLabel logo_props={_page.logo_props} name={getPageName(_page.name)} LabelIcon={PageIcon} />
-            <PageAccessIcon {..._page} />
+            <SwitcherLabel
+              logo_props={optionPage.logo_props}
+              name={getPageName(optionPage.name)}
+              LabelIcon={PageIcon}
+            />
+            <PageAccessIcon {...optionPage} />
           </div>
         ),
       };
@@ -66,8 +70,9 @@ export const PageDetailsHeader = observer(function PageDetailsHeader() {
 
   return (
     <Header>
-      <Header.LeftItem>
-        <div>
+      {/* Telepon: sisi kiri boleh menyusut (bukan 80% tetap) supaya menu aksi di kanan tidak terdorong keluar layar */}
+      <Header.LeftItem className="max-w-none overflow-hidden">
+        <div className="min-w-0">
           <Breadcrumbs isLoading={loader === "init-loader"}>
             <CommonProjectBreadcrumbs workspaceSlug={workspaceSlug?.toString()} projectId={projectId?.toString()} />
             <Breadcrumbs.Item

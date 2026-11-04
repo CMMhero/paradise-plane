@@ -88,7 +88,9 @@ export const useProjectColumns = (props: TUseProjectColumnsProps) => {
           handleDisplayFilterUpdate={handleDisplayFilterUpdate}
         />
       ),
-      tdRender: (rowData: RowData) => <div className="w-32">{rowData.member.display_name}</div>,
+      tdRender: (rowData: RowData) => (
+        <div className="w-32 [overflow-wrap:anywhere] whitespace-normal">{rowData.member.display_name}</div>
+      ),
     },
     {
       key: "Email",
@@ -100,7 +102,11 @@ export const useProjectColumns = (props: TUseProjectColumnsProps) => {
           handleDisplayFilterUpdate={handleDisplayFilterUpdate}
         />
       ),
-      tdRender: (rowData: RowData) => <div className="w-48 text-secondary">{rowData.member.email}</div>,
+      tdRender: (rowData: RowData) => (
+        <div className="w-48 truncate text-secondary" title={rowData.member.email}>
+          {rowData.member.email}
+        </div>
+      ),
     },
     {
       key: "Account Type",

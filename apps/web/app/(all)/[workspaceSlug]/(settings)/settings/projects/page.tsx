@@ -16,11 +16,14 @@ import ProjectDarkEmptyState from "@/app/assets/empty-state/project-settings/no-
 import ProjectLightEmptyState from "@/app/assets/empty-state/project-settings/no-projects-light.png?url";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 
 function ProjectSettingsPage() {
   // store hooks
   const { resolvedTheme } = useTheme();
   const { toggleCreateProjectModal } = useCommandPalette();
+  // Paradise: staf / member biasa tidak boleh membuat project.
+  const bolehBuatProject = useBolehBuatProject();
   // derived values
   const resolvedPath = resolvedTheme === "dark" ? ProjectDarkEmptyState : ProjectLightEmptyState;
   return (
@@ -35,12 +38,14 @@ function ProjectSettingsPage() {
         <Link href="https://plane.so/" target="_blank" className={cn(getButtonStyling("secondary", "base"))}>
           Learn more about projects
         </Link>
-        <Button
-          onClick={() => toggleCreateProjectModal(true)}
-          data-ph-element={PROJECT_TRACKER_ELEMENTS.EMPTY_STATE_CREATE_PROJECT_BUTTON}
-        >
-          Start your first project
-        </Button>
+        {bolehBuatProject && (
+          <Button
+            onClick={() => toggleCreateProjectModal(true)}
+            data-ph-element={PROJECT_TRACKER_ELEMENTS.EMPTY_STATE_CREATE_PROJECT_BUTTON}
+          >
+            Start your first project
+          </Button>
+        )}
       </div>
     </div>
   );

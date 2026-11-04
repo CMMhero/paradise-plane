@@ -30,6 +30,7 @@ from plane.db.models import (
     Cycle,
     FileAsset,
     Initiative,
+    JabatanOrganisasi,
     Issue,
     IssueTemplate,
     IssueView,
@@ -222,7 +223,7 @@ def _peta_penghapus(model_name, pks):
 
 
 def _orang(u):
-    return {"email": u.email, "display_name": u.display_name} if u else None
+    return {"id": str(u.id), "email": u.email, "display_name": u.display_name} if u else None
 
 
 def _sisa_hari(deleted_at):
@@ -327,7 +328,17 @@ def _pulihkan_akun(snap):
     jumlah = WorkspaceMember.objects.filter(
         id__in=snap.workspace_member_ids, workspace__deleted_at__isnull=True
     ).update(is_active=True)
+    # Penempatan organisasi yang dicabut SAAT akun dihapus (lihat
+    # InstanceMemberDetailEndpoint.delete) kembali juga; yang dicabut sebelumnya tidak.
+    jabatan = JabatanOrganisasi.all_objects.filter(member=u, deleted_at__gte=snap.dihapus_pada)
+    workspace_ids = set(jabatan.values_list("workspace_id", flat=True))
+    jumlah += jabatan.update(deleted_at=None)
     snap.delete()
+    if workspace_ids:
+        from plane.db.jangkauan import sinkronkan_satu  # noqa: PLC0415
+
+        for ws_id in workspace_ids:
+            transaction.on_commit(lambda ws_id=ws_id: sinkronkan_satu(ws_id, u.id))
     return 1 + jumlah
 
 

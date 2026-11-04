@@ -16,6 +16,8 @@ import { useMember } from "@/hooks/store/use-member";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import type { IMemberFilters } from "@/store/member/utils";
 
+const isSuspended = (rowData: RowData) => rowData.is_active === false;
+
 export const useMemberColumns = () => {
   // states
   const [removeMemberModal, setRemoveMemberModal] = useState<RowData | null>(null);
@@ -33,8 +35,6 @@ export const useMemberColumns = () => {
 
   // derived values
   const isAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
-
-  const isSuspended = (rowData: RowData) => rowData.is_active === false;
 
   // handlers
   const handleDisplayFilterUpdate = (filterUpdates: Partial<IMemberFilters>) => {
@@ -68,7 +68,11 @@ export const useMemberColumns = () => {
       key: "Display name",
       content: t("workspace_settings.settings.members.details.display_name"),
       tdRender: (rowData: RowData) => (
-        <div className={`w-32 ${isSuspended(rowData) ? "text-placeholder" : ""}`}>{rowData.member.display_name}</div>
+        <div
+          className={`w-32 [overflow-wrap:anywhere] whitespace-normal ${isSuspended(rowData) ? "text-placeholder" : ""}`}
+        >
+          {rowData.member.display_name}
+        </div>
       ),
       thRender: () => (
         <MemberHeaderColumn
@@ -83,7 +87,9 @@ export const useMemberColumns = () => {
       key: "Email address",
       content: t("workspace_settings.settings.members.details.email_address"),
       tdRender: (rowData: RowData) => (
-        <div className={`w-48 truncate ${isSuspended(rowData) ? "text-placeholder" : ""}`}>{rowData.member.email}</div>
+        <div className={`w-48 truncate ${isSuspended(rowData) ? "text-placeholder" : ""}`} title={rowData.member.email}>
+          {rowData.member.email}
+        </div>
       ),
       thRender: () => (
         <MemberHeaderColumn

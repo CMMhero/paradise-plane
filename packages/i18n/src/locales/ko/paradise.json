@@ -1,4 +1,11 @@
 {
+  "aturan_tugas_ui": {
+    "reject_description_optional": "The work item moves back to In Progress. You can add a reason so the requester knows what to fix.",
+    "reason_placeholder_optional": "Rejection reason (optional)",
+    "invite_expired_title": "Invitation expired",
+    "invite_expired_message": "This invitation has expired. Ask the person who invited you to send a new one.",
+    "invite_expired_badge": "Expired"
+  },
   "chatux_kelola_ui": {
     "channel_settings": "Channel settings",
     "name": "Channel name",
@@ -317,6 +324,7 @@
     "joinable_channels": "Channels you can join",
     "no_other_channels": "There are no other channels right now.",
     "edited": "edited",
+    "message_deleted": "Message deleted",
     "add_reaction": "Add reaction",
     "reply": "Reply to message",
     "edit": "Edit message",
@@ -358,6 +366,21 @@
       "server_unreachable": "Failed to connect to the call server. Check the office network.",
       "camera_failed": "The camera can't be used, so the call continues with audio only.",
       "connection_down": "The connection is down. Try again in a moment."
+    },
+    "call_ring": {
+      "incoming_voice": "수신 음성 통화",
+      "incoming_video": "수신 영상 통화",
+      "accept": "수락",
+      "accept_voice_only": "음성만",
+      "decline": "거절",
+      "missed_title": "부재중 통화",
+      "missed_body": "{name}님이 전화했습니다.",
+      "no_answer_title": "응답 없음",
+      "no_answer_body": "{name}님이 전화를 받지 않았습니다.",
+      "declined_title": "통화 거절됨",
+      "declined_body": "{name}님이 통화를 거절했습니다.",
+      "busy_title": "통화 중",
+      "busy_body": "{name}님은 다른 통화 중입니다."
     },
     "confirm_delete_title": "메시지를 삭제할까요?",
     "confirm_delete_body": "이 대화의 모든 사람이 더 이상 볼 수 없습니다. 되돌릴 수 없습니다.",
@@ -480,7 +503,17 @@
     "sound_turn_off": "Turn off notification sound",
     "sound_turn_on": "Turn on notification sound",
     "sound_on": "Notification sound is on",
-    "sound_off": "Notification sound is off"
+    "sound_off": "Notification sound is off",
+    "unread_count": "{count} unread",
+    "open_full_view": "Open full view",
+    "see_all": "See all in Inbox",
+    "inbox_options": "Inbox options",
+    "item_actions": "Notification actions",
+    "filter_heading": "Show only",
+    "view_heading": "View",
+    "snooze_heading": "Snooze",
+    "snoozed_until": "Snoozed until {date}",
+    "load_failed": "Couldn't load notifications."
   },
   "division_dashboard_ui": {
     "duration_hm": "{h}h {m}m",
@@ -829,6 +862,7 @@
     "digest_tim": "Your team",
     "digest_tim_description": "Supervisors and managers: the departments or division you oversee, per project.",
     "inbox_overdue": "{count, plural, one{Overdue by # day} other{Overdue by # days}}",
+    "inbox_approval_overdue": "{count, plural, one{Waiting for your approval, overdue by # day} other{Waiting for your approval, overdue by # days}}",
     "inbox_due_today": "Due today",
     "inbox_due_in": "{count, plural, one{Due tomorrow} other{Due in # days}}",
     "inbox_chat_messages": "{count, plural, one{sent you a message} other{sent you # messages}}"
@@ -873,5 +907,58 @@
     "not_set": "Not set",
     "job_title_choose": "Choose a department",
     "job_title_clear": "Clear"
+  },
+  "settings_limits_ui": {
+    "email_language_hint": "Emails are sent in English or Indonesian only.",
+    "locked_by_admin": "Turned off by admin.",
+    "locked_policy": "Limited by your organization's policy.",
+    "archive_ceiling_hint": "Your organization archives done work items after {days} days at the latest."
+  },
+  "attention_ui": {
+    "title": "Needs attention",
+    "widget_title": "Needs attention",
+    "empty": "Nothing needs your attention right now.",
+    "view_all": "View all",
+    "more": "+{count} more",
+    "requested_by": "Requested by {name}",
+    "group_decide": "Waiting for your decision",
+    "group_overdue_mine": "My overdue work items",
+    "group_rejected": "Rejected, needs rework",
+    "group_team_overdue": "Overdue in your team",
+    "group_due_soon": "Due in the next {days} days",
+    "group_waiting_mine": "Awaiting approval",
+    "group_mentioned": "Recently mentioned"
+  },
+  "quick_links_ui": {
+    "shared_title": "From your organization",
+    "my_links": "My links",
+    "edit_link": "빠른 링크 편집",
+    "visibility": "공개 범위",
+    "visibility_private": "비공개",
+    "visibility_private_hint": "이 링크는 나만 볼 수 있습니다.",
+    "visibility_public": "공개",
+    "visibility_public_hint": "모든 사용자 또는 선택한 본부와 부서에 표시됩니다. 관리자만 관리할 수 있습니다.",
+    "shared_by_admin": "Shared by your admin",
+    "shared_empty_admin": "No shared links yet. Links you add here appear for everyone, or for the divisions and departments you pick.",
+    "audience": "Who sees this link",
+    "audience_everyone": "Everyone in the workspace",
+    "audience_everyone_short": "Everyone",
+    "audience_units": "Selected divisions and departments",
+    "audience_hint": "A division includes all of its departments and its managers.",
+    "audience_no_units": "No divisions yet. Set them up in God Mode under Members, Organization.",
+    "audience_required": "Pick at least one division or department.",
+    "audience_nobody": "Nobody (its divisions or departments were removed)",
+    "title_hint": "Optional. Leave empty to use the site title.",
+    "icon_label": "아이콘 선택",
+    "icon_hint": "아이콘을 클릭해 프로젝트 아이콘처럼 선택합니다. 선택하지 않으면 사이트 아이콘이 사용됩니다.",
+    "reset_title": "Use the site title",
+    "reset_icon": "Use the site icon",
+    "saved": "Shared link saved",
+    "save_failed": "Could not save the shared link",
+    "save_failed_message": "Check the address and try again.",
+    "removed": "Shared link removed",
+    "remove_failed": "Could not remove the shared link",
+    "delete_title": "Remove this shared link?",
+    "delete_body": "It disappears from the Home and Quick links page of everyone it was shared with."
   }
 }

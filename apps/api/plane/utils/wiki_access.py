@@ -232,16 +232,41 @@ def has_foreign_descendants(page, user, max_depth=_MAX_DEPTH):
     return False
 
 
-def can_manage_wiki_material(user, asset):
-    """True kalau `user` boleh mengubah atau menghapus sebuah Materi Wiki.
+def can_manage_wiki_material(user, asset, kunci=None):
+    """True kalau `user` boleh mengubah (`PERM_WIKI_EDIT`, bawaan) atau menghapus
+    (`PERM_WIKI_DELETE`) sebuah Materi Wiki.
 
     KEP-51: admin workspace / Super Admin, atau pengunggahnya sendiri.
+    KEP-85: ditambah aturan God Mode. Bawaan = atasan pengunggah juga boleh.
+    "Atasan" dinilai di tingkat workspace (atasan di salah satu project yang ia
+    awasi dan pengunggahnya anggota), BUKAN di project Wiki: project Wiki diikuti
+    semua orang, jadi supervisor biasanya tidak mengawasinya. Pilihan "setiap
+    anggota" tetap dibatasi anggota project Wiki itu sendiri.
     """
+    from plane.utils.izin_sumber import PenilaiIzin  # noqa: PLC0415
+    from plane.utils.saklar_instance import IZIN_SEMUA_ANGGOTA, PERM_WIKI_EDIT  # noqa: PLC0415
+
     if user is None or getattr(user, "is_anonymous", True) or not getattr(user, "id", None):
         return False
     if asset.created_by_id and asset.created_by_id == user.id:
         return True
-    return is_wiki_admin(user, workspace_id=asset.workspace_id)
+    if is_wiki_admin(user, workspace_id=asset.workspace_id):
+        return True
+    kunci = kunci or PERM_WIKI_EDIT
+    # Daftar materi memanggil fungsi ini per baris; penilainya disimpan di objek
+    # user (hidup satu permintaan) supaya jenjang & aturan tidak dibaca ulang per baris.
+    simpanan = getattr(user, "_penilai_wiki", None)
+    if simpanan is None:
+        simpanan = {}
+        try:
+            user._penilai_wiki = simpanan
+        except AttributeError:
+            pass
+    penilai = simpanan.get(str(asset.workspace_id))
+    if penilai is None:
+        penilai = simpanan[str(asset.workspace_id)] = PenilaiIzin(user, asset.workspace_id)
+    project_id = asset.project_id if penilai.aturan(kunci) == IZIN_SEMUA_ANGGOTA else None
+    return penilai.boleh(kunci, project_id=project_id, pemilik_id=asset.created_by_id)
 
 
 def pastikan_folder_divisi(workspace, actor=None):

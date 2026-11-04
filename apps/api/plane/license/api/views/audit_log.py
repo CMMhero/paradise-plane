@@ -23,7 +23,10 @@ from plane.license.api.views.base import BaseAPIView
 
 # Model yang dipantau (lihat plane/db/audit.py). Dibatasi ke daftar ini supaya
 # registrasi lain, kalau kelak ditambah, tidak ikut bocor ke endpoint ini.
-_TRACKED_MODELS = ["project", "projectmember", "workspacemember", "issue", "page"]
+_TRACKED_MODELS = ["project", "projectmember", "workspacemember", "issue", "page", "instanceconfiguration"]
+# `instanceconfiguration` TIDAK didaftarkan ke auditlog (nilainya bisa rahasia
+# terenkripsi). Entrinya ditulis tangan oleh PATCH /api/instances/settings/
+# (license/api/views/setelan.py), satu per kunci yang berubah, lama -> baru (KEP-83).
 
 _ACTION_MAP = {
     "create": LogEntry.Action.CREATE,

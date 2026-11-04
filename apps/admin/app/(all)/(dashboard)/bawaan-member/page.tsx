@@ -14,28 +14,33 @@ import type { ReactNode } from "react";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { setPromiseToast } from "@plane/propel/toast";
-import { InstanceMemberService, type TMemberDefaults, type TSaklarEmail } from "@plane/services";
+import { InstanceMemberService, type TMemberDefaults } from "@plane/services";
 import { CustomSelect, Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Field } from "@/components/common/paradise-ui";
 import { UnsavedBar } from "@/components/common/unsaved-changes";
 // local
-import { useGodmodeStrings } from "@/app/i18n/godmode";
-import { MembersTabs } from "@/components/common/section-tabs";
+import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
+import { MenuTabs } from "@/components/common/section-tabs";
 import { BidangProfil } from "../members/bidang-profil";
 import { BidangNavigasi, BidangTataLetak } from "../members/bidang-tampilan";
 import { TerapkanKeSemua } from "./terapkan";
-import { MatriksNotifikasi } from "../members/matriks-notifikasi";
 import type { Route } from "./+types/page";
 
 const memberService = new InstanceMemberService();
 
-type TKelompokEmail = keyof TMemberDefaults["email"];
+// The notification matrix lives on Notifications > Defaults by role (KEP-83), so this
+// page never reads or writes the email section.
+type TDefaults = Omit<TMemberDefaults, "email">;
 type TKeanggotaan = TMemberDefaults["keanggotaan"];
 
-// Staf, leader (supervisor & manager), direktur. Kolom direktur juga batas atas di server.
-const KELOMPOK_EMAIL: readonly TKelompokEmail[] = ["staf", "pimpinan", "direktur"];
+const withoutEmail = (d: TMemberDefaults): TDefaults => ({
+  profile: d.profile,
+  keanggotaan: d.keanggotaan,
+  navigasi: d.navigasi,
+  work_items: d.work_items,
+});
 
 const sama = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -54,20 +59,14 @@ function Bagian({ title, note, children }: { title: string; note: string; childr
 function BawaanMemberPage(_props: Route.ComponentProps) {
   const { s } = useGodmodeStrings();
   const t = s.bawaan;
-  const judulKelompok: Record<TKelompokEmail, string> = {
-    staf: t.col_staf,
-    pimpinan: t.col_pimpinan,
-    direktur: t.col_direktur,
-  };
   const { data, error, mutate } = useSWR("INSTANCE_MEMBER_DEFAULTS", () => memberService.bawaan());
   // null = belum disentuh, tampilkan nilai server apa adanya.
-  const [draf, setDraf] = useState<TMemberDefaults | null>(null);
+  const [draf, setDraf] = useState<TDefaults | null>(null);
   const [sedangSimpan, setSedangSimpan] = useState(false);
 
-  const tersimpan: TMemberDefaults | null = data
+  const tersimpan: TDefaults | null = data
     ? {
         profile: data.profile,
-        email: data.email,
         keanggotaan: data.keanggotaan,
         navigasi: data.navigasi,
         work_items: data.work_items,
@@ -76,13 +75,10 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
   const nilai = draf ?? tersimpan;
   const berubah = Boolean(draf && tersimpan && !sama(draf, tersimpan));
 
-  const ubah = (f: (b: TMemberDefaults) => TMemberDefaults) => {
+  const ubah = (f: (b: TDefaults) => TDefaults) => {
     if (!tersimpan) return;
     setDraf((d) => f(d ?? tersimpan));
   };
-
-  const ubahEmail = (kelompok: TKelompokEmail, kunci: keyof TSaklarEmail, v: boolean) =>
-    ubah((b) => ({ ...b, email: { ...b.email, [kelompok]: { ...b.email[kelompok], [kunci]: v } } }));
 
   const ubahKeanggotaan = (k: Partial<TKeanggotaan>) =>
     ubah((b) => ({ ...b, keanggotaan: { ...b.keanggotaan, ...k } }));
@@ -118,11 +114,11 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
   return (
     <PageWrapper
       header={{
-        title: s.members.title,
-        description: t.description,
+        title: s.settings.tabs.people_defaults.title,
+        description: s.settings.tabs.people_defaults.description,
       }}
     >
-      <MembersTabs />
+      <MenuTabs menu="people" />
       <UnsavedBar isDirty={berubah} isSaving={sedangSimpan} onSave={simpan} onDiscard={() => setDraf(null)} />
       {error && <p className="text-13 text-danger-primary">{t.load_failed}</p>}
       {!error && !nilai && (
@@ -138,18 +134,6 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
               profile={nilai.profile}
               onProfil={(p) => ubah((b) => ({ ...b, profile: { ...b.profile, ...p } }))}
             />
-          </Bagian>
-
-          <Bagian title={t.group_email} note={t.email_note}>
-            <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">
-              {KELOMPOK_EMAIL.map((kelompok) => (
-                <div key={kelompok} className="space-y-1.5">
-                  <span className="block text-11 font-medium text-secondary">{judulKelompok[kelompok]}</span>
-                  {kelompok === "direktur" && <p className="text-11 text-warning-primary">{t.direktur_note}</p>}
-                  <MatriksNotifikasi nilai={nilai.email[kelompok]} onUbah={(k, v) => ubahEmail(kelompok, k, v)} />
-                </div>
-              ))}
-            </div>
           </Bagian>
 
           <Bagian title={t.group_membership} note={t.membership_note}>
@@ -207,8 +191,8 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
             <Button
               variant="secondary"
               size="base"
-              disabled={sedangSimpan || sama(nilai, data.pabrik)}
-              onClick={() => setDraf(data.pabrik)}
+              disabled={sedangSimpan || sama(nilai, withoutEmail(data.pabrik))}
+              onClick={() => setDraf(withoutEmail(data.pabrik))}
             >
               {t.reset}
             </Button>
@@ -222,6 +206,8 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
   );
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "New member defaults - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.people_defaults.title} - God Mode` },
+];
 
 export default BawaanMemberPage;

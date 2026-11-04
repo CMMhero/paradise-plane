@@ -15,6 +15,11 @@
       @apply bg-layer-transparent-active;
     }
 
+    /* Layar sentuh: baris perintah minimal 44px supaya kena jari. */
+    @media (pointer: coarse) {
+      @apply min-h-11;
+    }
+
     &[aria-disabled="true"],
     &[data-disabled="true"] {
       @apply bg-layer-transparent opacity-50 cursor-not-allowed;

@@ -29,6 +29,7 @@ from plane.db.models import (
     Module,
 )
 
+from plane.utils.wiki_access import WIKI_IDENTIFIER
 from plane.utils.analytics_plot import build_graph_plot, VALID_ANALYTICS_FIELDS, VALID_YAXIS
 from plane.utils.issue_filters import issue_filters
 from plane.app.permissions import allow_permission, ROLE
@@ -406,7 +407,7 @@ class ProjectStatsEndpoint(BaseAPIView):
         if not requested_fields:
             requested_fields = valid_fields
 
-        projects = Project.objects.filter(workspace__slug=slug)
+        projects = Project.objects.filter(workspace__slug=slug).exclude(identifier=WIKI_IDENTIFIER)
         if project_ids:
             projects = projects.filter(id__in=project_ids.split(","))
 

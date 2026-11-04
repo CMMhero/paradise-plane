@@ -175,13 +175,18 @@ def _muat_issue(issue_id):
 
 def beritahu_diajukan(baris, issue=None):
     """Pengajuan (baru atau ulang): beritahu atasan yang boleh memutuskan."""
-    from plane.utils.hierarki import calon_penyetuju
+    from plane.utils.hierarki import calon_penyetuju, peta_tingkat, saring_penyetuju
 
     try:
         issue = _muat_issue(baris.issue_id) or issue or baris.issue
         if issue is None:
             return
-        manajer = calon_penyetuju(baris.workspace_id, baris.project_id)
+        peta = peta_tingkat(baris.workspace_id)
+        # Pengajuan atasan (KEP-83) hanya dikirim ke yang lebih tinggi darinya;
+        # pengajuan staf tetap ke semua calon, sama seperti sebelumnya.
+        manajer = saring_penyetuju(
+            calon_penyetuju(baris.workspace_id, baris.project_id, peta=peta), peta, baris.pemohon_id
+        )
     except Exception:  # noqa: BLE001
         logger.exception("Gagal menghitung calon penyetuju untuk %s", getattr(baris, "id", "?"))
         return

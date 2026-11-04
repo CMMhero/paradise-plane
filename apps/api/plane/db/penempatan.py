@@ -15,6 +15,10 @@ Model orang di struktur organisasi, sesudah KEP-76:
   dua langkah yang terlihat: tambah yang baru, cabut yang lama.
 - Turun di bawah Manager: baris divisi dicabut otomatis (pemanggil diberi tahu),
   baris departemen tetap. Tidak ada lagi galat "rapikan dulu".
+- Mencabut tempat hanya mengubah jenjang kalau orangnya jadi TANPA TEMPAT sama
+  sekali: supervisor/manager yang kehilangan tempat terakhirnya jatuh ke Staf
+  (KEP-86). Selama masih memegang satu departemen atau divisi mana pun, jenjangnya
+  tetap. Direktur tidak pernah jatuh. Orang tanpa jenjang = Staf.
 
 Dulu ada empat jalur tulis yang masing-masing menyunting baris PERTAMA orang itu
 (`.first()`), jadi menempatkan seseorang di departemen baru diam-diam memindahkan
@@ -25,9 +29,35 @@ memanggil `sinkronkan_satu` sesudahnya (akses project ikut).
 """
 
 # Module imports
-from plane.db.models import JabatanOrganisasi, TINGKAT_MANAGER
+from plane.db.models import (
+    JabatanOrganisasi,
+    TINGKAT_DIREKTUR,
+    TINGKAT_MANAGER,
+    TINGKAT_MEMBER,
+    TINGKAT_SUPERVISOR,
+)
 
 TANPA_TEMPAT = (None, None)
+
+# `sumber` untuk baris yang ditulis karena orangnya JATUH ke staf (jenjang dicabut,
+# atau supervisor/manager kehilangan tempat terakhirnya).
+SUMBER_JATUH_KE_STAF = "bawaan-staf"
+
+
+def tingkat_sesudah_cabut(tingkat, dep_lama, div_lama, deps, divs):
+    """Jenjang sesudah sebagian penempatan dicabut (KEP-86, 4 Nov 2026).
+
+    Supervisor dan manager yang dicabut dari tempat TERAKHIRNYA (tidak tersisa satu
+    departemen atau divisi pun) jatuh ke Staf: tanpa tempat, tidak ada yang mereka
+    awasi atau pimpin. Masih punya tempat lain mana pun = jenjang tetap. Direktur
+    tidak butuh tempat dan tidak pernah jatuh. Hanya PENCABUTAN yang memicu ini:
+    menyetel jenjang Manager sebelum diberi divisi tetap boleh.
+    """
+    dicabut = bool(set(dep_lama) - set(deps)) or bool(set(div_lama) - set(divs))
+    pimpinan = TINGKAT_SUPERVISOR <= tingkat < TINGKAT_DIREKTUR
+    if pimpinan and dicabut and not deps and not divs:
+        return TINGKAT_MEMBER
+    return tingkat
 
 
 def penempatan_sekarang(workspace_id, user_id):
@@ -46,18 +76,30 @@ def penempatan_sekarang(workspace_id, user_id):
 def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumber="manual", catatan=None):
     """Jadikan baris aktif orang ini TEPAT (tingkat, departemen_ids, divisi_ids).
 
-    `tingkat=None` = cabut jenjang dan seluruh penempatan. Divisi di bawah Manager
-    dibuang di sini juga (penjaga terakhir). Mengembalikan himpunan divisi yang
-    dibuang karena aturan itu, supaya pemanggil bisa melaporkannya.
+    Tidak ada lagi "jenjang belum diisi" (4 Nov 2026): orang selalu setidaknya Staf.
+
+    - `tingkat=None` = cabut jenjang dan seluruh penempatan; orangnya kembali jadi
+      Staf tanpa tempat (satu baris tanpa tempat, bukan nol baris).
+    - Supervisor/manager yang dicabut dari tempat terakhirnya jatuh ke Staf
+      (`tingkat_sesudah_cabut`). Pemanggil membaca jenjang akhir dari barisnya.
+    - Divisi di bawah Manager dibuang di sini juga (penjaga terakhir).
+
+    Mengembalikan himpunan divisi yang dibuang karena jenjangnya di bawah Manager,
+    supaya pemanggil bisa melaporkannya.
     """
     aktif = list(JabatanOrganisasi.objects.filter(workspace=workspace, member=user))
     if tingkat is None:
-        for b in aktif:
-            b.delete()  # soft delete: riwayat siapa mencabut tetap ada
-        return set()
+        tingkat, departemen_ids, divisi_ids = TINGKAT_MEMBER, (), ()
+        sumber = SUMBER_JATUH_KE_STAF
 
     deps = {str(d) for d in departemen_ids}
     divs = {str(v) for v in divisi_ids}
+    dep_lama = {str(b.departemen_id) for b in aktif if b.departemen_id}
+    div_lama = {str(b.divisi_id) for b in aktif if b.divisi_id}
+    tingkat_akhir = tingkat_sesudah_cabut(tingkat, dep_lama, div_lama, deps, divs)
+    if tingkat_akhir != tingkat:
+        tingkat = tingkat_akhir
+        sumber = SUMBER_JATUH_KE_STAF
     dibuang = set()
     if tingkat < TINGKAT_MANAGER and divs:
         dibuang, divs = divs, set()

@@ -23,6 +23,7 @@ import { SidebarProjectsListItem } from "@/components/workspace/sidebar/projects
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 import type { TProject } from "@plane/types";
 import { ExtendedSidebarWrapper } from "./extended-sidebar-wrapper";
 
@@ -77,11 +78,11 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
     return project.name.toLowerCase().includes(searchQuery.toLowerCase()) || project.identifier.includes(searchQuery);
   });
 
-  // auth
-  const isAuthorizedUser = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
+  // auth. Paradise: dipakai hanya untuk tombol buat project; staf / member biasa tidak boleh.
+  const bolehBuatProject = useBolehBuatProject(workspaceSlug?.toString());
+  const isAuthorizedUser =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
+    bolehBuatProject;
 
   const handleClose = useCallback(() => toggleExtendedProjectSidebar(false), [toggleExtendedProjectSidebar]);
 

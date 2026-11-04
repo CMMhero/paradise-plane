@@ -27,8 +27,14 @@ export type TAnggotaHierarki = {
   email: string;
   display_name: string;
   is_active: boolean;
-  /** null = jenjang BELUM DIISI. Bukan "member" — "datanya kurang" tidak boleh berarti "dia staf". */
+  /**
+   * Sejak 4 Nov 2026 server tidak lagi mengirim null: orang tanpa baris jabatan
+   * dilaporkan Staf (10) dengan `tingkat_bawaan: true`. Tipe tetap menerima null
+   * untuk server lama.
+   */
   tingkat: number | null;
+  /** True = belum pernah ada yang menetapkan jenjangnya; dihitung Staf. */
+  tingkat_bawaan?: boolean;
   tingkat_nama: string | null;
   sumber: string | null;
   /** Identifier divisi tempat ia anggota. */

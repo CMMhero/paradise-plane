@@ -15,6 +15,7 @@ import { Button } from "@plane/propel/button";
 import { SettingsBoxedControlItem } from "@/components/settings/boxed-control-item";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 // local imports
 import { ArchiveRestoreProjectModal } from "../archive-restore-modal";
 import { DeleteProjectModal } from "../delete-project-modal";
@@ -37,9 +38,12 @@ export const GeneralProjectSettingsControlSection = observer(function GeneralPro
   // translation
   const { t } = useTranslation();
   // Kustomisasi Paradise: tanpa modul Archives, project tidak bisa diarsipkan dari sini.
-  const isArchiveEnabled = isParadiseModuleActive("archives");
+  // Paradise KEP-85: arsip & hapus project ikut aturan struktur God Mode.
+  const izin = useIzinSumber(workspaceSlug, projectId);
+  const isArchiveEnabled = isParadiseModuleActive("archives") && izin.struktur("PERM_PROJECT_ARCHIVE");
+  const isDeleteAllowed = izin.struktur("PERM_PROJECT_DELETE");
 
-  if (!currentProjectDetails) return null;
+  if (!currentProjectDetails || (!isArchiveEnabled && !isDeleteAllowed)) return null;
 
   return (
     <div className="mt-10">
@@ -61,7 +65,7 @@ export const GeneralProjectSettingsControlSection = observer(function GeneralPro
         {/* Project Selector */}
         {isArchiveEnabled && (
           <SettingsBoxedControlItem
-            className="rounded-b-none border-0 border-b"
+            className={isDeleteAllowed ? "rounded-b-none border-0 border-b" : "border-0"}
             title={t("archive")}
             description="Archiving a project will unlist your project from your side navigation although you will still be able to access it from your projects page. You can restore the project or delete it whenever you want."
             control={
@@ -72,20 +76,22 @@ export const GeneralProjectSettingsControlSection = observer(function GeneralPro
           />
         )}
         {/* Format Selector */}
-        <SettingsBoxedControlItem
-          className={isArchiveEnabled ? "rounded-t-none border-0" : "border-0"}
-          title={t("delete")}
-          description="When deleting a project, all of the data and resources within that project will be permanently removed and cannot be recovered."
-          control={
-            <Button
-              variant="error-outline"
-              onClick={() => setSelectedProject(currentProjectDetails.id ?? null)}
-              data-ph-element={PROJECT_TRACKER_ELEMENTS.DELETE_PROJECT_BUTTON}
-            >
-              {t("delete")}
-            </Button>
-          }
-        />
+        {isDeleteAllowed && (
+          <SettingsBoxedControlItem
+            className={isArchiveEnabled ? "rounded-t-none border-0" : "border-0"}
+            title={t("delete")}
+            description="When deleting a project, all of the data and resources within that project will be permanently removed and cannot be recovered."
+            control={
+              <Button
+                variant="error-outline"
+                onClick={() => setSelectedProject(currentProjectDetails.id ?? null)}
+                data-ph-element={PROJECT_TRACKER_ELEMENTS.DELETE_PROJECT_BUTTON}
+              >
+                {t("delete")}
+              </Button>
+            }
+          />
+        )}
       </div>
     </div>
   );

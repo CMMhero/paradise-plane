@@ -17,6 +17,7 @@ import { CustomSelect, CustomMenu } from "@plane/ui";
 import { cn, copyTextToClipboard } from "@plane/utils";
 // components
 import { ConfirmWorkspaceMemberRemove } from "@/components/workspace/confirm-workspace-member-remove";
+import { InviteExpiredBadge } from "@/components/workspace/invite-expired-badge";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useUserPermissions } from "@/hooks/store/user";
@@ -131,9 +132,13 @@ export const WorkspaceInvitationsListItem = observer(function WorkspaceInvitatio
           </div>
         </div>
         <div className="flex items-center gap-2 text-11">
-          <div className="flex items-center justify-center rounded-sm bg-label-yellow-bg-strong/20 px-2.5 py-1 text-center text-caption-sm-medium text-label-yellow-text">
-            <p>{t("common.pending")}</p>
-          </div>
+          {invitationDetails.is_expired ? (
+            <InviteExpiredBadge />
+          ) : (
+            <div className="flex items-center justify-center rounded-sm bg-label-yellow-bg-strong/20 px-2.5 py-1 text-center text-caption-sm-medium text-label-yellow-text">
+              <p>{t("common.pending")}</p>
+            </div>
+          )}
           <CustomSelect
             customButton={
               <div className="item-center flex gap-1 rounded-sm px-2 py-0.5">

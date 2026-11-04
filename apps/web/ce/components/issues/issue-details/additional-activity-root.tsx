@@ -5,7 +5,7 @@
  */
 
 import { observer } from "mobx-react";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Network, XCircle } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 // components
@@ -31,6 +31,46 @@ const IKON_PERSETUJUAN = {
 
 type TVerbPersetujuan = keyof typeof IKON_PERSETUJUAN;
 
+const humanizeField = (field: string | null | undefined) => (field ?? "item").replace(/_/g, " ");
+
+// Safety net for any IssueActivity.field the web has no dedicated renderer for
+// (custom Paradise fields, future upstream fields). Shows field + old -> new
+// so a row is never just an actor and a timestamp.
+const GenericActivity = observer(function GenericActivity(props: Omit<TAdditionalActivityRoot, "showIssue">) {
+  const { activityId, ends, field } = props;
+  const {
+    activity: { getActivityById },
+  } = useIssueDetail();
+
+  const activity = getActivityById(activityId);
+  if (!activity) return <></>;
+
+  const name = humanizeField(field ?? activity.field);
+  const verb = activity.verb ? activity.verb.replace(/_/g, " ") : "changed";
+  const hasChange = Boolean(activity.old_value || activity.new_value);
+
+  return (
+    <IssueActivityBlockComponent
+      icon={<Network className="h-3.5 w-3.5 text-secondary" aria-hidden="true" />}
+      activityId={activityId}
+      ends={ends}
+    >
+      <>
+        {verb} <span className="font-medium text-primary">{name}</span>
+        {hasChange && (
+          <>
+            {": "}
+            {activity.old_value && <span className="text-tertiary">{activity.old_value}</span>}
+            {activity.old_value && activity.new_value && " -> "}
+            {activity.new_value && <span className="font-medium text-primary">{activity.new_value}</span>}
+          </>
+        )}
+        .
+      </>
+    </IssueActivityBlockComponent>
+  );
+});
+
 const ApprovalActivity = observer(function ApprovalActivity(props: Omit<TAdditionalActivityRoot, "field">) {
   const { activityId, ends } = props;
   const { t } = useTranslation();
@@ -40,7 +80,10 @@ const ApprovalActivity = observer(function ApprovalActivity(props: Omit<TAdditio
 
   const activity = getActivityById(activityId);
   const verb = activity?.verb as TVerbPersetujuan | undefined;
-  if (!activity || !verb || !(verb in IKON_PERSETUJUAN)) return <></>;
+  if (!activity) return <></>;
+  // Unknown verb: never render an empty line, fall back to the generic row.
+  if (!verb || !(verb in IKON_PERSETUJUAN))
+    return <GenericActivity activityId={activityId} ends={ends} field="approval" />;
 
   return (
     <IssueActivityBlockComponent icon={IKON_PERSETUJUAN[verb]} activityId={activityId} ends={ends}>
@@ -55,5 +98,5 @@ const ApprovalActivity = observer(function ApprovalActivity(props: Omit<TAdditio
 export const AdditionalActivityRoot = observer(function AdditionalActivityRoot(props: TAdditionalActivityRoot) {
   const { field, ...rest } = props;
   if (field === "approval") return <ApprovalActivity {...rest} />;
-  return <></>;
+  return <GenericActivity {...rest} field={field} />;
 });

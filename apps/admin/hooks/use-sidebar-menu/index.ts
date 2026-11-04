@@ -11,12 +11,12 @@ import type { TSidebarMenuItem } from "./types";
 export function useSidebarMenu(): TSidebarMenuItem[] {
   return [
     coreSidebarMenuLinks.general,
-    coreSidebarMenuLinks.email,
-    coreSidebarMenuLinks.authentication,
-    coreSidebarMenuLinks.workspace,
-    coreSidebarMenuLinks.members,
+    coreSidebarMenuLinks.access,
+    coreSidebarMenuLinks.people,
+    coreSidebarMenuLinks.rules,
+    coreSidebarMenuLinks.notifications,
+    coreSidebarMenuLinks.modules,
+    coreSidebarMenuLinks.integrations,
     coreSidebarMenuLinks.logs,
-    coreSidebarMenuLinks.features,
-    coreSidebarMenuLinks.apiKeys,
   ];
 }

@@ -16,7 +16,7 @@ import {
 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
-import { ViewsIcon } from "@plane/propel/icons";
+import { PlusIcon, ViewsIcon } from "@plane/propel/icons";
 import type { IIssueDisplayFilterOptions, IIssueDisplayProperties, ICustomSearchSelectOption } from "@plane/types";
 import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
 import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown } from "@plane/ui";
@@ -102,12 +102,12 @@ export const GlobalIssuesHeader = observer(function GlobalIssuesHeader() {
   }));
 
   const workspaceOptions = (currentWorkspaceViews || []).map((view) => {
-    const _view = getViewDetailsById(view);
-    if (!_view) return;
+    const viewItem = getViewDetailsById(view);
+    if (!viewItem) return;
     return {
-      value: _view.id,
-      query: _view.name,
-      content: <SwitcherLabel name={_view.name} LabelIcon={ViewsIcon} />,
+      value: viewItem.id,
+      query: viewItem.name,
+      content: <SwitcherLabel name={viewItem.name} LabelIcon={ViewsIcon} />,
     };
   });
 
@@ -175,8 +175,11 @@ export const GlobalIssuesHeader = observer(function GlobalIssuesHeader() {
             size="lg"
             data-ph-element={GLOBAL_VIEW_TRACKER_ELEMENTS.RIGHT_HEADER_ADD_BUTTON}
             onClick={() => setCreateViewModal(true)}
+            aria-label={t("workspace_views.add_view")}
           >
-            {t("workspace_views.add_view")}
+            {/* Di HP cukup ikon: label penuh memeras nama tampilan jadi "All wo". */}
+            <PlusIcon className="size-4 sm:hidden" />
+            <span className="max-sm:sr-only">{t("workspace_views.add_view")}</span>
           </Button>
           <div className="hidden md:block">
             {viewDetails && <WorkspaceViewQuickActions workspaceSlug={workspaceSlug?.toString()} view={viewDetails} />}

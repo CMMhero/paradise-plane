@@ -113,16 +113,20 @@
   /* end font sizes and line heights */
 
   /* font styles */
-  --font-style: "Inter Variable", sans-serif;
+  /* Paradise: "Sans serif" mengikuti font antarmuka pilihan pengguna
+     (--font-teks, paradise-tampilan.css), bukan Inter yang dipatok. Stickies,
+     deskripsi, dan komentar jadi sama dengan sisa aplikasi. "Mono" memakai
+     font kode yang sama dengan blok kode. */
+  --font-style: var(--font-teks, "Inter Variable", sans-serif);
 
   &.sans-serif {
-    --font-style: "Inter Variable", sans-serif;
+    --font-style: var(--font-teks, "Inter Variable", sans-serif);
   }
   &.serif {
     --font-style: serif;
   }
   &.monospace {
-    --font-style: monospace;
+    --font-style: var(--font-kode, monospace);
   }
   /* end font styles */
 

@@ -125,11 +125,13 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
   );
 
   const mainContent = (
-    <div className="flex w-full items-start gap-2 rounded-lg bg-layer-1 px-4 py-2">
-      <div className="flex w-full flex-wrap items-center gap-2">{leftContent}</div>
+    // Paradise: di layar sempit tombol aksi (Clear all/Save view) pindah ke baris sendiri
+    // di bawah chip, supaya chip tidak terjepit kolom aksi.
+    <div className="flex w-full flex-col items-stretch gap-2 rounded-lg bg-layer-1 px-3 py-2 sm:flex-row sm:items-start sm:px-4">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-2">{leftContent}</div>
       <div
-        className={cn("flex items-center gap-2 border-l border-subtle pl-4", {
-          "border-l-transparent pl-0": !hasAvailableOperations,
+        className={cn("flex flex-wrap items-center gap-2 sm:border-l sm:border-subtle sm:pl-4", {
+          "sm:border-l-transparent sm:pl-0": !hasAvailableOperations,
         })}
       >
         {rightContent}
@@ -160,7 +162,7 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
   return <RowTransition show={filter.isVisible}>{variant === "modal" ? ModalVariant : HeaderVariant}</RowTransition>;
 });
 
-const COMMON_OPERATION_BUTTON_CLASSNAME = "py-1";
+const COMMON_OPERATION_BUTTON_CLASSNAME = "py-1 sentuh:py-2";
 
 type TElementTransitionProps = {
   children: React.ReactNode;

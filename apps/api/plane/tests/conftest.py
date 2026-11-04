@@ -138,3 +138,26 @@ def workspace(create_user):
     WorkspaceMember.objects.create(workspace=created_workspace, member=create_user, role=20)
 
     return created_workspace
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "gerbang_bawaan: run with the code default of HIERARKI_GERBANG_TUGAS (ON) instead of the test pin (OFF)",
+    )
+
+
+@pytest.fixture(autouse=True)
+def pin_gerbang_hierarki_mati(request, monkeypatch):
+    """Pin the hierarchy gate OFF for tests that predate KEP-84.
+
+    The code default of HIERARKI_GERBANG_TUGAS is now "1". Most older tests exercise
+    unrelated features (cycles, guest scope, notifications, delete/due-date rules)
+    with plain members assigning each other, which the gate would reject. They stay
+    meaningful with the gate OFF, so it is pinned via the env seed here. Tests that
+    exercise the gate set it explicitly (monkeypatch.setenv(FLAG_GERBANG, "1")), and
+    tests of the shipped defaults opt out with @pytest.mark.gerbang_bawaan.
+    """
+    if request.node.get_closest_marker("gerbang_bawaan"):
+        return
+    monkeypatch.setenv("HIERARKI_GERBANG_TUGAS", "0")

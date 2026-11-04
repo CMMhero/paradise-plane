@@ -26,13 +26,14 @@ from celery import shared_task
 # Module imports
 from plane.db.models import LoginActivity
 from plane.license.models import InstanceAdmin
-from plane.license.utils.instance_value import get_email_configuration
+from plane.license.utils.instance_value import email_aktif, get_email_configuration
 from plane.utils.email_merek import (
     MEREK,
     bahasa_penerima,
     bungkus,
     buat_pesan,
     judul_html,
+    kelompokkan_penerima,
     kotak,
     paragraf,
     tanggal,
@@ -102,7 +103,10 @@ TEKS_RETENSI = {
 
 
 def susun_peringatan_retensi(keadaan, bahasa="id", email=""):
-    """(subjek, teks, html). Murni: dipakai pengirim dan `kirim_contoh_email`."""
+    """(subjek, teks, html). Murni: dipakai pengirim dan `kirim_contoh_email`.
+
+    `email` = satu alamat atau daftar alamat (satu email bersama ke semua admin).
+    """
     s = TEKS_RETENSI.get(bahasa, TEKS_RETENSI["id"])
     tertua = keadaan.get("tertua")
     isian = {
@@ -131,15 +135,18 @@ def _kirim_email_peringatan(keadaan):
         logger.info("Retensi: tidak ada instance admin aktif untuk dikirimi email")
         return 0
 
-    if not get_email_configuration()[0]:
-        logger.warning("Retensi: EMAIL_HOST kosong, peringatan tidak terkirim")
+    if not email_aktif(get_email_configuration()[0]):
+        logger.warning("Retensi: SMTP belum diatur atau dimatikan, peringatan tidak terkirim")
         return 0
 
+    # Isinya sama untuk semua admin, jadi satu pesan per bahasa dengan semua
+    # alamat di To: tiap admin melihat siapa lagi yang diberi tahu.
     terkirim = 0
-    for user in admin:
-        subjek, teks, html = susun_peringatan_retensi(keadaan, bahasa_penerima(user), user.email)
-        buat_pesan(ke=user.email, subjek=subjek, html=html, teks=teks).send()
-        terkirim += 1
+    for kelompok in kelompokkan_penerima(admin):
+        alamat = [u.email for u in kelompok]
+        subjek, teks, html = susun_peringatan_retensi(keadaan, bahasa_penerima(kelompok[0]), alamat)
+        buat_pesan(ke=alamat, subjek=subjek, html=html, teks=teks).send()
+        terkirim += len(kelompok)
     logger.info("Retensi: peringatan terkirim ke %s admin", terkirim)
     return terkirim
 

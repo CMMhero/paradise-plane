@@ -26,6 +26,7 @@ import { copyUrlToClipboard, cn, getFileURL, renderFormattedDate } from "@plane/
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // local imports
@@ -67,6 +68,10 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
   const hasMemberRole = project.member_role === EUserPermissions.MEMBER;
   // archive
   const isArchived = !!project.archived_at;
+  // Paradise KEP-85: pulihkan/hapus project arsip = aturan struktur; hanya dimuat untuk kartu arsip.
+  const izin = useIzinSumber(isArchived && hasAdminRole ? workspaceSlug?.toString() : null, project.id);
+  const bolehPulihkan = hasAdminRole && izin.struktur("PERM_PROJECT_ARCHIVE");
+  const bolehHapus = hasAdminRole && izin.struktur("PERM_PROJECT_DELETE");
   // local storage
   const { setValue: toggleFavoriteMenu, storedValue: isFavoriteMenuOpen } = useLocalStorage<boolean>(
     IS_FAVORITE_MENU_OPEN,
@@ -84,7 +89,7 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
         message: () => "Project added to favorites.",
         actionItems: () => {
           if (!isFavoriteMenuOpen) toggleFavoriteMenu(true);
-          return <></>;
+          return null;
         },
       },
       error: {
@@ -156,14 +161,14 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
       action: () => setRestoreProject(true),
       title: "Restore",
       icon: ArchiveRestoreIcon,
-      shouldRender: isArchived && hasAdminRole,
+      shouldRender: isArchived && bolehPulihkan,
     },
     {
       key: "delete",
       action: () => setDeleteProjectModal(true),
       title: "Delete",
       icon: TrashIcon,
-      shouldRender: isArchived && hasAdminRole,
+      shouldRender: isArchived && bolehHapus,
     },
   ];
 
@@ -305,31 +310,37 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
               {isArchived && <div className="text-11 font-medium text-placeholder">Archived</div>}
             </div>
             {isArchived ? (
-              hasAdminRole && (
+              (bolehPulihkan || bolehHapus) && (
                 <div className="flex items-center justify-center gap-2">
-                  <div
-                    className="flex items-center justify-center text-11 font-medium text-placeholder hover:text-secondary"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setRestoreProject(true);
-                    }}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <ArchiveRestoreIcon className="h-3.5 w-3.5" />
-                      Restore
-                    </div>
-                  </div>
-                  <div
-                    className="flex items-center justify-center text-11 font-medium text-placeholder hover:text-secondary"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setDeleteProjectModal(true);
-                    }}
-                  >
-                    <TrashIcon className="h-3.5 w-3.5" />
-                  </div>
+                  {bolehPulihkan && (
+                    <button
+                      type="button"
+                      className="flex items-center justify-center text-11 font-medium text-placeholder hover:text-secondary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setRestoreProject(true);
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <ArchiveRestoreIcon className="h-3.5 w-3.5" />
+                        Restore
+                      </div>
+                    </button>
+                  )}
+                  {bolehHapus && (
+                    <button
+                      type="button"
+                      className="flex items-center justify-center text-11 font-medium text-placeholder hover:text-secondary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeleteProjectModal(true);
+                      }}
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               )
             ) : (

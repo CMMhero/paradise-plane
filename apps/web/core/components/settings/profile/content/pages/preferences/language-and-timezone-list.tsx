@@ -16,6 +16,12 @@ import { SettingsControlItem } from "@/components/settings/control-item";
 // hooks
 import { useUser, useUserProfile } from "@/hooks/store/user";
 
+const getLanguageLabel = (value: string) => {
+  const selectedLanguage = SUPPORTED_LANGUAGES.find((l) => l.value === value);
+  if (!selectedLanguage) return value;
+  return selectedLanguage.label;
+};
+
 export const ProfileSettingsLanguageAndTimezonePreferencesList = observer(
   function ProfileSettingsLanguageAndTimezonePreferencesList() {
     // store hooks
@@ -62,12 +68,6 @@ export const ProfileSettingsLanguageAndTimezonePreferencesList = observer(
       }
     };
 
-    const getLanguageLabel = (value: string) => {
-      const selectedLanguage = SUPPORTED_LANGUAGES.find((l) => l.value === value);
-      if (!selectedLanguage) return value;
-      return selectedLanguage.label;
-    };
-
     return (
       <div className="flex flex-col gap-y-1">
         <SettingsControlItem
@@ -77,7 +77,7 @@ export const ProfileSettingsLanguageAndTimezonePreferencesList = observer(
         />
         <SettingsControlItem
           title={t("language")}
-          description={t("language_setting")}
+          description={`${t("language_setting")} ${t("settings_limits_ui.email_language_hint")}`}
           control={
             <CustomSelect
               value={profile?.language}

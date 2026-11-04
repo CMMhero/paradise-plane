@@ -10,6 +10,7 @@ import { Play, Volume1, Volume2, VolumeX } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { IconButton } from "@plane/propel/icon-button";
+import type { IconButtonProps } from "@plane/propel/icon-button";
 import { Popover } from "@plane/propel/popover";
 import { ToggleSwitch } from "@plane/ui";
 import { cn } from "@plane/utils";
@@ -28,7 +29,13 @@ import { SaklarPeramban } from "./saklar-peramban";
  * di halaman Obrolan, orang yang terganggu bunyi tugas mencarinya di panel
  * Pemberitahuan, dan keduanya menemukan setelan yang sama.
  */
-export const SaklarSuara = observer(function SaklarSuara({ className = "" }: { className?: string }) {
+type TSaklarSuara = {
+  className?: string;
+  /** Samakan dengan tombol lain di header tempatnya dipasang (Inbox: "base"). */
+  size?: IconButtonProps["size"];
+};
+
+export const SaklarSuara = observer(function SaklarSuara({ className = "", size = "xl" }: TSaklarSuara) {
   const { t } = useTranslation();
   const { volume, bisu, geser, setBisu, pratinjau } = useVolumeSuara();
   const nyala = !bisu && volume > 0;
@@ -40,7 +47,7 @@ export const SaklarSuara = observer(function SaklarSuara({ className = "" }: { c
         render={
           <IconButton
             variant="ghost"
-            size="xl"
+            size={size}
             icon={ikon}
             aria-label={t("chatux_kelola_ui.sound_volume")}
             title={nyala ? t("notification_ui.sound_on") : t("notification_ui.sound_off")}
@@ -51,7 +58,13 @@ export const SaklarSuara = observer(function SaklarSuara({ className = "" }: { c
       <Popover.Panel
         side="bottom"
         align="end"
-        className="z-30 w-64 rounded-popover border-[0.5px] border-strong bg-surface-1 p-3 shadow-raised-200"
+        // z-index WAJIB di positioner, bukan di popup. Popup tidak diposisikan, jadi
+        // z-30 di sana tak berpengaruh, dan positioner (z auto) tergambar DI BAWAH
+        // kolom daftar Inbox (`relative z-[10]`, berlatar). Akibatnya klik tombol
+        // ini "tidak berbuat apa-apa": panelnya terbuka, tapi tertutup kolom itu.
+        // z-40 juga menaruhnya di atas popover lonceng Inbox (z-30).
+        positionerClassName="z-40"
+        className="w-64 rounded-popover border-[0.5px] border-strong bg-surface-1 p-3 shadow-raised-200"
       >
         <div className="flex flex-col gap-3">
           <p className="text-13 font-medium text-primary">{t("chatux_kelola_ui.sound_volume")}</p>

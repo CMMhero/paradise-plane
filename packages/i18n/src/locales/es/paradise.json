@@ -1,4 +1,11 @@
 {
+  "aturan_tugas_ui": {
+    "reject_description_optional": "The work item moves back to In Progress. You can add a reason so the requester knows what to fix.",
+    "reason_placeholder_optional": "Rejection reason (optional)",
+    "invite_expired_title": "Invitation expired",
+    "invite_expired_message": "This invitation has expired. Ask the person who invited you to send a new one.",
+    "invite_expired_badge": "Expired"
+  },
   "chatux_kelola_ui": {
     "channel_settings": "Channel settings",
     "name": "Channel name",
@@ -317,6 +324,7 @@
     "joinable_channels": "Channels you can join",
     "no_other_channels": "There are no other channels right now.",
     "edited": "edited",
+    "message_deleted": "Message deleted",
     "add_reaction": "Add reaction",
     "reply": "Reply to message",
     "edit": "Edit message",
@@ -358,6 +366,21 @@
       "server_unreachable": "Failed to connect to the call server. Check the office network.",
       "camera_failed": "The camera can't be used, so the call continues with audio only.",
       "connection_down": "The connection is down. Try again in a moment."
+    },
+    "call_ring": {
+      "incoming_voice": "Llamada de voz entrante",
+      "incoming_video": "Videollamada entrante",
+      "accept": "Aceptar",
+      "accept_voice_only": "Solo audio",
+      "decline": "Rechazar",
+      "missed_title": "Llamada perdida",
+      "missed_body": "Llamada de {name}.",
+      "no_answer_title": "Sin respuesta",
+      "no_answer_body": "La llamada de {name} no obtuvo respuesta.",
+      "declined_title": "Llamada rechazada",
+      "declined_body": "Se rechazó la llamada de {name}.",
+      "busy_title": "Ocupado",
+      "busy_body": "{name} está en otra llamada."
     },
     "confirm_delete_title": "¿Eliminar mensaje?",
     "confirm_delete_body": "Nadie en esta conversación volverá a verlo. No se puede deshacer.",
@@ -480,7 +503,17 @@
     "sound_turn_off": "Turn off notification sound",
     "sound_turn_on": "Turn on notification sound",
     "sound_on": "Notification sound is on",
-    "sound_off": "Notification sound is off"
+    "sound_off": "Notification sound is off",
+    "unread_count": "{count} unread",
+    "open_full_view": "Open full view",
+    "see_all": "See all in Inbox",
+    "inbox_options": "Inbox options",
+    "item_actions": "Notification actions",
+    "filter_heading": "Show only",
+    "view_heading": "View",
+    "snooze_heading": "Snooze",
+    "snoozed_until": "Snoozed until {date}",
+    "load_failed": "Couldn't load notifications."
   },
   "division_dashboard_ui": {
     "duration_hm": "{h}h {m}m",
@@ -829,6 +862,7 @@
     "digest_tim": "Your team",
     "digest_tim_description": "Supervisors and managers: the departments or division you oversee, per project.",
     "inbox_overdue": "{count, plural, one{Overdue by # day} other{Overdue by # days}}",
+    "inbox_approval_overdue": "{count, plural, one{Waiting for your approval, overdue by # day} other{Waiting for your approval, overdue by # days}}",
     "inbox_due_today": "Due today",
     "inbox_due_in": "{count, plural, one{Due tomorrow} other{Due in # days}}",
     "inbox_chat_messages": "{count, plural, one{sent you a message} other{sent you # messages}}"
@@ -873,5 +907,58 @@
     "not_set": "Not set",
     "job_title_choose": "Choose a department",
     "job_title_clear": "Clear"
+  },
+  "settings_limits_ui": {
+    "email_language_hint": "Emails are sent in English or Indonesian only.",
+    "locked_by_admin": "Turned off by admin.",
+    "locked_policy": "Limited by your organization's policy.",
+    "archive_ceiling_hint": "Your organization archives done work items after {days} days at the latest."
+  },
+  "attention_ui": {
+    "title": "Needs attention",
+    "widget_title": "Needs attention",
+    "empty": "Nothing needs your attention right now.",
+    "view_all": "View all",
+    "more": "+{count} more",
+    "requested_by": "Requested by {name}",
+    "group_decide": "Waiting for your decision",
+    "group_overdue_mine": "My overdue work items",
+    "group_rejected": "Rejected, needs rework",
+    "group_team_overdue": "Overdue in your team",
+    "group_due_soon": "Due in the next {days} days",
+    "group_waiting_mine": "Awaiting approval",
+    "group_mentioned": "Recently mentioned"
+  },
+  "quick_links_ui": {
+    "shared_title": "From your organization",
+    "my_links": "My links",
+    "edit_link": "Editar enlace rápido",
+    "visibility": "Visibilidad",
+    "visibility_private": "Privado",
+    "visibility_private_hint": "Solo usted ve este enlace.",
+    "visibility_public": "Público",
+    "visibility_public_hint": "Se muestra a todos o a las divisiones y departamentos que elija. Solo los administradores pueden gestionarlo.",
+    "shared_by_admin": "Shared by your admin",
+    "shared_empty_admin": "No shared links yet. Links you add here appear for everyone, or for the divisions and departments you pick.",
+    "audience": "Who sees this link",
+    "audience_everyone": "Everyone in the workspace",
+    "audience_everyone_short": "Everyone",
+    "audience_units": "Selected divisions and departments",
+    "audience_hint": "A division includes all of its departments and its managers.",
+    "audience_no_units": "No divisions yet. Set them up in God Mode under Members, Organization.",
+    "audience_required": "Pick at least one division or department.",
+    "audience_nobody": "Nobody (its divisions or departments were removed)",
+    "title_hint": "Optional. Leave empty to use the site title.",
+    "icon_label": "Elija un icono",
+    "icon_hint": "Haga clic en el icono para elegir uno, igual que con el icono de un proyecto. Si no elige ninguno, se usa el icono del sitio.",
+    "reset_title": "Use the site title",
+    "reset_icon": "Use the site icon",
+    "saved": "Shared link saved",
+    "save_failed": "Could not save the shared link",
+    "save_failed_message": "Check the address and try again.",
+    "removed": "Shared link removed",
+    "remove_failed": "Could not remove the shared link",
+    "delete_title": "Remove this shared link?",
+    "delete_body": "It disappears from the Home and Quick links page of everyone it was shared with."
   }
 }

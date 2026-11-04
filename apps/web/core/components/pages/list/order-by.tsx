@@ -38,7 +38,7 @@ export function PageOrderByDropdown(props: Props) {
       customButton={
         <div className={getButtonStyling("secondary", "lg")}>
           {!isDescending ? <ArrowUpWideNarrow className="size-3" /> : <ArrowDownWideNarrow className="size-3" />}
-          {orderByDetails?.label}
+          <span className="max-sm:sr-only">{orderByDetails?.label}</span>
         </div>
       }
       placement="bottom-end"

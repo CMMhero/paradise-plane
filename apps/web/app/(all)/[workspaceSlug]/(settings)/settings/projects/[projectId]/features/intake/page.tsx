@@ -17,6 +17,7 @@ import { ProjectSettingsFeatureControlItem } from "@/components/settings/project
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 // local imports
 import type { Route } from "./+types/page";
 import { FeaturesIntakeProjectSettingsHeader } from "./header";
@@ -33,6 +34,8 @@ function FeaturesIntakeSettingsPage({ params }: Route.ComponentProps) {
     ? `${currentProjectDetails?.name} settings - ${t("project_settings.features.intake.short_title")}`
     : undefined;
   const canPerformProjectAdminActions = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
+  // Paradise KEP-85: menyalakan/mematikan intake = aturan struktur PERM_PROJECT_WORKFLOW.
+  const izin = useIzinSumber(workspaceSlug, projectId);
 
   if (workspaceUserInfo && !canPerformProjectAdminActions) {
     return <NotAuthorizedView section="settings" isProjectView className="h-auto" />;
@@ -53,6 +56,7 @@ function FeaturesIntakeSettingsPage({ params }: Route.ComponentProps) {
             featureProperty="inbox_view"
             projectId={projectId}
             value={!!currentProjectDetails?.inbox_view}
+            disabled={!izin.struktur("PERM_PROJECT_WORKFLOW")}
             workspaceSlug={workspaceSlug}
           />
         </div>

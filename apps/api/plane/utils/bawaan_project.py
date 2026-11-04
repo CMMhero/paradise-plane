@@ -41,8 +41,69 @@ PABRIK = {
 }
 
 
+# --- Plafon arsip otomatis (KEP-83) ---
+#
+# AUTO_ARCHIVE_DONE_DAYS (God Mode, hari) adalah PLAFON untuk `archive_in`
+# project (bulan): project boleh mengarsipkan lebih cepat, tidak lebih lambat.
+# Satu bulan dihitung 30 hari, sama dengan task harian (issue_automation_task)
+# dan dengan web (pilihan boleh bila bulan * 30 <= plafon). Plafon 0 = aturan
+# instance mati, jadi tidak ada plafon.
+HARI_SEBULAN = 30
+
+
+def bulan_arsip_maks():
+    """Bulan `archive_in` terbesar yang masih di bawah plafon, atau None tanpa plafon."""
+    from plane.utils.saklar_instance import AUTO_ARCHIVE_DONE_DAYS, setelan_angka  # noqa: PLC0415
+
+    plafon = setelan_angka(AUTO_ARCHIVE_DONE_DAYS)
+    if not plafon:
+        return None
+    return min(plafon // HARI_SEBULAN, BULAN_MAKS)
+
+
+def galat_archive_in(bulan):
+    """Pesan galat kalau `archive_in` melewati plafon instance, atau None kalau boleh.
+
+    0 (arsip project mati) selalu boleh: aturan instance tetap berjalan.
+    """
+    if not isinstance(bulan, int) or isinstance(bulan, bool) or bulan <= 0:
+        return None
+    maks = bulan_arsip_maks()
+    if maks is None or bulan <= maks:
+        return None
+    from plane.utils.saklar_instance import AUTO_ARCHIVE_DONE_DAYS, setelan_angka  # noqa: PLC0415
+
+    plafon = setelan_angka(AUTO_ARCHIVE_DONE_DAYS)
+    if maks == 0:
+        return (
+            f"Auto-archive cannot be later than the instance limit of {plafon} days. "
+            "Turn it off here; the instance rule already archives done work items."
+        )
+    return (
+        f"Auto-archive cannot be later than the instance limit of {plafon} days. "
+        f"Pick {maks} {'month' if maks == 1 else 'months'} or less."
+    )
+
+
+def galat_archive_in_project(bulan, project=None):
+    """`galat_archive_in` untuk create/update project.
+
+    Project lama yang SUDAH memegang nilai di atas plafon tidak dirusak: mengirim
+    ulang nilai yang sama (formulir yang menyimpan semua kolom) tetap boleh. Task
+    harian mengarsipkan pada mana pun yang lebih dulu, jadi plafonnya tetap berlaku.
+    """
+    if project is not None and bulan == project.archive_in:
+        return None
+    return galat_archive_in(bulan)
+
+
 def baca_bawaan() -> dict:
-    """Bawaan yang berlaku sekarang. Baris rusak = pabrik, dicatat ke log, tidak meledak."""
+    """Bawaan yang berlaku sekarang. Baris rusak = pabrik, dicatat ke log, tidak meledak.
+
+    `archive_in` yang tersimpan di atas plafon arsip instance (plafonnya diturunkan
+    sesudah bawaan disimpan) dijepit ke plafon itu, supaya project baru tidak
+    ditolak karena bawaannya sendiri (KEP-83).
+    """
     from plane.license.models import InstanceConfiguration
 
     mentah = InstanceConfiguration.objects.filter(key=KUNCI).values_list("value", flat=True).first()
@@ -54,7 +115,10 @@ def baca_bawaan() -> dict:
             logger.warning("%s bukan JSON sah; memakai bawaan pabrik", KUNCI)
     if not isinstance(tersimpan, dict):
         tersimpan = {}
-    return {kunci: tersimpan.get(kunci, nilai) for kunci, nilai in PABRIK.items()}
+    hasil = {kunci: tersimpan.get(kunci, nilai) for kunci, nilai in PABRIK.items()}
+    if galat_archive_in(hasil["archive_in"]):
+        hasil["archive_in"] = bulan_arsip_maks()
+    return hasil
 
 
 def _bulan(nama, nilai):
@@ -79,6 +143,10 @@ def periksa_perubahan(data) -> tuple[dict, str | None]:
             galat = _bulan(nama, data[nama])
             if galat:
                 return {}, galat
+    if "archive_in" in data:
+        galat = galat_archive_in(data["archive_in"])
+        if galat:
+            return {}, galat
     if "guest_view_all_features" in data and not isinstance(data["guest_view_all_features"], bool):
         return {}, "guest_view_all_features must be true or false."
     return {**baca_bawaan(), **data}, None

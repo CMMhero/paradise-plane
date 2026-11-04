@@ -23,12 +23,14 @@ import { truncateText } from "@plane/utils";
 import emptyInvitation from "@/app/assets/empty-state/invitation.svg?url";
 // components
 import { EmptyState } from "@/components/common/empty-state";
+import { InviteExpiredBadge } from "@/components/workspace/invite-expired-badge";
 import { WorkspaceLogo } from "@/components/workspace/logo";
 import { USER_WORKSPACES_LIST } from "@plane/constants";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUser, useUserProfile } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { adalahUndanganKedaluwarsa, tampilkanUndanganKedaluwarsa } from "@/lib/undangan";
 // services
 import { AuthenticationWrapper } from "@/lib/wrappers/authentication-wrapper";
 // plane web services
@@ -58,6 +60,10 @@ function UserInvitationsPage() {
 
   const handleInvitation = (workspace_invitation: IWorkspaceMemberInvitation, action: "accepted" | "withdraw") => {
     if (action === "accepted") {
+      if (workspace_invitation.is_expired) {
+        tampilkanUndanganKedaluwarsa(t);
+        return;
+      }
       setInvitationsRespond((prevData) => [...prevData, workspace_invitation.id]);
     } else if (action === "withdraw") {
       setInvitationsRespond((prevData) => prevData.filter((item: string) => item !== workspace_invitation.id));
@@ -82,11 +88,12 @@ function UserInvitationsPage() {
         mutate(USER_WORKSPACES_LIST);
         const firstInviteId = invitationsRespond[0];
         const redirectWorkspace = invitations?.find((i) => i.id === firstInviteId)?.workspace;
-        updateUserProfile({ last_workspace_id: redirectWorkspace?.id })
+        return updateUserProfile({ last_workspace_id: redirectWorkspace?.id })
           .then(() => {
             setIsJoiningWorkspaces(false);
-            fetchWorkspaces().then(() => {
+            return fetchWorkspaces().then(() => {
               router.push(`/${redirectWorkspace?.slug}`);
+              return null;
             });
           })
           .catch(() => {
@@ -98,12 +105,19 @@ function UserInvitationsPage() {
             setIsJoiningWorkspaces(false);
           });
       })
-      .catch((_err) => {
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: t("error"),
-          message: t("something_went_wrong_please_try_again"),
-        });
+      .catch((err: unknown) => {
+        if (adalahUndanganKedaluwarsa(err)) {
+          tampilkanUndanganKedaluwarsa(t);
+          // Muat ulang daftar supaya undangan itu ikut bertanda kedaluwarsa.
+          void mutate("USER_WORKSPACE_INVITATIONS");
+          setInvitationsRespond([]);
+        } else {
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: t("error"),
+            message: t("something_went_wrong_please_try_again"),
+          });
+        }
         setIsJoiningWorkspaces(false);
       });
   };
@@ -138,8 +152,17 @@ function UserInvitationsPage() {
                         key={invitation.id}
                         className={`flex cursor-pointer items-center gap-2 rounded-sm border px-3.5 py-5 ${
                           isSelected ? "border-accent-strong" : "border-subtle hover:bg-layer-1"
-                        }`}
+                        } ${invitation.is_expired ? "opacity-60" : ""}`}
+                        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a real button would change the card layout and styling
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleInvitation(invitation, isSelected ? "withdraw" : "accepted")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleInvitation(invitation, isSelected ? "withdraw" : "accepted");
+                          }
+                        }}
                       >
                         <div className="flex-shrink-0">
                           <WorkspaceLogo
@@ -152,6 +175,7 @@ function UserInvitationsPage() {
                           <div className="text-13 font-medium">{truncateText(invitation.workspace.name, 30)}</div>
                           <p className="text-11 text-secondary">{ROLE[invitation.role]}</p>
                         </div>
+                        {invitation.is_expired && <InviteExpiredBadge />}
                         <span className={`flex-shrink-0 ${isSelected ? "text-accent-primary" : "text-secondary"}`}>
                           <CheckCircle2 className="h-5 w-5" />
                         </span>

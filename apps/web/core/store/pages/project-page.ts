@@ -9,6 +9,9 @@ import { computedFn } from "mobx-utils";
 // constants
 import { EPageAccess, EUserPermissions } from "@plane/constants";
 import type { TPage } from "@plane/types";
+// lib
+import { bacaIzinSumber, nilaiIzinIsi } from "@/lib/izin-sumber";
+import { isWikiProject } from "@/lib/wiki-project";
 // plane web store
 import type { RootStore } from "@/plane-web/store/root.store";
 // services
@@ -93,6 +96,26 @@ export class ProjectPage extends BasePage implements TProjectPage {
   });
 
   /**
+   * Kustomisasi Paradise (KEP-85): hak atas page mengikuti aturan God Mode
+   * (pemilik + atasan / pemilik saja / semua anggota), bukan role admin project.
+   * Data izin dibaca dari salinan reaktif `izin-saya/` yang diisi `useIzinSumber`
+   * (dipasang di layout project); belum dimuat = pemilik saja.
+   *
+   * Page di project Wiki tetap aturan lama: hanya admin project.
+   */
+  private bolehMenurutIzin = computedFn(
+    (kunci: "PERM_PAGE_EDIT" | "PERM_PAGE_ARCHIVE" | "PERM_PAGE_DELETE"): boolean => {
+      const projectId = this.project_ids?.[0];
+      const project = this.rootStore.projectRoot.project.getProjectById(projectId);
+      if (isWikiProject(project)) return this.getHighestRoleAcrossProjects() === EUserPermissions.ADMIN;
+      const highestRole = this.getHighestRoleAcrossProjects();
+      if (!highestRole || highestRole < EUserPermissions.MEMBER) return false;
+      const izin = bacaIzinSumber(this.rootStore.router.workspaceSlug, projectId);
+      return nilaiIzinIsi(izin, kunci, { pemilikId: this.owned_by }, this.rootStore.user.data?.id, !!projectId);
+    }
+  );
+
+  /**
    * @description returns true if the current logged in user can access the page
    */
   get canCurrentUserAccessPage() {
@@ -102,12 +125,10 @@ export class ProjectPage extends BasePage implements TProjectPage {
 
   /**
    * @description returns true if the current logged in user can edit the page
-   * Kustomisasi Paradise: hanya admin project (atau Super Admin, yang selalu
-   * berbaris role admin) yang boleh mengubah Wiki. Member boleh baca + tambah.
+   * Kustomisasi Paradise: lihat `bolehMenurutIzin` (KEP-85; Wiki tetap admin project).
    */
   get canCurrentUserEditPage() {
-    const highestRole = this.getHighestRoleAcrossProjects();
-    return highestRole === EUserPermissions.ADMIN;
+    return this.bolehMenurutIzin("PERM_PAGE_EDIT");
   }
 
   /**
@@ -122,32 +143,31 @@ export class ProjectPage extends BasePage implements TProjectPage {
    * @description returns true if the current logged in user can lock the page
    */
   get canCurrentUserLockPage() {
-    const highestRole = this.getHighestRoleAcrossProjects();
-    return highestRole === EUserPermissions.ADMIN;
+    return this.bolehMenurutIzin("PERM_PAGE_EDIT");
   }
 
   /**
    * @description returns true if the current logged in user can change the access of the page
    */
   get canCurrentUserChangeAccess() {
-    const highestRole = this.getHighestRoleAcrossProjects();
-    return highestRole === EUserPermissions.ADMIN;
+    // Paradise KEP-85: publik/privat hanya pemiliknya.
+    const project = this.rootStore.projectRoot.project.getProjectById(this.project_ids?.[0]);
+    if (isWikiProject(project)) return this.getHighestRoleAcrossProjects() === EUserPermissions.ADMIN;
+    return this.isCurrentUserOwner;
   }
 
   /**
    * @description returns true if the current logged in user can archive the page
    */
   get canCurrentUserArchivePage() {
-    const highestRole = this.getHighestRoleAcrossProjects();
-    return highestRole === EUserPermissions.ADMIN;
+    return this.bolehMenurutIzin("PERM_PAGE_ARCHIVE");
   }
 
   /**
    * @description returns true if the current logged in user can delete the page
    */
   get canCurrentUserDeletePage() {
-    const highestRole = this.getHighestRoleAcrossProjects();
-    return highestRole === EUserPermissions.ADMIN;
+    return this.bolehMenurutIzin("PERM_PAGE_DELETE");
   }
 
   /**
@@ -170,11 +190,10 @@ export class ProjectPage extends BasePage implements TProjectPage {
    * @description returns true if the page can be edited
    */
   get isContentEditable() {
-    const highestRole = this.getHighestRoleAcrossProjects();
     const isArchived = this.archived_at;
     const isLocked = this.is_locked;
 
-    return !isArchived && !isLocked && highestRole === EUserPermissions.ADMIN;
+    return !isArchived && !isLocked && this.canCurrentUserEditPage;
   }
 
   getRedirectionLink = computedFn(() => {

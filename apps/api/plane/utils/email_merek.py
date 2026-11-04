@@ -40,6 +40,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from email.mime.image import MIMEImage
+from email.utils import formataddr, parseaddr
 from html import unescape
 from pathlib import Path
 
@@ -83,10 +84,12 @@ WARNA = {
     "info_halus": "#FAF4EF",
 }
 
-# Plus Jakarta Sans = font aplikasi. Gmail tidak memuat font web, jadi cadangannya
-# harus mirip: Segoe UI (Windows/Outlook), Roboto (Android), Helvetica (Apple).
-FONT = "'Plus Jakarta Sans','Segoe UI',Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif"
-FONT_MONO = "'Geist Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"
+# Font sistem saja, tanpa font web. Outlook (yang dipakai kantor) memblokir font
+# web dan Gmail membuangnya, jadi dulu Plus Jakarta Sans cuma tampil di pratinjau
+# God Mode dan pratinjaunya beda dengan email yang diterima. Segoe UI di depan:
+# itu yang dilihat penerima di Windows/Outlook, dan pratinjau di Windows ikut sama.
+FONT = "'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif"
+FONT_MONO = "Consolas,SFMono-Regular,Menlo,'Liberation Mono',monospace"
 
 # ---------------------------------------------------------------- sistem gaya
 #
@@ -99,8 +102,11 @@ FONT_MONO = "'Geist Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monosp
 # - Elemen tingkat atas di isi kartu diberi penanda `data-j`; `_rapikan_akhir()`
 #   menolkan jarak bawah elemen TERAKHIR, jadi padding kartu atas = bawah apa pun
 #   penutupnya (tombol, paragraf, kotak).
-# - Bingkai = "border sebagai latar": sel luar berlatar warna garis + padding 1px,
-#   sel dalam berlatar permukaan. Border pada <td> kadang hilang sebagian di Word.
+# - Bingkai lewat partial `bingkai_buka.html` / `bingkai_tutup.html`: Outlook klasik
+#   mendapat baris & kolom 1px berlatar garis di sekeliling sel isi (di dalam tabel
+#   berlatar isi), klien lain border biasa. Jangan kembali ke "sel luar berlatar
+#   garis + padding 1px": celah sub-piksel Word di skala 125%/150% memperlihatkan
+#   latar garis itu sebagai garis tipis selebar kartu.
 # - Teks berbaris banyak memakai <br> (`linebreaksbr`), bukan `white-space:pre-wrap`.
 
 RUANG = {
@@ -111,8 +117,8 @@ RUANG = {
     "rapat": 8,  # baris orang -> isinya, label -> daftar
 }
 UKURAN = {"h1": 22, "h2": 16, "isi": 15, "isi_2": 14, "tabel": 13, "meta": 12}
-# Sudut: kartu utama 12/11, blok di dalamnya 10/9 (luar/dalam bingkai), tombol 8.
-SUDUT = {"kartu": 12, "kartu_dalam": 11, "blok": 10, "blok_dalam": 9, "tombol": 8}
+# Sudut: kartu utama 12, blok di dalamnya 10, tombol 8 (VML arcsize 20% x 40px).
+SUDUT = {"kartu": 12, "blok": 10, "tombol": 8}
 PADDING_BLOK = "16px 18px"
 JEDA_AVATAR = 10  # avatar -> nama
 UKURAN_AVATAR = 28
@@ -133,6 +139,7 @@ GAYA = {
         f"margin:0 0 {RUANG['judul']}px;{_F}font-size:{UKURAN['h1']}px;line-height:1.3;font-weight:700;"
         f"color:{WARNA['teks']};"
     ),
+    "isi_kartu": f"font-size:{UKURAN['isi']}px;line-height:1.6;color:{WARNA['teks']};",
     "h2": f"margin:0;{_F}font-size:{UKURAN['h2']}px;line-height:1.4;font-weight:700;color:{WARNA['teks']};",
     "p": f"margin:0 0 {RUANG['paragraf']}px;{_F}font-size:{UKURAN['isi']}px;line-height:1.6;color:{WARNA['teks']};",
     "p2": (
@@ -202,6 +209,51 @@ def bahasa_untuk_alamat(email) -> str:
 
     user = User.objects.filter(email__iexact=str(email or "").strip()).select_related("profile").first()
     return bahasa_penerima(user) if user else bahasa_bawaan()
+
+
+# ---------------------------------------------------------------- penerima bersama
+
+# Batas alamat dalam satu header To. Banyak server SMTP menolak pesan di atas
+# ~100 penerima; 50 menyisakan ruang dan tetap jauh di atas kasus nyata
+# (penanggung jawab satu tugas, admin instance).
+MAKS_PENERIMA = 50
+
+
+def kelompokkan_penerima(orang, kunci=bahasa_penerima) -> list[list]:
+    """Penerima dengan isi email yang SAMA dijadikan satu pesan, To: a; b; c.
+
+    Keputusan user 4 Nov 2026: email yang isinya sama untuk beberapa orang
+    dikirim sekali dengan semua alamat di To, supaya tiap penerima tahu siapa
+    lagi yang menerimanya. `kunci(user)` = apa pun yang membuat isinya berbeda
+    (bahasa, posisi di utas). Urut alamat supaya susunan To tetap dari waktu ke
+    waktu; kelompok di atas MAKS_PENERIMA dipecah.
+    """
+    grup: dict = {}
+    for o in sorted(orang, key=lambda u: str(getattr(u, "email", "")).lower()):
+        if getattr(o, "email", ""):
+            grup.setdefault(kunci(o), []).append(o)
+    return [g[i : i + MAKS_PENERIMA] for g in grup.values() for i in range(0, len(g), MAKS_PENERIMA)]
+
+
+def daftar_orang(penerima) -> list:
+    """Satu user atau daftar user, selalu jadi daftar. Untuk `susun_*` yang menerima keduanya."""
+    if penerima is None:
+        return []
+    return list(penerima) if isinstance(penerima, (list, tuple, set)) else [penerima]
+
+
+def gabung_nama(nama, bahasa="id") -> str:
+    """"Andi", "Andi dan Budi", "Andi, Budi, dan Citra". Nama kosong dibuang."""
+    nama = [n for n in (str(x or "").strip() for x in nama) if n]
+    sambung = " dan " if bahasa == "id" else " and "
+    if len(nama) <= 2:
+        return sambung.join(nama)
+    return ", ".join(nama[:-1]) + "," + sambung + nama[-1]
+
+
+def alamat_gabungan(penerima) -> str:
+    """Alamat untuk footer "Email ini dikirim ke ...", dipisah titik koma seperti To."""
+    return "; ".join(o.email for o in daftar_orang(penerima) if getattr(o, "email", ""))
 
 
 _BULAN = {
@@ -295,7 +347,8 @@ def bungkus(
             "pratajuk": pratajuk,
             "alasan": alasan,
             "url_preferensi": url_preferensi,
-            "email_penerima": email_penerima,
+            # Daftar alamat (email bersama) ditulis seperti header To: a; b; c.
+            "email_penerima": email_penerima if isinstance(email_penerima, str) else "; ".join(email_penerima),
         },
     )
     return _rapikan_akhir(html)
@@ -751,10 +804,22 @@ def koneksi_smtp(timeout=30):
     return koneksi, efrom
 
 
-def buat_pesan(*, ke, subjek, html, teks=None, koneksi=None, dari=None, gambar=(), lampiran=()):
+def pengirim(alamat) -> str:
+    """Header From dengan nama tampilan `MEREK`; bagian alamat dipertahankan.
+
+    Nama bawaan konfigurasi (mis. "Team Plane <team@...>") selalu diganti.
+    Alamat kosong dibiarkan kosong supaya Django jatuh ke DEFAULT_FROM_EMAIL.
+    """
+    _, surel = parseaddr(alamat or "")
+    return formataddr((MEREK, surel)) if surel else ""
+
+
+def buat_pesan(*, ke, subjek, html, teks=None, koneksi=None, dari=None, gambar=(), lampiran=(), header=None):
     """Satu pesan siap `send()`. Logo selalu ikut; `gambar` = avatar tambahan.
 
-    `lampiran` = [(nama_berkas, isi, mimetype)].
+    `lampiran` = [(nama_berkas, isi, mimetype)]. `header` = header tambahan, mis.
+    Message-ID/In-Reply-To/References dari `email_utas.utas_untuk` (Django hanya
+    membuat Message-ID sendiri kalau tidak ada di sini).
     """
     if koneksi is None or dari is None:
         k, d = koneksi_smtp()
@@ -763,10 +828,11 @@ def buat_pesan(*, ke, subjek, html, teks=None, koneksi=None, dari=None, gambar=(
     pesan = EmailBermerek(
         subject=re.sub(r"[\x00-\x1F\x7F-\x9F]", "", subjek),
         body=teks if teks is not None else teks_polos(html),
-        from_email=dari,
+        from_email=pengirim(dari) or None,
         to=[ke] if isinstance(ke, str) else list(ke),
         connection=koneksi,
         gambar=[logo(), *[g for g in gambar if g]],
+        headers=dict(header or {}),
     )
     pesan.attach_alternative(html, "text/html")
     for nama, isi, tipe in lampiran:

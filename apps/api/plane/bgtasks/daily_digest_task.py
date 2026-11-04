@@ -17,27 +17,27 @@ memutuskan persetujuan, jadi "yang dia awasi" tidak punya dua definisi.
 
 HIDUP secara bawaan untuk semua jabatan (keputusan user 2026-10-30) dan
 menggantikan pengingat per tugas (`deadline_reminder_task`, kini bawaannya mati).
-Orang mematikannya sendiri di Profil > Notifikasi. Jadwal: Senin-Jumat 08.30
-Jakarta (beat_schedule di plane/celery.py).
+Orang mematikannya sendiri di Profil > Notifikasi. Jadwal: slot `ringkasan-pagi`
+di plane/bgtasks/jadwal_kantor.py (God Mode: DIGEST_MORNING_TIME pada DIGEST_WEEKDAYS,
+bawaan Senin-Jumat 08.30 OFFICE_TIMEZONE).
 
-Edisi sore (`kirim_ringkasan_sore`, 17.30 Jakarta, saklar `daily_digest_sore`,
+Edisi sore (`kirim_ringkasan_sore`, bawaan 17.30, saklar `daily_digest_sore`,
 keputusan user 2026-11-02): isi sama, ditambah yang SELESAI hari ini, dan jendela
 depan menyempit ke hari kerja berikutnya. Lihat docstring daily_digest_email.
 
-ponytail: tidak ada tabel pencatat "sudah terkirim hari ini". Beat memicu sekali
-sehari; kalau task dijalankan manual dua kali, orang menerima dua email.
+Sekali per hari dijamin penanda `JadwalTerlaksana` milik penjadwal kantor. Task ini
+sendiri tidak mencatat: dijalankan manual dua kali, orang menerima dua email.
 """
 
 import logging
 from collections import defaultdict
-from datetime import datetime, time, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date, datetime, time, timedelta
 
 from celery import shared_task
 from django.core.mail import get_connection
+from django.db.models import Exists, OuterRef, Q
 
 from plane.bgtasks.daily_digest_email import (
-    HARI_KE_DEPAN,
     GrupTim,
     Kelompok,
     Ringkasan,
@@ -45,7 +45,7 @@ from plane.bgtasks.daily_digest_email import (
     kelompokkan,
     susun_email,
 )
-from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI
+from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI, hari_ini_kantor
 from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
     TINGKAT_DIREKTUR,
@@ -55,26 +55,33 @@ from plane.db.models import (
     Divisi,
     Issue,
     IssueAssignee,
+    PersetujuanPenugasan,
+    STATUS_PERSETUJUAN_DISETUJUI,
     UserNotificationPreference,
     Workspace,
     WorkspaceMember,
 )
+from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.exception_logger import log_exception
 from plane.utils.hierarki import divisi_diawasi, semua_departemen_ids, semua_divisi_ids, tingkat_efektif
 from plane.utils.preferensi_email import saklar_efektif
+from plane.utils.saklar_instance import DIGEST_LOOKAHEAD_DAYS, setelan_angka
+from plane.utils.setelan_instance import DIGEST_WEEKDAYS, setelan_hari_kerja, zona_kantor
 
 logger = logging.getLogger("plane")
 
 NAMA_PERAN = {TINGKAT_SUPERVISOR: "Supervisor", TINGKAT_MANAGER: "Manager", TINGKAT_DIREKTUR: "Direktur"}
 
 # Celery dan Django berjalan di UTC. "Hari ini" dan "selesai hari ini" harus hari
-# kantor: tugas yang selesai 06.30 WIB tercatat 23.30 UTC kemarin.
-ZONA_KANTOR = ZoneInfo("Asia/Jakarta")
+# kantor (OFFICE_TIMEZONE, God Mode > General > Company): tugas yang selesai
+# 06.30 WIB tercatat 23.30 UTC kemarin. `hari_ini_kantor` diimpor dari
+# deadline_reminder_task supaya kedua task memakai satu definisi.
 
 
-def hari_ini_kantor():
-    return datetime.now(ZONA_KANTOR).date()
+def hari_ke_depan_pagi() -> int:
+    """Jendela depan edisi pagi (God Mode DIGEST_LOOKAHEAD_DAYS, bawaan 7)."""
+    return setelan_angka(DIGEST_LOOKAHEAD_DAYS)
 
 
 class TugasWorkspace:
@@ -84,7 +91,9 @@ class TugasWorkspace:
     270 kueri tugas.
     """
 
-    def __init__(self, workspace_id, hari_ini, hari_ke_depan=HARI_KE_DEPAN, dengan_selesai=False):
+    def __init__(self, workspace_id, hari_ini, hari_ke_depan=None, dengan_selesai=False):
+        if hari_ke_depan is None:
+            hari_ke_depan = hari_ke_depan_pagi()
         self.hari_ke_depan = hari_ke_depan
         self.tugas = list(
             Issue.issue_objects.filter(
@@ -93,22 +102,38 @@ class TugasWorkspace:
                 target_date__isnull=False,
                 target_date__lte=hari_ini + timedelta(days=hari_ke_depan),
             )
+            # KEP-84: tugas yang sudah diajukan selesai dan menunggu persetujuan
+            # bukan pekerjaan terbuka staf: tidak masuk terlambat/hari ini/depan.
+            .filter(q_bisa_terlambat())
             .exclude(state__group__in=GRUP_SELESAI)
             .select_related("project", "workspace", "state")
         )
-        # Edisi sore: yang pindah ke grup "completed" sejak 00.00 WIB hari ini,
+        # Edisi sore: yang pindah ke grup "completed" sejak 00.00 kantor hari ini,
         # bertenggat atau tidak. Dibatalkan (cancelled) bukan "selesai".
+        # KEP-84: dengan APPROVAL_FINISH_TIME = saat diajukan, tugas yang diajukan
+        # kemarin dan disetujui hari ini punya `completed_at` kemarin, padahal
+        # kemarin ia belum selesai (belum masuk ringkasan mana pun). Karena itu
+        # yang DISETUJUI hari ini juga dihitung, lewat `diputuskan_pada`.
         self.selesai_ids = set()
         if dengan_selesai:
-            awal = datetime.combine(hari_ini, time.min, tzinfo=ZONA_KANTOR)
+            awal = datetime.combine(hari_ini, time.min, tzinfo=zona_kantor())
+            akhir = awal + timedelta(days=1)
+            disetujui_hari_ini = Exists(
+                PersetujuanPenugasan.objects.filter(
+                    issue_id=OuterRef("pk"),
+                    status=STATUS_PERSETUJUAN_DISETUJUI,
+                    diputuskan_pada__gte=awal,
+                    diputuskan_pada__lt=akhir,
+                )
+            )
             selesai = list(
                 Issue.issue_objects.filter(
                     workspace_id=workspace_id,
                     project__deleted_at__isnull=True,
                     state__group="completed",
-                    completed_at__gte=awal,
-                    completed_at__lt=awal + timedelta(days=1),
-                ).select_related("project", "workspace", "state")
+                )
+                .filter(Q(completed_at__gte=awal, completed_at__lt=akhir) | Q(disetujui_hari_ini))
+                .select_related("project", "workspace", "state")
             )
             self.selesai_ids = {i.id for i in selesai}
             self.tugas += selesai
@@ -249,10 +274,13 @@ def _koneksi():
     return koneksi, efrom
 
 
-def _kirim(sore):
-    hari_ini = hari_ini_kantor()
+def _kirim(sore, tanggal=None):
+    """`tanggal`: tanggal kantor ISO dari penjadwal; kosong = hari ini (OFFICE_TIMEZONE)."""
+    hari_ini = date.fromisoformat(tanggal) if tanggal else hari_ini_kantor()
     kunci = "daily_digest_sore" if sore else "daily_digest"
-    hari_ke_depan = hari_ke_hari_kerja_berikutnya(hari_ini) if sore else HARI_KE_DEPAN
+    hari_ke_depan = (
+        hari_ke_hari_kerja_berikutnya(hari_ini, setelan_hari_kerja(DIGEST_WEEKDAYS)) if sore else hari_ke_depan_pagi()
+    )
     koneksi, efrom = _koneksi()
 
     terkirim = kosong = gagal = 0
@@ -283,12 +311,12 @@ def _kirim(sore):
 
 
 @shared_task
-def kirim_ringkasan_harian():
-    """Edisi pagi, 08.30 WIB. Lihat beat_schedule di plane/celery.py."""
-    return _kirim(sore=False)
+def kirim_ringkasan_harian(tanggal: str | None = None):
+    """Edisi pagi. Slot `ringkasan-pagi` di plane/bgtasks/jadwal_kantor.py (bawaan 08.30)."""
+    return _kirim(sore=False, tanggal=tanggal)
 
 
 @shared_task
-def kirim_ringkasan_sore():
-    """Edisi sore, 17.30 WIB. Lihat beat_schedule di plane/celery.py."""
-    return _kirim(sore=True)
+def kirim_ringkasan_sore(tanggal: str | None = None):
+    """Edisi sore. Slot `ringkasan-sore` di plane/bgtasks/jadwal_kantor.py (bawaan 17.30)."""
+    return _kirim(sore=True, tanggal=tanggal)

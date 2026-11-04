@@ -254,7 +254,10 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
             return kwargs
 
         if self.state.group == StateGroup.COMPLETED.value:
-            self.completed_at = timezone.now()
+            # KEP-84: tugas yang selesai lewat persetujuan bisa membawa waktu
+            # selesainya sendiri (saat staf mengajukan, APPROVAL_FINISH_TIME=0),
+            # disetel `_selesaikan_tugas` di app/views/issue/persetujuan.py.
+            self.completed_at = getattr(self, "_completed_at_override", None) or timezone.now()
         else:
             self.completed_at = None
 
@@ -267,9 +270,11 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         """Isi start_date/target_date yang kosong saat status berpindah (KEP-41).
 
         Masuk `started` -> tanggal mulai. Masuk `completed` -> tanggal selesai,
-        KECUALI `_tahan_tanggal_selesai` disetel: staf yang menggeser ke selesai
-        masih menunggu atasan, dan tanggalnya baru diisi saat disetujui
-        (`isi_tanggal_selesai`). Aturan isinya di `plane/utils/tanggal_otomatis.py`.
+        KECUALI `_tahan_tanggal_selesai` disetel (jalur lama sebelum KEP-55, saat
+        tugas staf masuk selesai sambil menunggu). Tugas yang lewat persetujuan
+        baru masuk selesai saat disetujui; tanggalnya dihitung dari `completed_at`,
+        yang menurut APPROVAL_FINISH_TIME (KEP-84) = saat diajukan (bawaan) atau
+        saat disetujui. Aturan isinya di `plane/utils/tanggal_otomatis.py`.
         """
         self._tanggal_otomatis = []
         if not self.state:
@@ -303,10 +308,10 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
     def isi_tanggal_selesai(self, actor_id=None):
         """Isi (atau majukan, lihat `_tanggal_selesai_baru`) target_date tugas yang SUDAH selesai.
 
-        Dipakai saat atasan menyetujui tugas yang sejak diajukan sudah berstatus
-        selesai (statusnya tidak berpindah, jadi `save()` tidak memicu apa pun).
-        Tanggalnya = hari tugas digeser ke selesai (`completed_at`), bukan hari
-        disetujui: lamanya menunggu atasan bukan lamanya pengerjaan.
+        Hanya untuk data lama (sebelum KEP-55): pengajuan menunggu yang tugasnya
+        sudah berstatus selesai sejak diajukan (statusnya tidak berpindah, jadi
+        `save()` tidak memicu apa pun). Tanggalnya = hari tugas digeser ke selesai
+        (`completed_at`), apa pun APPROVAL_FINISH_TIME: baris lama tidak diubah.
         """
         if not self.state or self.state.group != StateGroup.COMPLETED.value:
             return
@@ -530,8 +535,13 @@ def get_upload_path(instance, filename):
 
 def file_size(value):
     # File limit check is only for cloud hosted
-    if value.size > settings.FILE_SIZE_LIMIT:
-        raise ValidationError("File too large. Size should not exceed 5 MB.")
+    # Paradise (KEP-83): batas dari God Mode (UPLOAD_MAX_MB), diimpor di sini
+    # karena modul model dimuat sebelum utilitas siap.
+    from plane.utils.plan_limits import batas_unggah_byte  # noqa: PLC0415
+
+    batas = batas_unggah_byte()
+    if value.size > batas:
+        raise ValidationError(f"File too large. Size should not exceed {batas // (1024 * 1024)} MB.")
 
 
 class IssueAttachment(ProjectBaseModel):

@@ -39,6 +39,7 @@ import { SettingsHeading } from "@/components/settings/heading";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 
 const trashService = new ProjectTrashService();
 
@@ -114,6 +115,10 @@ function TrashSettingsPage() {
   const [akanDibuang, setAkanDibuang] = useState<TTrashItem | null>(null);
 
   const canAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
+  // Paradise KEP-85: pulihkan & buang permanen = aturan struktur God Mode.
+  const izin = useIzinSumber(workspaceSlug?.toString(), projectId?.toString());
+  const bolehPulihkan = izin.struktur("PERM_TRASH_RESTORE");
+  const bolehBuang = izin.struktur("PERM_TRASH_PURGE");
   const pageTitle = currentProjectDetails?.name
     ? t("trash_ui.page_title", { name: currentProjectDetails.name })
     : undefined;
@@ -297,19 +302,23 @@ function TrashSettingsPage() {
                       </td>
                       <td className={TABEL.td}>
                         <div className="flex items-center justify-end gap-1">
-                          <AksiIkon
-                            label={t("trash_ui.restore")}
-                            icon={RotateCcw}
-                            disabled={sibuk === item.id}
-                            onClick={() => void handlePulihkan(item)}
-                          />
-                          <AksiIkon
-                            label={t("trash_ui.purge")}
-                            icon={Trash2}
-                            variant="error-outline"
-                            disabled={sibuk === item.id}
-                            onClick={() => setAkanDibuang(item)}
-                          />
+                          {bolehPulihkan && (
+                            <AksiIkon
+                              label={t("trash_ui.restore")}
+                              icon={RotateCcw}
+                              disabled={sibuk === item.id}
+                              onClick={() => void handlePulihkan(item)}
+                            />
+                          )}
+                          {bolehBuang && (
+                            <AksiIkon
+                              label={t("trash_ui.purge")}
+                              icon={Trash2}
+                              variant="error-outline"
+                              disabled={sibuk === item.id}
+                              onClick={() => setAkanDibuang(item)}
+                            />
+                          )}
                         </div>
                       </td>
                     </tr>

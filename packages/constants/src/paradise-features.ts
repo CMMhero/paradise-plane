@@ -81,6 +81,20 @@ export const setParadiseOverdueGraceDays = (days: number | undefined): void => {
 export const getParadiseOverdueGraceDays = (): number => tenggangTerlambat;
 
 /**
+ * KEP-84: tugas yang menunggu persetujuan selesai tidak dihitung terlambat
+ * (`paradise_approval_pending_not_late`, God Mode APPROVAL_PENDING_NOT_LATE).
+ * Bawaan false = perilaku server lama sampai payload instance diterima.
+ */
+let menungguTidakTerlambat = false;
+
+/** Dipanggil instance store tiap kali `paradise_approval_pending_not_late` diterima. */
+export const setParadiseApprovalPendingNotLate = (aktif: boolean | undefined): void => {
+  menungguTidakTerlambat = aktif === true;
+};
+
+export const getParadiseApprovalPendingNotLate = (): boolean => menungguTidakTerlambat;
+
+/**
  * Penanda fitur yang dicabut (KEP-53, 2 Nov 2026: cycles, work item types,
  * templates). Di peta gerbang mana pun nilai ini berarti "selalu mati", apa pun
  * isi God Mode. Data lama di server tidak dihapus, hanya tak punya pintu lagi.

@@ -25,7 +25,7 @@ from plane.bgtasks.issue_activities_task import issue_activity
 from plane.app.permissions import allow_permission, ROLE
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
-from plane.utils.plan_limits import batas_ukuran_unggahan
+from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.utils.host import base_host
 
@@ -101,7 +101,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
     def post(self, request, slug, project_id, issue_id):
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", False)
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
 
         if not type or type not in settings.ATTACHMENT_MIME_TYPES:
             return Response(

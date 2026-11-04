@@ -37,7 +37,11 @@ export function EmptyStateDetailed({
           className
         )}
       >
-        {resolvedAsset && <div className="flex max-w-40 items-center">{resolvedAsset}</div>}
+        {resolvedAsset && (
+          <div className={cn("flex max-w-40 items-center", { "mx-auto justify-center": align === "center" })}>
+            {resolvedAsset}
+          </div>
+        )}
 
         <div
           className={cn("flex flex-col gap-4", {
@@ -56,10 +60,10 @@ export function EmptyStateDetailed({
             : actions &&
               actions.length > 0 && (
                 <div className="flex flex-col gap-4 sm:flex-row">
-                  {actions.map((action, index) => {
+                  {actions.map((action) => {
                     const { label, variant, ...rest } = action;
                     return (
-                      <Button key={index} variant={variant} size="xl" {...rest}>
+                      <Button key={action.label} variant={variant} size="xl" {...rest}>
                         {label}
                       </Button>
                     );

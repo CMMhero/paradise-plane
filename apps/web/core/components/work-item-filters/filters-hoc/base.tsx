@@ -40,6 +40,9 @@ export const WorkItemFiltersHOC = observer(function WorkItemFiltersHOC(props: TW
   );
 });
 
+/** Jumlah WorkItemFilterRoot yang sedang memakai instance filter per kunci. */
+const jumlahPemakaiFilter = new Map<string, number>();
+
 type TWorkItemFilterProps = TSharedWorkItemFiltersProps &
   TAdditionalWorkItemFiltersProps & {
     initialWorkItemFilters: IIssueFilters;
@@ -91,13 +94,23 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     [entityType, workItemEntityID, saveViewOptions, updateViewOptions, updateFilters]
   );
 
-  // delete filter instance when component unmounts
-  useEffect(
-    () => () => {
-      deleteFilter(entityType, workItemEntityID);
-    },
-    [deleteFilter, entityType, workItemEntityID]
-  );
+  // Hapus instance filter saat komponen terakhir yang memakainya dilepas.
+  // Dihitung per kunci dan penghapusannya ditunda satu tick: StrictMode (dev)
+  // menjalankan cleanup lalu mount ulang tanpa membuat ulang useMemo, dan induk
+  // bisa me-remount dengan kunci yang sama. Penghapusan langsung membuat instance
+  // yang baru diambil komponen berikutnya ikut hilang dari store.
+  useEffect(() => {
+    const key = `${entityType}-${workItemEntityID}`;
+    jumlahPemakaiFilter.set(key, (jumlahPemakaiFilter.get(key) ?? 0) + 1);
+    return () => {
+      jumlahPemakaiFilter.set(key, (jumlahPemakaiFilter.get(key) ?? 1) - 1);
+      setTimeout(() => {
+        if ((jumlahPemakaiFilter.get(key) ?? 0) > 0) return;
+        jumlahPemakaiFilter.delete(key);
+        deleteFilter(entityType, workItemEntityID);
+      }, 0);
+    };
+  }, [deleteFilter, entityType, workItemEntityID]);
 
   useEffect(() => {
     workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);

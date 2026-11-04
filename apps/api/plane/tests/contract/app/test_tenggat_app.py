@@ -305,6 +305,7 @@ class TestAturanTenggatIntake:
         assert _tanggal(tugas_intake) == TENGGAT_LAMA
 
     @pytest.mark.django_db
+    @pytest.mark.gerbang_bawaan
     def test_admin_yang_tidak_terlibat_masih_ditahan_gerbang_hierarki(
         self, workspace, project, tugas_intake, penanggung
     ):

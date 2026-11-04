@@ -15,6 +15,7 @@ import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 // local imports
 import type { Route } from "./+types/page";
 import { GeneralProjectSettingsHeader } from "./header";
@@ -27,7 +28,15 @@ function ProjectSettingsPage({ params }: Route.ComponentProps) {
   const { currentProjectDetails } = useProject();
   const { allowPermissions } = useUserPermissions();
   // derived values
-  const isAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, projectId);
+  const isProjectAdmin = allowPermissions(
+    [EUserPermissions.ADMIN],
+    EUserPermissionsLevel.PROJECT,
+    workspaceSlug,
+    projectId
+  );
+  // Paradise KEP-85: setelan project = aturan struktur PERM_PROJECT_EDIT (arsip/hapus dinilai di control section).
+  const izin = useIzinSumber(workspaceSlug, projectId);
+  const isAdmin = isProjectAdmin && izin.struktur("PERM_PROJECT_EDIT");
 
   const pageTitle = currentProjectDetails?.name ? `${currentProjectDetails?.name} - General Settings` : undefined;
 
@@ -45,7 +54,7 @@ function ProjectSettingsPage({ params }: Route.ComponentProps) {
         ) : (
           <ProjectDetailsFormLoader />
         )}
-        {isAdmin && <GeneralProjectSettingsControlSection projectId={projectId} />}
+        {isProjectAdmin && <GeneralProjectSettingsControlSection projectId={projectId} />}
       </div>
     </SettingsContentWrapper>
   );

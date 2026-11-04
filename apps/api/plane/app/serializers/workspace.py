@@ -28,6 +28,7 @@ from plane.db.models import (
 )
 from plane.utils.constants import RESTRICTED_WORKSPACE_SLUGS
 from plane.utils.url import contains_url
+from plane.utils.undangan import tanda_kedaluwarsa
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
@@ -117,9 +118,14 @@ class WorkspaceMemberAdminSerializer(DynamicBaseSerializer):
 class WorkSpaceMemberInviteSerializer(BaseSerializer):
     workspace = WorkspaceLiteSerializer(read_only=True)
     invite_link = serializers.SerializerMethodField()
+    # Paradise (KEP-83): undangan lewat INVITE_EXPIRY_DAYS tetap terdaftar, diberi tanda.
+    is_expired = serializers.SerializerMethodField()
 
     def get_invite_link(self, obj):
         return f"/workspace-invitations/?invitation_id={obj.id}&slug={obj.workspace.slug}&token={obj.token}"
+
+    def get_is_expired(self, obj):
+        return tanda_kedaluwarsa(self, obj)
 
     class Meta:
         model = WorkspaceMemberInvite
@@ -146,6 +152,10 @@ class WorkSpaceMemberInvitePublicSerializer(BaseSerializer):
     """
 
     workspace = WorkspaceLiteSerializer(read_only=True)
+    is_expired = serializers.SerializerMethodField()
+
+    def get_is_expired(self, obj):
+        return tanda_kedaluwarsa(self, obj)
 
     class Meta:
         model = WorkspaceMemberInvite
@@ -160,6 +170,7 @@ class WorkSpaceMemberInvitePublicSerializer(BaseSerializer):
             "created_at",
             "updated_at",
             "created_by",
+            "is_expired",
         ]
         read_only_fields = fields
 
@@ -182,7 +193,8 @@ class WorkspaceUserLinkSerializer(BaseSerializer):
     class Meta:
         model = WorkspaceUserLink
         fields = "__all__"
-        read_only_fields = ["workspace", "owner"]
+        # Paradise KEP-82: metadata (judul & favicon situs) diisi server, bukan klien.
+        read_only_fields = ["workspace", "owner", "metadata"]
 
     def to_internal_value(self, data):
         url = data.get("url", "")

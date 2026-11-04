@@ -254,6 +254,10 @@ class TestSelesaiLebihAwal:
         assert issue.target_date == rencana, "masih menunggu atasan, belum boleh bergeser"
 
         baris = PersetujuanPenugasan.objects.get(issue_id=issue_id, status="menunggu")
+        # KEP-84: bawaan APPROVAL_FINISH_TIME = saat diajukan. Diajukan kemarin,
+        # disetujui hari ini: Due date maju ke hari PENGAJUAN.
+        diajukan = timezone.now() - timedelta(days=1)
+        PersetujuanPenugasan.objects.filter(pk=baris.pk).update(created_at=diajukan)
         res = _klien(bos).post(
             URL_PUTUSKAN.format(slug=workspace.slug, project_id=divisi.id, pk=baris.id),
             {"aksi": "setujui"},
@@ -262,7 +266,8 @@ class TestSelesaiLebihAwal:
         assert res.status_code == status.HTTP_200_OK, getattr(res, "data", None)
 
         issue.refresh_from_db()
-        assert issue.target_date == tanggal_lokal(issue.completed_at, ZONA)
+        assert issue.completed_at == diajukan
+        assert issue.target_date == tanggal_lokal(diajukan, ZONA)
         jejak = IssueActivity.objects.get(issue_id=issue_id, field="target_date", comment__contains="automatically")
         assert jejak.old_value == str(rencana)
         assert jejak.actor_id == bos.id

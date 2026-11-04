@@ -108,7 +108,11 @@ class Adapter:
         ])
 
         # Check if sign up is disabled and invite is present or not
-        if ENABLE_SIGNUP == "0" and not WorkspaceMemberInvite.objects.filter(email=email).exists():
+        # Paradise (KEP-83): undangan kedaluwarsa (INVITE_EXPIRY_DAYS) tidak lagi
+        # membuka pendaftaran; bawaan 0 = semua undangan berlaku, seperti dulu.
+        from plane.utils.undangan import saring_berlaku  # noqa: PLC0415
+
+        if ENABLE_SIGNUP == "0" and not saring_berlaku(WorkspaceMemberInvite.objects.filter(email=email)).exists():
             self.logger.warning("Sign up is disabled and invite is not present")
             # Raise exception
             raise AuthenticationException(

@@ -11,8 +11,9 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Loader, ToggleSwitch } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
-import { EmailTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // hooks
+import { godmodeStrings } from "@/app/i18n/godmode";
 import { useInstance } from "@/hooks/store";
 // types
 import type { Route } from "./+types/page";
@@ -55,14 +56,16 @@ const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.Comp
   };
   useEffect(() => {
     if (formattedConfig) {
-      setIsSMTPEnabled(formattedConfig.ENABLE_SMTP === "1");
+      // Sama dengan `email_aktif()` di server: host terisi = email menyala.
+      // ENABLE_SMTP tidak dibaca server (benihnya "0"), jadi jangan dipakai di sini.
+      setIsSMTPEnabled(Boolean(formattedConfig.EMAIL_HOST?.trim()));
     }
   }, [formattedConfig]);
 
   return (
     <PageWrapper
       header={{
-        title: "Secure emails from your own instance",
+        title: godmodeStrings.settings.tabs.notifications_email.title,
         description: (
           <>
             This instance can email you and its users through your own server, without going out to the internet.
@@ -81,7 +84,7 @@ const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.Comp
         ),
       }}
     >
-      <EmailTabs />
+      <MenuTabs menu="notifications" />
       {isSMTPEnabled && !isLoading && (
         <>
           {formattedConfig ? (
@@ -120,6 +123,8 @@ const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.Comp
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Email Settings - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.notifications_email.title} - God Mode` },
+];
 
 export default InstanceEmailPage;

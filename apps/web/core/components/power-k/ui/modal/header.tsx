@@ -48,13 +48,14 @@ export function PowerKModalHeader(props: Props) {
           value={searchTerm}
           onValueChange={onSearchChange}
           placeholder={placeholder}
-          className="flex-1 bg-transparent text-13 text-primary placeholder-(--text-color-placeholder) outline-none"
+          className="flex-1 bg-transparent text-13 text-primary placeholder-(--text-color-placeholder) outline-none sentuh:text-16"
+          // oxlint-disable-next-line jsx-a11y/no-autofocus -- the search modal must focus its input on open
           autoFocus
         />
         {searchTerm && (
           <button
             onClick={() => onSearchChange("")}
-            className="flex-shrink-0 rounded-sm p-1 text-placeholder hover:bg-layer-1 hover:text-secondary"
+            className="flex-shrink-0 rounded-sm p-1 text-placeholder hover:bg-layer-1 hover:text-secondary sentuh:p-2.5"
           >
             <X className="h-3 w-3" />
           </button>

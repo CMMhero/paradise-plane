@@ -4,21 +4,15 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Activity, Trash, AI, dan Image pindah ke bawah Logs dan API keys. Bookmark
- * ke alamat lama diteruskan ke tab yang sama, bukan jatuh ke 404.
+ * Bookmarks to any earlier God Mode address are forwarded to the same page in
+ * the KEP-83 menu tree (see alamat-lama-map.ts), not dropped into the 404.
  */
 
 import { Navigate, useLocation } from "react-router";
-
-const ALAMAT_BARU: Record<string, string> = {
-  "/activity": "/logs/",
-  "/activity/audit-log": "/logs/audit/",
-  "/trash": "/logs/trash/",
-  "/ai": "/api-keys/",
-  "/image": "/api-keys/image/",
-};
+import { ALAMAT_BARU } from "@/app/alamat-lama-map";
 
 export default function AlamatLama() {
-  const { pathname } = useLocation();
-  return <Navigate to={ALAMAT_BARU[pathname.replace(/\/+$/, "")] ?? "/general/"} replace />;
+  const { pathname, search } = useLocation();
+  const target = ALAMAT_BARU[pathname.replace(/\/+$/, "")] ?? "/general/";
+  return <Navigate to={`${target}${search}`} replace />;
 }

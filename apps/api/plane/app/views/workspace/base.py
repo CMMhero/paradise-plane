@@ -52,6 +52,7 @@ from plane.utils.url import contains_url
 from plane.utils.analytics_events import WORKSPACE_CREATED, WORKSPACE_DELETED
 from plane.utils.csv_utils import sanitize_csv_row
 from plane.utils.tanggal_otomatis import batas_terlambat
+from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 
 
 class WorkSpaceViewSet(BaseViewSet):
@@ -324,7 +325,9 @@ class UserWorkspaceDashboardEndpoint(BaseAPIView):
             .order_by("state_group")
         )
 
+        # KEP-84: yang menunggu persetujuan selesai tidak dihitung terlambat.
         overdue_issues = Issue.issue_objects.filter(
+            q_bisa_terlambat(),
             ~Q(state__group__in=["completed", "cancelled"]),
             workspace__slug=slug,
             assignees__in=[request.user],

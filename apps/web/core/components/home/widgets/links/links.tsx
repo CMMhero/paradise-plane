@@ -11,6 +11,7 @@ import { useHome } from "@/hooks/store/use-home";
 import { LinksEmptyState } from "../empty-states/links";
 import { EWidgetKeys, WidgetLoader } from "../loaders";
 import { ProjectLinkDetail } from "./link-detail";
+import { QUICK_LINK_GRID_CLASS } from "./quick-link-display";
 import type { TLinkOperations } from "./use-links";
 
 export type TLinkOperationsModal = Exclude<TLinkOperations, "create">;
@@ -35,14 +36,14 @@ export const ProjectLinkList = observer(function ProjectLinkList(props: TProject
   if (links.length === 0) return <LinksEmptyState />;
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <ContentOverflowWrapper
-        maxHeight={150}
+        maxHeight={260}
         containerClassName="box-border min-h-[30px] flex flex-col"
         fallback={<></>}
         buttonClassName="bg-surface-2/20"
       >
-        <div className="mb-2 flex flex-1 flex-wrap gap-2">
+        <div className={`mb-2 ${QUICK_LINK_GRID_CLASS}`}>
           {links.map((linkId) => (
             <ProjectLinkDetail key={linkId} linkId={linkId} linkOperations={linkOperations} />
           ))}

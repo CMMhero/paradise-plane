@@ -12,13 +12,15 @@ from .base import BaseModel
 # Titik pengingat, dalam hari relatif terhadap target_date.
 # Negatif = sebelum tenggat, 0 = hari H, positif = sudah lewat (overdue).
 #
-# Delapan titik ini permintaan user 2026-08-11. Yang positif SENGAJA ada:
-# tugas yang lewat tenggat justru paling perlu diingatkan, dan diam-diam
-# membiarkannya lewat adalah cara paling halus membuat orang berhenti percaya
-# pada alat pelacak tugas.
-TITIK_SEBELUM = [-7, -5, -3, -1, 0]
-TITIK_OVERDUE = [3, 5, 7]
-SEMUA_TITIK = TITIK_SEBELUM + TITIK_OVERDUE
+# Sejak KEP-83 titiknya diatur di God Mode, bukan di sini:
+# DEADLINE_REMINDER_EMAIL_DAYS (bawaan -7,-5,-3,-1,0,3,5,7, permintaan user
+# 2026-08-11) dan DEADLINE_REMINDER_INBOX_DAYS (plane/utils/setelan_instance.py).
+# Yang positif SENGAJA ada: tugas yang lewat tenggat justru paling perlu
+# diingatkan, dan diam-diam membiarkannya lewat adalah cara paling halus
+# membuat orang berhenti percaya pada alat pelacak tugas.
+#
+# `titik` di bawah polos IntegerField tanpa choices, jadi titik apa pun dalam
+# -30..30 tersimpan tanpa migrasi.
 
 
 class PengingatTenggat(BaseModel):
@@ -48,7 +50,7 @@ class PengingatTenggat(BaseModel):
     penerima = models.ForeignKey(
         "db.User", related_name="deadline_reminders", on_delete=models.CASCADE
     )
-    # Hari relatif terhadap target_date. Lihat SEMUA_TITIK di atas.
+    # Hari relatif terhadap target_date. Lihat komentar di atas kelas.
     titik = models.IntegerField()
     # Tanggal tenggat yang berlaku SAAT pengingat dikirim. Disimpan supaya kalau
     # tenggatnya digeser, kita tahu pengingat lama merujuk tanggal yang berbeda

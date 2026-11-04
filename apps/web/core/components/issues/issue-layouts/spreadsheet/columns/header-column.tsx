@@ -15,6 +15,7 @@ import type { IIssueDisplayFilterOptions, IIssueDisplayProperties, TIssueOrderBy
 import { CustomMenu, Row } from "@plane/ui";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { SpreadSheetPropertyIcon } from "../../utils";
+import { ApprovalHeaderColumn } from "./approval-header-column";
 
 interface Props {
   property: keyof IIssueDisplayProperties;
@@ -46,6 +47,11 @@ export function HeaderColumn(props: Props) {
   };
 
   if (!propertyDetails) return null;
+
+  // Kustomisasi Paradise: Approval tidak punya urutan di server; dropdown header-nya menyaring status.
+  if (property === "approval_status") {
+    return <ApprovalHeaderColumn title={t(propertyDetails.i18n_title)} onClose={onClose} />;
+  }
 
   // Kustomisasi Paradise: kolom tanpa urutan di server tampil sebagai judul biasa, tanpa menu sortir.
   if (!propertyDetails.ascendingOrderKey) {

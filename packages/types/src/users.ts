@@ -264,6 +264,8 @@ export interface IUserEmailNotificationSettings extends TNotificationPreferences
   ikut_bawaan_jabatan: boolean;
   /** Saklar yang dipaksa mati kebijakan direktur di God Mode. Kosong untuk selain direktur. */
   dikunci?: TNotificationPreferenceKey[];
+  /** Saklar yang dikunci admin: saklar instance mati, atau batas kebijakan direktur. */
+  locked_by_admin?: Partial<Record<TNotificationPreferenceKey, "instance_switch_off" | "director_cap">>;
 }
 
 export type TProfileViews = "assigned" | "created" | "subscribed";

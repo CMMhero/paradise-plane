@@ -14,13 +14,14 @@ import type { THomeWidgetProps } from "@plane/types";
 import { useHome } from "@/hooks/store/use-home";
 import { LinkCreateUpdateModal } from "./create-update-link-modal";
 import { ProjectLinkList } from "./links";
+import { SharedQuickLinks } from "./shared-links";
 import { useLinks } from "./use-links";
 
 export const DashboardQuickLinks = observer(function DashboardQuickLinks(props: THomeWidgetProps) {
   const { workspaceSlug } = props;
   const { linkOperations } = useLinks(workspaceSlug);
   const {
-    quickLinks: { isLinkModalOpen, toggleLinkModal, linkData, setLinkData, fetchLinks },
+    quickLinks: { toggleLinkModal, setLinkData, fetchLinks },
   } = useHome();
   const { t } = useTranslation();
 
@@ -40,12 +41,7 @@ export const DashboardQuickLinks = observer(function DashboardQuickLinks(props: 
   );
   return (
     <>
-      <LinkCreateUpdateModal
-        isModalOpen={isLinkModalOpen}
-        handleOnClose={() => toggleLinkModal(false)}
-        linkOperations={linkOperations}
-        preloadedData={linkData}
-      />
+      <LinkCreateUpdateModal workspaceSlug={workspaceSlug} linkOperations={linkOperations} />
       <div className="mb-2">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-14 font-semibold text-tertiary">{t("home.quick_links.title_plural")}</div>
@@ -56,7 +52,9 @@ export const DashboardQuickLinks = observer(function DashboardQuickLinks(props: 
             <PlusIcon className="my-auto size-4" /> <span>{t("home.quick_links.add")}</span>
           </button>
         </div>
-        <div className="flex w-full flex-wrap">
+        {/* Paradise KEP-82: links shared by admins come first. */}
+        <SharedQuickLinks workspaceSlug={workspaceSlug} />
+        <div className="w-full">
           {/* rendering links */}
           <ProjectLinkList workspaceSlug={workspaceSlug} linkOperations={linkOperations} />
         </div>

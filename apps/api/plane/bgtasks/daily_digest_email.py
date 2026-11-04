@@ -19,8 +19,9 @@ Satu email punya sampai tiga bagian, tergantung jabatan penerima:
 
 Ada dua edisi (keputusan user 2026-11-02), masing-masing dengan saklarnya sendiri:
 
-- **Pagi** (08.30 WIB, `daily_digest`): untuk memulai hari. Jendela depan 7 hari.
-- **Sore** (17.30 WIB, `daily_digest_sore`): untuk menutup hari. Bagian "hari ini"
+- **Pagi** (bawaan 08.30, `daily_digest`): untuk memulai hari. Jendela depan
+  DIGEST_LOOKAHEAD_DAYS (bawaan 7 hari). Jam dan hari kirim diatur di God Mode (KEP-83).
+- **Sore** (bawaan 17.30, `daily_digest_sore`): untuk menutup hari. Bagian "hari ini"
   memuat yang SELESAI hari ini dan yang tenggatnya hari ini tapi BELUM selesai;
   jendela depan menyempit ke hari kerja berikutnya (besok, atau sampai Senin
   kalau hari ini Jumat). Bagian yang dimuat ikut saklar SAKLAR_RINGKASAN yang sama.
@@ -52,6 +53,7 @@ from plane.utils.email_merek import (
     url_preferensi,
 )
 
+# Bawaan DIGEST_LOOKAHEAD_DAYS. Nilai yang berlaku dibaca task tiap putaran.
 HARI_KE_DEPAN = 7
 # Orang dengan 80 tugas terlambat butuh tahu angkanya, bukan 80 baris.
 BATAS_BARIS = 15
@@ -68,8 +70,8 @@ NAMA_HARI = {
 T = {
     "id": {
         "hari_ini": "Jatuh tempo hari ini",
-        "depan": "Jatuh tempo {n} hari ke depan",
-        "depan_pendek": "{n} hari",
+        "depan": "Jatuh tempo {d} ke depan",
+        "depan_pendek": "{d}",
         "sore_hari": "Belum selesai, tenggat hari ini",
         "besok": "Jatuh tempo besok",
         "besok_pendek": "Besok",
@@ -88,14 +90,14 @@ T = {
         "n_belum": "{n} belum selesai (tenggat hari ini)",
         "n_terlambat": "{n} terlambat",
         "n_hari_ini": "{n} hari ini",
-        "n_depan_pagi": "{n} 7 hari ke depan",
+        "n_depan_pagi": "{n} {d} ke depan",
         "awalan_sore": "[Ringkasan sore] ",
         "awalan_pagi": "[Ringkasan pagi] ",
         "subjek_kosong": "tugas Anda",
         "subjek_tim": " · tim: {n} terlambat",
         "kosong_pilihan": "Tidak ada tugas Anda di bagian yang Anda pilih.",
         "kosong_sore": "Tidak ada tugas Anda yang selesai hari ini, terlambat, atau {depan}.",
-        "kosong_pagi": "Tidak ada tugas Anda yang jatuh tempo dalam 7 hari ke depan.",
+        "kosong_pagi": "Tidak ada tugas Anda yang jatuh tempo dalam {d} ke depan.",
         "judul_sore": "Ringkasan akhir hari",
         "judul_pagi": "Ringkasan tugas",
         "sapaan": "Halo {nama},",
@@ -103,7 +105,7 @@ T = {
         "diberikan": "Tugas yang Anda berikan",
         "tim_baris": "{nama}: {selesai}{lewat} terlambat, {hari} hari ini, {depan} {label}",
         "tim_selesai": "{n} selesai hari ini, ",
-        "depan_tim": "7 hari ke depan",
+        "depan_tim": "{d} ke depan",
         "kolom_project": "Project",
         "kolom_selesai": "Selesai",
         "kolom_terlambat": "Terlambat",
@@ -114,8 +116,8 @@ T = {
     },
     "en": {
         "hari_ini": "Due today",
-        "depan": "Due in the next {n} days",
-        "depan_pendek": "{n} days",
+        "depan": "Due in the next {d}",
+        "depan_pendek": "{d}",
         "sore_hari": "Not done, due today",
         "besok": "Due tomorrow",
         "besok_pendek": "Tomorrow",
@@ -134,14 +136,14 @@ T = {
         "n_belum": "{n} not done (due today)",
         "n_terlambat": "{n} overdue",
         "n_hari_ini": "{n} today",
-        "n_depan_pagi": "{n} in the next 7 days",
+        "n_depan_pagi": "{n} in the next {d}",
         "awalan_sore": "[Evening summary] ",
         "awalan_pagi": "[Morning summary] ",
         "subjek_kosong": "your tasks",
         "subjek_tim": " · team: {n} overdue",
         "kosong_pilihan": "You have no tasks in the sections you chose.",
         "kosong_sore": "You have no tasks done today, overdue, or {depan}.",
-        "kosong_pagi": "You have no tasks due in the next 7 days.",
+        "kosong_pagi": "You have no tasks due in the next {d}.",
         "judul_sore": "End-of-day summary",
         "judul_pagi": "Task summary",
         "sapaan": "Hi {nama},",
@@ -149,7 +151,7 @@ T = {
         "diberikan": "Tasks you assigned",
         "tim_baris": "{nama}: {selesai}{lewat} overdue, {hari} today, {depan} {label}",
         "tim_selesai": "{n} done today, ",
-        "depan_tim": "in the next 7 days",
+        "depan_tim": "in the next {d}",
         "kolom_project": "Project",
         "kolom_selesai": "Done",
         "kolom_terlambat": "Overdue",
@@ -165,9 +167,25 @@ def _t(bahasa):
     return T.get(bahasa, T["id"])
 
 
-def hari_ke_hari_kerja_berikutnya(hari_ini) -> int:
-    """Jarak ke hari kerja berikutnya: 1, kecuali Jumat (3) dan Sabtu (2). Untuk edisi sore."""
-    return {4: 3, 5: 2}.get(hari_ini.weekday(), 1)
+HARI_KERJA_BAWAAN = frozenset({1, 2, 3, 4, 5})
+
+
+def hari_ke_hari_kerja_berikutnya(hari_ini, hari_kerja=HARI_KERJA_BAWAAN) -> int:
+    """Jarak ke hari kirim berikutnya (`hari_kerja`: hari ISO, God Mode DIGEST_WEEKDAYS). Edisi sore.
+
+    Senin-Jumat: 1, kecuali Jumat (3) dan Sabtu (2).
+    """
+    for jarak in range(1, 8):
+        if (hari_ini + timedelta(days=jarak)).isoweekday() in hari_kerja:
+            return jarak
+    return 1
+
+
+def durasi_hari(n: int, bahasa: str = "id") -> str:
+    """"7 hari" / "7 days" / "1 day" untuk jendela depan (God Mode DIGEST_LOOKAHEAD_DAYS)."""
+    if bahasa == "en":
+        return "1 day" if n == 1 else f"{n} days"
+    return f"{n} hari"
 
 
 @dataclass
@@ -239,7 +257,8 @@ class Label:
 def label_untuk(ringkasan, hari_ini, bahasa="id") -> Label:
     s = _t(bahasa)
     if not ringkasan.sore:
-        return Label(s["hari_ini"], s["depan"].format(n=HARI_KE_DEPAN), s["depan_pendek"].format(n=HARI_KE_DEPAN))
+        d = durasi_hari(ringkasan.hari_ke_depan, bahasa)
+        return Label(s["hari_ini"], s["depan"].format(d=d), s["depan_pendek"].format(d=d))
     if ringkasan.hari_ke_depan == 1:
         return Label(s["sore_hari"], s["besok"], s["besok_pendek"])
     hari = NAMA_HARI.get(bahasa, NAMA_HARI["id"])[(hari_ini + timedelta(days=ringkasan.hari_ke_depan)).weekday()]
@@ -317,7 +336,11 @@ def _tim_teks(ringkasan, hari_ini, label, bahasa="id"):
     for g in grup:
         t = g.tugas
         selesai = s["tim_selesai"].format(n=len(t.selesai)) if ringkasan.sore else ""
-        depan = _awal_kecil(label.depan_pendek) if ringkasan.sore else s["depan_tim"]
+        depan = (
+            _awal_kecil(label.depan_pendek)
+            if ringkasan.sore
+            else s["depan_tim"].format(d=durasi_hari(ringkasan.hari_ke_depan, bahasa))
+        )
         baris.append(
             s["tim_baris"].format(
                 nama=g.nama, selesai=selesai, lewat=len(t.lewat), hari=len(t.hari), depan=len(t.depan), label=depan
@@ -427,7 +450,8 @@ def _subjek(ringkasan, label, s, nyala):
     else:
         potong = [
             s["n_hari_ini"].format(n=len(k.hari)) if nyala("digest_hari_ini") else "",
-            s["n_depan_pagi"].format(n=len(k.depan)) if nyala("digest_depan") else "",
+            # Edisi pagi: label.depan_pendek = durasi_hari(hari_ke_depan), mis. "7 hari".
+            s["n_depan_pagi"].format(n=len(k.depan), d=label.depan_pendek) if nyala("digest_depan") else "",
             s["n_terlambat"].format(n=len(k.lewat)) if nyala("digest_terlambat") else "",
         ]
         awalan = s["awalan_pagi"]
@@ -455,7 +479,7 @@ def susun_email(penerima, ringkasan, hari_ini, bahasa="id"):
     elif ringkasan.sore:
         kosong = s["kosong_sore"].format(depan=_awal_kecil(label.depan))
     else:
-        kosong = s["kosong_pagi"]
+        kosong = s["kosong_pagi"].format(d=label.depan_pendek)
     judul = s["judul_sore"] if ringkasan.sore else s["judul_pagi"]
     tgl = tanggal(hari_ini, bahasa)
 

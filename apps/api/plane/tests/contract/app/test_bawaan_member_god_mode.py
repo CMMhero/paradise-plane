@@ -161,14 +161,14 @@ class TestBawaanDiterapkan:
         Profile.objects.create(user=lama)
         _ubah(
             super_admin,
-            {"profile": {"language": "id", "timezone": "Asia/Jakarta", "theme": "dark", "start_of_the_week": 1}},
+            {"profile": {"language": "id", "timezone": "Asia/Makassar", "theme": "dark", "start_of_the_week": 1}},
         )
 
         baru = _buat_user("baru")
         profil = Profile.objects.create(user=baru)
         baru.refresh_from_db()
         profil.refresh_from_db()
-        assert baru.user_timezone == "Asia/Jakarta"
+        assert baru.user_timezone == "Asia/Makassar"
         assert profil.language == "id"
         assert profil.start_of_the_week == 1
         assert profil.theme == {
@@ -181,7 +181,7 @@ class TestBawaanDiterapkan:
         }
 
         lama.refresh_from_db()
-        assert lama.user_timezone == "UTC"
+        assert lama.user_timezone == "Asia/Jakarta"
         assert Profile.objects.get(user=lama).language == "en"
 
     @pytest.mark.django_db

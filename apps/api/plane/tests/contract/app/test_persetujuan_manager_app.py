@@ -231,3 +231,61 @@ class TestBiayaKueriAntrean:
         assert hasil[0]["id"] == str(menunggu.id)
         waktu = [h["created_at"] for h in hasil]
         assert waktu == sorted(waktu, reverse=True)
+
+
+@pytest.mark.contract
+class TestAntreanHanyaUntukPenyetuju:
+    """Antrean dan aksi memakai predikat yang sama: tak ada baris yang berujung 403."""
+
+    @pytest.mark.django_db
+    def test_bukan_penyetuju_tidak_melihat_baris_di_perlu_keputusan(self, org, monkeypatch):
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        _, baris = _ajukan(org)
+        url = URL_PERSETUJUAN.format(slug=org.ws.slug, project_id=org.p1.id)
+        # Pemohon sendiri dan rekan stafnya (anggota project, bukan atasan) tidak boleh melihatnya.
+        rekan = _user("rekan", org.ws)
+        JabatanOrganisasi.objects.create(
+            workspace=org.ws, member=rekan, tingkat=TINGKAT_MEMBER, departemen=org.smt1
+        )
+        assert ProjectMember.objects.filter(member=rekan, project=org.p1, is_active=True).exists()
+        for user in (org.staf, rekan):
+            respon = _klien(user).get(url + "?peran=penyetuju")
+            assert respon.status_code == status.HTTP_200_OK, getattr(respon, "data", None)
+            assert respon.json()["hasil"] == []
+        # Tanpa `peran`: orang lain juga tidak melihat pengajuan yang bukan wewenangnya.
+        respon = _klien(rekan).get(url)
+        assert respon.json()["hasil"] == []
+        # Penyetuju sah tetap melihatnya, dan aksi yang sama tidak ditolak.
+        respon = _klien(org.manager).get(url + "?peran=penyetuju")
+        assert [h["id"] for h in respon.json()["hasil"]] == [str(baris.id)]
+        ok = _klien(org.manager).post(url + f"{baris.id}/", {"aksi": "setujui"}, format="json")
+        assert ok.status_code == status.HTTP_200_OK
+
+    @pytest.mark.django_db
+    def test_ditolak_lalu_diajukan_ulang_tampil_menunggu_sekali(self, org, monkeypatch):
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        issue_id, baris = _ajukan(org)
+        url = URL_PERSETUJUAN.format(slug=org.ws.slug, project_id=org.p1.id)
+        tolak = _klien(org.manager).post(url + f"{baris.id}/", {"aksi": "tolak", "alasan": "ulang"}, format="json")
+        assert tolak.status_code == status.HTTP_200_OK
+        # Staf menggeser ke Done lagi = pengajuan ulang.
+        geser = _klien(org.staf).patch(
+            URL_ISSUE_DETAIL.format(slug=org.ws.slug, project_id=org.p1.id, issue_id=issue_id),
+            {"state": str(org.states["completed"].id)},
+            format="json",
+        )
+        assert geser.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT)
+
+        antrean = _klien(org.manager).get(url + "?peran=penyetuju").json()["hasil"]
+        assert len(antrean) == 1
+        assert antrean[0]["status"] == "menunggu" and antrean[0]["tugas"]["id"] == issue_id
+        assert antrean[0]["boleh_saya_putuskan"] is True
+
+        # "Pengajuan saya": satu baris terbaru per tugas, penolakan lama jadi riwayat saja.
+        milik_staf = _klien(org.staf).get(url + "?peran=pemohon").json()["hasil"]
+        assert [(h["tugas"]["id"], h["status"]) for h in milik_staf] == [(issue_id, "menunggu")]
+
+        # Riwayat lengkap tetap ada lewat ?tugas=.
+        riwayat = _klien(org.staf).get(url + f"?tugas={issue_id}").json()["hasil"]
+        assert sorted(h["status"] for h in riwayat) == ["ditolak", "menunggu"]
+        assert riwayat[0]["status"] == "menunggu"

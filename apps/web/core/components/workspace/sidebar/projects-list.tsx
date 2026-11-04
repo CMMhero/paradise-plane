@@ -30,6 +30,7 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useProjectNavigationPreferences } from "@/hooks/use-navigation-preferences";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 // plane web imports
 import type { TProject } from "@plane/types";
 // services
@@ -66,11 +67,11 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
     { revalidateOnFocus: false }
   );
 
-  // auth
-  const isAuthorizedUser = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
+  // auth. Paradise: dipakai hanya untuk tombol buat project; staf / member biasa tidak boleh.
+  const bolehBuatProject = useBolehBuatProject(workspaceSlug?.toString());
+  const isAuthorizedUser =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
+    bolehBuatProject;
 
   // Compute limited projects for main sidebar
   const displayedProjects = projectPreferences.showLimitedProjects

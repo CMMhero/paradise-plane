@@ -1,6 +1,6 @@
 {
   "name": "@plane/propel",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "private": true,
   "license": "AGPL-3.0",
   "type": "module",
@@ -32,6 +32,7 @@
     "./icon-button": "./dist/icon-button/index.js",
     "./icons": "./dist/icons/index.js",
     "./input": "./dist/input/index.js",
+    "./member-profile-card": "./dist/member-profile-card/index.js",
     "./menu": "./dist/menu/index.js",
     "./pill": "./dist/pill/index.js",
     "./popover": "./dist/popover/index.js",

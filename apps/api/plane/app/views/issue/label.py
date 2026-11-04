@@ -18,6 +18,14 @@ from plane.app.serializers import LabelSerializer
 from plane.app.permissions import allow_permission, ProjectBasePermission, ROLE
 from plane.db.models import Project, Label
 from plane.utils.cache import invalidate_cache
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
+
+
+def _galat_alur_kerja(request, slug, project_id):
+    """KEP-85: label = alur kerja project. Admin project tidak lagi cukup; yang
+    memutuskan PERM_PROJECT_WORKFLOW (bawaan: supervisor ke atas di project yang ia awasi)."""
+    return tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
 
 
 class LabelViewSet(BaseViewSet):
@@ -42,6 +50,9 @@ class LabelViewSet(BaseViewSet):
     @invalidate_cache(path="/api/workspaces/:slug/labels/", url_params=True, user=False, multiple=True)
     @allow_permission([ROLE.ADMIN])
     def create(self, request, slug, project_id):
+        galat = _galat_alur_kerja(request, slug, project_id)
+        if galat is not None:
+            return galat
         try:
             serializer = LabelSerializer(data=request.data, context={"project_id": project_id})
             if serializer.is_valid():
@@ -57,6 +68,9 @@ class LabelViewSet(BaseViewSet):
     @invalidate_cache(path="/api/workspaces/:slug/labels/", url_params=True, user=False)
     @allow_permission([ROLE.ADMIN])
     def partial_update(self, request, *args, **kwargs):
+        galat = _galat_alur_kerja(request, kwargs["slug"], kwargs["project_id"])
+        if galat is not None:
+            return galat
         # Check if the label name is unique within the project
         if (
             "name" in request.data
@@ -84,6 +98,9 @@ class LabelViewSet(BaseViewSet):
     @invalidate_cache(path="/api/workspaces/:slug/labels/", url_params=True, user=False)
     @allow_permission([ROLE.ADMIN])
     def destroy(self, request, *args, **kwargs):
+        galat = _galat_alur_kerja(request, kwargs["slug"], kwargs["project_id"])
+        if galat is not None:
+            return galat
         return super().destroy(request, *args, **kwargs)
 
 
@@ -91,6 +108,9 @@ class BulkCreateIssueLabelsEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN])
     def post(self, request, slug, project_id):
         label_data = request.data.get("label_data", [])
+        galat = _galat_alur_kerja(request, slug, project_id)
+        if galat is not None:
+            return galat
 
         project = Project.objects.get(pk=project_id)
 

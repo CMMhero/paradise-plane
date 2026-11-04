@@ -14,8 +14,11 @@ import { createFilterConfig, createOperatorConfigEntry, getMultiSelectConfig } f
 
 // ------------ Approval status filter ------------
 
-/** Status values as stored by the API (`PersetujuanPenugasan.status`). */
-export type TApprovalStatusKey = "menunggu" | "disetujui" | "ditolak";
+/**
+ * Status values as stored by the API (`PersetujuanPenugasan.status`), plus the
+ * filter-only value `tanpa` (work item that never needed approval).
+ */
+export type TApprovalStatusKey = "menunggu" | "disetujui" | "ditolak" | "tanpa";
 
 export type TApprovalStatusOption = { key: TApprovalStatusKey; label: string };
 

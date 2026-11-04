@@ -18,6 +18,7 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectFilter } from "@/hooks/store/use-project-filter";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 import { isWikiProject } from "@/lib/wiki-project";
 // local imports
 import { ProjectCard } from "./card";
@@ -51,10 +52,11 @@ export const ProjectCardList = observer(function ProjectCardList(props: TProject
   const filteredProjectIds = filteredProjectIdsProps ?? storeFilteredProjectIds;
 
   // permissions
-  const canPerformEmptyStateActions = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
+  // Paradise: tombol di sini membuat project, jadi staf / member biasa tidak boleh.
+  const bolehBuatProject = useBolehBuatProject();
+  const canPerformEmptyStateActions =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
+    bolehBuatProject;
 
   if (!filteredProjectIds || !workspaceProjectIds || loader === "init-loader" || fetchStatus !== "complete")
     return <ProjectsLoader />;

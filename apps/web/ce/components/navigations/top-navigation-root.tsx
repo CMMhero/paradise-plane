@@ -6,42 +6,26 @@
 
 // components
 import { observer } from "mobx-react";
-import { useParams, usePathname } from "next/navigation";
-import { cn, getNumberCount } from "@plane/utils";
+import { useParams } from "next/navigation";
+import { cn } from "@plane/utils";
 import { TopNavPowerK } from "@/components/navigation";
+import { NotificationsPopover } from "@/components/workspace-notifications/popover/root";
 import { HelpMenuRoot } from "@/components/workspace/sidebar/help-section/root";
 import { UserMenuRoot } from "@/components/workspace/sidebar/user-menu-root";
 import { WorkspaceMenuRoot } from "@/components/workspace/sidebar/workspace-menu-root";
 import { useAppRailPreferences } from "@/hooks/use-navigation-preferences";
-import { Tooltip } from "@plane/propel/tooltip";
-import { AppSidebarItem } from "@/components/sidebar/sidebar-item";
-import { InboxIcon } from "@plane/propel/icons";
-import useSWR from "swr";
-import { useWorkspaceNotifications } from "@/hooks/store/notifications";
-// local imports
+import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 export const TopNavigationRoot = observer(function TopNavigationRoot() {
   // router
   const { workspaceSlug } = useParams();
-  const pathname = usePathname();
 
   // store hooks
-  const { unreadNotificationsCount, getUnreadNotificationsCount } = useWorkspaceNotifications();
   const { preferences } = useAppRailPreferences();
+  // Modul "inbox" dimatikan di God Mode = rute /notifications ditutup; lonceng ikut hilang.
+  const { isModuleEnabled } = useParadiseModules();
 
   const showLabel = preferences.displayMode === "icon_with_label";
-
-  // Fetch notification count
-  useSWR(
-    workspaceSlug ? "WORKSPACE_UNREAD_NOTIFICATION_COUNT" : null,
-    workspaceSlug ? () => getUnreadNotificationsCount(workspaceSlug.toString()) : null
-  );
-
-  // Calculate notification count
-  const isMentionsEnabled = unreadNotificationsCount.mention_unread_notifications_count > 0;
-  const totalNotifications = isMentionsEnabled
-    ? unreadNotificationsCount.mention_unread_notifications_count
-    : unreadNotificationsCount.total_unread_notifications_count;
 
   return (
     <div
@@ -50,38 +34,18 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
       })}
     >
       {/* Workspace Menu */}
-      <div className="flex-1 shrink-0">
+      <div className="min-w-0 flex-1">
         <WorkspaceMenuRoot variant="top-navigation" />
       </div>
       {/* Power K Search */}
-      <div className="shrink-0">
+      <div className="shrink-0 px-1">
         <TopNavPowerK />
       </div>
       {/* Additional Actions */}
-      <div className="flex flex-1 shrink-0 items-center justify-end gap-1">
-        <Tooltip tooltipContent="Inbox" position="bottom">
-          <AppSidebarItem
-            variant="link"
-            item={{
-              href: `/${workspaceSlug?.toString()}/notifications/`,
-              icon: (
-                <div className="relative">
-                  <InboxIcon className="size-5" />
-                  {totalNotifications > 0 && (
-                    <span
-                      aria-label={`${totalNotifications} unread`}
-                      className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-control bg-danger-primary px-1 text-10 leading-none font-semibold text-on-color"
-                    >
-                      {isMentionsEnabled ? "@" : ""}
-                      {getNumberCount(totalNotifications)}
-                    </span>
-                  )}
-                </div>
-              ),
-              isActive: pathname?.includes("/notifications/"),
-            }}
-          />
-        </Tooltip>
+      <div className="flex shrink-0 items-center justify-end gap-1 md:flex-1">
+        {/* Paradise: lonceng membuka popover di tempat (lihat workspace-notifications/popover),
+            bukan pindah ke /notifications. Lencana jumlah ikut pindah ke sana. */}
+        {workspaceSlug && isModuleEnabled("inbox") && <NotificationsPopover workspaceSlug={workspaceSlug.toString()} />}
         <HelpMenuRoot />
         {/* Link "Star us on GitHub" dibuang: ini instrumen promosi upstream, tidak
             ada gunanya di alat internal kantor. Header hak cipta di berkas sumber,

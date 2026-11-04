@@ -34,6 +34,14 @@ from plane.tests.contract.app.test_daily_digest_peran import HARI_INI, Dunia, _o
 from plane.utils.hierarki import divisi_diawasi
 from plane.utils.preferensi_email import saklar_untuk
 
+
+@pytest.fixture(autouse=True)
+def _utas_email_mati(monkeypatch):
+    """Subjek per peran yang diuji di sini hanya ada saat utas email MATI. Sejak
+    KEP-84 utas HIDUP secara bawaan (subjek jadi `[PROJ-1] Judul`), jadi dipatok mati."""
+    monkeypatch.setenv("ENABLE_EMAIL_THREADING", "0")
+
+
 LOCMEM = "django.core.mail.backends.locmem.EmailBackend"
 
 

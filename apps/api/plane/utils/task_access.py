@@ -29,50 +29,135 @@ tempat cepat atau lambat jadi tiga aturan.
 """
 
 from plane.db.superadmin import is_super_admin
+from plane.utils.saklar_instance import (
+    DUE_DATE_CHANGE_RULE,
+    HAPUS_PEMBUAT_SAJA,
+    HAPUS_YANG_BOLEH_UBAH,
+    TASK_DELETE_RULE,
+    TENGGAT_PLUS_ADMIN_PROJECT,
+    TENGGAT_YANG_BOLEH_UBAH,
+    setelan_angka,
+)
 
 _ROLE_ADMIN = 20
 
-
-def _admin_project(user, slug, project_id):
-    from plane.db.models import ProjectMember
-
-    return ProjectMember.objects.filter(
-        member=user,
-        workspace__slug=slug,
-        project_id=project_id,
-        role=_ROLE_ADMIN,
-        is_active=True,
-    ).exists()
+# KEP-83: dua baris pertama tabel di atas sekarang bisa diatur Super Admin di
+# God Mode (TASK_DELETE_RULE, DUE_DATE_CHANGE_RULE). Bawaan keduanya (0) adalah
+# persis tabel di atas; arti tiap pilihan ada di plane/utils/saklar_instance.py.
 
 
-def bisa_hapus_tugas(user, issue, slug, project_id):
+class AturanTugas:
+    """Aturan kepemilikan yang dibaca SEKALI untuk satu permintaan.
+
+    Endpoint massal (hapus/arsip/geser tanggal banyak tugas) memanggil
+    `bisa_hapus_tugas` / `bisa_ganti_tenggat` per tugas. Tanpa ini tiap panggilan
+    membaca ulang TASK_DELETE_RULE, DUE_DATE_CHANGE_RULE, gerbang hierarki, status
+    Super Admin, dan peran admin project dari database. Di sini semuanya dibaca
+    sekali (lazily) lalu dipakai untuk semua tugas. Aturannya tidak berubah:
+    tanpa `aturan`, setiap fungsi membuat satu yang baru, persis perilaku lama.
+    """
+
+    def __init__(self, user):
+        self.user = user
+        self._nilai = {}
+        self._admin_ids = None
+
+    def _sekali(self, kunci, baca):
+        if kunci not in self._nilai:
+            self._nilai[kunci] = baca()
+        return self._nilai[kunci]
+
+    @property
+    def super_admin(self):
+        return self._sekali("super_admin", lambda: is_super_admin(self.user))
+
+    @property
+    def hapus(self):
+        return self._sekali("hapus", lambda: setelan_angka(TASK_DELETE_RULE))
+
+    @property
+    def tenggat(self):
+        return self._sekali("tenggat", lambda: setelan_angka(DUE_DATE_CHANGE_RULE))
+
+    @property
+    def gerbang(self):
+        from plane.utils.hierarki import gerbang_aktif  # noqa: PLC0415
+
+        return self._sekali("gerbang", gerbang_aktif)
+
+    def admin_project(self, project_id, slug=None):
+        """Apakah user admin aktif di project ini. Satu kueri untuk semua project.
+
+        `slug` diisi = project itu juga harus milik workspace tersebut, sama dengan
+        saringan `workspace__slug` pemeriksaan admin project sebelum KEP-83.
+        """
+        if self._admin_ids is None:
+            from plane.db.models import ProjectMember  # noqa: PLC0415
+
+            self._admin_ids = {
+                str(pid): ws
+                for pid, ws in ProjectMember.objects.filter(
+                    member=self.user, role=_ROLE_ADMIN, is_active=True
+                ).values_list("project_id", "workspace__slug")
+            }
+        ws = self._admin_ids.get(str(project_id))
+        return ws is not None and (slug is None or ws == slug)
+
+
+def _aturan(user, aturan):
+    return aturan if aturan is not None and aturan.user == user else AturanTugas(user)
+
+
+def _boleh_ubah(user, issue, project_id, aturan=None):
+    """Hak UBAH tugas: gerbang hierarki menyala = `galat_ubah_tugas`; mati = setiap anggota.
+
+    Gerbang mati berarti tidak ada kunci edit per tugas: izin project di view
+    (anggota, bukan tamu) yang sudah menjaga pintunya.
+    """
+    from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
+
+    if not _aturan(user, aturan).gerbang:
+        return True
+    return galat_ubah_tugas(project_id, issue, actor=user) is None
+
+
+def bisa_hapus_tugas(user, issue, slug, project_id, aturan=None):
     """Boleh menghapus atau mengarsipkan tugas ini.
 
     Arsip disamakan dengan hapus dengan sengaja: mengarsipkan tugas
     menyembunyikannya dari SEMUA papan, jadi kalau hapus dikunci sementara arsip
     dibiarkan bebas, orang yang di-assign tetap bisa membuat tugas orang lain
     lenyap dari pandangan, hanya lewat pintu yang namanya berbeda.
+
+    `aturan`: `AturanTugas` milik permintaan ini (endpoint massal), supaya setelan,
+    gerbang, dan peran dibaca sekali. Kosong = dibaca sekarang.
     """
     if user is None or getattr(user, "is_anonymous", True):
         return False
-    if is_super_admin(user):
+    aturan = _aturan(user, aturan)
+    if aturan.super_admin:
         return True
 
-    # Gerbang hierarki aktif: hapus/arsip ikut aturan UBAH (`galat_ubah_tugas`),
+    if aturan.hapus == HAPUS_PEMBUAT_SAJA:
+        return issue.created_by_id == user.id
+    if aturan.hapus == HAPUS_YANG_BOLEH_UBAH:
+        return _boleh_ubah(user, issue, project_id, aturan)
+
+    # HAPUS_ATURAN_HARI_INI (bawaan). Gerbang hierarki aktif: hapus/arsip ikut aturan UBAH (`galat_ubah_tugas`),
     # yaitu pembuat/assignee tugas itu sendiri, atau atasannya. Admin project
     # TIDAK lagi cukup: di kantor ini hampir semua staf berperan admin project,
     # jadi jalur itu membuat staf bisa menghapus tugas orang lain.
-    from plane.utils.hierarki import galat_ubah_tugas, gerbang_aktif  # noqa: PLC0415
+    from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
 
-    if gerbang_aktif():
+    if aturan.gerbang:
         return galat_ubah_tugas(project_id, issue, actor=user) is None
 
     if issue.created_by_id == user.id:
         return True
-    return _admin_project(user, slug, project_id)
+    return aturan.admin_project(project_id, slug)
 
 
-def bisa_ganti_tenggat(user, issue):
+def bisa_ganti_tenggat(user, issue, aturan=None):
     """Boleh menggeser Due Date tugas ini.
 
     Sengaja LEBIH KETAT daripada hak hapus: admin project tidak termasuk.
@@ -81,7 +166,33 @@ def bisa_ganti_tenggat(user, issue):
     """
     if user is None or getattr(user, "is_anonymous", True):
         return False
-    return issue.created_by_id == user.id or is_super_admin(user)
+    if issue.created_by_id == user.id:
+        return True
+    aturan = _aturan(user, aturan)
+    if aturan.super_admin:
+        return True
+    # KEP-83: bawaan (TENGGAT_PEMBUAT_SAJA) berhenti di atas, persis aturan lama.
+    if aturan.tenggat == TENGGAT_PLUS_ADMIN_PROJECT:
+        return aturan.admin_project(issue.project_id)
+    if aturan.tenggat == TENGGAT_YANG_BOLEH_UBAH:
+        return _boleh_ubah(user, issue, issue.project_id, aturan)
+    return False
+
+
+def pesan_tolak_tenggat(aturan=None):
+    """Pesan 403 untuk tenggat yang tidak boleh digeser, sesuai aturan yang berlaku."""
+    aturan = aturan.tenggat if aturan is not None else setelan_angka(DUE_DATE_CHANGE_RULE)
+    if aturan == TENGGAT_PLUS_ADMIN_PROJECT:
+        return (
+            "Tenggat hanya bisa diubah oleh yang membuat tugas ini, admin project, "
+            "atau Super Admin. Hubungi pembuatnya kalau tanggalnya perlu digeser."
+        )
+    if aturan == TENGGAT_YANG_BOLEH_UBAH:
+        return "Anda tidak dapat mengubah tugas ini, jadi tenggatnya juga tidak dapat digeser."
+    return (
+        "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
+        "atau Super Admin. Hubungi pembuatnya kalau tanggalnya perlu digeser."
+    )
 
 
 def bisa_ganti_tenggat_intake(user, issue, penanggung_jawab=False):

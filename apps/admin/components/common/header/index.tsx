@@ -14,6 +14,7 @@ import { Breadcrumbs } from "@plane/ui";
 import { BreadcrumbLink } from "../breadcrumb-link";
 // hooks
 import { useTheme } from "@/hooks/store";
+import { CommandPalette } from "@/components/command-palette/command-palette";
 // local imports
 import { CORE_HEADER_SEGMENT_LABELS } from "./core";
 import { EXTENDED_HEADER_SEGMENT_LABELS } from "./extended";
@@ -43,24 +44,24 @@ const toSentenceCase = (segment: string): string => {
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
+// Function to dynamically generate breadcrumb items based on pathname
+const generateBreadcrumbItems = (pathname: string) => {
+  const pathSegments = pathname.split("/").slice(1); // removing the first empty string.
+  pathSegments.pop();
+
+  let currentUrl = "";
+  const breadcrumbItems = pathSegments.map((segment) => {
+    currentUrl += "/" + segment;
+    return {
+      title: HEADER_SEGMENT_LABELS[segment] ?? toSentenceCase(segment),
+      href: currentUrl,
+    };
+  });
+  return breadcrumbItems;
+};
+
 export const AdminHeader = observer(function AdminHeader() {
   const pathName = usePathname();
-
-  // Function to dynamically generate breadcrumb items based on pathname
-  const generateBreadcrumbItems = (pathname: string) => {
-    const pathSegments = pathname.split("/").slice(1); // removing the first empty string.
-    pathSegments.pop();
-
-    let currentUrl = "";
-    const breadcrumbItems = pathSegments.map((segment) => {
-      currentUrl += "/" + segment;
-      return {
-        title: HEADER_SEGMENT_LABELS[segment] ?? toSentenceCase(segment),
-        href: currentUrl,
-      };
-    });
-    return breadcrumbItems;
-  };
 
   const breadcrumbItems = generateBreadcrumbItems(pathName || "");
 
@@ -93,6 +94,7 @@ export const AdminHeader = observer(function AdminHeader() {
           </div>
         )}
       </div>
+      <CommandPalette />
     </div>
   );
 });

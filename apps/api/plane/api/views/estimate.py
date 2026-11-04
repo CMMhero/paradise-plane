@@ -11,6 +11,8 @@ from drf_spectacular.utils import OpenApiRequest, OpenApiResponse
 from plane.app.permissions.project import ProjectEntityPermission
 from plane.api.views.base import BaseAPIView
 from plane.db.models import Estimate, EstimatePoint, Project, Workspace
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
 from plane.api.serializers import EstimateSerializer, EstimatePointSerializer
 from plane.utils.openapi.decorators import estimate_docs, estimate_point_docs
 from plane.utils.openapi import (
@@ -45,6 +47,10 @@ class ProjectEstimateAPIEndpoint(BaseAPIView):
         ),
     )
     def post(self, request, slug, project_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         project = Project.objects.filter(id=project_id, workspace__slug=slug).first()
         if not project:
             return Response(status=status.HTTP_404_NOT_FOUND, data={"error": "Project not found"})
@@ -104,6 +110,10 @@ class ProjectEstimateAPIEndpoint(BaseAPIView):
         },
     )
     def patch(self, request, slug, project_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         ALLOWED_FIELDS = ["name", "description"]
         estimate = self.get_queryset().first()
         if not estimate:
@@ -127,6 +137,10 @@ class ProjectEstimateAPIEndpoint(BaseAPIView):
         },
     )
     def delete(self, request, slug, project_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         estimate = self.get_queryset().first()
         if not estimate:
             return Response(status=status.HTTP_404_NOT_FOUND, data={"error": "Estimate not found"})
@@ -194,6 +208,10 @@ class EstimatePointListCreateAPIEndpoint(BaseAPIView):
         },
     )
     def post(self, request, slug, project_id, estimate_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         estimate = Estimate.objects.filter(
             id=estimate_id,
             workspace__slug=slug,
@@ -262,6 +280,10 @@ class EstimatePointDetailAPIEndpoint(BaseAPIView):
         },
     )
     def patch(self, request, slug, project_id, estimate_id, estimate_point_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         estimate_point = self.get_queryset().filter(id=estimate_point_id).first()
         if not estimate_point:
             return Response(status=status.HTTP_404_NOT_FOUND, data={"error": "Estimate point not found"})
@@ -284,6 +306,10 @@ class EstimatePointDetailAPIEndpoint(BaseAPIView):
         },
     )
     def delete(self, request, slug, project_id, estimate_id, estimate_point_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         estimate_point = self.get_queryset().filter(id=estimate_point_id).first()
         if not estimate_point:
             return Response(status=status.HTTP_404_NOT_FOUND, data={"error": "Estimate point not found"})

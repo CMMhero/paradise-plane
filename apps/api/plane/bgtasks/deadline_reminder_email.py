@@ -16,10 +16,13 @@ from plane.utils.email_merek import (
     KANTOR,
     MEREK,
     WARNA,
+    alamat_gabungan,
     bahasa_penerima,
     bungkus,
     buat_pesan,
     catatan_kecil,
+    daftar_orang,
+    gabung_nama,
     judul_html,
     kartu,
     sapaan_html,
@@ -193,6 +196,28 @@ TEKS_PENGINGAT = {
     },
 }
 
+# KEP-84: pengingat ke PENYETUJU untuk tugas yang sudah diajukan selesai tapi
+# belum diputuskan, lalu lewat tenggatnya. Menimpa kalimat TEKS_PENGINGAT saja.
+TEKS_PENYETUJU = {
+    "id": {
+        "awalan_lewat": "Menunggu persetujuan",
+        "kalimat_lewat": "Tugas ini sudah diajukan selesai dan menunggu persetujuan Anda, sementara tenggatnya sudah lewat",
+        "alasan": "Anda menerima email ini karena Anda dapat menyetujui tugas ini.",
+    },
+    "en": {
+        "awalan_lewat": "Waiting for approval",
+        "kalimat_lewat": "This work item was submitted as done and is waiting for your approval, and its due date has passed",
+        "alasan": "You received this email because you can approve this work item.",
+    },
+}
+
+
+def _teks(bahasa: str, penyetuju: bool = False) -> dict:
+    dasar = TEKS_PENGINGAT.get(bahasa, TEKS_PENGINGAT["id"])
+    if not penyetuju:
+        return dasar
+    return {**dasar, **TEKS_PENYETUJU.get(bahasa, TEKS_PENYETUJU["id"])}
+
 
 def label_titik(titik: int, bahasa="id") -> str:
     """Keterangan satu titik pengingat: -3 = tinggal 3 hari, 0 = hari ini, 3 = terlambat 3 hari."""
@@ -202,12 +227,15 @@ def label_titik(titik: int, bahasa="id") -> str:
     return s["sisa"].format(n=-titik) if titik < 0 else s["lewat"].format(n=titik)
 
 
-def susun_email_pengingat(issue, penerima, titik: int, label: str = "", tautan: str = "", bahasa="id"):
+def susun_email_pengingat(
+    issue, penerima, titik: int, label: str = "", tautan: str = "", bahasa="id", penyetuju: bool = False
+):
     """(subjek, teks, html) satu pengingat. Murni: dipakai pengirim dan pratinjau.
 
-    `label` kosong = dihitung dari `titik` dalam `bahasa`.
+    `label` kosong = dihitung dari `titik` dalam `bahasa`. `penyetuju=True` =
+    versi untuk atasan yang belum memutuskan pengajuan selesai (KEP-84).
     """
-    s = TEKS_PENGINGAT.get(bahasa, TEKS_PENGINGAT["id"])
+    s = _teks(bahasa, penyetuju)
     label = label or label_titik(titik, bahasa)
     kode = f"{issue.project.identifier}-{issue.sequence_id}"
     overdue = titik > 0
@@ -215,7 +243,10 @@ def susun_email_pengingat(issue, penerima, titik: int, label: str = "", tautan: 
     status = issue.state.name if issue.state else "-"
     kalimat = s["kalimat_lewat"] if overdue else s["kalimat"]
     tenggat = tanggal(issue.target_date, bahasa)
-    sapaan = s["sapaan"].format(nama=penerima.display_name or penerima.first_name or "").replace(" ,", ",")
+    # `penerima` boleh daftar: pengingat bersama untuk semua orang di tugas ini.
+    orang = daftar_orang(penerima)
+    nama = gabung_nama([o.display_name or o.first_name or "" for o in orang], bahasa)
+    sapaan = s["sapaan"].format(nama=nama).replace(" ,", ",")
 
     baris_teks = [
         sapaan,
@@ -255,23 +286,50 @@ def susun_email_pengingat(issue, penerima, titik: int, label: str = "", tautan: 
         pratajuk=f"{kode} {issue.name}: {label}",
         alasan=s["alasan"],
         url_preferensi=url_preferensi(getattr(getattr(issue, "workspace", None), "slug", "")),
-        email_penerima=getattr(penerima, "email", ""),
+        email_penerima=alamat_gabungan(orang),
     )
     return subjek, "\n".join(baris_teks), html
 
 
 def kirim_email_pengingat(issue, penerima, titik: int, label: str = "") -> None:
-    """Kirim satu pengingat. Melempar kalau gagal, biar pemanggil yang mencatat.
+    """Kirim satu pengingat ke satu orang. Melempar kalau gagal, biar pemanggil yang mencatat."""
+    from plane.utils.email_utas import utas_untuk
 
-    `label` dari pemanggil lama diabaikan untuk penerima berbahasa Inggris:
+    _kirim(issue, [penerima], titik, label, utas_untuk(issue, penerima.id))
+
+
+def kirim_email_pengingat_bersama(
+    issue, penerima, titik: int, label: str = "", penyetuju: bool = False
+) -> list[tuple[list, Exception | None]]:
+    """Satu email bersama (To: a; b; c) per kelompok penerima pengingat yang sama.
+
+    Isinya sama untuk semua orang di satu tugas dan satu titik, jadi semuanya
+    melihat siapa lagi yang diingatkan. Dipecah hanya per bahasa dan posisi di
+    utas. Mengembalikan [(kelompok, galat)]: galat None = terkirim. Tidak
+    melempar, supaya kelompok yang gagal tidak menahan kelompok lain.
+    """
+    from plane.utils.email_utas import utas_bersama
+
+    hasil = []
+    for kelompok, utas in utas_bersama(issue, list(penerima), bahasa_penerima):
+        try:
+            _kirim(issue, kelompok, titik, label, utas, penyetuju=penyetuju)
+            hasil.append((kelompok, None))
+        except Exception as e:  # noqa: BLE001
+            hasil.append((kelompok, e))
+    return hasil
+
+
+def _kirim(issue, kelompok, titik: int, label: str, utas, penyetuju: bool = False) -> None:
+    """`label` dari pemanggil lama diabaikan untuk penerima berbahasa Inggris:
     teksnya dihitung ulang dari `titik` dalam bahasa penerima.
     """
-    bahasa = bahasa_penerima(penerima)
+    bahasa = bahasa_penerima(kelompok[0])
     kode = f"{issue.project.identifier}-{issue.sequence_id}"
     url = _base_url()
     tautan = f"{url}/{issue.workspace.slug}/projects/{issue.project_id}/issues/{issue.id}" if url else ""
     subjek, teks, html = susun_email_pengingat(
-        issue, penerima, titik, label if bahasa == "id" else "", tautan, bahasa=bahasa
+        issue, kelompok, titik, label if bahasa == "id" else "", tautan, bahasa=bahasa, penyetuju=penyetuju
     )
 
     ics = bangun_ics(
@@ -283,9 +341,10 @@ def kirim_email_pengingat(issue, penerima, titik: int, label: str = "") -> None:
     # `text/calendar` dengan method=PUBLISH: dibaca sebagai berkas yang bisa
     # ditambahkan, bukan sebagai undangan rapat yang menuntut balasan.
     buat_pesan(
-        ke=penerima.email,
-        subjek=subjek,
+        ke=[o.email for o in kelompok],
+        subjek=utas[0] if utas else subjek,
         html=html,
         teks=teks,
         lampiran=[(f"{kode}.ics", ics, "text/calendar; method=PUBLISH")],
+        header=utas[1] if utas else None,
     ).send(fail_silently=False)

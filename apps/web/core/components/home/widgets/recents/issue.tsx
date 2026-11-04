@@ -94,12 +94,12 @@ export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
         </div>
       }
       appendTitleElement={
-        <div className="flex-shrink-0 text-11 font-medium text-placeholder">
+        <div className="hidden flex-shrink-0 text-11 font-medium text-placeholder sm:block">
           {calculateTimeAgo(activity.visited_at)}
         </div>
       }
       quickActionElement={
-        <div className="flex gap-4">
+        <div className="flex shrink-0 gap-3 sm:gap-4">
           <Tooltip tooltipHeading="State" tooltipContent={state?.name ?? "State"}>
             <div>
               <StateGroupIcon
@@ -111,7 +111,7 @@ export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
             </div>
           </Tooltip>
           <Tooltip tooltipHeading="Priority" tooltipContent={issueDetails?.priority ?? "Priority"}>
-            <div>
+            <div className="hidden sm:block">
               <PriorityIcon priority={issueDetails?.priority} withContainer size={12} />
             </div>
           </Tooltip>

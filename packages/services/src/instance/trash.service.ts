@@ -34,7 +34,7 @@ export type TTrashItem = {
   /** Sisa hari sebelum dibuang permanen oleh task harian. */
   days_left: number;
   /** null kalau dibuang lewat skrip, atau kalau modelnya tidak dipantau auditlog. */
-  deleted_by: { email: string; display_name: string } | null;
+  deleted_by: { id: string; email: string; display_name: string } | null;
 };
 
 export type TTrashResponse = {

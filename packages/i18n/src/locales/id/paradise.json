@@ -1,4 +1,11 @@
 {
+  "aturan_tugas_ui": {
+    "reject_description_optional": "Tugas kembali ke In Progress. Anda boleh menulis alasan supaya pengaju tahu apa yang perlu diperbaiki.",
+    "reason_placeholder_optional": "Alasan penolakan (opsional)",
+    "invite_expired_title": "Undangan kedaluwarsa",
+    "invite_expired_message": "Undangan ini sudah kedaluwarsa. Minta pengundang mengirim undangan yang baru.",
+    "invite_expired_badge": "Kedaluwarsa"
+  },
   "chatux_kelola_ui": {
     "channel_settings": "Setelan kanal",
     "name": "Nama kanal",
@@ -317,6 +324,7 @@
     "joinable_channels": "Kanal yang bisa diikuti",
     "no_other_channels": "Tidak ada kanal lain untuk saat ini.",
     "edited": "disunting",
+    "message_deleted": "Pesan dihapus",
     "add_reaction": "Beri reaksi",
     "reply": "Balas pesan",
     "edit": "Sunting pesan",
@@ -358,6 +366,21 @@
       "server_unreachable": "Gagal menyambung ke server panggilan. Periksa jaringan kantor.",
       "camera_failed": "Kamera tidak bisa dipakai, panggilan diteruskan dengan suara saja.",
       "connection_down": "Sambungan sedang putus. Coba lagi sebentar."
+    },
+    "call_ring": {
+      "incoming_voice": "Panggilan suara masuk",
+      "incoming_video": "Panggilan video masuk",
+      "accept": "Angkat",
+      "accept_voice_only": "Suara saja",
+      "decline": "Tolak",
+      "missed_title": "Panggilan tak terjawab",
+      "missed_body": "{name} menelepon Anda.",
+      "no_answer_title": "Tidak dijawab",
+      "no_answer_body": "{name} tidak mengangkat.",
+      "declined_title": "Panggilan ditolak",
+      "declined_body": "{name} menolak panggilan.",
+      "busy_title": "Sedang sibuk",
+      "busy_body": "{name} sedang dalam panggilan lain."
     },
     "confirm_delete_title": "Hapus pesan?",
     "confirm_delete_body": "Semua orang di percakapan ini tidak akan melihatnya lagi. Tindakan ini tidak bisa dibatalkan.",
@@ -480,7 +503,17 @@
     "sound_turn_off": "Matikan suara notifikasi",
     "sound_turn_on": "Nyalakan suara notifikasi",
     "sound_on": "Suara notifikasi menyala",
-    "sound_off": "Suara notifikasi mati"
+    "sound_off": "Suara notifikasi mati",
+    "unread_count": "{count} belum dibaca",
+    "open_full_view": "Buka tampilan penuh",
+    "see_all": "Lihat semua di Kotak Masuk",
+    "inbox_options": "Opsi kotak masuk",
+    "item_actions": "Aksi pemberitahuan",
+    "filter_heading": "Tampilkan hanya",
+    "view_heading": "Tampilan",
+    "snooze_heading": "Tunda",
+    "snoozed_until": "Ditunda sampai {date}",
+    "load_failed": "Pemberitahuan gagal dimuat."
   },
   "division_dashboard_ui": {
     "duration_hm": "{h}j {m}m",
@@ -829,6 +862,7 @@
     "digest_tim": "Tim Anda",
     "digest_tim_description": "Supervisor dan manager: departemen atau divisi yang Anda awasi, per project.",
     "inbox_overdue": "{count, plural, other{Terlambat # hari}}",
+    "inbox_approval_overdue": "{count, plural, other{Menunggu persetujuan Anda, terlambat # hari}}",
     "inbox_due_today": "Jatuh tempo hari ini",
     "inbox_due_in": "{count, plural, one{Jatuh tempo besok} other{Jatuh tempo # hari lagi}}",
     "inbox_chat_messages": "{count, plural, one{mengirimi Anda pesan} other{mengirimi Anda # pesan}}"
@@ -873,5 +907,58 @@
     "not_set": "Belum diisi",
     "job_title_choose": "Pilih departemen",
     "job_title_clear": "Kosongkan"
+  },
+  "settings_limits_ui": {
+    "email_language_hint": "Email hanya dikirim dalam bahasa Inggris atau Indonesia.",
+    "locked_by_admin": "Dimatikan oleh admin.",
+    "locked_policy": "Dibatasi oleh kebijakan organisasi Anda.",
+    "archive_ceiling_hint": "Organisasi Anda mengarsipkan work item selesai paling lambat setelah {days} hari."
+  },
+  "attention_ui": {
+    "title": "Perlu perhatian",
+    "widget_title": "Perlu perhatian",
+    "empty": "Tidak ada yang perlu perhatian sekarang.",
+    "view_all": "Lihat semua",
+    "more": "+{count} lainnya",
+    "requested_by": "Diajukan oleh {name}",
+    "group_decide": "Menunggu keputusan Anda",
+    "group_overdue_mine": "Tugas saya yang terlambat",
+    "group_rejected": "Ditolak, perlu dikerjakan ulang",
+    "group_team_overdue": "Terlambat di tim Anda",
+    "group_due_soon": "Jatuh tempo {days} hari ke depan",
+    "group_waiting_mine": "Menunggu persetujuan atasan",
+    "group_mentioned": "Anda disebut baru-baru ini"
+  },
+  "quick_links_ui": {
+    "shared_title": "Dari organisasi",
+    "my_links": "Link saya",
+    "edit_link": "Ubah link cepat",
+    "visibility": "Visibilitas",
+    "visibility_private": "Pribadi",
+    "visibility_private_hint": "Hanya Anda yang melihat link ini.",
+    "visibility_public": "Publik",
+    "visibility_public_hint": "Tampil untuk semua orang, atau untuk divisi dan departemen yang Anda pilih. Hanya admin yang dapat mengelolanya.",
+    "shared_by_admin": "Dibagikan admin",
+    "shared_empty_admin": "Belum ada link bersama. Link yang ditambahkan di sini tampil untuk semua orang, atau untuk divisi dan departemen yang dipilih.",
+    "audience": "Siapa yang melihat link ini",
+    "audience_everyone": "Semua orang di workspace",
+    "audience_everyone_short": "Semua orang",
+    "audience_units": "Divisi dan departemen tertentu",
+    "audience_hint": "Divisi mencakup semua departemen dan manager-nya.",
+    "audience_no_units": "Belum ada divisi. Atur di God Mode, Members, Organization.",
+    "audience_required": "Pilih minimal satu divisi atau departemen.",
+    "audience_nobody": "Tidak ada (divisi atau departemennya sudah dihapus)",
+    "title_hint": "Opsional. Kosongkan untuk memakai judul situs.",
+    "icon_label": "Pilih ikon",
+    "icon_hint": "Klik ikon untuk memilih, seperti ikon proyek. Jika tidak dipilih, ikon situs akan dipakai.",
+    "reset_title": "Pakai judul situs",
+    "reset_icon": "Pakai ikon situs",
+    "saved": "Link bersama disimpan",
+    "save_failed": "Link bersama gagal disimpan",
+    "save_failed_message": "Periksa alamatnya lalu coba lagi.",
+    "removed": "Link bersama dihapus",
+    "remove_failed": "Link bersama gagal dihapus",
+    "delete_title": "Hapus link bersama ini?",
+    "delete_body": "Link ini hilang dari Home dan halaman Quick links semua orang yang menerimanya."
   }
 }

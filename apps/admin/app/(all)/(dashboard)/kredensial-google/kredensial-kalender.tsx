@@ -25,7 +25,7 @@ type Props = {
 
 export function KredensialKalender({ config }: Props) {
   const { s } = useGodmodeStrings();
-  const t = s.fitur;
+  const t = s.settings.google;
   const { updateInstanceConfigurations } = useInstance();
   const {
     handleSubmit,
@@ -43,16 +43,16 @@ export function KredensialKalender({ config }: Props) {
     try {
       await updateInstanceConfigurations(nilai);
       reset(nilai);
-      setToast({ type: TOAST_TYPE.SUCCESS, title: t.saved, message: t.gcal_name });
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t.saved, message: t.calendar_credentials });
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: t.save_failed, message: t.gcal_name });
+      setToast({ type: TOAST_TYPE.ERROR, title: t.save_failed, message: t.calendar_credentials });
     }
   };
 
   return (
     <div className="space-y-4 py-4">
       <UnsavedBar
-        label={t.gcal_name}
+        label={t.calendar_credentials}
         isDirty={isDirty}
         isSaving={isSubmitting}
         onSave={() => handleSubmit(simpan)()}
@@ -63,7 +63,7 @@ export function KredensialKalender({ config }: Props) {
           control={control}
           type="text"
           name="GOOGLE_CALENDAR_CLIENT_ID"
-          label={t.gcal_client_id}
+          label={t.calendar_client_id}
           placeholder="123456789-abc.apps.googleusercontent.com"
           error={false}
           required={false}
@@ -72,15 +72,15 @@ export function KredensialKalender({ config }: Props) {
           control={control}
           type="password"
           name="GOOGLE_CALENDAR_CLIENT_SECRET"
-          label={t.gcal_client_secret}
+          label={t.calendar_client_secret}
           placeholder="GOCSPX-..."
           error={false}
           required={false}
         />
       </div>
-      <p className="text-11 text-tertiary">{t.gcal_hint}</p>
+      <p className="text-11 text-tertiary">{t.calendar_hint}</p>
       <Button variant="primary" size="lg" onClick={handleSubmit(simpan)} loading={isSubmitting} disabled={!isDirty}>
-        {isSubmitting ? t.saving : t.save}
+        {isSubmitting ? t.saving : t.save_credentials}
       </Button>
     </div>
   );

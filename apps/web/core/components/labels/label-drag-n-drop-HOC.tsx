@@ -12,6 +12,7 @@ import { pointerOutsideOfPreview } from "@atlaskit/pragmatic-drag-and-drop/eleme
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { attachInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import { createRoot } from "react-dom/client";
 // types
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
@@ -20,6 +21,7 @@ import type { IIssueLabel, InstructionType } from "@plane/types";
 import { DropIndicator } from "@plane/ui";
 // components
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 import { LabelName } from "./label-block/label-name";
 import type { TargetData } from "./label-utils";
 import { getCanDrop, getInstructionFromPayload } from "./label-utils";
@@ -67,7 +69,10 @@ export const LabelDndHOC = observer(function LabelDndHOC(props: Props) {
   const dragHandleRef = useRef<HTMLButtonElement | null>(null);
 
   const { allowPermissions } = useUserPermissions();
-  const isEditable = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
+  const { workspaceSlug, projectId } = useParams();
+  const izin = useIzinSumber(workspaceSlug?.toString(), projectId?.toString());
+  const isEditable =
+    allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT) && izin.struktur("PERM_PROJECT_WORKFLOW");
 
   useEffect(() => {
     const element = labelRef.current;
@@ -101,7 +106,7 @@ export const LabelDndHOC = observer(function LabelDndHOC(props: Props) {
       dropTargetForElements({
         element,
         canDrop: ({ source }) => getCanDrop(source, label, isChild),
-        getData: ({ input, element }) => {
+        getData: ({ input, element: targetElement }) => {
           const data = { id: label?.id, parentId: label?.parent, isGroup, isChild };
 
           const blockedStates: InstructionType[] = [];
@@ -113,7 +118,7 @@ export const LabelDndHOC = observer(function LabelDndHOC(props: Props) {
 
           return attachInstruction(data, {
             input,
-            element,
+            element: targetElement,
             currentLevel: isChild ? 1 : 0,
             indentPerLevel: 0,
             mode: isLastChild ? "last-in-group" : "standard",
@@ -121,8 +126,8 @@ export const LabelDndHOC = observer(function LabelDndHOC(props: Props) {
           });
         },
         onDrag: ({ self, source, location }) => {
-          const instruction = getInstructionFromPayload(self, source, location);
-          setInstruction(instruction);
+          const dragInstruction = getInstructionFromPayload(self, source, location);
+          setInstruction(dragInstruction);
         },
         onDragLeave: () => {
           setInstruction(undefined);
@@ -146,21 +151,21 @@ export const LabelDndHOC = observer(function LabelDndHOC(props: Props) {
           if (!dropTarget || !dropTargetData) return;
 
           // get possible instructions for the dropTarget
-          const instruction = getInstructionFromPayload(dropTarget, source, location);
+          const dropInstruction = getInstructionFromPayload(dropTarget, source, location);
 
           // if instruction is make child the set parentId as current dropTarget Id or else set it as dropTarget's parentId
-          parentId = instruction === "make-child" ? dropTargetData.id : dropTargetData.parentId;
+          parentId = dropInstruction === "make-child" ? dropTargetData.id : dropTargetData.parentId;
           // if instruction is any other than make-child, i.e., reorder-above and reorder-below then set the droppedId as dropTarget's id
-          const droppedLabelId = instruction !== "make-child" ? dropTargetData.id : undefined;
+          const droppedLabelId = dropInstruction !== "make-child" ? dropTargetData.id : undefined;
           // if instruction is to reorder-below that is enabled only for end of the last items in the list then dropAtEndOfList as true
-          if (instruction === "reorder-below") dropAtEndOfList = true;
+          if (dropInstruction === "reorder-below") dropAtEndOfList = true;
 
           const sourceData = source.data as TargetData;
           if (sourceData.id) onDrop(sourceData.id, parentId, droppedLabelId, dropAtEndOfList);
         },
       })
     );
-  }, [labelRef?.current, dragHandleRef?.current, label, isChild, isGroup, isLastChild, onDrop]);
+  }, [label, isChild, isGroup, isLastChild, onDrop, isEditable]);
 
   const isMakeChild = instruction == "make-child";
 

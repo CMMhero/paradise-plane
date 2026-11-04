@@ -16,6 +16,7 @@ import { copyUrlToClipboard, cn } from "@plane/utils";
 import { useViewMenuItems } from "@/components/common/quick-actions-helper";
 // hooks
 import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 // local imports
 import { DeleteGlobalViewModal } from "./delete-view-modal";
 import { CreateUpdateWorkspaceViewModal } from "./modal";
@@ -36,6 +37,8 @@ export const WorkspaceViewQuickActions = observer(function WorkspaceViewQuickAct
   // auth
   const isOwner = view?.owned_by === data?.id;
   const isAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
+  // Paradise KEP-85: view workspace tanpa project; atasan dinilai server saja.
+  const izin = useIzinSumber(workspaceSlug);
 
   const viewLink = `${workspaceSlug}/workspace-views/${view.id}`;
   const handleCopyText = async () => {
@@ -52,6 +55,8 @@ export const WorkspaceViewQuickActions = observer(function WorkspaceViewQuickAct
   const MENU_ITEMS = useViewMenuItems({
     isOwner,
     isAdmin,
+    isEditAllowed: izin.boleh("PERM_VIEW_EDIT", { pemilikId: view?.owned_by }),
+    isDeleteAllowed: izin.boleh("PERM_VIEW_DELETE", { pemilikId: view?.owned_by }),
     handleDelete: () => setDeleteViewModal(true),
     handleEdit: () => setUpdateViewModal(true),
     handleOpenInNewTab,

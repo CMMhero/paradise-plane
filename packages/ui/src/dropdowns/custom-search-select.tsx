@@ -74,7 +74,7 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
 
   const closeDropdown = () => {
     setIsOpen(false);
-    onClose && onClose();
+    onClose?.();
   };
 
   const handleKeyDown = useDropdownKeyDown(openDropdown, closeDropdown, isOpen);
@@ -86,6 +86,7 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
   };
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- Combobox headless sudah memasang ARIA pada anak-anaknya; wrapper hanya menangkap tombol navigasi
     <Combobox
       as="div"
       ref={dropdownRef}
@@ -105,7 +106,7 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
                   ref={setReferenceElement}
                   type="button"
                   className={cn(
-                    "flex w-full items-center justify-between gap-1 text-11",
+                    "flex w-full items-center justify-between gap-1 text-left text-11",
                     {
                       "cursor-not-allowed text-secondary": disabled,
                       "cursor-pointer hover:bg-layer-transparent-hover": !disabled,
@@ -124,7 +125,7 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
                   type="button"
                   className={cn(
                     // Paradise (KEP-64): pemicu tampil sama dengan Input (garis tipis, latar layer-2).
-                    "flex w-full items-center justify-between gap-1 rounded-field border-[0.5px] border-subtle-1 bg-layer-2",
+                    "flex w-full items-center justify-between gap-1 rounded-field border-[0.5px] border-subtle-1 bg-layer-2 text-left",
                     {
                       "px-3 py-2 text-13": input,
                       "px-2 py-1 text-11": !input,

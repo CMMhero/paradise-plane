@@ -32,7 +32,13 @@ export type TEmailPreview = {
   attachments: string[];
 };
 
-/** Read-only: renders sample emails on the server, never opens SMTP. */
+export type TEmailPreviewSent = {
+  sent_to: string;
+  key: string;
+  lang: TEmailPreviewLang;
+};
+
+/** Render hanya baca; `send` satu-satunya yang membuka SMTP, dan hanya ke diri sendiri. */
 export class InstanceEmailPreviewService extends APIService {
   constructor() {
     super(API_BASE_URL);
@@ -48,6 +54,15 @@ export class InstanceEmailPreviewService extends APIService {
 
   async retrieve(key: string, lang: TEmailPreviewLang): Promise<TEmailPreview> {
     return this.get(`/api/instances/email-preview/${encodeURIComponent(key)}/`, { params: { lang } })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data ?? error;
+      });
+  }
+
+  /** Mengirim satu email contoh ke alamat Super Admin yang sedang masuk. */
+  async send(key: string, lang: TEmailPreviewLang): Promise<TEmailPreviewSent> {
+    return this.post(`/api/instances/email-preview/${encodeURIComponent(key)}/send/`, {}, { params: { lang } })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data ?? error;

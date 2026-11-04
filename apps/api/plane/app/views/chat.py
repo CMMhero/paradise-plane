@@ -40,13 +40,18 @@ from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, ur
 from plane.utils.obrolan_siaran import siarkan
 from plane.utils.kanal_sistem import adalah_admin_workspace, boleh_kirim, ikutkan_jika_belum
 from plane.utils.kartu_obrolan import kartu_disebut_di_obrolan
-from plane.utils.saklar_instance import CHAT_DELETE_WINDOW_HOURS, setelan_angka
+from plane.utils.saklar_instance import (
+    CHAT_ATTACHMENTS_MAX,
+    CHAT_DELETE_WINDOW_HOURS,
+    CHAT_EDIT_WINDOW_HOURS,
+    CHAT_MESSAGE_MAX_LENGTH,
+    setelan_angka,
+)
 from plane.db.models import KUNCI_PENGUMUMAN
 
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.db.models import (
-    BATAS_ISI,
     FileAsset,
     Langganan,
     PesanLangsung,
@@ -74,9 +79,6 @@ JUMLAH_PESAN = 100
 # Batas hasil pencarian. Tanpa batas, satu kata umum seperti "ya" menarik
 # seluruh riwayat ke dalam satu respons.
 JUMLAH_HASIL_CARI = 50
-
-# Berapa lampiran boleh menempel pada satu pesan.
-BATAS_LAMPIRAN = 5
 
 # Berapa orang boleh disebut dalam satu pesan. Lebih dari ini sudah pengumuman.
 BATAS_SEBUT = 20
@@ -128,14 +130,16 @@ def _peta_kutipan(pesan_list):
     induk_ids = {p.balasan_ke_id for p in pesan_list if p.balasan_ke_id}
     if not induk_ids:
         return {}
-    induk = PesanLangsung.objects.filter(id__in=induk_ids).values("id", "isi", "pengirim_id")
+    # all_objects: kutipan ke pesan yang sudah dihapus tetap ada, isinya dikosongkan.
+    induk = PesanLangsung.all_objects.filter(id__in=induk_ids).values("id", "isi", "pengirim_id", "deleted_at")
     return {
         str(i["id"]): {
             "id": str(i["id"]),
             "pengirim": str(i["pengirim_id"]) if i["pengirim_id"] else "",
             # Dipotong di server: yang dibutuhkan UI cuma cuplikan, dan
             # mengirim pesan panjang dua kali membengkakkan tiap muatan.
-            "isi": (i["isi"] or "")[:120],
+            "isi": "" if i["deleted_at"] else (i["isi"] or "")[:120],
+            "dihapus": i["deleted_at"] is not None,
         }
         for i in induk
     }
@@ -193,7 +197,28 @@ def _jumlah_belum_dibaca(langganan):
 
 
 def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None):
+    if pesan.deleted_at is not None:
+        # Batu nisan: pesan dihapus tetap menempati tempatnya di percakapan,
+        # tapi tanpa isi, lampiran, reaksi, kutipan, atau data kartu. Penyaringan
+        # DI SINI (satu-satunya pembentuk muatan pesan) menjamin tak ada jalur
+        # yang bocor. `pengirim` dan waktu tetap, supaya susunan gelembung sama.
+        return {
+            "id": str(pesan.id),
+            "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
+            "isi": "",
+            "jenis": "teks",
+            "muatan": {},
+            "created_at": pesan.created_at,
+            "lampiran": [],
+            "disunting": False,
+            "sudah_dibaca": pesan.dibaca_pada is not None,
+            "balasan_ke": None,
+            "reaksi": [],
+            "baru": False,
+            "dihapus": True,
+        }
     return {
+        "dihapus": False,
         "id": str(pesan.id),
         # Kosong = pesan sistem ("Paradise"): catatan rilis dan kartu kabar.
         "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
@@ -447,13 +472,22 @@ class ChatPesanEndpoint(BaseAPIView):
         pesan = self._pesan_saya(request, slug, pesan_id)
         if pesan is None:
             return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
+        # Jendela sunting dari God Mode (KEP-83), 0 = tanpa batas (perilaku lama).
+        # Pola sama dengan jendela hapus di bawah.
+        batas_jam = setelan_angka(CHAT_EDIT_WINDOW_HOURS)
+        if batas_jam and pesan.created_at < timezone.now() - timedelta(hours=batas_jam):
+            return Response(
+                {"error": f"Pesan yang lebih lama dari {batas_jam} jam tidak bisa disunting."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         isi = (request.data.get("isi") or "").strip()
         if not isi:
             return Response({"error": "Pesan kosong."}, status=status.HTTP_400_BAD_REQUEST)
-        if len(isi) > BATAS_ISI:
+        batas_isi = setelan_angka(CHAT_MESSAGE_MAX_LENGTH)
+        if len(isi) > batas_isi:
             return Response(
-                {"error": f"Pesan terlalu panjang, maksimum {BATAS_ISI} karakter."},
+                {"error": f"Pesan terlalu panjang, maksimum {batas_isi} karakter."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -479,8 +513,9 @@ class ChatPesanEndpoint(BaseAPIView):
                 {"error": f"Pesan yang lebih lama dari {batas_jam} jam tidak bisa dihapus."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        # Soft delete: barisnya tetap ada untuk audit, tapi hilang dari semua
-        # daftar karena manager bawaan menyaring deleted_at.
+        # Soft delete: barisnya tetap ada. Daftar pesan satu ruang memuatnya
+        # sebagai batu nisan (`dihapus`), sedangkan pencarian, hitungan belum
+        # dibaca, dan pratinjau percakapan tetap menyaringnya lewat manager bawaan.
         ruang_id = pesan.ruang_id
         pesan.delete()
         siarkan(ruang_id, "hapus", request.user.id)
@@ -617,16 +652,18 @@ def _muat_isi_ruang(request, slug, ruang, batas=None):
     perbaikan tampilan pesan harus diingat dua kali, dan yang terlupa baru
     ketahuan dari laporan pengguna.
     """
-    antara = PesanLangsung.objects.filter(ruang=ruang)
+    # all_objects: pesan yang dihapus ikut sebagai batu nisan (lihat _bentuk).
+    antara = PesanLangsung.all_objects.filter(ruang=ruang)
     if batas is not None:
         antara = antara.filter(created_at__lt=batas)
 
     # Diambil menurun supaya yang terpotong adalah pesan TERTUA, lalu dibalik
     # supaya peramban menerimanya urut waktu.
     urut = list(reversed(list(antara.order_by("-created_at")[:JUMLAH_PESAN])))
-    peta = _peta_lampiran([p.id for p in urut], slug)
-    reaksi = _peta_reaksi([p.id for p in urut])
-    kutipan = _peta_kutipan(urut)
+    hidup = [p.id for p in urut if p.deleted_at is None]
+    peta = _peta_lampiran(hidup, slug)
+    reaksi = _peta_reaksi(hidup)
+    kutipan = _peta_kutipan([p for p in urut if p.deleted_at is None])
     return [
         _bentuk(
             p,
@@ -670,18 +707,22 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     isi = (request.data.get("isi") or "").strip()
     lampiran_ids = request.data.get("lampiran") or []
 
-    if not isinstance(lampiran_ids, list) or len(lampiran_ids) > BATAS_LAMPIRAN:
+    # Batas lampiran dan panjang pesan dari God Mode (KEP-83); bawaannya 5 dan
+    # 5000, angka yang dulu tertulis di kode.
+    batas_lampiran = setelan_angka(CHAT_ATTACHMENTS_MAX)
+    batas_isi = setelan_angka(CHAT_MESSAGE_MAX_LENGTH)
+    if not isinstance(lampiran_ids, list) or len(lampiran_ids) > batas_lampiran:
         return Response(
-            {"error": "Lampiran maksimum %s berkas." % BATAS_LAMPIRAN},
+            {"error": "Lampiran maksimum %s berkas." % batas_lampiran},
             status=status.HTTP_400_BAD_REQUEST,
         )
     # Kosong hanya ditolak kalau lampirannya juga kosong. Mengirim gambar tanpa
     # keterangan apa pun itu hal yang wajar dilakukan orang.
     if not isi and not lampiran_ids:
         return Response({"error": "Pesan kosong."}, status=status.HTTP_400_BAD_REQUEST)
-    if len(isi) > BATAS_ISI:
+    if len(isi) > batas_isi:
         return Response(
-            {"error": "Pesan terlalu panjang, maksimum %s karakter." % BATAS_ISI},
+            {"error": "Pesan terlalu panjang, maksimum %s karakter." % batas_isi},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

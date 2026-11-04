@@ -45,12 +45,14 @@ export function FiltersDropdown(props: Props) {
   });
 
   return (
-    <Popover as="div">
+    // flex: tanpa ini <div> blok membungkus tombol inline-flex dan ikut tinggi baris teks,
+    // jadi lebih tinggi dari tombol dan tergeser dari tetangganya di header.
+    <Popover as="div" className="flex items-center">
       {({ open }) => (
         <>
           {menuButton ? (
             <Popover.Button as={React.Fragment}>
-              <button type="button" ref={setReferenceElement} className="rounded-button">
+              <button type="button" ref={setReferenceElement} className="flex items-center rounded-button">
                 {menuButton}
               </button>
             </Popover.Button>
@@ -94,7 +96,7 @@ export function FiltersDropdown(props: Props) {
                 style={styles.popper}
                 {...attributes.popper}
               >
-                <div className="flex max-h-[30rem] w-[18.75rem] flex-col overflow-hidden lg:max-h-[37.5rem]">
+                <div className="flex max-h-[min(30rem,calc(100dvh-8rem))] w-[18.75rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden lg:max-h-[min(37.5rem,calc(100dvh-8rem))]">
                   {children}
                 </div>
               </div>

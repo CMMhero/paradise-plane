@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.db.models import DeployBoard, FileAsset
 from plane.settings.storage import S3Storage
+from plane.utils.plan_limits import batas_unggah_byte
 from plane.utils.path_validator import sanitize_filename
 
 # Module imports
@@ -86,7 +87,7 @@ class EntityAssetEndpoint(BaseAPIView):
         # Get the asset
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
         entity_type = request.data.get("entity_type", "")
         entity_identifier = request.data.get("entity_identifier")
 
@@ -132,7 +133,10 @@ class EntityAssetEndpoint(BaseAPIView):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size)
+        # Paradise (KEP-83): dulu ukuran dari klien dipakai apa adanya; sekarang
+        # dijepit ke batas unggah God Mode seperti titik unggahan lainnya.
+        size_limit = min(size, batas_unggah_byte())
+        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size_limit)
         # Return the presigned URL
         return Response(
             {

@@ -55,7 +55,7 @@ const OVERLAY_CLASSNAME = cn("fixed inset-0 z-90 bg-backdrop");
 // `overflow-y-auto` aman di sini karena popover dan menu di propel semuanya
 // dirender lewat Portal, jadi tidak ada yang terpotong oleh gulir ini.
 const BASE_CLASSNAME =
-  "relative text-left bg-surface-1 rounded-overlay shadow-md w-full z-100 border border-subtle max-h-[90dvh] overflow-y-auto";
+  "relative text-left bg-surface-1 rounded-overlay shadow-md w-full max-w-[calc(100vw-1rem)] z-100 border border-subtle max-h-[90dvh] overflow-y-auto overscroll-contain";
 
 // Utility functions
 const getPositionClassNames = (position: DialogPosition) =>
@@ -117,7 +117,6 @@ const DialogPanel = forwardRef(function DialogPanel(
         ref={ref}
         data-slot="dialog-content"
         className={cn(BASE_CLASSNAME, positionClassNames, width, className)}
-        role="dialog"
         aria-modal="true"
         {...props}
       >

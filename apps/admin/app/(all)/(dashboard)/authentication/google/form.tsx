@@ -27,12 +27,14 @@ import { useInstance } from "@/hooks/store";
 
 type Props = {
   config: IFormattedInstanceConfiguration;
+  /** Embedded in Integrations > Google, where there is nothing to go back to. */
+  hideBack?: boolean;
 };
 
 type GoogleConfigFormValues = Record<TInstanceGoogleAuthenticationConfigurationKeys, string>;
 
 export function InstanceGoogleConfigForm(props: Props) {
-  const { config } = props;
+  const { config, hideBack = false } = props;
   // store hooks
   const { updateInstanceConfigurations } = useInstance();
   // form data
@@ -171,6 +173,7 @@ export function InstanceGoogleConfigForm(props: Props) {
     <>
       {/* Paradise: the dashboard-wide unsaved bar replaces the old discard modal; it also guards "Go back". */}
       <UnsavedBar
+        label="Google sign-in"
         isDirty={isDirty}
         isSaving={isSubmitting}
         onSave={() => handleSubmit(onSubmit)()}
@@ -205,9 +208,11 @@ export function InstanceGoogleConfigForm(props: Props) {
                 >
                   {isSubmitting ? "Saving" : "Save changes"}
                 </Button>
-                <Link href="/authentication" className={getButtonStyling("secondary", "lg")}>
-                  Go back
-                </Link>
+                {!hideBack && (
+                  <Link href="/access/providers" className={getButtonStyling("secondary", "lg")}>
+                    Go back
+                  </Link>
+                )}
               </div>
             </div>
           </div>

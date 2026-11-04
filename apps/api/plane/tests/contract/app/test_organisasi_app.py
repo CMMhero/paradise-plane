@@ -814,7 +814,9 @@ class TestPenempatanMenambahBukanMemindah:
         _tempatkan(org.ws, org.staf1, TINGKAT_MEMBER, departemen=org.hr)
         r = _setel_hierarki(super_admin, {"member_id": str(org.staf1.id), "tingkat": None})
         assert r.status_code == status.HTTP_200_OK, r.data
-        assert _tempat(org.staf1, org.ws) == set()
+        # 4 Nov 2026: tidak ada lagi "belum diisi"; cabut = Staf tanpa tempat.
+        assert _tempat(org.staf1, org.ws) == {(None, None)}
+        assert r.data["member"]["tingkat"] == TINGKAT_MEMBER
         assert not _aktif(org.staf1, org.p1) and not _aktif(org.staf1, org.p3)
 
     @pytest.mark.django_db

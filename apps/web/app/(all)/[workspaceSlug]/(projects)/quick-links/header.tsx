@@ -20,6 +20,7 @@ export const WorkspaceQuickLinksHeader = observer(function WorkspaceQuickLinksHe
   const {
     quickLinks: { toggleLinkModal, setLinkData },
   } = useHome();
+  // Paradise KEP-82: admins pick Public in the same modal, so one Add button is enough.
 
   const handleAdd = () => {
     setLinkData(undefined);

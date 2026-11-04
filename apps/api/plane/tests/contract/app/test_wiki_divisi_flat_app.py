@@ -10,7 +10,7 @@ Kontrak struktur Wiki yang disederhanakan (keputusan user 2026-10-24):
     - materi ditaruh langsung di folder divisinya,
     - folder & sub-topik: HANYA admin workspace atau Super Admin,
     - unggah materi: admin, atau anggota departemen pemilik folder (KEP-51),
-    - ubah/hapus materi: admin, atau pengunggahnya sendiri (KEP-51),
+    - ubah/hapus materi: admin, pengunggahnya, atau atasannya (KEP-51, KEP-85),
     - folder non-divisi tanpa pemilik = General (semua anggota Wiki),
     - governance selalu aktif untuk project WIKI tanpa saklar,
     - folder divisi dibuat otomatis per Divisi (`pastikan_folder_divisi`).
@@ -159,8 +159,23 @@ class TestWikiTanpaSubTopik:
         res = _klien(anggota).delete(self._url_hapus_materi(workspace, wiki_p.id, materi.id))
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
+    # KEP-85 (4 Nov 2026) membalik KEP-51 untuk atasan: bawaan PERM_WIKI_DELETE =
+    # pengunggah + atasannya. "Pemilik saja" di God Mode mengembalikan aturan lama.
     @pytest.mark.django_db
-    def test_spv_divisi_TIDAK_boleh_hapus_materi_anggota_lagi(self, workspace, siap):
+    def test_spv_boleh_hapus_materi_bawahan_secara_bawaan(self, workspace, siap):
+        _, _, _, spv, wiki_p, _, _, materi = siap
+        res = _klien(spv).delete(self._url_hapus_materi(workspace, wiki_p.id, materi.id))
+        assert res.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.django_db
+    def test_spv_TIDAK_boleh_hapus_materi_bawahan_kalau_pemilik_saja(self, workspace, siap):
+        from plane.license.models import InstanceConfiguration  # noqa: PLC0415
+        from plane.utils import saklar_instance as si  # noqa: PLC0415
+
+        InstanceConfiguration.objects.update_or_create(
+            key=si.PERM_WIKI_DELETE,
+            defaults={"value": str(si.IZIN_PEMILIK_SAJA), "category": "PARADISE", "is_encrypted": False},
+        )
         _, _, _, spv, wiki_p, _, _, materi = siap
         res = _klien(spv).delete(self._url_hapus_materi(workspace, wiki_p.id, materi.id))
         assert res.status_code == status.HTTP_403_FORBIDDEN

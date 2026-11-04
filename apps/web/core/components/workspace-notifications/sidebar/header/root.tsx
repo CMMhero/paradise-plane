@@ -11,7 +11,6 @@ import { InboxIcon } from "@plane/propel/icons";
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
-import { SaklarSuara } from "@/components/notifikasi/saklar-suara";
 // local imports
 import { NotificationSidebarHeaderOptions } from "./options";
 
@@ -28,7 +27,7 @@ export const NotificationSidebarHeader = observer(function NotificationSidebarHe
   if (!workspaceSlug) return <></>;
   return (
     <Header className="my-auto bg-surface-1">
-      <Header.LeftItem>
+      <Header.LeftItem className="min-w-0 flex-nowrap">
         <Breadcrumbs>
           <Breadcrumbs.Item
             component={
@@ -41,11 +40,9 @@ export const NotificationSidebarHeader = observer(function NotificationSidebarHe
           />
         </Breadcrumbs>
       </Header.LeftItem>
-      <Header.RightItem>
-        {/* Kustomisasi Paradise: saklar yang sama dengan yang
-            ada di halaman Obrolan. Orang yang terganggu bunyi tugas mencarinya di
-            sini, bukan di Obrolan. */}
-        <SaklarSuara />
+      <Header.RightItem className="shrink-0">
+        {/* Kustomisasi Paradise: saklar suara (sama dengan halaman Obrolan) ada di
+            dalam opsi ini, berukuran sama dengan tombol lain. */}
         <NotificationSidebarHeaderOptions workspaceSlug={workspaceSlug} />
       </Header.RightItem>
     </Header>

@@ -363,15 +363,18 @@ CELERY_IMPORTS = (
     "plane.bgtasks.exporter_expired_task",
     "plane.bgtasks.file_asset_task",
     "plane.bgtasks.email_notification_task",
+    "plane.bgtasks.email_antrean",
     "plane.bgtasks.cleanup_task",
     "plane.bgtasks.login_activity_retention",
     "plane.bgtasks.deadline_reminder_task",
     "plane.bgtasks.daily_digest_task",
     "plane.bgtasks.direktur_digest_task",
+    "plane.bgtasks.jadwal_kantor",
     "plane.bgtasks.google_calendar_sync",
     "plane.bgtasks.chat_notification_task",
     "plane.bgtasks.tugas_ke_dm_task",
     "plane.bgtasks.penugasan_email",
+    "plane.bgtasks.quick_link_task",
     "plane.bgtasks.dormancy_task",
     "plane.bgtasks.control_plane_heartbeat",
     "plane.bgtasks.billing_task",
@@ -476,7 +479,9 @@ LIVE_URL = urljoin(LIVE_BASE_URL, LIVE_BASE_PATH) if LIVE_BASE_URL else None
 # WEB URL
 WEB_URL = os.environ.get("WEB_URL")
 
-HARD_DELETE_AFTER_DAYS = int(os.environ.get("HARD_DELETE_AFTER_DAYS", 60))
+# Paradise (KEP-83): HARD_DELETE_AFTER_DAYS bukan setelan Django lagi. Env-nya
+# hanya benih TRASH_RETENTION_DAYS (plane/utils/saklar_instance.py), yang diatur
+# di God Mode dan dibaca deletion_task. Setelan lama di sini tidak dibaca siapa pun.
 
 
 def _retention_days(env_var, default):
@@ -500,7 +505,7 @@ def _retention_days(env_var, default):
 API_ACTIVITY_LOG_RETENTION_DAYS = _retention_days("API_ACTIVITY_LOG_RETENTION_DAYS", 14)
 
 # Webhook delivery logs are retained on their own window, independent of the
-# generic HARD_DELETE_AFTER_DAYS.
+# Trash retention (TRASH_RETENTION_DAYS, God Mode).
 WEBHOOK_LOG_RETENTION_DAYS = _retention_days("WEBHOOK_LOG_RETENTION_DAYS", 14)
 
 # Email notification logs are retained on their own window.

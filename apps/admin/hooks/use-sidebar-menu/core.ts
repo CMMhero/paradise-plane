@@ -4,73 +4,68 @@
  * See the LICENSE file for details.
  */
 
-import { Cog, KeyRound, Mail, ScrollText, ToggleRight, Users } from "lucide-react";
-// plane imports
-import { LockIcon, WorkspaceIcon } from "@plane/propel/icons";
+import { Bell, Cog, LayoutGrid, ListChecks, LockKeyhole, Plug, ScrollText, Users } from "lucide-react";
 // types
 import type { TSidebarMenuItem } from "./types";
 
 export type TCoreSidebarMenuKey =
   | "general"
-  | "email"
-  | "workspace"
-  | "authentication"
-  | "features"
-  | "members"
-  | "logs"
-  | "apiKeys";
+  | "access"
+  | "people"
+  | "rules"
+  | "notifications"
+  | "modules"
+  | "integrations"
+  | "logs";
 
+// Paradise (KEP-83): eight menus, each with tabs (components/common/section-tabs.tsx).
 export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem> = {
   general: {
     Icon: Cog,
     name: "General",
-    description: "Identify your instances and get key details.",
+    description: "Instance, company, and workspaces.",
     href: `/general/`,
   },
-  email: {
-    Icon: Mail,
-    name: "Email",
-    description: "Configure your SMTP controls.",
-    href: `/email/`,
+  access: {
+    Icon: LockKeyhole,
+    name: "Sign-in & access",
+    description: "Methods, providers, sessions, and invites.",
+    href: `/access/`,
   },
-  workspace: {
-    Icon: WorkspaceIcon,
-    name: "Workspaces",
-    description: "Manage all workspaces on this instance.",
-    href: `/workspace/`,
-  },
-  authentication: {
-    Icon: LockIcon,
-    name: "Authentication",
-    description: "Configure authentication modes.",
-    href: `/authentication/`,
-  },
-  // Paradise. Accounts, organization structure, and new member defaults (tabs).
-  members: {
+  people: {
     Icon: Users,
-    name: "Members",
+    name: "People",
     description: "Accounts, organization, and defaults.",
-    href: `/members/`,
+    href: `/people/`,
   },
-  // Paradise. Sign-in activity, the audit log, and the trash (tabs).
+  rules: {
+    Icon: ListChecks,
+    name: "Work rules",
+    description: "Approvals, dates, and archiving.",
+    href: `/rules/`,
+  },
+  notifications: {
+    Icon: Bell,
+    name: "Notifications",
+    description: "Email, schedule, and defaults by role.",
+    href: `/notifications/`,
+  },
+  modules: {
+    Icon: LayoutGrid,
+    name: "Modules",
+    description: "Visibility, chat, dashboards, and files.",
+    href: `/modules/`,
+  },
+  integrations: {
+    Icon: Plug,
+    name: "Integrations",
+    description: "Google, AI, and the image library.",
+    href: `/integrations/`,
+  },
   logs: {
     Icon: ScrollText,
-    name: "Logs",
-    description: "Activity, audit log, and trash.",
+    name: "Data & logs",
+    description: "Activity, audit log, trash, and retention.",
     href: `/logs/`,
-  },
-  // Paradise. Modules, automations, and operational settings (KEP-40).
-  features: {
-    Icon: ToggleRight,
-    name: "Features",
-    description: "Modules, automations, and timings.",
-    href: `/features/`,
-  },
-  // Paradise. AI, image library, and Google credentials (tabs).
-  apiKeys: {
-    Icon: KeyRound,
-    name: "API keys",
-    description: "AI, image library, and Google credentials.",
-    href: `/api-keys/`,
   },
 };

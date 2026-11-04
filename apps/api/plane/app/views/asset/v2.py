@@ -27,7 +27,8 @@ from plane.utils.wiki_access import (
     can_manage_wiki_material,
     is_wiki_governed,
 )
-from plane.utils.plan_limits import batas_ukuran_unggahan
+from plane.utils.saklar_instance import PERM_WIKI_DELETE, PERM_WIKI_EDIT
+from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
@@ -144,11 +145,11 @@ class UserAssetsV2Endpoint(BaseAPIView):
         # get the asset key
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
         entity_type = request.data.get("entity_type", False)
 
         # Check if the file size is within the limit
-        size_limit = min(size, settings.FILE_SIZE_LIMIT)
+        size_limit = min(size, batas_unggah_byte())
 
         #  Check if the entity type is allowed
         if not entity_type or entity_type not in ["USER_AVATAR", "USER_COVER"]:
@@ -367,7 +368,7 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
     def post(self, request, slug):
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
         entity_type = request.data.get("entity_type")
         entity_identifier = request.data.get("entity_identifier", False)
 
@@ -610,7 +611,7 @@ class ProjectAssetEndpoint(BaseAPIView):
     def post(self, request, slug, project_id):
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = int(request.data.get("size", batas_unggah_byte()))
         entity_type = request.data.get("entity_type", "")
         entity_identifier = request.data.get("entity_identifier")
 
@@ -691,6 +692,19 @@ class ProjectAssetEndpoint(BaseAPIView):
     def patch(self, request, slug, project_id, pk):
         # get the asset id
         asset = FileAsset.objects.get(id=pk, workspace__slug=slug, project_id=project_id)
+        # KEP-85: `attributes` materi Wiki memuat judulnya. Tanpa penjaga ini, PATCH
+        # di sini jadi pintu belakang untuk mengganti judul materi orang lain yang
+        # di WikiMaterialEndpoint dijaga.
+        if asset.entity_type == FileAsset.EntityTypeContext.WIKI_MATERIAL and not can_manage_wiki_material(
+            request.user, asset, PERM_WIKI_EDIT
+        ):
+            return Response(
+                {
+                    "error": "Hanya pengunggahnya, atasannya, admin workspace, atau Super Admin "
+                    "yang boleh mengubah materi ini."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
         # get the storage metadata
         asset.is_uploaded = True
         # get the storage metadata
@@ -713,11 +727,11 @@ class ProjectAssetEndpoint(BaseAPIView):
         # yang meloloskan siapa pun anggota project untuk membuang kerja orang
         # lain, dan aturan hapus di lapisan halaman jadi tidak ada artinya.
         if asset.entity_type == FileAsset.EntityTypeContext.WIKI_MATERIAL and not can_manage_wiki_material(
-            request.user, asset
+            request.user, asset, PERM_WIKI_DELETE
         ):
             return Response(
                 {
-                    "error": "Hanya pengunggahnya, admin workspace, atau Super Admin "
+                    "error": "Hanya pengunggahnya, atasannya, admin workspace, atau Super Admin "
                     "yang boleh menghapus materi ini."
                 },
                 status=status.HTTP_403_FORBIDDEN,

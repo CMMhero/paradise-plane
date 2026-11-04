@@ -12,7 +12,6 @@ import useSWR, { mutate } from "swr";
 import {
   ChevronLeft,
   ChevronUp,
-  CornerUpLeft,
   Paperclip,
   Settings2,
   Upload,
@@ -44,6 +43,7 @@ import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useKonfirmasi } from "@/hooks/use-konfirmasi";
+import { useParadiseLimits } from "@/hooks/use-paradise-limits";
 import { SaklarSuara } from "@/components/notifikasi/saklar-suara";
 import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { useUser } from "@/hooks/store/user";
@@ -59,17 +59,19 @@ import {
 // local imports
 import { susunBaris } from "./baris";
 import { useObrolanLangsung } from "./langsung";
-import { usePanggilan } from "./panggilan";
-import { PanggilanLayar } from "./panggilan-layar";
+import { usePanggilanWorkspace } from "./penyedia-panggilan";
 import { Gelembung } from "./gelembung";
+import { KutipanBalasan } from "./kutipan-balasan";
 import { DaftarSebut, useSebutan } from "./pemilih-sebut";
 import type { TCalonSebut } from "./pemilih-sebut";
 import { DialogBuatKanal, DialogJelajahKanal } from "./kanal-dialog";
 import { DialogSetelanKanal } from "./kanal-setelan";
 import { ukuranTerbaca } from "./lampiran";
-import { BATAS_LAMPIRAN, berkasDariTempel, seretBerkas, useUnggahLampiran } from "./unggah-lampiran";
+import { berkasDariTempel, seretBerkas, useUnggahLampiran } from "./unggah-lampiran";
 import { DenganKehadiran, StatusKehadiranTeks, TitikKehadiran } from "@/components/chat/titik-kehadiran";
 import { MemberProfileTrigger } from "@/components/member-profile";
+import { usePetaKehadiran } from "@/hooks/use-kehadiran";
+import { urutkanMenurutKehadiran } from "@/lib/kehadiran";
 
 const chatService = new ChatService();
 
@@ -119,6 +121,7 @@ function ChatPage() {
   const adalahKanal = Boolean(ruangParam);
   // store hooks
   const { data: currentUser } = useUser();
+  const petaKehadiran = usePetaKehadiran();
   const { config: instanceConfig } = useInstance();
   const batasHapusJam = instanceConfig?.paradise_chat_delete_window_hours;
   const {
@@ -158,7 +161,9 @@ function ChatPage() {
   const aksiLokalRef = useRef(0);
   const { minta, dialog: dialogKonfirmasi } = useKonfirmasi();
   const tulisRef = useRef<HTMLTextAreaElement>(null);
-  const panggilanRef = useRef<ReturnType<typeof usePanggilan> | null>(null);
+  // Panggilan hidup di lapisan workspace (penyedia-panggilan.tsx) supaya
+  // bertahan saat pindah halaman; halaman ini cuma memakainya.
+  const panggilan = usePanggilanWorkspace();
 
   const slug = workspaceSlug?.toString();
 
@@ -217,8 +222,10 @@ function ChatPage() {
         }
       }
     },
-    onSinyal: (dari, muatan) => void panggilanRef.current?.terimaSinyal(dari, muatan),
-    onPergi: (dari) => panggilanRef.current?.lawanPergi(dari),
+    // Soket ruang tinggal membawa ajakan konferensi kanal. Sinyal DM pindah ke
+    // soket kehadiran, dan `pergi` sengaja TIDAK lagi menutup panggilan: lawan
+    // yang sekadar pindah percakapan dulu ikut memutus panggilan yang sedang jalan.
+    onSinyal: (_dari, muatan) => panggilan.terimaSinyalRuang(ruangSaatIni, muatan),
   });
 
   // Satu SWR untuk dua jenis percakapan. Kuncinya dibedakan supaya berpindah
@@ -319,15 +326,31 @@ function ChatPage() {
     // terbaru lebih dulu, dan store sudah mengurutkan anggota menurut nama, jadi
     // menyambung dua daftar yang masing-masing sudah urut sudah cukup.
     const cocok = new Set(kandidat);
-    const adaPesan = barisDM.map((baris) => baris.lawan_bicara).filter((id) => cocok.has(id));
-    const belumPernah = kandidat.filter((id) => !peta.has(id));
+    const namaDari = (id: string) => getWorkspaceMemberDetails(id)?.member?.display_name ?? "";
+    // Online dulu, lalu away, lalu offline; dalam satu kelompok menurut nama.
+    const urut = urutkanMenurutKehadiran(
+      [
+        ...barisDM.map((baris) => baris.lawan_bicara).filter((id) => cocok.has(id)),
+        ...kandidat.filter((id) => !peta.has(id)),
+      ],
+      petaKehadiran,
+      namaDari
+    );
     // Catatan untuk diri sendiri selalu paling atas, seperti "Saved messages":
     // ia tempat yang dicari dengan sengaja, bukan percakapan yang tenggelam.
     const namaSaya = (currentUser?.display_name ?? "").toLowerCase();
     const diriSendiri = currentUser?.id && (!kunciCari || namaSaya.includes(kunciCari)) ? [currentUser.id] : [];
-    return [...diriSendiri, ...adaPesan, ...belumPernah].map((id) => ({ id, terakhir: peta.get(id) }));
+    return [...diriSendiri, ...urut].map((id) => ({ id, terakhir: peta.get(id) }));
     // oxlint-disable-next-line react/preserve-manual-memoization -- narrower deps are intentional to avoid recomputing on unrelated user fields
-  }, [percakapan, workspaceMemberIds, currentUser?.id, currentUser?.display_name, cari, getWorkspaceMemberDetails]);
+  }, [
+    percakapan,
+    workspaceMemberIds,
+    currentUser?.id,
+    currentUser?.display_name,
+    cari,
+    getWorkspaceMemberDetails,
+    petaKehadiran,
+  ]);
 
   const semuaPesan = useMemo(() => [...lama, ...(pesan ?? [])], [lama, pesan]);
   const barisPesan = useMemo(
@@ -347,6 +370,7 @@ function ChatPage() {
     el.style.height = `${Math.min(el.scrollHeight, TINGGI_TULIS_MAKS)}px`;
   };
 
+  const batasParadise = useParadiseLimits();
   // Tombol klip, tempel, dan seret semuanya lewat `tambahLampiran`: batas
   // jumlah/ukuran dan kemajuan unggah ada di unggah-lampiran.ts.
   const {
@@ -356,6 +380,7 @@ function ChatPage() {
     tambah: tambahLampiran,
     buang: buangLampiran,
     kosongkan: kosongkanLampiran,
+    maksJumlah: maksLampiran,
   } = useUnggahLampiran({
     slug,
     onTolak: (tolak, maks) => {
@@ -365,7 +390,7 @@ function ChatPage() {
         title:
           terlaluBesar.length > 0
             ? t("chatux_kelola_ui.file_too_large", { name: terlaluBesar[0].nama, size: Math.round(maks / 1024 / 1024) })
-            : t("chatux_kelola_ui.too_many_files", { count: BATAS_LAMPIRAN }),
+            : t("chatux_kelola_ui.too_many_files", { count: maksLampiran }),
       });
     },
     onGagal: (gagal, total, pesanServer) =>
@@ -508,8 +533,13 @@ function ChatPage() {
     tandaiAksiLokal(aksiLokalRef);
     try {
       await chatService.hapusPesan(slug, p.id);
-      // Riwayat lama disimpan terpisah dari SWR, jadi harus ikut dibersihkan.
-      setLama((sebelumnya) => sebelumnya.filter((x) => x.id !== p.id));
+      // Riwayat lama disimpan terpisah dari SWR, jadi ikut dijadikan batu nisan
+      // (pesan tetap di tempatnya, isinya diganti "Pesan dihapus").
+      setLama((sebelumnya) =>
+        sebelumnya.map((x) =>
+          x.id === p.id ? { ...x, dihapus: true, isi: "", lampiran: [], reaksi: [], balasan_ke: null } : x
+        )
+      );
       await Promise.all([muatPesan(), muatPercakapan()]);
     } catch (galat) {
       setToast({
@@ -559,18 +589,27 @@ function ChatPage() {
     }
   };
 
-  const panggilan = usePanggilan({
-    slug,
-    ruangId: ruangSaatIni,
-    kirimSinyal,
-    onGagal: (pesanGalat) => setToast({ type: TOAST_TYPE.ERROR, title: t("chat_ui.call_failed"), message: pesanGalat }),
-  });
-  // Soket dibuat lebih dulu daripada hook panggilan, jadi callback-nya tidak
-  // bisa menunjuk `panggilan` secara langsung. Ref ini yang menjembatani.
-  // oxlint-disable-next-line react/refs -- bridge ref so socket callbacks can reach the call hook created after them
-  panggilanRef.current = panggilan;
-
   const kanalAktif = (daftarKanal ?? []).find((r) => r.id === ruangParam);
+  /** Konferensi di kanal yang sedang dibuka. Tidak berlaku di DM. */
+  const mulaiKonferensi = (video: boolean) => {
+    if (!ruangParam) return;
+    void panggilan.mulaiKonferensi({
+      ruang: ruangParam,
+      nama: kanalAktif?.nama ?? t("chat_ui.channel"),
+      video,
+      kirimSinyalRuang: kirimSinyal,
+    });
+  };
+  const telepon = (video: boolean) => {
+    if (dengan) void panggilan.panggil(dengan, ruangSaatIni, video);
+  };
+  // Ajakan konferensi hanya berlaku untuk kanal tempat ia diterima; berpindah
+  // percakapan atau meninggalkan halaman ini membuangnya.
+  const { lupakanKonferensi } = panggilan;
+  useEffect(() => {
+    if (!ruangSaatIni) return undefined;
+    return lupakanKonferensi;
+  }, [ruangSaatIni, lupakanKonferensi]);
   // Kanal sistem yang hanya dibaca (Announcements, Changelog, Paradise) tidak
   // bisa ditelepon; kanal divisi/departemen bisa, karena isinya orang sungguhan.
   const kanalTanpaPanggilan = !!kanalAktif?.sistem && !/^(divisi|departemen):/.test(kanalAktif.kunci_sistem ?? "");
@@ -815,7 +854,7 @@ function ChatPage() {
                     terpilih ? "bg-layer-1-selected" : ""
                   }`}
                 >
-                  <DenganKehadiran userId={diriSendiri ? null : id}>
+                  <DenganKehadiran userId={id}>
                     <Avatar
                       name={anggota?.display_name}
                       src={getFileURL(anggota?.avatar_url ?? "")}
@@ -926,7 +965,7 @@ function ChatPage() {
                   <div className="ml-auto flex items-center gap-1">
                     <IconButton
                       type="button"
-                      onClick={() => void panggilan.mulaiKonferensi(false)}
+                      onClick={() => mulaiKonferensi(false)}
                       disabled={!tersambung || panggilan.status !== "diam" || kanalTanpaPanggilan}
                       title={tersambung ? t("chat_ui.start_channel_voice") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.channel_voice_call")}
@@ -936,7 +975,7 @@ function ChatPage() {
                     />
                     <IconButton
                       type="button"
-                      onClick={() => void panggilan.mulaiKonferensi(true)}
+                      onClick={() => mulaiKonferensi(true)}
                       disabled={!tersambung || panggilan.status !== "diam" || kanalTanpaPanggilan}
                       title={tersambung ? t("chat_ui.start_channel_video") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.channel_video_call")}
@@ -989,7 +1028,7 @@ function ChatPage() {
                     <p className="truncate text-12 text-tertiary">{t("chat_ui.notes_to_self")}</p>
                   ) : null}
                   {/* Panggilan hanya untuk DM. Untuk kanal butuh SFU, dan itu
-                      pekerjaan lain. Tombolnya mati kalau soket sedang putus,
+                      pekerjaan lain. Tombolnya mati kalau soket kehadiran putus,
                       karena tanpa jalur sinyal panggilan tidak akan tersambung
                       dan yang menekan cuma menunggu tanpa tahu sebabnya.
                       Tidak ada tombol sama sekali di catatan diri sendiri:
@@ -997,9 +1036,9 @@ function ChatPage() {
                   <div className={cn("ml-auto flex items-center gap-1", dengan === currentUser?.id && "hidden")}>
                     <IconButton
                       type="button"
-                      onClick={() => dengan && void panggilan.panggil(dengan, false)}
-                      disabled={!tersambung || panggilan.status !== "diam"}
-                      title={tersambung ? t("chat_ui.voice_call") : t("chat_ui.realtime_down")}
+                      onClick={() => telepon(false)}
+                      disabled={!panggilan.siap || panggilan.status !== "diam"}
+                      title={panggilan.siap ? t("chat_ui.voice_call") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.voice_call")}
                       variant="ghost"
                       size="lg"
@@ -1007,9 +1046,9 @@ function ChatPage() {
                     />
                     <IconButton
                       type="button"
-                      onClick={() => dengan && void panggilan.panggil(dengan, true)}
-                      disabled={!tersambung || panggilan.status !== "diam"}
-                      title={tersambung ? t("chat_ui.video_call") : t("chat_ui.realtime_down")}
+                      onClick={() => telepon(true)}
+                      disabled={!panggilan.siap || panggilan.status !== "diam"}
+                      title={panggilan.siap ? t("chat_ui.video_call") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.video_call")}
                       variant="ghost"
                       size="lg"
@@ -1134,8 +1173,8 @@ function ChatPage() {
                           batasHapusJam={batasHapusJam}
                           onReaksi={(pesanIni, emoji) => void reaksi(pesanIni, emoji)}
                           onTelepon={(video) => {
-                            if (adalahKanal) void panggilan.mulaiKonferensi(video);
-                            else if (dengan) void panggilan.panggil(dengan, video);
+                            if (adalahKanal) mulaiKonferensi(video);
+                            else telepon(video);
                           }}
                         />
                       </div>
@@ -1159,20 +1198,29 @@ function ChatPage() {
             <div
               className={`flex flex-col gap-2 border-t border-subtle p-3 ${kanalAktif?.boleh_kirim === false ? "hidden" : ""}`}
             >
-              {membalas || menyunting ? (
+              {membalas && !menyunting ? (
+                <KutipanBalasan
+                  nama={
+                    membalas.pengirim && membalas.pengirim === currentUser?.id
+                      ? t("chat_ui.you")
+                      : ((membalas.pengirim
+                          ? getWorkspaceMemberDetails(membalas.pengirim)?.member?.display_name
+                          : null) ?? t("chat_ui.member"))
+                  }
+                  isi={membalas.dihapus ? t("chat_ui.message_deleted") : membalas.isi || t("chat_ui.attachment")}
+                  miring={!!membalas.dihapus}
+                  labelBatal={t("cancel")}
+                  onBatal={() => setMembalas(null)}
+                />
+              ) : null}
+              {menyunting ? (
                 <div className="flex items-start gap-2 rounded-item border-l-2 border-accent-strong bg-layer-1 px-2.5 py-1.5">
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1 text-12 font-medium text-accent-primary">
-                      {menyunting ? <Pencil className="size-3" /> : <CornerUpLeft className="size-3" />}
-                      {menyunting
-                        ? t("chat_ui.editing_message")
-                        : lawanBicara?.display_name
-                          ? t("chat_ui.replying_to", { name: lawanBicara.display_name })
-                          : t("chat_ui.replying")}
+                      <Pencil className="size-3" />
+                      {t("chat_ui.editing_message")}
                     </p>
-                    <p className="truncate text-12 text-tertiary">
-                      {(menyunting ?? membalas)?.isi || t("chat_ui.attachment")}
-                    </p>
+                    <p className="truncate text-12 text-tertiary">{menyunting.isi || t("chat_ui.attachment")}</p>
                   </div>
                   <button
                     type="button"
@@ -1277,6 +1325,7 @@ function ChatPage() {
                   ) : null}
                   <textarea
                     ref={tulisRef}
+                    maxLength={batasParadise.chat_message_max_length}
                     value={draf}
                     onChange={(e) => {
                       setDraf(e.target.value);
@@ -1338,41 +1387,22 @@ function ChatPage() {
 
       {/* Ajakan gabung, bukan dering. Muncul untuk yang sedang membuka ruang
           saat orang lain memulai panggilan di sana. */}
-      {panggilan.konferensiBerjalan && panggilan.status === "diam" ? (
+      {panggilan.konferensiBerjalan &&
+      panggilan.konferensiBerjalan.ruang === ruangSaatIni &&
+      panggilan.status === "diam" ? (
         <div className="fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-control border border-subtle bg-layer-3 px-4 py-2">
           <span className="text-13 text-primary">{t("chat_ui.call_in_progress")}</span>
-          <Button variant="primary" size="base" onClick={() => void panggilan.mulaiKonferensi(panggilan.pakaiVideo)}>
+          <Button
+            variant="primary"
+            size="base"
+            onClick={() => mulaiKonferensi(panggilan.konferensiBerjalan?.video ?? false)}
+          >
             {t("chat_ui.join")}
           </Button>
         </div>
       ) : null}
 
-      <PanggilanLayar
-        status={panggilan.status}
-        koneksi={panggilan.koneksi}
-        judul={
-          adalahKanal
-            ? (kanalAktif?.nama ?? t("chat_ui.channel"))
-            : ((panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.display_name : undefined) ??
-              t("chat_ui.member"))
-        }
-        avatarJudul={
-          !adalahKanal && panggilan.lawan
-            ? getFileURL(getWorkspaceMemberDetails(panggilan.lawan)?.member?.avatar_url ?? "") || undefined
-            : undefined
-        }
-        cariAvatar={(id) => getFileURL(getWorkspaceMemberDetails(id)?.member?.avatar_url ?? "") || undefined}
-        pakaiVideo={panggilan.pakaiVideo}
-        mikMati={panggilan.mikMati}
-        kameraMati={panggilan.kameraMati}
-        streamLokal={panggilan.streamLokal}
-        pesertaJauh={panggilan.pesertaJauh}
-        byteMasuk={panggilan.byteMasuk}
-        onAngkat={() => void panggilan.angkat()}
-        onTutup={panggilan.tutup}
-        onSetelMik={panggilan.setelMik}
-        onSetelKamera={panggilan.setelKamera}
-      />
+      {/* Layar panggilan dirender PenyediaPanggilan di lapisan workspace. */}
 
       <DialogBuatKanal isOpen={buatTerbuka} onClose={() => setBuatTerbuka(false)} onBuat={buatKanal} />
       <DialogSetelanKanal

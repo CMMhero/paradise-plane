@@ -28,6 +28,9 @@ interface UseCycleMenuItemsProps {
 interface UseModuleMenuItemsProps {
   moduleDetails: IModule | undefined;
   isEditingAllowed: boolean;
+  /** Paradise KEP-85: arsip/pulihkan dan hapus punya aturan sendiri; bawaan = isEditingAllowed. */
+  isArchivingAllowed?: boolean;
+  isDeletingAllowed?: boolean;
   workspaceSlug: string;
   projectId: string;
   moduleId: string;
@@ -42,6 +45,9 @@ interface UseModuleMenuItemsProps {
 interface UseViewMenuItemsProps {
   isOwner: boolean;
   isAdmin: boolean;
+  /** Paradise KEP-85: kalau diisi, menggantikan isOwner (ubah) dan isOwner || isAdmin (hapus). */
+  isEditAllowed?: boolean;
+  isDeleteAllowed?: boolean;
   workspaceSlug: string;
   projectId?: string;
   view: IProjectView | IWorkspaceView;
@@ -90,7 +96,9 @@ export const useCycleMenuItems = (props: UseCycleMenuItemsProps): MenuResult => 
 
 export const useModuleMenuItems = (props: UseModuleMenuItemsProps): MenuResult => {
   const factory = useQuickActionsFactory();
-  const { moduleDetails, isEditingAllowed, ...handlers } = props;
+  const { moduleDetails, isEditingAllowed, isArchivingAllowed, isDeletingAllowed, ...handlers } = props;
+  const bolehArsip = isArchivingAllowed ?? isEditingAllowed;
+  const bolehHapus = isDeletingAllowed ?? isEditingAllowed;
 
   const isArchived = !!moduleDetails?.archived_at;
   const moduleState = moduleDetails?.status?.toLocaleLowerCase();
@@ -102,12 +110,12 @@ export const useModuleMenuItems = (props: UseModuleMenuItemsProps): MenuResult =
     factory.createOpenInNewTabMenuItem(handlers.handleOpenInNewTab),
     factory.createCopyLinkMenuItem(handlers.handleCopyLink),
     factory.createArchiveMenuItem(handlers.handleArchive, {
-      shouldRender: isEditingAllowed && !isArchived,
+      shouldRender: bolehArsip && !isArchived,
       disabled: !isInArchivableGroup,
       description: isInArchivableGroup ? undefined : "Only completed or cancelled modules can be archived",
     }),
-    factory.createRestoreMenuItem(handlers.handleRestore, isEditingAllowed && isArchived),
-    factory.createDeleteMenuItem(handlers.handleDelete, isEditingAllowed && !isArchived),
+    factory.createRestoreMenuItem(handlers.handleRestore, bolehArsip && isArchived),
+    factory.createDeleteMenuItem(handlers.handleDelete, bolehHapus && !isArchived),
   ].filter((item) => item.shouldRender !== false);
 
   return { items, modals: null };
@@ -115,16 +123,16 @@ export const useModuleMenuItems = (props: UseModuleMenuItemsProps): MenuResult =
 
 export const useViewMenuItems = (props: UseViewMenuItemsProps): MenuResult => {
   const factory = useQuickActionsFactory();
-  const { workspaceSlug, isOwner, isAdmin, projectId, view, ...handlers } = props;
+  const { workspaceSlug, isOwner, isAdmin, isEditAllowed, isDeleteAllowed, projectId, view, ...handlers } = props;
 
   if (!view) return { items: [], modals: null };
 
   // Assemble final menu items - order defined here
   const items = [
-    factory.createEditMenuItem(handlers.handleEdit, isOwner),
+    factory.createEditMenuItem(handlers.handleEdit, isEditAllowed ?? isOwner),
     factory.createOpenInNewTabMenuItem(handlers.handleOpenInNewTab),
     factory.createCopyLinkMenuItem(handlers.handleCopyLink),
-    factory.createDeleteMenuItem(handlers.handleDelete, isOwner || isAdmin),
+    factory.createDeleteMenuItem(handlers.handleDelete, isDeleteAllowed ?? (isOwner || isAdmin)),
   ].filter((item) => item.shouldRender !== false);
 
   return { items, modals: null };

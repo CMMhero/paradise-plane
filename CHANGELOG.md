@@ -6,6 +6,189 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-04
+
+### Versi 3.0.0
+
+- **Naik 2.3.0 ke 3.0.0, major.** 2.3.0 belum dirilis, jadi seluruh isinya
+  ikut 3.0.0. Major karena semantik izin berubah dan orang kehilangan hak yang
+  kemarin mereka punya (aturan versi KEP-48). Tidak ada langkah operator: tanpa
+  migrasi, tanpa env baru.
+- **Izin per sumber mengikuti kepemilikan dan hierarki (KEP-85).** Module, page,
+  view, komentar, dan materi Wiki hanya bisa diubah, diarsipkan, atau dihapus
+  pemiliknya (pembuat/owner, ditambah lead dan anggota module), atasannya di
+  hierarki, admin workspace, dan Super Admin. Struktur project (detail &
+  setelan, state, label, estimate, intake, arsip/hapus project, pulihkan/buang
+  trash) jadi wewenang supervisor ke atas di project yang ia awasi. Role "admin
+  project" milik Plane tidak lagi memberi hak atas barang orang lain. Semua 18
+  aturan bisa diatur di God Mode > Work rules > Permissions (frasa
+  `CHANGE RULES`, tercatat di Audit log). Endpoint baru
+  `GET workspaces/<slug>/izin-saya/` dipakai web untuk menyembunyikan aksi yang
+  pasti ditolak.
+- **Celah yang tertutup:** token API bisa mengubah/menghapus komentar siapa pun
+  (termasuk guest); setiap member bisa mengubah dan mengarsipkan module orang
+  lain, mengarsipkan project, dan mengubah state; guest bisa mengubah state;
+  token API bisa mengarsipkan project tanpa jadi admin; siapa pun bisa mengganti
+  judul materi Wiki orang lain lewat endpoint aset; admin project bisa membuang
+  permanen page, view, module, dan materi orang lain dari Trash.
+- **Yang akan terasa:** staf tidak lagi bisa memasukkan work item ke module yang
+  bukan miliknya (bukan pembuat, lead, atau anggota). Mengatur state, termasuk
+  urutannya, kini butuh wewenang alur kerja.
+
+### Versi 2.3.0
+
+- **Naik 2.2.0 ke 2.3.0, minor.** Endpoint baru, satu migrasi data perapian
+  (0163, jalan sendiri saat deploy) dan tanpa langkah operator, jadi bukan
+  major; bukan patch karena ada fitur baru. Pekerjaan lain yang belum dirilis
+  di branch ini ikut versi yang sama.
+- **Tampilan HP dirapikan di seluruh aplikasi.** Diuji dengan tangkapan layar
+  390/360/768/1280 px. Nama di tabel Members tidak lagi pecah satu huruf per
+  baris (juga di desktop). Bilah atas: pencarian jadi ikon yang membuka palet
+  perintah, lonceng/bantuan/avatar tidak lagi terdorong keluar layar. Tab
+  project bisa digeser, breadcrumb tanpa panah gantung dan tanpa baris ganda di
+  Settings, toolbar work item punya tombol Filter dan ikon tata letak. Ribbon
+  filter: tombol pindah ke baris sendiri di HP, chip lebih besar di layar
+  sentuh, filter tidak lagi hilang di dev (StrictMode). Toolbar Members, padding
+  profil, palet perintah, modal, dropdown, laci sidebar, Pages, Views, Dashboard
+  Divisi, dan Recents ikut dirapikan. Ikut 2.3.0 yang belum dirilis, tanpa
+  naik versi lagi.
+- **God Mode ditata ulang, aturan kerja bisa diatur (KEP-83).** Delapan menu
+  (General, Sign-in & access, People, Work rules, Notifications, Modules,
+  Integrations, Data & logs); URL lama dialihkan. Satu sumber setelan:
+  `GET/PATCH /api/instances/settings/`, God Mode tidak lagi menyalin bawaan.
+  Baru bisa diatur: jam & hari ringkasan dan pengingat dalam zona waktu kantor,
+  titik pengingat, aturan persetujuan, hapus/arsip, ganti tenggat, assign ke
+  bawah saja, batas unggah, umur sesi, masa berlaku undangan, batas chat
+  (panjang, lampiran, jendela sunting), jendela Needs attention. Semua bawaan =
+  perilaku lama; aturan sensitif minta frasa `CHANGE RULES` dan tercatat di
+  Audit log. Saklar pribadi yang induknya dimatikan admin tampil terkunci.
+  Arsip otomatis instance jadi plafon untuk setelan per project. People >
+  Organization jadi satu halaman: bagan struktur di atas, Board seret-lepas
+  di bawah (tab Chart & details dan panel project lama dibuang, KEP-86);
+  seret orang kembali ke People = cabut dari tempat itu; supervisor/manager
+  jatuh ke Staf hanya kalau tidak tersisa departemen atau divisi apa pun; tombol edit member di kolom pertama;
+  kolom teknis Audit log selalu tampil. Migrasi 0165 hanya menambah tabel
+  penanda jadwal. Tetap minor: tanpa env baru dan tanpa langkah operator.
+  Catatan operator: `FILE_SIZE_LIMIT` dan `SESSION_COOKIE_AGE` kini hanya
+  benih. Sesudah deploy pertama, menaikkan env tidak lagi menaikkan batas;
+  ubah di God Mode (Modules > Files, Sign-in & access > Sessions). Migrasi 0165
+  bergantung pada 0163 dan 0164, jadi ketiganya harus ikut commit yang sama.
+- **Pencarian setelan God Mode (Ctrl/Cmd + K).** Palet perintah ala Power K
+  di header God Mode: cari menu, tab, dan setiap setelan registri secara fuzzy
+  lewat judul, teks bantuan, label pilihan, kunci setelan, dan jalur menu
+  (salah ketik satu huruf tetap ketemu). Memilih setelan membuka tabnya,
+  menggulir ke barisnya, dan menandainya sebentar. Dropdown pilihan
+  (`CustomSelect`, `CustomSearchSelect`) kini rata kiri saat labelnya
+  terlipat dua baris; sebelumnya baris kedua jadi rata tengah.
+- **Bawaan setelan ditinjau ulang + waktu selesai = saat mengajukan (KEP-84).**
+  Bawaan baru: gerbang hierarki, email pengingat tenggat, satu utas email per
+  work item, dan email hanya ke member aktif HIDUP; undangan kedaluwarsa 7 hari,
+  jendela sunting chat 24 jam, Trash 30 hari, member baru zona Asia/Jakarta.
+  Tugas yang diajukan staf dihitung selesai saat diajukan, bukan saat atasan
+  menyetujui, dan selama menunggu tidak dihitung terlambat; pengingat lewat
+  tenggat pindah ke penyetuju. Keduanya setelan God Mode > Work rules.
+  Akibat langsung saat deploy (kuncinya baru lahir di rilis ini): orang yang
+  30 hari tak membuka aplikasi berhenti menerima email kabar kerja (inbox tetap),
+  undangan lebih tua dari 7 hari langsung kedaluwarsa, pesan chat lebih tua dari
+  24 jam tak bisa disunting lagi.
+- **Panggilan DM berdering di halaman mana pun, video kembali jalan.**
+  Undangan panggilan dulu lewat soket PER RUANG, jadi yang ditelepon hanya
+  berdering kalau kebetulan sedang membuka percakapan itu, dan yang mengangkat
+  masuk ke ruang LiveKit milik percakapan yang terbuka di layarnya, bukan milik
+  panggilannya. Sekarang sinyal DM lewat soket kehadiran (satu per tab,
+  `tipe: "panggilan"`, diperiksa keanggotaan ruangnya oleh `apps/live`), dan
+  panggilan hidup di tingkat workspace (`penyedia-panggilan.tsx`) sehingga tidak
+  putus saat pindah halaman. Ada kartu panggilan masuk + nada dering +
+  notifikasi peramban, batas dering 45 detik (penelepon: "Tidak dijawab", yang
+  ditelepon: "Panggilan tak terjawab"), batal, tolak, sibuk, dan sinkron antar
+  tab. Video: `adaptiveStream` dicabut karena kita tidak memakai
+  `track.attach()`, sehingga server berhenti meneruskan video (suara jalan,
+  video 0 KB); pratinjau sendiri dirakit ulang sesudah kamera dinyalakan lagi,
+  dan kamera lawan yang dimatikan tampil sebagai avatar.
+- **Staf jadi jenjang bawaan, staf tidak bisa membuat project (KEP-79).**
+  Orang tanpa jenjang otomatis Staf; manajer/supervisor yang kehilangan tempat
+  terakhirnya turun ke Staf. Membuat project hanya untuk Super Admin, Admin
+  workspace, dan Supervisor ke atas. Jenjang bisa diatur langsung di God Mode
+  > Members > Organization.
+- **Quick link bersama + judul & favicon otomatis (KEP-82).** Super Admin dan
+  admin workspace bisa memasang quick link untuk semua orang atau untuk divisi
+  dan departemen tertentu. Satu modal untuk semua link: admin memilih
+  Visibility Private (hanya dirinya) atau Public (semua orang / unit pilihan);
+  member biasa hanya mengelola link Private miliknya. Mengganti visibilitas
+  memindah link. Link itu tampil paling atas di Home dan halaman Quick links
+  tiap orang yang masuk sasarannya. Judul dan favicon diambil otomatis dari
+  situsnya; ikon dipilih dari emoji/ikon bawaan seperti ikon project (bukan
+  URL gambar), dan bisa dikembalikan ke favicon situs. Teks quick link yang
+  dulu tampil sebagai kunci mentah kini terbaca. Migrasi 0164 menambah tabel;
+  migrasi 0166 mengimpor 23 link dari portal one.paradiseperkasa.com sebagai
+  quick link global untuk semua orang (idempoten, ikut terpasang saat deploy).
+- **Inbox jadi popover di lonceng (KEP-80).** Bisa diperluas ke halaman penuh.
+  Halaman penuh dirapikan: header sejajar, kolom daftar lebih lebar, tombol
+  suara kini jalan (z-index salah tempat) dan seukuran tombol lain.
+- **Chat: pesan terhapus tampil "Pesan dihapus" (KEP-81)**, daftar orang
+  diurutkan online/away dulu, lencana status juga di diri sendiri.
+- **Ganti tema tanpa memuat ulang halaman.** Tema diterapkan langsung, disimpan
+  di latar belakang, dikembalikan kalau gagal.
+- **Wiki tidak lagi dihitung** di Dashboard Divisi, Laporan, analytics, dan
+  daftar project tanpa departemen.
+- **Kartu profil member di seluruh God Mode**, "View work" hanya untuk admin,
+  dan nama/email panjang di tabel member tidak lagi meluber.
+- **Email yang isinya sama dikirim sekali, semua alamat di To (KEP-78).**
+  Peringatan riwayat login akan dihapus (ke semua admin), email penugasan ke
+  rekan setugas, dan pengingat tenggat satu tugas dulu dikirim satu per satu;
+  sekarang satu email `To: a; b; c`, jadi tiap penerima tahu siapa lagi yang
+  menerimanya. Sapaannya menyebut semua nama dan footer menulis semua alamat.
+  Dipecah hanya per bahasa penerima dan posisi di utas email, maksimal 50
+  alamat per pesan.
+- **Stickies dan editor ikut font aplikasi.** Editor (stickies, deskripsi,
+  komentar, halaman) dulu memakai Inter yang dipatok; sekarang pilihan
+  "Sans serif" mengikuti font antarmuka di Preferensi. Font kode (blok kode,
+  `<code>`, `<kbd>`, kelas `font-code`/`font-mono`, pilihan "Mono" di editor)
+  selalu Geist Mono, juga saat font antarmuka diganti ke JetBrains Mono. Blok
+  kode dulu menunjuk keluarga "JetBrainsMono" yang tidak pernah dimuat, dan
+  `font-mono` adalah kelas mati yang diam-diam memakai font antarmuka.
+- **"Deleted account" tidak lagi nyangkut di departemen God Mode.** Menghapus
+  akun dulu tidak mencabut penempatan organisasinya, jadi akun itu tetap
+  tampil (di R&D sebagai Manager) dan tombol cabutnya diam karena daftar member
+  menyembunyikan akun terhapus. Sekarang penghapusan akun mencabut
+  penempatannya (soft delete), memulihkan dari Trash mengembalikannya, pohon
+  organisasi tidak pernah menampilkan akun terhapus, dan migrasi 0163
+  merapikan sisa lama. Baris produksi sudah dibersihkan langsung 4 Nov.
+- **God Mode > Email > Preview:** bawaan bahasa jadi Inggris, tombol
+  "Send to me" mengirim contoh yang sedang dibuka ke email admin yang masuk
+  (`POST /api/instances/email-preview/<key>/send/`), dan bingkai iframe tidak
+  lagi menambah sudut/garis yang bukan bagian dari email.
+- **Pengirim email bernama "Space Paradise Perkasa"** (`pengirim()` di
+  `email_merek.py`); alamatnya tetap dari konfigurasi SMTP God Mode.
+- **Garis tipis di dalam kartu email (Outlook klasik) hilang.** Bingkai kartu
+  dulu berupa sel berlatar warna garis dengan sel putih di dalamnya; Word pada
+  skala layar 125/150% menyisakan celah antar blok sehingga warna garis tembus
+  jadi garis sepanjang kartu. Sekarang satu bingkai bersama
+  (`partials/bingkai_buka.html` / `bingkai_tutup.html`): Outlook klasik memakai
+  sel garis 1px di empat sisi, klien lain `border` biasa.
+- **Font email = tumpukan sistem berawalan Segoe UI**, tautan Google Fonts
+  dibuang, supaya pratinjau God Mode sama dengan yang tampil di Outlook. Tinggi
+  tombol HTML disamakan dengan tombol VML Outlook (40px).
+- **Email tugas & persetujuan dikumpulkan jadi satu ringkasan per orang.**
+  Antrean `EmailNotificationLog` + sapuan 5 menit, jeda bawaan 15 menit;
+  permintaan persetujuan di atas. Tiga setelan baru di God Mode `/features`:
+  `ENABLE_EMAIL_BATCH` (+ `EMAIL_BATCH_DELAY_MINUTES`), `ENABLE_EMAIL_THREADING`
+  (balasan di utas yang sama per work item, bawaan mati karena subjek jadi
+  `[PROJ-12] Judul`), `ENABLE_EMAIL_ACTIVE_ONLY` (+ `EMAIL_ACTIVE_DAYS`, 30).
+- **Widget "Needs attention" di Home** (`GET .../paradise/attention/`): tugas
+  telat, jatuh tempo 7 hari, ditolak, menunggu persetujuan, mention; atasan
+  juga dapat antrean keputusan dan tugas telat timnya.
+- **Antrean persetujuan hanya untuk yang berhak memutuskan** (predikat sama
+  dengan aksi setujui/tolak); ditolak lalu diajukan ulang kini tampil sekali
+  sebagai menunggu. Kolom Approval di tampilan tabel punya dropdown filter
+  (termasuk "None").
+- **Activity:** entri ganda hilang (join keanggotaan project diganti `Exists`,
+  store menyaring id ganda); field tak dikenal tidak lagi tampil kosong.
+- **Mobile:** sidebar tidak lagi terbuka sendiri dan tidak tertutup header,
+  setelan profil pakai navigasi mobile, teks activity membungkus, ID di
+  antrean persetujuan tidak terpotong, target sentuh menu dropdown lebih tinggi.
+  Dropdown Module di detail work item sejajar tinggi baris lain.
+
 ## 2026-11-03
 
 ### Versi 2.2.0

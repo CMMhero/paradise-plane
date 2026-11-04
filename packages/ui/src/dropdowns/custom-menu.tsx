@@ -31,13 +31,15 @@ interface PortalProps {
   asChild?: boolean;
 }
 
-function Portal({ children, container, asChild = false }: PortalProps) {
-  const [mounted, setMounted] = React.useState(false);
+const subscribeNoop = () => () => {};
 
-  React.useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+function Portal({ children, container, asChild = false }: PortalProps) {
+  // false saat render server/hidrasi, true di klien
+  const mounted = React.useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
 
   if (!mounted) {
     return null;
@@ -205,7 +207,7 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
     >
       <div
         className={cn(
-          "shadow-md my-1 min-w-[12rem] overflow-y-scroll rounded-popover border border-strong-1 bg-surface-1 px-2 py-2.5 text-11 whitespace-nowrap ring-1 ring-strong-1/15 outline-none focus:outline-none",
+          "shadow-md my-1 max-w-[calc(100vw-1rem)] min-w-[12rem] overflow-y-scroll rounded-popover border border-strong-1 bg-surface-1 px-2 py-2.5 text-11 whitespace-nowrap ring-1 ring-strong-1/15 outline-none focus:outline-none",
           {
             "max-h-60": maxHeight === "lg",
             "max-h-48": maxHeight === "md",
@@ -472,7 +474,7 @@ function MenuItem(props: ICustomMenuItemProps) {
         <button
           type="button"
           className={cn(
-            "w-full truncate rounded-item px-2 py-1.5 text-left text-secondary select-none",
+            "w-full truncate rounded-item px-2 py-1.5 text-left text-secondary select-none sentuh:py-2.5",
             {
               "bg-layer-transparent-hover": active && !disabled,
               "text-placeholder": disabled,

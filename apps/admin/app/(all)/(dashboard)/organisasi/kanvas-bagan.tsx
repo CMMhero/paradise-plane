@@ -36,7 +36,19 @@ function TombolAlat({
   );
 }
 
-export function KanvasBagan({ children, judul }: { children: ReactNode; judul?: ReactNode }) {
+/** Tombol di dalam bagan yang membawa pengguna keluar bagan (mis. buka di papan): layar penuh ditutup dulu. */
+export const ATRIBUT_KELUAR_BAGAN = "data-kanvas-keluar";
+
+export function KanvasBagan({
+  children,
+  judul,
+  kelasTinggi = "h-[calc(100vh-18rem)] min-h-[440px]",
+}: {
+  children: ReactNode;
+  judul?: ReactNode;
+  /** Tinggi bingkai di luar layar penuh. */
+  kelasTinggi?: string;
+}) {
   const { s } = useGodmodeStrings();
   const [layarPenuh, setLayarPenuh] = useState(false);
   const { viewportRef, kontenRef, tampilan, sedangSeret, zoomMasuk, zoomKeluar, zoomAsli, pasUlang, viewportProps } =
@@ -65,14 +77,14 @@ export function KanvasBagan({ children, judul }: { children: ReactNode; judul?: 
     <div
       className={cn(
         "flex flex-col overflow-hidden border-subtle bg-layer-1",
-        layarPenuh ? "fixed inset-0 z-20 border-0" : "relative h-[calc(100vh-18rem)] min-h-[440px] rounded-card border"
+        layarPenuh ? "fixed inset-0 z-20 border-0" : cn("relative rounded-card border", kelasTinggi)
       )}
     >
       <div
         className="flex shrink-0 items-center gap-2 border-b border-subtle bg-surface-1 px-3 py-1.5"
         {...{ [ATRIBUT_ABAIKAN]: "" }}
       >
-        <div className="min-w-0 flex-1 truncate text-13 font-medium text-primary">{judul}</div>
+        <div className="min-w-0 flex-1 truncate text-12 text-tertiary">{judul}</div>
         <span className="hidden text-11 text-tertiary md:inline">{s.org.canvas_hint}</span>
         <div className="flex items-center gap-0.5 rounded-button border border-subtle bg-layer-1 p-0.5">
           <TombolAlat label={s.org.zoom_out} icon={Minus} onClick={zoomKeluar} />
@@ -113,6 +125,9 @@ export function KanvasBagan({ children, judul }: { children: ReactNode; judul?: 
           ref={kontenRef}
           className="absolute top-0 left-0 w-max origin-top-left will-change-transform"
           style={{ transform: `translate(${tampilan.x}px, ${tampilan.y}px) scale(${tampilan.k})` }}
+          onClickCapture={(e) => {
+            if (layarPenuh && (e.target as HTMLElement).closest(`[${ATRIBUT_KELUAR_BAGAN}]`)) setLayarPenuh(false);
+          }}
         >
           {children}
         </div>

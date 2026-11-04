@@ -22,7 +22,11 @@ export function SettingsContentWrapper(props: Props) {
   return (
     <div className="@container flex size-full grow flex-col overflow-hidden">
       {header && (
-        <div className="w-full shrink-0">
+        // Di bawah md jalur halaman sudah ditampilkan SettingsMobileNav (hamburger +
+        // nama halaman). Header ini dulu ikut tampil, jadi ada dua baris judul yang
+        // sama bertumpuk. Tak ada header pengaturan yang punya aksi kanan, jadi
+        // menyembunyikannya di HP tidak menghilangkan tombol apa pun.
+        <div className="hidden w-full shrink-0 md:block">
           <AppHeader header={header} />
         </div>
       )}

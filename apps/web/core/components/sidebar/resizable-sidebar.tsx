@@ -189,20 +189,26 @@ export function ResizableSidebar({
     onWidthChange?.(width);
   }, [width, onWidthChange]);
 
+  // Hanya gema perubahan sungguhan. Gema saat mount menimpa keadaan "tertutup" yang
+  // baru dipasang SidebarWrapper di layar sempit (default `false` di atas), jadi
+  // pada kunjungan pertama di HP sidebar malah terbuka menutupi halaman.
+  const lastCollapsedRef = useRef(isCollapsed);
   useEffect(() => {
+    if (lastCollapsedRef.current === isCollapsed) return;
+    lastCollapsedRef.current = isCollapsed;
     onCollapsedChange?.(isCollapsed);
   }, [isCollapsed, onCollapsedChange]);
 
   return (
     <>
       {/* Main Sidebar */}
-      <div
+      <aside
         id="main-sidebar"
         className={cn(
           "z-20 h-full border-r border-subtle bg-surface-1",
           !isResizing && "transition-all duration-300 ease-in-out",
           isCollapsed ? "w-0 translate-x-[-100%] opacity-0" : "translate-x-0 opacity-100",
-          isLayarSempit && "absolute",
+          isLayarSempit && "absolute z-30",
           className
         )}
         style={{
@@ -210,11 +216,10 @@ export function ResizableSidebar({
           minWidth: `${isCollapsed ? 0 : width}px`,
           maxWidth: `${isCollapsed ? 0 : width}px`,
         }}
-        role="complementary"
         aria-label="Main sidebar"
         data-prevent-outside-click={isLayarSempit}
       >
-        <aside
+        <div
           className={cn(
             "group/sidebar relative flex h-full w-full flex-col overflow-hidden bg-surface-1 pt-3",
             isAnyExtendedSidebarExpanded && "rounded-none"
@@ -233,13 +238,23 @@ export function ResizableSidebar({
             // onDoubleClick toggle sidebar
             onDoubleClick={() => toggleCollapsed()}
             onMouseDown={(e) => startResizing(e)}
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <hr> membawa gaya bawaan dan tak bisa dipakai sebagai pegangan seret
             role="separator"
+            aria-orientation="vertical"
             aria-label="Resize sidebar"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggleCollapsed();
+              }
+            }}
           />
-        </aside>
-      </div>
+        </div>
+      </aside>
       {/* Peek View */}
-      <div
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- hover hanya untuk membuka/menutup pratinjau, bukan aksi utama */}
+      <aside
         className={cn(
           "shadow-sm absolute left-0 z-20 h-full bg-surface-1",
           !isResizing && "transition-all duration-300 ease-in-out",
@@ -253,10 +268,9 @@ export function ResizableSidebar({
         }}
         onMouseEnter={handlePeekEnter}
         onMouseLeave={handlePeekLeave}
-        role="complementary"
         aria-label="Sidebar peek view"
       >
-        <aside
+        <div
           className={cn(
             "group/sidebar relative z-20 flex h-full w-full flex-col overflow-hidden bg-surface-1 pt-4",
             "self-center rounded-md rounded-tl-none rounded-bl-none border-r border-subtle",
@@ -275,11 +289,20 @@ export function ResizableSidebar({
             // onDoubleClick toggle sidebar
             onDoubleClick={() => toggleCollapsed()}
             onMouseDown={(e) => startResizing(e)}
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <hr> membawa gaya bawaan dan tak bisa dipakai sebagai pegangan seret
             role="separator"
+            aria-orientation="vertical"
             aria-label="Resize sidebar"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggleCollapsed();
+              }
+            }}
           />
-        </aside>
-      </div>
+        </div>
+      </aside>
 
       {/* Extended Sidebar */}
       {extendedSidebar}

@@ -40,7 +40,8 @@ from plane.db.models import (
     ProjectMember,
     STATUS_PERSETUJUAN_MENUNGGU,
 )
-from plane.utils.hierarki import project_boleh_diputuskan
+from plane.utils.hierarki import pengajuan_boleh_diputuskan
+from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.saklar_instance import (
     DASHBOARD_KRITIS_PERSEN,
     DASHBOARD_ON_TIME_WINDOW_DAYS,
@@ -48,6 +49,7 @@ from plane.utils.saklar_instance import (
     setelan_angka,
 )
 from plane.utils.tanggal_otomatis import batas_terlambat
+from plane.utils.wiki_access import WIKI_IDENTIFIER
 
 LANCAR = "lancar"
 PERHATIAN = "perhatian"
@@ -70,6 +72,8 @@ def project_terjangkau(user, slug):
             project_projectmember__is_active=True,
             archived_at__isnull=True,
         )
+        # Wiki itu pustaka berkas, bukan project kerja: tak masuk angka dashboard.
+        .exclude(identifier=WIKI_IDENTIFIER)
         .distinct()
         .order_by("name")
     )
@@ -110,7 +114,10 @@ def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu):
     awal_jendela = sekarang - timedelta(days=jendela_tepat_waktu)
 
     belum_tuntas = ~Q(state__group__in=[_SELESAI, _BATAL])
-    terlambat = Q(target_date__lt=batas_terlambat(hari_ini)) & belum_tuntas
+    # KEP-84: yang menunggu persetujuan selesai tidak terlambat (tetap dihitung
+    # aktif di penyebut kesehatan: tugasnya memang belum disetujui selesai).
+    bisa_terlambat = q_bisa_terlambat()
+    terlambat = Q(target_date__lt=batas_terlambat(hari_ini)) & belum_tuntas & bisa_terlambat
     selesai = Q(state__group=_SELESAI)
     selesai_bertenggat = selesai & Q(completed_at__gte=awal_jendela, target_date__isnull=False)
 
@@ -128,12 +135,15 @@ def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu):
                 "id", filter=selesai & Q(completed_at__gte=empat_belas_hari, completed_at__lt=tujuh_hari)
             ),
             # Lewat tenggat seminggu lalu: tenggatnya sudah lewat saat itu dan
-            # tugasnya belum selesai saat itu (atau sampai sekarang).
+            # tugasnya belum selesai saat itu (atau sampai sekarang). Yang kini
+            # menunggu persetujuan disaring sama dengan angka minggu ini, supaya
+            # pembandingnya setara.
             terlambat_lalu=Count(
                 "id",
                 filter=Q(target_date__lt=batas_terlambat(sepekan_lalu))
                 & ~Q(state__group=_BATAL)
-                & (Q(completed_at__isnull=True) | Q(completed_at__date__gte=sepekan_lalu)),
+                & (Q(completed_at__isnull=True) | Q(completed_at__date__gte=sepekan_lalu))
+                & bisa_terlambat,
             ),
             bertenggat_30=Count("id", filter=selesai_bertenggat),
             tepat_waktu_30=Count("id", filter=selesai_bertenggat & Q(completed_at__date__lte=F("target_date"))),
@@ -161,25 +171,30 @@ def _jumlah_anggota(project_ids):
 
 
 def _persetujuan_untuk_saya(user, projects):
-    """{project_id: jumlah} pengajuan menunggu yang boleh user ini putuskan."""
+    """{project_id: jumlah} pengajuan menunggu yang boleh user ini putuskan.
+
+    Wewenang dinilai per (project, pemohon) lewat `pengajuan_boleh_diputuskan`,
+    sama dengan POST setuju/tolak: angka di sini = baris yang memang bisa ia putuskan.
+    """
     baris = (
         PersetujuanPenugasan.objects.filter(project_id__in=[p.id for p in projects], status=STATUS_PERSETUJUAN_MENUNGGU)
         .exclude(pemohon=user)
-        .values("project_id")
+        .values_list("project_id", "pemohon_id")
         .annotate(n=Count("id"))
     )
-    jumlah = {r["project_id"]: r["n"] for r in baris}
+    jumlah = {(pid, pemohon): n for pid, pemohon, n in baris}
     if not jumlah:
         return {}
     # Hanya project yang memang punya antrean yang diperiksa wewenangnya.
     workspace_dari = {p.id: p.workspace_id for p in projects}
     per_workspace = {}
-    for pid in jumlah:
-        per_workspace.setdefault(workspace_dari[pid], set()).add(pid)
-    boleh = set()
-    for workspace_id, pids in per_workspace.items():
-        boleh |= project_boleh_diputuskan(user, workspace_id, pids)
-    return {pid: n for pid, n in jumlah.items() if pid in boleh}
+    for pasangan in jumlah:
+        per_workspace.setdefault(workspace_dari[pasangan[0]], set()).add(pasangan)
+    hasil = {}
+    for workspace_id, pasangan in per_workspace.items():
+        for pid, pemohon in pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
+            hasil[pid] = hasil.get(pid, 0) + jumlah[(pid, pemohon)]
+    return hasil
 
 
 def _peta_departemen(project_ids):

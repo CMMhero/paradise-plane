@@ -72,6 +72,7 @@ DILEWATI = {
     "control.TenantInstance": "bidang kendali",
     "control.UsageSnapshot": "bidang kendali",
     "control.Invoice": "bidang kendali, dan catatan keuangan tidak pernah ikut ke penyewa",
+    "db.JadwalTerlaksana": "penanda jadwal kantor, keadaan penjadwal milik instance",
     "django_celery_beat.PeriodicTask": "keadaan penjadwal, milik instance",
     "django_celery_beat.PeriodicTasks": "keadaan penjadwal",
     "django_celery_beat.CrontabSchedule": "keadaan penjadwal",

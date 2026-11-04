@@ -42,6 +42,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.db.jangkauan import sinkronkan_workspace, tunda_sinkron
 from plane.db.models import (
+    DOMAIN_AKUN_TERHAPUS,
     Departemen,
     DepartemenProject,
     Divisi,
@@ -58,6 +59,7 @@ from plane.db.models import (
 )
 from plane.db.penempatan import penempatan_sekarang, setel_penempatan
 from plane.license.api.views.base import BaseAPIView
+from plane.utils.wiki_access import WIKI_IDENTIFIER
 
 BATAS_KODE = 20
 
@@ -218,9 +220,11 @@ def pohon_organisasi(workspace):
             peta.setdefault(dep_id, []).append(projects[pid])
     # Orang per departemen (staf/supervisor) dan manager per divisi, satu query.
     orang_dep, manager_div = {}, {}
+    # Akun terhapus tidak pernah ditampilkan (KEP-50): daftar member God Mode juga
+    # menyembunyikannya, jadi barisnya tidak akan bisa dicabut dari sini.
     for j in JabatanOrganisasi.objects.filter(workspace=workspace).filter(
         Q(departemen__isnull=False) | Q(divisi__isnull=False)
-    ).select_related("member"):
+    ).exclude(member__email__endswith=f"@{DOMAIN_AKUN_TERHAPUS}").select_related("member"):
         baris = {
             "id": str(j.member_id),
             "nama": j.member.display_name or j.member.email,
@@ -270,7 +274,10 @@ def pohon_organisasi(workspace):
             for v in Divisi.objects.filter(workspace=workspace).order_by("nama")
         ],
         "tanpa_departemen": [
-            _project(p) for p in sorted(projects.values(), key=lambda p: p.name) if p.id not in berdepartemen
+            _project(p)
+            for p in sorted(projects.values(), key=lambda p: p.name)
+            # Wiki itu pustaka, bukan project kerja: tak perlu ditempatkan di departemen.
+            if p.id not in berdepartemen and p.identifier != WIKI_IDENTIFIER
         ],
     }
 

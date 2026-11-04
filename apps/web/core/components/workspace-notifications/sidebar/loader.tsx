@@ -6,18 +6,17 @@
 
 import { range } from "lodash-es";
 
-export function NotificationsLoader() {
+// Paradise: cermin baris ringkas di notification-card/item.tsx (foto 32px, tiga lapis teks).
+export function NotificationsLoader({ rows = 8 }: { rows?: number }) {
   return (
     <div className="animate-pulse divide-y divide-subtle overflow-hidden">
-      {range(8).map((i) => (
-        <div key={i} className="flex w-full items-center gap-4 p-3">
-          <span className="min-h-12 min-w-12 rounded-full bg-layer-1" />
-          <div className="flex w-full flex-col gap-2.5">
-            <span className="h-5 w-36 rounded-xs bg-layer-1" />
-            <div className="flex w-full items-center justify-between gap-2">
-              <span className="h-5 w-28 rounded-xs bg-layer-1" />
-              <span className="h-5 w-16 rounded-xs bg-layer-1" />
-            </div>
+      {range(rows).map((i) => (
+        <div key={i} className="flex w-full items-start gap-2.5 py-2.5 pr-3 pl-5">
+          <span className="size-8 shrink-0 rounded-full bg-layer-1" />
+          <div className="flex w-full flex-col gap-1.5">
+            <span className="h-3.5 w-4/5 rounded-xs bg-layer-1" />
+            <span className="h-3 w-3/5 rounded-xs bg-layer-1" />
+            <span className="h-3 w-24 rounded-xs bg-layer-1" />
           </div>
         </div>
       ))}

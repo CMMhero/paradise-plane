@@ -14,21 +14,28 @@ import type { ReactNode } from "react";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { setPromiseToast } from "@plane/propel/toast";
-import { InstanceMemberService, type TProjectDefaults } from "@plane/services";
+import { InstanceMemberService, type TProjectDefaults as TAllProjectDefaults } from "@plane/services";
 import { CustomSearchSelect, CustomSelect, Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Field } from "@/components/common/paradise-ui";
 import { UnsavedBar } from "@/components/common/unsaved-changes";
-import { WorkspacesTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // local
-import { useGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
 import { Saklar, useZonaWaktu } from "../members/bidang-profil";
 import type { Route } from "./+types/page";
 
 const memberService = new InstanceMemberService();
 
-const BULAN = Array.from({ length: 13 }, (_, i) => i);
+// Archive and close timing moved to Work rules > Archiving, next to the instance ceiling.
+type TProjectDefaults = Pick<TAllProjectDefaults, "network" | "timezone" | "guest_view_all_features">;
+
+const pickDefaults = (d: TAllProjectDefaults): TProjectDefaults => ({
+  network: d.network,
+  timezone: d.timezone,
+  guest_view_all_features: d.guest_view_all_features,
+});
 
 const sama = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -44,30 +51,6 @@ function Bagian({ title, note, children }: { title: string; note: string; childr
   );
 }
 
-function PilihBulan({ label, nilai, onUbah }: { label: string; nilai: number; onUbah: (v: number) => void }) {
-  const { s, fill } = useGodmodeStrings();
-  const teks = (n: number) => (n === 0 ? s.bawaan_project.off : fill(s.bawaan_project.months, { count: n }));
-  return (
-    <Field label={label}>
-      <CustomSelect
-        value={nilai}
-        label={teks(nilai)}
-        onChange={(v: number) => onUbah(Number(v))}
-        buttonClassName="w-full"
-        className="w-full"
-        maxHeight="lg"
-        input
-      >
-        {BULAN.map((n) => (
-          <CustomSelect.Option key={n} value={n}>
-            {teks(n)}
-          </CustomSelect.Option>
-        ))}
-      </CustomSelect>
-    </Field>
-  );
-}
-
 function BawaanProjectPage(_props: Route.ComponentProps) {
   const { s } = useGodmodeStrings();
   const t = s.bawaan_project;
@@ -77,15 +60,7 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
   const [draf, setDraf] = useState<TProjectDefaults | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const tersimpan: TProjectDefaults | null = data
-    ? {
-        network: data.network,
-        timezone: data.timezone,
-        archive_in: data.archive_in,
-        close_in: data.close_in,
-        guest_view_all_features: data.guest_view_all_features,
-      }
-    : null;
+  const tersimpan: TProjectDefaults | null = data ? pickDefaults(data) : null;
   const nilai = draf ?? tersimpan;
   const isDirty = Boolean(draf && tersimpan && !sama(draf, tersimpan));
 
@@ -125,8 +100,8 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
     : [];
 
   return (
-    <PageWrapper header={{ title: "Workspaces on this instance", description: t.description }}>
-      <WorkspacesTabs />
+    <PageWrapper header={s.settings.tabs.rules_projects}>
+      <MenuTabs menu="rules" />
       <UnsavedBar isDirty={isDirty} isSaving={isSaving} onSave={simpan} onDiscard={() => setDraf(null)} />
       {error && <p className="text-13 text-danger-primary">{t.load_failed}</p>}
       {!error && !nilai && (
@@ -184,9 +159,6 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
                   }))}
                 />
               </Field>
-              <div />
-              <PilihBulan label={t.archive_in} nilai={nilai.archive_in} onUbah={(v) => ubah({ archive_in: v })} />
-              <PilihBulan label={t.close_in} nilai={nilai.close_in} onUbah={(v) => ubah({ close_in: v })} />
             </div>
           </Bagian>
 
@@ -197,8 +169,8 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
             <Button
               variant="secondary"
               size="base"
-              disabled={isSaving || sama(nilai, data.pabrik)}
-              onClick={() => setDraf(data.pabrik)}
+              disabled={isSaving || sama(nilai, pickDefaults(data.pabrik))}
+              onClick={() => setDraf(pickDefaults(data.pabrik))}
             >
               {t.reset}
             </Button>
@@ -211,6 +183,8 @@ function BawaanProjectPage(_props: Route.ComponentProps) {
   );
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "New project defaults - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.rules_projects.title} - God Mode` },
+];
 
 export default BawaanProjectPage;

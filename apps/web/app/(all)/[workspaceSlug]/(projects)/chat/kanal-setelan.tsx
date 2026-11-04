@@ -26,6 +26,8 @@ import { Avatar, EModalPosition, EModalWidth, Input, ModalCore, TextArea } from 
 import { getFileURL } from "@plane/utils";
 // components
 import { DenganKehadiran } from "@/components/chat/titik-kehadiran";
+import { usePetaKehadiran } from "@/hooks/use-kehadiran";
+import { urutkanMenurutKehadiran } from "@/lib/kehadiran";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
@@ -62,6 +64,7 @@ export const DialogSetelanKanal = observer(function DialogSetelanKanal({
 }: Props) {
   const { t } = useTranslation();
   const { data: saya } = useUser();
+  const petaKehadiran = usePetaKehadiran();
   const {
     workspace: { workspaceMemberIds, getWorkspaceMemberDetails },
   } = useMember();
@@ -251,7 +254,7 @@ export const DialogSetelanKanal = observer(function DialogSetelanKanal({
                     maxLength={BATAS_TOPIK}
                     rows={2}
                     placeholder={t("chatux_kelola_ui.topic_placeholder")}
-                    className="w-full text-13"
+                    className="min-h-16 w-full resize-none text-13"
                   />
                 </label>
                 <div className="flex justify-end">
@@ -323,7 +326,11 @@ export const DialogSetelanKanal = observer(function DialogSetelanKanal({
                 {t("chatux_kelola_ui.member_count", { count: anggota?.length ?? detail?.jumlah_anggota ?? 0 })}
               </p>
               <ul>
-                {(anggota ?? []).map((id) => {
+                {urutkanMenurutKehadiran(
+                  anggota ?? [],
+                  petaKehadiran,
+                  (id) => getWorkspaceMemberDetails(id)?.member?.display_name ?? ""
+                ).map((id) => {
                   const orang = getWorkspaceMemberDetails(id)?.member;
                   const namaOrang = orang?.display_name ?? t("chat_ui.member");
                   const diriSendiri = id === saya?.id;

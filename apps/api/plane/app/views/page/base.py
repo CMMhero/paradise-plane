@@ -54,6 +54,34 @@ from plane.bgtasks.page_version_task import track_page_version
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.copy_s3_object import copy_s3_objects_of_description_and_assets
 from plane.app.permissions import ProjectPagePermission
+from plane.utils.izin_sumber import tolak_izin
+from plane.utils.saklar_instance import PERM_PAGE_ARCHIVE, PERM_PAGE_DELETE
+from plane.utils.wiki_access import is_wiki_governed
+
+
+def _galat_arsip_halaman(request, page, project_id, pesan_lama):
+    """Siapa boleh mengarsipkan/membuka arsip halaman.
+
+    Wiki ber-ACL folder: pengaman lama (tamu/anggota bukan pemilik ditolak), karena
+    aturan Wiki sudah diputuskan di ProjectPagePermission jalur Wiki. Project biasa:
+    KEP-85, aturan PERM_PAGE_ARCHIVE (dulu admin project saja).
+    """
+    if is_wiki_governed(project_id):
+        if (
+            ProjectMember.objects.filter(
+                project_id=project_id, member=request.user, is_active=True, role__lte=15
+            ).exists()
+            and request.user.id != page.owned_by_id
+        ):
+            return Response({"error": pesan_lama}, status=status.HTTP_400_BAD_REQUEST)
+        return None
+    return tolak_izin(
+        request,
+        PERM_PAGE_ARCHIVE,
+        workspace_id=page.workspace_id,
+        project_id=project_id,
+        pemilik_id=page.owned_by_id,
+    )
 
 
 def unarchive_archive_page_and_descendants(page_id, archived_at):
@@ -320,17 +348,9 @@ class PageViewSet(BaseViewSet):
             project_pages__deleted_at__isnull=True,
         )
 
-        # only the owner or admin can archive the page
-        if (
-            ProjectMember.objects.filter(
-                project_id=project_id, member=request.user, is_active=True, role__lte=15
-            ).exists()
-            and request.user.id != page.owned_by_id
-        ):
-            return Response(
-                {"error": "Only the owner or admin can archive the page"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        galat = _galat_arsip_halaman(request, page, project_id, "Only the owner or admin can archive the page")
+        if galat is not None:
+            return galat
 
         UserFavorite.objects.filter(
             entity_type="page",
@@ -351,17 +371,9 @@ class PageViewSet(BaseViewSet):
             project_pages__deleted_at__isnull=True,
         )
 
-        # only the owner or admin can un archive the page
-        if (
-            ProjectMember.objects.filter(
-                project_id=project_id, member=request.user, is_active=True, role__lte=15
-            ).exists()
-            and request.user.id != page.owned_by_id
-        ):
-            return Response(
-                {"error": "Only the owner or admin can un archive the page"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        galat = _galat_arsip_halaman(request, page, project_id, "Only the owner or admin can un archive the page")
+        if galat is not None:
+            return galat
 
         # if parent archived then page will be un archived breaking hierarchy
         if page.parent_id and page.parent.archived_at:
@@ -386,19 +398,33 @@ class PageViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if page.owned_by_id != request.user.id and (
-            not ProjectMember.objects.filter(
-                workspace__slug=slug,
-                member=request.user,
-                role=20,
+        if is_wiki_governed(project_id):
+            # Wiki ber-ACL folder: aturannya di ProjectPagePermission jalur Wiki, ini
+            # pengaman lama yang dibiarkan apa adanya.
+            if page.owned_by_id != request.user.id and (
+                not ProjectMember.objects.filter(
+                    workspace__slug=slug,
+                    member=request.user,
+                    role=20,
+                    project_id=project_id,
+                    is_active=True,
+                ).exists()
+            ):
+                return Response(
+                    {"error": "Only admin or owner can delete the page"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        else:
+            # KEP-85: admin project tidak lagi cukup; aturan PERM_PAGE_DELETE yang memutuskan.
+            galat = tolak_izin(
+                request,
+                PERM_PAGE_DELETE,
+                workspace_id=page.workspace_id,
                 project_id=project_id,
-                is_active=True,
-            ).exists()
-        ):
-            return Response(
-                {"error": "Only admin or owner can delete the page"},
-                status=status.HTTP_403_FORBIDDEN,
+                pemilik_id=page.owned_by_id,
             )
+            if galat is not None:
+                return galat
 
         # remove parent from all the children
         _ = Page.objects.filter(

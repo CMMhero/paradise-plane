@@ -19,10 +19,14 @@ import { SettingsControlItem } from "@/components/settings/control-item";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useParadiseLimits } from "@/hooks/use-paradise-limits";
 
 type Props = {
   handleChange: (formData: Partial<IProject>) => Promise<void>;
 };
+
+// Server menghitung archive_in x 30 hari (issue_automation_task).
+const DAYS_PER_MONTH = 30;
 
 const initialValues: Partial<IProject> = { archive_in: 1 };
 
@@ -37,6 +41,10 @@ export const AutoArchiveAutomation = observer(function AutoArchiveAutomation(pro
   const { t } = useTranslation();
 
   const { currentProjectDetails } = useProject();
+  // God Mode: batas atas arsip (hari). 0 = tak ada batas instance, perilaku upstream.
+  const batasHari = useParadiseLimits().auto_archive_done_days ?? 0;
+  const maksBulan = batasHari > 0 ? Math.max(1, Math.floor(batasHari / DAYS_PER_MONTH)) : 12;
+  const bulanBolehDipilih = (bulan: number) => batasHari === 0 || bulan <= maksBulan;
 
   const isAdmin = allowPermissions(
     [EUserPermissions.ADMIN],
@@ -65,6 +73,7 @@ export const AutoArchiveAutomation = observer(function AutoArchiveAutomation(pro
         initialValues={initialValues}
         isOpen={monthModal}
         handleClose={() => setmonthModal(false)}
+        maxMonths={maksBulan}
         handleChange={handleChange}
       />
       <div className="flex flex-col gap-4 border-b border-subtle py-2">
@@ -80,6 +89,11 @@ export const AutoArchiveAutomation = observer(function AutoArchiveAutomation(pro
             }
           />
         </div>
+        {batasHari > 0 && (
+          <p className="ml-13 text-12 text-tertiary">
+            {t("settings_limits_ui.archive_ceiling_hint", { days: batasHari })}
+          </p>
+        )}
         {currentProjectDetails ? (
           autoArchiveStatus && (
             <div className="ml-13">
@@ -93,13 +107,19 @@ export const AutoArchiveAutomation = observer(function AutoArchiveAutomation(pro
                     label={`${currentProjectDetails?.archive_in} ${
                       currentProjectDetails?.archive_in === 1 ? "month" : "months"
                     }`}
-                    onChange={(val: number) => void handleChange({ archive_in: val })}
+                    onChange={(val: number) => {
+                      if (bulanBolehDipilih(val)) void handleChange({ archive_in: val });
+                    }}
                     input
                     disabled={!isAdmin}
                   >
                     <>
                       {PROJECT_AUTOMATION_MONTHS.map((month) => (
-                        <CustomSelect.Option key={month.i18n_label} value={month.value}>
+                        <CustomSelect.Option
+                          key={month.value}
+                          value={month.value}
+                          className={bulanBolehDipilih(month.value) ? undefined : "pointer-events-none opacity-40"}
+                        >
                           <span className="text-13">{t(month.i18n_label, { months: month.value })}</span>
                         </CustomSelect.Option>
                       ))}

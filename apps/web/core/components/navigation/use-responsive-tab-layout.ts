@@ -4,10 +4,36 @@
  * See the LICENSE file for details.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { TNavigationItem } from "./tab-navigation-root";
 
+/** Di bawah lebar ini tab digeser (scroll horizontal), bukan dipotong ke menu "...". */
+const KUERI_GESER = "(max-width: 767px)";
+
+const subscribeGeser = (callback: () => void) => {
+  const mql = window.matchMedia(KUERI_GESER);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+};
+
+/**
+ * HP: nama project + tombol aksinya saja sudah memakan sebagian besar baris, jadi
+ * hitungan "berapa tab yang muat" hampir selalu nol. Dulu nol dipaksa jadi satu
+ * tab, dan tab itu terpotong ("Work iten") sementara tombol "..." untuk tab
+ * lainnya ikut terdorong keluar wadah overflow-hidden: tab lain tidak bisa
+ * dicapai sama sekali. Di layar sekecil itu jajaran tab yang bisa digeser jari
+ * jauh lebih jelas daripada menu tersembunyi.
+ */
+const useModeGeser = () =>
+  useSyncExternalStore(
+    subscribeGeser,
+    () => window.matchMedia(KUERI_GESER).matches,
+    () => false
+  );
+
 export type TResponsiveTabLayout = {
+  /** true di HP: semua tab dirender dan wadahnya digeser horizontal. */
+  isScrollMode: boolean;
   visibleItems: TNavigationItem[];
   overflowItems: TNavigationItem[];
   hasOverflow: boolean;
@@ -36,6 +62,7 @@ export const useResponsiveTabLayout = ({
   hiddenNavigationItems,
   isActive,
 }: UseResponsiveTabLayoutProps): TResponsiveTabLayout => {
+  const isScrollMode = useModeGeser();
   // Refs for measuring items
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -129,6 +156,14 @@ export const useResponsiveTabLayout = ({
 
   // Smart pinning logic: calculate visible and overflow items
   const { visibleItems, overflowItems, hasOverflow } = useMemo(() => {
+    // Mode geser: semua tab tampil, menu "..." hanya untuk tab yang disembunyikan pengguna.
+    if (isScrollMode) {
+      return {
+        visibleItems: visibleNavigationItems,
+        overflowItems: hiddenNavigationItems,
+        hasOverflow: hiddenNavigationItems.length > 0,
+      };
+    }
     // Start with responsive calculation: which items fit in available space
     let visible = visibleNavigationItems.slice(0, visibleCount);
     let overflow = visibleNavigationItems.slice(visibleCount);
@@ -157,9 +192,10 @@ export const useResponsiveTabLayout = ({
       overflowItems: allOverflow,
       hasOverflow: allOverflow.length > 0,
     };
-  }, [visibleNavigationItems, hiddenNavigationItems, visibleCount, activeTabIndex]);
+  }, [visibleNavigationItems, hiddenNavigationItems, visibleCount, activeTabIndex, isScrollMode]);
 
   return {
+    isScrollMode,
     visibleItems,
     overflowItems,
     hasOverflow,

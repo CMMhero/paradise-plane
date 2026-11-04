@@ -34,22 +34,20 @@ export const GiteaConfiguration = observer(function GiteaConfiguration(props: Pr
     <>
       {GiteaConfigured ? (
         <div className="flex items-center gap-4">
-          <Link href="/authentication/gitea" className={cn(getButtonStyling("link", "base"), "font-medium")}>
+          <Link href="/access/providers/gitea" className={cn(getButtonStyling("link", "base"), "font-medium")}>
             Edit
           </Link>
           <ToggleSwitch
             value={Boolean(parseInt(GiteaConfig))}
             onChange={() => {
-              Boolean(parseInt(GiteaConfig)) === true
-                ? updateConfig("IS_GITEA_ENABLED", "0")
-                : updateConfig("IS_GITEA_ENABLED", "1");
+              updateConfig("IS_GITEA_ENABLED", parseInt(GiteaConfig) ? "0" : "1");
             }}
             size="sm"
             disabled={disabled}
           />
         </div>
       ) : (
-        <Link href="/authentication/gitea" className={cn(getButtonStyling("secondary", "base"), "text-tertiary")}>
+        <Link href="/access/providers/gitea" className={cn(getButtonStyling("secondary", "base"), "text-tertiary")}>
           <Settings2 className="h-4 w-4 p-0.5 text-tertiary" />
           Configure
         </Link>

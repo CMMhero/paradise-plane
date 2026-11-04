@@ -72,7 +72,7 @@ const HeaderFilters = observer(function HeaderFilters({
   const isFiltersApplied = calculateTotalFilters(filters ?? {}) !== 0;
 
   return (
-    <div className={cn("flex gap-3", classname)}>
+    <div className={cn("flex items-center gap-3", classname)}>
       <ProjectOrderByDropdown
         value={displayFilters?.order_by}
         onChange={(val) => {
@@ -85,7 +85,7 @@ const HeaderFilters = observer(function HeaderFilters({
       />
       <div className={cn(filterClassname)}>
         <FiltersDropdown
-          icon={<ListFilter className="h-3 w-3" />}
+          icon={<ListFilter className="size-4" />}
           title={t("common.filters")}
           placement="bottom-end"
           isFiltersApplied={isFiltersApplied}

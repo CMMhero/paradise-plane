@@ -20,6 +20,8 @@ from rest_framework.response import Response
 
 # Module imports
 from ..base import BaseViewSet
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
 from plane.app.permissions import allow_permission, ROLE
 from plane.db.models import (
     Intake,
@@ -80,8 +82,26 @@ class IntakeViewSet(BaseViewSet):
     def perform_create(self, serializer):
         serializer.save(project_id=self.kwargs.get("project_id"))
 
+    # KEP-85: wadah intake = alur kerja project (PERM_PROJECT_WORKFLOW). Isi intake
+    # (IntakeIssueViewSet) tidak tersentuh: itu work item dengan aturannya sendiri.
+    def _galat_wadah(self, request):
+        return tolak_izin_project(
+            request, PERM_PROJECT_WORKFLOW, slug=self.kwargs.get("slug"), project_id=self.kwargs.get("project_id")
+        )
+
+    def create(self, request, *args, **kwargs):
+        galat = self._galat_wadah(request)
+        return galat if galat is not None else super().create(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        galat = self._galat_wadah(request)
+        return galat if galat is not None else super().partial_update(request, *args, **kwargs)
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, pk):
+        galat = self._galat_wadah(request)
+        if galat is not None:
+            return galat
         intake = Intake.objects.filter(workspace__slug=slug, project_id=project_id, pk=pk).first()
         # Handle default intake delete
         if intake.is_default:

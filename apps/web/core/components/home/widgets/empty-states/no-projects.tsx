@@ -18,6 +18,7 @@ import { MembersPropertyIcon, CheckIcon, ProjectIcon, CloseIcon } from "@plane/p
 import { cn, getFileURL } from "@plane/utils";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 import { useProject } from "@/hooks/store/use-project";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
@@ -41,10 +42,11 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
   });
   const { t } = useTranslation();
   // derived values
-  const canCreateProject = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
+  // Paradise: staf / member biasa tidak boleh membuat project (server menolak 403).
+  const bolehBuatProject = useBolehBuatProject(workspaceSlug?.toString());
+  const canCreateProject =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
+    bolehBuatProject;
   const isWorkspaceAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
 
   const EMPTY_STATE_DATA = [

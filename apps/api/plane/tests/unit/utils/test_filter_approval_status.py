@@ -85,3 +85,28 @@ class TestFilterApprovalStatus:
         fs = IssueFilterSet(data={"approval_status__in": "menunggu,disetujui"}, queryset=Issue.issue_objects.all())
         ids = set(fs.qs.values_list("id", flat=True))
         assert ids == {a.id, b.id}
+
+
+@pytest.mark.unit
+class TestFilterApprovalStatusTanpa:
+    def test_tanpa_matches_issues_without_any_approval_row(self, divisi):
+        project, user = divisi
+        menunggu = _tugas(project, "menunggu")
+        _baris(project, user, menunggu, "menunggu", 5)
+        ditolak = _tugas(project, "ditolak")
+        _baris(project, user, ditolak, "ditolak", 5)
+        tanpa = _tugas(project, "tugas atasan")
+
+        hanya_tanpa = set(Issue.issue_objects.filter(q_approval_status(["tanpa"])).values_list("id", flat=True))
+        assert tanpa.id in hanya_tanpa
+        assert menunggu.id not in hanya_tanpa and ditolak.id not in hanya_tanpa
+
+        campur = set(
+            Issue.issue_objects.filter(q_approval_status(["ditolak", "tanpa"])).values_list("id", flat=True)
+        )
+        assert {ditolak.id, tanpa.id} <= campur and menunggu.id not in campur
+
+    def test_unknown_value_matches_nothing(self, divisi):
+        project, user = divisi
+        _baris(project, user, _tugas(project, "a"), "menunggu", 2)
+        assert not Issue.issue_objects.filter(q_approval_status(["bukan-status"])).exists()

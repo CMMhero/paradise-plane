@@ -18,6 +18,11 @@ Matriks yang dikunci di sini (project non-governance):
     arsip (POST /archive/)  admin saja        -> member 403
     kunci (POST /lock/)     admin saja        -> member 403
     Super Admin             lolos tanpa baris ProjectMember
+
+KEP-85 (4 Nov 2026): "admin saja" di atas kini berarti pemilik halaman, atasannya,
+atau admin workspace/Super Admin (aturan PERM_PAGE_* di God Mode); admin project
+yang bukan pemilik tidak lagi lolos. Admin di tes ini PEMILIK halamannya, jadi
+kontraknya tetap berlaku. Matriks lengkapnya: test_izin_sumber_app.py.
 """
 
 import uuid

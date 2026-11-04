@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+export * from "./attention";
 export * from "./empty-states";
 export * from "./loaders";
 export * from "./recents";

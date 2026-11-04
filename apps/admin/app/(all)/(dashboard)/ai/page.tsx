@@ -9,9 +9,9 @@ import useSWR from "swr";
 import { Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
-import { ApiKeysTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // hooks
-import { useGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
 import { useInstance } from "@/hooks/store";
 // types
 import type { Route } from "./+types/page";
@@ -28,11 +28,11 @@ const InstanceAIPage = observer(function InstanceAIPage(_props: Route.ComponentP
   return (
     <PageWrapper
       header={{
-        title: s.api_keys.title,
-        description: s.api_keys.ai_description,
+        title: s.settings.tabs.integrations_ai.title,
+        description: s.settings.tabs.integrations_ai.description,
       }}
     >
-      <ApiKeysTabs />
+      <MenuTabs menu="integrations" />
       {formattedConfig ? (
         <InstanceAIForm config={formattedConfig} />
       ) : (
@@ -49,6 +49,8 @@ const InstanceAIPage = observer(function InstanceAIPage(_props: Route.ComponentP
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Artificial intelligence - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.integrations_ai.title} - God Mode` },
+];
 
 export default InstanceAIPage;

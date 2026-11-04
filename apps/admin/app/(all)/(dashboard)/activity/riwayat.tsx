@@ -143,7 +143,7 @@ export function RiwayatMasuk({ hari }: { hari: number }) {
       key: "person",
       label: t.col_person,
       sortable: true,
-      render: (e) => <PersonCell name={e.display_name || e.email} email={e.email} size="sm" />,
+      render: (e) => <PersonCell userId={e.user_id} name={e.display_name || e.email} email={e.email} size="sm" />,
     },
     {
       key: "event",

@@ -8,8 +8,7 @@
  * urutan dijalankan di SERVER karena jejak audit bisa ratusan ribu baris.
  * Saat diurutkan menurut waktu, baris dikelompokkan per hari. Klik baris
  * membuka tabel Sebelum/Sesudah dengan nama kolom yang bisa dibaca (format.ts).
- * Kolom teknis (timestamp, urutan) disembunyikan dulu karena berubah di hampir
- * setiap simpan dan menenggelamkan yang penting.
+ * Kolom teknis (timestamp, urutan) selalu tampil, diurutkan paling akhir.
  */
 
 import { useMemo, useState } from "react";
@@ -28,7 +27,6 @@ import {
 import useSWR from "swr";
 // plane imports
 import { Badge } from "@plane/propel/badge";
-import { Button } from "@plane/propel/button";
 import { Tooltip } from "@plane/propel/tooltip";
 import {
   AUDIT_SYSTEM_ACTOR,
@@ -56,9 +54,9 @@ import { PageWrapper } from "@/components/common/page-wrapper";
 import { Pagination, StateBox } from "@/components/common/paradise";
 import { dayKey, formatDateTime, formatDayHeading, formatTime } from "@/components/common/paradise-styles";
 import { PersonCell } from "@/components/common/paradise-ui";
-import { LogsTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // local
-import { useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
 import {
   aksiAudit,
   barisPerubahan,
@@ -234,7 +232,12 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
       headClassName: "w-56",
       render: (e) =>
         e.actor ? (
-          <PersonCell name={e.actor.display_name || e.actor.email} email={e.actor.email} size="sm" />
+          <PersonCell
+            userId={e.actor.id}
+            name={e.actor.display_name || e.actor.email}
+            email={e.actor.email}
+            size="sm"
+          />
         ) : (
           // Entri tanpa aktor datang dari skrip shell, di situ memang tidak
           // ada request, jadi bukan celah audit.
@@ -316,8 +319,8 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
   const totalHalaman = data?.total_pages ?? 1;
 
   return (
-    <PageWrapper header={{ title: s.logs.title, description: t.description }}>
-      <LogsTabs />
+    <PageWrapper header={{ title: s.settings.tabs.logs_audit.title, description: t.description }}>
+      <MenuTabs menu="logs" />
       <div className="space-y-3">
         <ViewToolbar
           view={view}
@@ -351,7 +354,7 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
             rowKey={(e) => String(e.id)}
             onRowClick={(e) => setDibuka(dibuka === e.id ? null : e.id)}
             renderExpanded={(e) =>
-              dibuka === e.id ? <DetailPerubahan entri={e} baris={barisPerubahan(e.changes)} t={t} fill={fill} /> : null
+              dibuka === e.id ? <DetailPerubahan entri={e} baris={barisPerubahan(e.changes)} t={t} /> : null
             }
             // Judul per hari hanya bermakna saat urutannya memang menurut waktu.
             groupBy={
@@ -381,22 +384,7 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
   );
 };
 
-function DetailPerubahan({
-  entri,
-  baris,
-  t,
-  fill,
-}: {
-  entri: TAuditLogEntry;
-  baris: TBarisPerubahan[];
-  t: TAudit;
-  fill: TFill;
-}) {
-  const [tampilTeknis, setTampilTeknis] = useState(false);
-  const bermakna = baris.filter((b) => !b.teknis);
-  const teknis = baris.filter((b) => b.teknis);
-  const tampil = tampilTeknis ? baris : bermakna;
-
+function DetailPerubahan({ entri, baris, t }: { entri: TAuditLogEntry; baris: TBarisPerubahan[]; t: TAudit }) {
   return (
     <div className="ml-5 space-y-2 rounded-card border border-subtle bg-surface-1 p-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-11 text-tertiary">
@@ -414,50 +402,33 @@ function DetailPerubahan({
         <p className="text-12 text-secondary">{t.no_changes}</p>
       ) : (
         <>
-          {tampil.length === 0 ? (
-            <p className="text-12 text-secondary">{t.only_technical}</p>
-          ) : (
-            <div className="overflow-hidden rounded-card border border-subtle">
-              <table className="w-full table-fixed text-12">
-                <thead className="bg-layer-1 text-tertiary">
-                  <tr>
-                    <th className="w-44 px-3 py-1.5 text-left font-medium">{t.col_field}</th>
-                    <th className="px-3 py-1.5 text-left font-medium">{t.col_before}</th>
-                    <th className="px-3 py-1.5 text-left font-medium">{t.col_after}</th>
+          <div className="overflow-hidden rounded-card border border-subtle">
+            <table className="w-full table-fixed text-12">
+              <thead className="bg-layer-1 text-tertiary">
+                <tr>
+                  <th className="w-44 px-3 py-1.5 text-left font-medium">{t.col_field}</th>
+                  <th className="px-3 py-1.5 text-left font-medium">{t.col_before}</th>
+                  <th className="px-3 py-1.5 text-left font-medium">{t.col_after}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {baris.map((b) => (
+                  <tr key={b.field} className="border-t border-subtle align-top">
+                    <td className="px-3 py-2">
+                      <div className="font-medium text-primary">{b.label}</div>
+                      <div className="font-code text-10 text-placeholder">{b.field}</div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <Nilai field={b.field} mentah={b.lama} t={t} sisi="lama" />
+                    </td>
+                    <td className="px-3 py-2">
+                      <Nilai field={b.field} mentah={b.baru} t={t} sisi="baru" />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {tampil.map((b) => (
-                    <tr key={b.field} className="border-t border-subtle align-top">
-                      <td className="px-3 py-2">
-                        <div className="font-medium text-primary">{b.label}</div>
-                        <div className="font-code text-10 text-placeholder">{b.field}</div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <Nilai field={b.field} mentah={b.lama} t={t} sisi="lama" />
-                      </td>
-                      <td className="px-3 py-2">
-                        <Nilai field={b.field} mentah={b.baru} t={t} sisi="baru" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {teknis.length > 0 && (
-            <Button
-              variant="ghost"
-              size="base"
-              onClick={(ev) => {
-                // Jangan ikut menutup baris induk.
-                ev.stopPropagation();
-                setTampilTeknis((v) => !v);
-              }}
-            >
-              {tampilTeknis ? t.technical_hide : fill(t.technical_show, { n: teknis.length })}
-            </Button>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </div>
@@ -486,6 +457,8 @@ function Nilai({ field, mentah, t, sisi }: { field: string; mentah: unknown; t: 
   );
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "Audit log - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.logs_audit.title} - God Mode` },
+];
 
 export default LogsPage;

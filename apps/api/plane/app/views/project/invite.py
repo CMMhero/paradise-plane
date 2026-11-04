@@ -36,6 +36,7 @@ from plane.db.models import (
 )
 from plane.db.models.project import ProjectNetwork
 from plane.utils.host import base_host
+from plane.utils.undangan import balasan_kedaluwarsa, kedaluwarsa
 
 
 class ProjectInvitationsViewset(BaseViewSet):
@@ -254,6 +255,9 @@ class ProjectJoinEndpoint(BaseAPIView):
                     {"error": "`accepted` must be a boolean"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            if accepted and kedaluwarsa(project_invite):
+                # KEP-83: undangan lewat INVITE_EXPIRY_DAYS tidak bisa diterima.
+                return balasan_kedaluwarsa()
             project_invite.accepted = accepted
             project_invite.responded_at = timezone.now()
             project_invite.save()

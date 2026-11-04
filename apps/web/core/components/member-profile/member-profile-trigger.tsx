@@ -23,9 +23,9 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { Popover } from "@plane/propel/popover";
+import { MemberProfileBadge, MemberProfileHeader, MemberProfilePopover } from "@plane/propel/member-profile-card";
 import { Avatar } from "@plane/ui";
-import { cn, getFileURL } from "@plane/utils";
+import { getFileURL } from "@plane/utils";
 // components
 import { DenganKehadiran, StatusKehadiranTeks } from "@/components/chat/titik-kehadiran";
 // hooks
@@ -57,38 +57,36 @@ const CardHeader = observer(function CardHeader({ workspaceSlug, userId }: { wor
   const user = getUserDetails(userId);
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.display_name;
   // Kehadiran datang dari soket obrolan; tanpa modul chat statusnya tidak bermakna.
-  const showPresence = isModuleEnabled("chat") && currentUser?.id !== userId;
+  const showPresence = isModuleEnabled("chat");
   return (
-    <div className="flex items-center gap-3">
-      <DenganKehadiran userId={showPresence ? userId : null}>
-        <Avatar
-          src={getFileURL(user?.avatar_url ?? "")}
-          name={user?.display_name}
-          size={40}
-          className="text-18"
-          showTooltip={false}
-        />
-      </DenganKehadiran>
-      <div className="min-w-0">
-        <p className="truncate text-14 font-semibold text-primary">{fullName}</p>
-        <p className="flex items-center gap-1.5 truncate text-12 text-secondary">
-          <span className="truncate">@{user?.display_name}</span>
-          {currentUser?.id === userId ? (
-            <span className="rounded-sm bg-layer-1 px-1 text-11 text-tertiary">{t("profil_ui.you")}</span>
-          ) : null}
+    <MemberProfileHeader
+      avatar={
+        <DenganKehadiran userId={showPresence ? userId : null}>
+          <Avatar
+            src={getFileURL(user?.avatar_url ?? "")}
+            name={user?.display_name}
+            size={40}
+            className="text-18"
+            showTooltip={false}
+          />
+        </DenganKehadiran>
+      }
+      fullName={fullName ?? ""}
+      handle={user?.display_name ?? ""}
+      badges={
+        <>
+          {currentUser?.id === userId ? <MemberProfileBadge>{t("profil_ui.you")}</MemberProfileBadge> : null}
           {showPresence ? (
             <span className="text-11 text-tertiary">
               · <StatusKehadiranTeks userId={userId} />
             </span>
           ) : null}
           {profile && !profile.is_active ? (
-            <span className="rounded-sm bg-danger-subtle px-1 text-11 text-danger-primary">
-              {t("profil_ui.deactivated")}
-            </span>
+            <MemberProfileBadge tone="danger">{t("profil_ui.deactivated")}</MemberProfileBadge>
           ) : null}
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 });
 
@@ -109,38 +107,21 @@ export const MemberProfileTrigger = observer(function MemberProfileTrigger({
   if (!userId || !slug || !user || !isListableMember(user)) return <>{children}</>;
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <Popover.Button
-        nativeButton={false}
-        render={<span />}
-        // base-ui memberi role="button" + tabIndex sendiri saat nativeButton=false.
-        aria-label={t("profil_ui.open_profile", { name: user.display_name })}
-        className={cn("inline-flex max-w-full cursor-pointer items-center rounded-sm outline-none", className)}
-        onClick={(e) => {
-          // Jangan biarkan klik membuka kartu work item / mengikuti tautan induk.
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") e.stopPropagation();
-        }}
-      >
-        {children}
-      </Popover.Button>
-      <Popover.Panel
-        side={side}
-        align={align}
-        // z-index harus di positioner (elemen yang benar-benar diposisikan), bukan
-        // di popup: dengan z di popup, kartu tertutup peek overview work item (z-25).
-        positionerClassName="z-40"
-        className="w-72 rounded-popover border-[0.5px] border-strong bg-surface-1 p-4 shadow-raised-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col gap-3">
+    <MemberProfilePopover
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      ariaLabel={t("profil_ui.open_profile", { name: user.display_name })}
+      triggerClassName={className}
+      side={side}
+      align={align}
+      card={
+        <>
           <CardHeader workspaceSlug={slug} userId={userId} />
           <MemberProfileDetails workspaceSlug={slug} userId={userId} onNavigate={() => setIsOpen(false)} />
-        </div>
-      </Popover.Panel>
-    </Popover>
+        </>
+      }
+    >
+      {children}
+    </MemberProfilePopover>
   );
 });

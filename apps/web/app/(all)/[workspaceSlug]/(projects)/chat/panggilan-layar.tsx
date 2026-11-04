@@ -12,6 +12,10 @@ import { Avatar } from "@plane/propel/avatar";
 import type { TPesertaJauh, TStatusPanggilan } from "./panggilan";
 import { tataPanggilan } from "./tata-panggilan";
 
+/** `videoMati` opsional: diisi hook saat lawan mematikan kameranya (track
+ * tetap ada tapi membeku hitam). Tanpa itu kotaknya hitam, bukan avatar. */
+type TPesertaTampil = TPesertaJauh & { videoMati?: boolean };
+
 type Props = {
   status: TStatusPanggilan;
   koneksi: string;
@@ -24,7 +28,7 @@ type Props = {
   mikMati: boolean;
   kameraMati: boolean;
   streamLokal: MediaStream | null;
-  pesertaJauh: TPesertaJauh[];
+  pesertaJauh: TPesertaTampil[];
   byteMasuk: { audio: number; video: number };
   onAngkat: () => void;
   onTutup: () => void;
@@ -50,26 +54,55 @@ function Media({ stream, className, bisu = false }: { stream: MediaStream | null
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || el.srcObject === stream) return;
-    el.srcObject = stream;
-    // Kebijakan autoplay bisa menolak pemutaran tanpa gestur. Panggilan selalu
-    // dimulai dari klik jadi normalnya lolos; ditangkap supaya penolakannya
-    // tidak jatuh sebagai unhandled rejection yang tak terlihat.
-    void el.play().catch(() => undefined);
+    if (!el) return undefined;
+    // Induk merakit MediaStream BARU tiap ada peristiwa ruang, walau isi
+    // track-nya sama. Memasang ulang `srcObject` pada stream yang isinya sama
+    // memutus pemutaran sesaat (suara tersendat, gambar berkedip), jadi hanya
+    // dipasang ulang kalau himpunan track-nya benar-benar berbeda. Kamera yang
+    // dinyalakan ulang menghasilkan track baru, jadi tetap lolos.
+    if (el.srcObject !== stream && !samaTrack(el.srcObject as MediaStream | null, stream)) {
+      el.srcObject = stream;
+    }
+    if (!stream) return undefined;
+
+    // Kebijakan autoplay (Safari iOS, Chrome Android) bisa menolak pemutaran
+    // walau panggilan dimulai dari klik: yang mengangkat lewat dering atau
+    // yang menunggu lama sudah di luar jendela gestur. Ditolak = kotak hitam
+    // atau sunyi tanpa error. Jadi dicoba lagi saat metadata siap dan pada
+    // sentuhan/klik berikutnya di mana pun.
+    const putar = () => {
+      if (el.paused) void el.play().catch(() => undefined);
+    };
+    putar();
+    el.addEventListener("loadedmetadata", putar);
+    document.addEventListener("pointerdown", putar);
+    return () => {
+      el.removeEventListener("loadedmetadata", putar);
+      document.removeEventListener("pointerdown", putar);
+    };
   }, [stream]);
 
   // eslint-disable-next-line jsx-a11y/media-has-caption
   return <video ref={ref} autoPlay playsInline muted={bisu} className={className} />;
 }
 
+/** Dua stream dianggap sama kalau memuat track yang persis sama. */
+function samaTrack(a: MediaStream | null, b: MediaStream | null): boolean {
+  if (!a || !b) return false;
+  const ta = a.getTracks();
+  const tb = b.getTracks();
+  return ta.length === tb.length && ta.every((t) => tb.includes(t));
+}
+
 /** Satu kotak peserta: gambarnya kalau ada, avatar kalau hanya suara. */
-function Peserta({ peserta, avatar }: { peserta: TPesertaJauh; avatar?: string }) {
+function Peserta({ peserta, avatar }: { peserta: TPesertaTampil; avatar?: string }) {
+  const tampilVideo = peserta.adaVideo && !peserta.videoMati;
   return (
     <div className="relative flex min-h-0 items-center justify-center overflow-hidden rounded-card bg-black/60">
       {/* Elemen media SELALU terpasang, juga saat peserta hanya mengirim suara.
           Kalau ia ikut dirender bersyarat, audionya tidak punya tempat keluar. */}
-      <Media stream={peserta.stream} className={peserta.adaVideo ? "h-full w-full object-contain" : "hidden"} />
-      {!peserta.adaVideo ? <Avatar name={peserta.nama} src={avatar} size={64} shape="circle" /> : null}
+      <Media stream={peserta.stream} className={tampilVideo ? "h-full w-full object-contain" : "hidden"} />
+      {!tampilVideo ? <Avatar name={peserta.nama} src={avatar} size={64} shape="circle" /> : null}
       <span className="absolute bottom-2 left-2 rounded-item bg-black/60 px-1.5 py-0.5 text-12 text-white/90">
         {peserta.nama}
       </span>
@@ -138,7 +171,7 @@ export function PanggilanLayar({
           <Media
             stream={streamLokal}
             bisu
-            className="absolute right-2 bottom-2 w-24 rounded-item border border-white/20 bg-black object-cover shadow-overlay-200 sm:right-3 sm:bottom-3 sm:w-32"
+            className={`absolute right-2 bottom-2 w-24 rounded-item border border-white/20 bg-black object-cover shadow-overlay-200 sm:right-3 sm:bottom-3 sm:w-32 ${kameraMati ? "hidden" : ""}`}
           />
         ) : null}
       </div>

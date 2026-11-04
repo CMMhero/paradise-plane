@@ -24,6 +24,7 @@ import {
 // hooks
 import { useLabel } from "@/hooks/store/use-label";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 // local imports
 import { SettingsHeading } from "../settings/heading";
 
@@ -42,7 +43,10 @@ export const ProjectSettingsLabelList = observer(function ProjectSettingsLabelLi
   const { projectLabels, updateLabelPosition, projectLabelsTree, createLabel, updateLabel } = useLabel();
   const { allowPermissions } = useUserPermissions();
   // derived values
-  const isEditable = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
+  // Paradise KEP-85: label = alur kerja, aturan struktur PERM_PROJECT_WORKFLOW.
+  const izin = useIzinSumber(workspaceSlug?.toString(), projectId?.toString());
+  const isEditable =
+    allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT) && izin.struktur("PERM_PROJECT_WORKFLOW");
   const labelOperationsCallbacks: TLabelOperationsCallbacks = {
     createLabel: (data: Partial<IIssueLabel>) => createLabel(workspaceSlug?.toString(), projectId?.toString(), data),
     updateLabel: (labelId: string, data: Partial<IIssueLabel>) =>
@@ -133,7 +137,7 @@ export const ProjectSettingsLabelList = observer(function ProjectSettingsLabelLi
                     key={label.id}
                     label={label}
                     labelChildren={label.children || []}
-                    handleLabelDelete={(label: IIssueLabel) => setSelectDeleteLabel(label)}
+                    handleLabelDelete={(deletedLabel: IIssueLabel) => setSelectDeleteLabel(deletedLabel)}
                     isUpdating={isUpdating}
                     setIsUpdating={setIsUpdating}
                     isLastChild={index === projectLabelsTree.length - 1}
@@ -148,7 +152,7 @@ export const ProjectSettingsLabelList = observer(function ProjectSettingsLabelLi
                   label={label}
                   key={label.id}
                   setIsUpdating={setIsUpdating}
-                  handleLabelDelete={(label) => setSelectDeleteLabel(label)}
+                  handleLabelDelete={(deletedLabel) => setSelectDeleteLabel(deletedLabel)}
                   isChild={false}
                   isLastChild={index === projectLabelsTree.length - 1}
                   onDrop={onDrop}

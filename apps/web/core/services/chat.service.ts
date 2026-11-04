@@ -82,7 +82,7 @@ export type TLampiran = {
 
 export type TReaksi = { emoji: string; orang: string[] };
 
-export type TKutipan = { id: string; pengirim: string; isi: string };
+export type TKutipan = { id: string; pengirim: string; isi: string; dihapus?: boolean };
 
 export type TPesan = {
   id: string;
@@ -95,6 +95,8 @@ export type TPesan = {
   created_at: string;
   lampiran: TLampiran[];
   disunting: boolean;
+  /** Batu nisan: pesan sudah dihapus, isi/lampiran/reaksi dikosongkan server. Tidak ada di respons server lama. */
+  dihapus?: boolean;
   /** Hanya berarti untuk pesan keluar. */
   sudah_dibaca: boolean;
   balasan_ke: TKutipan | null;

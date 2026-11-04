@@ -17,6 +17,7 @@ import { IconButton } from "@plane/propel/icon-button";
 import { Tooltip } from "@plane/propel/tooltip";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 import { cn } from "@plane/utils";
+import { MemberProfileTrigger } from "./member-profile";
 import { avatarTone } from "./paradise-styles";
 
 type TUkuranOrang = "sm" | "md" | "lg";
@@ -38,27 +39,44 @@ export function PersonAvatar({ name, size = "md" }: { name: string; size?: TUkur
 
 /** Avatar + name + email, the one way a person is shown in every God Mode list. */
 export function PersonCell({
+  userId,
   name,
   email,
   badges,
   size = "md",
   muted = false,
 }: {
+  /** When set, clicking the avatar or name opens the member profile card. */
+  userId?: string | null;
   name: string;
   email?: string;
   badges?: ReactNode;
   size?: TUkuranOrang;
   muted?: boolean;
 }) {
+  const label = name || email || "?";
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <PersonAvatar name={name || email || "?"} size={size} />
+      <MemberProfileTrigger userId={userId} name={label} className="shrink-0">
+        <PersonAvatar name={label} size={size} />
+      </MemberProfileTrigger>
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <span className={cn("truncate font-medium", muted ? "text-tertiary" : "text-primary")}>{name || email}</span>
+          <MemberProfileTrigger userId={userId} name={label} className="min-w-0">
+            <span
+              className={cn("truncate font-medium", muted ? "text-tertiary" : "text-primary")}
+              title={name || email}
+            >
+              {name || email}
+            </span>
+          </MemberProfileTrigger>
           {badges}
         </div>
-        {email && name && <div className="truncate text-11 text-tertiary">{email}</div>}
+        {email && name && (
+          <div className="truncate text-11 text-tertiary" title={email}>
+            {email}
+          </div>
+        )}
       </div>
     </div>
   );

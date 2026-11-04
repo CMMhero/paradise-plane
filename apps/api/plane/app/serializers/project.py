@@ -13,6 +13,7 @@ from .base import BaseSerializer, DynamicBaseSerializer
 from django.db.models import Max
 from plane.app.serializers.workspace import WorkspaceLiteSerializer
 from plane.app.serializers.user import UserLiteSerializer, UserAdminLiteSerializer
+from plane.utils.undangan import tanda_kedaluwarsa
 from plane.db.models import (
     Project,
     ProjectMember,
@@ -73,6 +74,15 @@ class ProjectSerializer(BaseSerializer):
             )
 
         return identifier
+
+    def validate_archive_in(self, archive_in):
+        # Paradise (KEP-83): plafon arsip otomatis instance (AUTO_ARCHIVE_DONE_DAYS).
+        from plane.utils.bawaan_project import galat_archive_in_project  # noqa: PLC0415
+
+        galat = galat_archive_in_project(archive_in, self.instance)
+        if galat:
+            raise serializers.ValidationError(detail=galat)
+        return archive_in
 
     def validate(self, data):
         # Validate description content for security
@@ -197,6 +207,11 @@ class ProjectMemberRoleSerializer(DynamicBaseSerializer):
 class ProjectMemberInviteSerializer(BaseSerializer):
     project = ProjectLiteSerializer(read_only=True)
     workspace = WorkspaceLiteSerializer(read_only=True)
+    # Paradise (KEP-83): undangan lewat INVITE_EXPIRY_DAYS tetap terdaftar, diberi tanda.
+    is_expired = serializers.SerializerMethodField()
+
+    def get_is_expired(self, obj):
+        return tanda_kedaluwarsa(self, obj)
 
     class Meta:
         model = ProjectMemberInvite
@@ -213,6 +228,10 @@ class ProjectMemberInvitePublicSerializer(BaseSerializer):
 
     project = ProjectLiteSerializer(read_only=True)
     workspace = WorkspaceLiteSerializer(read_only=True)
+    is_expired = serializers.SerializerMethodField()
+
+    def get_is_expired(self, obj):
+        return tanda_kedaluwarsa(self, obj)
 
     class Meta:
         model = ProjectMemberInvite
@@ -224,6 +243,7 @@ class ProjectMemberInvitePublicSerializer(BaseSerializer):
             "message",
             "accepted",
             "responded_at",
+            "is_expired",
         ]
         read_only_fields = fields
 

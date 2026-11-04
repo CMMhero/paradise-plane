@@ -97,7 +97,8 @@ export class IssueActivityStore implements IIssueActivityStore {
 
     if (!activities || !comments) return undefined;
 
-    activities.forEach((activityId) => {
+    // Dedup by id: older servers returned the same row twice (join fan-out).
+    uniq(activities).forEach((activityId) => {
       const activity = this.getActivityById(activityId);
       if (!activity) return;
       const type =
@@ -115,7 +116,7 @@ export class IssueActivityStore implements IIssueActivityStore {
       });
     });
 
-    comments.forEach((commentId) => {
+    uniq(comments).forEach((commentId) => {
       const comment = currentStore.comment.getCommentById(commentId);
       if (!comment) return;
       activityComments.push({
@@ -160,9 +161,9 @@ export class IssueActivityStore implements IIssueActivityStore {
       const activityIds = activities.map((activity) => activity.id);
 
       runInAction(() => {
-        update(this.activities, issueId, (currentActivityIds) => {
-          if (!currentActivityIds) return activityIds;
-          return uniq(concat(currentActivityIds, activityIds));
+        update(this.activities, issueId, (existingActivityIds) => {
+          if (!existingActivityIds) return uniq(activityIds);
+          return uniq(concat(existingActivityIds, activityIds));
         });
         activities.forEach((activity) => {
           set(this.activityMap, activity.id, activity);

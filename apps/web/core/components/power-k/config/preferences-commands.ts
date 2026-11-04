@@ -23,25 +23,25 @@ export const usePowerKPreferencesCommands = (): TPowerKCommandConfig[] => {
   // store hooks
   const { setTheme } = useTheme();
   const { updateCurrentUser } = useUser();
-  const { updateUserProfile, updateUserTheme } = useUserProfile();
+  const { data: userProfile, updateUserProfile, updateUserTheme } = useUserProfile();
   // translation
   const { t } = useTranslation();
 
   const handleUpdateTheme = useCallback(
     async (newTheme: string) => {
+      const previousTheme = userProfile?.theme?.theme;
       setTheme(newTheme);
       return updateUserTheme({ theme: newTheme })
         .then(() => {
           setToast({
             type: TOAST_TYPE.SUCCESS,
             title: "Theme updated",
-            message: "Reloading to apply changes...",
+            message: "Theme applied.",
           });
-          // reload the page after showing the toast
-          window.location.reload();
           return;
         })
         .catch(() => {
+          setTheme(previousTheme || "system");
           setToast({
             type: TOAST_TYPE.ERROR,
             title: t("toast.error"),

@@ -11,19 +11,20 @@
  */
 
 import { useState } from "react";
-import { ExternalLink, Paperclip } from "lucide-react";
+import { ExternalLink, Paperclip, Send } from "lucide-react";
 import useSWR from "swr";
 // plane imports
 import { Button } from "@plane/propel/button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { InstanceEmailPreviewService, type TEmailPreviewLang } from "@plane/services";
 import { Loader } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { StateBox } from "@/components/common/paradise";
-import { EmailTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // local
-import { useGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
 // types
 import type { Route } from "./+types/page";
 
@@ -32,7 +33,7 @@ const service = new InstanceEmailPreviewService();
 type TTampilan = "html" | "text";
 type TLebar = "desktop" | "mobile";
 
-const LEBAR_PX: Record<TLebar, number> = { desktop: 640, mobile: 375 };
+const LEBAR_PX: Record<TLebar, number> = { desktop: 624, mobile: 375 };
 const SKELETON = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
 type TPilihan<T extends string> = { value: T; label: string };
@@ -73,7 +74,8 @@ function Pilihan<T extends string>({
 const EmailPreviewPage = function EmailPreviewPage(_props: Route.ComponentProps) {
   const { s, fill } = useGodmodeStrings();
   const t = s.email_preview;
-  const [lang, setLang] = useState<TEmailPreviewLang>("id");
+  const [lang, setLang] = useState<TEmailPreviewLang>("en");
+  const [isSending, setIsSending] = useState(false);
   const [kunci, setKunci] = useState<string | null>(null);
   const [tampilan, setTampilan] = useState<TTampilan>("html");
   const [lebar, setLebar] = useState<TLebar>("desktop");
@@ -97,17 +99,38 @@ const EmailPreviewPage = function EmailPreviewPage(_props: Route.ComponentProps)
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
+  const kirimKeSaya = async () => {
+    if (!isi.data || isSending) return;
+    setIsSending(true);
+    try {
+      const hasil = await service.send(isi.data.key, isi.data.lang);
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: fill(t.sent_to, { email: hasil.sent_to }),
+      });
+    } catch (error) {
+      const pesan = (error as { error?: unknown } | null)?.error;
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t.send_failed,
+        message: typeof pesan === "string" ? pesan : undefined,
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
-    <PageWrapper header={{ title: t.title, description: t.description }}>
-      <EmailTabs />
+    <PageWrapper header={s.settings.tabs.notifications_preview}>
+      <MenuTabs menu="notifications" />
       <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <Pilihan
           label={t.language}
           value={lang}
           onChange={setLang}
           options={[
-            { value: "id", label: t.lang_id },
             { value: "en", label: t.lang_en },
+            { value: "id", label: t.lang_id },
           ]}
         />
         <Pilihan
@@ -160,7 +183,7 @@ const EmailPreviewPage = function EmailPreviewPage(_props: Route.ComponentProps)
                       "text-secondary hover:bg-layer-1": item.key !== pilihan,
                     })}
                   >
-                    <span className="font-mono block text-11 text-tertiary">{item.key}</span>
+                    <span className="block font-code text-11 text-tertiary">{item.key}</span>
                     <span className={cn("block truncate text-13", { "text-danger-primary": item.error })}>
                       {item.subject}
                     </span>
@@ -184,6 +207,10 @@ const EmailPreviewPage = function EmailPreviewPage(_props: Route.ComponentProps)
                   {isi.data.attachments.join(", ")}
                 </span>
               )}
+              <Button variant="secondary" size="sm" onClick={kirimKeSaya} disabled={!isi.data} loading={isSending}>
+                <Send className="size-3.5" aria-hidden />
+                {isSending ? t.sending : t.send_me}
+              </Button>
               <Button variant="secondary" size="sm" onClick={bukaTab} disabled={!isi.data}>
                 <ExternalLink className="size-3.5" aria-hidden />
                 {t.open_tab}
@@ -201,7 +228,7 @@ const EmailPreviewPage = function EmailPreviewPage(_props: Route.ComponentProps)
                 <Loader.Item height="70vh" />
               </Loader>
             ) : tampilan === "text" ? (
-              <pre className="font-mono mx-auto max-w-[640px] overflow-x-auto rounded-card border border-subtle bg-surface-1 p-4 text-12 whitespace-pre-wrap text-primary">
+              <pre className="mx-auto max-w-[640px] overflow-x-auto rounded-card border border-subtle bg-surface-1 p-4 font-code text-12 whitespace-pre-wrap text-primary">
                 {isi.data.text}
               </pre>
             ) : (
@@ -211,7 +238,7 @@ const EmailPreviewPage = function EmailPreviewPage(_props: Route.ComponentProps)
                 srcDoc={isi.data.html}
                 // Tanpa allow-scripts: HTML email tidak boleh menjalankan apa pun di God Mode.
                 sandbox="allow-popups allow-popups-to-escape-sandbox"
-                className={cn("mx-auto block h-[70vh] w-full rounded-card border border-subtle bg-white", {
+                className={cn("mx-auto block h-[70vh] w-full bg-white", {
                   "opacity-60": isi.isValidating,
                 })}
                 style={{ maxWidth: LEBAR_PX[lebar] }}
@@ -224,6 +251,8 @@ const EmailPreviewPage = function EmailPreviewPage(_props: Route.ComponentProps)
   );
 };
 
-export const meta: Route.MetaFunction = () => [{ title: "Email Preview - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.notifications_preview.title} - God Mode` },
+];
 
 export default EmailPreviewPage;

@@ -25,6 +25,22 @@ const BERKAS = {
 
 export type TJenisSuara = keyof typeof BERKAS;
 
+/** Buat elemen Audio untuk satu jenis suara, dimuat lebih awal. */
+const buatAudio = (jenis: TJenisSuara) => {
+  const audio = new Audio(BERKAS[jenis]);
+  audio.preload = "auto";
+  return audio;
+};
+
+/** Putar satu elemen dari awal pada volume tertentu. Penolakan autoplay ditelan. */
+const putarDari = (audio: HTMLAudioElement, volume: number) => {
+  audio.volume = Math.min(1, volume);
+  audio.currentTime = 0;
+  void audio.play().catch(() => {
+    // Diabaikan: peramban belum mengizinkan suara otomatis.
+  });
+};
+
 /** Memutar suara notifikasi dengan volume dan bisu milik akun ini.
  *
  * Elemen Audio dibuat sekali lalu dipakai ulang, bukan `new Audio()` tiap kali
@@ -43,12 +59,18 @@ export const useSuaraNotifikasi = () => {
   const cache = useRef<Partial<Record<TJenisSuara, HTMLAudioElement>>>({});
   const bisuLama = nyalaLama === false;
 
+  /** Elemen dering terpisah dari `cache`: ia berulang (`loop`), dan bunyi pesan
+   * yang masuk saat sedang berdering tidak boleh memotongnya. */
+  const deringRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     const elemen = cache.current;
+    const dering = deringRef;
     return () => {
       // Dihentikan saat komponen dilepas supaya bunyi tidak menggantung setelah
       // orangnya berpindah halaman.
       Object.values(elemen).forEach((audio) => audio?.pause());
+      dering.current?.pause();
     };
   }, []);
 
@@ -56,17 +78,10 @@ export const useSuaraNotifikasi = () => {
 
   const putar = useCallback((jenis: TJenisSuara, volume: number) => {
     if (volume <= 0) return;
-    let audio = cache.current[jenis];
-    if (!audio) {
-      audio = new Audio(BERKAS[jenis]);
-      audio.preload = "auto";
-      cache.current[jenis] = audio;
-    }
-    audio.volume = Math.min(1, volume);
-    audio.currentTime = 0;
-    void audio.play().catch(() => {
-      // Diabaikan: peramban belum mengizinkan suara otomatis.
-    });
+    const tersimpan = cache.current[jenis];
+    const audio = tersimpan ?? buatAudio(jenis);
+    if (!tersimpan) cache.current[jenis] = audio;
+    putarDari(audio, volume);
   }, []);
 
   /** Bunyi pemberitahuan sungguhan: mengikuti volume & bisu akun. */
@@ -74,6 +89,32 @@ export const useSuaraNotifikasi = () => {
     (jenis: TJenisSuara) => putar(jenis, volumeAudio(suaraSekarang())),
     [putar, suaraSekarang]
   );
+
+  /** Nada dering panggilan masuk, berulang sampai `hentikanDering`.
+   *
+   * Ikut volume & bisu akun seperti bunyi lain: orang yang membisukan
+   * notifikasi tetap melihat kartu panggilan masuk, hanya tanpa suara. Ditolak
+   * autoplay (tab belum pernah diklik) itu wajar dan ditelan; kartunya tetap
+   * tampil, dan kartu peramban menutupi tab yang tersembunyi. */
+  const mulaiDering = useCallback(() => {
+    const volume = volumeAudio(suaraSekarang());
+    if (volume <= 0) return;
+    let audio = deringRef.current;
+    if (!audio) {
+      audio = new Audio(BERKAS.panggilan);
+      audio.loop = true;
+      audio.preload = "auto";
+      deringRef.current = audio;
+    }
+    putarDari(audio, volume);
+  }, [suaraSekarang]);
+
+  const hentikanDering = useCallback(() => {
+    const audio = deringRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+  }, []);
 
   /** Pratinjau di Preferensi: memutar pada volume yang sedang digeser, abaikan bisu. */
   const pratinjau = useCallback((volume: number) => putar("pesan", volume / 100), [putar]);
@@ -91,5 +132,5 @@ export const useSuaraNotifikasi = () => {
     [profil, suaraSekarang]
   );
 
-  return { bunyikan, pratinjau, nyala, suara, setNyala };
+  return { bunyikan, pratinjau, nyala, suara, setNyala, mulaiDering, hentikanDering };
 };

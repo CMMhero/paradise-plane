@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { ROLE } from "@plane/constants";
 // types
 import { Button } from "@plane/propel/button";
@@ -15,10 +16,12 @@ import { Checkbox, Spinner } from "@plane/ui";
 import { truncateText } from "@plane/utils";
 // constants
 // helpers
+import { InviteExpiredBadge } from "@/components/workspace/invite-expired-badge";
 import { WorkspaceLogo } from "@/components/workspace/logo";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserSettings } from "@/hooks/store/user";
+import { adalahUndanganKedaluwarsa, tampilkanUndanganKedaluwarsa } from "@/lib/undangan";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
 
@@ -34,12 +37,17 @@ export function Invitations(props: Props) {
   // states
   const [isJoiningWorkspaces, setIsJoiningWorkspaces] = useState(false);
   const [invitationsRespond, setInvitationsRespond] = useState<string[]>([]);
+  const { t } = useTranslation();
   // store hooks
   const { fetchWorkspaces } = useWorkspace();
   const { fetchCurrentUserSettings } = useUserSettings();
 
   const handleInvitation = (workspace_invitation: IWorkspaceMemberInvitation, action: "accepted" | "withdraw") => {
     if (action === "accepted") {
+      if (workspace_invitation.is_expired) {
+        tampilkanUndanganKedaluwarsa(t);
+        return;
+      }
       setInvitationsRespond((prevData) => [...prevData, workspace_invitation.id]);
     } else if (action === "withdraw") {
       setInvitationsRespond((prevData) => prevData.filter((item: string) => item !== workspace_invitation.id));
@@ -47,7 +55,7 @@ export function Invitations(props: Props) {
   };
 
   const submitInvitations = async () => {
-    const invitation = invitations?.find((invitation) => invitation.id === invitationsRespond[0]);
+    const invitation = invitations?.find((item) => item.id === invitationsRespond[0]);
     if (invitationsRespond.length <= 0 && !invitation?.role) return;
     setIsJoiningWorkspaces(true);
     try {
@@ -56,7 +64,8 @@ export function Invitations(props: Props) {
       await fetchCurrentUserSettings();
       await handleNextStep();
     } catch (error) {
-      console.error(error);
+      if (adalahUndanganKedaluwarsa(error)) tampilkanUndanganKedaluwarsa(t);
+      else console.error(error);
       setIsJoiningWorkspaces(false);
     }
   };
@@ -76,8 +85,17 @@ export function Invitations(props: Props) {
             return (
               <div
                 key={invitation.id}
-                className={`flex cursor-pointer items-center gap-2 rounded-sm border border-subtle p-3.5 hover:bg-surface-2`}
+                className={`flex cursor-pointer items-center gap-2 rounded-sm border border-subtle p-3.5 hover:bg-surface-2 ${invitation.is_expired ? "opacity-60" : ""}`}
                 onClick={() => handleInvitation(invitation, isSelected ? "withdraw" : "accepted")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleInvitation(invitation, isSelected ? "withdraw" : "accepted");
+                  }
+                }}
+                // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- contains block elements (div/p), invalid inside a button
+                role="button"
+                tabIndex={0}
               >
                 <div className="flex-shrink-0">
                   <WorkspaceLogo
@@ -90,6 +108,7 @@ export function Invitations(props: Props) {
                   <div className="text-13 font-medium">{truncateText(invitedWorkspace?.name, 30)}</div>
                   <p className="text-11 text-secondary">{ROLE[invitation.role]}</p>
                 </div>
+                {invitation.is_expired && <InviteExpiredBadge />}
                 <span className={`flex-shrink-0`}>
                   <Checkbox checked={isSelected} />
                 </span>
