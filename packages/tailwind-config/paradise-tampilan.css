@@ -30,7 +30,8 @@
    Lightness tiap langkah SAMA dengan tangga bawaan Plane, jadi kontras teks,
    batas, dan permukaan tidak bergeser di skema mana pun. Tangganya ditulis
    SEKALI; skema cuma mengisi tiga kenop:
-     --skema-h  hue latar
+     --skema-h  hue latar, DIAMBIL dari hue aksen (--aksen-h) supaya putih dan
+                hitam ikut aksen
      --skema-c  chroma dasar (dikali profil per langkah; ujung teks mengecil
                 supaya teks tetap terbaca netral)
      --highlight  aksen kedua
@@ -43,36 +44,34 @@
      hutan  hijau sage, aksen hijau + emas
      netral abu bawaan Plane tanpa rona, aksen biru + amber */
 :root {
-  --skema-h: 62;
-  --skema-c: 0.01;
-  --skema-h-gelap: 38;
-  --skema-c-gelap: 0.01;
+  /* Rona latar IKUT hue aksen (bukan hue sendiri), jadi permukaan putih/hitam
+     tidak lagi terlihat polos: terang dan gelap sama-sama bernuansa aksen.
+     Bara: aksen merah merek (hue 27); skema lain menimpa --aksen-h di 2b. */
+  --aksen-h: 27;
+  --skema-h: var(--aksen-h);
+  --skema-h-gelap: var(--aksen-h);
+  --skema-c: 0.016;
+  --skema-c-gelap: 0.02;
 }
 
 :root[data-skema="senja"] {
-  --skema-h: 285;
-  --skema-c: 0.008;
-  --skema-h-gelap: 285;
-  --skema-c-gelap: 0.016;
+  --skema-c: 0.014;
+  --skema-c-gelap: 0.024;
 }
 
 :root[data-skema="sumi"] {
-  --skema-h: 95;
-  --skema-c: 0.008;
-  --skema-h-gelap: 245;
-  --skema-c-gelap: 0.016;
+  --skema-c: 0.014;
+  --skema-c-gelap: 0.024;
 }
 
 :root[data-skema="hutan"] {
-  --skema-h: 140;
-  --skema-c: 0.009;
-  --skema-h-gelap: 160;
-  --skema-c-gelap: 0.013;
+  --skema-c: 0.015;
+  --skema-c-gelap: 0.02;
 }
 
 :root:not([data-theme*="contrast"]):not([data-skema="netral"]) {
-  --neutral-white: oklch(0.995 calc(var(--skema-c) * 0.4) var(--skema-h));
-  --neutral-100: oklch(0.9848 calc(var(--skema-c) * 0.7) var(--skema-h));
+  --neutral-white: oklch(0.995 calc(var(--skema-c) * 0.75) var(--skema-h));
+  --neutral-100: oklch(0.9848 calc(var(--skema-c) * 0.9) var(--skema-h));
   --neutral-200: oklch(0.9696 calc(var(--skema-c) * 0.9) var(--skema-h));
   --neutral-300: oklch(0.9543 calc(var(--skema-c) * 1.1) var(--skema-h));
   --neutral-400: oklch(0.9389 calc(var(--skema-c) * 1.2) var(--skema-h));
@@ -113,6 +112,16 @@
    menambah unduhan. */
 :root {
   --font-ui: "Plus Jakarta Sans Variable";
+  /* Tumpukan lengkap sebagai variabel CSS biasa, supaya CSS di luar Tailwind
+     (editor, ProseMirror) bisa memakai font yang sama dengan aplikasi.
+     Font kode SENGAJA tidak ikut `data-font`: memilih JetBrains Mono sebagai
+     font antarmuka tidak boleh mengganti font kode. */
+  --font-teks:
+    var(--font-ui), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  --font-kode:
+    "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 :root[data-font="inter"] {
@@ -292,15 +301,12 @@
 @theme inline {
   /* `inline` + var(): utilitas `font-body` menulis var(--font-ui), jadi
      mengganti atribut `data-font` langsung mengganti font seluruh aplikasi. */
-  --font-heading:
-    var(--font-ui), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-    "Noto Color Emoji";
-  --font-body:
-    var(--font-ui), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-    "Noto Color Emoji";
-  --font-code:
-    "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-    monospace;
+  --font-heading: var(--font-teks);
+  --font-body: var(--font-teks);
+  --font-code: var(--font-kode);
+  /* `font-mono` dulu kelas mati (variables.css mengosongkan --font-*), jadi
+     elemennya diam-diam memakai font antarmuka. Sekarang alias font kode. */
+  --font-mono: var(--font-kode);
 
   --color-highlight: var(--highlight);
   --color-highlight-subtle: var(--highlight-subtle);
@@ -340,6 +346,18 @@
 /* Angka tabular di mana pun font kode atau tabel dipakai: kolom angka rapi. */
 :where(table, .font-code) {
   font-variant-numeric: tabular-nums;
+}
+
+/* <code>/<pre>/<kbd> tanpa kelas: preflight Tailwind jatuh ke ui-monospace
+   karena --font-mono bawaan dikosongkan. Di @layer base dan sesudah preflight,
+   jadi kelas utilitas (font-body dsb.) tetap menang. */
+@layer base {
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-kode);
+  }
 }
 
 /* Kolom pencarian: radius kolom ketik biasa (putaran 9: pil penuh dibatalkan).

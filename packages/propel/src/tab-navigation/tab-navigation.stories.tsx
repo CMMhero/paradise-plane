@@ -63,6 +63,7 @@ export const Default: Story = {
               <a
                 key={item.key}
                 href={item.href}
+                aria-label={item.name}
                 onClick={(e) => {
                   e.preventDefault();
                   setActiveNavTab(item.key);
@@ -78,7 +79,7 @@ export const Default: Story = {
             ))}
           </TabNavigationList>
           <div className="text-11 text-tertiary">
-            Active: <span className="font-mono text-primary">{activeNavTab}</span>
+            Active: <span className="font-code text-primary">{activeNavTab}</span>
           </div>
         </div>
 

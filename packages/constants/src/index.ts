@@ -22,6 +22,7 @@ export * from "./gantt-chart";
 export * from "./graph";
 export * from "./icon";
 export * from "./instance";
+export * from "./instance-settings";
 export * from "./intake";
 export * from "./issue";
 export * from "./members";

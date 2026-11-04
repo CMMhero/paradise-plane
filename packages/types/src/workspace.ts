@@ -51,6 +51,8 @@ export interface IWorkspaceMemberInvitation {
   role: TUserPermissions;
   token: string;
   invite_link: string;
+  /** Server baru: undangan sudah lewat masa berlakunya (tidak bisa diterima lagi). */
+  is_expired?: boolean;
   workspace: {
     id: string;
     logo_url: string;

@@ -50,7 +50,7 @@ function MenuItem(props: TMenuItemProps) {
     <BaseMenu.Item
       disabled={disabled}
       className={cn(
-        "w-full cursor-pointer truncate rounded-item px-2 py-1.5 text-left text-secondary outline-none select-none hover:bg-layer-1",
+        "w-full cursor-pointer truncate rounded-item px-2 py-1.5 text-left text-secondary outline-none select-none hover:bg-layer-1 sentuh:py-2.5",
         {
           "text-placeholder": disabled,
         },
@@ -105,6 +105,11 @@ function Menu(props: TMenuProps) {
       submenuClosersRef.current.delete(closeSubmenu);
     };
   }, []);
+  const menuContextValue = React.useMemo(
+    () => ({ closeAllSubmenus, registerSubmenu }),
+    [closeAllSubmenus, registerSubmenu]
+  );
+
   const openDropdown = () => {
     setIsOpen(true);
   };
@@ -186,7 +191,7 @@ function Menu(props: TMenuProps) {
           <BaseMenu.Popup
             tabIndex={tabIndex}
             className={cn(
-              "my-1 min-w-[12rem] overflow-y-scroll rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 whitespace-nowrap shadow-raised-200 focus:outline-none",
+              "my-1 max-w-[calc(100vw-1rem)] min-w-[12rem] overflow-y-scroll rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 whitespace-nowrap shadow-raised-200 focus:outline-none",
               {
                 "max-h-60": maxHeight === "lg",
                 "max-h-48": maxHeight === "md",
@@ -197,7 +202,7 @@ function Menu(props: TMenuProps) {
             )}
             data-main-menu="true"
           >
-            <MenuContext.Provider value={{ closeAllSubmenus, registerSubmenu }}>{children}</MenuContext.Provider>
+            <MenuContext.Provider value={menuContextValue}>{children}</MenuContext.Provider>
           </BaseMenu.Popup>
         </BaseMenu.Positioner>
       </BaseMenu.Portal>

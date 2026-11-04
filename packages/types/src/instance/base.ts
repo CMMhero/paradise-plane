@@ -47,6 +47,19 @@ export interface IInstance {
   workspaces_exist: boolean;
 }
 
+/** `config.paradise_limits` dari GET /api/instances/ (registry setelan God Mode). */
+export type TParadiseLimits = {
+  upload_max_mb?: number;
+  chat_message_max_length?: number;
+  chat_attachments_max?: number;
+  /** Jam sesudah dikirim, pesan obrolan masih bisa disunting. 0 = tanpa batas. */
+  chat_edit_window_hours?: number;
+  /** Batas atas arsip otomatis dalam hari. 0 = instance tidak membatasi. */
+  auto_archive_done_days?: number;
+  chat_delete_window_hours?: number;
+  office_timezone?: string;
+};
+
 export interface IInstanceConfig {
   enable_signup: boolean;
   is_workspace_creation_disabled: boolean;
@@ -61,8 +74,12 @@ export interface IInstanceConfig {
   paradise_modules?: Partial<Record<TParadiseModule, boolean>>;
   /** Hari tenggang sesudah Due date sebelum terlambat (God Mode > Features). Tidak ada = server lama, 0. */
   paradise_overdue_grace_days?: number;
+  /** KEP-84: tugas yang menunggu persetujuan selesai tidak terlambat (God Mode APPROVAL_PENDING_NOT_LATE). Tidak ada = server lama, false. */
+  paradise_approval_pending_not_late?: boolean;
   /** Jam sesudah dikirim, pesan obrolan masih bisa dihapus pengirimnya. 0 = tanpa batas. Tidak ada = server lama, tanpa batas. */
   paradise_chat_delete_window_hours?: number;
+  /** Batas yang diatur Super Admin di God Mode. Tidak ada = server lama, pakai bawaan klien. */
+  paradise_limits?: TParadiseLimits;
   /** Bawaan project baru dari God Mode. Tidak ada = server lama, pakai bawaan formulir. */
   paradise_project_defaults?: {
     /** 2 = Public, 0 = Private. */

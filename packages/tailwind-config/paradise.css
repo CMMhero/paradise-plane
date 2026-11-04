@@ -301,6 +301,55 @@ th,
 }
 
 /* ==========================================================================
+   Permukaan dan layer ikut aksen (sidebar, halaman, kartu, menu)
+   ==========================================================================
+
+   Kanvas saja tidak cukup: sidebar dan badan halaman memakai `surface-1`
+   (putih murni / hitam murni) sehingga hampir seluruh layar tetap polos.
+   Tiap langkah `--bg-surface-*` dan `--bg-layer-*` (termasuk hover, active,
+   selected) sekarang = langkah netral aslinya dicampur sedikit `--brand-default`.
+   Urutan lightness antar langkah tidak berubah, jadi hierarki dan kontras teks
+   sama; yang bergeser hanya rona. Ikut skema dan tema kustom lewat
+   `--brand-default`. Kontras tinggi dikecualikan seperti kanvas.
+
+   --tint-permukaan: porsi aksen. Naikkan untuk rona lebih kuat. */
+:root:not([data-theme*="contrast"]) {
+  --tint-permukaan: 5%;
+  --bg-surface-1: color-mix(in oklch, var(--neutral-white), var(--brand-default) var(--tint-permukaan));
+  --bg-surface-2: color-mix(in oklch, var(--neutral-100), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1: color-mix(in oklch, var(--neutral-200), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1-hover: color-mix(in oklch, var(--neutral-300), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1-active: color-mix(in oklch, var(--neutral-400), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1-selected: color-mix(in oklch, var(--neutral-400), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2: color-mix(in oklch, var(--neutral-white), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2-hover: color-mix(in oklch, var(--neutral-100), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2-active: color-mix(in oklch, var(--neutral-200), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2-selected: color-mix(in oklch, var(--neutral-200), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3: color-mix(in oklch, var(--neutral-300), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3-hover: color-mix(in oklch, var(--neutral-400), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3-active: color-mix(in oklch, var(--neutral-500), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3-selected: color-mix(in oklch, var(--neutral-500), var(--brand-default) var(--tint-permukaan));
+}
+
+:root[data-theme="dark"] {
+  --tint-permukaan: 7%;
+  --bg-surface-1: color-mix(in oklch, var(--neutral-100), var(--brand-default) var(--tint-permukaan));
+  --bg-surface-2: color-mix(in oklch, var(--neutral-200), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1: color-mix(in oklch, var(--neutral-200), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1-hover: color-mix(in oklch, var(--neutral-300), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1-active: color-mix(in oklch, var(--neutral-400), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-1-selected: color-mix(in oklch, var(--neutral-400), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2: color-mix(in oklch, var(--neutral-300), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2-hover: color-mix(in oklch, var(--neutral-400), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2-active: color-mix(in oklch, var(--neutral-500), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-2-selected: color-mix(in oklch, var(--neutral-500), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3: color-mix(in oklch, var(--neutral-400), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3-hover: color-mix(in oklch, var(--neutral-500), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3-active: color-mix(in oklch, var(--neutral-600), var(--brand-default) var(--tint-permukaan));
+  --bg-layer-3-selected: color-mix(in oklch, var(--neutral-600), var(--brand-default) var(--tint-permukaan));
+}
+
+/* ==========================================================================
    Warna merek PT Paradise Perkasa (merah logo), menggantikan biru Plane
    ==========================================================================
 

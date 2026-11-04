@@ -17,6 +17,26 @@ import type {
 // api service
 import { APIService } from "../api.service";
 
+/** Isi kartu profil satu akun (`members/<id>/profile/`), bentuknya sama dengan kartu di apps/web. */
+export type TInstanceMemberProfile = {
+  id: string;
+  display_name: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string | null;
+  is_active: boolean;
+  workspace_role: number | null;
+  job_title: string;
+  email: string;
+  phone_extension: string;
+  penempatan: {
+    /** 10 staf, 20 supervisor, 30 manager, 40 direktur. */
+    tingkat: number;
+    departemen: { id: string; kode: string; nama: string } | null;
+    divisi: { id: string; kode: string; nama: string } | null;
+  }[];
+};
+
 export type TInstanceMember = {
   id: string;
   email: string;
@@ -267,6 +287,15 @@ export class InstanceMemberService extends APIService {
    */
   async update(id: string, data: TMemberUpdate): Promise<TInstanceMemberUpdated> {
     return this.patch(`/api/instances/members/${id}/`, data)
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data ?? e;
+      });
+  }
+
+  /** Kartu profil (hanya baca) untuk popup di God Mode. */
+  async profil(id: string): Promise<TInstanceMemberProfile> {
+    return this.get(`/api/instances/members/${id}/profile/`)
       .then((r) => r?.data)
       .catch((e) => {
         throw e?.response?.data ?? e;

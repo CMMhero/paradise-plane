@@ -75,8 +75,8 @@ export function BreadcrumbNavigationSearchDropdown(props: TBreadcrumbNavigationS
             >
               {shouldTruncate && <div className="flex text-tertiary @4xl:hidden">...</div>}
               <div
-                className={cn("flex gap-2", {
-                  "hidden items-center gap-2 @4xl:flex": shouldTruncate,
+                className={cn("flex items-center gap-2", {
+                  "hidden @4xl:flex": shouldTruncate,
                 })}
               >
                 {icon && <Breadcrumbs.Icon>{icon}</Breadcrumbs.Icon>}

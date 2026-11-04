@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 // plane imports
 import type { TIssueFilterPriorityObject, TIssuePriorities } from "@plane/constants";
 import {
+  getParadiseApprovalPendingNotLate,
   getParadiseOverdueGraceDays,
   ISSUE_DISPLAY_FILTERS_BY_PAGE,
   ISSUE_PRIORITY_FILTERS,
@@ -172,15 +173,21 @@ export const createIssuePayload: (projectId: string, formData: Partial<TIssue>) 
  * @description check if the issue due date should be highlighted
  * @param date
  * @param stateGroup
+ * @param approvalStatus `approval_status` work item (Paradise). "menunggu" + God Mode
+ *   APPROVAL_PENDING_NOT_LATE = sudah diajukan selesai, tidak terlambat (KEP-84).
  * @returns boolean
  */
 export const shouldHighlightIssueDueDate = (
   date: string | Date | null,
-  stateGroup: TStateGroups | undefined
+  stateGroup: TStateGroups | undefined,
+  approvalStatus?: string | null
 ): boolean => {
   if (!date || !stateGroup) return false;
   // if the issue is completed or cancelled, don't highlight the due date
   if ([STATE_GROUPS.completed.key, STATE_GROUPS.cancelled.key].includes(stateGroup)) return false;
+  // Kustomisasi Paradise (KEP-84): menunggu persetujuan selesai = tidak merah,
+  // sama dengan hitungan terlambat server (plane/utils/menunggu_persetujuan.py).
+  if (approvalStatus === "menunggu" && getParadiseApprovalPendingNotLate()) return false;
 
   const parsedDate = getDate(date);
   if (!parsedDate) return false;

@@ -41,9 +41,15 @@ function Breadcrumbs({ className, children, onBack, isLoading = false }: Breadcr
   }, []);
 
   const childrenArray = React.Children.toArray(children);
+  const lastChild = childrenArray[childrenArray.length - 1];
+  // Item terakhir SELALU dirender dengan isLast, termasuk saat cuma satu item.
+  // Dulu jalur layar kecil dengan satu item merender anak apa adanya, jadi
+  // pemisah ">" tetap muncul di belakang item terakhir tanpa apa-apa sesudahnya.
+  const renderLast = () =>
+    React.isValidElement<BreadcrumbItemProps>(lastChild) ? React.cloneElement(lastChild, { isLast: true }) : lastChild;
 
   return (
-    <div className={cn("flex flex-grow items-center gap-0.5 overflow-hidden", className)}>
+    <div className={cn("flex min-w-0 flex-grow items-center gap-0.5 overflow-hidden", className)}>
       {!isSmallScreen && (
         <>
           {childrenArray.map((child, index) => {
@@ -64,30 +70,24 @@ function Breadcrumbs({ className, children, onBack, isLoading = false }: Breadcr
         </>
       )}
 
-      {isSmallScreen && childrenArray.length > 1 && (
-        <>
-          <div className="flex items-center gap-2.5 p-1">
-            {onBack && (
-              <span onClick={onBack} className="text-secondary">
-                ...
-              </span>
-            )}
-            <ChevronRightIcon className="h-3.5 w-3.5 flex-shrink-0 text-placeholder" aria-hidden="true" />
-          </div>
-          <div className="flex items-center gap-2.5 p-1">
-            {isLoading ? (
-              <BreadcrumbItemLoader />
-            ) : React.isValidElement(childrenArray[childrenArray.length - 1]) ? (
-              React.cloneElement(childrenArray[childrenArray.length - 1] as React.ReactElement, {
-                isLast: true,
-              })
-            ) : (
-              childrenArray[childrenArray.length - 1]
-            )}
-          </div>
-        </>
+      {/* Layar kecil: cukup item terakhir. Item sebelumnya diringkas jadi tombol
+          "..." (kembali) HANYA kalau ada onBack; tanpa onBack, dulu tersisa
+          pemisah ">" yatim di depan judul. */}
+      {isSmallScreen && childrenArray.length > 1 && onBack && (
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="grid h-7 min-w-7 place-items-center rounded-sm px-1 text-secondary hover:bg-layer-transparent-hover"
+          >
+            ...
+          </button>
+          <ChevronRightIcon className="h-3.5 w-3.5 flex-shrink-0 text-placeholder" aria-hidden="true" />
+        </div>
       )}
-      {isSmallScreen && childrenArray.length === 1 && childrenArray}
+      {isSmallScreen && childrenArray.length > 0 && (
+        <div className="flex min-w-0 items-center">{isLoading ? <BreadcrumbItemLoader /> : renderLast()}</div>
+      )}
     </div>
   );
 }
@@ -102,7 +102,7 @@ type BreadcrumbItemProps = {
 function BreadcrumbItem(props: BreadcrumbItemProps) {
   const { component, showSeparator = true, isLast = false } = props;
   return (
-    <div className="flex h-6 items-center gap-0.5">
+    <div className="flex h-6 min-w-0 items-center gap-0.5">
       {component}
       {showSeparator && !isLast && <BreadcrumbSeparator />}
     </div>
