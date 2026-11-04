@@ -42,7 +42,7 @@ from django.utils import timezone
 
 # Module imports
 from plane.db.models import Workspace, WorkspacePlan
-from plane.license.utils.instance_value import get_email_configuration
+from plane.license.utils.instance_value import email_aktif, get_email_configuration
 from plane.utils.email_merek import bahasa_penerima, base_url, bungkus, buat_pesan, judul_html, kotak, paragraf, tombol
 from plane.utils.plan_limits import (
     TIDUR_BEKU_HARI,
@@ -100,7 +100,7 @@ def _kirim_peringatan(workspace, pemilik, hari_menganggur):
         return False
 
     try:
-        if not get_email_configuration()[0]:
+        if not email_aktif(get_email_configuration()[0]):
             return False
 
         sisa = max(TIDUR_BEKU_HARI - hari_menganggur, 0)

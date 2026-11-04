@@ -10,6 +10,9 @@ from django_filters import FilterSet, filters
 
 from plane.db.models import Issue, PersetujuanPenugasan
 
+# Filter value for "never needed approval" (no approval row at all).
+TANPA_PERSETUJUAN = "tanpa"
+
 
 class UUIDInFilter(filters.BaseInFilter, filters.UUIDFilter):
     pass
@@ -285,13 +288,24 @@ def q_approval_status(values):
 
     Only the newest row counts: a task that was rejected and then resubmitted
     has an old `ditolak` row and a new `menunggu` row, and it is pending.
+
+    The pseudo value `tanpa` matches issues that never had an approval row.
     """
+    nilai = list(values)
+    tanpa = TANPA_PERSETUJUAN in nilai
+    status = [v for v in nilai if v != TANPA_PERSETUJUAN]
     terbaru = (
         PersetujuanPenugasan.objects.filter(issue_id=OuterRef("issue_id")).order_by("-created_at").values("id")[:1]
     )
-    issue_ids = (
-        PersetujuanPenugasan.objects.annotate(terbaru_id=Subquery(terbaru))
-        .filter(id=F("terbaru_id"), status__in=list(values))
-        .values("issue_id")
-    )
-    return Q(pk__in=issue_ids)
+    kondisi = Q()
+    if status:
+        issue_ids = (
+            PersetujuanPenugasan.objects.annotate(terbaru_id=Subquery(terbaru))
+            .filter(id=F("terbaru_id"), status__in=status)
+            .values("issue_id")
+        )
+        kondisi |= Q(pk__in=issue_ids)
+    if tanpa:
+        kondisi |= ~Q(pk__in=PersetujuanPenugasan.objects.values("issue_id"))
+    # Only unknown values (neither status nor `tanpa`): match nothing, not everything.
+    return kondisi if status or tanpa else Q(pk__in=[])

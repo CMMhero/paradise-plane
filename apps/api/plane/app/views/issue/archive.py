@@ -41,7 +41,7 @@ from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
 from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
 from plane.app.permissions import allow_permission, ROLE
-from plane.utils.task_access import bisa_hapus_tugas
+from plane.utils.task_access import AturanTugas, bisa_hapus_tugas
 from plane.utils.error_codes import ERROR_CODES
 from plane.utils.host import base_host
 
@@ -341,7 +341,8 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
         # staf hanya boleh mengarsipkan tugasnya sendiri atau bawahannya. Tanpa
         # ini, arsip massal adalah pintu samping bulk delete yang sudah dijaga.
         semua = list(issues)
-        boleh = [i for i in semua if bisa_hapus_tugas(request.user, i, slug, project_id)]
+        aturan = AturanTugas(request.user)
+        boleh = [i for i in semua if bisa_hapus_tugas(request.user, i, slug, project_id, aturan)]
         dilewati = len(semua) - len(boleh)
         bulk_archive_issues = []
         for issue in boleh:

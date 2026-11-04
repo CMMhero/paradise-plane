@@ -152,7 +152,7 @@ TATA_LETAK_SAH = frozenset({"list", "kanban", "calendar", "spreadsheet"})
 PABRIK = {
     "profile": {
         "language": "en",
-        "timezone": "UTC",
+        "timezone": "Asia/Jakarta",
         "theme": "system",
         "start_of_the_week": 0,
         **GAYA_PABRIK,

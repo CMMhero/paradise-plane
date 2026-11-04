@@ -47,8 +47,12 @@ def _reset_throttle_cache():
 
 
 @pytest.fixture
-def setup_instance(db):
+def setup_instance(db, monkeypatch):
     """Create and configure an instance for authentication tests"""
+    # Magic login is off by default in production (KEP-09) and needs SMTP, so the
+    # magic-link tests opt in explicitly instead of relying on the environment.
+    monkeypatch.setenv("ENABLE_MAGIC_LINK_LOGIN", "1")
+    monkeypatch.setenv("EMAIL_HOST", "smtp.test.local")
     instance_id = uuid.uuid4() if not Instance.objects.exists() else Instance.objects.first().id
 
     # Create or update instance with all required fields

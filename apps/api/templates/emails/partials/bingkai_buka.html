@@ -1,0 +1,10 @@
+{% comment %}Pembuka bingkai berlatar (kartu utama, kartu work item, kode masuk). Tutup dengan bingkai_tutup.html.
+Parameter: latar, sudut, padding, gaya (gaya tambahan sel isi), kelas, rata.
+
+Outlook klasik (mesin Word): bingkai = baris dan kolom 1px berlatar garis di SEKELILING sel isi, di dalam tabel berlatar
+sama dengan isi. Dulu bingkai = sel luar berlatar garis + padding 1px; celah sub-piksel antarbaris yang dibuat Word pada
+skala layar 125%/150% memperlihatkan latar sel luar itu, jadi muncul garis tipis selebar kartu di bawah tombol dan
+paragraf. Sekarang yang terlihat lewat celah itu warna isi sendiri. Garis bawah juga baris tersendiri, jadi tidak lagi
+hilang saat isi berakhir dengan <p> (alasan tabel 1px penutup yang lama).
+Klien lain: satu sel dengan border + border-radius biasa.{% endcomment %}<!--[if mso]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ latar }}" style="background-color:{{ latar }};"><tr><td colspan="3" height="1" bgcolor="{{ w.garis }}" style="height:1px;font-size:1px;line-height:1px;mso-line-height-rule:exactly;background-color:{{ w.garis }};">&nbsp;</td></tr><tr><td width="1" bgcolor="{{ w.garis }}" style="width:1px;font-size:1px;line-height:1px;mso-line-height-rule:exactly;background-color:{{ w.garis }};">&nbsp;</td><td{% if rata %} align="{{ rata }}"{% endif %} bgcolor="{{ latar }}" style="background-color:{{ latar }};{% if padding %}padding:{{ padding }};{% endif %}font-family:{{ font }};{{ gaya }}"><![endif]-->
+<!--[if !mso]><!--><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td{% if kelas %} class="{{ kelas }}"{% endif %}{% if rata %} align="{{ rata }}"{% endif %} bgcolor="{{ latar }}" style="background-color:{{ latar }};border:1px solid {{ w.garis }};border-radius:{{ sudut }}px;{% if padding %}padding:{{ padding }};{% endif %}font-family:{{ font }};{{ gaya }}"><!--<![endif]-->

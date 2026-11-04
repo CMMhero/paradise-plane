@@ -15,10 +15,14 @@ from plane.app.views.issue.cross_division import (
     RingkasanLintasDivisiEndpoint,
 )
 from plane.app.views.penempatan_saya import PenempatanSayaEndpoint
+from plane.app.views.workspace.boleh_buat_project import BolehBuatProjectEndpoint
+from plane.app.views.workspace.izin_saya import IzinSayaEndpoint
+from plane.app.views.workspace.perhatian import PerhatianEndpoint
 from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAnggotaEndpoint
 from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
 from plane.app.views.workspace.organisasi import StrukturOrganisasiEndpoint
+from plane.app.views.workspace.quick_link_bersama import QuickLinkBersamaEndpoint
 from plane.app.views.workspace.profil_anggota import ProfilAnggotaEndpoint
 from plane.app.views import (
     ProjectTrashEndpoint,
@@ -184,6 +188,11 @@ urlpatterns = [
         name="chat-thread",
     ),
     path(
+        "workspaces/<str:slug>/paradise/attention/",
+        PerhatianEndpoint.as_view(),
+        name="perhatian",
+    ),
+    path(
         "workspaces/<str:slug>/divisi-dashboard/",
         DivisionDashboardEndpoint.as_view(),
         name="divisi-dashboard",
@@ -201,6 +210,17 @@ urlpatterns = [
         "workspaces/<str:slug>/struktur-organisasi/",
         StrukturOrganisasiEndpoint.as_view(),
         name="struktur-organisasi",
+    ),
+    # Quick link bersama dari admin, untuk semua orang atau divisi/departemen (KEP-82).
+    path(
+        "workspaces/<str:slug>/quick-links/shared/",
+        QuickLinkBersamaEndpoint.as_view(),
+        name="quick-link-bersama",
+    ),
+    path(
+        "workspaces/<str:slug>/quick-links/shared/<uuid:pk>/",
+        QuickLinkBersamaEndpoint.as_view(),
+        name="quick-link-bersama-detail",
     ),
     # Kartu profil anggota (direktori karyawan workspace).
     path(
@@ -227,6 +247,17 @@ urlpatterns = [
         "workspaces/<str:slug>/penempatan-saya/",
         PenempatanSayaEndpoint.as_view(),
         name="penempatan-saya",
+    ),
+    # KEP-85: izin ubah/arsip/hapus per sumber, untuk menyembunyikan aksi di tampilan.
+    path(
+        "workspaces/<str:slug>/izin-saya/",
+        IzinSayaEndpoint.as_view(),
+        name="izin-saya",
+    ),
+    path(
+        "workspaces/<str:slug>/boleh-buat-project/",
+        BolehBuatProjectEndpoint.as_view(),
+        name="boleh-buat-project",
     ),
     # Antrean persetujuan penugasan. Baris menunggu tugasnya TETAP muncul (keputusan user
     # 2026-10-15), jadi endpoint ini yang menjadi indikatornya. Literal

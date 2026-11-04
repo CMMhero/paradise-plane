@@ -28,7 +28,7 @@ from plane.license.utils.encryption import encrypt_data
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.instance_config_variables import instance_config_variables
-from plane.utils.saklar_instance import SAKLAR_BAWAAN, SETELAN_ANGKA, SETELAN_PILIHAN, nilai_angka_sah
+from plane.utils.setelan_instance import SENSITIF, NilaiTidakSah, dikenal, normalkan
 from plane.utils.bawaan_member import KUNCI as BAWAAN_MEMBER_KUNCI
 from plane.utils.bawaan_project import KUNCI as BAWAAN_PROJECT_KUNCI
 
@@ -59,28 +59,34 @@ class InstanceConfigurationEndpoint(BaseAPIView):
                 {"error": f"{BAWAAN_PROJECT_KUNCI} is changed via /api/instances/projects/defaults/."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # Saklar fitur Paradise hanya "0"/"1": nilai lain dibaca sebagai mati oleh
-        # `saklar_aktif`, jadi typo diam-diam mematikan fitur.
-        salah = [
-            k for k in request.data.keys() if k in SAKLAR_BAWAAN and str(request.data[k]).strip() not in ("0", "1")
-        ]
-        if salah:
+        # Aturan sensitif (KEP-83) hanya lewat /api/instances/settings/, yang
+        # meminta frasa konfirmasi dan mencatat jejak audit. Lewat sini keduanya
+        # bisa dilewati diam-diam.
+        sensitif = sorted(k for k in request.data.keys() if k in SENSITIF)
+        if sensitif:
             return Response(
-                {"error": f"Toggle values must be 0 or 1: {', '.join(salah)}"},
+                {
+                    "error": f"These settings are changed via /api/instances/settings/: {', '.join(sensitif)}",
+                    "keys": sensitif,
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # Setelan angka dijaga rentangnya di sini, bukan hanya di form: retensi
-        # 0 hari berarti task harian menghapus seluruh riwayat.
-        di_luar = [k for k in request.data.keys() if k in SETELAN_ANGKA and not nilai_angka_sah(k, request.data[k])]
-        if di_luar:
-            rentang = ", ".join(
-                f"{k} ({'/'.join(map(str, SETELAN_PILIHAN[k]))})"
-                if k in SETELAN_PILIHAN
-                else f"{k} ({SETELAN_ANGKA[k][1]}-{SETELAN_ANGKA[k][2]})"
-                for k in di_luar
-            )
+        # Setelan Paradise divalidasi dengan validator registri yang sama
+        # (plane/utils/setelan_instance.py): saklar hanya "0"/"1" (typo diam-diam
+        # mematikan fitur), angka dalam rentangnya (retensi 0 hari = seluruh
+        # riwayat terhapus), jam/hari/zona dalam bentuknya. Semua atau tidak sama sekali.
+        paradise, galat = {}, {}
+        for kunci in request.data.keys():
+            if not dikenal(kunci):
+                continue
+            try:
+                paradise[kunci] = normalkan(kunci, request.data[kunci])
+            except NilaiTidakSah as e:
+                galat[kunci] = str(e)
+        if galat:
+            rincian = ", ".join(f"{k} ({pesan})" for k, pesan in galat.items())
             return Response(
-                {"error": f"Value out of range: {rentang}"},
+                {"error": f"Invalid value: {rincian}", "errors": galat},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -101,7 +107,7 @@ class InstanceConfigurationEndpoint(BaseAPIView):
         bulk_configurations = []
         for configuration in configurations:
             raw_value = request.data.get(configuration.key, configuration.value)
-            value = "" if raw_value is None else str(raw_value).strip()
+            value = paradise.get(configuration.key, "" if raw_value is None else str(raw_value).strip())
             if configuration.is_encrypted:
                 configuration.value = encrypt_data(value)
             else:

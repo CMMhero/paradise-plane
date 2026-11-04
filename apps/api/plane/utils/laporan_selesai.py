@@ -29,7 +29,6 @@ dihitung dari semua tugas, dan CSV memuat semuanya.
 
 # Python imports
 from datetime import date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
 
 # Django imports
 from django.db.models import Count, F, Q
@@ -39,8 +38,9 @@ from django.utils import timezone
 # Module imports
 from plane.db.models import Issue, IssueAssignee
 from plane.utils.ringkasan_divisi import _peta_departemen, project_terjangkau
+from plane.utils.setelan_instance import zona_kantor
 
-ZONA_KANTOR = ZoneInfo("Asia/Jakarta")
+# Zona kantor dibaca dari God Mode (OFFICE_TIMEZONE) tiap pemanggilan, bukan konstanta.
 
 PERIODE_7_HARI = "7d"
 PERIODE_30_HARI = "30d"
@@ -87,7 +87,7 @@ def rentang_periode(periode, hari_ini):
 
 
 def _ke_waktu(hari):
-    return datetime.combine(hari, time.min, tzinfo=ZONA_KANTOR)
+    return datetime.combine(hari, time.min, tzinfo=zona_kantor())
 
 
 def ketepatan(tanggal_selesai, tenggat):
@@ -102,7 +102,7 @@ def _selesai_di(project_ids, awal, akhir):
         state__group=_SELESAI,
         completed_at__gte=_ke_waktu(awal),
         completed_at__lt=_ke_waktu(akhir),
-    ).annotate(tanggal_selesai=TruncDate("completed_at", tzinfo=ZONA_KANTOR))
+    ).annotate(tanggal_selesai=TruncDate("completed_at", tzinfo=zona_kantor()))
 
 
 _ANGKA = {
@@ -205,7 +205,7 @@ def susun_laporan(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
     if periode not in PERIODE_SAH:
         raise ValueError(f"periode tidak dikenal: {periode}")
     sekarang = sekarang or timezone.now()
-    hari_ini = sekarang.astimezone(ZONA_KANTOR).date()
+    hari_ini = sekarang.astimezone(zona_kantor()).date()
     (awal, akhir), (awal_lalu, akhir_lalu) = rentang_periode(periode, hari_ini)
 
     projects = list(project_terjangkau(user, slug))
@@ -240,7 +240,7 @@ def susun_laporan(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
 def baris_csv(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
     """Header + semua tugas selesai dalam periode, untuk unduhan CSV (tanpa batas)."""
     sekarang = sekarang or timezone.now()
-    hari_ini = sekarang.astimezone(ZONA_KANTOR).date()
+    hari_ini = sekarang.astimezone(zona_kantor()).date()
     (awal, akhir), _ = rentang_periode(periode, hari_ini)
 
     ids = list(project_terjangkau(user, slug).values_list("id", flat=True))

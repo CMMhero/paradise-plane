@@ -42,6 +42,8 @@ from plane.bgtasks.webhook_task import model_activity, webhook_activity
 from plane.utils.exception_logger import log_exception
 from .base import BaseAPIView
 from plane.utils.host import base_host
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_ARCHIVE, PERM_PROJECT_DELETE, PERM_PROJECT_EDIT
 from plane.utils.order_queryset import PROJECT_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.api.serializers import (
     ProjectSerializer,
@@ -229,6 +231,12 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
         """
         try:
             workspace = Workspace.objects.get(slug=slug)
+
+            # Kustomisasi Paradise: staf / member biasa tidak boleh membuat project.
+            from plane.utils.izin_buat_project import PESAN_TOLAK_BUAT_PROJECT, boleh_buat_project
+
+            if not boleh_buat_project(request.user, workspace.id):
+                return Response({"error": PESAN_TOLAK_BUAT_PROJECT}, status=status.HTTP_403_FORBIDDEN)
 
             # Kustomisasi Paradise: kolom yang tidak dikirim diisi bawaan project God Mode.
             from plane.utils.bawaan_project import lengkapi_data_project
@@ -554,6 +562,10 @@ class ProjectDetailAPIEndpoint(BaseAPIView):
         Partially update an existing project's properties like name, description, or settings.
         Tracks changes in model activity logs for audit purposes.
         """
+        # KEP-85: admin project tidak lagi cukup; PERM_PROJECT_EDIT yang memutuskan.
+        galat = tolak_izin_project(request, PERM_PROJECT_EDIT, slug=slug, project_id=pk)
+        if galat is not None:
+            return galat
         try:
             workspace = Workspace.objects.get(slug=slug)
             project = Project.objects.get(pk=pk)
@@ -631,6 +643,9 @@ class ProjectDetailAPIEndpoint(BaseAPIView):
         Permanently remove a project and all its associated data from the workspace.
         Only admins can delete projects and the action cannot be undone.
         """
+        galat = tolak_izin_project(request, PERM_PROJECT_DELETE, slug=slug, project_id=pk)
+        if galat is not None:
+            return galat
         project = Project.objects.get(pk=pk, workspace__slug=slug)
         # Delete the user favorite cycle
         UserFavorite.objects.filter(entity_type="project", entity_identifier=pk, project_id=pk).delete()
@@ -674,6 +689,10 @@ class ProjectArchiveUnarchiveAPIEndpoint(BaseAPIView):
         Move a project to archived status, hiding it from active project lists.
         Archived projects remain accessible but are excluded from regular workflows.
         """
+        # KEP-85: dulu setiap anggota workspace bisa; sekarang PERM_PROJECT_ARCHIVE.
+        galat = tolak_izin_project(request, PERM_PROJECT_ARCHIVE, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         project.archived_at = timezone.now()
         project.save()
@@ -698,6 +717,9 @@ class ProjectArchiveUnarchiveAPIEndpoint(BaseAPIView):
         Restore an archived project to active status, making it available in regular workflows.
         The project will reappear in active project lists and become fully functional.
         """
+        galat = tolak_izin_project(request, PERM_PROJECT_ARCHIVE, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         project.archived_at = None
         project.save()

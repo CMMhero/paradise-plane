@@ -14,6 +14,7 @@ Struktur uji:
 """
 
 from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
 from unittest import mock
 from uuid import uuid4
 
@@ -27,7 +28,9 @@ from plane.bgtasks.daily_digest_task import (
     penerima_workspace,
     susun_ringkasan,
 )
+from plane.bgtasks.jadwal_kantor import SLOT_PER_NAMA
 from plane.celery import app as celery_app
+from plane.utils.setelan_instance import setelan_hari_kerja, setelan_jam, zona_kantor
 from plane.db.models import (
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
@@ -49,7 +52,9 @@ from plane.db.models import (
 
 # Hari kantor (WIB), sama dengan yang dipakai pengirimnya. Hari UTC beda tanggal
 # antara 17.00 dan 24.00 UTC.
-HARI_INI = daily_digest_task.hari_ini_kantor()
+# Tanpa database (dihitung saat impor): bawaan OFFICE_TIMEZONE = Asia/Jakarta, yang
+# juga dibaca task selama uji tidak menyimpan zona lain.
+HARI_INI = datetime.now(ZoneInfo("Asia/Jakarta")).date()
 
 
 def _orang(workspace, prefix):
@@ -213,11 +218,16 @@ class TestKirim:
         assert nganggur.email not in ke
         assert hasil["kosong"] >= 1
 
+    @pytest.mark.django_db
     def test_jadwal_senin_jumat_0830_jakarta(self):
-        jadwal = celery_app.conf.beat_schedule["ringkasan-harian"]["schedule"]
-        # Celery berjalan di UTC: 08.30 WIB = 01.30 UTC.
-        assert jadwal.hour == {1} and jadwal.minute == {30}
-        assert jadwal.day_of_week == {1, 2, 3, 4, 5}
+        # KEP-83: jamnya di God Mode, bawaannya tetap Senin-Jumat 08.30 Jakarta.
+        slot = SLOT_PER_NAMA["ringkasan-pagi"]
+        assert slot.task == "plane.bgtasks.daily_digest_task.kirim_ringkasan_harian"
+        assert setelan_jam(slot.kunci_jam) == time(8, 30)
+        assert setelan_hari_kerja(slot.kunci_hari) == {1, 2, 3, 4, 5}
+        assert str(zona_kantor()) == "Asia/Jakarta"
+        # Crontab UTC lama sudah tidak ada; yang tersisa detak penjadwal kantor.
+        assert "ringkasan-harian" not in celery_app.conf.beat_schedule
 
 
 @pytest.mark.contract
@@ -276,13 +286,15 @@ class TestEdisiSore:
         assert ke[dunia.staf.email].subject.startswith("[Ringkasan sore]")
         assert "SELESAI HARI INI (1)" in ke[dunia.staf.email].body
 
+    @pytest.mark.django_db
     def test_jadwal_senin_jumat_1730_jakarta(self):
-        jadwal = celery_app.conf.beat_schedule["ringkasan-sore"]["schedule"]
-        # 17.30 WIB = 10.30 UTC.
-        assert jadwal.hour == {10} and jadwal.minute == {30}
-        assert jadwal.day_of_week == {1, 2, 3, 4, 5}
+        slot = SLOT_PER_NAMA["ringkasan-sore"]
+        assert slot.task == "plane.bgtasks.daily_digest_task.kirim_ringkasan_sore"
+        assert setelan_jam(slot.kunci_jam) == time(17, 30)
+        assert setelan_hari_kerja(slot.kunci_hari) == {1, 2, 3, 4, 5}
+        assert "ringkasan-sore" not in celery_app.conf.beat_schedule
 
 
 def _kemarin_siang():
     """12.00 WIB kemarin, untuk completed_at yang jelas di luar "hari ini"."""
-    return datetime.combine(HARI_INI, time(12), tzinfo=daily_digest_task.ZONA_KANTOR) - timedelta(days=1)
+    return datetime.combine(HARI_INI, time(12), tzinfo=zona_kantor()) - timedelta(days=1)

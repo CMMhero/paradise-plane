@@ -66,6 +66,8 @@ from plane.bgtasks.webhook_task import model_activity
 from .. import BaseAPIView, BaseViewSet
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.utils.host import base_host
+from plane.utils.izin_sumber import tolak_izin_module, tolak_izin_module_ids
+from plane.utils.saklar_instance import PERM_MODULE_DELETE, PERM_MODULE_EDIT
 
 
 class ModuleViewSet(BaseViewSet):
@@ -665,6 +667,10 @@ class ModuleViewSet(BaseViewSet):
                 {"error": "Archived module cannot be updated"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # KEP-85: module orang lain hanya untuk pembuat/lead/anggotanya, atasannya, atau admin.
+        galat = tolak_izin_module(request, PERM_MODULE_EDIT, current_module)
+        if galat is not None:
+            return galat
         current_instance = json.dumps(ModuleSerializer(current_module).data, cls=DjangoJSONEncoder)
         serializer = ModuleWriteSerializer(current_module, data=request.data, partial=True)
 
@@ -720,9 +726,14 @@ class ModuleViewSet(BaseViewSet):
             return Response(module, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission([ROLE.ADMIN], creator=True, model=Module)
+    # KEP-85: dulu admin project ATAU pembuat. Admin project tidak lagi cukup; gerbang
+    # peran cuma menyaring tamu, aturan PERM_MODULE_DELETE yang memutuskan.
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, pk):
         module = Module.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+        galat = tolak_izin_module(request, PERM_MODULE_DELETE, module)
+        if galat is not None:
+            return galat
 
         module_issues = list(ModuleIssue.objects.filter(module_id=pk).values_list("issue", flat=True))
         _ = [
@@ -770,6 +781,33 @@ class ModuleLinkViewSet(BaseViewSet):
             project_id=self.kwargs.get("project_id"),
             module_id=self.kwargs.get("module_id"),
         )
+
+    # KEP-85: tautan bagian dari module, jadi menambah/mengubah/menghapusnya = mengubah
+    # module (PERM_MODULE_EDIT). Membaca tetap bebas bagi anggota project.
+    def _galat_izin_module(self, request):
+        return tolak_izin_module_ids(
+            request,
+            PERM_MODULE_EDIT,
+            [self.kwargs.get("module_id")],
+            slug=self.kwargs.get("slug"),
+            project_id=self.kwargs.get("project_id"),
+        )
+
+    def create(self, request, *args, **kwargs):
+        galat = self._galat_izin_module(request)
+        return galat if galat is not None else super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        galat = self._galat_izin_module(request)
+        return galat if galat is not None else super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        galat = self._galat_izin_module(request)
+        return galat if galat is not None else super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        galat = self._galat_izin_module(request)
+        return galat if galat is not None else super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
         return (

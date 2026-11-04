@@ -49,6 +49,7 @@ from plane.utils.wiki_access import (
     can_manage_wiki_page,
     is_wiki_governed,
 )
+from plane.utils.saklar_instance import PERM_WIKI_DELETE, PERM_WIKI_EDIT
 
 # Tipe yang peramban sanggup tampilkan sendiri, tanpa konversi apa pun.
 _PRATINJAU_TEKS = {
@@ -127,7 +128,10 @@ def _materi_json(asset, user):
             else None
         ),
         # Dihitung server, bukan ditebak klien. Satu sumber kebenaran.
-        "can_manage": can_manage_wiki_material(user, asset),
+        # KEP-85: can_manage = boleh mengubah (PERM_WIKI_EDIT); can_delete terpisah
+        # karena God Mode bisa mengatur hapus lebih ketat dari ubah.
+        "can_manage": can_manage_wiki_material(user, asset, PERM_WIKI_EDIT),
+        "can_delete": can_manage_wiki_material(user, asset, PERM_WIKI_DELETE),
     }
 
 
@@ -324,10 +328,10 @@ class WikiMaterialEndpoint(BaseAPIView):
         if asset is None:
             return Response({"error": "Materi tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not can_manage_wiki_material(request.user, asset):
+        if not can_manage_wiki_material(request.user, asset, PERM_WIKI_EDIT):
             return Response(
                 {
-                    "error": "Hanya pengunggahnya, admin workspace, atau Super Admin "
+                    "error": "Hanya pengunggahnya, atasannya, admin workspace, atau Super Admin "
                     "yang boleh mengubah materi ini."
                 },
                 status=status.HTTP_403_FORBIDDEN,

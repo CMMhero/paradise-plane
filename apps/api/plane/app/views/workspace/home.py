@@ -48,7 +48,8 @@ class WorkspaceHomePreferenceViewSet(BaseAPIView):
                             key=key,
                             user=request.user,
                             workspace=workspace,
-                            sort_order=sort_order,
+                            # Paradise: "Needs attention" selalu di atas widget lain.
+                            sort_order=2000 if key == "needs_attention" else sort_order,
                         )
                         for key in create_preference_keys
                     ],

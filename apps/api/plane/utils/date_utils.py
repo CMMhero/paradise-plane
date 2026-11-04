@@ -168,10 +168,16 @@ def get_analytics_filters(
         "archived_at__isnull": True,
     }
 
-    # Add project IDs to filters if provided
+    # Wiki itu pustaka berkas, bukan project kerja: jangan masuk analytics.
+    # Filter berbentuk kwargs tak bisa negasi, jadi kumpulkan project non-Wiki.
+    from plane.db.models import Project  # noqa: PLC0415
+    from plane.utils.wiki_access import WIKI_IDENTIFIER  # noqa: PLC0415
+
+    non_wiki = Project.objects.filter(workspace__slug=slug).exclude(identifier=WIKI_IDENTIFIER)
     if project_ids:
-        base_filters["project_id__in"] = project_ids
-        project_filters["id__in"] = project_ids
+        non_wiki = non_wiki.filter(id__in=project_ids)
+    base_filters["project_id__in"] = non_wiki.values("id")
+    project_filters["id__in"] = non_wiki.values("id")
 
     # Initialize date range variables
     analytics_date_range = None

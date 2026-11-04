@@ -23,7 +23,7 @@ from plane.authentication.adapter.error import (
     AUTHENTICATION_ERROR_CODES,
 )
 from plane.authentication.rate_limit import AuthenticationThrottle
-from plane.license.utils.instance_value import get_configuration_value
+from plane.license.utils.instance_value import email_aktif, get_configuration_value
 
 
 class EmailCheckEndpoint(APIView):
@@ -46,12 +46,12 @@ class EmailCheckEndpoint(APIView):
                 {"key": "EMAIL_HOST", "default": os.environ.get("EMAIL_HOST", "")},
                 {
                     "key": "ENABLE_MAGIC_LINK_LOGIN",
-                    "default": os.environ.get("ENABLE_MAGIC_LINK_LOGIN", "1"),
+                    "default": os.environ.get("ENABLE_MAGIC_LINK_LOGIN", "0"),
                 },
             ]
         )
 
-        smtp_configured = bool(EMAIL_HOST)
+        smtp_configured = email_aktif()
         is_magic_login_enabled = ENABLE_MAGIC_LINK_LOGIN == "1"
 
         email = request.data.get("email", False)

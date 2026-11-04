@@ -17,6 +17,9 @@ from plane.utils.wiki_access import (
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
+from plane.utils.izin_sumber import tolak_izin
+from plane.utils.saklar_instance import PERM_PAGE_ARCHIVE, PERM_PAGE_DELETE, PERM_PAGE_EDIT
+
 
 # Permission Mappings for workspace members
 ADMIN = ROLE.ADMIN.value
@@ -82,6 +85,9 @@ class ProjectPagePermission(BasePermission):
             # Handle private page access
             if page.access == Page.PRIVATE_ACCESS:
                 return self._has_private_page_action_access(request, slug, page, project_id)
+
+            # KEP-85: halaman publik milik orang lain diputuskan aturan izin per sumber.
+            return self._has_page_action_access(request, role, view, page, project_id)
 
         # Handle public page access
         return self._has_public_page_action_access(request, role, view)
@@ -216,6 +222,10 @@ class ProjectPagePermission(BasePermission):
         Keputusan user 2026-10-24: yang boleh MENGUBAH/mengelola Wiki hanya
         admin project atau Super Admin (lolos di `has_permission`). Member
         boleh membaca dan MENAMBAH halaman ke projectnya, tidak lebih.
+
+        KEP-85: sejak 4 Nov 2026 jalur ini hanya dipakai TANPA page_id (daftar,
+        buat halaman). Aksi atas halaman yang sudah ada diputuskan
+        `_has_page_action_access` (aturan PERM_PAGE_*).
         """
         method = request.method
         action = getattr(view, "action", None)
@@ -247,6 +257,56 @@ class ProjectPagePermission(BasePermission):
 
         # Deny by default
         return False
+
+    # KEP-85: aksi atas halaman yang SUDAH ada -> kunci izin. Aksi di luar peta ini
+    # (duplikat = POST tanpa action) tidak mengubah halaman aslinya.
+    _KUNCI_AKSI_HALAMAN = {
+        "partial_update": PERM_PAGE_EDIT,
+        "update": PERM_PAGE_EDIT,
+        "lock": PERM_PAGE_EDIT,
+        "unlock": PERM_PAGE_EDIT,
+        "archive": PERM_PAGE_ARCHIVE,
+        "unarchive": PERM_PAGE_ARCHIVE,
+        "destroy": PERM_PAGE_DELETE,
+    }
+
+    def _has_page_action_access(self, request, role, view, page, project_id):
+        """Izin aksi atas halaman publik milik ORANG LAIN, jalur default (KEP-85).
+
+        Pemiliknya sudah lolos di `has_permission`. Dulu cuma admin project yang
+        boleh mengubah/mengarsipkan/menghapus halaman orang lain; admin project
+        tidak lagi memberi wewenang (hampir semua staf admin project), jadi yang
+        memutuskan aturan PERM_PAGE_* di God Mode: pemilik + atasannya (bawaan),
+        pemilik saja, atau setiap anggota project. Tamu tetap hanya membaca.
+        Mengganti akses (publik/privat) tetap milik pemilik saja.
+        """
+        if request.method in SAFE_METHODS:
+            return role in [ADMIN, MEMBER, GUEST]
+        if role not in [ADMIN, MEMBER]:
+            return False
+
+        action = getattr(view, "action", None)
+        if action == "access":
+            raise PermissionDenied("Hanya pemilik halaman yang dapat mengubah aksesnya.")
+        kunci = self._KUNCI_AKSI_HALAMAN.get(action)
+        if kunci is None:
+            if request.method in ["PUT", "PATCH"]:
+                # PATCH tanpa action: deskripsi (PagesDescriptionViewSet) dan probe can-edit Live.
+                kunci = PERM_PAGE_EDIT
+            elif request.method == "DELETE":
+                kunci = PERM_PAGE_DELETE
+            else:
+                return True
+        galat = tolak_izin(
+            request,
+            kunci,
+            workspace_id=page.workspace_id,
+            project_id=project_id,
+            pemilik_id=page.owned_by_id,
+        )
+        if galat is not None:
+            raise PermissionDenied(galat.data["error"])
+        return True
 
     def _has_public_page_action_access(self, request, role, view):
         """

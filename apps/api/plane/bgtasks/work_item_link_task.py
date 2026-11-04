@@ -143,6 +143,8 @@ def crawl_work_item_link_title_and_favicon(url: str) -> Dict[str, Any]:
             "favicon": favicon_base64["favicon_base64"],
             "url": url,
             "favicon_url": favicon_base64["favicon_url"],
+            # Paradise KEP-82: address of the page's preview image (og:image), if any.
+            "og_image_url": find_og_image_url(soup, final_url),
         }
 
         return result
@@ -155,6 +157,38 @@ def crawl_work_item_link_title_and_favicon(url: str) -> Dict[str, Any]:
             "favicon": None,
             "url": url,
         }
+
+
+OG_IMAGE_SELECTORS = (
+    ("property", "og:image:secure_url"),
+    ("property", "og:image"),
+    ("name", "og:image"),
+    ("name", "twitter:image"),
+    ("property", "twitter:image"),
+    ("name", "twitter:image:src"),
+)
+
+
+def find_og_image_url(soup: Optional[BeautifulSoup], base_url: str) -> Optional[str]:
+    """Paradise KEP-82: preview image address from Open Graph, falling back to Twitter cards.
+
+    Relative addresses are resolved against `base_url`. Only http(s) results are
+    returned, so `data:`, `javascript:` and similar values never get fetched.
+    """
+    if soup is None:
+        return None
+    for attribute, wanted in OG_IMAGE_SELECTORS:
+        for tag in soup.find_all("meta"):
+            if (tag.get(attribute) or "").strip().lower() != wanted:
+                continue
+            content = (tag.get("content") or "").strip()
+            if not content:
+                continue
+            absolute = urljoin(base_url, content)
+            parsed = urlparse(absolute)
+            if parsed.scheme in ("http", "https") and parsed.hostname:
+                return absolute
+    return None
 
 
 def find_favicon_url(soup: Optional[BeautifulSoup], base_url: str) -> Optional[str]:

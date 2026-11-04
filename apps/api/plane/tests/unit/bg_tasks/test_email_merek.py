@@ -28,6 +28,7 @@ from plane.utils.email_merek import (
     bahasa_penerima,
     buat_pesan,
     inisial,
+    pengirim,
     tanggal,
 )
 from plane.utils.email_teks import KOLOM, PRIORITAS, TEKS
@@ -197,3 +198,60 @@ class TestPesan:
         assert mime.get_content_type() == "multipart/related"
         assert any(b.get("Content-ID") == f"<{LOGO_CID}>" for b in mime.walk())
         assert pesan.subject == "Halobaris"  # karakter kontrol dibuang
+
+
+@pytest.mark.unit
+class TestPengirim:
+    def test_alamat_polos_diberi_nama_merek(self):
+        assert pengirim("noreply@paradiseperkasa.com") == f"{MEREK} <noreply@paradiseperkasa.com>"
+
+    def test_nama_lama_diganti_merek(self):
+        assert pengirim("Team Plane <team@mailer.plane.so>") == f"{MEREK} <team@mailer.plane.so>"
+
+    def test_kosong_tetap_kosong(self):
+        assert pengirim("") == ""
+        assert pengirim(None) == ""
+
+
+def _cabang_outlook(html):
+    """HTML seperti yang dibaca Outlook klasik: isi `[if mso]` dibuka, `[if !mso]` dibuang."""
+    html = re.sub(r"<!--\[if !mso\]><!-->.*?<!--<!\[endif\]-->", "", html, flags=re.S)
+    return re.sub(r"<!--\[if mso\]>(.*?)<!\[endif\]-->", r"\1", html, flags=re.S)
+
+
+@pytest.mark.unit
+class TestBingkaiDanFont:
+    """Garis tipis selebar kartu di Outlook (4 Nov): latar garis tidak boleh ada di belakang isi."""
+
+    def test_font_sistem_tanpa_font_web(self, contoh):
+        assert email_merek.FONT.startswith("'Segoe UI',")
+        for berkas in contoh.glob("*.html"):
+            html = berkas.read_text(encoding="utf-8")
+            assert "fonts.googleapis" not in html and "Plus Jakarta" not in html, berkas.name
+
+    def test_tanpa_bingkai_latar_garis(self, contoh):
+        garis = email_merek.WARNA["garis"]
+        for berkas in contoh.glob("*-id.html"):
+            html = berkas.read_text(encoding="utf-8")
+            assert "padding:1px" not in html, berkas.name
+            # Sel berlatar garis hanya boleh berupa garis 1px, tidak pernah membungkus isi.
+            for sel in re.findall(rf'<td[^>]*bgcolor="{garis}"[^>]*>(.*?)</td>', html, flags=re.S):
+                assert sel == "&nbsp;", berkas.name
+
+    def test_kartu_outlook_ditutup_baris_bawah(self, contoh):
+        baris_bawah = re.compile(r'<tr><td colspan="3" height="1" bgcolor="[^"]+"[^>]*>&nbsp;</td></tr></table>')
+        for berkas in contoh.glob("*-id.html"):
+            outlook = _cabang_outlook(berkas.read_text(encoding="utf-8"))
+            kartu = outlook[: outlook.index('class="em-kaki"')]
+            assert outlook.count('colspan="3" height="1"') % 2 == 0, berkas.name  # tiap bingkai: atas + bawah
+            akhir = list(baris_bawah.finditer(kartu))
+            assert akhir and not kartu[akhir[-1].end() :].count("<table"), berkas.name
+
+    def test_tombol_vml_sama_dengan_tombol_html(self):
+        html = email_merek.tombol("Buka", "https://x.id")
+        tinggi = int(re.search(r"height:(\d+)px;v-text-anchor", html).group(1))
+        arc = int(re.search(r'arcsize="(\d+)%"', html).group(1))
+        assert tinggi * arc / 100 == email_merek.SUDUT["tombol"]
+        atas, _ = (int(x) for x in re.search(r"padding:(\d+)px (\d+)px;font-family", html).groups())
+        baris = int(re.search(r"line-height:(\d+)px;font-weight", html).group(1))
+        assert 2 * atas + baris + 2 == tinggi  # + border 1px atas dan bawah

@@ -25,12 +25,15 @@ from plane.db.models import Issue, User, WorkspaceMember
 from plane.db.models.hierarki import TINGKAT_NAMA
 from plane.utils.email_merek import (
     WARNA,
+    alamat_gabungan,
     avatar_untuk,
     bahasa_penerima,
     baris_orang,
     bungkus,
     buat_pesan,
     catatan_kecil,
+    daftar_orang,
+    gabung_nama,
     judul_html,
     kartu,
     paragraf,
@@ -42,6 +45,8 @@ from plane.utils.email_merek import (
 from plane.utils.email_teks import PRIORITAS
 from plane.utils.exception_logger import log_exception
 from plane.utils.hierarki import tingkat_anggota
+from plane.utils.email_utas import utas_bersama
+from plane.utils.penerima_aktif import aktif_sejak, batas_aktif
 from plane.utils.preferensi_email import boleh_email
 
 TEKS = {
@@ -114,7 +119,9 @@ def susun_email_penugasan(
     ]
     rincian = [r for r in rincian if r[1]]
     deskripsi = _potong(getattr(issue, "description_stripped", "") or "", BATAS_DESKRIPSI)
-    sapaan = s["sapaan"].format(nama=_nama(penerima)).replace(" ,", ",")
+    # `penerima` boleh daftar: rekan setugas menerima SATU email bersama.
+    orang = daftar_orang(penerima)
+    sapaan = s["sapaan"].format(nama=gabung_nama([_nama(o) for o in orang], bahasa)).replace(" ,", ",")
     kalimat = s["kalimat"].format(siapa=siapa)
 
     teks = [sapaan, "", kalimat, "", f"  {kode}  {judul}"]
@@ -143,7 +150,7 @@ def susun_email_penugasan(
         pratajuk=kalimat,
         alasan=s["alasan"],
         url_preferensi=url_preferensi(getattr(getattr(issue, "workspace", None), "slug", "")),
-        email_penerima=getattr(penerima, "email", ""),
+        email_penerima=alamat_gabungan(orang),
     )
     return subjek, "\n".join(teks), html
 
@@ -157,7 +164,9 @@ def penerima_email(issue, actor_id, penerima_ids) -> list:
         workspace_id=issue.workspace_id, member_id__in=tujuan, is_active=True
     ).values_list("member_id", flat=True)
     orang = User.objects.filter(id__in=aktif, is_active=True, is_bot=False)
-    return [o for o in orang if boleh_email(o.id, "assigned")]
+    # ENABLE_EMAIL_ACTIVE_ONLY: yang lama tak membuka aplikasi tidak diemail.
+    batas = batas_aktif()
+    return [o for o in orang if aktif_sejak(o, batas) and boleh_email(o.id, "assigned")]
 
 
 @shared_task
@@ -193,25 +202,31 @@ def kirim_email_penugasan(issue_id, actor_id, penerima_ids):
 
     koneksi, efrom = _koneksi()
     terkirim = gagal = 0
-    for orang in penerima:
+    # Rekan setugas menerima SATU email bersama (To: a; b; c) supaya tiap orang
+    # tahu siapa lagi yang ditugaskan. Dipecah hanya kalau isinya memang beda:
+    # bahasa, atau posisi di utas (lihat `utas_bersama`).
+    for kelompok, utas in utas_bersama(issue, penerima, bahasa_penerima, dari=efrom or ""):
         try:
             gambar = []
             subjek, teks, html = susun_email_penugasan(
-                issue, orang, pemberi, jabatan, tautan, bahasa=bahasa_penerima(orang), gambar=gambar
+                issue, kelompok, pemberi, jabatan, tautan, bahasa=bahasa_penerima(kelompok[0]), gambar=gambar
             )
             buat_pesan(
-                ke=orang.email,
-                subjek=subjek,
+                ke=[o.email for o in kelompok],
+                subjek=utas[0] if utas else subjek,
                 html=html,
                 teks=teks,
                 koneksi=koneksi,
                 dari=efrom,
                 gambar=gambar,
                 lampiran=lampiran,
+                header=utas[1] if utas else None,
             ).send(fail_silently=False)
-            terkirim += 1
+            terkirim += len(kelompok)
         except Exception as e:  # noqa: BLE001
-            # Satu alamat rusak tidak boleh menahan rekan setugasnya.
-            gagal += 1
+            # Server SMTP yang menolak SEBAGIAN alamat tetap mengirim ke sisanya
+            # (smtplib hanya melempar kalau semua ditolak), jadi satu alamat rusak
+            # tidak menahan rekan setugasnya. Yang sampai sini = seluruh kelompok gagal.
+            gagal += len(kelompok)
             log_exception(e)
     return {"terkirim": terkirim, "gagal": gagal}

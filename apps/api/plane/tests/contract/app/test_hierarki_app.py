@@ -371,9 +371,11 @@ class TestPengawasanDivisi:
 @pytest.mark.contract
 class TestKatupMati:
     @pytest.mark.django_db
-    def test_katup_mati_secara_default(self, monkeypatch):
+    @pytest.mark.gerbang_bawaan
+    def test_katup_menyala_secara_default(self, monkeypatch):
+        # KEP-84: the shipped default is now ON.
         monkeypatch.delenv(FLAG_GERBANG, raising=False)
-        assert gerbang_aktif() is False
+        assert gerbang_aktif() is True
 
     @pytest.mark.django_db
     def test_dengan_katup_mati_anggota_boleh_menugaskan_siapa_pun(
@@ -385,7 +387,7 @@ class TestKatupMati:
         mati, ia HARUS lolos — kalau tidak, fitur yang belum diputuskan sudah mengubah
         pekerjaan orang.
         """
-        monkeypatch.delenv(FLAG_GERBANG, raising=False)
+        monkeypatch.setenv(FLAG_GERBANG, "0")
         assert galat_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a) is None
         assert periksa_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a) is None
 
@@ -394,7 +396,7 @@ class TestKatupMati:
         self, workspace, staf_a, staf_a2, divisi_a, monkeypatch, django_assert_num_queries
     ):
         """Katup tertutup harus benar-benar gratis, bukan 'lolos setelah memeriksa'."""
-        monkeypatch.delenv(FLAG_GERBANG, raising=False)
+        monkeypatch.setenv(FLAG_GERBANG, "0")
         with django_assert_num_queries(0):
             assert galat_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a) is None
 
@@ -638,8 +640,9 @@ class TestEndpointHierarki:
         """Kontrol: staf_a memang sudah punya jenjang di fixture, jadi cari yang lain."""
         response = self._get(super_admin)
         data = response.data
-        belum = [b for b in data["anggota"] if b["tingkat"] is None]
-        assert all(b["tingkat_nama"] is None for b in belum)
+        # 4 Nov 2026: tanpa baris = Staf bawaan, ditandai `tingkat_bawaan`.
+        belum = [b for b in data["anggota"] if b["tingkat_bawaan"]]
+        assert all(b["tingkat"] == TINGKAT_MEMBER for b in belum)
         assert data["ringkasan"]["belum_diisi"] == len(belum)
 
     @pytest.mark.django_db
@@ -686,7 +689,7 @@ class TestGerbangDiJalurHttp:
     def test_dengan_katup_mati_penugasan_ke_orang_lain_tetap_jalan(
         self, workspace, staf_a, staf_a2, divisi_a, jenjang, monkeypatch
     ):
-        monkeypatch.delenv(FLAG_GERBANG, raising=False)
+        monkeypatch.setenv(FLAG_GERBANG, "0")
         client = _klien(staf_a)
         response = client.post(
             URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
@@ -782,7 +785,7 @@ class TestGerbangDiJalurHttp:
         self, workspace, staf_a, staf_a2, divisi_a, jenjang, monkeypatch
     ):
         """Kontrak katup: dengan flag mati, draft tidak berubah perilaku."""
-        monkeypatch.delenv(FLAG_GERBANG, raising=False)
+        monkeypatch.setenv(FLAG_GERBANG, "0")
         client = _klien(staf_a)
         response = client.post(
             URL_DRAFTS.format(slug=workspace.slug),
@@ -956,7 +959,7 @@ class TestPersetujuanPenugasan:
     def test_katup_mati_TIDAK_membuat_baris_apa_pun(
         self, workspace, staf_a, divisi_a, jenjang, monkeypatch
     ):
-        monkeypatch.delenv(FLAG_GERBANG, raising=False)
+        monkeypatch.setenv(FLAG_GERBANG, "0")
         client = _klien(staf_a)
         response = client.post(
             URL_ISSUES.format(slug=workspace.slug, project_id=divisi_a.id),
@@ -1197,7 +1200,8 @@ class TestTulisHierarki:
         assert tingkat_anggota(staf_a.id, workspace.id) == 30
 
         assert self._post(super_admin, {"member_id": str(staf_a.id), "tingkat": None}).status_code == 200
-        assert tingkat_anggota(staf_a.id, workspace.id) is None, "null harus berarti 'belum diisi'"
+        # 4 Nov 2026: null = kembali Staf tanpa tempat, bukan "belum diisi".
+        assert tingkat_anggota(staf_a.id, workspace.id) == 10, "null harus berarti 'kembali jadi staf'"
 
         assert self._post(super_admin, {"member_id": str(staf_a.id), "tingkat": 10}).status_code == 200
         assert tingkat_anggota(staf_a.id, workspace.id) == 10
@@ -1271,7 +1275,10 @@ class TestTulisHierarki:
         response = self._get(super_admin)
         baris = {b["email"]: b for b in response.data["anggota"]}
         assert baris[staf_a.email]["tingkat"] == TINGKAT_MEMBER
-        assert baris[super_admin.email]["tingkat"] is None
+        # Tanpa baris jabatan = Staf bawaan (4 Nov 2026), tetap bisa dibedakan.
+        assert baris[super_admin.email]["tingkat"] == TINGKAT_MEMBER
+        assert baris[super_admin.email]["tingkat_bawaan"] is True
+        assert baris[staf_a.email]["tingkat_bawaan"] is False
         assert response.data["ringkasan"]["belum_diisi"] >= 1
 
 

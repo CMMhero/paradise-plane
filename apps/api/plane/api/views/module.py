@@ -36,13 +36,14 @@ from plane.db.models import (
     ModuleIssue,
     ModuleLink,
     Project,
-    ProjectMember,
     UserFavorite,
 )
 
 from .base import BaseAPIView
 from plane.bgtasks.webhook_task import model_activity
 from plane.utils.host import base_host
+from plane.utils.izin_sumber import tolak_izin_module, tolak_izin_module_ids
+from plane.utils.saklar_instance import PERM_MODULE_ARCHIVE, PERM_MODULE_DELETE, PERM_MODULE_EDIT
 from plane.utils.order_queryset import ISSUE_ORDER_BY_ALLOWLIST, MODULE_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.utils.openapi import (
     module_docs,
@@ -456,6 +457,9 @@ class ModuleDetailAPIEndpoint(BaseAPIView):
         Tracks all changes in model activity logs for audit purposes.
         """
         module = Module.objects.get(pk=pk, project_id=project_id, workspace__slug=slug)
+        galat = tolak_izin_module(request, PERM_MODULE_EDIT, module)
+        if galat is not None:
+            return galat
 
         current_instance = json.dumps(ModuleSerializer(module).data, cls=DjangoJSONEncoder)
 
@@ -544,19 +548,10 @@ class ModuleDetailAPIEndpoint(BaseAPIView):
         Only admins or the module creator can perform this action.
         """
         module = Module.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
-        if module.created_by_id != request.user.id and (
-            not ProjectMember.objects.filter(
-                workspace__slug=slug,
-                member=request.user,
-                role=20,
-                project_id=project_id,
-                is_active=True,
-            ).exists()
-        ):
-            return Response(
-                {"error": "Only admin or creator can delete the module"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        # KEP-85: dulu admin project ATAU pembuat; sekarang aturan PERM_MODULE_DELETE.
+        galat = tolak_izin_module(request, PERM_MODULE_DELETE, module)
+        if galat is not None:
+            return galat
 
         module_issues = list(ModuleIssue.objects.filter(module_id=pk).values_list("issue", flat=True))
         issue_activity.delay(
@@ -719,6 +714,9 @@ class ModuleIssueListCreateAPIEndpoint(BaseAPIView):
         if not len(issues):
             return Response({"error": "Issues are required"}, status=status.HTTP_400_BAD_REQUEST)
         module = Module.objects.get(workspace__slug=slug, project_id=project_id, pk=module_id)
+        galat = tolak_izin_module(request, PERM_MODULE_EDIT, module)
+        if galat is not None:
+            return galat
 
         issues = Issue.objects.filter(workspace__slug=slug, project_id=project_id, pk__in=issues).values_list(
             "id", flat=True
@@ -917,6 +915,9 @@ class ModuleIssueDetailAPIEndpoint(BaseAPIView):
         Remove a work item from a module while keeping the work item in the project.
         Records the removal activity for tracking purposes.
         """
+        galat = tolak_izin_module_ids(request, PERM_MODULE_EDIT, [module_id], slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         module_issue = ModuleIssue.objects.get(
             workspace__slug=slug,
             project_id=project_id,
@@ -1088,6 +1089,9 @@ class ModuleArchiveUnarchiveAPIEndpoint(BaseAPIView):
         Only modules with completed status can be archived.
         """
         module = Module.objects.get(pk=pk, project_id=project_id, workspace__slug=slug)
+        galat = tolak_izin_module(request, PERM_MODULE_ARCHIVE, module)
+        if galat is not None:
+            return galat
         if module.status not in ["completed", "cancelled"]:
             return Response(
                 {"error": "Only completed or cancelled modules can be archived"},
@@ -1122,6 +1126,9 @@ class ModuleArchiveUnarchiveAPIEndpoint(BaseAPIView):
         The module will reappear in active module lists and become fully functional.
         """
         module = Module.objects.get(pk=pk, project_id=project_id, workspace__slug=slug)
+        galat = tolak_izin_module(request, PERM_MODULE_ARCHIVE, module)
+        if galat is not None:
+            return galat
         module.archived_at = None
         module.save()
         return Response(status=status.HTTP_204_NO_CONTENT)

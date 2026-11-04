@@ -19,6 +19,14 @@ from plane.app.serializers import StateSerializer
 from plane.app.permissions import ROLE, allow_permission
 from plane.db.models import State, Issue
 from plane.utils.cache import invalidate_cache
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
+
+
+def _galat_alur_kerja(request, slug, project_id):
+    """KEP-85: state = alur kerja project. Admin project (dan dulu bahkan anggota
+    biasa untuk ubah) tidak lagi cukup; yang memutuskan PERM_PROJECT_WORKFLOW."""
+    return tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
 
 
 class StateViewSet(BaseViewSet):
@@ -45,6 +53,9 @@ class StateViewSet(BaseViewSet):
     @invalidate_cache(path="workspaces/:slug/states/", url_params=True, user=False)
     @allow_permission([ROLE.ADMIN])
     def create(self, request, slug, project_id):
+        galat = _galat_alur_kerja(request, slug, project_id)
+        if galat is not None:
+            return galat
         try:
             serializer = StateSerializer(data=request.data)
             if serializer.is_valid():
@@ -60,6 +71,9 @@ class StateViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, pk):
+        galat = _galat_alur_kerja(request, slug, project_id)
+        if galat is not None:
+            return galat
         try:
             state = State.objects.get(pk=pk, project_id=project_id, workspace__slug=slug)
             serializer = StateSerializer(state, data=request.data, partial=True)
@@ -104,6 +118,9 @@ class StateViewSet(BaseViewSet):
     @invalidate_cache(path="workspaces/:slug/states/", url_params=True, user=False)
     @allow_permission([ROLE.ADMIN])
     def mark_as_default(self, request, slug, project_id, pk):
+        galat = _galat_alur_kerja(request, slug, project_id)
+        if galat is not None:
+            return galat
         # Select all the states which are marked as default
         _ = State.objects.filter(workspace__slug=slug, project_id=project_id, default=True).update(default=False)
         _ = State.objects.filter(workspace__slug=slug, project_id=project_id, pk=pk).update(default=True)
@@ -112,6 +129,9 @@ class StateViewSet(BaseViewSet):
     @invalidate_cache(path="workspaces/:slug/states/", url_params=True, user=False)
     @allow_permission([ROLE.ADMIN])
     def destroy(self, request, slug, project_id, pk):
+        galat = _galat_alur_kerja(request, slug, project_id)
+        if galat is not None:
+            return galat
         state = State.objects.get(is_triage=False, pk=pk, project_id=project_id, workspace__slug=slug)
 
         if state.default:

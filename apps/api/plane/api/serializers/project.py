@@ -163,6 +163,15 @@ class ProjectCreateSerializer(BaseSerializer):
         project = Project.objects.create(**validated_data, workspace_id=self.context["workspace_id"])
         return project
 
+    def validate_archive_in(self, archive_in):
+        # Paradise (KEP-83): plafon arsip otomatis instance, sama dengan API aplikasi.
+        from plane.utils.bawaan_project import galat_archive_in_project  # noqa: PLC0415
+
+        galat = galat_archive_in_project(archive_in, self.instance)
+        if galat:
+            raise serializers.ValidationError(galat)
+        return archive_in
+
 
 class ProjectUpdateSerializer(ProjectCreateSerializer):
     """

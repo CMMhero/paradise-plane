@@ -8,8 +8,8 @@
   target_date yang kosong. Tanggal yang sudah ada tidak pernah ditimpa, dan
   tidak dikosongkan saat tugas mundur.
 * Staf yang menggeser ke selesai masih menunggu atasan: target_date baru
-  diisi saat DISETUJUI, dengan tanggal saat digeser ke selesai. Ditolak = tetap
-  kosong.
+  diisi saat DISETUJUI, dengan tanggal PENGAJUAN (KEP-84, bawaan
+  APPROVAL_FINISH_TIME). Ditolak = tetap kosong.
 * Tiap isian otomatis meninggalkan jejak aktivitas.
 """
 
@@ -17,6 +17,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 import pytest
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -204,6 +205,10 @@ class TestTanggalSelesai:
         assert issue.target_date is None, "masih menunggu atasan, belum boleh terisi"
 
         baris = PersetujuanPenugasan.objects.get(issue_id=issue_id, status="menunggu")
+        # KEP-84: bawaan APPROVAL_FINISH_TIME = saat diajukan. Pengajuan dibuat dua
+        # hari lalu, disetujui hari ini: tanggalnya hari PENGAJUAN.
+        diajukan = timezone.now() - timedelta(days=2)
+        PersetujuanPenugasan.objects.filter(pk=baris.pk).update(created_at=diajukan)
         res = _klien(bos).post(
             URL_PUTUSKAN.format(slug=workspace.slug, project_id=divisi.id, pk=baris.id),
             {"aksi": "setujui"},
@@ -212,7 +217,8 @@ class TestTanggalSelesai:
         assert res.status_code == status.HTTP_200_OK, getattr(res, "data", None)
 
         issue.refresh_from_db()
-        assert issue.target_date == tanggal_lokal(issue.completed_at, ZONA)
+        assert issue.completed_at == diajukan
+        assert issue.target_date == tanggal_lokal(diajukan, ZONA)
         jejak = IssueActivity.objects.get(issue_id=issue_id, field="target_date", comment__contains="automatically")
         assert jejak.actor_id == bos.id
 

@@ -33,7 +33,13 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.app.permissions import ROLE, allow_permission
-from plane.utils.task_access import bisa_ganti_tenggat, bisa_hapus_tugas, tenggat_diubah
+from plane.utils.task_access import (
+    AturanTugas,
+    bisa_ganti_tenggat,
+    bisa_hapus_tugas,
+    pesan_tolak_tenggat,
+    tenggat_diubah,
+)
 from plane.app.serializers import (
     IssueCreateSerializer,
     IssueDetailSerializer,
@@ -717,10 +723,7 @@ class IssueViewSet(BaseViewSet):
         # apa pun padahal yang ia ubah cuma prioritas.
         if tenggat_diubah(issue, request.data) and not bisa_ganti_tenggat(request.user, issue):
             return Response(
-                {
-                    "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
-                    "atau Super Admin. Hubungi pembuatnya kalau tanggalnya perlu digeser."
-                },
+                {"error": pesan_tolak_tenggat()},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -893,7 +896,9 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
         # Hapus yang boleh, lewati sisanya, lalu KATAKAN berapa yang dilewati.
         # Diam-diam menghapus sebagian adalah kegagalan senyap, dan orang akan
         # mengira semuanya sudah terhapus.
-        boleh = [i for i in semua if bisa_hapus_tugas(request.user, i, slug, project_id)]
+        # Setelan, gerbang, dan peran dibaca sekali untuk seluruh daftar.
+        aturan = AturanTugas(request.user)
+        boleh = [i for i in semua if bisa_hapus_tugas(request.user, i, slug, project_id, aturan)]
         dilewati = len(semua) - len(boleh)
         issues = Issue.issue_objects.filter(pk__in=[i.pk for i in boleh])
 
@@ -1254,6 +1259,8 @@ class IssueBulkUpdateDateEndpoint(BaseAPIView):
         issues = list(Issue.objects.filter(id__in=issue_ids, workspace__slug=slug, project_id=project_id))
         issues_dict = {str(issue.id): issue for issue in issues}
         issues_to_update = []
+        # Aturan tenggat dibaca sekali untuk semua baris (bukan per tugas).
+        aturan = AturanTugas(request.user)
 
         for update in updates:
             issue_id = update["id"]
@@ -1266,12 +1273,9 @@ class IssueBulkUpdateDateEndpoint(BaseAPIView):
             target_date = update.get("target_date")
             # Tenggat hanya boleh digeser pembuat tugas / Super Admin (sama dengan PATCH).
             # Seret di Gantt/kalender lewat endpoint ini, jadi tanpa cek ini aturannya bocor.
-            if tenggat_diubah(issue, update) and not bisa_ganti_tenggat(request.user, issue):
+            if tenggat_diubah(issue, update) and not bisa_ganti_tenggat(request.user, issue, aturan):
                 return Response(
-                    {
-                        "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
-                        "atau Super Admin. Hubungi pembuatnya kalau tanggalnya perlu digeser."
-                    },
+                    {"error": pesan_tolak_tenggat(aturan)},
                     status=status.HTTP_403_FORBIDDEN,
                 )
             validate_dates = self.validate_dates(issue.start_date, issue.target_date, start_date, target_date)

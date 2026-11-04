@@ -15,6 +15,8 @@ from plane.api.serializers import StateSerializer
 from plane.app.permissions import ProjectEntityPermission
 from plane.db.models import Issue, State
 from .base import BaseAPIView
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
 from plane.utils.openapi import (
     state_docs,
     STATE_ID_PARAMETER,
@@ -83,6 +85,10 @@ class StateListCreateAPIEndpoint(BaseAPIView):
         Create a new workflow state for a project with specified name, color, and group.
         Supports external ID tracking for integration purposes.
         """
+        # KEP-85: state = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         try:
             serializer = StateSerializer(data=request.data, context={"project_id": project_id})
             if serializer.is_valid():
@@ -228,6 +234,9 @@ class StateDetailAPIEndpoint(BaseAPIView):
         Permanently remove a workflow state from a project.
         Default states and states with existing work items cannot be deleted.
         """
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         state = State.objects.get(is_triage=False, pk=state_id, project_id=project_id, workspace__slug=slug)
 
         if state.default:
@@ -275,6 +284,9 @@ class StateDetailAPIEndpoint(BaseAPIView):
         Partially update an existing workflow state's properties like name, color, or group.
         Validates external ID uniqueness if provided.
         """
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         state = State.objects.get(workspace__slug=slug, project_id=project_id, pk=state_id)
         serializer = StateSerializer(state, data=request.data, partial=True)
         if serializer.is_valid():

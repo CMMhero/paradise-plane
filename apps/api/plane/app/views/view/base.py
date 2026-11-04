@@ -47,6 +47,33 @@ from .. import BaseViewSet
 from plane.db.models import UserFavorite
 from plane.utils.filters import ComplexFilterBackend
 from plane.utils.filters import IssueFilterSet
+from plane.utils.izin_sumber import penilai_untuk, tolak_izin
+from plane.utils.saklar_instance import PERM_VIEW_DELETE, PERM_VIEW_EDIT
+
+
+def _galat_izin_view(request, kunci, view, data=None):
+    """KEP-85: siapa boleh mengubah/menghapus view, workspace maupun project.
+
+    Dulu: ubah = pemilik saja, hapus = pemilik atau admin (project/workspace).
+    Sekarang aturan PERM_VIEW_* yang memutuskan; admin project tidak lagi cukup.
+    View privat orang lain tetap tak terlihat (404) kecuali bagi admin, dan
+    mengganti akses publik/privat tetap hak pemilik saja.
+    """
+    pemilik = view.owned_by_id == request.user.id
+    if not pemilik and view.access == 0 and not penilai_untuk(request, view.workspace_id).admin:
+        return Response({"error": "View not found."}, status=status.HTTP_404_NOT_FOUND)
+    if not pemilik and data is not None and "access" in data and data.get("access") != view.access:
+        return Response(
+            {"error": "Only the owner of the view can change its access"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return tolak_izin(
+        request,
+        kunci,
+        workspace_id=view.workspace_id,
+        project_id=view.project_id,
+        pemilik_id=view.owned_by_id,
+    )
 
 
 class WorkspaceViewViewSet(BaseViewSet):
@@ -83,7 +110,7 @@ class WorkspaceViewViewSet(BaseViewSet):
         views = IssueViewSerializer(queryset, many=True, fields=fields if fields else None).data
         return Response(views, status=status.HTTP_200_OK)
 
-    @allow_permission(allowed_roles=[], level="WORKSPACE", creator=True, model=IssueView)
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
     def partial_update(self, request, slug, pk):
         with transaction.atomic():
             workspace_view = IssueView.objects.select_for_update().get(pk=pk, workspace__slug=slug)
@@ -91,12 +118,10 @@ class WorkspaceViewViewSet(BaseViewSet):
             if workspace_view.is_locked:
                 return Response({"error": "view is locked"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Only update the view if owner is updating
-            if workspace_view.owned_by_id != request.user.id:
-                return Response(
-                    {"error": "Only the owner of the view can update the view"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            # KEP-85: dulu pemilik saja; sekarang aturan PERM_VIEW_EDIT.
+            galat = _galat_izin_view(request, PERM_VIEW_EDIT, workspace_view, request.data)
+            if galat is not None:
+                return galat
 
             serializer = IssueViewSerializer(workspace_view, data=request.data, partial=True)
 
@@ -117,27 +142,23 @@ class WorkspaceViewViewSet(BaseViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission(allowed_roles=[ROLE.ADMIN], level="WORKSPACE", creator=True, model=IssueView)
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
     def destroy(self, request, slug, pk):
         workspace_view = IssueView.objects.get(pk=pk, workspace__slug=slug)
 
-        workspace_member = WorkspaceMember.objects.filter(
-            workspace__slug=slug, member=request.user, role=20, is_active=True
-        )
-        if workspace_member.exists() or workspace_view.owned_by == request.user:
-            workspace_view.delete()
-            # Delete the user favorite view
-            UserFavorite.objects.filter(
-                workspace__slug=slug,
-                entity_identifier=pk,
-                project__isnull=True,
-                entity_type="view",
-            ).delete()
-        else:
-            return Response(
-                {"error": "Only admin or owner can delete the view"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # KEP-85: dulu admin workspace atau pemilik; sekarang aturan PERM_VIEW_DELETE
+        # (admin workspace tetap lolos lewat penilai).
+        galat = _galat_izin_view(request, PERM_VIEW_DELETE, workspace_view)
+        if galat is not None:
+            return galat
+        workspace_view.delete()
+        # Delete the user favorite view
+        UserFavorite.objects.filter(
+            workspace__slug=slug,
+            entity_identifier=pk,
+            project__isnull=True,
+            entity_type="view",
+        ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -346,7 +367,7 @@ class IssueViewViewSet(BaseViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission(allowed_roles=[], creator=True, model=IssueView)
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER])
     def partial_update(self, request, slug, project_id, pk):
         with transaction.atomic():
             issue_view = IssueView.objects.select_for_update().get(pk=pk, workspace__slug=slug, project_id=project_id)
@@ -354,12 +375,10 @@ class IssueViewViewSet(BaseViewSet):
             if issue_view.is_locked:
                 return Response({"error": "view is locked"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Only update the view if owner is updating
-            if issue_view.owned_by_id != request.user.id:
-                return Response(
-                    {"error": "Only the owner of the view can update the view"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            # KEP-85: dulu pemilik saja; sekarang aturan PERM_VIEW_EDIT.
+            galat = _galat_izin_view(request, PERM_VIEW_EDIT, issue_view, request.data)
+            if galat is not None:
+                return galat
 
             serializer = IssueViewSerializer(issue_view, data=request.data, partial=True)
 
@@ -368,39 +387,28 @@ class IssueViewViewSet(BaseViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission(allowed_roles=[ROLE.ADMIN], creator=True, model=IssueView)
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, pk):
         project_view = IssueView.objects.get(pk=pk, project_id=project_id, workspace__slug=slug)
-        if (
-            ProjectMember.objects.filter(
-                workspace__slug=slug,
-                project_id=project_id,
-                member=request.user,
-                role=20,
-                is_active=True,
-            ).exists()
-            or project_view.owned_by_id == request.user.id
-        ):
-            project_view.delete()
-            # Delete the user favorite view
-            UserFavorite.objects.filter(
-                project_id=project_id,
-                workspace__slug=slug,
-                entity_identifier=pk,
-                entity_type="view",
-            ).delete()
-            # Delete the page from recent visit
-            UserRecentVisit.objects.filter(
-                project_id=project_id,
-                workspace__slug=slug,
-                entity_identifier=pk,
-                entity_name="view",
-            ).delete(soft=False)
-        else:
-            return Response(
-                {"error": "Only admin or owner can delete the view"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # KEP-85: dulu admin project atau pemilik; admin project tidak lagi cukup.
+        galat = _galat_izin_view(request, PERM_VIEW_DELETE, project_view)
+        if galat is not None:
+            return galat
+        project_view.delete()
+        # Delete the user favorite view
+        UserFavorite.objects.filter(
+            project_id=project_id,
+            workspace__slug=slug,
+            entity_identifier=pk,
+            entity_type="view",
+        ).delete()
+        # Delete the page from recent visit
+        UserRecentVisit.objects.filter(
+            project_id=project_id,
+            workspace__slug=slug,
+            entity_identifier=pk,
+            entity_name="view",
+        ).delete(soft=False)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

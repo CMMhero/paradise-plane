@@ -31,6 +31,7 @@ from django.utils import timezone
 
 from plane.db.models import PesanLangsung
 from plane.utils.exception_logger import log_exception
+from plane.utils.penerima_aktif import aktif_sejak, batas_aktif
 from plane.utils.preferensi_email import penyaring
 from plane.utils.saklar_instance import (
     CHAT_EMAIL_INTERVAL_MINUTES,
@@ -113,6 +114,7 @@ def kirim_pemberitahuan_pesan():
     per_penerima = {uid: daftar for uid, daftar in per_penerima.items() if uid in mau}
 
     terakhir_dikirimi = _email_terakhir(list(per_penerima.keys()))
+    batas = batas_aktif(sekarang)
 
     terkirim = 0
     for user_id, pesan_masuk in per_penerima.items():
@@ -124,6 +126,11 @@ def kirim_pemberitahuan_pesan():
 
         penerima = pesan_masuk[0].penerima
         if not penerima.email or not penerima.is_active:
+            continue
+        if not aktif_sejak(penerima, batas):
+            # ENABLE_EMAIL_ACTIVE_ONLY: ditandai sudah ditangani seperti saklar
+            # `chat` yang mati, supaya kembali aktif tidak memicu email tumpukan lama.
+            PesanLangsung.objects.filter(id__in=[p.id for p in pesan_masuk]).update(dinotifikasi_pada=sekarang)
             continue
 
         # Rangkum per lawan bicara: berapa pesan dan apa yang terakhir ditulis.

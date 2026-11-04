@@ -12,6 +12,8 @@ from .base import BaseModel
 # Batas panjang satu pesan. Bukan batas teknis TextField, tapi batas kewarasan:
 # tanpa ini satu tempelan berisi seluruh isi spreadsheet masuk ke tabel dan tiap
 # pemuatan percakapan ikut menyeretnya.
+# KEP-83: batas yang berlaku sekarang CHAT_MESSAGE_MAX_LENGTH di God Mode
+# (app/views/chat.py membacanya); angka ini tinggal sebagai bawaannya yang lama.
 BATAS_ISI = 5000
 
 # Kanal sistem (3 Nov 2026). Dua kanal per workspace yang diikuti SEMUA anggota,

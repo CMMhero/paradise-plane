@@ -43,6 +43,8 @@ from plane.db.models import (
 )
 from plane.db.models.intake import IntakeIssueStatus
 from plane.utils.host import base_host
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_ARCHIVE, PERM_PROJECT_DELETE, PERM_PROJECT_EDIT
 from plane.utils.order_queryset import PROJECT_ORDER_BY_ALLOWLIST, sanitize_order_by
 
 
@@ -260,6 +262,13 @@ class ProjectViewSet(BaseViewSet):
     def create(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
 
+        # Kustomisasi Paradise: staf / member biasa tidak boleh membuat project
+        # (plane/utils/izin_buat_project.py, satu sumber untuk web + API v1).
+        from plane.utils.izin_buat_project import PESAN_TOLAK_BUAT_PROJECT, boleh_buat_project
+
+        if not boleh_buat_project(request.user, workspace.id):
+            return Response({"error": PESAN_TOLAK_BUAT_PROJECT}, status=status.HTTP_403_FORBIDDEN)
+
         # Kustomisasi Paradise: kolom yang tidak dikirim diisi bawaan project dari
         # God Mode (plane/utils/bawaan_project.py). Formulir web sudah mengisi
         # dirinya dengan nilai yang sama; ini untuk pemanggil lain.
@@ -329,28 +338,12 @@ class ProjectViewSet(BaseViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, slug, pk=None):
-        # try:
-        is_workspace_admin = WorkspaceMember.objects.filter(
-            member=request.user,
-            workspace__slug=slug,
-            is_active=True,
-            role=ROLE.ADMIN.value,
-        ).exists()
-
-        is_project_admin = ProjectMember.objects.filter(
-            member=request.user,
-            workspace__slug=slug,
-            project_id=pk,
-            role=ROLE.ADMIN.value,
-            is_active=True,
-        ).exists()
-
-        # Return error for if the user is neither workspace admin nor project admin
-        if not is_project_admin and not is_workspace_admin:
-            return Response(
-                {"error": "You don't have the required permissions."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        # KEP-85: dulu admin workspace ATAU admin project. Admin project tidak lagi
+        # cukup (hampir semua staf admin project); yang memutuskan PERM_PROJECT_EDIT
+        # (bawaan: supervisor ke atas di project yang ia awasi; admin selalu lolos).
+        galat = tolak_izin_project(request, PERM_PROJECT_EDIT, slug=slug, project_id=pk)
+        if galat is not None:
+            return galat
 
         workspace = Workspace.objects.get(slug=slug)
 
@@ -397,21 +390,11 @@ class ProjectViewSet(BaseViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, slug, pk):
-        if (
-            WorkspaceMember.objects.filter(
-                member=request.user,
-                workspace__slug=slug,
-                is_active=True,
-                role=ROLE.ADMIN.value,
-            ).exists()
-            or ProjectMember.objects.filter(
-                member=request.user,
-                workspace__slug=slug,
-                project_id=pk,
-                role=ROLE.ADMIN.value,
-                is_active=True,
-            ).exists()
-        ):
+        # KEP-85: dulu admin workspace ATAU admin project; sekarang PERM_PROJECT_DELETE.
+        if not Project.objects.filter(pk=pk, workspace__slug=slug).exists():
+            return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+        galat = tolak_izin_project(request, PERM_PROJECT_DELETE, slug=slug, project_id=pk)
+        if galat is None:
             project = Project.objects.get(pk=pk, workspace__slug=slug)
             project.delete()
             webhook_activity.delay(
@@ -434,16 +417,17 @@ class ProjectViewSet(BaseViewSet):
             UserFavorite.objects.filter(project_id=pk, workspace__slug=slug).delete()
 
             return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response(
-                {"error": "You don't have the required permissions."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        return galat
 
 
 class ProjectArchiveUnarchiveEndpoint(BaseAPIView):
+    # KEP-85: dulu setiap anggota project (admin + member) boleh mengarsipkan project;
+    # sekarang PERM_PROJECT_ARCHIVE yang memutuskan.
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def post(self, request, slug, project_id):
+        galat = tolak_izin_project(request, PERM_PROJECT_ARCHIVE, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         project.archived_at = timezone.now()
         project.save()
@@ -452,6 +436,9 @@ class ProjectArchiveUnarchiveEndpoint(BaseAPIView):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def delete(self, request, slug, project_id):
+        galat = tolak_izin_project(request, PERM_PROJECT_ARCHIVE, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         project.archived_at = None
         project.save()

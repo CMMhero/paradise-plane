@@ -10,7 +10,7 @@ import secrets
 
 # Module imports
 from plane.authentication.adapter.credential import CredentialAdapter
-from plane.license.utils.instance_value import get_configuration_value
+from plane.license.utils.instance_value import email_aktif, get_configuration_value
 from plane.settings.redis import redis_instance
 from plane.authentication.adapter.error import (
     AUTHENTICATION_ERROR_CODES,
@@ -49,12 +49,12 @@ class MagicCodeProvider(CredentialAdapter):
                 {"key": "EMAIL_HOST", "default": os.environ.get("EMAIL_HOST")},
                 {
                     "key": "ENABLE_MAGIC_LINK_LOGIN",
-                    "default": os.environ.get("ENABLE_MAGIC_LINK_LOGIN", "1"),
+                    "default": os.environ.get("ENABLE_MAGIC_LINK_LOGIN", "0"),
                 },
             ]
         )
 
-        if not (EMAIL_HOST):
+        if not email_aktif():
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["SMTP_NOT_CONFIGURED"],
                 error_message="SMTP_NOT_CONFIGURED",

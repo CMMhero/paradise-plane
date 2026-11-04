@@ -81,7 +81,9 @@ from plane.db.models import (
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan
-from plane.utils.task_access import bisa_ganti_tenggat, bisa_hapus_tugas, tenggat_diubah
+from plane.utils.task_access import bisa_ganti_tenggat, bisa_hapus_tugas, pesan_tolak_tenggat, tenggat_diubah
+from plane.utils.izin_sumber import tolak_izin, tolak_izin_komentar, tolak_izin_project
+from plane.utils.saklar_instance import PERM_COMMENT_DELETE, PERM_COMMENT_EDIT, PERM_PROJECT_WORKFLOW
 from plane.utils.order_queryset import (
     ACTIVITY_ORDER_BY_ALLOWLIST,
     ISSUE_ORDER_BY_ALLOWLIST,
@@ -640,6 +642,11 @@ class IssueDetailAPIEndpoint(BaseAPIView):
                     external_source=external_source,
                 )
 
+                # Kustomisasi Paradise: upsert lewat external_id adalah PATCH juga,
+                # jadi aturan tenggat yang sama berlaku (dulu pintu ini terlewat).
+                if tenggat_diubah(issue, request.data) and not bisa_ganti_tenggat(request.user, issue):
+                    return Response({"error": pesan_tolak_tenggat()}, status=status.HTTP_403_FORBIDDEN)
+
                 # Get the current instance of the issue in order to track
                 # changes and dispatch the issue activity
                 current_instance = json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder)
@@ -786,10 +793,7 @@ class IssueDetailAPIEndpoint(BaseAPIView):
         # aturan yang cuma dipasang di aplikasi web bukan aturan, cuma saran.
         if tenggat_diubah(issue, request.data) and not bisa_ganti_tenggat(request.user, issue):
             return Response(
-                {
-                    "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
-                    "atau Super Admin."
-                },
+                {"error": pesan_tolak_tenggat()},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -933,6 +937,10 @@ class LabelListCreateAPIEndpoint(BaseAPIView):
         Create a new label in the specified project with name, color, and description.
         Supports external ID tracking for integration purposes.
         """
+        # KEP-85: label = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         try:
             serializer = LabelCreateUpdateSerializer(data=request.data)
             if serializer.is_valid():
@@ -1072,6 +1080,9 @@ class LabelDetailAPIEndpoint(LabelListCreateAPIEndpoint):
         Validates external ID uniqueness if provided.
         """
         label = self.get_queryset().get(pk=pk)
+        galat = tolak_izin(request, PERM_PROJECT_WORKFLOW, workspace_id=label.workspace_id, project_id=label.project_id)
+        if galat is not None:
+            return galat
         serializer = LabelCreateUpdateSerializer(label, data=request.data, partial=True)
         if serializer.is_valid():
             if (
@@ -1117,6 +1128,9 @@ class LabelDetailAPIEndpoint(LabelListCreateAPIEndpoint):
         This action cannot be undone.
         """
         label = self.get_queryset().get(pk=pk)
+        galat = tolak_izin(request, PERM_PROJECT_WORKFLOW, workspace_id=label.workspace_id, project_id=label.project_id)
+        if galat is not None:
+            return galat
         label.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1613,6 +1627,10 @@ class IssueCommentDetailAPIEndpoint(BaseAPIView):
         Validates external ID uniqueness if provided.
         """
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
+        # KEP-85: dulu token API bebas mengubah komentar siapa pun; sekarang aturan PERM_COMMENT_EDIT.
+        galat = tolak_izin_komentar(request, PERM_COMMENT_EDIT, issue_comment)
+        if galat is not None:
+            return galat
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
 
@@ -1682,6 +1700,10 @@ class IssueCommentDetailAPIEndpoint(BaseAPIView):
         Records deletion activity for audit purposes.
         """
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
+        # KEP-85: dulu token API bebas menghapus komentar siapa pun; sekarang aturan PERM_COMMENT_DELETE.
+        galat = tolak_izin_komentar(request, PERM_COMMENT_DELETE, issue_comment)
+        if galat is not None:
+            return galat
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
         issue_comment.delete()
         issue_activity.delay(

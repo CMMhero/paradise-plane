@@ -24,7 +24,7 @@ from plane.db.models import (
 )
 from plane.utils.paginator import BasePaginator
 from plane.utils.inbox_chat import ENTITY_CHAT
-from plane.utils.preferensi_email import SAKLAR_NOTIFIKASI, dikunci, saklar_efektif, terapkan_perubahan
+from plane.utils.preferensi_email import SAKLAR_NOTIFIKASI, dikunci, kunci_admin, saklar_efektif, terapkan_perubahan
 from plane.utils.order_queryset import NOTIFICATION_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.app.permissions import allow_permission, ROLE
 
@@ -305,12 +305,18 @@ class UserNotificationPreferenceEndpoint(BaseAPIView):
     # Kustomisasi Paradise: yang dikirim ke klien adalah saklar yang BERLAKU
     # (bawaan jabatan selama `ikut_bawaan_jabatan` hidup), dan perubahan apa pun
     # membekukan nilai itu ke kolom. Lihat plane/utils/preferensi_email.py.
-    def _bentuk(self, pref):
+    def _bentuk(self, pref, terkunci=None):
+        terkunci = kunci_admin(pref.user_id) if terkunci is None else terkunci
         return {
             "id": str(pref.id),
             **saklar_efektif(pref),
+            # Saklar yang dikunci admin tampil MATI (KEP-83). Pilihan orangnya tetap
+            # tersimpan dan kembali berlaku saat kuncinya dibuka.
+            **{kunci: False for kunci in terkunci},
             # Saklar yang dipaksa mati kebijakan direktur di God Mode; web mengunci tombolnya.
             "dikunci": dikunci(pref.user_id),
+            # {saklar: "instance_switch_off" | "director_cap"} (KEP-83).
+            "locked_by_admin": terkunci,
             "ikut_bawaan_jabatan": pref.ikut_bawaan_jabatan,
         }
 
@@ -329,7 +335,12 @@ class UserNotificationPreferenceEndpoint(BaseAPIView):
                     return Response({"error": f"{kunci} harus true/false."}, status=status.HTTP_400_BAD_REQUEST)
                 perubahan[kunci] = request.data[kunci]
         pref = self._pref(request)
+        # Menyalakan saklar yang dikunci admin DIABAIKAN, bukan ditolak: permintaan
+        # lain di body yang sama tetap jalan, dan `locked_by_admin` di balasan
+        # memberi tahu web kenapa saklar itu tetap mati. Mematikannya tetap boleh.
+        terkunci = kunci_admin(pref.user_id)
+        perubahan = {k: v for k, v in perubahan.items() if not (v is True and k in terkunci)}
         kolom = terapkan_perubahan(pref, perubahan)
         if kolom:
             pref.save(update_fields=[*kolom, "updated_at"])
-        return Response(self._bentuk(pref), status=status.HTTP_200_OK)
+        return Response(self._bentuk(pref, terkunci), status=status.HTTP_200_OK)

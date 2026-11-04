@@ -189,6 +189,32 @@ def dikunci(user_id, sekarang=None, kelompok=None) -> list:
     return [kunci for kunci in SAKLAR_NOTIFIKASI if not batas[kunci]]
 
 
+# Saklar pribadi yang punya saklar induk di God Mode (KEP-83). Induk mati =
+# saklar pribadinya terkunci "Turned off by admin" di web; pilihan orangnya tetap
+# tersimpan dan berlaku lagi begitu induknya dinyalakan.
+INDUK_INSTANCE = {
+    "deadline_reminder": "ENABLE_DEADLINE_REMINDER",
+    "chat": "ENABLE_CHAT_EMAIL",
+}
+ALASAN_SAKLAR_INSTANCE = "instance_switch_off"
+ALASAN_BATAS_DIREKTUR = "director_cap"
+
+
+def kunci_admin(user_id, kelompok=None, sekarang=None) -> dict:
+    """{saklar: alasan} yang dikunci admin untuk orang ini; tak bisa ia nyalakan.
+
+    Alasan `instance_switch_off` (saklar induk God Mode mati) didahulukan atas
+    `director_cap` (baris direktur God Mode, KEP-59), karena itu yang lebih luas.
+    """
+    from plane.utils.saklar_instance import saklar_aktif
+
+    hasil = {kunci: ALASAN_BATAS_DIREKTUR for kunci in dikunci(user_id, sekarang, kelompok)}
+    for kunci, induk in INDUK_INSTANCE.items():
+        if not saklar_aktif(induk):
+            hasil[kunci] = ALASAN_SAKLAR_INSTANCE
+    return {kunci: hasil[kunci] for kunci in SAKLAR_NOTIFIKASI if kunci in hasil}
+
+
 def saklar_efektif(pref, user_id=None, kelompok=None, sekarang=None) -> dict:
     """Nilai yang berlaku. `pref` boleh None (baris belum ada = ikut bawaan God Mode hari ini).
 

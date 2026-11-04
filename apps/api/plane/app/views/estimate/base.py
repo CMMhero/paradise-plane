@@ -23,6 +23,8 @@ from plane.app.serializers import (
     EstimateReadSerializer,
 )
 from plane.utils.cache import invalidate_cache
+from plane.utils.izin_sumber import tolak_izin_project
+from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
 from plane.bgtasks.issue_activities_task import issue_activity
 
 
@@ -62,6 +64,10 @@ class BulkEstimatePointEndpoint(BaseViewSet):
 
     @invalidate_cache(path="/api/workspaces/:slug/estimates/", url_params=True, user=False)
     def create(self, request, slug, project_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         estimate = request.data.get("estimate")
         estimate_name = estimate.get("name", generate_random_name())
         estimate_type = estimate.get("type", "categories")
@@ -107,6 +113,10 @@ class BulkEstimatePointEndpoint(BaseViewSet):
 
     @invalidate_cache(path="/api/workspaces/:slug/estimates/", url_params=True, user=False)
     def partial_update(self, request, slug, project_id, estimate_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         if not len(request.data.get("estimate_points", [])):
             return Response(
                 {"error": "Estimate points are required"},
@@ -145,6 +155,10 @@ class BulkEstimatePointEndpoint(BaseViewSet):
 
     @invalidate_cache(path="/api/workspaces/:slug/estimates/", url_params=True, user=False)
     def destroy(self, request, slug, project_id, estimate_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         estimate = Estimate.objects.get(pk=estimate_id, workspace__slug=slug, project_id=project_id)
         estimate.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -153,6 +167,10 @@ class BulkEstimatePointEndpoint(BaseViewSet):
 class EstimatePointEndpoint(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id, estimate_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         #  TODO: add a key validation if the same key already exists
         if not request.data.get("key") or not request.data.get("value"):
             return Response(
@@ -180,6 +198,10 @@ class EstimatePointEndpoint(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def partial_update(self, request, slug, project_id, estimate_id, estimate_point_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         #  TODO: add a key validation if the same key already exists
         estimate_point = EstimatePoint.objects.get(
             pk=estimate_point_id,
@@ -195,6 +217,10 @@ class EstimatePointEndpoint(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, estimate_id, estimate_point_id):
+        # KEP-85: estimate = alur kerja project (PERM_PROJECT_WORKFLOW).
+        galat = tolak_izin_project(request, PERM_PROJECT_WORKFLOW, slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         new_estimate_id = request.data.get("new_estimate_id", None)
         estimate_points = EstimatePoint.objects.filter(
             estimate_id=estimate_id, project_id=project_id, workspace__slug=slug

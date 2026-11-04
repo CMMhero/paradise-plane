@@ -36,6 +36,14 @@ from plane.db.models import (
 from plane.license.models import Instance, InstanceAdmin
 from plane.utils.hierarki import FLAG_GERBANG
 
+
+@pytest.fixture(autouse=True)
+def _utas_email_mati(monkeypatch):
+    """Subjek per peran yang diuji di sini hanya ada saat utas email MATI. Sejak
+    KEP-84 utas HIDUP secara bawaan (subjek jadi `[PROJ-1] Judul`), jadi dipatok mati."""
+    monkeypatch.setenv("ENABLE_EMAIL_THREADING", "0")
+
+
 URL_ISSUES = "/api/workspaces/{slug}/projects/{project_id}/issues/"
 URL_PUTUSKAN = "/api/workspaces/{slug}/projects/{project_id}/persetujuan-penugasan/{pk}/"
 

@@ -40,6 +40,8 @@ from plane.utils.filters import ComplexFilterBackend
 from plane.utils.filters import IssueFilterSet
 from .. import BaseViewSet
 from plane.utils.host import base_host
+from plane.utils.izin_sumber import tolak_izin_module_ids
+from plane.utils.saklar_instance import PERM_MODULE_EDIT
 
 
 class ModuleIssueViewSet(BaseViewSet):
@@ -212,6 +214,10 @@ class ModuleIssueViewSet(BaseViewSet):
         issues = request.data.get("issues", [])
         if not issues:
             return Response({"error": "Issues are required"}, status=status.HTTP_400_BAD_REQUEST)
+        # KEP-85: mengisi module = mengubah module.
+        galat = tolak_izin_module_ids(request, PERM_MODULE_EDIT, [module_id], slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         project = Project.objects.get(pk=project_id)
         # Scope to workspace+project to prevent cross-tenant IDOR
         issues = list(
@@ -258,6 +264,12 @@ class ModuleIssueViewSet(BaseViewSet):
     def create_issue_modules(self, request, slug, project_id, issue_id):
         modules = request.data.get("modules", [])
         removed_modules = request.data.get("removed_modules", [])
+        # KEP-85: memasukkan/mengeluarkan tugas dari module = mengubah module itu.
+        galat = tolak_izin_module_ids(
+            request, PERM_MODULE_EDIT, [*modules, *removed_modules], slug=slug, project_id=project_id
+        )
+        if galat is not None:
+            return galat
         project = Project.objects.get(pk=project_id)
 
         if modules:
@@ -324,6 +336,9 @@ class ModuleIssueViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, module_id, issue_id):
+        galat = tolak_izin_module_ids(request, PERM_MODULE_EDIT, [module_id], slug=slug, project_id=project_id)
+        if galat is not None:
+            return galat
         module_issue = ModuleIssue.objects.filter(
             workspace__slug=slug,
             project_id=project_id,

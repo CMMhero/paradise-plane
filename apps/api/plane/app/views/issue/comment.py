@@ -23,6 +23,8 @@ from plane.db.models import IssueComment, ProjectMember, CommentReaction, Projec
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.host import base_host
 from plane.bgtasks.webhook_task import model_activity
+from plane.utils.izin_sumber import tolak_izin_komentar
+from plane.utils.saklar_instance import PERM_COMMENT_DELETE, PERM_COMMENT_EDIT
 
 
 class IssueCommentViewSet(BaseViewSet):
@@ -106,9 +108,14 @@ class IssueCommentViewSet(BaseViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission(allowed_roles=[ROLE.ADMIN], creator=True, model=IssueComment)
+    # KEP-85: dulu admin project ATAU pembuat. Admin project tidak lagi cukup; gerbang
+    # peran tinggal menyaring non-anggota, aturan PERM_COMMENT_* yang memutuskan.
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, issue_id, pk):
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
+        galat = tolak_izin_komentar(request, PERM_COMMENT_EDIT, issue_comment)
+        if galat is not None:
+            return galat
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
         serializer = IssueCommentSerializer(issue_comment, data=request.data, partial=True)
@@ -141,9 +148,12 @@ class IssueCommentViewSet(BaseViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission(allowed_roles=[ROLE.ADMIN], creator=True, model=IssueComment)
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def destroy(self, request, slug, project_id, issue_id, pk):
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
+        galat = tolak_izin_komentar(request, PERM_COMMENT_DELETE, issue_comment)
+        if galat is not None:
+            return galat
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
         issue_comment.delete()
         issue_activity.delay(

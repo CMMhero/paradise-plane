@@ -76,33 +76,18 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.login_activity_retention.bersihkan_login_activity",
         "schedule": crontab(hour=17, minute=0),
     },
-    # Paradise: pengingat tenggat 8 titik, H-7 sampai H+7.
-    # 01:00 UTC = 08:00 WIB, saat orang baru membuka email. Sengaja BUKAN tengah
-    # malam: pengingat yang tiba saat semua orang tidur akan tenggelam di bawah
-    # email semalaman sebelum sempat dibaca.
-    "pengingat-tenggat": {
-        "task": "plane.bgtasks.deadline_reminder_task.kirim_pengingat_tenggat",
-        "schedule": crontab(hour=1, minute=0),
-    },
-    # Paradise: satu email ringkasan harian per orang yang MENYALAKANNYA
-    # (hari ini, 7 hari ke depan, terlambat). Senin-Jumat 08.30 Jakarta.
-    # Celery berjalan di UTC (CELERY_TIMEZONE = TIME_ZONE = "UTC"), jadi 08.30 WIB
-    # = 01.30 UTC. Tanggalnya sama di kedua zona, jadi day_of_week tetap benar.
-    "ringkasan-harian": {
-        "task": "plane.bgtasks.daily_digest_task.kirim_ringkasan_harian",
-        "schedule": crontab(hour=1, minute=30, day_of_week="mon-fri"),
-    },
-    # Paradise: edisi sore ringkasan harian, Senin-Jumat 17.30 WIB = 10.30 UTC.
-    # Saklarnya sendiri (`daily_digest_sore`): yang selesai hari ini, yang belum
-    # selesai padahal tenggatnya hari ini, terlambat, dan tenggat hari kerja berikutnya.
-    "ringkasan-sore": {
-        "task": "plane.bgtasks.daily_digest_task.kirim_ringkasan_sore",
-        "schedule": crontab(hour=10, minute=30, day_of_week="mon-fri"),
-    },
-    # Paradise: ringkasan tugas selesai per divisi untuk direktur, 08.30 WIB.
-    "ringkasan-direktur": {
-        "task": "plane.bgtasks.direktur_digest_task.kirim_ringkasan_direktur",
-        "schedule": crontab(hour=1, minute=30, day_of_week="mon-fri"),
+    # Paradise (KEP-83): pengingat tenggat, ringkasan pagi/sore, dan laporan
+    # direktur. Jam, hari, dan zona waktunya diatur di God Mode (OFFICE_TIMEZONE,
+    # DEADLINE_REMINDER_TIME, DIGEST_*_TIME, DIRECTOR_DIGEST_TIME, DIGEST_WEEKDAYS),
+    # jadi di sini cuma detak 5 menit. `jalankan_jadwal_kantor` yang memutuskan
+    # slot mana yang jatuh tempo dan menjamin tiap slot paling banyak sekali per
+    # tanggal kantor (penanda JadwalTerlaksana). Bawaannya sama dengan crontab
+    # lama: pengingat 08:00 tiap hari, ringkasan 08:30 dan 17:30, direktur 08:30,
+    # Senin-Jumat, Asia/Jakarta. Entri lama (pengingat-tenggat, ringkasan-*)
+    # dibuang dari database oleh PenjadwalDatabase di bawah.
+    "jadwal-kantor": {
+        "task": "plane.bgtasks.jadwal_kantor.jalankan_jadwal_kantor",
+        "schedule": crontab(minute="*/5"),
     },
     # Paradise: dorong tenggat ke Google Calendar tiap
     # orang yang menyambungkan akunnya.
@@ -191,4 +176,6 @@ def setup_task_loggers(logger, *args, **kwargs):
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
-app.conf.beat_scheduler = "django_celery_beat.schedulers.DatabaseScheduler"
+# DatabaseScheduler yang juga membuang entri basi (yang sudah dihapus dari
+# beat_schedule di atas) sebelum mulai. Lihat plane/utils/penjadwal_beat.py (BUG-12).
+app.conf.beat_scheduler = "plane.utils.penjadwal_beat:PenjadwalDatabase"

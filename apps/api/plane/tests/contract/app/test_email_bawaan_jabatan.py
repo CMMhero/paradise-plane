@@ -135,6 +135,13 @@ class TestEndpointProfil:
 class TestPengingatTenggat:
     @pytest.mark.django_db
     def test_staf_yang_menyalakan_diingatkan_pemberi_tugas_pimpinan_tidak(self, workspace):
+        # Saklar induk God Mode menyala: kalau mati, menyalakan saklar pribadinya
+        # diabaikan (locked_by_admin, KEP-83).
+        from plane.license.models import InstanceConfiguration
+
+        InstanceConfiguration.objects.update_or_create(
+            key="ENABLE_DEADLINE_REMINDER", defaults={"value": "1", "category": "PARADISE"}
+        )
         staf = _orang(workspace, "dikerjai", TINGKAT_MEMBER)
         _patch(staf, {"deadline_reminder": True})
         atasan = _orang(workspace, "pemberi", TINGKAT_SUPERVISOR)

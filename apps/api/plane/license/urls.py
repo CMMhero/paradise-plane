@@ -26,13 +26,15 @@ from plane.license.api.views import (
     InstanceMemberSessionEndpoint,
 )
 from plane.license.api.views.member import InstanceMemberPreferenceEndpoint
+from plane.license.api.views.member_profile import InstanceMemberProfileEndpoint
 from plane.license.api.views.bawaan_member import (
     InstanceMemberDefaultsApplyEndpoint,
     InstanceMemberDefaultsEndpoint,
     InstanceProjectDefaultsEndpoint,
 )
 from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
-from plane.license.api.views.email_preview import InstanceEmailPreviewEndpoint
+from plane.license.api.views.setelan import InstanceSettingsEndpoint
+from plane.license.api.views.email_preview import InstanceEmailPreviewEndpoint, InstanceEmailPreviewSendEndpoint
 from plane.license.api.views.divisi import InstanceDivisiAnggotaEndpoint
 from plane.license.api.views.organisasi import (
     InstanceDepartemenDariProjectEndpoint,
@@ -61,6 +63,8 @@ urlpatterns = [
         InstanceConfigurationEndpoint.as_view(),
         name="instance-configuration",
     ),
+    # Paradise (KEP-83): registri setelan God Mode. Kunci sensitif HANYA lewat sini.
+    path("settings/", InstanceSettingsEndpoint.as_view(), name="instance-settings"),
     path(
         "configurations/disable-email-feature/",
         DisableEmailFeatureEndpoint.as_view(),
@@ -89,6 +93,11 @@ urlpatterns = [
     # Pratinjau semua email (baca-saja, tanpa SMTP) untuk God Mode > Email > Preview.
     path("email-preview/", InstanceEmailPreviewEndpoint.as_view(), name="instance-email-preview"),
     path("email-preview/<str:key>/", InstanceEmailPreviewEndpoint.as_view(), name="instance-email-preview-detail"),
+    path(
+        "email-preview/<str:key>/send/",
+        InstanceEmailPreviewSendEndpoint.as_view(),
+        name="instance-email-preview-send",
+    ),
     path(
         "workspace-slug-check/",
         InstanceWorkSpaceAvailabilityCheckEndpoint.as_view(),
@@ -123,6 +132,8 @@ urlpatterns = [
         InstanceMemberPreferenceEndpoint.as_view(),
         name="instance-member-preferences",
     ),
+    # Paradise: kartu profil member (baca saja)
+    path("members/<uuid:pk>/profile/", InstanceMemberProfileEndpoint.as_view(), name="instance-member-profile"),
     # Paradise: pemantauan sesi & aktivitas
     path(
         "members/<uuid:pk>/sessions/",

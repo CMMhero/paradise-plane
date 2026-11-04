@@ -31,7 +31,13 @@ aktornya `None`, dan gerbangnya **menolak** (gagal ke arah aman, prinsip #3).
 from django.utils import timezone
 
 # Module imports
-from plane.utils.saklar_instance import HIERARKI_GERBANG_TUGAS, saklar_aktif
+from plane.utils.saklar_instance import (
+    APPROVAL_REQUIRED_BELOW_LEVEL,
+    ASSIGN_DOWN_ONLY,
+    HIERARKI_GERBANG_TUGAS,
+    saklar_aktif,
+    setelan_angka,
+)
 from plane.db.models import (
     JabatanOrganisasi,
     PengawasanDivisi,
@@ -66,6 +72,8 @@ __all__ = [
     "aktor_dari_context",
     "catat_persetujuan",
     "butuh_persetujuan",
+    "saring_penyetuju",
+    "periksa_tingkat_penerima",
     "status_persetujuan_tugas",
     "BUTUH_PERSETUJUAN",
     "TANPA_ATASAN",
@@ -85,7 +93,15 @@ FLAG_GERBANG = HIERARKI_GERBANG_TUGAS
 # Dinyalakan 2026-10-15 sesudah user menjawab: "manager it bawahi supervisor dan member
 # it" -- jadi arah penugasan hanya boleh ke bawah. Sebelumnya sakelar ini mati karena
 # jawabannya belum ada, dan menebaknya akan memblokir pekerjaan seluruh kantor.
-PERIKSA_TINGKAT_PENERIMA = True
+#
+# KEP-83: dulu konstanta `PERIKSA_TINGKAT_PENERIMA = True`, sekarang saklar
+# ASSIGN_DOWN_ONLY di God Mode (bawaan "1" = perilaku lama). Dibaca saat dipanggil,
+# BUKAN saat impor (KEP-49), jadi perubahannya berlaku tanpa membuat ulang container.
+
+
+def periksa_tingkat_penerima():
+    """Apakah penugasan oleh atasan hanya boleh ke jenjang yang LEBIH RENDAH."""
+    return saklar_aktif(ASSIGN_DOWN_ONLY)
 
 
 def gerbang_aktif():
@@ -517,7 +533,7 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
         return None
 
     if project_id in divisi_diawasi(actor.id, workspace_id):
-        if PERIKSA_TINGKAT_PENERIMA:
+        if periksa_tingkat_penerima():
             peta = peta_tingkat(workspace_id)
             for uid in assignee_ids:
                 if uid in dari_id:
@@ -536,6 +552,36 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 def _adalah_staf(user_id, workspace_id):
     tingkat = tingkat_anggota(user_id, workspace_id)
     return tingkat is None or tingkat < TINGKAT_SUPERVISOR
+
+
+def _wajib_persetujuan_jenjang(user_id, workspace_id):
+    """Apakah jenjang orang ini harus menunggu persetujuan saat menyelesaikan tugasnya.
+
+    KEP-83: ambangnya APPROVAL_REQUIRED_BELOW_LEVEL di God Mode. Jenjang DI BAWAH
+    angka itu wajib menunggu; jenjang kosong selalu dihitung staf. Bawaan 20
+    (supervisor) = persis `_adalah_staf`, aturan sebelum setelan ini ada.
+
+    Sengaja TERPISAH dari `_adalah_staf`: setelan ini hanya menentukan siapa yang
+    menunggu persetujuan, bukan siapa yang terkunci aturan penugasan staf
+    (`_galat_kolaborasi_staf`).
+    """
+    tingkat = tingkat_anggota(user_id, workspace_id)
+    return tingkat is None or tingkat < setelan_angka(APPROVAL_REQUIRED_BELOW_LEVEL)
+
+
+def saring_penyetuju(calon, peta, pemohon_id):
+    """Calon penyetuju yang sah untuk pengajuan milik `pemohon_id`.
+
+    Pengajuan staf (jenjang < supervisor atau kosong): semua calon project itu,
+    sama seperti sebelum KEP-83 (semua calon memang lebih tinggi dari staf).
+    Pengajuan atasan (hanya mungkin bila APPROVAL_REQUIRED_BELOW_LEVEL dinaikkan):
+    hanya calon yang jenjangnya LEBIH TINGGI dari pemohon, supaya supervisor tidak
+    saling menyetujui tugas sesamanya.
+    """
+    tingkat_pemohon = peta.get(pemohon_id)
+    if tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR:
+        return list(calon)
+    return [uid for uid in calon if peta.get(uid, 0) > tingkat_pemohon]
 
 
 def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
@@ -727,6 +773,58 @@ def project_boleh_diputuskan(user, workspace_id, project_ids):
     return hasil | {pid for pid in sisa if not any(pid in awasi(uid) for uid in kandidat)}
 
 
+def pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
+    """Wewenang memutuskan per BARIS pengajuan, untuk banyak baris sekaligus.
+
+    `pasangan`: iterable (project_id, pemohon_id). Hasil: himpunan pasangan yang
+    boleh diputuskan `user`, dengan aturan yang sama persis dengan POST
+    setuju/tolak (`_Wewenang._sah_untuk` di app/views/issue/persetujuan.py):
+    calon penyetuju project itu (`calon_penyetuju`), disaring jenjang pemohon
+    (`saring_penyetuju`: pengajuan atasan hanya boleh diputuskan yang lebih
+    tinggi), lalu Super Admin hanya jalan keluar kalau daftar tersaring kosong.
+
+    `project_boleh_diputuskan` hanya melihat project, jadi widget dan Dashboard
+    Divisi bisa menghitung pengajuan supervisor (APPROVAL_REQUIRED_BELOW_LEVEL
+    dinaikkan) yang lalu ditolak POST. Biayanya tetap: peta jenjang dibaca sekali,
+    `divisi_diawasi` sekali per orang, berapa pun jumlah barisnya (tanpa N+1).
+    """
+    pasangan = set(pasangan)
+    if not pasangan:
+        return set()
+
+    peta = peta_tingkat(workspace_id)
+    kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
+    diawasi = {}
+
+    def awasi(uid):
+        # Dibandingkan sebagai string, sama dengan `calon_penyetuju`.
+        if uid not in diawasi:
+            diawasi[uid] = {str(p) for p in divisi_diawasi(uid, workspace_id)}
+        return diawasi[uid]
+
+    def sah(uid, project_id, tingkat_pemohon):
+        # `calon_penyetuju` (mengawasi project) + `saring_penyetuju` (lebih tinggi
+        # dari pemohon atasan). Kandidat sudah pasti berjenjang >= supervisor.
+        staf = tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR
+        return (staf or peta[uid] > tingkat_pemohon) and str(project_id) in awasi(uid)
+
+    saya_kandidat = peta.get(user.id, 0) >= TINGKAT_SUPERVISOR
+    super_admin = None
+    hasil = set()
+    for project_id, pemohon_id in pasangan:
+        tingkat_pemohon = peta.get(pemohon_id)
+        if saya_kandidat and sah(user.id, project_id, tingkat_pemohon):
+            hasil.add((project_id, pemohon_id))
+            continue
+        if super_admin is None:
+            from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
+            super_admin = is_super_admin(user)
+        if super_admin and not any(sah(uid, project_id, tingkat_pemohon) for uid in kandidat):
+            hasil.add((project_id, pemohon_id))
+    return hasil
+
+
 # (Dihapus 2026-10-24: tidak ada lagi kunci tulis. Persetujuan hanya di
 # gerbang selesai -- `selesai_perlu_persetujuan` di atas. Lihat riwayat git untuk
 # `galat_terkunci` / `KunciPersetujuanMixin` / masa susun.)
@@ -881,7 +979,8 @@ def butuh_persetujuan(actor, project_id, assignee_ids):
     if project is None:
         return False
 
-    return _adalah_staf(actor.id, project.workspace_id)
+    # KEP-83: ambang jenjangnya dari God Mode (bawaan = staf saja, aturan di atas).
+    return _wajib_persetujuan_jenjang(actor.id, project.workspace_id)
 
 
 def catat_persetujuan(issue, actor=None, state_sebelumnya_id=None):

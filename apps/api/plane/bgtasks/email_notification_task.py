@@ -17,11 +17,13 @@ from django.utils import timezone
 
 # Module imports
 from plane.db.models import EmailNotificationLog, Issue, User
-from plane.license.utils.instance_value import get_email_configuration
+from plane.license.utils.instance_value import email_aktif, get_email_configuration
 from plane.settings.redis import redis_instance
 from plane.utils.email_merek import avatar_untuk, bahasa_penerima, buat_pesan, render_email, url_preferensi
 from plane.utils.email_pembaruan import susun_email_pembaruan
+from plane.utils.email_utas import utas_untuk
 from plane.utils.exception_logger import log_exception
+from plane.utils.penerima_aktif import penerima_aktif
 
 
 def remove_unwanted_characters(input_text):
@@ -45,8 +47,21 @@ def release_lock(lock_id):
 
 @shared_task
 def stack_email_notification():
+    # Kustomisasi Paradise: saklar God Mode ENABLE_EMAIL_BATCH. Menyala = semua
+    # kabar satu penerima ditahan selama EMAIL_BATCH_DELAY_MINUTES lalu dikirim
+    # sebagai SATU email (plane/bgtasks/email_antrean.py). Mati = jalur lama di bawah.
+    from plane.utils.saklar_instance import ENABLE_EMAIL_BATCH, saklar_aktif
+
+    if saklar_aktif(ENABLE_EMAIL_BATCH):
+        from plane.bgtasks.email_antrean import sapu_antrean
+
+        sapu_antrean()
+        return
+
     # get all email notifications
-    email_notifications = EmailNotificationLog.objects.filter(processed_at__isnull=True).order_by("receiver").values()
+    email_notifications = (
+        EmailNotificationLog.objects.filter(processed_at__isnull=True).order_by("receiver", "created_at").values()
+    )
 
     # Kustomisasi Paradise: baris persetujuan (`entity="approval"`) dikirim
     # lewat tugas khusus di bawah (templat dan bahasanya sendiri), satu email
@@ -69,22 +84,27 @@ def stack_email_notification():
         ]
         # create payload for all issues
         payload = {}
-        email_notification_ids = []
+        # Kustomisasi Paradise: id per work item. Dulu satu daftar untuk semua work
+        # item penerima, jadi email work item pertama menandai baris work item lain
+        # "terkirim" sebelum emailnya sendiri berangkat.
+        ids_per_issue = {}
         for receiver_notification in receiver_notifications:
             payload.setdefault(receiver_notification.get("entity_identifier"), {}).setdefault(
                 str(receiver_notification.get("triggered_by_id")), []
             ).append(receiver_notification.get("data"))
             # append processed notifications
             processed_notifications.append(receiver_notification.get("id"))
-            email_notification_ids.append(receiver_notification.get("id"))
+            ids_per_issue.setdefault(receiver_notification.get("entity_identifier"), []).append(
+                str(receiver_notification.get("id"))
+            )
 
         # Create emails for all the issues
         for issue_id, notification_data in payload.items():
             send_email_notification.delay(
-                issue_id=issue_id,
+                issue_id=str(issue_id),
                 notification_data=notification_data,
                 receiver_id=receiver_id,
-                email_notification_ids=email_notification_ids,
+                email_notification_ids=ids_per_issue.get(issue_id, []),
             )
 
     # Update the email notification log
@@ -156,6 +176,30 @@ def process_html_content(content):
     return processed_content_list
 
 
+def aktor_dari_data(notification_data) -> list:
+    """{actor_id: [data baris log]} -> blok aktor untuk `susun_email_pembaruan`.
+
+    Kustomisasi Paradise: satu blok per aktor (perubahan + komentar), foto profil
+    disisipkan CID lewat `konteks_pembaruan`. Dulu `avatar_url` ditempel ke
+    `base_api` apa adanya: orang tanpa foto jadi `http://hostNone` (gambar pecah),
+    yang punya foto jadi URL MinIO LAN.
+    """
+    aktor = []
+    for actor_id, changes in create_payload(notification_data=notification_data).items():
+        actor = User.objects.filter(pk=actor_id).select_related("avatar_asset").first()
+        comment = changes.pop("comment", False)
+        mention = changes.pop("mention", False)
+        komentar = []
+        if comment:
+            komentar += [k for k in comment.get("new_value") or [] if k]
+        if mention:
+            komentar += [k for k in process_html_content(mention.get("new_value")) or [] if k]
+        activity_time = changes.pop("activity_time")
+        waktu = datetime.strptime(activity_time, "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
+        aktor.append({"user": actor, "waktu": waktu, "changes": changes, "komentar": komentar})
+    return aktor
+
+
 @shared_task
 def send_email_notification(issue_id, notification_data, receiver_id, email_notification_ids):
     # Convert UUIDs to a sorted, concatenated string
@@ -174,35 +218,28 @@ def send_email_notification(issue_id, notification_data, receiver_id, email_noti
             if not base_api:
                 return
 
-            data = create_payload(notification_data=notification_data)
-
             receiver = User.objects.get(pk=receiver_id)
             issue = Issue.objects.get(pk=issue_id)
-            # Kustomisasi Paradise: satu blok per aktor (perubahan + komentar), foto
-            # profil disisipkan CID lewat `konteks_pembaruan`. Dulu `avatar_url`
-            # ditempel ke `base_api` apa adanya: orang tanpa foto jadi
-            # `http://hostNone` (gambar pecah), yang punya foto jadi URL MinIO LAN.
-            aktor = []
-            for actor_id, changes in data.items():
-                actor = User.objects.filter(pk=actor_id).select_related("avatar_asset").first()
-                comment = changes.pop("comment", False)
-                mention = changes.pop("mention", False)
-                komentar = []
-                if comment:
-                    komentar += [k for k in comment.get("new_value") or [] if k]
-                if mention:
-                    komentar += [k for k in process_html_content(mention.get("new_value")) or [] if k]
-                activity_time = changes.pop("activity_time")
-                waktu = datetime.strptime(activity_time, "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
-                aktor.append({"user": actor, "waktu": waktu, "changes": changes, "komentar": komentar})
+            if not penerima_aktif(receiver):
+                # ENABLE_EMAIL_ACTIVE_ONLY: inbox sudah ditulis, email dilewati.
+                release_lock(lock_id=lock_id)
+                return
 
             subject, html_content, text_content, gambar = susun_email_pembaruan(
-                issue, aktor, base_api, bahasa_penerima(receiver), receiver.email
+                issue, aktor_dari_data(notification_data), base_api, bahasa_penerima(receiver), receiver.email
             )
+            utas = utas_untuk(issue, receiver.id)
+            if utas:
+                subject = utas[0]
 
             try:
                 buat_pesan(
-                    ke=receiver.email, subjek=subject, html=html_content, teks=text_content, gambar=gambar
+                    ke=receiver.email,
+                    subjek=subject,
+                    html=html_content,
+                    teks=text_content,
+                    gambar=gambar,
+                    header=utas[1] if utas else None,
                 ).send()
                 logging.getLogger("plane.worker").info("Email Sent Successfully")
 
@@ -344,6 +381,38 @@ def render_approval(context, bahasa, aktor=None, email_penerima="", slug="", gam
     )
 
 
+def susun_email_persetujuan(baris) -> dict | None:
+    """{issue, subject, html, teks, gambar} untuk satu baris log persetujuan; None kalau work item hilang."""
+    import os
+
+    from django.conf import settings
+
+    receiver = baris.receiver
+    aktor = baris.triggered_by
+    data = baris.data or {}
+    info = data.get("issue", {})
+    aktivitas = data.get("issue_activity", {})
+    issue = Issue.objects.select_related("project", "project__workspace").filter(pk=info.get("id")).first()
+    if issue is None:
+        return None
+
+    bahasa = bahasa_penerima(receiver)
+    s = _STRINGS_APPROVAL_ID if bahasa == "id" else _STRINGS_APPROVAL_EN
+    label = f"{issue.project.identifier}-{issue.sequence_id}"
+    verb = str(aktivitas.get("verb") or "submitted")
+    nama_aktor = getattr(aktor, "display_name", None) or getattr(aktor, "email", None) or "?"
+    dasar = (settings.APP_BASE_URL or os.environ.get("WEB_URL") or "").rstrip("/")
+    slug = issue.project.workspace.slug
+    url_tugas = f"{dasar}/{slug}/projects/{issue.project.id}/issues/{issue.id}"
+    url_antrean = f"{dasar}/{slug}/projects/{issue.project.id}/persetujuan"
+    context = konteks_persetujuan(
+        s, verb, nama_aktor, label, issue.name, str(aktivitas.get("issue_comment") or ""), url_tugas, url_antrean
+    )
+    gambar = []
+    html_content, text_content = render_approval(context, bahasa, aktor, receiver.email, slug, gambar)
+    return {"issue": issue, "subject": context["subject"], "html": html_content, "teks": text_content, "gambar": gambar}
+
+
 @shared_task
 def send_approval_email_notification(email_log_id):
     """Kirim satu email persetujuan untuk satu baris `EmailNotificationLog`."""
@@ -361,36 +430,15 @@ def send_approval_email_notification(email_log_id):
             if baris is None:
                 return
             receiver = baris.receiver
-            aktor = baris.triggered_by
-            data = baris.data or {}
-            info = data.get("issue", {})
-            aktivitas = data.get("issue_activity", {})
-            issue = Issue.objects.select_related("project", "project__workspace").filter(pk=info.get("id")).first()
-            if issue is None:
+            pesan = susun_email_persetujuan(baris)
+            if pesan is None or not penerima_aktif(receiver):
+                # Work item hilang, atau ENABLE_EMAIL_ACTIVE_ONLY menahan email
+                # orang yang lama tak aktif (inbox sudah ditulis).
                 EmailNotificationLog.objects.filter(pk=baris.pk).update(processed_at=timezone.now())
                 return
-
-            bahasa = bahasa_penerima(receiver)
-            s = _STRINGS_APPROVAL_ID if bahasa == "id" else _STRINGS_APPROVAL_EN
-            label = f"{issue.project.identifier}-{issue.sequence_id}"
-            verb = str(aktivitas.get("verb") or "submitted")
-            nama_aktor = (
-                getattr(aktor, "display_name", None) or getattr(aktor, "email", None) or "?"
-            )
-            import os
-
-            from django.conf import settings
-
-            dasar = (settings.APP_BASE_URL or os.environ.get("WEB_URL") or "").rstrip("/")
-            slug = issue.project.workspace.slug
-            url_tugas = f"{dasar}/{slug}/projects/{issue.project.id}/issues/{issue.id}"
-            url_antrean = f"{dasar}/{slug}/projects/{issue.project.id}/persetujuan"
-            context = konteks_persetujuan(
-                s, verb, nama_aktor, label, issue.name, str(aktivitas.get("issue_comment") or ""), url_tugas, url_antrean
-            )
-            subject = context["subject"]
-            gambar = []
-            html_content, text_content = render_approval(context, bahasa, aktor, receiver.email, slug, gambar)
+            issue = pesan["issue"]
+            subject = pesan["subject"]
+            html_content, text_content, gambar = pesan["html"], pesan["teks"], pesan["gambar"]
 
             (
                 EMAIL_HOST,
@@ -401,7 +449,7 @@ def send_approval_email_notification(email_log_id):
                 EMAIL_USE_SSL,
                 EMAIL_FROM,
             ) = get_email_configuration()
-            if not EMAIL_HOST:
+            if not email_aktif(EMAIL_HOST):
                 # Tanpa SMTP, menahan baris berarti mengulanginya tiap 5 menit
                 # selamanya. Tandai selesai supaya antrean tidak macet; email
                 # memang tidak bisa dikirim tanpa pengirim yang dikonfigurasi.
@@ -416,6 +464,9 @@ def send_approval_email_notification(email_log_id):
                 use_tls=str(EMAIL_USE_TLS) == "1",
                 use_ssl=str(EMAIL_USE_SSL) == "1",
             )
+            utas = utas_untuk(issue, receiver.id, dari=EMAIL_FROM or "")
+            if utas:
+                subject = utas[0]
             buat_pesan(
                 ke=receiver.email,
                 subjek=remove_unwanted_characters(subject),
@@ -424,6 +475,7 @@ def send_approval_email_notification(email_log_id):
                 koneksi=connection,
                 dari=EMAIL_FROM,
                 gambar=gambar,
+                header=utas[1] if utas else None,
             ).send()
             logging.getLogger("plane.worker").info("Approval email sent successfully")
             EmailNotificationLog.objects.filter(pk=baris.pk).update(

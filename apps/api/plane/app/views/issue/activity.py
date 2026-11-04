@@ -6,7 +6,7 @@
 from itertools import chain
 
 # Django imports
-from django.db.models import Prefetch, Q
+from django.db.models import Exists, OuterRef, Prefetch, Q
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
 
@@ -18,7 +18,7 @@ from rest_framework import status
 from .. import BaseAPIView
 from plane.app.serializers import IssueActivitySerializer, IssueCommentSerializer
 from plane.app.permissions import ProjectEntityPermission, allow_permission, ROLE
-from plane.db.models import IssueActivity, IssueComment, CommentReaction, IntakeIssue
+from plane.db.models import IssueActivity, IssueComment, CommentReaction, IntakeIssue, ProjectMember
 
 
 class IssueActivityEndpoint(BaseAPIView):
@@ -32,12 +32,22 @@ class IssueActivityEndpoint(BaseAPIView):
         if request.GET.get("created_at__gt", None) is not None:
             filters = {"created_at__gt": request.GET.get("created_at__gt")}
 
+        # Keanggotaan lewat Exists, BUKAN join `project__project_projectmember__`:
+        # join itu melipatgandakan baris tiap ada lebih dari satu baris anggota yang
+        # lolos (mis. keanggotaan lama yang di-soft-delete tapi `is_active` masih
+        # True), sehingga satu aktivitas/komentar muncul dua kali di riwayat.
+        membership = ProjectMember.objects.filter(
+            project_id=OuterRef("project_id"),
+            member=self.request.user,
+            is_active=True,
+        )
+
         issue_activities = (
             IssueActivity.objects.filter(issue_id=issue_id)
+            .annotate(is_project_member=Exists(membership))
             .filter(
                 ~Q(field__in=["comment", "vote", "reaction", "draft"]),
-                project__project_projectmember__member=self.request.user,
-                project__project_projectmember__is_active=True,
+                is_project_member=True,
                 project__archived_at__isnull=True,
                 workspace__slug=slug,
             )
@@ -46,9 +56,9 @@ class IssueActivityEndpoint(BaseAPIView):
         ).order_by("created_at")
         issue_comments = (
             IssueComment.objects.filter(issue_id=issue_id)
+            .annotate(is_project_member=Exists(membership))
             .filter(
-                project__project_projectmember__member=self.request.user,
-                project__project_projectmember__is_active=True,
+                is_project_member=True,
                 project__archived_at__isnull=True,
                 workspace__slug=slug,
             )

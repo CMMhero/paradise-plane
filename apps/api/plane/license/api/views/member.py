@@ -15,7 +15,15 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
-from plane.db.models import Profile, Session, User, UserNotificationPreference, Workspace, WorkspaceMember
+from plane.db.models import (
+    JabatanOrganisasi,
+    Profile,
+    Session,
+    User,
+    UserNotificationPreference,
+    Workspace,
+    WorkspaceMember,
+)
 from plane.utils.bawaan_member import (
     GAYA_PABRIK,
     GAYA_SAH,
@@ -409,6 +417,12 @@ class InstanceMemberEndpoint(BaseAPIView):
             u.is_active = False
             u.save(update_fields=["email", "username", "display_name", "first_name", "last_name", "is_active"])
             keanggotaan_aktif.update(is_active=False)
+            # Penempatan di struktur organisasi ikut dicabut (soft delete, jadi Trash
+            # bisa mengembalikannya). Kalau dibiarkan, "Deleted account" tetap muncul
+            # di departemen/divisinya dan tidak bisa dicabut dari God Mode, karena
+            # daftar member menyembunyikan akun terhapus.
+            for jabatan in JabatanOrganisasi.objects.filter(member=u):
+                jabatan.delete()
             sesi = _akhiri_sesi(u.id)
 
         return Response(

@@ -192,3 +192,43 @@ def test_trashbin_project_tidak_menjangkau_akun(admin, target):
     obj, _ = ambil("account", target.pk, project_id="00000000-0000-0000-0000-000000000000")
 
     assert obj is None
+
+
+def _departemen(workspace):
+    from plane.db.models import Departemen, Divisi
+
+    divisi = Divisi.objects.create(workspace=workspace, kode="RND", nama="Research and Development")
+    return Departemen.objects.create(
+        workspace=workspace, divisi=divisi, kode="RND-RND", nama="Research and Development"
+    )
+
+
+def test_hapus_akun_mencabut_penempatan_dan_pulihkan_mengembalikannya(admin, target, workspace):
+    from plane.db.models import JabatanOrganisasi, TINGKAT_MANAGER
+    from plane.license.api.views.organisasi import pohon_organisasi
+
+    dep = _departemen(workspace)
+    JabatanOrganisasi.objects.create(workspace=workspace, member=target, departemen=dep, tingkat=TINGKAT_MANAGER)
+
+    assert _hapus(admin, target).status_code == 200
+    assert not JabatanOrganisasi.objects.filter(member=target).exists()
+    anggota = pohon_organisasi(workspace)["divisi"][0]["departemen"][0]["anggota"]
+    assert anggota == []
+
+    assert _pulihkan(admin, target).status_code == 200
+    assert JabatanOrganisasi.objects.filter(member=target, departemen=dep).exists()
+
+
+def test_pohon_organisasi_tidak_menampilkan_akun_terhapus_lama(workspace):
+    """Sisa dari sebelum 2.3.0: akun sudah digosok tapi barisnya masih hidup."""
+    from plane.db.models import JabatanOrganisasi, TINGKAT_MANAGER, email_akun_terhapus
+    from plane.license.api.views.organisasi import pohon_organisasi
+
+    dep = _departemen(workspace)
+    u = User.objects.create(email="x@paradise.test", username="x_paradise_test", is_active=False)
+    User.objects.filter(pk=u.pk).update(email=email_akun_terhapus(u.id))
+    JabatanOrganisasi.objects.create(workspace=workspace, member=u, departemen=dep, tingkat=TINGKAT_MANAGER)
+
+    dep_data = pohon_organisasi(workspace)["divisi"][0]["departemen"][0]
+    assert dep_data["anggota"] == []
+    assert dep_data["jumlah_orang"] == 0

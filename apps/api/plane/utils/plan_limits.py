@@ -261,14 +261,21 @@ def kursi_terpakai(workspace_id):
     kursi bisa mengirim sepuluh undangan sekaligus, dan kesepuluhnya akan
     diterima. Batas yang bisa dilewati dengan mengundang lebih banyak orang
     bukan batas.
+
+    Undangan yang sudah kedaluwarsa (INVITE_EXPIRY_DAYS, KEP-83) tidak dihitung:
+    ia tidak bisa diterima lagi, jadi bukan kursi yang dijanjikan. Bawaan 0 =
+    tidak pernah kedaluwarsa, jadi hitungannya sama dengan sebelum setelan itu ada.
     """
     from plane.db.models import WorkspaceMember, WorkspaceMemberInvite
+    from plane.utils.undangan import saring_berlaku
 
     anggota = WorkspaceMember.objects.filter(
         workspace_id=workspace_id, is_active=True, deleted_at__isnull=True
     ).count()
-    undangan = WorkspaceMemberInvite.objects.filter(
-        workspace_id=workspace_id, responded_at__isnull=True, deleted_at__isnull=True
+    undangan = saring_berlaku(
+        WorkspaceMemberInvite.objects.filter(
+            workspace_id=workspace_id, responded_at__isnull=True, deleted_at__isnull=True
+        )
     ).count()
     return anggota + undangan
 
@@ -296,6 +303,24 @@ def periksa_penambahan_anggota(workspace_id, jumlah_baru=1):
         )
 
 
+def batas_unggah_byte():
+    """Batas ukuran satu unggahan dalam byte, dari God Mode (UPLOAD_MAX_MB, KEP-83).
+
+    Pengganti `settings.FILE_SIZE_LIMIT` di setiap titik unggahan. Selama setelannya
+    masih di batas proxy (bawaannya, karena God Mode hanya boleh MENURUNKAN), hasilnya
+    `settings.FILE_SIZE_LIMIT` apa adanya: env yang bukan kelipatan MiB tidak ikut
+    terpotong ke bawah, jadi deploy tidak mengubah batas sebyte pun.
+    """
+    from django.conf import settings
+
+    from plane.utils.saklar_instance import UPLOAD_MAX_MB, batas_proxy_mb, setelan_angka
+
+    mb = setelan_angka(UPLOAD_MAX_MB)
+    if mb >= batas_proxy_mb():
+        return settings.FILE_SIZE_LIMIT
+    return min(mb * 1024 * 1024, settings.FILE_SIZE_LIMIT)
+
+
 def batas_ukuran_unggahan(slug, ukuran):
     """Pengganti `min(settings.FILE_SIZE_LIMIT, size)` di SETIAP titik unggahan.
 
@@ -307,11 +332,10 @@ def batas_ukuran_unggahan(slug, ukuran):
     Mengembalikan ukuran yang boleh dipakai, dan melempar BatasTerlampaui kalau
     workspace-nya beku atau kuotanya habis.
     """
-    from django.conf import settings
-
     from plane.db.models import Workspace
 
     ukuran = int(ukuran)
+    batas = batas_unggah_byte()
     workspace_id = (
         Workspace.objects.filter(slug=slug, deleted_at__isnull=True)
         .values_list("id", flat=True)
@@ -319,8 +343,8 @@ def batas_ukuran_unggahan(slug, ukuran):
         if slug
         else None
     )
-    periksa_unggahan(workspace_id, min(settings.FILE_SIZE_LIMIT, ukuran))
-    return min(settings.FILE_SIZE_LIMIT, ukuran)
+    periksa_unggahan(workspace_id, min(batas, ukuran))
+    return min(batas, ukuran)
 
 
 # --- Rem 3: tidur ------------------------------------------------------------

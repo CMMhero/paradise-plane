@@ -36,6 +36,8 @@ from plane.utils.timezone_converter import user_timezone_converter
 
 
 # Module imports
+from plane.utils.izin_sumber import tolak_izin_module
+from plane.utils.saklar_instance import PERM_MODULE_ARCHIVE
 from .. import BaseAPIView
 
 
@@ -543,6 +545,10 @@ class ModuleArchiveUnarchiveEndpoint(BaseAPIView):
 
     def post(self, request, slug, project_id, module_id):
         module = Module.objects.get(pk=module_id, project_id=project_id, workspace__slug=slug)
+        # KEP-85: arsip module orang lain hanya untuk atasannya atau admin.
+        galat = tolak_izin_module(request, PERM_MODULE_ARCHIVE, module)
+        if galat is not None:
+            return galat
         if module.status not in ["completed", "cancelled"]:
             return Response(
                 {"error": "Only completed or cancelled modules can be archived"},
@@ -560,6 +566,9 @@ class ModuleArchiveUnarchiveEndpoint(BaseAPIView):
 
     def delete(self, request, slug, project_id, module_id):
         module = Module.objects.get(pk=module_id, project_id=project_id, workspace__slug=slug)
+        galat = tolak_izin_module(request, PERM_MODULE_ARCHIVE, module)
+        if galat is not None:
+            return galat
         module.archived_at = None
         module.save()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -12,6 +12,7 @@ uji selalu memakai susunan yang SAMA dengan pengirim sungguhan. Gambar CID
 """
 
 import base64
+import logging
 import re
 from contextlib import contextmanager
 from unittest import mock
@@ -28,8 +29,8 @@ _KUNCI = re.compile(r"^[a-z0-9-]{1,64}$")
 
 
 def _bahasa(request) -> str:
-    kode = request.query_params.get("lang", "id")
-    return kode if kode in _BAHASA else "id"
+    kode = request.query_params.get("lang", "en")
+    return kode if kode in _BAHASA else "en"
 
 
 @contextmanager
@@ -104,3 +105,35 @@ class InstanceEmailPreviewEndpoint(BaseAPIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
             return Response({"key": key, "lang": bahasa, **isi}, status=status.HTTP_200_OK)
+
+
+class InstanceEmailPreviewSendEndpoint(BaseAPIView):
+    """POST /api/instances/email-preview/<key>/send/?lang=en|id
+
+    Kirim contoh yang sama ke alamat admin God Mode yang sedang masuk, lewat
+    SMTP bawaan. Gambar CID dan lampiran ikut. Sinkron: hasilnya langsung terlihat.
+    """
+
+    def post(self, request, key):
+        from plane.utils.email_merek import buat_pesan
+
+        bahasa = _bahasa(request)
+        if not _KUNCI.match(key):
+            return Response({"error": "Invalid template key"}, status=status.HTTP_400_BAD_REQUEST)
+        tujuan = (request.user.email or "").strip()
+        if not tujuan:
+            return Response({"error": "Your account has no email address"}, status=status.HTTP_400_BAD_REQUEST)
+        with _daftar_contoh() as daftar:
+            buat = dict(daftar).get(key)
+            if buat is None:
+                return Response({"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND)
+            try:
+                subjek, html, teks, gambar, lampiran = buat(bahasa)
+                pesan = buat_pesan(ke=tujuan, subjek=subjek, html=html, teks=teks, gambar=gambar, lampiran=lampiran)
+                pesan.send(fail_silently=False)
+            except Exception as e:  # noqa: BLE001
+                logging.getLogger("plane.worker").exception("Email preview send failed: %s", key)
+                return Response(
+                    {"error": f"Send failed: {e.__class__.__name__}: {e}"}, status=status.HTTP_502_BAD_GATEWAY
+                )
+        return Response({"sent_to": tujuan, "key": key, "lang": bahasa}, status=status.HTTP_200_OK)

@@ -159,7 +159,10 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             u = users.get(uid)
             if u is None:
                 continue
-            tingkat = peta.get(uid)
+            # Tanpa baris jabatan = Staf (bawaan, 4 Nov 2026). `tingkat_bawaan` menandai
+            # bahwa jenjangnya bukan hasil keputusan siapa pun, supaya laporan tetap bisa
+            # membedakannya.
+            tingkat = peta.get(uid, TINGKAT_MEMBER)
             divisi = divisi_orang.get(uid, set())
 
             punya_atasan = False
@@ -177,10 +180,10 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     "email": u.email,
                     "display_name": u.display_name,
                     "is_active": u.is_active,
-                    # None = jenjang BELUM DIISI. Sengaja bukan 0 dan bukan "Member":
-                    # "datanya kurang" tidak boleh diam-diam berarti "dia staf".
                     "tingkat": tingkat,
-                    "tingkat_nama": TINGKAT_NAMA.get(tingkat) if tingkat is not None else None,
+                    "tingkat_nama": TINGKAT_NAMA.get(tingkat),
+                    # True = belum pernah ada yang menetapkan jenjangnya; dihitung Staf.
+                    "tingkat_bawaan": uid not in peta,
                     "sumber": sumber.get(uid),
                     "divisi": sorted(divisi),
                     "divisi_diawasi": sorted(pengawasan.get(uid, set())),
@@ -195,14 +198,14 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             )
 
         total = len(baris)
-        punya_jenjang_total = sum(1 for b in baris if b["tingkat"] is not None)
+        punya_jenjang_total = sum(1 for b in baris if not b["tingkat_bawaan"])
         tanpa_atasan = [b for b in baris if not b["punya_atasan"]]
 
         if hanya_tanpa_atasan:
             baris = tanpa_atasan
         if divisi_saring:
             baris = [b for b in baris if divisi_saring in b["divisi"]]
-        baris.sort(key=lambda b: ((b["tingkat"] is None), -(b["tingkat"] or 0), b["email"]))
+        baris.sort(key=lambda b: (-b["tingkat"], b["email"]))
 
         # Pelanggaran yang HARUS terlihat: baris `role = 20` di banyak divisi.
         role20 = {}
@@ -294,7 +297,8 @@ class InstanceHierarkiEndpoint(BaseAPIView):
 
         ```
         { "member_id": "<uuid>",
-          "tingkat": 10|20|30|40|null,       # null = jenjang dicabut ("belum diisi")
+          "tingkat": 10|20|30|40|null,       # null = jenjang + semua tempat dicabut,
+                                                 # orangnya kembali Staf tanpa tempat
           "sumber": "...",                    # opsional, default "manual"
           "catatan": "...",                   # opsional
           "pengawasan": ["<project_id>", ...] # opsional: MENGGANTI seluruh baris pengawasan
@@ -314,6 +318,8 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         Staf (departemen) atau Manager (divisi); memimpin divisi tanpa mengirim
         jenjang menaikkan ke Manager; turun di bawah Manager mencabut divisinya
         (dilaporkan di `divisi_dilepas`), departemennya tetap.
+        Supervisor/manager yang dicabut dari tempat terakhirnya jatuh ke Staf; selama
+        masih memegang satu tempat mana pun, jenjangnya tetap (KEP-86).
 
         `pengawasan` hanya dikirim kalau memang diubah -- bedanya penting, karena
         "tidak dikirim" berarti "jangan sentuh", sedangkan "dikirim kosong" berarti
@@ -472,7 +478,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             .order_by("departemen_id", "divisi_id")
             .values_list("tingkat", "departemen_id", "divisi_id")
         )
-        tingkat_sekarang = max((t for t, _, _ in semua), default=None)
+        tingkat_sekarang = max((t for t, _, _ in semua), default=TINGKAT_MEMBER)
         dept_semua = sorted({str(d) for _, d, _ in semua if d})
         divisi_semua = sorted({str(v) for _, _, v in semua if v})
         utama_skr = dept_semua[0] if dept_semua else None

@@ -325,6 +325,15 @@ class TestChat:
         assert PesanLangsung.objects.filter(id=pesan.id).count() == 0, "hilang dari daftar"
         assert PesanLangsung.all_objects.filter(id=pesan.id).count() == 1, "barisnya tetap ada untuk audit"
 
+        # Di percakapan, pesan itu tetap ada sebagai batu nisan tanpa isi.
+        client.force_authenticate(user=aku)
+        isi = client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/").data
+        batu = [m for m in isi if m["id"] == str(pesan.id)]
+        assert len(batu) == 1
+        assert batu[0]["dihapus"] is True
+        assert batu[0]["isi"] == ""
+        assert batu[0]["lampiran"] == [] and batu[0]["reaksi"] == []
+
     @pytest.mark.django_db
     def test_pesan_lewat_batas_jam_tidak_bisa_dihapus(self, kantor, monkeypatch):
         """Bawaan 24 jam: pesan kemarin lusa tetap tinggal, pesan barusan boleh dihapus."""

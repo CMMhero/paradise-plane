@@ -30,6 +30,7 @@ from plane.bgtasks.event_tracking_task import track_event
 from plane.bgtasks.workspace_invitation_task import workspace_invitation
 from plane.db.models import User, Workspace, WorkspaceMember, WorkspaceMemberInvite
 from plane.utils.plan_limits import periksa_penambahan_anggota
+from plane.utils.undangan import balasan_kedaluwarsa, kedaluwarsa, saring_berlaku
 from plane.utils.cache import invalidate_cache, invalidate_cache_directly
 from plane.utils.host import base_host
 from plane.utils.analytics_events import USER_JOINED_WORKSPACE, USER_INVITED_TO_WORKSPACE
@@ -196,6 +197,10 @@ class WorkspaceJoinEndpoint(BaseAPIView):
         # If already responded then return error
         if workspace_invite.responded_at is None:
             menerima = request.data.get("accepted", False)
+            if menerima and kedaluwarsa(workspace_invite):
+                # KEP-83: undangan lewat INVITE_EXPIRY_DAYS tidak bisa diterima.
+                # Undangannya dibiarkan apa adanya supaya admin bisa mengirim ulang.
+                return balasan_kedaluwarsa()
             if menerima:
                 # Diperiksa SEBELUM undangan ditandai terjawab. Kalau dijaga
                 # sesudahnya, penolakan meninggalkan undangan yang sudah "dijawab"
@@ -292,9 +297,12 @@ class UserWorkspaceInvitationsViewSet(BaseViewSet):
     @invalidate_cache(path="/api/users/me/workspaces/", multiple=True)
     def create(self, request):
         invitations = request.data.get("invitations", [])
-        workspace_invitations = WorkspaceMemberInvite.objects.filter(
-            pk__in=invitations, email=request.user.email
-        ).order_by("-created_at")
+        diminta = WorkspaceMemberInvite.objects.filter(pk__in=invitations, email=request.user.email)
+        # KEP-83: undangan kedaluwarsa dilewati (tetap tersimpan). Kalau SEMUA
+        # yang diminta kedaluwarsa, jawab galatnya alih-alih 204 tanpa hasil.
+        workspace_invitations = saring_berlaku(diminta).order_by("-created_at")
+        if diminta.exists() and not workspace_invitations.exists():
+            return balasan_kedaluwarsa()
 
         # If the user is already a member of workspace and was deactivated then activate the user
         for invitation in workspace_invitations:
