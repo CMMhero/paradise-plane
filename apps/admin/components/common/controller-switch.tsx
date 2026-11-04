@@ -26,7 +26,7 @@ export function ControllerSwitch<T extends FieldValues>(props: Props<T>) {
   } = props;
 
   return (
-    <div className="flex items-center justify-between gap-1">
+    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-1">
       <h4 className="text-13 text-tertiary">Refresh user attributes from {label} during sign in</h4>
       <div className="relative">
         <Controller

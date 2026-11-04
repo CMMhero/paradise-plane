@@ -59,7 +59,8 @@ export function WorkspaceCreateForm() {
                 title: "Success!",
                 message: "Workspace created successfully.",
               });
-              router.push(`/workspace`);
+              router.push(`/general/workspaces`);
+              return null;
             })
             .catch(() => {
               setToast({
@@ -69,6 +70,7 @@ export function WorkspaceCreateForm() {
               });
             });
         } else setSlugError(true);
+        return null;
       })
       .catch(() => {
         setToast({
@@ -197,7 +199,7 @@ export function WorkspaceCreateForm() {
         >
           {isSubmitting ? "Creating workspace" : "Create workspace"}
         </Button>
-        <Link className={getButtonStyling("secondary", "lg")} href="/workspace">
+        <Link className={getButtonStyling("secondary", "lg")} href="/general/workspaces">
           Go back
         </Link>
       </div>

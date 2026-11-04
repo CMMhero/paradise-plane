@@ -37,9 +37,9 @@ import { PageWrapper } from "@/components/common/page-wrapper";
 import { Pagination, StateBox } from "@/components/common/paradise";
 import { formatDateTime } from "@/components/common/paradise-styles";
 import { IconAction, PersonCell } from "@/components/common/paradise-ui";
-import { LogsTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // local
-import { useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
 // types
 import type { Route } from "./+types/page";
 
@@ -214,7 +214,12 @@ const TrashPage = function TrashPage(_props: Route.ComponentProps) {
       sortValue: (item) => item.deleted_by?.display_name || item.deleted_by?.email,
       render: (item) =>
         item.deleted_by ? (
-          <PersonCell name={item.deleted_by.display_name} email={item.deleted_by.email} size="sm" />
+          <PersonCell
+            userId={item.deleted_by.id}
+            name={item.deleted_by.display_name}
+            email={item.deleted_by.email}
+            size="sm"
+          />
         ) : (
           <span className="text-placeholder">—</span>
         ),
@@ -281,8 +286,8 @@ const TrashPage = function TrashPage(_props: Route.ComponentProps) {
   const teksKonfirmasi = akanDibuang?.type === "account" ? t.account_purge_confirm : t.purge_confirm;
 
   return (
-    <PageWrapper header={{ title: s.logs.title, description: fill(t.description, { kept }) }}>
-      <LogsTabs />
+    <PageWrapper header={{ title: s.settings.tabs.logs_trash.title, description: fill(t.description, { kept }) }}>
+      <MenuTabs menu="logs" />
       <div className="space-y-3">
         <ViewToolbar
           view={view}
@@ -347,6 +352,8 @@ const TrashPage = function TrashPage(_props: Route.ComponentProps) {
   );
 };
 
-export const meta: Route.MetaFunction = () => [{ title: "Trash - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.logs_trash.title} - God Mode` },
+];
 
 export default TrashPage;

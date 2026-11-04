@@ -67,7 +67,7 @@ export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
           <p className="text-11 text-secondary">{s.grant.description}</p>
           <p className="text-11 text-secondary">
             {fill(s.grant.confirm_instruction, { phrase: s.grant.confirm_phrase }).split(s.grant.confirm_phrase)[0]}
-            <code className="font-mono rounded-item bg-layer-2 px-1 py-0.5 text-primary">{s.grant.confirm_phrase}</code>
+            <code className="rounded-item bg-layer-2 px-1 py-0.5 font-code text-primary">{s.grant.confirm_phrase}</code>
             {fill(s.grant.confirm_instruction, { phrase: s.grant.confirm_phrase }).split(s.grant.confirm_phrase)[1]}
           </p>
         </div>

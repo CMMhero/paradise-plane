@@ -36,11 +36,11 @@ import { PageWrapper } from "@/components/common/page-wrapper";
 import { Pagination, StateBox } from "@/components/common/paradise";
 import { formatDateTime, formatRelative } from "@/components/common/paradise-styles";
 import { EModalWidth, Field, IconAction, ParadiseModal, PersonCell } from "@/components/common/paradise-ui";
-import { MembersTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
 // hooks
 import { useUser } from "@/hooks/store";
 // local
-import { useGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
 import { BadgeJabatan } from "./jabatan";
 import { MemberEditor } from "./member-editor";
 import {
@@ -116,18 +116,30 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
 
   const columns: TColumn<TBarisMember>[] = [
     {
+      key: "edit",
+      label: m.col_edit,
+      locked: true,
+      srOnlyLabel: true,
+      headClassName: "w-12",
+      sticky: true,
+      render: (r) => (
+        <IconAction
+          label={fill(m.edit_member, { name: r.display_name || r.email })}
+          icon={Pencil}
+          onClick={() => setSedangEdit(r.id)}
+        />
+      ),
+    },
+    {
       key: "member",
       label: m.col_member,
       locked: true,
       className: "max-w-[280px]",
       sortValue: (r) => (r.display_name || r.email).toLowerCase(),
       render: (r) => (
-        <button
-          type="button"
-          onClick={() => setSedangEdit(r.id)}
-          className="block w-full min-w-0 rounded-item text-left focus-visible:ring-1 focus-visible:ring-accent-strong focus-visible:outline-none"
-        >
+        <div className="block w-full min-w-0 text-left">
           <PersonCell
+            userId={r.id}
             name={r.display_name}
             email={r.email}
             muted={!r.is_active}
@@ -151,7 +163,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
               </>
             }
           />
-        </button>
+        </div>
       ),
     },
     {
@@ -255,21 +267,6 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
         />
       ),
     },
-    {
-      key: "edit",
-      label: m.col_edit,
-      locked: true,
-      srOnlyLabel: true,
-      headClassName: "w-12",
-      className: "text-right",
-      render: (r) => (
-        <IconAction
-          label={fill(m.edit_member, { name: r.display_name || r.email })}
-          icon={Pencil}
-          onClick={() => setSedangEdit(r.id)}
-        />
-      ),
-    },
   ];
 
   const kolomUrut = columns.find((c) => c.key === view.sort.key)?.sortValue;
@@ -284,7 +281,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
   return (
     <PageWrapper
       header={{
-        title: m.title,
+        title: s.settings.tabs.people_accounts.title,
         description: m.description,
         actions: (
           <Button variant="primary" size="lg" prependIcon={<UserPlus />} onClick={() => setBuatTerbuka(true)}>
@@ -293,7 +290,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
         ),
       }}
     >
-      <MembersTabs />
+      <MenuTabs menu="people" />
       <div className="space-y-3">
         <ViewToolbar
           view={view}
@@ -329,6 +326,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
             rowKey={(r) => r.id}
             // Super Admin harus bisa dipindai sekilas di antara puluhan baris.
             rowClassName={(r) => (r.is_super_admin ? "bg-warning-subtle" : undefined)}
+            onRowClick={(r) => setSedangEdit(r.id)}
             minWidth={960}
           />
         )}
@@ -481,5 +479,7 @@ function ModalAkunBaru({
     </ParadiseModal>
   );
 }
+
+export const meta = () => [{ title: `${godmodeStrings.settings.tabs.people_accounts.title} - God Mode` }];
 
 export default observer(MembersPage);

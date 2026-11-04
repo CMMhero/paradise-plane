@@ -1,53 +1,61 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: kredensial Google di God Mode
+ * Kustomisasi Paradise Task Tracker: Integrations > Google
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Tab Google di menu API keys. Kredensial Google Calendar tinggal di sini;
- * saklar sinkronnya tetap di Features. Login Google memakai klien OAuth
- * sendiri (scope beda) dan tetap diatur di Authentication, di sini hanya
- * ditautkan.
+ * Everything Google on one page (KEP-83): the sign-in OAuth client, the Calendar
+ * OAuth client, and the Calendar sync switch. Sign-in and Calendar keep separate
+ * clients because their scopes differ; the sync switch cannot be turned on
+ * until the Calendar credentials are filled in.
  */
 
 import { observer } from "mobx-react";
-import Link from "next/link";
 import useSWR from "swr";
 import { Loader } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Section } from "@/components/common/paradise";
-import { ApiKeysTabs } from "@/components/common/section-tabs";
+import { MenuTabs } from "@/components/common/section-tabs";
+import { SettingsTabForm } from "@/components/settings/settings-tab-form";
 // hooks
-import { useGodmodeStrings } from "@/app/i18n/godmode";
+import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
 import { useInstance } from "@/hooks/store";
 // types
 import type { Route } from "./+types/page";
 // local
+import { InstanceGoogleConfigForm } from "../authentication/google/form";
 import { KredensialKalender } from "./kredensial-kalender";
 
-const KredensialGooglePage = observer(function KredensialGooglePage(_props: Route.ComponentProps) {
+const GooglePage = observer(function GooglePage(_props: Route.ComponentProps) {
   const { s } = useGodmodeStrings();
-  const t = s.api_keys;
+  const t = s.settings;
   const { formattedConfig, fetchInstanceConfigurations } = useInstance();
 
   useSWR("INSTANCE_CONFIGURATIONS", () => fetchInstanceConfigurations());
 
+  const hasCalendarCredentials = Boolean(
+    formattedConfig?.GOOGLE_CALENDAR_CLIENT_ID && formattedConfig?.GOOGLE_CALENDAR_CLIENT_SECRET
+  );
+
   return (
-    <PageWrapper header={{ title: t.title, description: t.google_description }}>
-      <ApiKeysTabs />
+    <PageWrapper header={t.tabs.integrations_google}>
+      <MenuTabs menu="integrations" />
       {formattedConfig ? (
         <div className="space-y-10">
-          <Section title={t.gcal_title} description={t.gcal_note} bordered>
+          <Section title={t.sections.google_signin.title} description={t.google.signin_help}>
+            <InstanceGoogleConfigForm config={formattedConfig} hideBack />
+          </Section>
+          <Section title={t.google.calendar_credentials} bordered>
             <div className="px-4">
               <KredensialKalender config={formattedConfig} />
             </div>
           </Section>
-          <Section title={t.signin_title} description={t.signin_note}>
-            <Link href="/authentication/google/" className="text-13 font-medium text-accent-primary hover:underline">
-              {t.signin_link}
-            </Link>
-          </Section>
+          <SettingsTabForm
+            tab="integrations_google"
+            tabTitle={t.tabs.integrations_google.title}
+            blockedOn={hasCalendarCredentials ? undefined : { ENABLE_GOOGLE_CALENDAR_SYNC: t.google.calendar_missing }}
+          />
         </div>
       ) : (
         <Loader className="space-y-8">
@@ -59,6 +67,8 @@ const KredensialGooglePage = observer(function KredensialGooglePage(_props: Rout
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Google - God Mode" }];
+export const meta: Route.MetaFunction = () => [
+  { title: `${godmodeStrings.settings.tabs.integrations_google.title} - God Mode` },
+];
 
-export default KredensialGooglePage;
+export default GooglePage;

@@ -4,24 +4,24 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Satu menu "..." yang sama di kotak bagan dan baris pohon, supaya ubah, hapus,
- * tambah orang, dan pindah departemen bisa langsung dari mana pun tanpa membuka
- * panel detail dulu. Isi menu hanya mengirim perintah; modalnya ada di
- * kelola.tsx.
+ * Satu menu "..." di kepala divisi, kartu departemen papan, dan kotak bagan: ubah, hapus,
+ * tambah orang, pindah departemen / ganti project. Isi menu hanya mengirim
+ * perintah; modalnya ada di kelola.tsx.
  *
  * Menu DI-PORTAL ke body: kotak bagan ada di dalam isi yang di-transform, dan
  * `position: fixed` milik CustomMenu ikut tergeser kalau tidak di-portal.
+ * ATRIBUT_ABAIKAN mencegah klik menu memulai geser kanvas.
  */
 
 import type { ReactNode } from "react";
-import { ArrowRightLeft, ExternalLink, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { ArrowRightLeft, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 // plane imports
 import { CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { ATRIBUT_ABAIKAN } from "./kanvas";
-import type { TKelola, TPilihan } from "./util";
+import type { TKelola } from "./util";
 
 type TItem = { kunci: string; label: string; icon: ReactNode; onClick: () => void; bahaya?: boolean };
 
@@ -52,32 +52,11 @@ function MenuAksi({ nama, items, className }: { nama: string; items: TItem[]; cl
   );
 }
 
-export function MenuDivisi({
-  id,
-  nama,
-  onKelola,
-  onPilih,
-  className,
-}: {
-  id: string;
-  nama: string;
-  onKelola: TKelola;
-  /** Tanpa ini, item "Buka detail" tidak tampil (mis. di panel detail divisi itu sendiri). */
-  onPilih?: (p: TPilihan) => void;
-  className?: string;
-}) {
+type TMenuProps = { id: string; nama: string; onKelola: TKelola; className?: string };
+
+export function MenuDivisi({ id, nama, onKelola, className }: TMenuProps) {
   const { s } = useGodmodeStrings();
   const items: TItem[] = [
-    ...(onPilih
-      ? [
-          {
-            kunci: "buka",
-            label: s.org.open_details,
-            icon: <ExternalLink />,
-            onClick: () => onPilih({ jenis: "divisi", id }),
-          },
-        ]
-      : []),
     {
       kunci: "ubah",
       label: s.org.edit_name_code,
@@ -107,31 +86,9 @@ export function MenuDivisi({
   return <MenuAksi nama={nama} items={items} className={className} />;
 }
 
-export function MenuDepartemen({
-  id,
-  nama,
-  onKelola,
-  onPilih,
-  className,
-}: {
-  id: string;
-  nama: string;
-  onKelola: TKelola;
-  onPilih?: (p: TPilihan) => void;
-  className?: string;
-}) {
+export function MenuDepartemen({ id, nama, onKelola, className }: TMenuProps) {
   const { s } = useGodmodeStrings();
   const items: TItem[] = [
-    ...(onPilih
-      ? [
-          {
-            kunci: "buka",
-            label: s.org.open_details,
-            icon: <ExternalLink />,
-            onClick: () => onPilih({ jenis: "departemen", id }),
-          },
-        ]
-      : []),
     {
       kunci: "ubah",
       label: s.org.edit_name_code,

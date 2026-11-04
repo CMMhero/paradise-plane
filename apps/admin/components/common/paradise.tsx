@@ -22,11 +22,18 @@ export type TPageTab = { label: string; href: string };
 const tanpaGarisAkhir = (p: string) => p.replace(/\/+$/, "");
 
 export function PageTabs({ tabs }: { tabs: TPageTab[] }) {
-  const pathName = usePathname() ?? "";
+  const pathName = tanpaGarisAkhir(usePathname() ?? "");
+  // The tab with the longest matching prefix wins, so a sub-page such as
+  // /access/providers/github keeps "Providers" lit and "Methods" (/access) off.
+  const activeHref = tabs
+    .map((tab) => tanpaGarisAkhir(tab.href))
+    .filter((href) => pathName === href || pathName.startsWith(href + "/"))
+    // oxlint-disable-next-line unicorn/no-array-sort -- lib ES2022 has no toSorted; array is already a local copy
+    .sort((x, y) => y.length - x.length)[0];
   return (
-    <nav className="mb-6 flex gap-6 border-b border-subtle" aria-label="Section">
+    <nav className="mb-6 flex flex-wrap gap-x-6 gap-y-1 border-b border-subtle" aria-label="Section">
       {tabs.map((tab) => {
-        const isActive = tanpaGarisAkhir(pathName).endsWith(tanpaGarisAkhir(tab.href));
+        const isActive = tanpaGarisAkhir(tab.href) === activeHref;
         return (
           <Link
             key={tab.href}
@@ -74,26 +81,32 @@ export function Section({
   );
 }
 
-/** One setting: label + description on the left, control on the right. */
+/** One setting: title + description, then the control below; side by side from md. */
 export function SettingRow({
+  id,
   title,
   description,
   note,
   control,
 }: {
+  /** DOM id, so a link (command palette) can scroll to this row. */
+  id?: string;
   title: string;
   description?: ReactNode;
   note?: ReactNode;
   control: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-6 px-4 py-4">
+    <div
+      id={id}
+      className="flex scroll-mt-20 flex-col items-stretch gap-3 px-4 py-4 transition-colors duration-500 data-[highlight=true]:bg-accent-subtle md:flex-row md:items-start md:justify-between md:gap-6"
+    >
       <div className="space-y-1">
         <div className="text-13 font-medium text-primary">{title}</div>
         {description && <div className="text-11 leading-5 text-tertiary">{description}</div>}
         {note}
       </div>
-      <div className="shrink-0 pt-0.5">{control}</div>
+      <div className="min-w-0 md:shrink-0 md:pt-0.5">{control}</div>
     </div>
   );
 }

@@ -7,6 +7,8 @@
  * Tabel ala spreadsheet work item: kepala lengket, klik kepala kolom untuk
  * mengurutkan (klik lagi membalik arah), kolom bisa disembunyikan dari menu
  * Display. Opsional: kelompok baris (judul per hari) dan baris yang bisa dibuka.
+ * Baris yang bisa diklik juga bisa difokus dan dibuka dengan Enter; klik atau
+ * Enter pada kontrol di dalam sel (tombol, saklar, tautan) tidak ikut membuka baris.
  */
 
 import { Fragment } from "react";
@@ -26,6 +28,8 @@ export type TColumn<Row> = {
   locked?: boolean;
   /** Kolom tanpa judul yang tampil (aksi). */
   srOnlyLabel?: boolean;
+  /** Menempel di tepi kiri saat tabel digulir ke samping (kolom aksi pertama). */
+  sticky?: boolean;
   className?: string;
   headClassName?: string;
 };
@@ -46,6 +50,14 @@ type TProps<Row> = {
   minWidth?: number;
 };
 
+/** Kontrol interaktif di dalam sel: kliknya milik kontrol itu, bukan milik baris. */
+const INTERAKTIF = "button, a, input, select, textarea, label, [role=switch], [role=button], [role=menuitem]";
+
+const dariKontrol = (target: EventTarget, baris: HTMLElement): boolean => {
+  const el = (target as HTMLElement).closest?.(INTERAKTIF);
+  return Boolean(el) && baris.contains(el);
+};
+
 const visibleColumns = <Row,>(columns: TColumn<Row>[], hidden: string[]): TColumn<Row>[] =>
   columns.filter((c) => c.locked || !hidden.includes(c.key));
 
@@ -63,6 +75,7 @@ export function DataTable<Row>({
   minWidth = 720,
 }: TProps<Row>) {
   const kolom = visibleColumns(columns, hidden);
+  const adaSticky = kolom.some((c) => c.sticky);
 
   const kelompok: { key: string; label: ReactNode; rows: Row[] }[] = [];
   for (const row of rows) {
@@ -98,15 +111,45 @@ export function DataTable<Row>({
                 return (
                   <Fragment key={rowKey(row)}>
                     <tr
-                      onClick={onRowClick ? () => onRowClick(row) : undefined}
+                      onClick={
+                        onRowClick
+                          ? (ev) => {
+                              if (!dariKontrol(ev.target, ev.currentTarget)) onRowClick(row);
+                            }
+                          : undefined
+                      }
+                      onKeyDown={
+                        onRowClick
+                          ? (ev) => {
+                              // Hanya Enter pada baris itu sendiri, bukan pada kontrol di dalamnya.
+                              if (ev.key === "Enter" && ev.target === ev.currentTarget) {
+                                ev.preventDefault();
+                                onRowClick(row);
+                              }
+                            }
+                          : undefined
+                      }
+                      tabIndex={onRowClick ? 0 : undefined}
                       className={cn(
                         "border-t border-subtle transition-colors hover:bg-layer-1-hover",
-                        { "cursor-pointer": Boolean(onRowClick), "bg-layer-1": Boolean(isi) },
+                        {
+                          "cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-strong":
+                            Boolean(onRowClick),
+                          "bg-surface-1": adaSticky,
+                          "bg-layer-1": Boolean(isi),
+                        },
                         rowClassName?.(row)
                       )}
                     >
                       {kolom.map((c) => (
-                        <td key={c.key} className={cn("px-3 py-2 align-middle", c.className)}>
+                        <td
+                          key={c.key}
+                          className={cn(
+                            "px-3 py-2 align-middle",
+                            c.sticky && "sticky left-0 z-[1] bg-inherit",
+                            c.className
+                          )}
+                        >
                           {c.render(row)}
                         </td>
                       ))}
@@ -144,7 +187,11 @@ function KepalaKolom<Row>({
 
   return (
     <th
-      className={cn("px-3 py-2 text-left font-medium whitespace-nowrap", c.headClassName)}
+      className={cn(
+        "px-3 py-2 text-left font-medium whitespace-nowrap",
+        c.sticky && "sticky left-0 z-[2] bg-layer-1",
+        c.headClassName
+      )}
       aria-sort={aktif ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
     >
       {c.srOnlyLabel ? (

@@ -14,7 +14,6 @@ import {
   type TAnggotaHierarki,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
-  type TOrangOrganisasi,
 } from "@plane/services";
 import type { TGodmodeStrings } from "@/app/i18n/godmode";
 
@@ -49,8 +48,8 @@ export type TAksiOrganisasi = {
 };
 
 /**
- * Perintah kelola yang membuka satu modal di tingkat halaman. Bagan, pohon, dan
- * panel detail memakai modal yang sama, jadi aturan buat/ubah/hapus/tambah orang
+ * Perintah kelola yang membuka satu modal di tingkat halaman. Papan dan menu
+ * "..." memakai modal yang sama, jadi aturan buat/ubah/hapus/tambah orang
  * hanya ditulis sekali (kelola.tsx).
  */
 export type TPerintahKelola =
@@ -123,30 +122,6 @@ export const cariDepartemen = (
   }
   return undefined;
 };
-
-/** Node yang sedang dibuka di panel kanan. */
-export type TPilihan =
-  | { jenis: "ringkasan" }
-  | { jenis: "divisi"; id: string }
-  | { jenis: "departemen"; id: string }
-  | { jenis: "belum" }
-  | { jenis: "lama" };
-
-export const samaPilihan = (a: TPilihan, b: TPilihan): boolean =>
-  a.jenis === b.jenis && ("id" in a ? a.id : "") === ("id" in b ? b.id : "");
-
-/** Cocokkan orang dengan kata cari global (nama/email). `q` sudah huruf kecil. */
-export const cocokOrang = (q: string, o: Pick<TOrangOrganisasi, "nama" | "email">): boolean =>
-  !q || `${o.nama} ${o.email}`.toLowerCase().includes(q);
-
-export const cocokTeks = (q: string, ...teks: string[]): boolean => !q || teks.join(" ").toLowerCase().includes(q);
-
-/** Departemen yang lolos cari: namanya cocok, atau salah satu orangnya cocok. */
-export const depCocok = (q: string, d: TDepartemenOrganisasi): boolean =>
-  cocokTeks(q, d.nama, d.kode) || d.anggota.some((a) => cocokOrang(q, a));
-
-export const divisiCocok = (q: string, v: TDivisiOrganisasi): boolean =>
-  cocokTeks(q, v.nama, v.kode) || v.manager.some((m) => cocokOrang(q, m)) || v.departemen.some((d) => depCocok(q, d));
 
 const KODE_MAKS = 20;
 /** Kata sambung yang tak ikut jadi huruf kode ("Research and Development" -> RD). */

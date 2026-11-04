@@ -6,18 +6,17 @@
 
 // Paradise pages. Without an entry the breadcrumb falls back to the URL segment
 // in sentence case ("project-defaults" -> "Project defaults"), never caps.
+// The breadcrumb stops at the parent: the last segment is the tab shown below.
 export const EXTENDED_HEADER_SEGMENT_LABELS: Record<string, string> = {
-  workspace: "Workspaces",
-  "project-defaults": "New project defaults",
-  preview: "Preview",
-  members: "Members",
+  company: "Company",
+  workspaces: "Workspaces",
+  providers: "Providers",
+  people: "People",
   organization: "Organization",
-  defaults: "New member defaults",
-  logs: "Logs",
+  rules: "Work rules",
+  notifications: "Notifications",
+  modules: "Modules",
+  logs: "Data & logs",
   audit: "Audit log",
   trash: "Trash",
-  features: "Features",
-  "api-keys": "API keys",
-  image: "Image library",
-  google: "Google",
 };

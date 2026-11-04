@@ -13,6 +13,7 @@ import { AdminHeader } from "@/components/common/header";
 import { LogoSpinner } from "@/components/common/logo-spinner";
 import { NewUserPopup } from "@/components/common/new-user-popup";
 import { UnsavedChangesBar, UnsavedChangesProvider } from "@/components/common/unsaved-changes";
+import { useSettingAnchor } from "@/components/command-palette/use-setting-anchor";
 // hooks
 import { useUser } from "@/hooks/store";
 // local components
@@ -24,6 +25,8 @@ function AdminLayout(_props: Route.ComponentProps) {
   const { replace } = useRouter();
   // store hooks
   const { isUserLoggedIn } = useUser();
+  // Paradise: palette links (#setting-KEY) scroll to their row.
+  useSettingAnchor();
 
   useEffect(() => {
     if (isUserLoggedIn === false) replace("/");
