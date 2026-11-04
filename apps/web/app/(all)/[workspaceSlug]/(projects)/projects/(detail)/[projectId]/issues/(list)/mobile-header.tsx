@@ -15,6 +15,7 @@ import type { IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane
 import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
+import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
 import {
   DisplayFiltersSelection,
   FiltersDropdown,
@@ -70,17 +71,24 @@ export const ProjectIssuesMobileHeader = observer(function ProjectIssuesMobileHe
         onClose={() => setAnalyticsModal(false)}
         projectDetails={currentProjectDetails ?? undefined}
       />
-      <div className="z-[13] flex justify-evenly border-b border-subtle bg-surface-1 py-2 md:hidden">
+      {/* Baris alat HP: tiap segmen tetap selebar isinya dan barisnya bisa digeser,
+          jadi tak ada tombol yang terpotong di layar 320px. */}
+      <div className="z-[13] scrollbar-hide flex min-h-11 items-stretch justify-evenly overflow-x-auto border-b border-subtle bg-surface-1 py-1.5 md:hidden [&>*]:shrink-0">
         <MobileLayoutSelection
           layouts={[EIssueLayoutTypes.LIST, EIssueLayoutTypes.KANBAN, EIssueLayoutTypes.CALENDAR]}
           onChange={handleLayoutChange}
+          activeLayout={activeLayout}
         />
+        {/* Paradise: di layar sempit header desktop (yang memuat tombol filter) disembunyikan, jadi tombol filter dipasang di sini. */}
+        <div className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary">
+          <WorkItemFiltersToggle entityType={EIssuesStoreType.PROJECT} entityId={projectId?.toString() ?? ""} />
+        </div>
         <div className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary">
           <FiltersDropdown
             title={t("common.display")}
             placement="bottom-end"
             menuButton={
-              <span className="flex items-center text-13 text-secondary">
+              <span className="flex items-center px-3 py-2 text-13 text-secondary">
                 {t("common.display")}
                 <ChevronDownIcon className="ml-2 h-4 w-4 text-secondary" />
               </span>
@@ -103,7 +111,7 @@ export const ProjectIssuesMobileHeader = observer(function ProjectIssuesMobileHe
         {isModuleEnabled("analytics") && (
           <button
             onClick={() => setAnalyticsModal(true)}
-            className="flex flex-grow justify-center border-l border-subtle text-13 text-secondary"
+            className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary"
           >
             {t("common.analytics")}
           </button>

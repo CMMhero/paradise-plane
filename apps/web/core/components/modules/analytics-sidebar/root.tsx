@@ -36,6 +36,7 @@ import { CreateUpdateModuleLinkModal, ModuleAnalyticsProgress, ModuleLinksList }
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useModule } from "@/hooks/store/use-module";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 // plane web constants
 const defaultValues: Partial<IModule> = {
   lead_id: "",
@@ -65,6 +66,7 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
   const { allowPermissions } = useUserPermissions();
 
   const { getModuleById, updateModuleDetails, createModuleLink, updateModuleLink, deleteModuleLink } = useModule();
+  const izin = useIzinSumber(workspaceSlug?.toString(), projectId?.toString());
   const { areEstimateEnabledByProjectId, currentActiveEstimateId, estimateById } = useProjectEstimates();
 
   // derived values
@@ -163,10 +165,12 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
       ? "0 work items"
       : `${moduleDetails.completed_estimate_points}/${moduleDetails.total_estimate_points}`;
 
-  const isEditingAllowed = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.PROJECT
-  );
+  const isEditingAllowed =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT) &&
+    izin.boleh("PERM_MODULE_EDIT", {
+      pemilikId: moduleDetails.created_by,
+      terlibatIds: [moduleDetails.lead_id, ...(moduleDetails.member_ids ?? [])],
+    });
 
   return (
     <div className="relative">

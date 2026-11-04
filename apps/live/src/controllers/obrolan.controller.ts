@@ -49,7 +49,22 @@ type KlienHadir = {
   /** Acak per sambungan: satu orang bisa membuka banyak tab. */
   tab: string;
   status: TStatusHadir;
+  /** Cookie tab ini, dipakai memeriksa keanggotaan ruang untuk sinyal panggilan. */
+  cookie: string;
+  /** Waktu (ms) sinyal panggilan terakhir tab ini, untuk batas laju. */
+  sinyal: number[];
 };
+
+/** Jenis sinyal panggilan DM yang diterima di soket kehadiran. */
+const JENIS_PANGGILAN = new Set(["panggil", "batal", "tolak", "terima", "tutup", "sibuk"]);
+const POLA_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PANJANG_ID_PANGGILAN = 64;
+/** Batas laju per tab: terlalu banyak sinyal dalam jendela ini dibuang. */
+const BATAS_SINYAL = 20;
+const JENDELA_SINYAL_MS = 10_000;
+/** Hasil keanggotaan ruang disimpan sebentar supaya tiap sinyal tidak memukul API. */
+const MASA_CACHE_ANGGOTA_MS = 3 * 60_000;
+const BATAS_CACHE_ANGGOTA = 2000;
 
 /**
  * Obrolan real-time, dan jalur sinyal untuk panggilan suara/video.
@@ -84,6 +99,8 @@ export class ObrolanController {
   /** Tab yang melaporkan kehadiran, per workspace, di proses INI. */
   private klienHadir = new Map<string, Set<KlienHadir>>();
   private penyimpanMemori = new PenyimpanMemori();
+  /** Anggota ruang per (pengirim, workspace, ruang), dengan masa berlaku. */
+  private cacheAnggota = new Map<string, { anggota: Set<string>; sampai: number }>();
   private pelanggan: Redis | null = null;
 
   @WSDecorator("/")
@@ -217,7 +234,7 @@ export class ObrolanController {
       return;
     }
 
-    const klien: KlienHadir = { ws, userId, slug, tab: randomUUID(), status: "online" };
+    const klien: KlienHadir = { ws, userId, slug, tab: randomUUID(), status: "online", cookie, sinyal: [] };
     const isi = this.klienHadir.get(slug) ?? new Set<KlienHadir>();
     isi.add(klien);
     this.klienHadir.set(slug, isi);
@@ -247,10 +264,14 @@ export class ObrolanController {
   }
 
   private async terimaDetak(klien: KlienHadir, data: RawData) {
-    let masuk: { tipe?: string; status?: unknown };
+    let masuk: { tipe?: string; status?: unknown; ke?: unknown; ruang?: unknown; muatan?: unknown };
     try {
       masuk = JSON.parse(data.toString());
     } catch {
+      return;
+    }
+    if (masuk.tipe === "panggilan") {
+      await this.terimaPanggilan(klien, masuk);
       return;
     }
     if (masuk.tipe !== "hadir") return;
@@ -301,8 +322,93 @@ export class ObrolanController {
   }
 
   private teruskanKehadiran(slug: string, muatan: string) {
-    for (const klien of this.klienHadir.get(slug) ?? []) {
+    const klienLokal = this.klienHadir.get(slug) ?? [];
+    // Siaran kehadiran biasa tidak berisi `_tab`; hanya sinyal panggilan yang
+    // perlu diurai, sisanya langsung diteruskan apa adanya.
+    if (muatan.includes('"tipe":"panggilan"')) {
+      let sinyal: { tipe?: string; dari?: string; ke?: string; _tab?: string };
+      try {
+        sinyal = JSON.parse(muatan);
+      } catch {
+        return;
+      }
+      if (sinyal.tipe === "panggilan") {
+        const { _tab: tabPengirim, ...untukPeramban } = sinyal;
+        const kirim = JSON.stringify(untukPeramban);
+        for (const klien of klienLokal) {
+          // Tujuan, atau tab LAIN milik pengirim (sinkron antar tab). Tab
+          // pengirim sendiri dilewati: ia sudah tahu apa yang barusan dikirimnya.
+          const sah = klien.userId === sinyal.ke || klien.userId === sinyal.dari;
+          if (!sah || klien.tab === tabPengirim) continue;
+          if (klien.ws.readyState === klien.ws.OPEN) klien.ws.send(kirim);
+        }
+        return;
+      }
+    }
+    for (const klien of klienLokal) {
       if (klien.ws.readyState === klien.ws.OPEN) klien.ws.send(muatan);
+    }
+  }
+
+  /** Sinyal panggilan DM lewat soket kehadiran, supaya yang ditelepon berdering
+   * di tab mana pun tanpa harus membuka percakapannya. Semua yang tidak sah
+   * dibuang diam-diam: membalas galat memberi tahu penebak apa yang ada. */
+  private async terimaPanggilan(klien: KlienHadir, masuk: { ke?: unknown; ruang?: unknown; muatan?: unknown }) {
+    const { ke, ruang, muatan } = masuk;
+    if (typeof ke !== "string" || ke.length === 0 || ke.length > 64) return;
+    if (typeof ruang !== "string" || !POLA_UUID.test(ruang)) return;
+    if (!muatan || typeof muatan !== "object") return;
+    const { jenis, id, video } = muatan as { jenis?: unknown; id?: unknown; video?: unknown };
+    if (typeof jenis !== "string" || !JENIS_PANGGILAN.has(jenis)) return;
+    if (typeof id !== "string" || id.length === 0 || id.length > PANJANG_ID_PANGGILAN) return;
+    if (video !== undefined && typeof video !== "boolean") return;
+
+    // Batas laju dihitung sebelum pemeriksaan hak, supaya spam tak memukul API.
+    const sekarang = Date.now();
+    klien.sinyal = klien.sinyal.filter((t) => sekarang - t < JENDELA_SINYAL_MS);
+    if (klien.sinyal.length >= BATAS_SINYAL) return;
+    klien.sinyal.push(sekarang);
+
+    const anggota = await this.anggotaRuang(klien, ruang);
+    if (!anggota || !anggota.has(klien.userId) || !anggota.has(ke)) return;
+
+    // Hanya bidang yang dikenal yang diteruskan. `dari` diisi server.
+    const bersih = { jenis, id, ...(video === undefined ? {} : { video }) };
+    const isi = JSON.stringify({ tipe: "panggilan", dari: klien.userId, ke, ruang, muatan: bersih, _tab: klien.tab });
+    const redis = redisManager.getClient();
+    try {
+      if (!redis) this.teruskanKehadiran(klien.slug, isi);
+      else await redis.publish(`${AWALAN_KANAL_HADIR}${klien.slug}`, isi);
+    } catch (error) {
+      logger.warn("OBROLAN: gagal menyiarkan sinyal panggilan", error);
+    }
+  }
+
+  /** Anggota satu ruang menurut API, dengan cookie tab pemanggil. `null` kalau
+   * pemanggil sendiri bukan anggota (API menjawab 404) atau API gagal. Hanya
+   * hasil positif yang disimpan. */
+  private async anggotaRuang(klien: KlienHadir, ruang: string): Promise<Set<string> | null> {
+    const kunci = `${klien.userId}:${klien.slug}:${ruang}`;
+    const sekarang = Date.now();
+    const ada = this.cacheAnggota.get(kunci);
+    if (ada && ada.sampai > sekarang) return ada.anggota;
+    try {
+      const balas = await fetch(`${env.API_BASE_URL}/api/workspaces/${klien.slug}/chat/ruang/${ruang}/anggota/`, {
+        headers: { Cookie: klien.cookie },
+      });
+      if (!balas.ok) return null;
+      const daftar = (await balas.json()) as unknown;
+      if (!Array.isArray(daftar)) return null;
+      const anggota = new Set(daftar.filter((x): x is string => typeof x === "string"));
+      if (this.cacheAnggota.size >= BATAS_CACHE_ANGGOTA) {
+        for (const [k, v] of this.cacheAnggota) if (v.sampai <= sekarang) this.cacheAnggota.delete(k);
+        if (this.cacheAnggota.size >= BATAS_CACHE_ANGGOTA) this.cacheAnggota.clear();
+      }
+      this.cacheAnggota.set(kunci, { anggota, sampai: sekarang + MASA_CACHE_ANGGOTA_MS });
+      return anggota;
+    } catch (error) {
+      logger.warn("OBROLAN: gagal memeriksa anggota ruang", error);
+      return null;
     }
   }
 

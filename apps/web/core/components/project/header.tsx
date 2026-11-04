@@ -18,6 +18,7 @@ import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 // plane web constants
 // components
 import HeaderFilters from "./filters";
@@ -32,10 +33,11 @@ export const ProjectsBaseHeader = observer(function ProjectsBaseHeader() {
 
   const pathname = usePathname();
   // auth
-  const isAuthorizedUser = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
+  // Paradise: tombol di header ini hanya "buat project"; staf / member biasa tidak boleh.
+  const bolehBuatProject = useBolehBuatProject();
+  const isAuthorizedUser =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
+    bolehBuatProject;
   const isArchived = pathname.includes("/archives");
 
   return (

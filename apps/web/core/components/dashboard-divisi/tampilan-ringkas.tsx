@@ -72,7 +72,12 @@ export function SummaryView({ workspaceSlug, data, onShowDetail }: Props) {
         )}
       </section>
 
-      <Button variant="link" size="base" className="self-start" onClick={onShowDetail}>
+      <Button
+        variant="link"
+        size="base"
+        className="h-auto max-w-full self-start text-left !whitespace-normal"
+        onClick={onShowDetail}
+      >
         {t("division_dashboard_ui.detail_hint")}
       </Button>
     </div>

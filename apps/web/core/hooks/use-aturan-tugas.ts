@@ -6,16 +6,23 @@
  */
 
 import { useContext } from "react";
+import { useParams } from "next/navigation";
 import useSWR, { type SWRConfiguration } from "swr";
 import { EUserPermissionsLevel } from "@plane/constants";
 import type { TIssue } from "@plane/types";
 import { EUserProjectRoles } from "@plane/types";
 // hooks
+import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { StoreContext } from "@/lib/store-context";
 // services
 import { IssueService } from "@/services/issue";
-import { PersetujuanService, type TBisaDitugaskan } from "@/services/persetujuan.service";
+import {
+  ATURAN_TUGAS_BAWAAN,
+  PersetujuanService,
+  type TAturanTugas,
+  type TBisaDitugaskan,
+} from "@/services/persetujuan.service";
 import { UserService } from "@/services/user.service";
 
 /**
@@ -44,10 +51,15 @@ export const TINGKAT_SUPERVISOR = 20;
 /**
  * Aturan kepemilikan tugas + jenjang saya, sisi tampilan.
  *
+ * Bawaan (God Mode KEP-83 tidak diubah, atau server lama tanpa `aturan`):
+ *
  *     hapus / arsipkan   sama dengan ubah (pemilik/assignee atau atasan) + Super Admin
  *     ganti Due Date     HANYA pembuatnya atau Super Admin
  *     assignee staf      HANYA dirinya sendiri (+ approval atasan di server)
  *     sisanya            bebas untuk semua anggota
+ *
+ * Super Admin bisa mengubah lima aturan itu di God Mode; nilainya datang dari
+ * `aturan` di balasan `bisa-ditugaskan/` (`TAturanTugas`) dan dibaca di sini.
  *
  * Penegak yang sebenarnya ada di server (`plane/utils/task_access.py` +
  * gerbang hierarki `plane/utils/hierarki.py`), dan ini TIDAK menggantikannya.
@@ -93,14 +105,27 @@ export const useTingkatSaya = (workspaceSlug: string | undefined, projectId: str
 };
 
 /** Bentuk minimum yang cukup untuk menilai "apakah saya pembuatnya". */
-type PembuatTugas = { created_by?: string | null };
+type PembuatTugas = { created_by?: string | null; assignee_ids?: string[] | null; project_id?: string | null };
 
 /**
  * True kalau pembuka layar dipastikan staf (termasuk jenjang belum diisi).
  * null = belum dimuat — pemanggil memilih: kunci sementara (form create) atau
  * terbuka dulu (detail baca, server yang menolak).
  */
-export const stafSaja = (tingkat: number | null): boolean => tingkat != null && tingkat < TINGKAT_SUPERVISOR;
+export const stafSaja = (tingkat: number | null, ambang: number = TINGKAT_SUPERVISOR): boolean =>
+  tingkat != null && tingkat < ambang;
+
+/** Nilai pilihan `ganti_tenggat` / `hapus_tugas`; cermin konstanta `saklar_instance.py`. */
+const ATURAN_TENGGAT_PLUS_ADMIN_PROJECT = 1;
+const ATURAN_TENGGAT_YANG_BOLEH_UBAH = 2;
+const ATURAN_HAPUS_PEMBUAT_SAJA = 1;
+const ATURAN_HAPUS_YANG_BOLEH_UBAH = 2;
+
+/** Gabungkan `aturan` server dengan bawaan (kunci yang hilang = perilaku lama). */
+const gabungAturan = (aturan: Partial<TAturanTugas> | undefined | null): TAturanTugas => ({
+  ...ATURAN_TUGAS_BAWAAN,
+  ...aturan,
+});
 
 /**
  * Menunggu persetujuan TIDAK lagi mengunci (keputusan user 2026-10-24:
@@ -187,6 +212,7 @@ export const useBisaDitugaskan = (
   tingkat: number | null;
   gerbangAktif: boolean;
   bawahanIds: string[];
+  aturan: TAturanTugas;
 } => {
   const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
   const { data, isLoading } = useSWR(
@@ -195,7 +221,15 @@ export const useBisaDitugaskan = (
     OPSI_HAK_AKSES
   );
   if (!kunci || isLoading || !data)
-    return { mode: null, userIds: [], memuat: true, tingkat: null, gerbangAktif: true, bawahanIds: [] };
+    return {
+      mode: null,
+      userIds: [],
+      memuat: true,
+      tingkat: null,
+      gerbangAktif: true,
+      bawahanIds: [],
+      aturan: gabungAturan(data?.aturan),
+    };
   const users = (data.users ?? []).map((u) => u.id);
   const ids = users.length > 0 ? users : (data.user_ids ?? []);
   return {
@@ -206,7 +240,33 @@ export const useBisaDitugaskan = (
     // Server lama yang belum membalas kunci ini: anggap gerbang menyala (aman).
     gerbangAktif: data.gerbang_aktif ?? true,
     bawahanIds: data.bawahan_ids ?? [],
+    aturan: gabungAturan(data.aturan),
   };
+};
+
+/**
+ * Project yang dipakai untuk membaca `aturan`. Aturannya berlaku se-instance,
+ * tapi dibawa balasan `bisa-ditugaskan/` per project: pakai yang diberikan,
+ * lalu project di URL, lalu project pertama yang saya ikuti (layar lintas project).
+ */
+const useKonteksAturan = (
+  workspaceSlug?: string,
+  projectId?: string | null
+): { slug: string | undefined; projectId: string | undefined } => {
+  const params = useParams();
+  const { joinedProjectIds } = useProject();
+  const slugRute = params?.workspaceSlug?.toString();
+  const projectRute = params?.projectId?.toString();
+  return {
+    slug: workspaceSlug ?? slugRute,
+    projectId: projectId ?? projectRute ?? joinedProjectIds[0],
+  };
+};
+
+/** Lima aturan God Mode untuk tampilan; bawaan = perilaku lama selama belum dimuat. */
+export const useAturanInstance = (workspaceSlug?: string, projectId?: string | null): TAturanTugas => {
+  const konteks = useKonteksAturan(workspaceSlug, projectId);
+  return useBisaDitugaskan(konteks.slug, konteks.projectId).aturan;
 };
 
 /** Bentuk minimum tugas untuk menilai hak ubah/hapus. */
@@ -282,7 +342,7 @@ export const useOpsiAssignee = (
 ): { memberIds: string[] | undefined; rapikan: (val: string[]) => string[] } => {
   const daftar = useBisaDitugaskan(workspaceSlug, projectId);
   const tingkat = useTingkatSaya(workspaceSlug, projectId);
-  const staf = stafSaja(tingkat);
+  const staf = stafSaja(tingkat, daftar.aturan.persetujuan_di_bawah);
   const lama = assigneeIds ?? [];
   return {
     memberIds: daftar.memuat ? undefined : Array.from(new Set([...daftar.userIds, ...lama])),
@@ -290,7 +350,10 @@ export const useOpsiAssignee = (
   };
 };
 
-export const useAturanTugas = () => {
+export const useAturanTugas = (workspaceSlug?: string, projectId?: string | null) => {
+  const konteks = useKonteksAturan(workspaceSlug, projectId);
+  const { aturan } = useBisaDitugaskan(konteks.slug, konteks.projectId);
+  const bolehUbah = usePenilaiUbahTugas(konteks.slug, konteks.projectId);
   const { data: currentUser } = useUser();
   const { allowPermissions } = useUserPermissions();
 
@@ -311,15 +374,31 @@ export const useAturanTugas = () => {
   const adalahSuperAdmin = !!statusAdmin?.is_instance_admin;
 
   /**
-   * Boleh menggeser Due Date. Sengaja tidak termasuk admin project.
+   * Boleh menggeser Due Date. Cerminan `bisa_ganti_tenggat` server, per aturan God Mode:
+   *
+   *     0 (bawaan)   pembuat atau Super Admin (admin project TIDAK termasuk)
+   *     1            + admin project dari project tugas itu
+   *     2            + siapa pun yang boleh MENGUBAH tugas itu
    *
    * Parameternya sengaja hanya butuh `created_by`, bukan `TIssue` utuh:
    * beberapa layar (inbox triage) memegang objek `Partial<TIssue>`.
    */
-  const bisaGantiTenggat = (issue: PembuatTugas | undefined | null) => adalahPembuat(issue) || adalahSuperAdmin;
+  const bisaGantiTenggat = (issue: PembuatTugas | undefined | null) => {
+    if (adalahPembuat(issue) || adalahSuperAdmin) return true;
+    if (!issue) return false;
+    if (aturan.ganti_tenggat === ATURAN_TENGGAT_PLUS_ADMIN_PROJECT) {
+      const idProject = issue.project_id ?? konteks.projectId;
+      return (
+        !!idProject &&
+        allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, konteks.slug, idProject)
+      );
+    }
+    if (aturan.ganti_tenggat === ATURAN_TENGGAT_YANG_BOLEH_UBAH) return bolehUbah(issue);
+    return false;
+  };
 
   return {
-    /** Lihat `bisaGantiTenggat` di atas — hanya pembuat atau Super Admin. */
+    /** Lihat `bisaGantiTenggat` di atas — bawaan hanya pembuat atau Super Admin. */
     bisaGantiTenggat,
 
     /**
@@ -336,12 +415,15 @@ export const useAturanTugas = () => {
      */
     bisaGantiTenggatIntake: (
       issue: PembuatTugas | undefined | null,
-      projectId: string | undefined,
+      idProject: string | undefined,
       sudahDiterima: boolean
     ) =>
       bisaGantiTenggat(issue) ||
       (!sudahDiterima &&
-        allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, undefined, projectId)),
+        allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, undefined, idProject)),
+
+    /** Lima aturan God Mode (bawaan = perilaku lama selama belum dimuat). */
+    aturan,
 
     /** Id user saat ini — dipakai dropdown assignee untuk mode "hanya diri sendiri". */
     idSaya: currentUser?.id ?? null,
@@ -350,8 +432,12 @@ export const useAturanTugas = () => {
 
 /**
  * Bolehkan menu Arsip/Hapus untuk tugas ini? Tombolnya HILANG kalau tidak
- * boleh (bukan error sesudah klik). Cerminan `bisa_hapus_tugas` server:
+ * boleh (bukan error sesudah klik). Cerminan `bisa_hapus_tugas` server, per
+ * aturan `hapus_tugas` di God Mode (Super Admin selalu boleh):
  *
+ *     1  pembuat saja
+ *     2  siapa pun yang boleh MENGUBAH tugas itu -> `useBolehUbahTugas`
+ *     0  (bawaan)
  *     gerbang hierarki aktif   sama dengan hak UBAH (KEP-27) -> `useBolehUbahTugas`
  *     gerbang mati             pembuat, admin project, atau Super Admin
  *
@@ -371,12 +457,16 @@ export const useBolehHapus = (
     OPSI_HAK_AKSES
   );
   const bolehUbah = useBolehUbahTugas(workspaceSlug, projectId, issue);
-  const { memuat, gerbangAktif } = useBisaDitugaskan(workspaceSlug, projectId);
+  const { memuat, gerbangAktif, aturan } = useBisaDitugaskan(workspaceSlug, projectId);
   if (!issue) return { boleh: false, terkunci: false };
+  const adalahPembuat = !!currentUser?.id && issue.created_by === currentUser.id;
+  if (aturan.hapus_tugas === ATURAN_HAPUS_PEMBUAT_SAJA)
+    return { boleh: !!statusAdmin?.is_instance_admin || adalahPembuat, terkunci: false };
+  if (aturan.hapus_tugas === ATURAN_HAPUS_YANG_BOLEH_UBAH) return { boleh: bolehUbah, terkunci: false };
   if (memuat || gerbangAktif) return { boleh: bolehUbah, terkunci: false };
   const boleh =
     !!statusAdmin?.is_instance_admin ||
-    (!!currentUser?.id && issue.created_by === currentUser.id) ||
+    adalahPembuat ||
     allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, projectId ?? undefined);
   return { boleh, terkunci: false };
 };

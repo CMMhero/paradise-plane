@@ -28,6 +28,10 @@ import { ProfileNavbar } from "./navbar";
 
 const userService = new UserService();
 
+// Garis miring di ujung diabaikan: "/assigned" dan "/assigned/" sama-sama tab Assigned.
+// Dulu tidak cocok, jadi tombol pilih tab di HP tampil kosong.
+const tanpaGarisAkhir = (path: string) => path.replace(/\/+$/, "");
+
 function UseProfileLayout({ params }: Route.ComponentProps) {
   // router
   const { workspaceSlug, userId } = params;
@@ -61,7 +65,9 @@ function UseProfileLayout({ params }: Route.ComponentProps) {
   const isIssuesTab = pathname.includes("assigned") || pathname.includes("created") || pathname.includes("subscribed");
 
   const tabsList = isAuthorized ? [...PROFILE_VIEWER_TAB, ...PROFILE_ADMINS_TAB] : PROFILE_VIEWER_TAB;
-  const currentTab = tabsList.find((tab) => pathname === `/${workspaceSlug}/profile/${userId}${tab.selected}`);
+  const currentTab = tabsList.find(
+    (tab) => tanpaGarisAkhir(pathname) === tanpaGarisAkhir(`/${workspaceSlug}/profile/${userId}${tab.selected}`)
+  );
 
   return (
     <>

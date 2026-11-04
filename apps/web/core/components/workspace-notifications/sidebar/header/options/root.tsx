@@ -5,82 +5,75 @@
  */
 
 import { observer } from "mobx-react";
-import { CheckCheck, RefreshCw } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 // plane imports
-import { ENotificationLoader, ENotificationQueryParamType } from "@plane/constants";
+import { ENotificationLoader } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { IconButton } from "@plane/propel/icon-button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
 import { Spinner } from "@plane/ui";
+// components
+import { SaklarSuara } from "@/components/notifikasi/saklar-suara";
 // hooks
 import { useWorkspaceNotifications } from "@/hooks/store/notifications";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // local imports
-import { NotificationFilter } from "../../filters/menu";
-import { NotificationHeaderMenuOption } from "./menu-option";
-import { IconButton } from "@plane/propel/icon-button";
+import { NotificationOptionsMenu } from "./options-menu";
 
-type TNotificationSidebarHeaderOptions = {
+type TNotificationHeaderOptions = {
   workspaceSlug: string;
 };
 
-export const NotificationSidebarHeaderOptions = observer(function NotificationSidebarHeaderOptions(
-  props: TNotificationSidebarHeaderOptions
-) {
-  const { workspaceSlug } = props;
-  // hooks
-  const { isMobile } = usePlatformOS();
-  const { loader, getNotifications, markAllNotificationsAsRead } = useWorkspaceNotifications();
+export const NotificationMarkAllReadButton = observer(function NotificationMarkAllReadButton({
+  workspaceSlug,
+}: TNotificationHeaderOptions) {
   const { t } = useTranslation();
-
-  const refreshNotifications = async () => {
-    if (loader) return;
-    try {
-      await getNotifications(workspaceSlug, ENotificationLoader.MUTATION_LOADER, ENotificationQueryParamType.CURRENT);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const { isMobile } = usePlatformOS();
+  const { loader, markAllNotificationsAsRead } = useWorkspaceNotifications();
+  const label = t("notification.options.mark_all_as_read");
 
   const handleMarkAllNotificationsAsRead = async () => {
-    // NOTE: We are using loader to prevent continues request when we are making all the notification to read
+    // NOTE: loader dipakai supaya permintaan tidak berulang selama yang pertama berjalan.
     if (loader) return;
     try {
       await markAllNotificationsAsRead(workspaceSlug);
     } catch (error) {
       console.error(error);
+      setToast({ type: TOAST_TYPE.ERROR, title: t("common.error.label"), message: t("common.error.message") });
     }
   };
 
   return (
-    <div className="relative flex items-center justify-center gap-2 text-body-xs-medium">
-      {/* mark all notifications as read*/}
-      <Tooltip tooltipContent={t("notification.options.mark_all_as_read")} isMobile={isMobile} position="bottom">
-        <IconButton
-          size="base"
-          variant="ghost"
-          icon={loader === ENotificationLoader.MARK_ALL_AS_READY ? Spinner : CheckCheck}
-          onClick={() => {
-            handleMarkAllNotificationsAsRead();
-          }}
-        />
-      </Tooltip>
+    <Tooltip tooltipContent={label} isMobile={isMobile} position="bottom">
+      <IconButton
+        size="base"
+        variant="ghost"
+        icon={loader === ENotificationLoader.MARK_ALL_AS_READY ? Spinner : CheckCheck}
+        aria-label={label}
+        onClick={() => void handleMarkAllNotificationsAsRead()}
+      />
+    </Tooltip>
+  );
+});
 
-      {/* refetch current notifications */}
-      <Tooltip tooltipContent={t("notification.options.refresh")} isMobile={isMobile} position="bottom">
-        <IconButton
-          size="base"
-          variant="ghost"
-          icon={RefreshCw}
-          className={loader === ENotificationLoader.MUTATION_LOADER ? "animate-spin" : ""}
-          onClick={refreshNotifications}
-        />
-      </Tooltip>
-
-      {/* notification filters */}
-      <NotificationFilter />
-
-      {/* notification menu options */}
-      <NotificationHeaderMenuOption />
+/**
+ * Tombol kanan header Inbox, dipakai di tampilan penuh DAN di popover lonceng.
+ *
+ * Dulu lima tombol (tandai semua, refresh, filter, suara xl, menu). Filter dan
+ * menu memakai PopoverMenu @plane/ui yang akarnya `w-full h-full`, jadi di kolom
+ * sempit keduanya berebut lebar penuh dan tombol "..." terdorong keluar header.
+ * Sekarang tiga tombol berukuran sama; refresh, filter, dan tampilan pindah ke
+ * satu menu.
+ */
+export const NotificationSidebarHeaderOptions = observer(function NotificationSidebarHeaderOptions({
+  workspaceSlug,
+}: TNotificationHeaderOptions) {
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <NotificationMarkAllReadButton workspaceSlug={workspaceSlug} />
+      <SaklarSuara size="base" />
+      <NotificationOptionsMenu workspaceSlug={workspaceSlug} />
     </div>
   );
 });

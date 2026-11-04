@@ -14,6 +14,7 @@ import { TabNavigationRoot } from "@/components/navigation/tab-navigation-root";
 import { AppSidebarToggleButton } from "@/components/sidebar/sidebar-toggle-button";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 import { useProjectNavigationPreferences } from "@/hooks/use-navigation-preferences";
 // layouts
 import { ProjectAuthWrapper } from "@/layouts/auth-layout/project-wrapper";
@@ -27,6 +28,8 @@ function ProjectLayout({ params }: Route.ComponentProps) {
   const { sidebarCollapsed } = useAppTheme();
   // preferences
   const { preferences: projectPreferences } = useProjectNavigationPreferences();
+  // Paradise KEP-85: muat izin-saya project ini sekali, untuk store page (MobX) yang tak bisa memanggil hook.
+  useIzinSumber(workspaceSlug, projectId);
 
   return (
     <>
@@ -34,13 +37,13 @@ function ProjectLayout({ params }: Route.ComponentProps) {
         <div className="z-20">
           <Row className="flex h-header w-full items-center gap-2 border-b border-subtle bg-surface-1">
             <div className="flex h-full w-full items-center gap-2 divide-x divide-subtle">
-              <div className="flex size-full flex-1 items-center gap-2">
+              <div className="flex size-full min-w-0 flex-1 items-center gap-2">
                 {sidebarCollapsed && (
                   <div className="shrink-0">
                     <AppSidebarToggleButton />
                   </div>
                 )}
-                <Header className={cn("h-full", { "pl-1.5": !sidebarCollapsed })}>
+                <Header className={cn("h-full w-auto min-w-0 flex-1 shrink", { "pl-1.5": !sidebarCollapsed })}>
                   <Header.LeftItem className="flex h-full max-w-full items-center gap-2">
                     <TabNavigationRoot workspaceSlug={workspaceSlug} projectId={projectId} />
                   </Header.LeftItem>

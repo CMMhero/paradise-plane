@@ -78,9 +78,10 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
     if (isOpen) {
       onDropdownOpen?.();
       if (!isMobile) {
-        inputRef.current && inputRef.current.focus();
+        inputRef.current?.focus();
       }
     }
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- onDropdownOpen changes identity every render; rerun only when isOpen changes
   }, [isOpen, isMobile]);
 
   const searchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -97,8 +98,8 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
         value: userId,
         query: `${userDetails?.display_name} ${userDetails?.first_name} ${userDetails?.last_name}`,
         content: (
-          <div className="flex items-center gap-2">
-            <div className="w-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="w-4 shrink-0">
               {isUserSuspended(userId, workspaceSlug?.toString()) ? (
                 <SuspendedUserIcon className="h-3.5 w-3.5 text-placeholder" />
               ) : (
@@ -129,7 +130,7 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
     <Combobox.Options data-prevent-outside-click static>
       <div
         className={cn(
-          "z-30 my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none",
+          "z-30 my-1 w-48 max-w-[calc(100vw-1rem)] rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none",
           optionsClassName
         )}
         ref={setPopperElement}
@@ -162,7 +163,7 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
                       value={option.value}
                       className={({ active, selected }) =>
                         cn(
-                          "flex w-full items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none",
+                          "flex w-full items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none sentuh:py-2.5",
                           active && "bg-layer-transparent-hover",
                           selected ? "text-primary" : "text-secondary",
                           isUserSuspended(option.value, workspaceSlug?.toString())

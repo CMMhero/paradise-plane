@@ -14,6 +14,7 @@ import { MemberProfileTrigger } from "@/components/member-profile";
 import type { TPesan } from "@/services/chat.service";
 import { KartuPesan, adalahKartu } from "./kartu/kartu-pesan";
 import { bolehDihapus } from "./batas-hapus";
+import { KutipanBalasan } from "./kutipan-balasan";
 import { DaftarLampiran } from "./lampiran";
 import { potongSebutan } from "./sebut";
 import { potongTautan } from "./tautan";
@@ -134,12 +135,13 @@ export function Gelembung(props: Props) {
   const { t } = useTranslation();
   const { pesan, dariSaya, awalKelompok, akhirKelompok, sayaId, namaOrang } = props;
   const [pilihReaksi, setPilihReaksi] = useState(false);
+  const dihapus = !!pesan.dihapus;
 
   // Kartu (log panggilan, catatan rilis, kartu tugas) selalu berlatar netral,
   // juga saat dikirim sendiri: tombol dan chip di dalamnya tidak terbaca di
   // atas warna aksen. Kartu juga tidak bisa disunting atau dihapus.
-  const kartu = adalahKartu(pesan);
-  const terang = dariSaya && !kartu;
+  const kartu = !dihapus && adalahKartu(pesan);
+  const terang = dariSaya && !kartu && !dihapus;
   // Nama asli, bukan namaOrang: untuk diri sendiri namaOrang memberi "Anda",
   // padahal teksnya "@NamaSaya". Dulu ini yang membuat sebutan ke saya tidak
   // pernah tersorot.
@@ -147,13 +149,15 @@ export function Gelembung(props: Props) {
   // Pesan masuk yang menyebut saya diberi bingkai amber supaya tertangkap mata
   // saat menggulir, bukan hanya sebutannya yang berwarna.
   const sayaDisebut = !dariSaya && !kartu && !!sayaId && disebut.some((o) => o.id === sayaId);
-  const gaya = kartu
-    ? "border border-subtle bg-layer-1 text-primary"
-    : dariSaya
-      ? "bg-accent-primary text-on-color"
-      : sayaDisebut
-        ? "border-2 border-warning-strong bg-layer-3 text-primary"
-        : "bg-layer-3 text-primary";
+  const gaya = dihapus
+    ? "border border-subtle bg-layer-1 text-tertiary"
+    : kartu
+      ? "border border-subtle bg-layer-1 text-primary"
+      : dariSaya
+        ? "bg-accent-primary text-on-color"
+        : sayaDisebut
+          ? "border-2 border-warning-strong bg-layer-3 text-primary"
+          : "bg-layer-3 text-primary";
   const redup = terang ? "text-on-color/70" : "text-tertiary";
   // Server tetap menolak pesan yang lewat batas; ini hanya supaya tombolnya
   // tidak ditawarkan untuk aksi yang pasti gagal.
@@ -178,35 +182,29 @@ export function Gelembung(props: Props) {
             (overflow-hidden), jadi ia ikut membulat hanya di sisi kiri.
             Seluruh kutipan satu tombol yang melompat ke pesan aslinya, jadi
             nama di dalamnya sengaja teks biasa (tombol tidak boleh bersarang). */}
-        {pesan.balasan_ke ? (
-          <button
-            type="button"
-            onClick={() => pesan.balasan_ke && props.onBukaKutipan?.(pesan.balasan_ke.id)}
-            className={`relative mb-1.5 block w-full overflow-hidden rounded-item py-1 pr-2 pl-3 text-left transition-colors ${
-              terang ? "bg-black/15 hover:bg-black/25" : "bg-accent-subtle hover:bg-accent-subtle-hover"
-            }`}
-          >
-            <span
-              aria-hidden
-              className={`absolute inset-y-0 left-0 w-1 ${terang ? "bg-white/80" : "bg-accent-primary"}`}
-            />
-            <span
-              className={`block truncate text-12 font-semibold ${terang ? "text-on-color" : "text-accent-primary"}`}
-            >
-              {namaOrang(pesan.balasan_ke.pengirim)}
-            </span>
-            <span className={`line-clamp-2 text-12 ${redup}`}>{pesan.balasan_ke.isi || t("chat_ui.attachment")}</span>
-          </button>
+        {pesan.balasan_ke && !dihapus ? (
+          <KutipanBalasan
+            className="mb-1.5"
+            nama={namaOrang(pesan.balasan_ke.pengirim)}
+            isi={
+              pesan.balasan_ke.dihapus ? t("chat_ui.message_deleted") : pesan.balasan_ke.isi || t("chat_ui.attachment")
+            }
+            miring={!!pesan.balasan_ke.dihapus}
+            terang={terang}
+            onBuka={() => pesan.balasan_ke && props.onBukaKutipan?.(pesan.balasan_ke.id)}
+          />
         ) : null}
 
-        {kartu ? (
+        {dihapus ? (
+          <p className={`text-13 italic ${redup}`}>{t("chat_ui.message_deleted")}</p>
+        ) : kartu ? (
           <KartuPesan pesan={pesan} namaOrang={namaOrang} onTelepon={props.onTelepon} />
         ) : pesan.isi ? (
           <p className="text-13 [overflow-wrap:anywhere] whitespace-pre-wrap">
             {disebut.length > 0 ? denganSebutan(pesan.isi, disebut, sayaId, terang) : denganTautan(pesan.isi)}
           </p>
         ) : null}
-        <DaftarLampiran lampiran={pesan.lampiran} terang={terang} />
+        {dihapus ? null : <DaftarLampiran lampiran={pesan.lampiran} terang={terang} />}
 
         {akhirKelompok || pesan.disunting ? (
           <p className={`mt-1 flex items-center gap-1 text-12 ${redup}`}>
@@ -219,7 +217,7 @@ export function Gelembung(props: Props) {
         ) : null}
       </div>
 
-      {pesan.reaksi.length > 0 ? (
+      {!dihapus && pesan.reaksi.length > 0 ? (
         <div className="mt-1 flex flex-wrap gap-1">
           {pesan.reaksi.map((r) => {
             const punyaSaya = !!sayaId && r.orang.includes(sayaId);
@@ -241,64 +239,66 @@ export function Gelembung(props: Props) {
         </div>
       ) : null}
 
-      <div className="mt-0.5 flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sentuh:gap-2 sentuh:opacity-100">
-        <IconButton
-          type="button"
-          onClick={() => setPilihReaksi((v) => !v)}
-          aria-label={t("chat_ui.add_reaction")}
-          variant="ghost"
-          size="sm"
-          icon={SmilePlus}
-        />
-        <IconButton
-          type="button"
-          onClick={() => props.onBalas?.(pesan)}
-          aria-label={t("chat_ui.reply")}
-          variant="ghost"
-          size="sm"
-          icon={CornerUpLeft}
-        />
-        {terang ? (
-          <>
-            <IconButton
-              type="button"
-              onClick={() => props.onSunting?.(pesan)}
-              aria-label={t("chat_ui.edit")}
-              variant="ghost"
-              size="sm"
-              icon={Pencil}
-            />
-            {bolehHapus ? (
+      {dihapus ? null : (
+        <div className="mt-0.5 flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sentuh:gap-2 sentuh:opacity-100">
+          <IconButton
+            type="button"
+            onClick={() => setPilihReaksi((v) => !v)}
+            aria-label={t("chat_ui.add_reaction")}
+            variant="ghost"
+            size="sm"
+            icon={SmilePlus}
+          />
+          <IconButton
+            type="button"
+            onClick={() => props.onBalas?.(pesan)}
+            aria-label={t("chat_ui.reply")}
+            variant="ghost"
+            size="sm"
+            icon={CornerUpLeft}
+          />
+          {terang ? (
+            <>
               <IconButton
                 type="button"
-                onClick={() => props.onHapus?.(pesan)}
-                aria-label={t("chat_ui.delete")}
+                onClick={() => props.onSunting?.(pesan)}
+                aria-label={t("chat_ui.edit")}
                 variant="ghost"
                 size="sm"
-                icon={Trash2}
+                icon={Pencil}
               />
-            ) : null}
-          </>
-        ) : null}
+              {bolehHapus ? (
+                <IconButton
+                  type="button"
+                  onClick={() => props.onHapus?.(pesan)}
+                  aria-label={t("chat_ui.delete")}
+                  variant="ghost"
+                  size="sm"
+                  icon={Trash2}
+                />
+              ) : null}
+            </>
+          ) : null}
 
-        {pilihReaksi ? (
-          <div className="flex items-center gap-0.5 rounded-control border border-subtle bg-layer-1 px-1.5 py-0.5">
-            {REAKSI_CEPAT.map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => {
-                  props.onReaksi?.(pesan, e);
-                  setPilihReaksi(false);
-                }}
-                className="rounded-button px-0.5 text-13 hover:bg-layer-2"
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+          {pilihReaksi ? (
+            <div className="flex items-center gap-0.5 rounded-control border border-subtle bg-layer-1 px-1.5 py-0.5">
+              {REAKSI_CEPAT.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => {
+                    props.onReaksi?.(pesan, e);
+                    setPilihReaksi(false);
+                  }}
+                  className="rounded-button px-0.5 text-13 hover:bg-layer-2"
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

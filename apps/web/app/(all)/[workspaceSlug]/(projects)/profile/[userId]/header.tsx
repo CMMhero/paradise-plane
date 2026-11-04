@@ -47,7 +47,10 @@ export const UserProfileHeader = observer(function UserProfileHeader(props: TUse
 
   const tabsList = isAuthorized ? [...PROFILE_VIEWER_TAB, ...PROFILE_ADMINS_TAB] : PROFILE_VIEWER_TAB;
 
-  const userName = `${userProjectsData?.user_data?.first_name} ${userProjectsData?.user_data?.last_name}`;
+  // Sebelum data profil datang dulu tampil "undefined undefined".
+  const userName = [userProjectsData?.user_data?.first_name, userProjectsData?.user_data?.last_name]
+    .filter(Boolean)
+    .join(" ");
 
   const isCurrentUser = currentUser?.id === userId;
 
@@ -77,7 +80,7 @@ export const UserProfileHeader = observer(function UserProfileHeader(props: TUse
             placement="bottom-start"
             customButton={
               <div className="flex items-center gap-2 rounded-md border border-subtle px-2 py-1.5">
-                <span className="flex flex-grow justify-center text-13 text-secondary">{type}</span>
+                <span className="flex flex-grow justify-center text-13 text-secondary">{type ? t(type) : null}</span>
                 <ChevronDownIcon className="h-4 w-4 text-placeholder" />
               </div>
             }

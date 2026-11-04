@@ -31,7 +31,7 @@ export function PowerKModalCommandItem(props: Props) {
   return (
     <Command.Item value={value} onSelect={onSelect} className="focus:outline-none" disabled={isDisabled}>
       <div
-        className={cn("flex items-center gap-2 text-secondary", {
+        className={cn("flex min-w-0 items-center gap-2 text-secondary", {
           "opacity-70": isDisabled,
         })}
       >

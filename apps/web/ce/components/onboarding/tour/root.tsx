@@ -18,6 +18,7 @@ import ViewsTour from "@/app/assets/onboarding/views.webp?url";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useUser } from "@/hooks/store/user";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 // local imports
 import { TourSidebar } from "./sidebar";
 
@@ -85,6 +86,8 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
   // store hooks
   const { toggleCreateProjectModal } = useCommandPalette();
   const { data: currentUser } = useUser();
+  // Paradise: staf / member biasa tidak boleh membuat project.
+  const bolehBuatProject = useBolehBuatProject();
 
   const currentStepIndex = TOUR_STEPS.findIndex((tourStep) => tourStep.key === step);
   const currentStep = TOUR_STEPS[currentStepIndex];
@@ -163,7 +166,7 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
                     </Button>
                   )}
                 </div>
-                {currentStepIndex === TOUR_STEPS.length - 1 && (
+                {currentStepIndex === TOUR_STEPS.length - 1 && bolehBuatProject && (
                   <Button
                     variant="primary"
                     onClick={() => {

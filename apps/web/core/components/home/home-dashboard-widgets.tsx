@@ -22,7 +22,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { HomePageHeader } from "@/plane-web/components/home/header";
 // local imports
 import { StickiesWidget } from "../stickies/widget";
-import { HomeLoader, NoProjectsEmptyState, RecentActivityWidget } from "./widgets";
+import { AttentionWidget, HomeLoader, NoProjectsEmptyState, RecentActivityWidget } from "./widgets";
 import { DashboardQuickLinks } from "./widgets/links";
 import { ManageWidgetsModal } from "./widgets/manage";
 
@@ -33,6 +33,11 @@ export const HOME_WIDGETS_LIST: {
     title: string;
   };
 } = {
+  needs_attention: {
+    component: AttentionWidget,
+    fullWidth: true,
+    title: "attention_ui.widget_title",
+  },
   quick_links: {
     component: DashboardQuickLinks,
     fullWidth: false,

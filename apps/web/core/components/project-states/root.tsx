@@ -15,6 +15,7 @@ import { ProjectStateLoader, GroupList } from "@/components/project-states";
 // hooks
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 
 type TProjectState = {
   workspaceSlug: string;
@@ -35,12 +36,11 @@ export const ProjectStateRoot = observer(function ProjectStateRoot(props: TProje
   } = useProjectState();
   const { allowPermissions } = useUserPermissions();
   // derived values
-  const isEditable = allowPermissions(
-    [EUserProjectRoles.ADMIN],
-    EUserPermissionsLevel.PROJECT,
-    workspaceSlug,
-    projectId
-  );
+  // Paradise KEP-85: alur kerja (state) = aturan struktur PERM_PROJECT_WORKFLOW.
+  const izin = useIzinSumber(workspaceSlug, projectId);
+  const isEditable =
+    allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, projectId) &&
+    izin.struktur("PERM_PROJECT_WORKFLOW");
 
   // Fetching all project states
   useSWR(

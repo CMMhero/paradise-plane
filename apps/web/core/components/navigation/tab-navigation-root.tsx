@@ -11,6 +11,7 @@ import { EUserPermissionsLevel, EUserPermissions } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { TabNavigationList, TabNavigationItem } from "@plane/propel/tab-navigation";
 import type { EUserProjectRoles } from "@plane/types";
+import { cn } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
@@ -109,7 +110,7 @@ export const TabNavigationRoot = observer(function TabNavigationRoot(props: TTab
   // Filter and sort navigation items
   const allNavigationItems = navigationItems
     .filter((item) => item.shouldRender)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+    .toSorted((a, b) => a.sortOrder - b.sortOrder);
 
   // Split items into two categories:
   // 1. visibleNavigationItems: Items NOT user-hidden (may still overflow due to space)
@@ -118,7 +119,7 @@ export const TabNavigationRoot = observer(function TabNavigationRoot(props: TTab
   const hiddenNavigationItems = allNavigationItems.filter((item) => tabPreferences.hiddenTabs.includes(item.key));
 
   // Responsive tab layout hook
-  const { visibleItems, overflowItems, hasOverflow, itemRefs, containerRef } = useResponsiveTabLayout({
+  const { isScrollMode, visibleItems, overflowItems, hasOverflow, itemRefs, containerRef } = useResponsiveTabLayout({
     visibleNavigationItems,
     hiddenNavigationItems,
     isActive,
@@ -188,8 +189,15 @@ export const TabNavigationRoot = observer(function TabNavigationRoot(props: TTab
 
         <div className="h-5 w-1 shrink-0 border-l border-subtle" />
 
-        <div ref={containerRef} className="flex h-full min-w-0 flex-1 items-center overflow-hidden">
-          <TabNavigationList className="h-full">
+        <div
+          ref={containerRef}
+          data-tab-scroller
+          className={cn("flex h-full min-w-0 flex-1 items-center", {
+            "overflow-hidden": !isScrollMode,
+            "scrollbar-hide overflow-x-auto overscroll-x-contain": isScrollMode,
+          })}
+        >
+          <TabNavigationList className="h-full shrink-0">
             {/* Render visible tab items */}
             {visibleItems.map((item) => {
               const itemIsActive = isActive(item);
@@ -203,6 +211,7 @@ export const TabNavigationRoot = observer(function TabNavigationRoot(props: TTab
                   tabPreferences={tabPreferences}
                   onToggleDefault={handleToggleDefaultTab}
                   onHide={handleHideTab}
+                  scrollIntoViewWhenActive={isScrollMode}
                   itemRef={(el) => {
                     itemRefs.current[originalIndex] = el;
                   }}
@@ -222,7 +231,7 @@ export const TabNavigationRoot = observer(function TabNavigationRoot(props: TTab
             )}
           </TabNavigationList>
 
-          {hasOverflow && (
+          {hasOverflow && !isScrollMode && (
             <div className="pointer-events-none absolute -z-10 opacity-0">
               {visibleNavigationItems.map((item) => {
                 const itemIsActive = isActive(item);

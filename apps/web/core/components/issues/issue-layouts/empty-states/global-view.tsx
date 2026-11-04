@@ -14,6 +14,7 @@ import { EIssuesStoreType, EUserWorkspaceRoles } from "@plane/types";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 
 export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
   // plane imports
@@ -27,6 +28,8 @@ export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
     [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     EUserPermissionsLevel.WORKSPACE
   );
+  // Paradise: staf / member biasa tidak boleh membuat project.
+  const bolehBuatProject = useBolehBuatProject();
 
   if (workspaceProjectIds?.length === 0) {
     return (
@@ -41,7 +44,7 @@ export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
             onClick: () => {
               toggleCreateProjectModal(true);
             },
-            disabled: !hasMemberLevelPermission,
+            disabled: !hasMemberLevelPermission || !bolehBuatProject,
             variant: "primary",
           },
         ]}

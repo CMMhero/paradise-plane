@@ -64,6 +64,7 @@ export const WorkspaceMembersList = observer(function WorkspaceMembersList(props
   const searchedInvitationsIds = getSearchedWorkspaceInvitationIds(searchQuery);
   const memberDetails = searchedMemberIds
     ?.map((memberId) => getWorkspaceMemberDetails(memberId))
+    // oxlint-disable-next-line unicorn/no-array-sort -- lib ES2022 di apps/web belum punya toSorted; array hasil map() sudah salinan
     .sort((a, b) => {
       if (a?.is_active && !b?.is_active) return -1;
       if (!a?.is_active && b?.is_active) return 1;
@@ -72,7 +73,7 @@ export const WorkspaceMembersList = observer(function WorkspaceMembersList(props
 
   return (
     <>
-      <div className="divide-y-[0.5px] divide-subtle overflow-scroll">
+      <div className="divide-y-[0.5px] divide-subtle overflow-x-auto">
         {searchedMemberIds?.length !== 0 && <WorkspaceMembersListItem memberDetails={memberDetails ?? []} />}
         {searchedInvitationsIds?.length === 0 && searchedMemberIds?.length === 0 && (
           <h4 className="mt-16 text-center text-body-xs-regular text-placeholder">{t("no_matching_members")}</h4>

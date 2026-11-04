@@ -52,14 +52,14 @@ export function NameColumn(props: NameProps) {
     <Disclosure>
       {() => (
         <div className="group relative">
-          <div className="flex w-72 items-center justify-between gap-x-4 gap-y-2">
-            <div className="flex flex-1 items-center gap-x-2 gap-y-2">
+          <div className="flex w-56 items-center justify-between gap-x-4 gap-y-2 sm:w-72">
+            <div className="flex min-w-0 flex-1 items-center gap-x-2 gap-y-2">
               {isSuspended ? (
                 <div className="rounded-full bg-layer-1">
                   <SuspendedUserIcon className="size-6 text-placeholder" />
                 </div>
               ) : avatar_url && avatar_url.trim() !== "" ? (
-                <MemberProfileTrigger userId={id}>
+                <MemberProfileTrigger userId={id} className="shrink-0">
                   <span className="relative flex size-6 items-center justify-center rounded-full text-on-color capitalize">
                     <img
                       src={getFileURL(avatar_url)}
@@ -69,19 +69,19 @@ export function NameColumn(props: NameProps) {
                   </span>
                 </MemberProfileTrigger>
               ) : (
-                <MemberProfileTrigger userId={id}>
+                <MemberProfileTrigger userId={id} className="shrink-0">
                   <span className="relative flex size-6 items-center justify-center rounded-full bg-layer-3 text-11 text-tertiary capitalize">
                     {(email ?? display_name ?? "?")[0]}
                   </span>
                 </MemberProfileTrigger>
               )}
               {isSuspended ? (
-                <span className="text-placeholder">
+                <span className="min-w-0 truncate text-placeholder" title={`${first_name} ${last_name}`}>
                   {first_name} {last_name}
                 </span>
               ) : (
-                <MemberProfileTrigger userId={id}>
-                  <span className="hover:underline">
+                <MemberProfileTrigger userId={id} className="min-w-0">
+                  <span className="truncate hover:underline" title={`${first_name} ${last_name}`}>
                     {first_name} {last_name}
                   </span>
                 </MemberProfileTrigger>
@@ -89,29 +89,32 @@ export function NameColumn(props: NameProps) {
             </div>
 
             {!isSuspended && (isAdmin || id === currentUser?.id) && (
-              <PopoverMenu
-                data={[""]}
-                keyExtractor={(item) => item}
-                popoverClassName="justify-end"
-                buttonClassName="outline-none	origin-center rotate-90 size-8 aspect-square flex-shrink-0 grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity"
-                render={() => (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="flex cursor-pointer items-center gap-x-3"
-                    onClick={() => setRemoveMemberModal(rowData)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setRemoveMemberModal(rowData);
-                      }
-                    }}
-                    data-ph-element={MEMBER_TRACKER_ELEMENTS.WORKSPACE_MEMBER_TABLE_CONTEXT_MENU}
-                  >
-                    <TrashIcon className="size-3.5 align-middle" /> {id === currentUser?.id ? "Leave " : "Remove "}
-                  </div>
-                )}
-              />
+              <div className="shrink-0">
+                <PopoverMenu
+                  data={[""]}
+                  keyExtractor={(item) => item}
+                  popoverClassName="justify-end"
+                  buttonClassName="outline-none	origin-center rotate-90 size-8 aspect-square flex-shrink-0 grid place-items-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 sentuh:opacity-100 transition-opacity"
+                  render={() => (
+                    <div
+                      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- di dalam tombol popover, <button> bersarang tidak valid
+                      role="button"
+                      tabIndex={0}
+                      className="flex cursor-pointer items-center gap-x-3"
+                      onClick={() => setRemoveMemberModal(rowData)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setRemoveMemberModal(rowData);
+                        }
+                      }}
+                      data-ph-element={MEMBER_TRACKER_ELEMENTS.WORKSPACE_MEMBER_TABLE_CONTEXT_MENU}
+                    >
+                      <TrashIcon className="size-3.5 align-middle" /> {id === currentUser?.id ? "Leave " : "Remove "}
+                    </div>
+                  )}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -161,11 +164,11 @@ export const AccountTypeColumn = observer(function AccountTypeColumn(props: Acco
           render={({ field: { value } }) => (
             <CustomSelect
               value={value as EUserPermissions}
-              onChange={async (value: EUserPermissions) => {
+              onChange={async (nextRole: EUserPermissions) => {
                 if (!workspaceSlug) return;
                 try {
                   await updateMember(workspaceSlug.toString(), rowData.member.id, {
-                    role: value as unknown as EUserPermissions,
+                    role: nextRole as unknown as EUserPermissions,
                   });
                 } catch (err: unknown) {
                   const error = err as { error?: string | string[] };

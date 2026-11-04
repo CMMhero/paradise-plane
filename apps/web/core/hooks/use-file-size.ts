@@ -8,6 +8,7 @@
 import { MAX_FILE_SIZE } from "@plane/constants";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
+import { useParadiseLimits } from "@/hooks/use-paradise-limits";
 
 type TReturnProps = {
   maxFileSize: number;
@@ -16,8 +17,11 @@ type TReturnProps = {
 export const useFileSize = (): TReturnProps => {
   // store hooks
   const { config } = useInstance();
+  const { upload_max_mb } = useParadiseLimits();
 
   return {
-    maxFileSize: config?.file_size_limit ?? MAX_FILE_SIZE,
+    // file_size_limit = batas byte yang persis dijaga server (UPLOAD_MAX_MB dari God Mode,
+    // dijepit batas proxy). upload_max_mb hanya cadangan untuk server lama tanpa angka byte.
+    maxFileSize: config?.file_size_limit ?? (upload_max_mb ? upload_max_mb * 1024 * 1024 : MAX_FILE_SIZE),
   };
 };

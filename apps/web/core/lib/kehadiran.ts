@@ -31,3 +31,20 @@ export function terapkanPesanKehadiran(lama: TPetaKehadiran, pesan: TPesanKehadi
 export function statusTab(gerakTerakhir: number, sekarang: number, terlihat: boolean): "online" | "away" {
   return terlihat && sekarang - gerakTerakhir < AMBANG_AWAY_MS ? "online" : "away";
 }
+
+const URUTAN_STATUS: Record<TStatusKehadiran, number> = { online: 0, away: 1, offline: 2 };
+
+/**
+ * Urutkan id orang: online dulu, lalu away, lalu offline; dalam satu kelompok
+ * menurut nama. Mengembalikan salinan, daftar asli tidak disentuh. Sort bawaan
+ * JS stabil, jadi nama kembar tetap dalam urutan semula.
+ */
+export function urutkanMenurutKehadiran(
+  ids: readonly string[],
+  peta: TPetaKehadiran,
+  namaDari: (id: string) => string
+): string[] {
+  const peringkat = (id: string) => URUTAN_STATUS[peta.get(id) ?? "offline"];
+  // oxlint-disable-next-line unicorn/no-array-sort -- salinan baru; lib TS proyek belum punya toSorted
+  return [...ids].sort((a, b) => peringkat(a) - peringkat(b) || namaDari(a).localeCompare(namaDari(b)));
+}

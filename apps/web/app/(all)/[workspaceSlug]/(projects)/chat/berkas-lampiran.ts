@@ -7,7 +7,7 @@
  * Tanpa impor apa pun supaya bisa diperiksa lewat tsx (berkas-lampiran.check.ts).
  */
 
-/** Cermin `BATAS_LAMPIRAN` di apps/api/plane/app/views/chat.py. */
+/** Bawaan; batas hidup dibaca dari `paradise_limits.chat_attachments_max` instance. */
 export const BATAS_LAMPIRAN = 5;
 
 export type TPenolakan = { jenis: "terlalu-besar" | "terlalu-banyak"; nama: string };
@@ -16,13 +16,14 @@ export type TPenolakan = { jenis: "terlalu-besar" | "terlalu-banyak"; nama: stri
 export function pilahBerkas(
   berkas: File[],
   sudahAda: number,
-  maksUkuran: number
+  maksUkuran: number,
+  maksJumlah: number = BATAS_LAMPIRAN
 ): { terima: File[]; tolak: TPenolakan[] } {
   const terima: File[] = [];
   const tolak: TPenolakan[] = [];
   for (const f of berkas) {
     if (f.size > maksUkuran) tolak.push({ jenis: "terlalu-besar", nama: f.name });
-    else if (sudahAda + terima.length >= BATAS_LAMPIRAN) tolak.push({ jenis: "terlalu-banyak", nama: f.name });
+    else if (sudahAda + terima.length >= maksJumlah) tolak.push({ jenis: "terlalu-banyak", nama: f.name });
     else terima.push(f);
   }
   return { terima, tolak };

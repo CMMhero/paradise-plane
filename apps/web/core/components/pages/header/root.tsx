@@ -61,7 +61,7 @@ export const PagesListHeaderRoot = observer(function PagesListHeaderRoot(props: 
   return (
     <>
       <Header variant={EHeaderVariant.SECONDARY}>
-        <Header.LeftItem>
+        <Header.LeftItem className="flex-nowrap overflow-x-auto overflow-y-hidden">
           <PageTabNavigation workspaceSlug={workspaceSlug} projectId={projectId} pageType={pageType} />
         </Header.LeftItem>
         <Header.RightItem className="items-center">

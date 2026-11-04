@@ -31,7 +31,7 @@ export const PreferensiSuara = observer(function PreferensiSuara() {
         title={t("chatux_kelola_ui.sound_volume")}
         description={t("chatux_kelola_ui.sound_volume_desc")}
         control={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <input
               type="range"
               min={0}
@@ -42,7 +42,7 @@ export const PreferensiSuara = observer(function PreferensiSuara() {
               onChange={(e) => geser(Number(e.target.value))}
               aria-label={t("chatux_kelola_ui.sound_volume")}
               aria-valuetext={`${volume}%`}
-              className="h-2 w-40 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sentuh:h-6"
+              className="h-2 w-40 max-w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sentuh:h-6"
             />
             <span className="w-10 text-right text-13 text-secondary tabular-nums">{volume}%</span>
             <Button variant="secondary" size="base" prependIcon={<Play />} onClick={pratinjau}>

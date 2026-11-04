@@ -55,9 +55,12 @@ function ApprovalNotificationAction({ verb }: { verb: string | undefined }) {
 
 // Kustomisasi Paradise: baris tenggat (`field: "deadline"`, deadline_reminder_task).
 // `newValue` = selisih hari terhadap tenggat: negatif belum lewat, 0 hari ini.
-function DeadlineNotificationAction({ newValue }: { newValue: string | undefined }) {
+// Verb `approval_overdue` (KEP-84) = baris untuk penyetuju: tugas sudah diajukan
+// selesai, belum diputuskan, dan tenggatnya lewat.
+function DeadlineNotificationAction({ newValue, verb }: { newValue: string | undefined; verb?: string }) {
   const { t } = useTranslation();
   const selisih = Number(newValue ?? 0);
+  if (verb === "approval_overdue") return <>{t("notif_prefs_ui.inbox_approval_overdue", { count: selisih })}</>;
   if (selisih > 0) return <>{t("notif_prefs_ui.inbox_overdue", { count: selisih })}</>;
   if (selisih === 0) return <>{t("notif_prefs_ui.inbox_due_today")}</>;
   return <>{t("notif_prefs_ui.inbox_due_in", { count: -selisih })}</>;
@@ -222,7 +225,7 @@ export function NotificationContent({
   if (notificationField === "deadline") {
     return (
       <span className="text-primary">
-        <DeadlineNotificationAction newValue={newValue} />
+        <DeadlineNotificationAction newValue={newValue} verb={verb} />
       </span>
     );
   }

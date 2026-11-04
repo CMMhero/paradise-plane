@@ -48,6 +48,12 @@ type Props = TDropdownProps & {
       }
   );
 
+const renderIcon = (logoProps: TProject["logo_props"]) => (
+  <span className="grid h-4 w-4 flex-shrink-0 place-items-center">
+    <Logo logo={logoProps} size={14} />
+  </span>
+);
+
 export const ProjectDropdownBase = observer(function ProjectDropdownBase(props: Props) {
   const {
     button,
@@ -139,27 +145,25 @@ export const ProjectDropdownBase = observer(function ProjectDropdownBase(props: 
     if (!multiple) handleClose();
   };
 
-  const getDisplayName = (value: string | string[] | null, placeholder: string = "") => {
-    if (Array.isArray(value)) {
-      const firstProject = getProjectById(value[0]);
-      return value.length ? (value.length === 1 ? firstProject?.name : `${value.length} projects`) : placeholder;
+  const getDisplayName = (selection: string | string[] | null, fallback: string = "") => {
+    if (Array.isArray(selection)) {
+      const firstProject = getProjectById(selection[0]);
+      return selection.length
+        ? selection.length === 1
+          ? firstProject?.name
+          : `${selection.length} projects`
+        : fallback;
     } else {
-      return value ? (getProjectById(value)?.name ?? placeholder) : placeholder;
+      return selection ? (getProjectById(selection)?.name ?? fallback) : fallback;
     }
   };
 
-  const getProjectIcon = (value: string | string[] | null) => {
-    const renderIcon = (logoProps: TProject["logo_props"]) => (
-      <span className="grid h-4 w-4 flex-shrink-0 place-items-center">
-        <Logo logo={logoProps} size={14} />
-      </span>
-    );
-
-    if (Array.isArray(value)) {
+  const getProjectIcon = (selection: string | string[] | null) => {
+    if (Array.isArray(selection)) {
       return (
         <div className="flex items-center gap-0.5">
-          {value.length > 0 ? (
-            value.map((projectId) => {
+          {selection.length > 0 ? (
+            selection.map((projectId) => {
               const projectDetails = getProjectById(projectId);
               return projectDetails?.logo_props ? renderIcon(projectDetails.logo_props) : null;
             })
@@ -169,7 +173,7 @@ export const ProjectDropdownBase = observer(function ProjectDropdownBase(props: 
         </div>
       );
     } else {
-      const projectDetails = getProjectById(value);
+      const projectDetails = getProjectById(selection);
       return projectDetails?.logo_props ? renderIcon(projectDetails.logo_props) : null;
     }
   };
@@ -224,6 +228,7 @@ export const ProjectDropdownBase = observer(function ProjectDropdownBase(props: 
   );
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- ComboDropDown ComboDropDown has no role prop; keyboard handling lives on the combobox wrapper
     <ComboDropDown
       as="div"
       ref={dropdownRef}
@@ -240,7 +245,7 @@ export const ProjectDropdownBase = observer(function ProjectDropdownBase(props: 
       {isOpen && (
         <Combobox.Options className="fixed z-10" static>
           <div
-            className="my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
+            className="my-1 w-48 max-w-[calc(100vw-1rem)] rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
             ref={setPopperElement}
             style={styles.popper}
             {...attributes.popper}
@@ -268,7 +273,7 @@ export const ProjectDropdownBase = observer(function ProjectDropdownBase(props: 
                         key={option.value}
                         value={option.value}
                         className={({ active, selected }) =>
-                          `flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none ${
+                          `flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none sentuh:py-2.5 ${
                             active ? "bg-layer-transparent-hover" : ""
                           } ${selected ? "text-primary" : "text-secondary"}`
                         }

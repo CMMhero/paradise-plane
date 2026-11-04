@@ -263,14 +263,17 @@ function CompletedRow({ workspaceSlug, item }: { workspaceSlug: string; item: TC
 
   return (
     <li>
-      <Link href={href} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 hover:bg-layer-2">
-        <span className="font-mono w-20 shrink-0 text-11 text-tertiary">
+      <Link href={href} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 hover:bg-layer-2">
+        <span className="w-20 shrink-0 font-code text-11 text-tertiary">
           {item.project_identifier}-{item.sequence_id}
         </span>
-        <span className="min-w-0 flex-1 truncate text-13 text-primary" title={item.name}>
+        <span
+          className="order-last min-w-0 basis-full truncate text-13 text-primary sm:order-none sm:flex-1 sm:basis-0"
+          title={item.name}
+        >
           {item.name}
         </span>
-        <span className="max-w-[12rem] truncate text-12 text-tertiary" title={assignees}>
+        <span className="max-w-[12rem] min-w-0 flex-1 truncate text-12 text-tertiary sm:flex-none" title={assignees}>
           {assignees}
         </span>
         <span className="w-16 shrink-0 text-right text-12 text-tertiary">{formatDay(item.completed_date)}</span>

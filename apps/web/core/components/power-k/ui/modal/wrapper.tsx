@@ -133,7 +133,8 @@ export const ProjectsAppPowerKModalWrapper = observer(function ProjectsAppPowerK
         </Transition.Child>
         {/* Modal Container */}
         <div className="fixed inset-0 z-30 overflow-y-auto">
-          <div className="flex items-center justify-center p-4 sm:p-6 md:p-20">
+          {/* Di HP: dekat atas dengan jarak tipis ke tepi, supaya lebar dan tinggi daftar terpakai penuh. */}
+          <div className="flex items-center justify-center p-2 pt-[8dvh] sm:p-6 md:p-20">
             <Transition.Child
               as={React.Fragment}
               enter="ease-out duration-300"
@@ -160,7 +161,7 @@ export const ProjectsAppPowerKModalWrapper = observer(function ProjectsAppPowerK
                     onSearchChange={setSearchTerm}
                     searchTerm={searchTerm}
                   />
-                  <Command.List className="vertical-scrollbar scrollbar-sm max-h-96 overflow-scroll outline-none">
+                  <Command.List className="vertical-scrollbar scrollbar-sm max-h-[min(24rem,calc(100dvh-13rem))] overflow-y-auto overscroll-contain outline-none">
                     <CommandsListComponent
                       activePage={activePage}
                       context={context}

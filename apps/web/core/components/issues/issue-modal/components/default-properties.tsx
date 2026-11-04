@@ -76,9 +76,9 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   // (otomatis terisi + terkunci), atasan → diri + bawahan, direktur → semua.
   // `memberIds` eksplisit mengalahkan fallback anggota-project di dropdown.
   const tingkatSaya = useTingkatSaya(workspaceSlug, projectId);
-  const stafSaja = hanyaStaf(tingkatSaya);
   const { idSaya } = useAturanTugas();
   const daftarBoleh = useBisaDitugaskan(workspaceSlug, projectId);
+  const stafSaja = hanyaStaf(tingkatSaya, daftarBoleh.aturan.persetujuan_di_bawah);
   const opsiAssignee = daftarBoleh.memuat ? undefined : daftarBoleh.userIds;
   const projectDetails = getProjectById(projectId);
 
@@ -99,7 +99,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
         control={control}
         name="state_id"
         render={({ field: { value, onChange } }) => (
-          <div className="h-7">
+          <div className="h-7 sentuh:h-10">
             <StateDropdown
               value={value}
               onChange={(stateId) => {
@@ -118,7 +118,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
         control={control}
         name="priority"
         render={({ field: { value, onChange } }) => (
-          <div className="h-7">
+          <div className="h-7 sentuh:h-10">
             <PriorityDropdown
               value={value}
               onChange={(priority) => {
@@ -135,7 +135,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
         control={control}
         name="assignee_ids"
         render={({ field: { value, onChange } }) => (
-          <div className="h-7">
+          <div className="h-7 sentuh:h-10">
             <MemberDropdown
               projectId={projectId ?? undefined}
               memberIds={opsiAssignee}
@@ -162,7 +162,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
         control={control}
         name="label_ids"
         render={({ field: { value, onChange } }) => (
-          <div className="h-7">
+          <div className="h-7 sentuh:h-10">
             <IssueLabelSelect
               value={value}
               onChange={(labelIds) => {
@@ -180,7 +180,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
         control={control}
         name="start_date"
         render={({ field: { value, onChange } }) => (
-          <div className="h-7">
+          <div className="h-7 sentuh:h-10">
             <DateDropdown
               value={value}
               onChange={(date) => {
@@ -199,7 +199,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
         control={control}
         name="target_date"
         render={({ field: { value, onChange } }) => (
-          <div className="h-7">
+          <div className="h-7 sentuh:h-10">
             <DateDropdown
               value={value}
               onChange={(date) => {
@@ -219,7 +219,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           control={control}
           name="cycle_id"
           render={({ field: { value, onChange } }) => (
-            <div className="h-7">
+            <div className="h-7 sentuh:h-10">
               <CycleDropdown
                 projectId={projectId ?? undefined}
                 onChange={(cycleId) => {
@@ -240,7 +240,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           control={control}
           name="module_ids"
           render={({ field: { value, onChange } }) => (
-            <div className="h-7">
+            <div className="h-7 sentuh:h-10">
               <ModuleDropdown
                 projectId={projectId ?? undefined}
                 value={value ?? []}
@@ -263,7 +263,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           control={control}
           name="estimate_point"
           render={({ field: { value, onChange } }) => (
-            <div className="h-7">
+            <div className="h-7 sentuh:h-10">
               <EstimateDropdown
                 value={value || undefined}
                 onChange={(estimatePoint) => {
@@ -279,7 +279,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           )}
         />
       )}
-      <div className="h-7">
+      <div className="h-7 sentuh:h-10">
         {parentId ? (
           <CustomMenu
             customButton={

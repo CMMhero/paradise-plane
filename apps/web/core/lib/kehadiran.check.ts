@@ -13,7 +13,7 @@
  */
 
 import assert from "node:assert/strict";
-import { AMBANG_AWAY_MS, statusTab, terapkanPesanKehadiran } from "./kehadiran";
+import { AMBANG_AWAY_MS, statusTab, terapkanPesanKehadiran, urutkanMenurutKehadiran } from "./kehadiran";
 import { bacaSuara, SUARA_PABRIK, volumeAudio } from "./suara";
 
 // --- status tab --------------------------------------------------------------
@@ -51,5 +51,22 @@ assert.equal(bacaSuara({ theme: "dark" }, true).bisu, true);
 assert.equal(bacaSuara({ theme: "dark", suara_bisu: false }, true).bisu, false);
 assert.equal(volumeAudio({ volume: 40, bisu: false }), 0.4);
 assert.equal(volumeAudio({ volume: 40, bisu: true }), 0);
+
+// --- urutan daftar -----------------------------------------------------------
+{
+  const nama: Record<string, string> = { a: "Citra", b: "Budi", c: "Andi", d: "Dewi" };
+  const peta = new Map<string, "online" | "away">([
+    ["a", "online"],
+    ["c", "away"],
+    ["d", "online"],
+  ]);
+  const asli = ["a", "b", "c", "d"];
+  // online (Citra, Dewi) dulu menurut nama, lalu away (Andi), lalu offline (Budi).
+  assert.deepEqual(
+    urutkanMenurutKehadiran(asli, peta, (id) => nama[id]),
+    ["a", "d", "c", "b"]
+  );
+  assert.deepEqual(asli, ["a", "b", "c", "d"], "daftar asli tidak diubah");
+}
 
 console.log("kehadiran & suara: semua pemeriksaan lulus");

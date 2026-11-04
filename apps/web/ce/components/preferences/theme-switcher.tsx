@@ -11,7 +11,7 @@ import { useTheme } from "next-themes";
 import type { I_THEME_OPTION } from "@plane/constants";
 import { THEME_OPTIONS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { setPromiseToast } from "@plane/propel/toast";
+import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { applyCustomTheme } from "@plane/utils";
 // components
 import { CustomThemeSelector } from "@/components/core/theme/custom-theme-selector";
@@ -35,46 +35,41 @@ export const ThemeSwitcher = observer(function ThemeSwitcher(props: {
   const { t } = useTranslation();
   // derived values
   const currentTheme = useMemo(() => {
-    const userThemeOption = THEME_OPTIONS.find((t) => t.value === userProfile?.theme?.theme);
+    const userThemeOption = THEME_OPTIONS.find((option) => option.value === userProfile?.theme?.theme);
     return userThemeOption || null;
   }, [userProfile?.theme?.theme]);
 
   const handleThemeChange = useCallback(
     async (themeOption: I_THEME_OPTION) => {
+      const previousTheme = userProfile?.theme?.theme;
+      // Optimistic: apply in place right away (no reload), persist in the background.
+      setTheme(themeOption.value);
+
+      // If switching to custom theme and user has saved custom colors, apply them immediately
+      if (
+        themeOption.value === "custom" &&
+        userProfile?.theme?.primary &&
+        userProfile?.theme?.background &&
+        userProfile?.theme?.darkPalette !== undefined
+      ) {
+        applyCustomTheme(
+          userProfile.theme.primary,
+          userProfile.theme.background,
+          userProfile.theme.darkPalette ? "dark" : "light"
+        );
+      }
+
       try {
-        setTheme(themeOption.value);
-
-        // If switching to custom theme and user has saved custom colors, apply them immediately
-        if (
-          themeOption.value === "custom" &&
-          userProfile?.theme?.primary &&
-          userProfile?.theme?.background &&
-          userProfile?.theme?.darkPalette !== undefined
-        ) {
-          applyCustomTheme(
-            userProfile.theme.primary,
-            userProfile.theme.background,
-            userProfile.theme.darkPalette ? "dark" : "light"
-          );
-        }
-
-        const updatePromise = updateUserTheme({ theme: themeOption.value });
-        setPromiseToast(updatePromise, {
-          loading: "Updating theme...",
-          success: {
-            title: "Theme updated",
-            message: () => "Reloading to apply changes...",
-          },
-          error: {
-            title: "Error!",
-            message: () => "Failed to update theme. Please try again.",
-          },
-        });
-        // Wait for the promise to resolve, then reload after showing toast
-        await updatePromise;
-        window.location.reload();
+        await updateUserTheme({ theme: themeOption.value });
       } catch (error) {
         console.error("Error updating theme:", error);
+        // The store already reverted its value; revert the live theme too.
+        setTheme(previousTheme || "system");
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "Error!",
+          message: "Failed to update theme. Please try again.",
+        });
       }
     },
     [setTheme, updateUserTheme, userProfile]

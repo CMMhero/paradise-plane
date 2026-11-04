@@ -18,6 +18,7 @@
 import { useCallback, useRef, useState } from "react";
 import { EFileAssetType } from "@plane/types";
 import { useFileSize } from "@/hooks/use-file-size";
+import { DEFAULT_CHAT_ATTACHMENTS_MAX, useParadiseLimits } from "@/hooks/use-paradise-limits";
 import { FileService } from "@/services/file.service";
 import { pilahBerkas, type TPenolakan } from "./berkas-lampiran";
 
@@ -37,6 +38,7 @@ type Opsi = {
 
 export function useUnggahLampiran({ slug, onTolak, onGagal }: Opsi) {
   const { maxFileSize } = useFileSize();
+  const maksJumlah = useParadiseLimits().chat_attachments_max ?? DEFAULT_CHAT_ATTACHMENTS_MAX;
   const [siap, setSiap] = useState<TLampiranSiap[]>([]);
   const [naik, setNaik] = useState<TLampiranNaik[]>([]);
   const urutRef = useRef(0);
@@ -48,7 +50,7 @@ export function useUnggahLampiran({ slug, onTolak, onGagal }: Opsi) {
   const tambah = useCallback(
     async (masuk: File[] | FileList | null) => {
       if (!slug || !masuk) return;
-      const { terima, tolak } = pilahBerkas(Array.from(masuk), jumlahRef.current, maxFileSize);
+      const { terima, tolak } = pilahBerkas(Array.from(masuk), jumlahRef.current, maxFileSize, maksJumlah);
       if (tolak.length > 0) onTolak(tolak, maxFileSize);
       if (terima.length === 0) return;
       jumlahRef.current += terima.length;
@@ -85,11 +87,11 @@ export function useUnggahLampiran({ slug, onTolak, onGagal }: Opsi) {
         onGagal(gagal.length, hasil.length, alasan);
       }
     },
-    [slug, maxFileSize, onTolak, onGagal]
+    [slug, maxFileSize, maksJumlah, onTolak, onGagal]
   );
 
   const buang = useCallback((id: string) => setSiap((lama) => lama.filter((l) => l.id !== id)), []);
   const kosongkan = useCallback(() => setSiap([]), []);
 
-  return { siap, naik, mengunggah: naik.length > 0, tambah, buang, kosongkan, maxFileSize };
+  return { siap, naik, mengunggah: naik.length > 0, tambah, buang, kosongkan, maxFileSize, maksJumlah };
 }

@@ -19,7 +19,7 @@ type Props = {
   isMobile?: boolean;
 };
 
-const DISABLED_ORDERING_OPTIONS = ["sort_order"];
+const DISABLED_ORDERING_OPTIONS = new Set(["sort_order"]);
 
 export function ProjectOrderByDropdown(props: Props) {
   const { onChange, value, isMobile = false } = props;
@@ -28,25 +28,19 @@ export function ProjectOrderByDropdown(props: Props) {
   const orderByDetails = PROJECT_ORDER_BY_OPTIONS.find((option) => value?.includes(option.key));
 
   const isDescending = value?.[0] === "-";
-  const isOrderingDisabled = !!value && DISABLED_ORDERING_OPTIONS.includes(value);
+  const isOrderingDisabled = !!value && DISABLED_ORDERING_OPTIONS.has(value);
 
   return (
     <CustomMenu
-      className={`${isMobile ? "flex w-full justify-center" : ""}`}
+      className={isMobile ? "flex w-full justify-center" : "flex items-center"}
+      // flex: tombol native adalah inline-block, jadi div inline-flex di dalamnya ikut
+      // garis dasar teks dan tombolnya melebihi tinggi 32px.
+      customButtonClassName="flex items-center"
       customButton={
-        <>
-          {isMobile ? (
-            <div className={getButtonStyling("secondary", "lg")}>
-              <ArrowDownWideNarrow className="size-3.5 shrink-0" strokeWidth={2} />
-              {orderByDetails && t(orderByDetails?.i18n_label)}
-            </div>
-          ) : (
-            <div className={getButtonStyling("secondary", "lg")}>
-              <ArrowDownWideNarrow className="size-3.5 shrink-0" strokeWidth={2} />
-              {orderByDetails && t(orderByDetails?.i18n_label)}
-            </div>
-          )}
-        </>
+        <div className={getButtonStyling("secondary", "lg")}>
+          <ArrowDownWideNarrow className="size-4 shrink-0" strokeWidth={2} />
+          {orderByDetails && t(orderByDetails?.i18n_label)}
+        </div>
       }
       placement="bottom-end"
       closeOnSelect

@@ -56,6 +56,58 @@ export function useStatusKehadiran(userId: string | null | undefined): TStatusKe
   );
 }
 
+/** Seluruh peta kehadiran, untuk mengurutkan daftar. Petanya diganti utuh pada
+ * tiap perubahan (tidak pernah diubah di tempat), jadi aman sebagai snapshot. */
+export function usePetaKehadiran(): TPetaKehadiran {
+  return useSyncExternalStore(
+    langganan,
+    () => peta,
+    () => peta
+  );
+}
+
+// ---- sinyal panggilan DM (menumpang soket yang sama) ----
+/** Soket kehadiran tab ini, kalau sedang terbuka. Satu-satunya jalur sinyal
+ * panggilan DM: ia hidup di lapisan workspace, jadi dering sampai ke halaman
+ * mana pun, bukan cuma saat percakapannya sedang dibuka. */
+let soketTerbuka: WebSocket | null = null;
+const pendengarPanggilan = new Set<(pesan: unknown) => void>();
+
+/** Dengarkan sinyal panggilan (`tipe: "panggilan"`). Bentuknya diperiksa
+ * pemakainya; lapisan soket hanya mengantar. */
+export function dengarPanggilan(f: (pesan: unknown) => void): () => void {
+  pendengarPanggilan.add(f);
+  return () => {
+    pendengarPanggilan.delete(f);
+  };
+}
+
+/** Kirim satu sinyal panggilan. `false` kalau soket sedang putus, supaya
+ * pemanggil bisa bilang begitu alih-alih menunggu jawaban yang tak akan datang.
+ * `dari` sengaja tidak ada: server yang mengisinya dari identitas terperiksa. */
+export function kirimSinyalPanggilan(isi: { ke: string; ruang: string; muatan: unknown }): boolean {
+  const ws = soketTerbuka;
+  if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+  try {
+    ws.send(JSON.stringify({ tipe: "panggilan", ...isi }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Dibaca di dalam penangan klik, di luar render. */
+export const soketKehadiranTerbuka = (): boolean => soketTerbuka?.readyState === WebSocket.OPEN;
+
+/** Soket kehadiran sedang terbuka: tombol panggilan DM boleh ditekan. */
+export function useKehadiranTersambung(): boolean {
+  return useSyncExternalStore(
+    langganan,
+    () => soketTerbuka !== null,
+    () => false
+  );
+}
+
 // ---- sambungan (satu per tab, dihitung referensinya) ----
 let pemakai = 0;
 let hentikan: (() => void) | null = null;
@@ -108,11 +160,25 @@ function mulai(slug: string): () => void {
     soket.addEventListener("open", () => {
       percobaan = 0;
       terkirim = null;
+      soketTerbuka = soket;
+      kabari();
       kirim(true);
     });
     soket.addEventListener("message", (ev) => {
       try {
-        peta = terapkanPesanKehadiran(peta, JSON.parse(ev.data as string) as TPesanKehadiran);
+        const pesan = JSON.parse(ev.data as string) as TPesanKehadiran | { tipe: "panggilan" };
+        if (pesan.tipe === "panggilan") {
+          // Satu pendengar yang galat tidak boleh menelan sinyal untuk yang lain.
+          pendengarPanggilan.forEach((f) => {
+            try {
+              f(pesan);
+            } catch {
+              // Diabaikan; lihat di atas.
+            }
+          });
+          return;
+        }
+        peta = terapkanPesanKehadiran(peta, pesan);
         kabari();
       } catch {
         // Pesan rusak diabaikan; potret berikutnya membetulkannya.
@@ -120,6 +186,7 @@ function mulai(slug: string): () => void {
     });
     soket.addEventListener("close", () => {
       ws = null;
+      if (soketTerbuka === soket) soketTerbuka = null;
       // Tanpa sambungan, status orang lain tidak bisa dipercaya lagi.
       peta = new Map();
       kabari();
@@ -154,6 +221,7 @@ function mulai(slug: string): () => void {
     document.removeEventListener("visibilitychange", terlihat);
     ws?.close();
     ws = null;
+    soketTerbuka = null;
     peta = new Map();
     kabari();
   };

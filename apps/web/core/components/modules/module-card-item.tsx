@@ -34,11 +34,17 @@ import { ModuleStatusDropdown } from "@/components/modules/module-status-dropdow
 import { useMember } from "@/hooks/store/use-member";
 import { useModule } from "@/hooks/store/use-module";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
 type Props = {
   moduleId: string;
+};
+
+const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
+  e.stopPropagation();
+  e.preventDefault();
 };
 
 export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
@@ -62,7 +68,13 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
     EUserPermissionsLevel.PROJECT
   );
-  const isDisabled = !isEditingAllowed || !!moduleDetails?.archived_at;
+  const izin = useIzinSumber(workspaceSlug?.toString(), projectId?.toString());
+  // Paradise KEP-85: sunting di tempat ikut aturan ubah module; favorit tetap untuk semua anggota.
+  const bolehUbahModule = izin.boleh("PERM_MODULE_EDIT", {
+    pemilikId: moduleDetails?.created_by,
+    terlibatIds: [moduleDetails?.lead_id, ...(moduleDetails?.member_ids ?? [])],
+  });
+  const isDisabled = !isEditingAllowed || !bolehUbahModule || !!moduleDetails?.archived_at;
   const renderIcon = Boolean(moduleDetails?.start_date) || Boolean(moduleDetails?.target_date);
 
   const { isMobile } = usePlatformOS();
@@ -74,6 +86,7 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
     const addToFavoritePromise = addModuleToFavorites(workspaceSlug.toString(), projectId.toString(), moduleId).then(
       () => {
         if (!storedValue) toggleFavoriteMenu(true);
+        return undefined;
       }
     );
 
@@ -114,11 +127,6 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
     });
   };
 
-  const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
-
   const handleModuleDetailsChange = async (payload: Partial<IModule>) => {
     if (!workspaceSlug || !projectId) return;
 
@@ -129,6 +137,7 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
           title: "Success!",
           message: "Module updated successfully.",
         });
+        return undefined;
       })
       .catch((err) => {
         setToast({
@@ -192,7 +201,7 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
               <Tooltip tooltipContent={moduleDetails.name} position="top" isMobile={isMobile}>
                 <span className="truncate text-14 font-medium">{moduleDetails.name}</span>
               </Tooltip>
-              <div className="flex items-center gap-2" onClick={handleEventPropagation}>
+              <div className="flex items-center gap-2" onClick={handleEventPropagation} role="presentation">
                 {moduleStatus && (
                   <ModuleStatusDropdown
                     isDisabled={isDisabled}
@@ -223,7 +232,11 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
               )}
             </div>
             <LinearProgressIndicator size="lg" data={progressIndicatorData} />
-            <div className="flex items-center justify-between py-0.5" onClick={handleEventPropagation}>
+            <div
+              className="flex items-center justify-between py-0.5"
+              onClick={handleEventPropagation}
+              role="presentation"
+            >
               <DateRangeDropdown
                 buttonContainerClassName={`h-6 w-full flex ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"} items-center gap-1.5 text-tertiary border-[0.5px] border-strong rounded-sm text-11`}
                 buttonVariant="transparent-with-text"

@@ -54,6 +54,8 @@ export const ProjectMemberList = observer(function ProjectMemberList(props: TPro
     projectId ? getFilteredProjectMemberDetails(memberId, projectId.toString()) : null
   );
 
+  // layar sentuh: jangan fokus otomatis, keyboard virtual menutup separuh layar
+  const autoFocusSearch = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   const isAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
 
   // Handler for role filter updates
@@ -82,17 +84,19 @@ export const ProjectMemberList = observer(function ProjectMemberList(props: TPro
         projectId={projectId}
         workspaceSlug={workspaceSlug}
       />
-      <div className="flex items-center justify-between gap-4 overflow-x-hidden border-b border-subtle py-2">
+      {/* Telepon: kontrol membungkus ke baris kedua, kolom cari memakai sisa lebar */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-subtle py-2">
         <div className="text-14 font-semibold">{t("common.members")}</div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-start gap-1.5 search-field border border-subtle bg-surface-1 px-2 py-1">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          <div className="flex min-h-10 min-w-40 flex-1 items-center justify-start gap-1.5 search-field border border-subtle bg-surface-1 px-2 py-1 sm:min-h-0 sm:flex-none">
             <SearchIcon className="h-3.5 w-3.5" />
             <Input
               mode="true-transparent"
-              className="w-full max-w-[234px] p-0 placeholder:text-placeholder"
+              className="w-full p-0 placeholder:text-placeholder sm:max-w-[234px]"
               placeholder="Search"
               value={searchQuery}
-              autoFocus
+              // oxlint-disable-next-line jsx-a11y/no-autofocus -- autofocus is gated on non-touch pointers (autoFocusSearch)
+              autoFocus={autoFocusSearch}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
@@ -117,7 +121,7 @@ export const ProjectMemberList = observer(function ProjectMemberList(props: TPro
       {!projectMemberIds ? (
         <MembersSettingsLoader />
       ) : (
-        <div className="divide-y divide-subtle overflow-scroll">
+        <div className="divide-y divide-subtle overflow-x-auto">
           {searchedProjectMembers.length !== 0 && (
             <ProjectMemberListItem
               memberDetails={memberDetails ?? []}

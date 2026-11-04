@@ -6,16 +6,19 @@
 
 import { useState } from "react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { ROLE } from "@plane/constants";
 import { Button } from "@plane/propel/button";
 import type { IWorkspaceMemberInvitation } from "@plane/types";
 import { Checkbox, Spinner } from "@plane/ui";
 import { truncateText } from "@plane/utils";
 // constants
+import { InviteExpiredBadge } from "@/components/workspace/invite-expired-badge";
 import { WorkspaceLogo } from "@/components/workspace/logo";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserSettings } from "@/hooks/store/user";
+import { adalahUndanganKedaluwarsa, tampilkanUndanganKedaluwarsa } from "@/lib/undangan";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
 // local components
@@ -33,6 +36,7 @@ export function WorkspaceJoinInvitesStep(props: Props) {
   // states
   const [isJoiningWorkspaces, setIsJoiningWorkspaces] = useState(false);
   const [invitationsRespond, setInvitationsRespond] = useState<string[]>([]);
+  const { t } = useTranslation();
   // store hooks
   const { fetchWorkspaces } = useWorkspace();
   const { fetchCurrentUserSettings } = useUserSettings();
@@ -40,6 +44,10 @@ export function WorkspaceJoinInvitesStep(props: Props) {
   // handle invitation
   const handleInvitation = (workspace_invitation: IWorkspaceMemberInvitation, action: "accepted" | "withdraw") => {
     if (action === "accepted") {
+      if (workspace_invitation.is_expired) {
+        tampilkanUndanganKedaluwarsa(t);
+        return;
+      }
       setInvitationsRespond((prevData) => [...prevData, workspace_invitation.id]);
     } else if (action === "withdraw") {
       setInvitationsRespond((prevData) => prevData.filter((item: string) => item !== workspace_invitation.id));
@@ -60,7 +68,8 @@ export function WorkspaceJoinInvitesStep(props: Props) {
       await fetchCurrentUserSettings();
       await handleNextStep();
     } catch (error: any) {
-      console.error(error);
+      if (adalahUndanganKedaluwarsa(error)) tampilkanUndanganKedaluwarsa(t);
+      else console.error(error);
       setIsJoiningWorkspaces(false);
     }
   };
@@ -89,7 +98,7 @@ export function WorkspaceJoinInvitesStep(props: Props) {
               <label
                 key={invitation.id}
                 htmlFor={`undangan-${invitation.id}`}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border border-subtle px-3 py-2 hover:bg-surface-2`}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border border-subtle px-3 py-2 hover:bg-surface-2 ${invitation.is_expired ? "opacity-60" : ""}`}
               >
                 <div className="flex-shrink-0">
                   <WorkspaceLogo
@@ -102,6 +111,7 @@ export function WorkspaceJoinInvitesStep(props: Props) {
                   <div className="text-13 font-medium">{truncateText(invitedWorkspace?.name, 30)}</div>
                   <p className="text-11 text-secondary">{ROLE[invitation.role]}</p>
                 </div>
+                {invitation.is_expired && <InviteExpiredBadge />}
                 <span className={`flex-shrink-0`}>
                   <Checkbox
                     id={`undangan-${invitation.id}`}

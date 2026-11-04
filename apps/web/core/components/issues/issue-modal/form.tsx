@@ -270,6 +270,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
           });
           editorRef?.current?.clearEditor();
         }
+        return undefined;
       })
       .catch((error) => {
         console.error(error);
@@ -334,15 +335,15 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     const issue = getIssueById(parentId);
     if (!issue) return;
 
-    const projectDetails = getProjectById(issue.project_id);
-    if (!projectDetails) return;
+    const parentProjectDetails = getProjectById(issue.project_id);
+    if (!parentProjectDetails) return;
 
     const stateDetails = getStateById(issue.state_id);
 
     setSelectedParentIssue(
-      convertWorkItemDataToSearchResponse(workspaceSlug?.toString(), issue, projectDetails, stateDetails)
+      convertWorkItemDataToSearchResponse(workspaceSlug?.toString(), issue, parentProjectDetails, stateDetails)
     );
-  }, [watch, getIssueById, getProjectById, selectedParentIssue, getStateById]);
+  }, [watch, getIssueById, getProjectById, selectedParentIssue, getStateById, setSelectedParentIssue, workspaceSlug]);
 
   // executing this useEffect when isDirty changes
   useEffect(() => {
@@ -380,7 +381,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
         <div className="w-full rounded-lg">
           <form
             ref={formRef}
-            onSubmit={handleSubmit((data) => handleFormSubmit(data))}
+            onSubmit={handleSubmit((formValues) => handleFormSubmit(formValues))}
             className="flex w-full flex-col"
           >
             <div className="rounded-t-lg bg-surface-1 p-5">
@@ -509,7 +510,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
               </div>
               {showActionButtons && (
                 <div
-                  className="flex items-center justify-end gap-4 border-t-[0.5px] border-subtle pt-6 pb-3"
+                  className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t-[0.5px] border-subtle pt-6 pb-3 max-sm:pt-4"
                   tabIndex={getIndex("create_more")}
                 >
                   {!data?.id && (
@@ -519,7 +520,9 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                       onKeyDown={(e) => {
                         if (e.key === "Enter") onCreateMoreToggleChange(!isCreateMoreToggleEnabled);
                       }}
+                      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- wraps ToggleSwitch (a button), a nested button would be invalid
                       role="button"
+                      tabIndex={0}
                     >
                       <ToggleSwitch value={isCreateMoreToggleEnabled} onChange={() => {}} size="sm" />
                       <span className="text-caption-sm-regular">{t("create_more")}</span>

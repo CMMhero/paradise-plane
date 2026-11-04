@@ -19,9 +19,11 @@ type Props = {
   initialValues: Partial<IProject>;
   handleClose: () => void;
   handleChange: (formData: Partial<IProject>) => Promise<void>;
+  /** Batas atas bulan (arsip otomatis di bawah batas instance). Bawaan 12. */
+  maxMonths?: number;
 };
 
-export function SelectMonthModal({ type, initialValues, isOpen, handleClose, handleChange }: Props) {
+export function SelectMonthModal({ type, initialValues, isOpen, handleClose, handleChange, maxMonths = 12 }: Props) {
   const { workspaceSlug, projectId } = useParams();
 
   const {
@@ -91,9 +93,9 @@ export function SelectMonthModal({ type, initialValues, isOpen, handleClose, han
                     control={control}
                     name="archive_in"
                     rules={{
-                      required: "Select a month between 1 and 12.",
+                      required: `Select a month between 1 and ${maxMonths}.`,
                       min: 1,
-                      max: 12,
+                      max: maxMonths,
                     }}
                     render={({ field: { value, onChange, ref } }) => (
                       <div className="relative flex w-full flex-col justify-center gap-1">
@@ -108,14 +110,14 @@ export function SelectMonthModal({ type, initialValues, isOpen, handleClose, han
                           placeholder="Enter Months"
                           className="w-full border-subtle"
                           min={1}
-                          max={12}
+                          max={maxMonths}
                         />
                         <span className="absolute top-2.5 right-8 text-13 text-secondary">Months</span>
                       </div>
                     )}
                   />
                   {errors.archive_in && (
-                    <span className="px-1 text-13 text-danger-primary">Select a month between 1 and 12.</span>
+                    <span className="px-1 text-13 text-danger-primary">Select a month between 1 and {maxMonths}.</span>
                   )}
                 </>
               )}

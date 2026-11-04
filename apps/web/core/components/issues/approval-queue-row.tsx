@@ -103,7 +103,9 @@ export const ApprovalQueueRow = observer(function ApprovalQueueRow(props: TAppro
         itemLink={bisaDibuka ? `/${workspaceSlug}/browse/${baris.tugas.nomor}/` : ""}
         disableLink={!bisaDibuka}
         prependTitleElement={
-          <span className="w-16 shrink-0 truncate text-13 font-medium text-tertiary">{baris.tugas.nomor ?? "-"}</span>
+          <span className="min-w-16 shrink-0 text-13 font-medium whitespace-nowrap text-tertiary">
+            {baris.tugas.nomor ?? "-"}
+          </span>
         }
         actionableItems={
           <>

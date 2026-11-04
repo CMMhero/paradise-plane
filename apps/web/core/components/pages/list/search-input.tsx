@@ -57,7 +57,7 @@ export function PageSearchInput(props: Props) {
         className={cn(
           "flex w-0 items-center justify-start overflow-hidden search-field border border-transparent text-placeholder opacity-0 transition-[width] ease-linear",
           {
-            "w-64 border-subtle px-2.5 py-1.5 opacity-100": isSearchOpen,
+            "w-40 border-subtle px-2.5 py-1.5 opacity-100 sm:w-64": isSearchOpen,
           }
         )}
       >

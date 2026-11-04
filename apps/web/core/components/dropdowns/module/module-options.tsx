@@ -52,7 +52,7 @@ export const ModuleOptions = observer(function ModuleOptions(props: Props) {
     if (isOpen) {
       onOpen();
       if (!isMobile) {
-        inputRef.current && inputRef.current.focus();
+        inputRef.current?.focus();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,7 +115,7 @@ export const ModuleOptions = observer(function ModuleOptions(props: Props) {
   return (
     <Combobox.Options className="fixed z-10" static>
       <div
-        className="my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
+        className="my-1 w-48 max-w-[calc(100vw-1rem)] rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
         ref={setPopperElement}
         style={styles.popper}
         {...attributes.popper}
@@ -142,7 +142,7 @@ export const ModuleOptions = observer(function ModuleOptions(props: Props) {
                   value={option.value}
                   className={({ active, selected }) =>
                     cn(
-                      "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none",
+                      "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none sentuh:py-2.5",
                       {
                         "bg-layer-transparent-hover": active,
                         "text-primary": selected,

@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
 import { useRouter } from "next/navigation";
 // plane package imports
@@ -21,6 +21,7 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 import { useAnalyticsTabs } from "@/plane-web/components/analytics/use-analytics-tabs";
 import type { Route } from "./+types/page";
 
@@ -44,21 +45,23 @@ function AnalyticsPage({ params }: Route.ComponentProps) {
     : undefined;
 
   // permissions
-  const canPerformEmptyStateActions = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
+  // Paradise: tombol kosong di sini membuat project, jadi staf / member biasa tidak boleh.
+  const bolehBuatProject = useBolehBuatProject();
+  const canPerformEmptyStateActions =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
+    bolehBuatProject;
 
   const workspaceSlug = params.workspaceSlug;
   const ANALYTICS_TABS = useAnalyticsTabs(workspaceSlug.toString());
 
   const [selectedTab, setSelectedTab] = useState(tabId || ANALYTICS_TABS[0]?.key);
 
-  useEffect(() => {
-    if (tabId) {
-      setSelectedTab(tabId);
-    }
-  }, [tabId]);
+  // Sync the selected tab when the route param changes (adjusting state during render, no effect needed).
+  const [prevTabId, setPrevTabId] = useState(tabId);
+  if (tabId !== prevTabId) {
+    setPrevTabId(tabId);
+    if (tabId) setSelectedTab(tabId);
+  }
 
   // Handle tab change
   const handleTabChange = (value: string) => {

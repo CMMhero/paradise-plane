@@ -14,6 +14,7 @@ import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 // local imports
 // Tipe props ditulis tangan, peninggalan masa rute ini bisa dibuang saat build.
 // Sekarang rutenya selalu terdaftar dan dijaga ParadiseModuleGate (God Mode).
@@ -29,6 +30,9 @@ function EstimatesSettingsPage({ params }: TPageProps) {
   // derived values
   const pageTitle = currentProjectDetails?.name ? `${currentProjectDetails?.name} - Estimates` : undefined;
   const canPerformProjectAdminActions = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
+  // Paradise KEP-85: estimate = alur kerja, aturan struktur PERM_PROJECT_WORKFLOW.
+  const izin = useIzinSumber(workspaceSlug, projectId);
+  const bolehUbahAlur = canPerformProjectAdminActions && izin.struktur("PERM_PROJECT_WORKFLOW");
 
   if (workspaceUserInfo && !canPerformProjectAdminActions) {
     return <NotAuthorizedView section="settings" isProjectView className="h-auto" />;
@@ -37,8 +41,8 @@ function EstimatesSettingsPage({ params }: TPageProps) {
   return (
     <SettingsContentWrapper header={<EstimatesProjectSettingsHeader />}>
       <PageHead title={pageTitle} />
-      <div className={`w-full ${canPerformProjectAdminActions ? "" : "pointer-events-none opacity-60"}`}>
-        <EstimateRoot workspaceSlug={workspaceSlug} projectId={projectId} isAdmin={canPerformProjectAdminActions} />
+      <div className={`w-full ${bolehUbahAlur ? "" : "pointer-events-none opacity-60"}`}>
+        <EstimateRoot workspaceSlug={workspaceSlug} projectId={projectId} isAdmin={bolehUbahAlur} />
       </div>
     </SettingsContentWrapper>
   );

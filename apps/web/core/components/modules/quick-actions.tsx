@@ -21,6 +21,7 @@ import { ArchiveModuleModal, CreateUpdateModuleModal, DeleteModuleModal } from "
 import { useModule } from "@/hooks/store/use-module";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 
 type Props = {
   parentRef: React.RefObject<HTMLDivElement>;
@@ -42,6 +43,7 @@ export const ModuleQuickActions = observer(function ModuleQuickActions(props: Pr
   const { allowPermissions } = useUserPermissions();
 
   const { getModuleById, restoreModule } = useModule();
+  const izin = useIzinSumber(workspaceSlug, projectId);
 
   // derived values
   const moduleDetails = getModuleById(moduleId);
@@ -52,6 +54,11 @@ export const ModuleQuickActions = observer(function ModuleQuickActions(props: Pr
     workspaceSlug,
     projectId
   );
+  // Paradise KEP-85: pemilik module = pembuat; terlibat = lead + anggota.
+  const sumberIzin = {
+    pemilikId: moduleDetails?.created_by,
+    terlibatIds: [moduleDetails?.lead_id, ...(moduleDetails?.member_ids ?? [])],
+  };
 
   const moduleLink = `${workspaceSlug}/projects/${projectId}/modules/${moduleId}`;
   const handleCopyText = () =>
@@ -61,6 +68,7 @@ export const ModuleQuickActions = observer(function ModuleQuickActions(props: Pr
         title: "Link Copied!",
         message: "Module link copied to clipboard.",
       });
+      return undefined;
     });
   const handleOpenInNewTab = () => window.open(`/${moduleLink}`, "_blank");
 
@@ -88,7 +96,9 @@ export const ModuleQuickActions = observer(function ModuleQuickActions(props: Pr
     workspaceSlug,
     projectId,
     moduleId,
-    isEditingAllowed,
+    isEditingAllowed: isEditingAllowed && izin.boleh("PERM_MODULE_EDIT", sumberIzin),
+    isArchivingAllowed: isEditingAllowed && izin.boleh("PERM_MODULE_ARCHIVE", sumberIzin),
+    isDeletingAllowed: isEditingAllowed && izin.boleh("PERM_MODULE_DELETE", sumberIzin),
     handleEdit: () => setEditModal(true),
     handleArchive: () => setArchiveModuleModal(true),
     handleRestore: handleRestoreModule,

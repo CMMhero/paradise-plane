@@ -18,7 +18,6 @@ import { CustomSelect, Input } from "@plane/ui";
 import { cn, copyUrlToClipboard, getFileURL, validateWorkspaceName } from "@plane/utils";
 // components
 import { WorkspaceImageUploadModal } from "@/components/core/modals/workspace-image-upload-modal";
-import { TimezoneSelect } from "@/components/global/timezone-select";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserPermissions } from "@/hooks/store/user";
@@ -30,7 +29,6 @@ const defaultValues: Partial<IWorkspace> = {
   url: "",
   organization_size: "2-10",
   logo_url: null,
-  timezone: "UTC",
 };
 
 export const WorkspaceDetails = observer(function WorkspaceDetails() {
@@ -63,7 +61,6 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
     const payload: Partial<IWorkspace> = {
       name: formData.name,
       organization_size: formData.organization_size,
-      timezone: formData.timezone,
     };
 
     try {
@@ -262,20 +259,6 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
                     className="w-full cursor-not-allowed !bg-layer-1"
                     disabled
                   />
-                )}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <h4 className="text-body-sm-medium text-tertiary">
-                {t("workspace_settings.settings.general.workspace_timezone")}
-              </h4>
-              <Controller
-                name="timezone"
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <>
-                    <TimezoneSelect value={value} onChange={onChange} disabled={!isAdmin} />
-                  </>
                 )}
               />
             </div>

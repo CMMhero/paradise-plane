@@ -13,6 +13,7 @@ import { PenjagaNotifikasi } from "@/components/notifikasi/penjaga";
 import { SambunganKehadiran } from "@/components/chat/titik-kehadiran";
 import { PendengarPengajuanPersetujuan } from "@/components/issues/approval-requested-listener";
 import { WorkspaceAuthWrapper } from "@/layouts/auth-layout/workspace-wrapper";
+import { PenyediaPanggilan } from "./(projects)/chat/penyedia-panggilan";
 import type { Route } from "./+types/layout";
 
 export default function WorkspaceLayout(props: Route.ComponentProps) {
@@ -32,7 +33,11 @@ export default function WorkspaceLayout(props: Route.ComponentProps) {
             {/* Satu soket kehadiran per tab: titik online/away di Obrolan. */}
             <SambunganKehadiran workspaceSlug={workspaceSlug} />
             <PendengarPengajuanPersetujuan />
-            <Outlet />
+            {/* Panggilan hidup di sini, bukan di halaman Obrolan: dering sampai
+                ke halaman mana pun, dan pindah halaman tidak memutus panggilan. */}
+            <PenyediaPanggilan workspaceSlug={workspaceSlug}>
+              <Outlet />
+            </PenyediaPanggilan>
           </WorkspaceContentWrapper>
         </AppRailVisibilityProvider>
       </WorkspaceAuthWrapper>

@@ -14,13 +14,15 @@ type Props = {
   startDate: string | null;
   stateGroup: TStateGroups;
   targetDate: string | null;
+  /** `approval_status` work item: menunggu persetujuan = tidak merah (KEP-84). */
+  approvalStatus?: string | null;
 };
 
 export function WorkItemPreviewCardDate(props: Props) {
-  const { startDate, stateGroup, targetDate } = props;
+  const { startDate, stateGroup, targetDate, approvalStatus } = props;
   // derived values
   const isDateRangeEnabled = Boolean(startDate && targetDate);
-  const shouldHighlightDate = shouldHighlightIssueDueDate(targetDate, stateGroup);
+  const shouldHighlightDate = shouldHighlightIssueDueDate(targetDate, stateGroup, approvalStatus);
 
   if (!startDate && !targetDate) return null;
 

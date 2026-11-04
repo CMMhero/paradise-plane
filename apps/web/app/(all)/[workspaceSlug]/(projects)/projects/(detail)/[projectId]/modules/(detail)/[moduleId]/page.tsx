@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 import useSWR from "swr";
 // plane imports
@@ -32,7 +33,7 @@ function ModuleIssuesPage({ params }: Route.ComponentProps) {
   // const { issuesFilter } = useIssues(EIssuesStoreType.MODULE);
   // local storage
   const { setValue, storedValue } = useLocalStorage("module_sidebar_collapsed", "false");
-  const isSidebarCollapsed = storedValue ? (storedValue === "true" ? true : false) : false;
+  const isSidebarCollapsed = storedValue ? storedValue === "true" : false;
   // fetching module details
   const { error } = useSWR(`CURRENT_MODULE_DETAILS_${moduleId}`, () =>
     fetchModuleDetails(workspaceSlug, projectId, moduleId)
@@ -45,6 +46,13 @@ function ModuleIssuesPage({ params }: Route.ComponentProps) {
   const toggleSidebar = () => {
     setValue(`${!isSidebarCollapsed}`);
   };
+
+  // Paradise: di layar sempit panel samping menutupi seluruh daftar work item, jadi
+  // saat halaman dibuka panel ditutup dulu. Pengguna masih bisa membukanya dari header.
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 1023px)").matches) setValue("true");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moduleId]);
 
   // const activeLayout = issuesFilter?.issueFilters?.displayFilters?.layout;
   return (
@@ -68,7 +76,7 @@ function ModuleIssuesPage({ params }: Route.ComponentProps) {
           {!isSidebarCollapsed && (
             <div
               className={cn(
-                "vertical-scrollbar absolute right-0 z-13 flex scrollbar-sm h-full w-[24rem] flex-shrink-0 flex-col gap-3.5 overflow-y-auto border-l border-subtle bg-surface-1 px-6 shadow-raised-200 duration-300"
+                "vertical-scrollbar absolute right-0 z-13 flex scrollbar-sm h-full w-[24rem] max-w-full flex-shrink-0 flex-col gap-3.5 overflow-y-auto border-l border-subtle bg-surface-1 px-6 shadow-raised-200 duration-300"
               )}
             >
               <ModuleAnalyticsSidebar moduleId={moduleId} handleClose={toggleSidebar} />

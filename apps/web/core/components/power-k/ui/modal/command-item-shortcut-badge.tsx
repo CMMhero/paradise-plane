@@ -73,7 +73,7 @@ export function ShortcutBadge({ shortcut }: { shortcut: string | undefined }) {
   const keys = formatShortcutForDisplay(shortcut);
 
   return (
-    <div className="pointer-events-none inline-flex shrink-0 items-center gap-1 font-medium select-none">
+    <div className="pointer-events-none inline-flex shrink-0 items-center gap-1 font-medium select-none sentuh:hidden">
       {keys.map((key) => (
         <kbd
           key={key}
@@ -102,7 +102,7 @@ export function KeySequenceBadge({ sequence }: { sequence: string | undefined })
   const chars = sequence.split("");
 
   return (
-    <div className="pointer-events-none inline-flex shrink-0 items-center gap-1 font-medium select-none">
+    <div className="pointer-events-none inline-flex shrink-0 items-center gap-1 font-medium select-none sentuh:hidden">
       {chars.map((char, index) => (
         // oxlint-disable-next-line react/no-array-index-key -- chars may repeat, order is fixed
         <React.Fragment key={index}>

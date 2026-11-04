@@ -20,6 +20,7 @@ import { copyUrlToClipboard, cn } from "@plane/utils";
 import { useViewMenuItems } from "@/components/common/quick-actions-helper";
 // hooks
 import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 import { PublishViewModal, useViewPublish } from "@/plane-web/components/views/publish";
 // local imports
 import { DeleteProjectViewModal } from "./delete-view-modal";
@@ -44,6 +45,8 @@ export const ViewQuickActions = observer(function ViewQuickActions(props: Props)
   // auth
   const isOwner = view?.owned_by === data?.id;
   const isAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, projectId);
+  // Paradise KEP-85: ubah/hapus view ikut aturan God Mode, bukan role admin project.
+  const izin = useIzinSumber(workspaceSlug, projectId);
 
   const { isPublishModalOpen, setPublishModalOpen, publishContextMenu } = useViewPublish(
     !!view.anchor,
@@ -58,12 +61,15 @@ export const ViewQuickActions = observer(function ViewQuickActions(props: Props)
         title: "Link Copied!",
         message: "View link copied to clipboard.",
       });
+      return undefined;
     });
   const handleOpenInNewTab = () => window.open(`/${viewLink}`, "_blank");
 
   const menuResult = useViewMenuItems({
     isOwner,
     isAdmin,
+    isEditAllowed: izin.boleh("PERM_VIEW_EDIT", { pemilikId: view?.owned_by }),
+    isDeleteAllowed: izin.boleh("PERM_VIEW_DELETE", { pemilikId: view?.owned_by }),
     workspaceSlug,
     projectId,
     view,

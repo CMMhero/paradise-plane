@@ -119,7 +119,6 @@ export const EstimateDropdown = observer(function EstimateDropdown(props: Props)
             </div>
           ),
         };
-      else undefined;
     })
     .filter((estimatePointDropdownOption) => estimatePointDropdownOption != undefined) as DropdownOptions;
   options?.unshift({
@@ -219,6 +218,7 @@ export const EstimateDropdown = observer(function EstimateDropdown(props: Props)
   );
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- ComboDropDown ComboDropDown has no role prop; keyboard handling lives on the combobox wrapper
     <ComboDropDown
       as="div"
       ref={dropdownRef}
@@ -234,7 +234,7 @@ export const EstimateDropdown = observer(function EstimateDropdown(props: Props)
       {isOpen && (
         <Combobox.Options className="fixed z-10" static>
           <div
-            className="my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
+            className="my-1 w-48 max-w-[calc(100vw-1rem)] rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
             ref={setPopperElement}
             style={styles.popper}
             {...attributes.popper}
@@ -272,7 +272,7 @@ export const EstimateDropdown = observer(function EstimateDropdown(props: Props)
                           {({ active, selected }) => (
                             <div
                               className={cn(
-                                "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none",
+                                "flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none sentuh:py-2.5",
                                 {
                                   "bg-layer-transparent-hover": active,
                                   "text-primary": selected,

@@ -76,7 +76,7 @@ export const SidebarProjectsGrouped = observer(function SidebarProjectsGrouped({
               type="button"
               onClick={() => toggle(divisi.id)}
               aria-expanded={terbuka}
-              className="flex w-full items-center gap-1 rounded-item px-2 py-1.5 text-left text-caption-md-medium text-tertiary hover:bg-layer-transparent-hover"
+              className="flex w-full items-center gap-1 rounded-item px-2 py-1.5 text-left text-caption-md-medium text-tertiary hover:bg-layer-transparent-hover sentuh:py-2.5"
             >
               <ChevronRightIcon className={cn("size-3 flex-shrink-0 transition-transform", { "rotate-90": terbuka })} />
               <span className="truncate">{divisi.nama}</span>

@@ -6,6 +6,7 @@
 
 import { useMemo } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 // plane imports
 import { EIssueCommentAccessSpecifier } from "@plane/constants";
@@ -18,6 +19,7 @@ import { CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { useUser } from "@/hooks/store/user";
+import { useIzinSumber } from "@/hooks/use-izin-sumber";
 
 type TCommentCard = {
   activityOperations: TCommentsOperations;
@@ -33,8 +35,11 @@ export const CommentQuickActions = observer(function CommentQuickActions(props: 
   const { data: currentUser } = useUser();
   // derived values
   const isAuthor = currentUser?.id === comment.actor;
-  const canEdit = isAuthor;
-  const canDelete = isAuthor;
+  // Paradise KEP-85: penulis, atau sesuai aturan God Mode (atasan / semua anggota).
+  const { workspaceSlug } = useParams();
+  const izin = useIzinSumber(workspaceSlug?.toString(), comment.project);
+  const canEdit = isAuthor || izin.boleh("PERM_COMMENT_EDIT", { pemilikId: comment.actor });
+  const canDelete = isAuthor || izin.boleh("PERM_COMMENT_DELETE", { pemilikId: comment.actor });
   // translation
   const { t } = useTranslation();
 

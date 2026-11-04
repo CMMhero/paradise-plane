@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useState } from "react";
 import { useTranslation } from "@plane/i18n";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
@@ -20,6 +21,7 @@ import { EPageTypes } from "@/helpers/authentication.helper";
 // hooks
 import { useUser } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { adalahUndanganKedaluwarsa, tampilkanUndanganKedaluwarsa } from "@/lib/undangan";
 // wrappers
 import { AuthenticationWrapper } from "@/lib/wrappers/authentication-wrapper";
 import { WorkspaceService } from "@/services/workspace.service";
@@ -39,6 +41,7 @@ function WorkspaceInvitationPage() {
   const token = searchParams.get("token");
   // store hooks
   const { data: currentUser } = useUser();
+  const [isExpired, setIsExpired] = useState(false);
 
   const { data: invitationDetail, error } = useSWR(
     invitation_id && slug && WORKSPACE_INVITATION(invitation_id.toString()),
@@ -62,7 +65,14 @@ function WorkspaceInvitationPage() {
         }
         return undefined;
       })
-      .catch((err: unknown) => console.error(err));
+      .catch((err: unknown) => {
+        if (adalahUndanganKedaluwarsa(err)) {
+          setIsExpired(true);
+          tampilkanUndanganKedaluwarsa(t);
+          return;
+        }
+        console.error(err);
+      });
   };
 
   const handleReject = () => {
@@ -82,7 +92,18 @@ function WorkspaceInvitationPage() {
   return (
     <AuthenticationWrapper pageType={EPageTypes.PUBLIC}>
       <div className="flex h-full w-full flex-col items-center justify-center px-3">
-        {invitationDetail && !invitationDetail.responded_at ? (
+        {isExpired || (invitationDetail?.is_expired && !invitationDetail.responded_at) ? (
+          <EmptySpace
+            title={t("aturan_tugas_ui.invite_expired_title")}
+            description={t("aturan_tugas_ui.invite_expired_message")}
+          >
+            {!currentUser ? (
+              <EmptySpaceItem Icon={User2} title={t("shared_ui.sign_in_to_continue")} href="/" />
+            ) : (
+              <EmptySpaceItem Icon={Boxes} title={t("shared_ui.back_to_home")} href="/" />
+            )}
+          </EmptySpace>
+        ) : invitationDetail && !invitationDetail.responded_at ? (
           error ? (
             <div className="shadow-2xl flex w-full flex-col space-y-4 rounded-sm border border-subtle bg-surface-1 px-4 py-8 text-center md:w-1/3">
               <h2 className="text-18 uppercase">INVITATION NOT FOUND</h2>

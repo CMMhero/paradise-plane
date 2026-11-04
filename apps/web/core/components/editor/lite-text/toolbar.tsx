@@ -95,6 +95,7 @@ export function IssueCommentToolbar(props: Props) {
   useEffect(() => {
     if (!editorRef) return;
     const unsubscribe = editorRef.onStateChange(updateActiveStates);
+    // oxlint-disable-next-line react/set-state-in-effect -- syncs initial state from the external editor
     updateActiveStates();
     return () => unsubscribe();
   }, [editorRef, updateActiveStates]);
@@ -103,7 +104,7 @@ export function IssueCommentToolbar(props: Props) {
   const isSubmitButtonDisabled = isCommentEmpty || !isEditorReadyToDiscard;
 
   return (
-    <div className="flex h-9 w-full items-stretch gap-1.5 overflow-x-scroll bg-surface-2">
+    <div className="flex h-9 w-full items-stretch gap-1.5 overflow-x-auto bg-surface-2 sentuh:h-11">
       {showAccessSpecifier && (
         <div className="flex flex-shrink-0 items-stretch gap-0.5 rounded-sm border-[0.5px] border-subtle p-1">
           {COMMENT_ACCESS_SPECIFIERS.map((access) => {
@@ -114,6 +115,7 @@ export function IssueCommentToolbar(props: Props) {
                 <button
                   type="button"
                   onClick={() => handleAccessChange?.(access.key)}
+                  aria-label={access.label}
                   className={cn("grid aspect-square place-items-center rounded-xs p-1 hover:bg-layer-1", {
                     "bg-layer-1": isAccessActive,
                   })}
@@ -130,7 +132,7 @@ export function IssueCommentToolbar(props: Props) {
           })}
         </div>
       )}
-      <div className="flex w-full items-stretch justify-between gap-2 rounded-sm border-[0.5px] border-subtle p-1">
+      <div className="flex w-full min-w-max items-stretch justify-between gap-2 rounded-sm border-[0.5px] border-subtle p-1">
         <div className="flex items-stretch">
           {Object.keys(toolbarItems).map((key, index) => (
             <div
@@ -155,8 +157,9 @@ export function IssueCommentToolbar(props: Props) {
                     <button
                       type="button"
                       onClick={() => executeCommand(item)}
+                      aria-label={item.name}
                       className={cn(
-                        "grid aspect-square place-items-center rounded-xs p-0.5 text-placeholder hover:bg-layer-1",
+                        "grid aspect-square place-items-center rounded-xs p-0.5 text-placeholder hover:bg-layer-1 sentuh:p-1.5",
                         {
                           "bg-layer-1 text-primary": isItemActive,
                         }
@@ -176,7 +179,7 @@ export function IssueCommentToolbar(props: Props) {
           ))}
         </div>
         {showSubmitButton && (
-          <div className="sticky right-1">
+          <div className="sticky right-1 bg-surface-2 pl-1">
             <Button
               type="submit"
               variant="primary"

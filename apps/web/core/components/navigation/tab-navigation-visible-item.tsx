@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { PinOff } from "lucide-react";
 // plane imports
@@ -22,6 +23,8 @@ export type TTabNavigationVisibleItemProps = {
   onToggleDefault: (tabKey: string) => void;
   onHide: (tabKey: string) => void;
   itemRef?: (el: HTMLDivElement | null) => void;
+  /** Mode geser (HP): tab aktif digeser masuk ke layar saat aktif. */
+  scrollIntoViewWhenActive?: boolean;
 };
 
 /**
@@ -35,12 +38,30 @@ export function TabNavigationVisibleItem({
   onToggleDefault,
   onHide,
   itemRef,
+  scrollIntoViewWhenActive = false,
 }: TTabNavigationVisibleItemProps) {
   const { t } = useTranslation();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!scrollIntoViewWhenActive || !isActive) return;
+    // Bukan scrollIntoView: itu ikut menggeser SEMUA leluhur yang bisa digulir,
+    // termasuk baris header ber-overflow-hidden, sehingga nama project terdorong
+    // keluar. Cukup gulir jajaran tabnya sendiri.
+    const el = wrapperRef.current;
+    const scroller = el?.closest<HTMLElement>("[data-tab-scroller]");
+    if (!el || !scroller) return;
+    // Posisi dari rect, bukan offsetLeft: offsetParent-nya leluhur header yang
+    // jauh lebih luar, jadi offsetLeft melenceng ratusan piksel.
+    const posisiTab = el.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft;
+    // Tab lebih lebar dari jajarannya: rata kiri supaya awal labelnya terbaca.
+    const sisa = scroller.clientWidth - el.offsetWidth;
+    scroller.scrollTo({ left: Math.max(0, sisa > 0 ? posisiTab - sisa / 2 : posisiTab) });
+  }, [scrollIntoViewWhenActive, isActive]);
   const isDefault = item.key === tabPreferences.defaultTab;
 
   return (
-    <div className="relative flex h-full items-center transition-all duration-300">
+    <div ref={wrapperRef} className="relative flex h-full shrink-0 items-center transition-all duration-300">
       {isActive && (
         <span className="absolute bottom-0 left-1/2 h-0.5 w-[80%] -translate-x-1/2 rounded-t-md bg-accent-primary transition-all duration-300" />
       )}

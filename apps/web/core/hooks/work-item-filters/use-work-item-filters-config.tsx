@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { AtSign, Briefcase, CheckCircle2, Clock, Stamp } from "lucide-react";
+import { AtSign, Briefcase, CheckCircle2, Clock, Minus, Stamp, XCircle } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { Logo } from "@plane/propel/emoji-icon-picker";
@@ -362,8 +362,9 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [isFilterEnabled, projects, operatorConfigs]
   );
 
-  // Kustomisasi Paradise: status persetujuan (KEP-25). "Ditolak" sengaja tidak
-  // ditawarkan: tugas yang ditolak kembali ke draft dan tidak pernah ada di papan.
+  // Kustomisasi Paradise: status persetujuan (KEP-25). Sejak KEP-55 tugas yang
+  // ditolak tetap di papan (kembali ke In Progress), jadi "Ditolak" ditawarkan;
+  // "Tanpa" = tugas yang tidak pernah butuh persetujuan.
   const approvalStatusFilterConfig = useMemo(
     () =>
       getApprovalStatusFilterConfig<TWorkItemFilterProperty>("approval_status")({
@@ -372,14 +373,16 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         options: [
           { key: "menunggu", label: t("issue.approval.badge.pending") },
           { key: "disetujui", label: t("issue.approval.badge.approved") },
+          { key: "ditolak", label: t("issue.approval.badge.rejected") },
+          { key: "tanpa", label: t("common.none") },
         ],
         filterIcon: Stamp,
-        getOptionIcon: (status) =>
-          status === "menunggu" ? (
-            <Clock className="size-3.5 text-warning-primary" />
-          ) : (
-            <CheckCircle2 className="size-3.5 text-success-primary" />
-          ),
+        getOptionIcon: (status) => {
+          if (status === "menunggu") return <Clock className="size-3.5 text-warning-primary" />;
+          if (status === "ditolak") return <XCircle className="size-3.5 text-danger-primary" />;
+          if (status === "tanpa") return <Minus className="size-3.5 text-placeholder" />;
+          return <CheckCircle2 className="size-3.5 text-success-primary" />;
+        },
         ...operatorConfigs,
       }),
     [isFilterEnabled, operatorConfigs, t]

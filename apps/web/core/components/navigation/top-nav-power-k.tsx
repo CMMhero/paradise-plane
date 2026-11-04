@@ -35,7 +35,7 @@ export const TopNavPowerK = observer(() => {
   const [isWorkspaceLevel, setIsWorkspaceLevel] = useState(false);
 
   // store hooks
-  const { activeContext, setActivePage, activePage, setTopNavInputRef } = usePowerK();
+  const { activeContext, setActivePage, activePage, setTopNavInputRef, togglePowerKModal } = usePowerK();
   const { data: currentUser } = useUser();
 
   const handleOnClose = useCallback(() => {
@@ -218,9 +218,21 @@ export const TopNavPowerK = observer(() => {
   // tingginya mengikuti ruang yang benar-benar terlihat di peramban HP.
   return (
     <div ref={containerRef} className="relative">
+      {/* Layar sempit: kolom 364px mendorong lonceng, bantuan, dan avatar keluar
+          layar. Di bawah md cukup ikon yang membuka palet modal Power K (memang
+          dibuat untuk layar penuh). Kolom aslinya tetap dirender tersembunyi supaya
+          ref pintasan papan ketik tetap terdaftar. */}
+      <button
+        type="button"
+        onClick={() => togglePowerKModal(true)}
+        aria-label="Search commands"
+        className="grid size-8 place-items-center rounded-md text-secondary hover:bg-layer-1-hover md:hidden"
+      >
+        <SearchIcon className="size-4" />
+      </button>
       <div
         className={cn(
-          "relative z-30 flex w-[min(364px,calc(100vw-2rem))] items-center transition-all duration-300 ease-in-out",
+          "relative z-30 hidden w-[min(364px,calc(100vw-2rem))] items-center transition-all duration-300 ease-in-out md:flex",
           {
             "w-[min(554px,calc(100vw-2rem))]": isOpen,
           }
@@ -266,10 +278,12 @@ export const TopNavPowerK = observer(() => {
       </div>
       <div
         className={cn(
-          "shadow-lg absolute -top-[6px] left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden rounded-popover border border-subtle bg-surface-1 px-0 pt-10 transition-all duration-300 ease-in-out",
+          // max-md:hidden + pointer-events-none saat tertutup: kotak 0x0 ini tetap
+          // punya padding atas 40px dan dulu menelan ketukan pada ikon cari di HP.
+          "shadow-lg absolute -top-[6px] left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden rounded-popover border border-subtle bg-surface-1 px-0 pt-10 transition-all duration-300 ease-in-out max-md:hidden",
           {
             "max-h-[80dvh] w-[min(574px,calc(100vw-2rem))] opacity-100": isOpen,
-            "h-0 w-0 opacity-0": !isOpen,
+            "pointer-events-none h-0 w-0 opacity-0": !isOpen,
           }
         )}
       >

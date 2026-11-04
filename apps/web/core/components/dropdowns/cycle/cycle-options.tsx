@@ -56,9 +56,10 @@ export const CycleOptions = observer(function CycleOptions(props: CycleOptionsPr
     if (isOpen) {
       onOpen();
       if (!isMobile) {
-        inputRef.current && inputRef.current.focus();
+        inputRef.current?.focus();
       }
     }
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- onOpen is recreated every render; effect must only rerun when isOpen changes
   }, [isOpen, isMobile]);
 
   // popper-js init
@@ -77,7 +78,7 @@ export const CycleOptions = observer(function CycleOptions(props: CycleOptionsPr
   const cycleIds = (getProjectCycleIds(projectId) ?? [])?.filter((cycleId) => {
     const cycleDetails = getCycleById(cycleId);
     if (currentCycleId && currentCycleId === cycleId) return false;
-    return cycleDetails?.status ? (cycleDetails?.status.toLowerCase() != "completed" ? true : false) : true;
+    return cycleDetails?.status ? cycleDetails.status.toLowerCase() !== "completed" : true;
   });
 
   const onOpen = () => {
@@ -126,7 +127,7 @@ export const CycleOptions = observer(function CycleOptions(props: CycleOptionsPr
   return (
     <Combobox.Options className="fixed z-10" static>
       <div
-        className="my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
+        className="my-1 w-48 max-w-[calc(100vw-1rem)] rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none"
         ref={setPopperElement}
         style={styles.popper}
         {...attributes.popper}
@@ -152,7 +153,7 @@ export const CycleOptions = observer(function CycleOptions(props: CycleOptionsPr
                   key={option.value}
                   value={option.value}
                   className={({ active, selected }) =>
-                    `flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none ${
+                    `flex w-full cursor-pointer items-center justify-between gap-2 truncate rounded-item px-2 py-1.5 select-none sentuh:py-2.5 ${
                       active ? "bg-layer-transparent-hover" : ""
                     } ${selected ? "text-primary" : "text-secondary"}`
                   }

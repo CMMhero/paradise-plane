@@ -21,8 +21,10 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
 import { UserService } from "@/services/user.service";
 
+type TDataForm = IUserEmailNotificationSettings;
+
 type Props = {
-  data: IUserEmailNotificationSettings;
+  data: TDataForm;
 };
 
 type TKunciForm = TNotificationPreferenceKey | "ikut_bawaan_jabatan";
@@ -47,7 +49,16 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
   // Salinan lokal supaya saklar langsung bergerak; diganti jawaban server sesudah PATCH.
   const [nilai, setNilai] = useState(data);
   // Kebijakan direktur di God Mode: saklar ini selalu mati dan tak bisa dinyalakan sendiri.
-  const dikunci = new Set(nilai.dikunci ?? []);
+  const kunciAdmin = nilai.locked_by_admin ?? {};
+  const dikunci = new Set<string>([...(nilai.dikunci ?? []), ...Object.keys(kunciAdmin)]);
+  const hidup = (key: TNotificationPreferenceKey) => !dikunci.has(key) && !!nilai[key];
+  // Keterangan singkat untuk baris yang saklarnya dikunci; kosong bila tak ada yang dikunci.
+  const catatanKunci = (...keys: TNotificationPreferenceKey[]): string | undefined => {
+    const terkunci = keys.filter((k) => dikunci.has(k));
+    if (terkunci.length === 0) return undefined;
+    const batasKebijakan = terkunci.every((k) => (kunciAdmin[k] ?? "director_cap") === "director_cap");
+    return t(batasKebijakan ? "settings_limits_ui.locked_policy" : "settings_limits_ui.locked_by_admin");
+  };
 
   useEffect(() => {
     setNilai(data);
@@ -58,7 +69,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
     setNilai({ ...nilai, [key]: value });
     try {
       // Server mengembalikan saklar yang berlaku; mengubah satu = berhenti ikut bawaan jabatan.
-      const updated: IUserEmailNotificationSettings = await userService.updateCurrentUserEmailNotificationSettings({
+      const updated: TDataForm = await userService.updateCurrentUserEmailNotificationSettings({
         [key]: value,
       });
       setNilai(updated);
@@ -116,10 +127,13 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
                     <span className="block text-12 text-tertiary">
                       {t(`notif_prefs_ui.event_${ev.key}_description`)}
                     </span>
+                    {catatanKunci(ev.inbox, ev.email) && (
+                      <span className="block text-12 text-warning-primary">{catatanKunci(ev.inbox, ev.email)}</span>
+                    )}
                   </td>
                   <td className="py-3 text-center">
                     <ToggleSwitch
-                      value={!!nilai[ev.inbox]}
+                      value={hidup(ev.inbox)}
                       label={`${judul}: ${t("notif_prefs_ui.col_inbox")}`}
                       onChange={(v) => void ubah(ev.inbox, v)}
                       disabled={dikunci.has(ev.inbox)}
@@ -128,7 +142,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
                   </td>
                   <td className="py-3 text-center">
                     <ToggleSwitch
-                      value={!!nilai[ev.email]}
+                      value={hidup(ev.email)}
                       label={`${judul}: ${t("notif_prefs_ui.col_email")}`}
                       onChange={(v) => void ubah(ev.email, v)}
                       disabled={dikunci.has(ev.email)}
@@ -140,7 +154,9 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
             })}
           </tbody>
         </table>
-        {dikunci.size > 0 && <p className="text-12 text-tertiary">{t("shared_ui.role_defaults_locked")}</p>}
+        {(nilai.dikunci?.length ?? 0) > 0 && (
+          <p className="text-12 text-tertiary">{t("shared_ui.role_defaults_locked")}</p>
+        )}
       </section>
 
       <section className="flex flex-col gap-y-1" aria-labelledby="notif-ringkasan-judul">
@@ -149,10 +165,12 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
         </h3>
         <SettingsControlItem
           title={t("shared_ui.daily_digest_title")}
-          description={t("shared_ui.daily_digest_description")}
+          description={[t("shared_ui.daily_digest_description"), catatanKunci("daily_digest")]
+            .filter(Boolean)
+            .join(" ")}
           control={
             <ToggleSwitch
-              value={!!nilai.daily_digest}
+              value={hidup("daily_digest")}
               onChange={(v) => void ubah("daily_digest", v)}
               disabled={dikunci.has("daily_digest")}
               size={ukuranSaklar}
@@ -161,10 +179,12 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
         />
         <SettingsControlItem
           title={t("shared_ui.daily_digest_sore_title")}
-          description={t("shared_ui.daily_digest_sore_description")}
+          description={[t("shared_ui.daily_digest_sore_description"), catatanKunci("daily_digest_sore")]
+            .filter(Boolean)
+            .join(" ")}
           control={
             <ToggleSwitch
-              value={!!nilai.daily_digest_sore}
+              value={hidup("daily_digest_sore")}
               onChange={(v) => void ubah("daily_digest_sore", v)}
               disabled={dikunci.has("daily_digest_sore")}
               size={ukuranSaklar}
@@ -178,10 +198,12 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
               <SettingsControlItem
                 key={bagian}
                 title={t(`notif_prefs_ui.${bagian}`)}
-                description={t(`notif_prefs_ui.${bagian}_description`)}
+                description={[t(`notif_prefs_ui.${bagian}_description`), catatanKunci(bagian)]
+                  .filter(Boolean)
+                  .join(" ")}
                 control={
                   <ToggleSwitch
-                    value={!!nilai[bagian]}
+                    value={hidup(bagian)}
                     onChange={(v) => void ubah(bagian, v)}
                     disabled={dikunci.has(bagian)}
                     size={ukuranSaklar}

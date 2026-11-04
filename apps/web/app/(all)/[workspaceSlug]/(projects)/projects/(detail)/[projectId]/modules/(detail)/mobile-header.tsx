@@ -18,6 +18,7 @@ import { CustomMenu } from "@plane/ui";
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import { DisplayFiltersSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 import { IssueLayoutIcon } from "@/components/issues/issue-layouts/layout-icon";
+import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useModule } from "@/hooks/store/use-module";
@@ -83,10 +84,10 @@ export const ModuleIssuesMobileHeader = observer(function ModuleIssuesMobileHead
       <div className="flex justify-evenly border-b border-subtle bg-surface-1 py-2">
         <CustomMenu
           maxHeight={"md"}
-          className="flex flex-grow justify-center text-13 text-secondary"
+          className="flex flex-grow items-center justify-center text-13 text-secondary"
           placement="bottom-start"
           customButton={<span className="flex flex-grow justify-center text-13 text-secondary">Layout</span>}
-          customButtonClassName="flex flex-grow justify-center text-secondary text-13"
+          customButtonClassName="flex flex-grow items-center justify-center py-2 text-secondary text-13"
           closeOnSelect
         >
           {SUPPORTED_LAYOUTS.map((layout, index) => (
@@ -102,6 +103,12 @@ export const ModuleIssuesMobileHeader = observer(function ModuleIssuesMobileHead
             </CustomMenu.MenuItem>
           ))}
         </CustomMenu>
+        {/* Paradise: header desktop (berisi tombol filter) tidak tampil di layar sempit, jadi tombol filter dipasang di sini. */}
+        {moduleId && (
+          <div className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary">
+            <WorkItemFiltersToggle entityType={EIssuesStoreType.MODULE} entityId={moduleId.toString()} />
+          </div>
+        )}
         <div className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary">
           <FiltersDropdown
             title="Display"
@@ -131,7 +138,7 @@ export const ModuleIssuesMobileHeader = observer(function ModuleIssuesMobileHead
         {isModuleEnabled("analytics") && (
           <button
             onClick={() => setAnalyticsModal(true)}
-            className="flex flex-grow justify-center border-l border-subtle text-13 text-secondary"
+            className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary"
           >
             Analytics
           </button>

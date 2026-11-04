@@ -17,6 +17,8 @@ import { copyTextToClipboard } from "@plane/utils";
 // hooks
 import { useHome } from "@/hooks/store/use-home";
 // types
+import { getQuickLinkIcon, getQuickLinkImage, getQuickLinkTitle } from "./quick-link-display";
+import { renderLogo } from "./quick-link-logo";
 import type { TLinkOperations } from "./use-links";
 
 export type TProjectLinkDetail = {
@@ -47,13 +49,13 @@ export const ProjectLinkDetail = observer(function ProjectLinkDetail(props: TPro
 
   const handleCopyText = useCallback(() => {
     if (!linkUrl) return;
-    copyTextToClipboard(linkUrl).then(() => {
+    copyTextToClipboard(linkUrl).then(() =>
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: t("link_copied"),
         message: t("view_link_copied_to_clipboard"),
-      });
-    });
+      })
+    );
   }, [linkUrl, t]);
 
   const handleOpenInNewTab = useCallback(() => {
@@ -99,7 +101,10 @@ export const ProjectLinkDetail = observer(function ProjectLinkDetail(props: TPro
 
   return (
     <LinkItemBlock
-      title={linkDetail.title || linkDetail.url}
+      title={getQuickLinkTitle(linkDetail)}
+      iconSrc={getQuickLinkIcon(linkDetail)}
+      icon={renderLogo(linkDetail)}
+      imageSrc={getQuickLinkImage(linkDetail)}
       url={linkDetail.url}
       createdAt={linkDetail.created_at}
       menuItems={menuItems}

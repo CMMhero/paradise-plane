@@ -19,6 +19,9 @@ import type {
   IWorkspaceView,
   TIssuesResponse,
   TLink,
+  TSharedQuickLink,
+  TSharedQuickLinkPayload,
+  TSharedQuickLinksResponse,
   TSearchResponse,
   TSearchEntityRequestPayload,
   TWidgetEntityData,
@@ -324,6 +327,43 @@ export class WorkspaceService extends APIService {
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
+      });
+  }
+
+  // Paradise KEP-82: quick links shared by admins.
+  async fetchSharedQuickLinks(workspaceSlug: string): Promise<TSharedQuickLinksResponse> {
+    return this.get(`/api/workspaces/${workspaceSlug}/quick-links/shared/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response;
+      });
+  }
+
+  async createSharedQuickLink(workspaceSlug: string, data: TSharedQuickLinkPayload): Promise<TSharedQuickLink> {
+    return this.post(`/api/workspaces/${workspaceSlug}/quick-links/shared/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response;
+      });
+  }
+
+  async updateSharedQuickLink(
+    workspaceSlug: string,
+    linkId: string,
+    data: TSharedQuickLinkPayload
+  ): Promise<TSharedQuickLink> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/quick-links/shared/${linkId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response;
+      });
+  }
+
+  async deleteSharedQuickLink(workspaceSlug: string, linkId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/quick-links/shared/${linkId}/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response;
       });
   }
 

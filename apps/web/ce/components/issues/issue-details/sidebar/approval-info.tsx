@@ -54,8 +54,9 @@ export const ApprovalSidebarInfo = observer(function ApprovalSidebarInfo(props: 
       : null,
     async () => {
       const hasil = (await persetujuanService.daftar(workspaceSlug, projectId, { tugas: issueId }))?.hasil ?? [];
-      // Yang menunggu menang; sisanya urutan server (terbaru dulu).
-      return hasil.find((b) => b.status === "menunggu") ?? hasil[0] ?? null;
+      // Baris TERBARU menang (urutan server: terbaru dulu). Penolakan lama yang
+      // sudah diajukan ulang hanya riwayat, bukan status tugas sekarang.
+      return hasil[0] ?? null;
     },
     // Senyap seperti worklog: sidebar tak boleh berteriak kalau gagal muat.
     { shouldRetryOnError: false }
