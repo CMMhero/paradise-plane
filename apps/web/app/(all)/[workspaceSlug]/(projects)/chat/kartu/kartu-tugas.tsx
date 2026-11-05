@@ -12,12 +12,13 @@ import { useTranslation } from "@plane/i18n";
 import { Button, getButtonStyling } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar, TextArea } from "@plane/ui";
-import { getFileURL, renderFormattedDate } from "@plane/utils";
+import { cn, getFileURL, renderFormattedDate } from "@plane/utils";
 import { useMember } from "@/hooks/store/use-member";
 import { PersetujuanService } from "@/services/persetujuan.service";
 import type { TPesan } from "@/services/chat.service";
 import { bacaKartuTugas } from "./muatan";
 import type { TKartuTugas, TStatusPersetujuan } from "./muatan";
+import { warnaKartu } from "./warna";
 
 const persetujuanService = new PersetujuanService();
 
@@ -53,14 +54,20 @@ const ChipStatus = ({ status }: { status: TStatusPersetujuan }) => {
   );
 };
 
-type Props = { pesan: TPesan; namaOrang: (id: string) => string };
+type Props = {
+  pesan: TPesan;
+  namaOrang: (id: string) => string;
+  /** Kartu yang saya picu (saya pengirimnya): warna gelembung keluar, tanpa tombol keputusan. */
+  terang?: boolean;
+};
 
-export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang }: Props) {
+export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang, terang = false }: Props) {
   const { t } = useTranslation();
   const {
     workspace: { getWorkspaceMemberDetails },
   } = useMember();
   const kartu = bacaKartuTugas(pesan.muatan);
+  const warna = warnaKartu(terang);
   // Status lokal sesudah tombol ditekan; server juga memperbarui kartu ini
   // untuk semua penyetuju lain (tandai_persetujuan_diputuskan).
   const [keputusan, setKeputusan] = useState<TStatusPersetujuan | null>(null);
@@ -79,7 +86,11 @@ export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang }: Pro
   // hanya dikirim ke calon penyetuju, dan server memeriksa ulang kewenangannya
   // (403 kalau bukan atasan pembuat), jadi tombol di sini bukan gerbang izin.
   const bolehPutuskan =
-    pesan.jenis === "persetujuan" && kartu.detail.verb === "submitted" && !!persetujuan && status === "menunggu";
+    !terang &&
+    pesan.jenis === "persetujuan" &&
+    kartu.detail.verb === "submitted" &&
+    !!persetujuan &&
+    status === "menunggu";
 
   const putuskan = async (aksi: "setujui" | "tolak") => {
     if (!persetujuan) return;
@@ -103,19 +114,21 @@ export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang }: Pro
 
   return (
     <div className="flex w-72 max-w-full flex-col gap-2">
-      <p className="text-12 text-secondary">{t(judulKartu(pesan.jenis, kartu), { name: pelaku })}</p>
+      <p className={cn("text-12", warna.sekunder)}>{t(judulKartu(pesan.jenis, kartu), { name: pelaku })}</p>
 
-      <div className="flex flex-col gap-1 rounded-control border border-subtle bg-layer-2 px-2.5 py-2">
+      <div className={cn("flex flex-col gap-1 rounded-control border px-2.5 py-2", warna.kotak)}>
         {tugas ? (
           <>
-            <p className="text-12 text-tertiary">
+            <p className={cn("text-12", warna.redup)}>
               {tugas.nomor}
               {project.nama ? ` · ${project.nama}` : ""}
             </p>
-            <p className="line-clamp-2 text-13 font-medium [overflow-wrap:anywhere] text-primary">{tugas.judul}</p>
-            <div className="flex flex-wrap items-center gap-1.5 text-12 text-tertiary">
+            <p className={cn("line-clamp-2 text-13 font-medium [overflow-wrap:anywhere]", warna.utama)}>
+              {tugas.judul}
+            </p>
+            <div className={cn("flex flex-wrap items-center gap-1.5 text-12", warna.redup)}>
               {tugas.state ? (
-                <span className="rounded-control bg-layer-3 px-1.5 py-px text-secondary">{tugas.state}</span>
+                <span className={cn("rounded-control px-1.5 py-px", warna.chip)}>{tugas.state}</span>
               ) : null}
               {tugas.tenggat ? (
                 <span>{t("chatkartu_ui.due", { date: renderFormattedDate(tugas.tenggat) })}</span>
@@ -140,10 +153,12 @@ export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang }: Pro
             </div>
           </>
         ) : (
-          <p className="text-13 font-medium text-primary">{project.nama}</p>
+          <p className={cn("text-13 font-medium", warna.utama)}>{project.nama}</p>
         )}
         {kartu.detail.komentar ? (
-          <p className="line-clamp-3 border-l-2 border-subtle pl-2 text-12 text-secondary">{kartu.detail.komentar}</p>
+          <p className={cn("line-clamp-3 border-l-2 pl-2 text-12", warna.garis, warna.sekunder)}>
+            {kartu.detail.komentar}
+          </p>
         ) : null}
       </div>
 
