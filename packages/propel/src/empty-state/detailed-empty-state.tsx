@@ -21,7 +21,8 @@ export function EmptyStateDetailed({
   rootClassName,
   assetClassName,
   customButton,
-  align = "start",
+  // Paradise: bawaan tengah, supaya ilustrasi dan teks sejajar di tengah area kosong
+  align = "center",
 }: BaseEmptyStateCommonProps) {
   // Determine which asset to use: assetKey takes precedence, fallback to custom asset
   const resolvedAsset = assetKey ? getDetailedAsset(assetKey as DetailedAssetType, assetClassName) : asset;
@@ -59,7 +60,11 @@ export function EmptyStateDetailed({
             ? customButton
             : actions &&
               actions.length > 0 && (
-                <div className="flex flex-col gap-4 sm:flex-row">
+                <div
+                  className={cn("flex flex-col gap-4 sm:flex-row", {
+                    "items-center justify-center": align === "center",
+                  })}
+                >
                   {actions.map((action) => {
                     const { label, variant, ...rest } = action;
                     return (
