@@ -5,9 +5,11 @@
  * See the LICENSE file for details.
  */
 
+import { useState } from "react";
 import { useTranslation } from "@plane/i18n";
 import { FileText } from "lucide-react";
 import { API_BASE_URL } from "@plane/constants";
+import { ImageFullScreenModal } from "@plane/editor";
 import type { TLampiran } from "@/services/chat.service";
 
 /** Ubah byte jadi angka yang bisa dibaca orang. */
@@ -18,6 +20,56 @@ export const ukuranTerbaca = (byte: number): string => {
 };
 
 type Props = { lampiran: TLampiran[]; terang?: boolean };
+
+/** Layar sentuh: tombol unduh & tab baru disembunyikan, sama seperti di work item. */
+const layarSentuh = () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+
+/**
+ * Gambar lampiran yang dibuka di penampil layar penuh milik work item (zoom,
+ * geser, Esc/Back untuk menutup), bukan tab baru. Satu penampil untuk seluruh
+ * aplikasi, supaya cara melihat gambar tidak perlu dipelajari dua kali.
+ */
+function GambarLampiran({ url, nama }: { url: string; nama: string }) {
+  const [terbuka, setTerbuka] = useState(false);
+  const [ukuran, setUkuran] = useState<{ lebar: number; rasio: number }>({ lebar: 0, rasio: 1 });
+
+  return (
+    <>
+      <button
+        type="button"
+        className="w-fit cursor-zoom-in rounded-item focus-visible:outline-2 focus-visible:outline-accent-strong"
+        onClick={(e) => {
+          e.stopPropagation();
+          setTerbuka(true);
+        }}
+        aria-label={nama}
+      >
+        {/* Tinggi tetap supaya ruangnya sudah tersedia sebelum gambar termuat:
+            tanpa itu tiap gambar yang selesai dimuat mendorong isi ke bawah
+            dan percakapan tidak lagi berhenti di pesan terbaru. */}
+        <img
+          src={url}
+          alt={nama}
+          className="h-48 w-auto max-w-full rounded-item object-contain"
+          loading="lazy"
+          onLoad={(e) => {
+            const { naturalWidth, naturalHeight } = e.currentTarget;
+            if (naturalWidth && naturalHeight) setUkuran({ lebar: naturalWidth, rasio: naturalWidth / naturalHeight });
+          }}
+        />
+      </button>
+      <ImageFullScreenModal
+        aspectRatio={ukuran.rasio}
+        downloadSrc={url}
+        isFullScreenEnabled={terbuka}
+        isTouchDevice={layarSentuh()}
+        src={url}
+        width={ukuran.lebar ? `${ukuran.lebar}px` : ""}
+        toggleFullScreenMode={setTerbuka}
+      />
+    </>
+  );
+}
 
 /** Lampiran satu pesan.
  *
@@ -37,23 +89,10 @@ export function DaftarLampiran({ lampiran, terang }: Props) {
     <div className="mt-1.5 flex flex-col gap-1.5">
       {lampiran.map((l) => {
         const url = `${API_BASE_URL}${l.url}`;
-        if (l.tipe.startsWith("image/"))
-          return (
-            <a key={l.id} href={url} target="_blank" rel="noopener noreferrer">
-              {/* Tinggi tetap supaya ruangnya sudah tersedia sebelum gambar termuat:
-                  tanpa itu tiap gambar yang selesai dimuat mendorong isi ke bawah
-                  dan percakapan tidak lagi berhenti di pesan terbaru. */}
-              <img
-                src={url}
-                alt={l.nama}
-                className="h-48 w-auto max-w-full rounded-item object-contain"
-                loading="lazy"
-              />
-            </a>
-          );
+        if (l.tipe.startsWith("image/")) return <GambarLampiran key={l.id} url={url} nama={l.nama} />;
         if (l.tipe.startsWith("video/"))
-          // eslint-disable-next-line jsx-a11y/media-has-caption
           return (
+            // oxlint-disable-next-line jsx-a11y/media-has-caption -- user-uploaded chat videos have no caption track
             <video
               key={l.id}
               src={url}

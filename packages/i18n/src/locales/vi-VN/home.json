@@ -4,8 +4,8 @@
       "quickstart_guide": "Hướng dẫn nhanh",
       "not_right_now": "Không phải bây giờ",
       "create_project": {
-        "title": "Tạo dự án",
-        "description": "Trong Paradise Task Tracker, hầu hết mọi thứ đều bắt đầu từ dự án.",
+        "title": "Tạo phòng ban",
+        "description": "Trong Paradise Task Tracker, hầu hết mọi thứ đều bắt đầu từ phòng ban.",
         "cta": "Bắt đầu"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "Gần đây",
       "empty": {
-        "project": "Sau khi truy cập dự án, các dự án gần đây của bạn sẽ xuất hiện ở đây.",
+        "project": "Sau khi truy cập phòng ban, các phòng ban gần đây của bạn sẽ xuất hiện ở đây.",
         "page": "Sau khi truy cập trang, các trang gần đây của bạn sẽ xuất hiện ở đây.",
         "issue": "Sau khi truy cập mục công việc, các mục công việc gần đây của bạn sẽ xuất hiện ở đây.",
-        "default": "Bạn chưa có dự án gần đây nào."
+        "default": "Bạn chưa có phòng ban gần đây nào."
       },
       "filters": {
         "all": "Tất cả",
-        "projects": "Dự án",
+        "projects": "Phòng ban",
         "pages": "Trang",
         "issues": "Mục công việc"
       }

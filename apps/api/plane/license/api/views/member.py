@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
+from plane.license.audit_godmode import catat_godmode
 from plane.db.models import (
     JabatanOrganisasi,
     Profile,
@@ -343,6 +344,14 @@ class InstanceMemberEndpoint(BaseAPIView):
                         workspace=ws, member=u, tingkat=keanggotaan["tingkat"], sumber=SUMBER_BAWAAN_MEMBER
                     )
 
+        catat_godmode(
+            request,
+            kind="account",
+            label=f"Account: {u.email}",
+            action=1,
+            object_pk=str(u.pk),
+            changes={"email": ["", u.email]},
+        )
         return Response(_serialize(u, super_admin_user_ids(), _keanggotaan([u.id])), status=status.HTTP_201_CREATED)
 
     def delete(self, request, pk):
@@ -425,6 +434,14 @@ class InstanceMemberEndpoint(BaseAPIView):
                 jabatan.delete()
             sesi = _akhiri_sesi(u.id)
 
+        catat_godmode(
+            request,
+            kind="account",
+            label=f"Account: {u.email}",
+            action=2,
+            object_pk=str(u.pk),
+            detail="Account deleted (soft delete + anonymised)",
+        )
         return Response(
             {"id": str(u.id), "email": u.email, "display_name": u.display_name, "sessions_ended": sesi},
             status=status.HTTP_200_OK,
@@ -600,6 +617,14 @@ class InstanceMemberEndpoint(BaseAPIView):
                     )
                 InstanceAdmin.objects.filter(instance=instance, user=u).delete()
 
+        catat_godmode(
+            request,
+            kind="account",
+            label=f"Account: {u.email}",
+            object_pk=str(u.pk),
+            changes={"fields": ["", ", ".join(sorted(k for k in request.data if "password" not in k))]},
+            detail="Account updated",
+        )
         hasil = _serialize(u, super_admin_user_ids(), _keanggotaan([u.id]))
         # Supaya UI bisa memberi tahu terus terang bahwa orangnya baru saja
         # dikeluarkan dan harus masuk ulang, bukan dibiarkan menebak.
@@ -720,4 +745,11 @@ class InstanceMemberPreferenceEndpoint(BaseAPIView):
                 ubah_navigasi(u, baru_nav)
             if "layout" in baru_wi:
                 ubah_tata_letak(u, baru_wi["layout"])
+        catat_godmode(
+            request,
+            kind="account_preferences",
+            label=f"Account preferences: {u.email}",
+            object_pk=str(u.pk),
+            changes={"sections": ["", ", ".join(sorted(request.data))]},
+        )
         return Response(_bentuk_preferensi(u, profil, notif), status=status.HTTP_200_OK)

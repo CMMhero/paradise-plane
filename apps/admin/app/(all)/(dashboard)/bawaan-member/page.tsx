@@ -48,7 +48,7 @@ function Bagian({ title, note, children }: { title: string; note: string; childr
   return (
     <section className="space-y-2">
       <div className="space-y-0.5">
-        <h3 className="text-11 font-medium tracking-wide text-secondary uppercase">{title}</h3>
+        <h3 className="text-11 font-medium text-secondary">{title}</h3>
         <p className="text-12 text-tertiary">{note}</p>
       </div>
       <div className="space-y-3 rounded-card border border-subtle px-4 py-3">{children}</div>

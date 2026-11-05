@@ -17,7 +17,7 @@
  * - Data profil baru diminta saat kartu dibuka (lihat `useMemberProfile`).
  */
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -45,7 +45,13 @@ type Props = {
   /** Default "bottom". */
   side?: "top" | "bottom" | "left" | "right";
   align?: "start" | "center" | "end";
+  /** Buka kartu saat pointer singgah (mention), selain lewat klik. Default mati. */
+  openOnHover?: boolean;
 };
+
+/** Jeda sebelum kartu hover terbuka / tertutup, supaya lewat sekilas tidak memunculkannya. */
+const HOVER_OPEN_DELAY_MS = 350;
+const HOVER_CLOSE_DELAY_MS = 150;
 
 const CardHeader = observer(function CardHeader({ workspaceSlug, userId }: { workspaceSlug: string; userId: string }) {
   const { t } = useTranslation();
@@ -96,11 +102,27 @@ export const MemberProfileTrigger = observer(function MemberProfileTrigger({
   className,
   side = "bottom",
   align = "start",
+  openOnHover = false,
 }: Props) {
   const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   const { getUserDetails } = useMember();
   const [isOpen, setIsOpen] = useState(false);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHoverTimer = useCallback(() => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = null;
+  }, []);
+  // Satu pemasa untuk buka dan tutup: pointer pindah dari pemicu ke kartu membatalkan penutupan.
+  const hoverTo = useCallback(
+    (next: boolean) => {
+      clearHoverTimer();
+      hoverTimer.current = setTimeout(() => setIsOpen(next), next ? HOVER_OPEN_DELAY_MS : HOVER_CLOSE_DELAY_MS);
+    },
+    [clearHoverTimer]
+  );
+  useEffect(() => clearHoverTimer, [clearHoverTimer]);
 
   const user = userId ? getUserDetails(userId) : undefined;
   const slug = workspaceSlug?.toString();
@@ -114,6 +136,9 @@ export const MemberProfileTrigger = observer(function MemberProfileTrigger({
       triggerClassName={className}
       side={side}
       align={align}
+      hoverHandlers={
+        openOnHover ? { onMouseEnter: () => hoverTo(true), onMouseLeave: () => hoverTo(false) } : undefined
+      }
       card={
         <>
           <CardHeader workspaceSlug={slug} userId={userId} />

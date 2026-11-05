@@ -16,19 +16,17 @@ dicatat satu baris di jejak audit God Mode (Logs > Audit log) sebagai
 """
 
 # Django imports
-from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
 # Third party imports
-from auditlog.models import LogEntry
 from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
 from plane.license.api.views.base import BaseAPIView
+from plane.license.audit_godmode import catat_godmode
 from plane.license.models import InstanceConfiguration
 from plane.utils.cache import invalidate_cache
-from plane.utils.ip_address import get_client_ip
 from plane.utils.setelan_instance import (
     FRASA_KONFIRMASI,
     SENSITIF,
@@ -46,18 +44,14 @@ GALAT_KONFIRMASI = "confirm_required"
 
 def catat_audit(request, kunci: str, lama: str, baru: str, baris: InstanceConfiguration) -> None:
     """Satu entri jejak audit untuk satu kunci yang berubah."""
-    actor = request.user if getattr(request.user, "is_authenticated", False) else None
-    LogEntry.objects.create(
-        content_type=ContentType.objects.get_for_model(InstanceConfiguration),
-        object_pk=str(baris.pk),
-        object_repr=kunci,
-        action=LogEntry.Action.UPDATE,
+    catat_godmode(
+        request,
+        kind="instance_setting",
+        label=f"Instance setting: {kunci}",
         changes={"value": [lama, baru]},
-        changes_text=f"{kunci}: {lama} -> {baru}",
-        actor=actor,
-        actor_email=getattr(actor, "email", None),
-        remote_addr=get_client_ip(request) or None,
-        additional_data={"key": kunci, "sensitive": kunci in SENSITIF},
+        object_pk=str(baris.pk),
+        detail=f"{kunci}: {lama} -> {baru}",
+        extra={"key": kunci, "sensitive": kunci in SENSITIF},
     )
 
 

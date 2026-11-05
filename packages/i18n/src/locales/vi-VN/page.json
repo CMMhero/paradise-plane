@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Không thể di chuyển trang riêng tư và trang đã chia sẻ đến không gian nhóm.",
       "placeholders": {
-        "workspace_to_all": "Tìm dự án và không gian nhóm",
-        "workspace_to_project": "Tìm dự án",
-        "project_to_all": "Tìm dự án và không gian nhóm",
-        "project_to_project": "Tìm dự án",
-        "project_to_all_with_wiki": "Tìm bộ sưu tập wiki, dự án và không gian nhóm",
-        "project_to_project_with_wiki": "Tìm bộ sưu tập wiki và dự án"
+        "workspace_to_all": "Tìm phòng ban và không gian nhóm",
+        "workspace_to_project": "Tìm phòng ban",
+        "project_to_all": "Tìm phòng ban và không gian nhóm",
+        "project_to_project": "Tìm phòng ban",
+        "project_to_all_with_wiki": "Tìm bộ sưu tập wiki, phòng ban và không gian nhóm",
+        "project_to_project_with_wiki": "Tìm bộ sưu tập wiki và phòng ban"
       },
       "toasts": {
         "success": {

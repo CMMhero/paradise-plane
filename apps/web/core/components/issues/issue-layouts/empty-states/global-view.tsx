@@ -14,22 +14,19 @@ import { EIssuesStoreType, EUserWorkspaceRoles } from "@plane/types";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 
 export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
   // plane imports
   const { t } = useTranslation();
   // store hooks
   const { workspaceProjectIds } = useProject();
-  const { toggleCreateIssueModal, toggleCreateProjectModal } = useCommandPalette();
+  const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
   // derived values
   const hasMemberLevelPermission = allowPermissions(
     [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     EUserPermissionsLevel.WORKSPACE
   );
-  // Paradise: staf / member biasa tidak boleh membuat project.
-  const bolehBuatProject = useBolehBuatProject();
 
   if (workspaceProjectIds?.length === 0) {
     return (
@@ -38,16 +35,6 @@ export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
         description={t("workspace_projects.empty_state.no_projects.description")}
         assetKey="project"
         assetClassName="size-40"
-        actions={[
-          {
-            label: t("workspace_projects.empty_state.no_projects.primary_button.text"),
-            onClick: () => {
-              toggleCreateProjectModal(true);
-            },
-            disabled: !hasMemberLevelPermission || !bolehBuatProject,
-            variant: "primary",
-          },
-        ]}
       />
     );
   }

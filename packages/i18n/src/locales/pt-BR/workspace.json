@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Visão geral dos seus projetos, atividades e métricas",
-        "description": "Bem-vindo ao Paradise Task Tracker, estamos animados por tê-lo aqui. Crie seu primeiro projeto e rastreie seus itens de trabalho, e esta página se transformará em um espaço que ajuda você a progredir. Os administradores também verão itens que ajudam sua equipe a progredir.",
+        "title": "Visão geral dos seus departamentos, atividades e métricas",
+        "description": "Bem-vindo ao Paradise Task Tracker, estamos animados por tê-lo aqui. Crie seu primeiro departamento e rastreie seus itens de trabalho, e esta página se transformará em um espaço que ajuda você a progredir. Os administradores também verão itens que ajudam sua equipe a progredir.",
         "primary_button": {
-          "text": "Construa seu primeiro projeto",
+          "text": "Construa seu primeiro departamento",
           "comic": {
-            "title": "Tudo começa com um projeto no Paradise Task Tracker",
-            "description": "Um projeto pode ser o planejamento de um produto, uma campanha de marketing ou o lançamento de um novo carro."
+            "title": "Tudo começa com um departamento no Paradise Task Tracker",
+            "description": "Um departamento pode ser o planejamento de um produto, uma campanha de marketing ou o lançamento de um novo carro."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Total de tarefas abertas",
     "error": "Ocorreu algum erro ao buscar os dados.",
     "work_items_closed_in": "Itens de trabalho fechados em",
-    "selected_projects": "Projetos selecionados",
+    "selected_projects": "Departamentos selecionados",
     "total_members": "Total de membros",
     "total_cycles": "Total de ciclos",
     "total_modules": "Total de módulos",
@@ -100,11 +100,11 @@
     "backlog_work_items": "{entity} no backlog",
     "un_started_work_items": "{entity} não iniciados",
     "completed_work_items": "{entity} concluídos",
-    "project_insights": "Insights do projeto",
-    "summary_of_projects": "Resumo dos projetos",
-    "all_projects": "Todos os projetos",
+    "project_insights": "Insights do departamento",
+    "summary_of_projects": "Resumo dos departamentos",
+    "all_projects": "Todos os departamentos",
     "trend_on_charts": "Tendência nos gráficos",
-    "active_projects": "Projetos ativos",
+    "active_projects": "Departamentos ativos",
     "customized_insights": "Insights personalizados",
     "created_vs_resolved": "Criado vs Resolvido",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Acompanhe progresso, cargas de trabalho e alocações. Identifique tendências, remova bloqueios e trabalhe mais rápido",
-        "description": "Veja escopo versus demanda, estimativas e expansão de escopo. Obtenha desempenho por membros da equipe e equipes, garantindo que seu projeto seja executado no prazo.",
+        "description": "Veja escopo versus demanda, estimativas e expansão de escopo. Obtenha desempenho por membros da equipe e equipes, garantindo que seu departamento seja executado no prazo.",
         "primary_button": {
-          "text": "Comece seu primeiro projeto",
+          "text": "Comece seu primeiro departamento",
           "comic": {
             "title": "Analytics funciona melhor com Ciclos + Módulos",
             "description": "Primeiro, defina um tempo limite para seus itens de trabalho em Ciclos e, se possível, agrupe itens que abrangem mais de um ciclo em Módulos. Confira ambos na navegação esquerda."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Faça upgrade para {plan} para desbloquear {tab}",
     "workitem_resolved_vs_pending": "Itens de trabalho resolvidos vs pendentes",
-    "projects_by_status": "Projetos por status",
+    "projects_by_status": "Departamentos por status",
     "active_users": "Usuários ativos",
     "intake_trends": "Tendências de entrada"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Projeto} other {Projetos}}",
+    "label": "{count, plural, one {Departamento} other {Departamentos}}",
     "create": {
-      "label": "Adicionar Projeto"
+      "label": "Adicionar Departamento"
     },
     "network": {
       "label": "Rede",
@@ -186,7 +186,7 @@
       "members_length": "Número de membros"
     },
     "scope": {
-      "my_projects": "Meus projetos",
+      "my_projects": "Meus departamentos",
       "archived_projects": "Arquivados"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Nenhum projeto ativo",
-        "description": "Pense em cada projeto como o pai do trabalho orientado a objetivos. Os projetos são onde os Trabalhos, Ciclos e Módulos vivem e, junto com seus colegas, ajudam você a atingir esse objetivo. Crie um novo projeto ou filtre os projetos arquivados.",
+        "title": "Nenhum departamento ativo",
+        "description": "Pense em cada departamento como o pai do trabalho orientado a objetivos. Os departamentos são onde os Trabalhos, Ciclos e Módulos vivem e, junto com seus colegas, ajudam você a atingir esse objetivo. Crie um novo departamento ou filtre os departamentos arquivados.",
         "primary_button": {
-          "text": "Comece seu primeiro projeto",
+          "text": "Comece seu primeiro departamento",
           "comic": {
-            "title": "Tudo começa com um projeto no Paradise Task Tracker",
-            "description": "Um projeto pode ser o roteiro de um produto, uma campanha de marketing ou o lançamento de um novo carro."
+            "title": "Tudo começa com um departamento no Paradise Task Tracker",
+            "description": "Um departamento pode ser o roteiro de um produto, uma campanha de marketing ou o lançamento de um novo carro."
           }
         }
       },
       "no_projects": {
-        "title": "Nenhum projeto",
-        "description": "Para criar itens de trabalho ou gerenciar seu trabalho, você precisa criar um projeto ou fazer parte de um.",
+        "title": "Nenhum departamento",
+        "description": "Para criar itens de trabalho ou gerenciar seu trabalho, você precisa criar um departamento ou fazer parte de um.",
         "primary_button": {
-          "text": "Comece seu primeiro projeto",
+          "text": "Comece seu primeiro departamento",
           "comic": {
-            "title": "Tudo começa com um projeto no Paradise Task Tracker",
-            "description": "Um projeto pode ser o roteiro de um produto, uma campanha de marketing ou o lançamento de um novo carro."
+            "title": "Tudo começa com um departamento no Paradise Task Tracker",
+            "description": "Um departamento pode ser o roteiro de um produto, uma campanha de marketing ou o lançamento de um novo carro."
           }
         }
       },
       "filter": {
-        "title": "Nenhum projeto correspondente",
-        "description": "Nenhum projeto detectado com os critérios correspondentes.\n Crie um novo projeto em vez disso."
+        "title": "Nenhum departamento correspondente",
+        "description": "Nenhum departamento detectado com os critérios correspondentes.\n Crie um novo departamento em vez disso."
       },
       "search": {
-        "description": "Nenhum projeto detectado com os critérios correspondentes.\nCrie um novo projeto em vez disso"
+        "description": "Nenhum departamento detectado com os critérios correspondentes.\nCrie um novo departamento em vez disso"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "Adicionar visualização",
     "empty_state": {
       "all-issues": {
-        "title": "Nenhum item de trabalho no projeto",
-        "description": "Primeiro projeto concluído! Agora, divida seu trabalho em partes rastreáveis com itens de trabalho. Vamos lá!",
+        "title": "Nenhum item de trabalho no departamento",
+        "description": "Primeiro departamento concluído! Agora, divida seu trabalho em partes rastreáveis com itens de trabalho. Vamos lá!",
         "primary_button": {
           "text": "Criar novo item de trabalho"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Escreva uma nota, um documento ou uma base de conhecimento completa. Obtenha ajuda do Galileo, o assistente de IA do Paradise Task Tracker, para começar",
-        "description": "Páginas são espaços para desenvolver pensamentos no Paradise Task Tracker. Anote notas de reunião, formate-as facilmente, incorpore itens de trabalho, organize-os usando uma biblioteca de componentes e mantenha tudo no contexto do seu projeto. Para facilitar qualquer documento, invoque o Galileo, a IA do Paradise Task Tracker, com um atalho ou clique de um botão.",
+        "description": "Páginas são espaços para desenvolver pensamentos no Paradise Task Tracker. Anote notas de reunião, formate-as facilmente, incorpore itens de trabalho, organize-os usando uma biblioteca de componentes e mantenha tudo no contexto do seu departamento. Para facilitar qualquer documento, invoque o Galileo, a IA do Paradise Task Tracker, com um atalho ou clique de um botão.",
         "primary_button": {
           "text": "Crie sua primeira página"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Nenhum ciclo ativo",
-        "description": "Ciclos dos seus projetos que incluem qualquer período que engloba a data de hoje dentro de seu intervalo. Encontre o progresso e detalhes de todos os seus ciclos ativos aqui."
+        "description": "Ciclos dos seus departamentos que incluem qualquer período que engloba a data de hoje dentro de seu intervalo. Encontre o progresso e detalhes de todos os seus ciclos ativos aqui."
       }
     }
   },

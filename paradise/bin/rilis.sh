@@ -23,6 +23,15 @@ SHA="$(git rev-parse "$SHA")" # sha pendek jadi penuh; tag GHCR memakai sha penu
 VERSI="$(git show "$SHA:apps/api/package.json" | grep -m1 '"version"' | sed 's/.*"version": *"\([^"]*\)".*/\1/')"
 echo "== Rilis $VERSI ($SHA) ke $HOST =="
 
+# 0. Catatan rilis wajib ada di commit ini. Kanal Changelog hanya menerbitkan
+#    versi yang punya `release_notes/<versi>.json`; tanpanya rilis naik tanpa
+#    pengumuman apa pun dan tidak ada yang menyadarinya. CHANGELOG.md wajib
+#    memuat entri versinya (KEP-48). Dicek sebelum menunggu CI 45 menit.
+git cat-file -e "$SHA:apps/api/plane/release_notes/$VERSI.json" 2>/dev/null ||
+  { echo "BATAL: apps/api/plane/release_notes/$VERSI.json tidak ada di $SHA."; exit 1; }
+git show "$SHA:CHANGELOG.md" | grep -q "^### Versi $VERSI\b" ||
+  { echo "BATAL: CHANGELOG.md di $SHA tidak punya '### Versi $VERSI'."; exit 1; }
+
 # Namespace GHCR dibaca dari .env server supaya laptop dan server tidak pernah
 # menunggui namespace yang berbeda.
 GHCR_OWNER="${GHCR_OWNER:-$(ssh "$HOST" "grep -m1 '^GHCR_OWNER=' ~/paradise-app/.env | cut -d= -f2")}"
@@ -52,7 +61,7 @@ for _ in $(seq 1 80); do
   [ -n "$akhir" ] && break
   echo "  $(ssh "$HOST" "tail -1 ~/paradise-app/$log" 2>/dev/null | cut -c1-120)"
 done
-ssh "$HOST" "grep -E 'Migrasi|MIGRASI|SEHAT|MASALAH|Versi berjalan|DEPLOY_EXIT' ~/paradise-app/$log" || true
+ssh "$HOST" "grep -E 'Migrasi|MIGRASI|changelog:|CHANGELOG|SEHAT|MASALAH|Versi berjalan|DEPLOY_EXIT' ~/paradise-app/$log" || true
 
 [ "${akhir:-}" = "DEPLOY_EXIT=0" ] || { echo "== DEPLOY GAGAL: ${akhir:-tidak selesai dalam 40 menit} =="; exit 1; }
 

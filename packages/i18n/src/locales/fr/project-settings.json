@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Saisissez l’ID du projet",
+      "enter_project_id": "Saisissez l’ID du département",
       "please_select_a_timezone": "Veuillez sélectionner un fuseau horaire",
       "archive_project": {
-        "title": "Archiver le projet",
-        "description": "L'archivage d’un projet le retirera de votre navigation latérale, bien que vous pourrez toujours y accéder depuis votre page de projets. Vous pouvez restaurer le projet ou le supprimer quand vous le souhaitez.",
-        "button": "Archiver le projet"
+        "title": "Archiver le département",
+        "description": "L'archivage d’un département le retirera de votre navigation latérale, bien que vous pourrez toujours y accéder depuis votre page de départements. Vous pouvez restaurer le département ou le supprimer quand vous le souhaitez.",
+        "button": "Archiver le département"
       },
       "delete_project": {
-        "title": "Supprimer le projet",
-        "description": "Lors de la suppression d’un projet, toutes les données et ressources de ce projet seront définitivement supprimées et ne pourront pas être récupérées.",
-        "button": "Supprimer mon projet"
+        "title": "Supprimer le département",
+        "description": "Lors de la suppression d’un département, toutes les données et ressources de ce département seront définitivement supprimées et ne pourront pas être récupérées.",
+        "button": "Supprimer mon département"
       },
       "toast": {
-        "success": "Projet mis à jour avec succès",
-        "error": "Le projet n’a pas pu être mis à jour. Veuillez réessayer."
+        "success": "Département mis à jour avec succès",
+        "error": "Le département n’a pas pu être mis à jour. Veuillez réessayer."
       }
     },
     "members": {
       "label": "Membres",
-      "project_lead": "Chef de projet",
-      "project_lead_description": "Sélectionnez le responsable du projet.",
+      "project_lead": "Chef de département",
+      "project_lead_description": "Sélectionnez le responsable du département.",
       "default_assignee": "Acteur par défaut",
-      "default_assignee_description": "Sélectionnez l’attributaire par défaut du projet.",
-      "project_subscribers": "Abonnés du projet",
-      "project_subscribers_description": "Sélectionnez les membres qui recevront des notifications pour ce projet.",
+      "default_assignee_description": "Sélectionnez l’attributaire par défaut du département.",
+      "project_subscribers": "Abonnés du département",
+      "project_subscribers_description": "Sélectionnez les membres qui recevront des notifications pour ce département.",
       "guest_super_permissions": {
         "title": "Accorder l’accès en lecture à tous les éléments de travail pour les utilisateurs invités :",
-        "sub_heading": "Cela permettra aux invités d’avoir un accès en lecture à tous les éléments de travail du projet."
+        "sub_heading": "Cela permettra aux invités d’avoir un accès en lecture à tous les éléments de travail du département."
       },
       "invite_members": {
         "title": "Inviter des membres",
-        "sub_heading": "Invitez des membres à travailler sur votre projet.",
+        "sub_heading": "Invitez des membres à travailler sur votre département.",
         "select_co_worker": "Sélectionner un acteur"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Estimations",
       "description": "Elles vous aident à communiquer la complexité et la charge de travail de l’équipe.",
       "label": "Estimations",
-      "title": "Activer les estimations pour mon projet",
+      "title": "Activer les estimations pour mon département",
       "enable_description": "Elles vous aident à communiquer la complexité et la charge de travail de l’équipe.",
       "no_estimate": "Sans estimation",
       "new": "Nouveau système d’estimation",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Estimation modifiée",
-            "message": "L’estimation a été mise à jour dans votre projet."
+            "message": "L’estimation a été mise à jour dans votre département."
           },
           "error": {
             "title": "Échec de la modification de l’estimation",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Estimations réorganisées",
-            "message": "Les estimations ont été réorganisées dans votre projet."
+            "message": "Les estimations ont été réorganisées dans votre département."
           },
           "error": {
             "title": "Échec de la réorganisation des estimations",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Automatisations",
       "heading": "Automatisations",
-      "description": "Configurez des actions automatisées pour fluidifier votre flux de gestion de projet et réduire les tâches manuelles.",
+      "description": "Configurez des actions automatisées pour fluidifier votre flux de gestion et réduire les tâches manuelles.",
       "auto-archive": {
         "title": "Archiver automatiquement les éléments de travail fermés",
         "description": "Paradise Task Tracker archivera automatiquement les éléments de travail qui ont été complétés ou annulés.",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "Pas encore d’étiquettes",
-        "description": "Créez des étiquettes pour organiser et filtrer les éléments de travail dans votre projet."
+        "description": "Créez des étiquettes pour organiser et filtrer les éléments de travail dans votre département."
       },
       "estimates": {
         "title": "Pas encore de systèmes d’estimation",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Aucune intégration configurée",
-        "description": "Configurez GitHub et d'autres intégrations pour synchroniser vos éléments de travail du projet."
+        "description": "Configurez GitHub et d'autres intégrations pour synchroniser vos éléments de travail du département."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Flux de travail",
-      "description": "Automatisez les transitions d’éléments de travail et définissez des règles pour contrôler la progression des tâches dans le pipeline de votre projet.",
+      "description": "Automatisez les transitions d’éléments de travail et définissez des règles pour contrôler la progression des tâches dans le pipeline de votre département.",
       "add_button": "Ajouter un nouveau flux de travail",
       "search": "Rechercher des flux de travail",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Tous les états sont utilisés",
-          "description": "Tous les états définis pour ce projet sont déjà présents dans votre flux de travail actuel."
+          "description": "Tous les états définis pour ce département sont déjà présents dans votre flux de travail actuel."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Cycles",
         "short_title": "Cycles",
-        "description": "Planifiez le travail dans des périodes flexibles qui s'adaptent au rythme et au tempo uniques de ce projet.",
+        "description": "Planifiez le travail dans des périodes flexibles qui s'adaptent au rythme et au tempo uniques de ce département.",
         "toggle_title": "Activer les cycles",
         "toggle_description": "Planifiez le travail dans des périodes ciblées."
       },
       "modules": {
         "title": "Modules",
         "short_title": "Modules",
-        "description": "Organisez le travail en sous-projets avec des chefs de projet et des responsables dédiés.",
+        "description": "Organisez le travail en sous-ensembles avec des chefs de département et des responsables dédiés.",
         "toggle_title": "Activer les modules",
-        "toggle_description": "Les membres du projet pourront créer et modifier des modules."
+        "toggle_description": "Les membres du département pourront créer et modifier des modules."
       },
       "views": {
         "title": "Vues",
         "short_title": "Vues",
         "description": "Enregistrez des tris, des filtres et des options d'affichage personnalisés ou partagez-les avec votre équipe.",
         "toggle_title": "Activer les vues",
-        "toggle_description": "Les membres du projet pourront créer et modifier des vues."
+        "toggle_description": "Les membres du département pourront créer et modifier des vues."
       },
       "pages": {
         "title": "Pages",
         "short_title": "Pages",
         "description": "Créez et modifiez du contenu libre : notes, documents, n'importe quoi.",
         "toggle_title": "Activer les pages",
-        "toggle_description": "Les membres du projet pourront créer et modifier des pages."
+        "toggle_description": "Les membres du département pourront créer et modifier des pages."
       },
       "intake": {
         "intake_responsibility": "Responsabilité d'ingestion",
@@ -358,9 +358,9 @@
         "short_title": "Réception",
         "description": "Permettez aux non-membres de partager des bugs, des commentaires et des suggestions ; sans perturber votre flux de travail.",
         "toggle_title": "Activer la réception",
-        "toggle_description": "Permettre aux membres du projet de créer des demandes de réception dans l'application.",
-        "toggle_tooltip_on": "Demandez à l'administrateur du projet de l'activer.",
-        "toggle_tooltip_off": "Demandez à l'administrateur du projet de le désactiver.",
+        "toggle_description": "Permettre aux membres du département de créer des demandes de réception dans l'application.",
+        "toggle_tooltip_on": "Demandez à l'administrateur du département de l'activer.",
+        "toggle_tooltip_off": "Demandez à l'administrateur du département de le désactiver.",
         "notify_assignee": {
           "title": "Notifier les responsables",
           "description": "Pour une nouvelle demande d'ingestion, les responsables par défaut seront alertés via des notifications"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Suivi du temps",
         "short_title": "Suivi du temps",
-        "description": "Enregistrez le temps passé sur les éléments de travail et les projets.",
+        "description": "Enregistrez le temps passé sur les éléments de travail et les départements.",
         "toggle_title": "Activer le suivi du temps",
-        "toggle_description": "Les membres du projet pourront enregistrer le temps travaillé."
+        "toggle_description": "Les membres du département pourront enregistrer le temps travaillé."
       },
       "milestones": {
         "title": "Jalons",
@@ -425,18 +425,18 @@
         "toggle_description": "Organisez les éléments de travail par échéances de jalons."
       },
       "toasts": {
-        "loading": "Mise à jour de la fonctionnalité du projet...",
-        "success": "Fonctionnalité du projet mise à jour avec succès.",
-        "error": "Une erreur s'est produite lors de la mise à jour de la fonctionnalité du projet. Veuillez réessayer."
+        "loading": "Mise à jour de la fonctionnalité du département...",
+        "success": "Fonctionnalité du département mise à jour avec succès.",
+        "error": "Une erreur s'est produite lors de la mise à jour de la fonctionnalité du département. Veuillez réessayer."
       }
     },
     "project_updates": {
-      "heading": "Mises à jour du projet",
-      "description": "Suivi consolidé et surveillance de la progression pour ce projet"
+      "heading": "Mises à jour du département",
+      "description": "Suivi consolidé et surveillance de la progression pour ce département"
     },
     "templates": {
       "heading": "Modèles",
-      "description": "Économisez 80% du temps consacré à la création de projets, d’éléments de travail et de pages en utilisant des modèles."
+      "description": "Économisez 80% du temps consacré à la création de départements, d’éléments de travail et de pages en utilisant des modèles."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Corbeille",
-      "description": "Les éléments supprimés arrivent ici avant d'être définitivement effacés. Les administrateurs du projet peuvent les restaurer ou les supprimer définitivement."
+      "description": "Les éléments supprimés arrivent ici avant d'être définitivement effacés. Les administrateurs du département peuvent les restaurer ou les supprimer définitivement."
     }
   }
 }

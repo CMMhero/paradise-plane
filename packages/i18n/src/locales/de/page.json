@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Private und geteilte Seiten können nicht in einen Teamspace verschoben werden.",
       "placeholders": {
-        "workspace_to_all": "Nach Projekten und Teamspaces suchen",
-        "workspace_to_project": "Nach Projekten suchen",
-        "project_to_all": "Nach Projekten und Teamspaces suchen",
-        "project_to_project": "Nach Projekten suchen",
-        "project_to_all_with_wiki": "Nach Wiki-Sammlungen, Projekten und Teamspaces suchen",
-        "project_to_project_with_wiki": "Nach Wiki-Sammlungen und Projekten suchen"
+        "workspace_to_all": "Nach Abteilungen und Teamspaces suchen",
+        "workspace_to_project": "Nach Abteilungen suchen",
+        "project_to_all": "Nach Abteilungen und Teamspaces suchen",
+        "project_to_project": "Nach Abteilungen suchen",
+        "project_to_all_with_wiki": "Nach Wiki-Sammlungen, Abteilungen und Teamspaces suchen",
+        "project_to_project_with_wiki": "Nach Wiki-Sammlungen und Abteilungen suchen"
       },
       "toasts": {
         "success": {

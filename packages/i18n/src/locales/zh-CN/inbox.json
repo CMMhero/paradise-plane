@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "只有项目管理员可以暂停/取消暂停工作项",
-      "accept_permission": "只有项目管理员可以接受工作项",
-      "decline_permission": "只有项目管理员可以拒绝工作项"
+      "snooze_permission": "只有部门管理员可以暂停/取消暂停工作项",
+      "accept_permission": "只有部门管理员可以接受工作项",
+      "decline_permission": "只有部门管理员可以拒绝工作项"
     },
     "actions": {
       "accept": "接受",
@@ -47,7 +47,7 @@
       "delete": "删除",
       "open": "打开工作项",
       "mark_as_duplicate": "标记为重复",
-      "move": "将 {value} 移至项目工作项"
+      "move": "将 {value} 移至部门工作项"
     },
     "source": {
       "in-app": "应用内"

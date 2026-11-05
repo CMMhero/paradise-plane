@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Witaj w swoim obszarze roboczym",
-        "description": "Aby pomóc Ci zacząć, stworzyliśmy dla Ciebie Projekt Demo. Dodajmy Twój pierwszy element pracy."
+        "description": "Aby pomóc Ci zacząć, stworzyliśmy dla Ciebie Dział Demo. Dodajmy Twój pierwszy element pracy."
       },
       "step_one": {
         "title": "Kliknij \"+ Dodaj element pracy\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Osiągaj postępy dzięki Cyklom",
-        "description": "Naciśnij Q, aby utworzyć Cykl. Nazwij go i ustaw daty—tylko jeden cykl na projekt."
+        "description": "Naciśnij Q, aby utworzyć Cykl. Nazwij go i ustaw daty—tylko jeden cykl na dział."
       },
       "step_one": {
         "title": "Utwórz nowy cykl",
-        "description": "Naciśnij Q, aby utworzyć Cykl. Nazwij go i ustaw daty—tylko jeden cykl na projekt."
+        "description": "Naciśnij Q, aby utworzyć Cykl. Nazwij go i ustaw daty—tylko jeden cykl na dział."
       },
       "step_two": {
         "title": "Kliknij \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Podziel swój projekt na Moduły",
-        "description": "Moduły to mniejsze, skupione projekty, które pomagają użytkownikom grupować i organizować elementy pracy w określonych ramach czasowych."
+        "title": "Podziel swój dział na Moduły",
+        "description": "Moduły to mniejsze, skupione działy, które pomagają użytkownikom grupować i organizować elementy pracy w określonych ramach czasowych."
       },
       "step_one": {
         "title": "Utwórz Moduł",
-        "description": "Moduły to mniejsze, skupione projekty, które pomagają użytkownikom grupować i organizować elementy pracy w określonych ramach czasowych."
+        "description": "Moduły to mniejsze, skupione działy, które pomagają użytkownikom grupować i organizować elementy pracy w określonych ramach czasowych."
       },
       "step_two": {
         "title": "Kliknij \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Dokumentuj za pomocą Stron opartych na AI",
-        "description": "Strony w Paradise Task Tracker pozwalają Ci przechwytywać, organizować i współpracować nad informacjami o projekcie—bez zewnętrznych narzędzi."
+        "description": "Strony w Paradise Task Tracker pozwalają Ci przechwytywać, organizować i współpracować nad informacjami o dziale—bez zewnętrznych narzędzi."
       },
       "step_one": {
         "title": "Ustaw stronę jako Publiczną lub Prywatną",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Zaakceptuj/odrzuć oczekujące zgłoszenie",
-        "description": "Zaakceptuj, aby edytować i przenieść element pracy do swojego projektu, lub odrzuć, aby oznaczyć go jako Anulowane."
+        "description": "Zaakceptuj, aby edytować i przenieść element pracy do swojego działu, lub odrzuć, aby oznaczyć go jako Anulowane."
       },
       "step_three": {
         "title": "Odłóż na później",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Znajdź cokolwiek natychmiast",
-        "description": "Użyj uniwersalnego wyszukiwania, aby przejść do zadań, projektów, stron i osób—bez opuszczania swojego przepływu."
+        "description": "Użyj uniwersalnego wyszukiwania, aby przejść do zadań, działów, stron i osób—bez opuszczania swojego przepływu."
       },
       "step_one": {
         "title": "Zachowaj kontrolę nad aktualizacjami",
@@ -148,8 +148,8 @@
       "got_it": "Rozumiem"
     },
     "seed_data": {
-      "title": "Oto Twój projekt demo",
-      "description": "Projekty pozwalają zarządzać zespołami, zadaniami i wszystkim, czego potrzebujesz, aby wykonać pracę w swoim obszarze roboczym."
+      "title": "Oto Twój dział demo",
+      "description": "Działy pozwalają zarządzać zespołami, zadaniami i wszystkim, czego potrzebujesz, aby wykonać pracę w swoim obszarze roboczym."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Rozpocznij konfigurację i zobacz, jak Twoje pomysły ożywają szybciej.",
       "checklist_items": {
         "item_1": {
-          "title": "Utwórz projekt"
+          "title": "Utwórz dział"
         },
         "item_2": {
           "title": "Utwórz element pracy"

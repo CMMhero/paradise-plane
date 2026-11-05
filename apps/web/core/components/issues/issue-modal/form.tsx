@@ -297,7 +297,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "Error!",
-        message: "Failed to move work item to project. Please try again.",
+        message: "Failed to move work item to department. Please try again.",
       });
     } finally {
       setIsMoving(false);

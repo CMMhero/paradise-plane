@@ -740,7 +740,7 @@ def avatar_untuk(user=None, nama="", gambar=None):
     if not getattr(user, "avatar_asset_id", None) and luar.startswith("https://"):
         hasil["src"] = luar
         return hasil, None
-    cid = f"avatar-{hashlib.sha1(str(getattr(user, 'id', nama)).encode()).hexdigest()[:12]}"
+    cid = f"avatar-{hashlib.sha256(str(getattr(user, 'id', nama)).encode()).hexdigest()[:12]}"
     if gambar is not None and any(g.cid == cid for g in gambar):
         hasil["src"] = f"cid:{cid}"
         return hasil, None

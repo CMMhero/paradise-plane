@@ -11,7 +11,6 @@ import { EPageAccess, EUserPermissions } from "@plane/constants";
 import type { TPage } from "@plane/types";
 // lib
 import { bacaIzinSumber, nilaiIzinIsi } from "@/lib/izin-sumber";
-import { isWikiProject } from "@/lib/wiki-project";
 // plane web store
 import type { RootStore } from "@/plane-web/store/root.store";
 // services
@@ -100,14 +99,10 @@ export class ProjectPage extends BasePage implements TProjectPage {
    * (pemilik + atasan / pemilik saja / semua anggota), bukan role admin project.
    * Data izin dibaca dari salinan reaktif `izin-saya/` yang diisi `useIzinSumber`
    * (dipasang di layout project); belum dimuat = pemilik saja.
-   *
-   * Page di project Wiki tetap aturan lama: hanya admin project.
    */
   private bolehMenurutIzin = computedFn(
     (kunci: "PERM_PAGE_EDIT" | "PERM_PAGE_ARCHIVE" | "PERM_PAGE_DELETE"): boolean => {
       const projectId = this.project_ids?.[0];
-      const project = this.rootStore.projectRoot.project.getProjectById(projectId);
-      if (isWikiProject(project)) return this.getHighestRoleAcrossProjects() === EUserPermissions.ADMIN;
       const highestRole = this.getHighestRoleAcrossProjects();
       if (!highestRole || highestRole < EUserPermissions.MEMBER) return false;
       const izin = bacaIzinSumber(this.rootStore.router.workspaceSlug, projectId);
@@ -125,7 +120,7 @@ export class ProjectPage extends BasePage implements TProjectPage {
 
   /**
    * @description returns true if the current logged in user can edit the page
-   * Kustomisasi Paradise: lihat `bolehMenurutIzin` (KEP-85; Wiki tetap admin project).
+   * Kustomisasi Paradise: lihat `bolehMenurutIzin` (KEP-85).
    */
   get canCurrentUserEditPage() {
     return this.bolehMenurutIzin("PERM_PAGE_EDIT");
@@ -151,8 +146,6 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get canCurrentUserChangeAccess() {
     // Paradise KEP-85: publik/privat hanya pemiliknya.
-    const project = this.rootStore.projectRoot.project.getProjectById(this.project_ids?.[0]);
-    if (isWikiProject(project)) return this.getHighestRoleAcrossProjects() === EUserPermissions.ADMIN;
     return this.isCurrentUserOwner;
   }
 

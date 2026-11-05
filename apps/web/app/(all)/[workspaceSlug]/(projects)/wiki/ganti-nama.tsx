@@ -10,14 +10,11 @@ import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { EModalPosition, EModalWidth, Input, ModalCore } from "@plane/ui";
-// services
-import { WikiMaterialService } from "@/services/wiki_material.service";
-
-const layanan = new WikiMaterialService();
+// local imports
+import { layananWiki } from "./data";
 
 type TProps = {
   workspaceSlug: string;
-  projectId: string;
   materiId: string;
   judulSekarang: string;
   namaBerkas: string;
@@ -38,7 +35,6 @@ type TProps = {
  */
 export function GantiNamaMateri({
   workspaceSlug,
-  projectId,
   materiId,
   judulSekarang,
   namaBerkas,
@@ -55,7 +51,7 @@ export function GantiNamaMateri({
     if (!bersih || sedangSimpan) return;
     setSedangSimpan(true);
     try {
-      await layanan.rename(workspaceSlug, projectId, materiId, bersih);
+      await layananWiki.renameMaterial(workspaceSlug, materiId, bersih);
       await onSelesai();
       setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.rename.done_title"), message: bersih });
       onClose();

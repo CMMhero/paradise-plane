@@ -103,7 +103,7 @@
     "empty_state": {
       "general": {
         "title": "Agrupe e defina prazos para seu trabalho em Ciclos.",
-        "description": "Divida o trabalho em partes com prazos definidos, trabalhe de trás para frente a partir do prazo do seu projeto para definir datas e faça um progresso tangível como equipe.",
+        "description": "Divida o trabalho em partes com prazos definidos, trabalhe de trás para frente a partir do prazo do seu departamento para definir datas e faça um progresso tangível como equipe.",
         "primary_button": {
           "text": "Defina seu primeiro ciclo",
           "comic": {
@@ -132,15 +132,15 @@
       },
       "archived": {
         "title": "Nenhum ciclo arquivado ainda",
-        "description": "Para organizar seu projeto, arquive os ciclos concluídos. Encontre-os aqui quando forem arquivados."
+        "description": "Para organizar seu departamento, arquive os ciclos concluídos. Encontre-os aqui quando forem arquivados."
       }
     }
   },
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "Salve visualizações filtradas para o seu projeto. Crie quantas precisar",
-        "description": "As visualizações são um conjunto de filtros salvos que você usa com frequência ou deseja acesso fácil. Todos os seus colegas em um projeto podem ver as visualizações de todos e escolher o que melhor se adapta às suas necessidades.",
+        "title": "Salve visualizações filtradas para o seu departamento. Crie quantas precisar",
+        "description": "As visualizações são um conjunto de filtros salvos que você usa com frequência ou deseja acesso fácil. Todos os seus colegas em um departamento podem ver as visualizações de todos e escolher o que melhor se adapta às suas necessidades.",
         "primary_button": {
           "text": "Crie sua primeira visualização",
           "comic": {
@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Ainda não há páginas públicas",
-        "description": "Veja aqui as páginas compartilhadas com todos do seu projeto.",
+        "description": "Veja aqui as páginas compartilhadas com todos do seu departamento.",
         "primary_button": {
           "text": "Crie sua primeira página"
         }
@@ -191,7 +191,7 @@
     "empty_state": {
       "no_issues": {
         "title": "Crie um item de trabalho e atribua-o a alguém, mesmo a você mesmo",
-        "description": "Pense nos itens de trabalho como tarefas, trabalhos ou JTBD. O que nós gostamos. Um item de trabalho e seus subitens de trabalho são geralmente acionáveis ​​baseados no tempo atribuídos aos membros de sua equipe. Sua equipe cria, atribui e conclui itens de trabalho para mover seu projeto em direção à sua meta.",
+        "description": "Pense nos itens de trabalho como tarefas, trabalhos ou JTBD. O que nós gostamos. Um item de trabalho e seus subitens de trabalho são geralmente acionáveis ​​baseados no tempo atribuídos aos membros de sua equipe. Sua equipe cria, atribui e conclui itens de trabalho para mover seu departamento em direção à sua meta.",
         "primary_button": {
           "text": "Crie seu primeiro item de trabalho",
           "comic": {
@@ -224,8 +224,8 @@
     "delete_module": "Excluir módulo",
     "empty_state": {
       "general": {
-        "title": "Mapeie os marcos do seu projeto para Módulos e rastreie o trabalho agregado facilmente.",
-        "description": "Um grupo de itens de trabalho que pertencem a um pai lógico e hierárquico forma um módulo. Pense neles como uma forma de rastrear o trabalho por marcos do projeto. Eles têm seus próprios períodos e prazos, bem como análises para ajudá-lo a ver o quão perto ou longe você está de um marco.",
+        "title": "Mapeie os marcos do seu departamento para Módulos e rastreie o trabalho agregado facilmente.",
+        "description": "Um grupo de itens de trabalho que pertencem a um pai lógico e hierárquico forma um módulo. Pense neles como uma forma de rastrear o trabalho por marcos do departamento. Eles têm seus próprios períodos e prazos, bem como análises para ajudá-lo a ver o quão perto ou longe você está de um marco.",
         "primary_button": {
           "text": "Construa seu primeiro módulo",
           "comic": {
@@ -246,7 +246,7 @@
       },
       "archived": {
         "title": "Nenhum Módulo arquivado ainda",
-        "description": "Para organizar seu projeto, arquive os módulos concluídos ou cancelados. Encontre-os aqui quando forem arquivados."
+        "description": "Para organizar seu departamento, arquive os módulos concluídos ou cancelados. Encontre-os aqui quando forem arquivados."
       },
       "sidebar": {
         "in_active": "Este módulo ainda não está ativo.",
@@ -272,7 +272,7 @@
     "empty_state": {
       "general": {
         "title": "Escreva uma nota, um documento ou uma base de conhecimento completa. Peça a Galileo, o assistente de IA do Paradise Task Tracker, para ajudá-lo a começar",
-        "description": "As páginas são espaço para registrar pensamentos no Paradise Task Tracker. Anote notas de reunião, formate-as facilmente, incorpore itens de trabalho, organize-os usando uma biblioteca de componentes e mantenha-os todos no contexto do seu projeto. Para facilitar qualquer documento, invoque Galileo, a IA do Paradise Task Tracker, com um atalho ou o clique de um botão.",
+        "description": "As páginas são espaço para registrar pensamentos no Paradise Task Tracker. Anote notas de reunião, formate-as facilmente, incorpore itens de trabalho, organize-os usando uma biblioteca de componentes e mantenha-os todos no contexto do seu departamento. Para facilitar qualquer documento, invoque Galileo, a IA do Paradise Task Tracker, com um atalho ou o clique de um botão.",
         "primary_button": {
           "text": "Crie sua primeira página"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Nenhuma página pública ainda",
-        "description": "Veja as páginas compartilhadas com todos em seu projeto aqui mesmo.",
+        "description": "Veja as páginas compartilhadas com todos em seu departamento aqui mesmo.",
         "primary_button": {
           "text": "Crie sua primeira página"
         }
@@ -300,36 +300,36 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "A Admissão não está habilitado para o projeto.",
-        "description": "A Admissão ajuda você a gerenciar as solicitações recebidas para o seu projeto e adicioná-las como itens de trabalho em seu fluxo de trabalho. Habilite a admissão nas configurações do projeto para gerenciar as solicitações.",
+        "title": "A Admissão não está habilitado para o departamento.",
+        "description": "A Admissão ajuda você a gerenciar as solicitações recebidas para o seu departamento e adicioná-las como itens de trabalho em seu fluxo de trabalho. Habilite a admissão nas configurações do departamento para gerenciar as solicitações.",
         "primary_button": {
           "text": "Gerenciar funcionalidades"
         }
       },
       "cycle": {
-        "title": "Os ciclos não estão habilitados para este projeto.",
-        "description": "Divida o trabalho em partes com prazos definidos, trabalhe de trás para frente a partir do prazo do seu projeto para definir datas e faça um progresso tangível como equipe. Habilite o recurso de ciclos para o seu projeto para começar a usá-los.",
+        "title": "Os ciclos não estão habilitados para este departamento.",
+        "description": "Divida o trabalho em partes com prazos definidos, trabalhe de trás para frente a partir do prazo do seu departamento para definir datas e faça um progresso tangível como equipe. Habilite o recurso de ciclos para o seu departamento para começar a usá-los.",
         "primary_button": {
           "text": "Gerenciar funcionalidades"
         }
       },
       "module": {
-        "title": "Os módulos não estão habilitados para o projeto.",
-        "description": "Os módulos são os blocos de construção do seu projeto. Habilite os módulos nas configurações do projeto para começar a usá-los.",
+        "title": "Os módulos não estão habilitados para o departamento.",
+        "description": "Os módulos são os blocos de construção do seu departamento. Habilite os módulos nas configurações do departamento para começar a usá-los.",
         "primary_button": {
           "text": "Gerenciar funcionalidades"
         }
       },
       "page": {
-        "title": "As páginas não estão habilitadas para o projeto.",
-        "description": "As páginas são os blocos de construção do seu projeto. Habilite as páginas nas configurações do projeto para começar a usá-las.",
+        "title": "As páginas não estão habilitadas para o departamento.",
+        "description": "As páginas são os blocos de construção do seu departamento. Habilite as páginas nas configurações do departamento para começar a usá-las.",
         "primary_button": {
           "text": "Gerenciar funcionalidades"
         }
       },
       "view": {
-        "title": "As visualizações não estão habilitadas para o projeto.",
-        "description": "As visualizações são os blocos de construção do seu projeto. Habilite as visualizações nas configurações do projeto para começar a usá-las.",
+        "title": "As visualizações não estão habilitadas para o departamento.",
+        "description": "As visualizações são os blocos de construção do seu departamento. Habilite as visualizações nas configurações do departamento para começar a usá-las.",
         "primary_button": {
           "text": "Gerenciar funcionalidades"
         }
@@ -392,7 +392,7 @@
           "complete": "Importação concluída"
         },
         "message": {
-          "success": "{count} membr{plural} importad{plural} com sucesso para o projeto.",
+          "success": "{count} membr{plural} importad{plural} com sucesso para o departamento.",
           "no_imports": "Nenhum novo membro foi importado do arquivo CSV."
         },
         "stats": {

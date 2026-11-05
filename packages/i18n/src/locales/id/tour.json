@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Selamat datang di ruang kerja Anda",
-        "description": "Untuk membantu Anda memulai, kami telah membuat Proyek Demo untuk Anda. Mari tambahkan item pekerjaan pertama Anda."
+        "description": "Untuk membantu Anda memulai, kami telah membuat Departemen Demo untuk Anda. Mari tambahkan item pekerjaan pertama Anda."
       },
       "step_one": {
         "title": "Klik \"+ Tambah item pekerjaan\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Buat kemajuan dengan Siklus",
-        "description": "Tekan Q untuk membuat Siklus. Beri nama dan tetapkan tanggal—hanya satu siklus per proyek."
+        "description": "Tekan Q untuk membuat Siklus. Beri nama dan tetapkan tanggal—hanya satu siklus per departemen."
       },
       "step_one": {
         "title": "Buat siklus baru",
-        "description": "Tekan Q untuk membuat Siklus. Beri nama dan tetapkan tanggal—hanya satu siklus per proyek."
+        "description": "Tekan Q untuk membuat Siklus. Beri nama dan tetapkan tanggal—hanya satu siklus per departemen."
       },
       "step_two": {
         "title": "Klik \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Bagi proyek Anda menjadi Modul",
-        "description": "Modul adalah proyek yang lebih kecil dan terfokus yang membantu pengguna mengelompokkan dan mengorganisir item pekerjaan dalam jangka waktu tertentu."
+        "title": "Bagi departemen Anda menjadi Modul",
+        "description": "Modul adalah kelompok pekerjaan yang lebih kecil dan terfokus yang membantu pengguna mengelompokkan dan mengorganisir item pekerjaan dalam jangka waktu tertentu."
       },
       "step_one": {
         "title": "Buat Modul",
-        "description": "Modul adalah proyek yang lebih kecil dan terfokus yang membantu pengguna mengelompokkan dan mengorganisir item pekerjaan dalam jangka waktu tertentu."
+        "description": "Modul adalah kelompok pekerjaan yang lebih kecil dan terfokus yang membantu pengguna mengelompokkan dan mengorganisir item pekerjaan dalam jangka waktu tertentu."
       },
       "step_two": {
         "title": "Klik \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Dokumentasikan dengan Halaman bertenaga AI",
-        "description": "Halaman di Paradise Task Tracker memungkinkan Anda menangkap, mengorganisir, dan berkolaborasi pada info proyek—tanpa alat eksternal."
+        "description": "Halaman di Paradise Task Tracker memungkinkan Anda menangkap, mengorganisir, dan berkolaborasi pada info departemen—tanpa alat eksternal."
       },
       "step_one": {
         "title": "Jadikan halaman Publik atau Privat",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Terima/tolak permintaan yang tertunda",
-        "description": "Terima untuk mengedit dan memindahkan item pekerjaan ke proyek Anda, atau tolak untuk menandainya sebagai Dibatalkan."
+        "description": "Terima untuk mengedit dan memindahkan item pekerjaan ke departemen Anda, atau tolak untuk menandainya sebagai Dibatalkan."
       },
       "step_three": {
         "title": "Tunda untuk sekarang",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Temukan apa pun secara instan",
-        "description": "Gunakan pencarian universal untuk melompat ke tugas, proyek, halaman, dan orang—tanpa meninggalkan alur Anda."
+        "description": "Gunakan pencarian universal untuk melompat ke tugas, departemen, halaman, dan orang—tanpa meninggalkan alur Anda."
       },
       "step_one": {
         "title": "Tetap kendalikan pembaruan",
@@ -148,8 +148,8 @@
       "got_it": "Mengerti"
     },
     "seed_data": {
-      "title": "Ini adalah proyek demo Anda",
-      "description": "Proyek memungkinkan Anda mengelola tim, tugas, dan segala yang Anda butuhkan untuk menyelesaikan pekerjaan di ruang kerja Anda."
+      "title": "Ini adalah departemen demo Anda",
+      "description": "Departemen memungkinkan Anda mengelola tim, tugas, dan segala yang Anda butuhkan untuk menyelesaikan pekerjaan di ruang kerja Anda."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Mulai pengaturan Anda dan lihat ide Anda terwujud lebih cepat.",
       "checklist_items": {
         "item_1": {
-          "title": "Buat proyek"
+          "title": "Buat departemen"
         },
         "item_2": {
           "title": "Buat item pekerjaan"

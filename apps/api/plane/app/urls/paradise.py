@@ -20,10 +20,30 @@ from plane.app.views.workspace.izin_saya import IzinSayaEndpoint
 from plane.app.views.workspace.perhatian import PerhatianEndpoint
 from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAnggotaEndpoint
 from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
+from plane.app.views.chat import ChatRuangSematanEndpoint, ChatSematanEndpoint
+from plane.app.views.chat_rujukan import ChatRujukanEndpoint, ChatRujukanInfoEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
+from plane.app.views.wiki import (
+    WikiAkarEndpoint,
+    WikiFolderArsipEndpoint,
+    WikiFolderEndpoint,
+    WikiFolderListEndpoint,
+    WikiFolderPulihkanEndpoint,
+)
+from plane.app.views.wiki_berkas import (
+    WikiBerkasEndpoint,
+    WikiCariEndpoint,
+    WikiMateriEndpoint,
+    WikiMateriFolderEndpoint,
+    WikiMateriPulihkanEndpoint,
+    WikiMateriTerunggahEndpoint,
+    WikiPratinjauEndpoint,
+    WikiSampahEndpoint,
+)
 from plane.app.views.workspace.organisasi import StrukturOrganisasiEndpoint
 from plane.app.views.workspace.quick_link_bersama import QuickLinkBersamaEndpoint
 from plane.app.views.workspace.profil_anggota import ProfilAnggotaEndpoint
+from plane.app.views.workspace.pratinjau_tautan import PratinjauTautanEndpoint
 from plane.app.views import (
     ProjectTrashEndpoint,
     ChatAnggotaEndpoint,
@@ -47,13 +67,6 @@ from plane.app.views import (
     GoogleCalendarStatusEndpoint,
     InitiativeViewSet,
     PageCanEditEndpoint,
-    WikiFolderEndpoint,
-    WikiMaterialCountEndpoint,
-    WikiMaterialEndpoint,
-    WikiMaterialPreviewEndpoint,
-    WikiMaterialSearchEndpoint,
-    WikiPermissionsEndpoint,
-    WikiTopicMaterialEndpoint,
 )
 
 urlpatterns = [
@@ -134,6 +147,11 @@ urlpatterns = [
         ChatReaksiEndpoint.as_view(),
         name="chat-reaksi",
     ),
+    path(
+        "workspaces/<str:slug>/chat/pesan/<uuid:pesan_id>/sematkan/",
+        ChatSematanEndpoint.as_view(),
+        name="chat-sematkan",
+    ),
     # Kanal. Ditaruh sebelum pola <uuid:user_id> mengikuti alasan yang sama
     # dengan "pesan" dan "belum-dibaca" di atas: "ruang" bukan UUID yang sah,
     # jadi tidak akan bentrok, tapi urutannya membuat niatnya terbaca.
@@ -178,9 +196,26 @@ urlpatterns = [
         name="chat-ruang-panggilan-log",
     ),
     path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/sematan/",
+        ChatRuangSematanEndpoint.as_view(),
+        name="chat-ruang-sematan",
+    ),
+    path(
         "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/kelola/",
         ChatKelolaRuangEndpoint.as_view(),
         name="chat-ruang-kelola",
+    ),
+    # KEP-91: saran dan keterangan rujukan #kanal / #work item, dipakai juga
+    # oleh editor deskripsi dan komentar.
+    path(
+        "workspaces/<str:slug>/chat/rujukan/",
+        ChatRujukanEndpoint.as_view(),
+        name="chat-rujukan",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/rujukan/info/",
+        ChatRujukanInfoEndpoint.as_view(),
+        name="chat-rujukan-info",
     ),
     path(
         "workspaces/<str:slug>/chat/<uuid:user_id>/",
@@ -289,39 +324,74 @@ urlpatterns = [
         name="page-can-edit",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-permissions/",
-        WikiPermissionsEndpoint.as_view(),
-        name="wiki-permissions",
+        "workspaces/<str:slug>/wiki/",
+        WikiAkarEndpoint.as_view(),
+        name="wiki-akar",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/topics/<uuid:page_id>/materials/",
-        WikiTopicMaterialEndpoint.as_view(),
-        name="wiki-topic-materials",
+        "workspaces/<str:slug>/wiki/folders/",
+        WikiFolderListEndpoint.as_view(),
+        name="wiki-folders",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/folders/<uuid:page_id>/",
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/",
         WikiFolderEndpoint.as_view(),
         name="wiki-folder",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/material-counts/",
-        WikiMaterialCountEndpoint.as_view(),
-        name="wiki-material-counts",
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/archive/",
+        WikiFolderArsipEndpoint.as_view(),
+        name="wiki-folder-archive",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/search/",
-        WikiMaterialSearchEndpoint.as_view(),
-        name="wiki-material-search",
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/materials/",
+        WikiMateriFolderEndpoint.as_view(),
+        name="wiki-folder-materials",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/materials/<uuid:asset_id>/",
-        WikiMaterialEndpoint.as_view(),
+        "workspaces/<str:slug>/wiki/materials/<uuid:materi_id>/",
+        WikiMateriEndpoint.as_view(),
         name="wiki-material",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/materials/<uuid:asset_id>/preview/",
-        WikiMaterialPreviewEndpoint.as_view(),
+        "workspaces/<str:slug>/wiki/materials/<uuid:materi_id>/uploaded/",
+        WikiMateriTerunggahEndpoint.as_view(),
+        name="wiki-material-uploaded",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/materials/<uuid:materi_id>/preview/",
+        WikiPratinjauEndpoint.as_view(),
         name="wiki-material-preview",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/files/<uuid:asset_id>/",
+        WikiBerkasEndpoint.as_view(),
+        name="wiki-file",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/search/",
+        WikiCariEndpoint.as_view(),
+        name="wiki-search",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/trash/",
+        WikiSampahEndpoint.as_view(),
+        name="wiki-trash",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/trash/folders/<uuid:folder_id>/restore/",
+        WikiFolderPulihkanEndpoint.as_view(),
+        name="wiki-trash-folder-restore",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/trash/materials/<uuid:materi_id>/restore/",
+        WikiMateriPulihkanEndpoint.as_view(),
+        name="wiki-trash-material-restore",
+    ),
+    path(
+        "workspaces/<str:slug>/link-preview/",
+        PratinjauTautanEndpoint.as_view(),
+        name="link-preview",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/trash/",

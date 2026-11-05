@@ -10,7 +10,7 @@ import { LIVE_BASE_PATH, LIVE_BASE_URL } from "@plane/constants";
 
 /** Kejadian yang disiarkan Django lewat Redis. */
 export type TKejadian = {
-  tipe: "siap" | "pesan" | "sunting" | "hapus" | "reaksi" | "sinyal" | "pergi" | "ruang" | "anggota";
+  tipe: "siap" | "pesan" | "sunting" | "hapus" | "reaksi" | "sematan" | "sinyal" | "pergi" | "ruang" | "anggota";
   ruang?: string;
   saya?: string;
   oleh?: string | null;
@@ -55,7 +55,9 @@ export function useObrolanLangsung({ slug, ruangId, onPerubahan, onSinyal, onPer
   // Callback disimpan di ref supaya berubahnya identitas fungsi milik pemanggil
   // tidak memutus lalu menyambung ulang soket pada setiap render.
   const cbRef = useRef({ onPerubahan, onSinyal, onPergi });
-  cbRef.current = { onPerubahan, onSinyal, onPergi };
+  useEffect(() => {
+    cbRef.current = { onPerubahan, onSinyal, onPergi };
+  });
 
   useEffect(() => {
     if (!slug || !ruangId) return;

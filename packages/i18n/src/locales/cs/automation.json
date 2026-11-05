@@ -123,7 +123,7 @@
     "table": {
       "title": "Název automatizace",
       "scope": "Rozsah",
-      "projects": "Projekty",
+      "projects": "Oddělení",
       "last_run_on": "Naposledy spuštěno",
       "created_on": "Vytvořeno",
       "last_updated_on": "Naposledy aktualizováno",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Automatizace smazána",
-          "message": "{name}, automatizace, byla nyní odstraněna z vašeho projektu."
+          "message": "{name}, automatizace, byla nyní odstraněna z vašeho oddělení."
         },
         "error": {
           "title": "Tuto automatizaci se tentokrát nepodařilo smazat.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Automatizace",
-        "description": "Automatizace jsou způsob, jak automatizovat úkoly ve vašem projektu.",
+        "description": "Automatizace jsou způsob, jak automatizovat úkoly ve vašem oddělení.",
         "sub_description": "Získejte zpět 80% svého administrativního času, když používáte automatizace."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Vyberte projekty, na kterých se má tato automatizace spouštět",
+        "label": "Vyberte oddělení, na kterých se má tato automatizace spouštět",
         "all_projects": {
-          "label": "Všechny projekty",
-          "description": "Automatizace poběží pro všechny projekty v pracovním prostoru."
+          "label": "Všechna oddělení",
+          "description": "Automatizace poběží pro všechna oddělení v pracovním prostoru."
         },
         "select_projects": {
-          "label": "Vybrat projekty",
-          "description": "Automatizace poběží pro vybrané projekty v pracovním prostoru.",
-          "placeholder": "Vybrat projekty"
+          "label": "Vybrat oddělení",
+          "description": "Automatizace poběží pro vybraná oddělení v pracovním prostoru.",
+          "placeholder": "Vybrat oddělení"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Globální",
           "project": {
-            "label": "Projekt",
+            "label": "Oddělení",
             "multiple": "Více",
             "all": "Vše"
           }

@@ -119,7 +119,6 @@
     font-size: 0.75em;
     height: var(--rdp-cell-size);
     padding: 0;
-    text-transform: uppercase;
   }
 
   /* ---------- */

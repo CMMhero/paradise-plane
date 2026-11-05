@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Hanya admin proyek yang bisa menunda/menghapus penundaan item kerja",
-      "accept_permission": "Hanya admin proyek yang bisa menerima item kerja",
-      "decline_permission": "Hanya admin proyek yang bisa menolak item kerja"
+      "snooze_permission": "Hanya admin departemen yang bisa menunda/menghapus penundaan item kerja",
+      "accept_permission": "Hanya admin departemen yang bisa menerima item kerja",
+      "decline_permission": "Hanya admin departemen yang bisa menolak item kerja"
     },
     "actions": {
       "accept": "Terima",
@@ -47,7 +47,7 @@
       "delete": "Hapus",
       "open": "Buka item kerja",
       "mark_as_duplicate": "Tandai sebagai duplikat",
-      "move": "Pindahkan {value} ke item kerja proyek"
+      "move": "Pindahkan {value} ke item kerja departemen"
     },
     "source": {
       "in-app": "dalam aplikasi"

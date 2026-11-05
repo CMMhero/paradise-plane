@@ -46,7 +46,7 @@ import { KelolaOrganisasi } from "./kelola";
 import { idDepartemen, idDivisi, PapanOrganisasi } from "./papan";
 import { akunTerhapus } from "./papan-logika";
 import { usePenempatanOptimis } from "./use-penempatan";
-import type { TAksiOrganisasi, TPerintahKelola } from "./util";
+import { pesanGagalSimpan, type TAksiOrganisasi, type TPerintahKelola } from "./util";
 
 const layanan = new InstanceOrganisasiService();
 const hierarkiService = new InstanceHierarkiService();
@@ -76,10 +76,8 @@ const bacaBaganTersembunyi = (): boolean => {
   }
 };
 
-const pesanGagal = (err: unknown, fallback: string): string => {
-  const pesan = (err as { error?: string } | undefined)?.error;
-  return typeof pesan === "string" && pesan.length > 0 ? pesan : fallback;
-};
+const pesanGagal = (err: unknown, fallback: string): string =>
+  pesanGagalSimpan(err, fallback, godmodeStrings.org.session_expired);
 
 export default function OrganisasiPage() {
   const { s, fill } = useGodmodeStrings();
@@ -269,7 +267,7 @@ export default function OrganisasiPage() {
 
         <section className="space-y-2" aria-label={s.org.chart}>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-11 font-semibold tracking-wide text-tertiary uppercase">{s.org.chart}</span>
+            <span className="text-11 font-semibold text-tertiary">{s.org.chart}</span>
             <Button
               variant="ghost"
               size="base"

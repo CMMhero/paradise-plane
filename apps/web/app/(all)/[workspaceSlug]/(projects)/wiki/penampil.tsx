@@ -13,7 +13,7 @@ import { getButtonStyling } from "@plane/propel/button";
 import { IconButton } from "@plane/propel/icon-button";
 import { cn } from "@plane/utils";
 // services
-import type { TPratinjauMateri } from "@/services/wiki_material.service";
+import type { TWikiPreview } from "@/services/wiki.service";
 
 const ZOOM_MIN = 0.25;
 const ZOOM_MAKS = 5;
@@ -35,9 +35,9 @@ const ZOOM_LANGKAH = 0.25;
  * dari luar. Menampilkan tombol zoom yang tidak berbuat apa-apa lebih buruk
  * daripada tidak menampilkannya.
  */
-export function PenampilMateri({ pratinjau }: { pratinjau: TPratinjauMateri }) {
+export function PenampilMateri({ pratinjau, title }: { pratinjau: TWikiPreview; title: string }) {
   const { t } = useTranslation();
-  const { kind, url, title } = pratinjau;
+  const { kind, url } = pratinjau;
   const [layarPenuh, setLayarPenuh] = useState(false);
   const [zoom, setZoom] = useState(1);
   // lebar gambar saat pas-bingkai (zoom 100%), dasar perhitungan zoom

@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Panoramica dei tuoi progetti, attività e metriche",
-        "description": "Benvenuto in Paradise Task Tracker, siamo entusiasti di averti qui. Crea il tuo primo progetto e traccia i tuoi elementi di lavoro, e questa pagina si trasformerà in uno spazio che ti aiuta a progredire. Gli amministratori vedranno anche elementi che aiutano il team a progredire.",
+        "title": "Panoramica dei tuoi reparti, attività e metriche",
+        "description": "Benvenuto in Paradise Task Tracker, siamo entusiasti di averti qui. Crea il tuo primo reparto e traccia i tuoi elementi di lavoro, e questa pagina si trasformerà in uno spazio che ti aiuta a progredire. Gli amministratori vedranno anche elementi che aiutano il team a progredire.",
         "primary_button": {
-          "text": "Crea il tuo primo progetto",
+          "text": "Crea il tuo primo reparto",
           "comic": {
-            "title": "Tutto inizia con un progetto in Paradise Task Tracker",
-            "description": "Un progetto può essere la roadmap di un prodotto, una campagna di marketing o il lancio di una nuova auto."
+            "title": "Tutto inizia con un reparto in Paradise Task Tracker",
+            "description": "Un reparto può essere la roadmap di un prodotto, una campagna di marketing o il lancio di una nuova auto."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Totale attività aperte",
     "error": "Si è verificato un errore nel recupero dei dati.",
     "work_items_closed_in": "Elementi di lavoro chiusi in",
-    "selected_projects": "Progetti selezionati",
+    "selected_projects": "Reparti selezionati",
     "total_members": "Totale membri",
     "total_cycles": "Totale cicli",
     "total_modules": "Totale moduli",
@@ -100,11 +100,11 @@
     "backlog_work_items": "{entity} nel backlog",
     "un_started_work_items": "{entity} non avviati",
     "completed_work_items": "{entity} completati",
-    "project_insights": "Approfondimenti sul progetto",
-    "summary_of_projects": "Riepilogo dei progetti",
-    "all_projects": "Tutti i progetti",
+    "project_insights": "Approfondimenti sul reparto",
+    "summary_of_projects": "Riepilogo dei reparti",
+    "all_projects": "Tutti i reparti",
     "trend_on_charts": "Tendenza nei grafici",
-    "active_projects": "Progetti attivi",
+    "active_projects": "Reparti attivi",
     "customized_insights": "Approfondimenti personalizzati",
     "created_vs_resolved": "Creato vs Risolto",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Traccia progressi, carichi di lavoro e allocazioni. Individua tendenze, rimuovi blocchi e lavora più velocemente",
-        "description": "Visualizza ambito vs domanda, stime e scope creep. Ottieni prestazioni per membri del team e squadre, assicurandoti che il tuo progetto si svolga nei tempi previsti.",
+        "description": "Visualizza ambito vs domanda, stime e scope creep. Ottieni prestazioni per membri del team e squadre, assicurandoti che il tuo reparto si svolga nei tempi previsti.",
         "primary_button": {
-          "text": "Inizia il tuo primo progetto",
+          "text": "Inizia il tuo primo reparto",
           "comic": {
             "title": "Analytics funziona meglio con Cicli + Moduli",
             "description": "Prima, incornicia i tuoi elementi di lavoro in Cicli e, se possibile, raggruppa gli elementi che si estendono oltre un ciclo in Moduli. Controlla entrambi nella navigazione sinistra."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Passa a {plan} per sbloccare {tab}",
     "workitem_resolved_vs_pending": "Elementi di lavoro risolti vs in sospeso",
-    "projects_by_status": "Progetti per stato",
+    "projects_by_status": "Reparti per stato",
     "active_users": "Utenti attivi",
     "intake_trends": "Tendenze di ammissione"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Progetto} other {Progetti}}",
+    "label": "{count, plural, one {Reparto} other {Reparti}}",
     "create": {
-      "label": "Aggiungi progetto"
+      "label": "Aggiungi reparto"
     },
     "network": {
       "label": "Rete",
@@ -186,7 +186,7 @@
       "members_length": "Numero di membri"
     },
     "scope": {
-      "my_projects": "I miei progetti",
+      "my_projects": "I miei reparti",
       "archived_projects": "Archiviati"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Nessun progetto attivo",
-        "description": "Considera ogni progetto come la base per un lavoro orientato a obiettivi. I progetti sono dove risiedono Jobs, Cicli e Moduli e, insieme ai tuoi colleghi, ti aiutano a raggiungere quell'obiettivo. Crea un nuovo progetto o filtra per progetti archiviati.",
+        "title": "Nessun reparto attivo",
+        "description": "Considera ogni reparto come la base per un lavoro orientato a obiettivi. I reparti sono dove risiedono Jobs, Cicli e Moduli e, insieme ai tuoi colleghi, ti aiutano a raggiungere quell'obiettivo. Crea un nuovo reparto o filtra per reparti archiviati.",
         "primary_button": {
-          "text": "Inizia il tuo primo progetto",
+          "text": "Inizia il tuo primo reparto",
           "comic": {
-            "title": "Tutto inizia con un progetto in Paradise Task Tracker",
-            "description": "Un progetto può essere la roadmap di un prodotto, una campagna di marketing o il lancio di una nuova auto."
+            "title": "Tutto inizia con un reparto in Paradise Task Tracker",
+            "description": "Un reparto può essere la roadmap di un prodotto, una campagna di marketing o il lancio di una nuova auto."
           }
         }
       },
       "no_projects": {
-        "title": "Nessun progetto",
-        "description": "Per creare elementi di lavoro o gestire il tuo lavoro, devi creare o far parte di un progetto.",
+        "title": "Nessun reparto",
+        "description": "Per creare elementi di lavoro o gestire il tuo lavoro, devi creare o far parte di un reparto.",
         "primary_button": {
-          "text": "Inizia il tuo primo progetto",
+          "text": "Inizia il tuo primo reparto",
           "comic": {
-            "title": "Tutto inizia con un progetto in Paradise Task Tracker",
-            "description": "Un progetto può essere la roadmap di un prodotto, una campagna di marketing o il lancio di una nuova auto."
+            "title": "Tutto inizia con un reparto in Paradise Task Tracker",
+            "description": "Un reparto può essere la roadmap di un prodotto, una campagna di marketing o il lancio di una nuova auto."
           }
         }
       },
       "filter": {
-        "title": "Nessun progetto corrispondente",
-        "description": "Nessun progetto rilevato con i criteri di ricerca corrispondenti.\n Crea un nuovo progetto invece."
+        "title": "Nessun reparto corrispondente",
+        "description": "Nessun reparto rilevato con i criteri di ricerca corrispondenti.\n Crea un nuovo reparto invece."
       },
       "search": {
-        "description": "Nessun progetto rilevato con i criteri di ricerca corrispondenti.\nCrea un nuovo progetto invece"
+        "description": "Nessun reparto rilevato con i criteri di ricerca corrispondenti.\nCrea un nuovo reparto invece"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "Aggiungi visualizzazione",
     "empty_state": {
       "all-issues": {
-        "title": "Nessun elemento di lavoro nel progetto",
-        "description": "Primo progetto fatto! Ora, suddividi il tuo lavoro in parti tracciabili con gli elementi di lavoro. Andiamo!",
+        "title": "Nessun elemento di lavoro nel reparto",
+        "description": "Primo reparto fatto! Ora, suddividi il tuo lavoro in parti tracciabili con gli elementi di lavoro. Andiamo!",
         "primary_button": {
           "text": "Crea un nuovo elemento di lavoro"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Scrivi una nota, un documento o una base di conoscenza completa. Fai partire Galileo, l'assistente AI di Paradise Task Tracker, per aiutarti a iniziare",
-        "description": "Le pagine sono spazi di pensiero in Paradise Task Tracker. Prendi appunti durante le riunioni, formattali facilmente, incorpora elementi di lavoro, disponili utilizzando una libreria di componenti e mantienili tutti nel contesto del tuo progetto. Per semplificare qualsiasi documento, invoca Galileo, l'AI di Paradise Task Tracker, con una scorciatoia o con un clic di un pulsante.",
+        "description": "Le pagine sono spazi di pensiero in Paradise Task Tracker. Prendi appunti durante le riunioni, formattali facilmente, incorpora elementi di lavoro, disponili utilizzando una libreria di componenti e mantienili tutti nel contesto del tuo reparto. Per semplificare qualsiasi documento, invoca Galileo, l'AI di Paradise Task Tracker, con una scorciatoia o con un clic di un pulsante.",
         "primary_button": {
           "text": "Crea la tua prima pagina"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Nessun ciclo attivo",
-        "description": "I cicli dei tuoi progetti che includono qualsiasi periodo che comprende la data di oggi entro il suo intervallo. Trova il progresso e i dettagli di tutti i tuoi cicli attivi qui."
+        "description": "I cicli dei tuoi reparti che includono qualsiasi periodo che comprende la data di oggi entro il suo intervallo. Trova il progresso e i dettagli di tutti i tuoi cicli attivi qui."
       }
     }
   },

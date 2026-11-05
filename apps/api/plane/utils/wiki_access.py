@@ -58,7 +58,7 @@ def owning_division_ids(folder):
 def is_division_folder(folder):
     """True kalau folder teratas ini milik sebuah Divisi (namanya sama).
 
-    Folder divisi dibuat dan dipelihara `pastikan_folder_divisi`, yang
+    Folder divisi dibuat dan dipelihara folder-folder lama, yang
     mencocokkan lewat nama. Folder teratas lain (General, folder khusus buatan
     admin) bukan folder divisi.
     """
@@ -129,7 +129,7 @@ def can_edit_wiki_page(user, page):
 #
 # "admin" = admin workspace atau Super Admin instance (`is_wiki_admin`).
 # Tidak ada setelan: pemilik folder divisi diturunkan dari struktur organisasi
-# God Mode lewat `pastikan_folder_divisi`.
+# God Mode lewat `pastikan_folder_unit` (plane.utils.wiki_mandiri).
 
 _ROLE_ADMIN = 20
 _ROLE_MEMBER = 15
@@ -155,7 +155,7 @@ def is_wiki_admin(user, workspace_id=None, workspace_slug=None):
 
     Admin project Wiki yang bukan admin workspace TIDAK termasuk. Anggota
     departemen boleh mengunggah (`can_edit_wiki_page`) dan pengunggah boleh
-    mengubah materinya sendiri (`can_manage_wiki_material`), tapi struktur Wiki
+    mengubah materinya sendiri, tapi struktur Wiki
     (folder, sub-topik) hanya untuk yang lolos fungsi ini.
     """
     from plane.db.models import WorkspaceMember
@@ -231,164 +231,3 @@ def has_foreign_descendants(page, user, max_depth=_MAX_DEPTH):
         depth += 1
     return False
 
-
-def can_manage_wiki_material(user, asset, kunci=None):
-    """True kalau `user` boleh mengubah (`PERM_WIKI_EDIT`, bawaan) atau menghapus
-    (`PERM_WIKI_DELETE`) sebuah Materi Wiki.
-
-    KEP-51: admin workspace / Super Admin, atau pengunggahnya sendiri.
-    KEP-85: ditambah aturan God Mode. Bawaan = atasan pengunggah juga boleh.
-    "Atasan" dinilai di tingkat workspace (atasan di salah satu project yang ia
-    awasi dan pengunggahnya anggota), BUKAN di project Wiki: project Wiki diikuti
-    semua orang, jadi supervisor biasanya tidak mengawasinya. Pilihan "setiap
-    anggota" tetap dibatasi anggota project Wiki itu sendiri.
-    """
-    from plane.utils.izin_sumber import PenilaiIzin  # noqa: PLC0415
-    from plane.utils.saklar_instance import IZIN_SEMUA_ANGGOTA, PERM_WIKI_EDIT  # noqa: PLC0415
-
-    if user is None or getattr(user, "is_anonymous", True) or not getattr(user, "id", None):
-        return False
-    if asset.created_by_id and asset.created_by_id == user.id:
-        return True
-    if is_wiki_admin(user, workspace_id=asset.workspace_id):
-        return True
-    kunci = kunci or PERM_WIKI_EDIT
-    # Daftar materi memanggil fungsi ini per baris; penilainya disimpan di objek
-    # user (hidup satu permintaan) supaya jenjang & aturan tidak dibaca ulang per baris.
-    simpanan = getattr(user, "_penilai_wiki", None)
-    if simpanan is None:
-        simpanan = {}
-        try:
-            user._penilai_wiki = simpanan
-        except AttributeError:
-            pass
-    penilai = simpanan.get(str(asset.workspace_id))
-    if penilai is None:
-        penilai = simpanan[str(asset.workspace_id)] = PenilaiIzin(user, asset.workspace_id)
-    project_id = asset.project_id if penilai.aturan(kunci) == IZIN_SEMUA_ANGGOTA else None
-    return penilai.boleh(kunci, project_id=project_id, pemilik_id=asset.created_by_id)
-
-
-def pastikan_folder_divisi(workspace, actor=None):
-    """Pastikan tiap Divisi punya foldernya di Wiki (project WIKI).
-
-    Keputusan user 2026-10-24: tiap divisi otomatis punya wikinya sendiri —
-    tidak perlu dibuat manual. Idempoten: folder yang sudah ada tidak
-    disentuh (kecuali daftar pemiliknya diselaraskan), yang belum ada dibuat
-    sebagai halaman top-level + baris `WikiFolderAccess` per project
-    departemen divisi itu.
-
-    Dipanggil sesudah tulis organisasi (buat/ubah/hapus divisi & departemen,
-    petakan project) dan sekali sebagai backfill. `actor` menjadi `owned_by`
-    folder yang baru dibuat (biasanya admin God Mode yang bertindak).
-    Mengembalikan {"dibuat": [nama], "folder": n}.
-    """
-    from plane.db.models import (  # noqa: PLC0415
-        Departemen,
-        DepartemenProject,
-        Divisi,
-        Page,
-        Project,
-        ProjectPage,
-        WikiFolderAccess,
-    )
-
-    hasil = {"dibuat": [], "folder": 0}
-    if workspace is None:
-        return hasil
-    wiki = Project.objects.filter(
-        workspace=workspace, identifier="WIKI", deleted_at__isnull=True
-    ).first()
-    if wiki is None:
-        return hasil
-
-    divisi_semua = Divisi.objects.filter(workspace=workspace, deleted_at__isnull=True).order_by("nama")
-    for divisi in divisi_semua:
-        folder = (
-            Page.objects.filter(
-                workspace=workspace,
-                parent__isnull=True,
-                name=divisi.nama,
-                project_pages__project=wiki,
-                project_pages__deleted_at__isnull=True,
-                deleted_at__isnull=True,
-                archived_at__isnull=True,
-            )
-            .order_by("created_at")
-            .first()
-        )
-        if folder is None:
-            if actor is None:
-                continue
-            folder = Page.objects.create(
-                workspace=workspace,
-                owned_by=actor,
-                name=divisi.nama,
-                access=Page.PUBLIC_ACCESS,
-            )
-            ProjectPage.objects.create(workspace=workspace, project=wiki, page=folder)
-            hasil["dibuat"].append(divisi.nama)
-        hasil["folder"] += 1
-
-        diinginkan = set(
-            DepartemenProject.objects.filter(
-                workspace=workspace,
-                departemen__divisi=divisi,
-                departemen__deleted_at__isnull=True,
-                project__deleted_at__isnull=True,
-                deleted_at__isnull=True,
-            ).values_list("project_id", flat=True)
-        )
-        sekarang = set(
-            WikiFolderAccess.objects.filter(folder=folder, deleted_at__isnull=True).values_list(
-                "division_id", flat=True
-            )
-        )
-        for pid in diinginkan - sekarang:
-            lama = WikiFolderAccess.all_objects.filter(folder=folder, division_id=pid).first()
-            if lama is None:
-                WikiFolderAccess.objects.create(
-                    workspace=workspace, project=wiki, folder=folder, division_id=pid
-                )
-            else:
-                lama.deleted_at = None
-                lama.save(update_fields=["deleted_at", "updated_at"])
-        for pid in sekarang - diinginkan:
-            obj = WikiFolderAccess.objects.filter(folder=folder, division_id=pid).first()
-            if obj is not None:
-                obj.delete()
-    return hasil
-
-
-def selaraskan_nama_folder_divisi(workspace, lama, baru):
-    """Ikutkan ganti nama Divisi ke folder Wikinya (kalau foldernya ada).
-
-    Dipanggil dari God Mode sesudah `Divisi` diganti namanya, supaya folder
-    otomatisnya tidak yatim (sync hanya mencocokkan berdasarkan nama).
-    """
-    from plane.db.models import Page, Project  # noqa: PLC0415
-
-    if not lama or not baru or lama == baru or workspace is None:
-        return False
-    wiki = Project.objects.filter(
-        workspace=workspace, identifier="WIKI", deleted_at__isnull=True
-    ).first()
-    if wiki is None:
-        return False
-    folder = (
-        Page.objects.filter(
-            workspace=workspace,
-            parent__isnull=True,
-            name=lama,
-            project_pages__project=wiki,
-            project_pages__deleted_at__isnull=True,
-            deleted_at__isnull=True,
-        )
-        .order_by("created_at")
-        .first()
-    )
-    if folder is None:
-        return False
-    folder.name = baru[:255]
-    folder.save(update_fields=["name", "updated_at"])
-    return True

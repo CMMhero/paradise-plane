@@ -49,6 +49,8 @@ export type TAnggotaHierarki = {
   departemen_ids?: string[];
   /** KEP-76: SEMUA divisi yang ia pimpin (manager ke atas). */
   divisi_ids?: string[];
+  /** KEP-93: peran orang ini DI tiap departemennya (10 Staf / 20 Supervisor). */
+  peran_departemen?: Record<string, number>;
 };
 
 export type TPilihanDepartemen = {
@@ -76,6 +78,10 @@ export type TSetJabatan = {
   departemen_ids?: string[];
   /** MENGGANTI seluruh divisi yang dipimpin (tidak dikirim = jangan sentuh). */
   divisi_ids?: string[];
+  /** KEP-93: peran per departemen, 10 (Staf) atau 20 (Supervisor). */
+  peran_departemen?: Record<string, number>;
+  /** KEP-93: `tingkat` tidak menyeragamkan peran departemen yang lain. */
+  pertahankan_peran?: boolean;
 };
 
 export type THasilSetJabatan = {
@@ -87,6 +93,9 @@ export type THasilSetJabatan = {
     divisi_ids: string[];
     /** Divisi yang dicabut otomatis karena jenjang turun di bawah Manager. */
     divisi_dilepas: string[];
+    /** KEP-93: departemen yang tertelan divisi yang kini ia pimpin. */
+    departemen_dilepas?: string[];
+    peran_departemen?: Record<string, number>;
   };
 };
 

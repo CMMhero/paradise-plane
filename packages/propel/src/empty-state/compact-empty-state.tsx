@@ -40,7 +40,7 @@ export function EmptyStateCompact({
           </div>
         )}
 
-        <div className="flex flex-col gap-4">
+        <div className={cn("flex flex-col gap-4", { "items-center": align === "center" })}>
           {title && description ? (
             <div className="flex flex-col gap-2">
               {title && <h3 className="text-16 leading-7 font-semibold text-primary">{title}</h3>}
@@ -54,7 +54,11 @@ export function EmptyStateCompact({
             ? customButton
             : actions &&
               actions.length > 0 && (
-                <div className="flex flex-col gap-4 sm:flex-row">
+                <div
+                  className={cn("flex flex-col gap-4 sm:flex-row", {
+                    "items-center justify-center": align === "center",
+                  })}
+                >
                   {actions.map((action) => {
                     const { label, variant, ...rest } = action;
                     return (

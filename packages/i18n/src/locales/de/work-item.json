@@ -168,7 +168,7 @@
       "confirm_message": "Möchten Sie dieses Arbeitselement wirklich archivieren? Alle archivierten Elemente können später wiederhergestellt werden.",
       "success": {
         "label": "Erfolgreich archiviert",
-        "message": "Ihre archivierten Elemente finden Sie in den Projektarchiven."
+        "message": "Ihre archivierten Elemente finden Sie in den Abteilungsarchiven."
       },
       "failed": {
         "message": "Archivierung des Arbeitselements fehlgeschlagen. Bitte versuchen Sie es erneut."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Wiederherstellung erfolgreich",
-        "message": "Ihr Arbeitselement ist jetzt wieder in den Arbeitselementen des Projekts zu finden."
+        "message": "Ihr Arbeitselement ist jetzt wieder in den Arbeitselementen der Abteilung zu finden."
       },
       "failed": {
         "message": "Wiederherstellung des Arbeitselements fehlgeschlagen. Bitte versuchen Sie es erneut."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Arbeitselement im Vollbild öffnen",
     "duplicate": {
       "modal": {
-        "title": "Eine Kopie in ein anderes Projekt erstellen",
+        "title": "Eine Kopie in eine andere Abteilung erstellen",
         "description1": "Dies erstellt eine Kopie des Arbeitselements.",
         "description2": "Alle Eigenschaftsdaten werden beim Duplizieren entfernt.",
-        "placeholder": "Projekt auswählen"
+        "placeholder": "Abteilung auswählen"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Wiederkehrende Arbeitsaufgabe erstellen",
-        "no_permission": "Wenden Sie sich an Ihren Projektadministrator, um wiederkehrende Arbeitsaufgaben zu erstellen"
+        "no_permission": "Wenden Sie sich an Ihren Abteilungsadministrator, um wiederkehrende Arbeitsaufgaben zu erstellen"
       }
     },
     "empty_state": {

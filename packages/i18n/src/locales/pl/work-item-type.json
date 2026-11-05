@@ -4,12 +4,12 @@
     "label_lowercase": "typy elementów pracy",
     "settings": {
       "description": "Dostosuj i dodaj własne właściwości, aby dopasować do potrzeb zespołu.",
-      "cant_delete_default_message": "Nie można usunąć tego typu elementu pracy, ponieważ jest on ustawiony jako domyślny dla tego projektu.",
+      "cant_delete_default_message": "Nie można usunąć tego typu elementu pracy, ponieważ jest on ustawiony jako domyślny dla tego działu.",
       "set_as_default": "Ustaw jako domyślny",
       "cant_set_default_inactive_message": "Aktywuj ten typ przed ustawieniem go jako domyślny",
       "set_default_confirmation": {
         "title": "Ustaw jako domyślny typ elementu pracy",
-        "description": "Ustawienie {name} jako domyślnego zaimportuje go do wszystkich projektów w tym obszarze roboczym. Wszystkie nowe elementy pracy będą domyślnie używać tego typu.",
+        "description": "Ustawienie {name} jako domyślnego zaimportuje go do wszystkich działów w tym obszarze roboczym. Wszystkie nowe elementy pracy będą domyślnie używać tego typu.",
         "confirm_button": "Ustaw jako domyślny"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "Formuła jest prawidłowa! Zwraca {resultType} ({count} pól odwołanych)",
           "error": {
             "empty": "Wprowadź formułę",
-            "missing_context": "Brak kontekstu przestrzeni roboczej, projektu lub typu elementu roboczego",
+            "missing_context": "Brak kontekstu przestrzeni roboczej, działu lub typu elementu roboczego",
             "validation_failed": "Weryfikacja nie powiodła się"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Typy",
         "description": "Twórz i dostosowuj typy elementów pracy z właściwościami.",
         "sort_options": {
-          "project_count": "Liczba projektów, w których uczestniczy"
+          "project_count": "Liczba działów, w których uczestniczy"
         },
         "filter_options": {
           "show_active": "Pokaż aktywne",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Włącz Typy Elementów Pracy",
-        "description": "Kształtuj elementy pracy według swojej pracy za pomocą Typów elementów pracy. Dostosuj je za pomocą ikon, teł i właściwości oraz skonfiguruj je dla tego projektu.",
+        "description": "Kształtuj elementy pracy według swojej pracy za pomocą Typów elementów pracy. Dostosuj je za pomocą ikon, teł i właściwości oraz skonfiguruj je dla tego działu.",
         "primary_button": {
           "text": "Włącz"
         },
         "confirmation": {
           "title": "Po włączeniu Typów Elementów Pracy nie można ich wyłączyć.",
-          "description": "Element pracy Paradise Task Tracker stanie się domyślnym typem elementu pracy dla tego projektu i pojawi się ze swoją ikoną i tłem w tym projekcie.",
+          "description": "Element pracy Paradise Task Tracker stanie się domyślnym typem elementu pracy dla tego działu i pojawi się ze swoją ikoną i tłem w tym dziale.",
           "button": {
             "default": "Włącz",
             "loading": "Konfigurowanie"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Zdobądź Pro, aby włączyć Typy elementów pracy.",
-        "description": "Kształtuj elementy pracy według swojej pracy za pomocą Typów elementów pracy. Dostosuj je za pomocą ikon, teł i właściwości oraz skonfiguruj je dla tego projektu.",
+        "description": "Kształtuj elementy pracy według swojej pracy za pomocą Typów elementów pracy. Dostosuj je za pomocą ikon, teł i właściwości oraz skonfiguruj je dla tego działu.",
         "primary_button": {
           "text": "Zdobądź Pro"
         }
       },
       "upgrade": {
         "title": "Aktualizuj, aby włączyć Typy elementów pracy.",
-        "description": "Kształtuj elementy pracy według swojej pracy za pomocą Typów elementów pracy. Dostosuj je za pomocą ikon, teł i właściwości oraz skonfiguruj je dla tego projektu.",
+        "description": "Kształtuj elementy pracy według swojej pracy za pomocą Typów elementów pracy. Dostosuj je za pomocą ikon, teł i właściwości oraz skonfiguruj je dla tego działu.",
         "primary_button": {
           "text": "Aktualizuj"
         }

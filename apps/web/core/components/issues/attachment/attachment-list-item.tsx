@@ -18,6 +18,7 @@ import { convertBytesToSize, getFileExtension, getFileName, getFileURL, renderFo
 //
 import { ButtonAvatars } from "@/components/dropdowns/member/avatar";
 import { getFileIcon } from "@/components/icons";
+import { LabelSumberTeks } from "@/components/pratinjau-tautan/label-sumber";
 // helpers
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -54,6 +55,8 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
   return (
     <>
       <button
+        type="button"
+        aria-label={`${fileName}.${fileExtension}`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -86,18 +89,23 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
               </>
             )}
 
-            <CustomMenu ellipsis closeOnSelect placement="bottom-end" disabled={disabled}>
-              <CustomMenu.MenuItem
-                onClick={() => {
-                  toggleDeleteAttachmentModal(attachmentId);
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <TrashIcon className="h-3.5 w-3.5" strokeWidth={2} />
-                  <span>{t("common.actions.delete")}</span>
-                </div>
-              </CustomMenu.MenuItem>
-            </CustomMenu>
+            {/* Paradise KEP-88: images from the description/comments are read-only here. */}
+            {attachment.sumber === "description" || attachment.sumber === "comment" ? (
+              <LabelSumberTeks sumber={attachment.sumber} />
+            ) : (
+              <CustomMenu ellipsis closeOnSelect placement="bottom-end" disabled={disabled}>
+                <CustomMenu.MenuItem
+                  onClick={() => {
+                    toggleDeleteAttachmentModal(attachmentId);
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <TrashIcon className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span>{t("common.actions.delete")}</span>
+                  </div>
+                </CustomMenu.MenuItem>
+              </CustomMenu>
+            )}
           </div>
         </div>
       </button>

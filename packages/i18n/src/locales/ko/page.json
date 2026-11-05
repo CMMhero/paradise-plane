@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "비공개 및 공유 페이지는 팀스페이스로 이동할 수 없습니다.",
       "placeholders": {
-        "workspace_to_all": "프로젝트 및 팀스페이스 검색",
-        "workspace_to_project": "프로젝트 검색",
-        "project_to_all": "프로젝트 및 팀스페이스 검색",
-        "project_to_project": "프로젝트 검색",
-        "project_to_all_with_wiki": "위키 컬렉션, 프로젝트 및 팀스페이스 검색",
-        "project_to_project_with_wiki": "위키 컬렉션 및 프로젝트 검색"
+        "workspace_to_all": "부서 및 팀스페이스 검색",
+        "workspace_to_project": "부서 검색",
+        "project_to_all": "부서 및 팀스페이스 검색",
+        "project_to_project": "부서 검색",
+        "project_to_all_with_wiki": "위키 컬렉션, 부서 및 팀스페이스 검색",
+        "project_to_project_with_wiki": "위키 컬렉션 및 부서 검색"
       },
       "toasts": {
         "success": {

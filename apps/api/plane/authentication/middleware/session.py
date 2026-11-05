@@ -54,7 +54,13 @@ class SessionMiddleware(MiddlewareMixin):
         else:
             if accessed:
                 patch_vary_headers(response, ("Cookie",))
-            if (modified or settings.SESSION_SAVE_EVERY_REQUEST) and not empty:
+            # Paradise (5 Nov 2026): sesi God Mode MENGGESER. Dulu habis tepat
+            # ADMIN_SESSION_COOKIE_AGE sesudah login walau dipakai terus, jadi
+            # seretan di papan Organization tiba-tiba gagal simpan (401) di tengah
+            # kerja. Kini tiap permintaan admin yang berhasil memperpanjangnya;
+            # sesi baru habis sesudah selama itu TIDAK dipakai.
+            geser_admin = is_admin_path and response.status_code < 400
+            if (modified or settings.SESSION_SAVE_EVERY_REQUEST or geser_admin) and not empty:
                 if request.session.get_expire_at_browser_close():
                     max_age = None
                     expires = None

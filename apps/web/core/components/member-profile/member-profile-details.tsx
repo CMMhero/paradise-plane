@@ -77,8 +77,8 @@ export const MemberProfileDetails = observer(function MemberProfileDetails({
     .filter((p) => p.departemen || p.divisi)
     .map((p) => ({
       key: `${p.departemen?.id ?? ""}-${p.divisi?.id ?? ""}`,
-      unit: p.departemen ?? p.divisi,
-      parent: p.departemen ? p.divisi : null,
+      division: p.divisi,
+      department: p.departemen,
       levelLabel: TINGKAT_DIKENAL.has(p.tingkat) ? t(`profil_ui.level_${p.tingkat}`) : null,
     }));
 
@@ -86,7 +86,8 @@ export const MemberProfileDetails = observer(function MemberProfileDetails({
     <div className={cn("flex flex-col gap-3", className)}>
       <MemberProfileFields
         labels={{
-          placement: t("profil_ui.placement"),
+          placement: t("profil_ui.org_placement"),
+          morePlacements: (count) => t("profil_ui.more_placements", { count }),
           email: t("profil_ui.email"),
           phoneExtension: t("profil_ui.phone_extension"),
           notSet: t("profil_ui.not_set"),

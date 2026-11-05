@@ -25,7 +25,6 @@ import { Badge } from "@plane/propel/badge";
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
-  InstanceDivisiMemberService,
   InstanceHierarkiService,
   InstanceMemberService,
   InstanceWorkspaceService,
@@ -38,19 +37,17 @@ import {
   type TPilihanDepartemen,
   type TPilihanDivisi,
 } from "@plane/services";
-import { CustomSearchSelect, CustomSelect, Input } from "@plane/ui";
+import { CustomSelect, Input } from "@plane/ui";
 // components
 import { EModalWidth, Field, Panel, ParadiseModal, PersonAvatar } from "@/components/common/paradise-ui";
 import { UnsavedIndicator, useUnsavedChanges } from "@/components/common/unsaved-changes";
 // local
 import { cocokKonfirmasiGrant, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
 import { PERAN_DEFAULT } from "./constants";
-import { DivisiPicker } from "./divisi-picker";
 import { PreferensiMember, useMemberPreferences } from "./preferensi";
 
 const memberService = new InstanceMemberService();
 const hierarkiService = new InstanceHierarkiService();
-const divisiService = new InstanceDivisiMemberService();
 const workspaceService = new InstanceWorkspaceService();
 
 /** Nilai dikirim ke backend. Tanpa "belum diisi": jabatan kosong = staf. */
@@ -60,12 +57,6 @@ const pilihanTingkat = (s: TGodmodeStrings): { value: string; label: string }[] 
   { value: String(TINGKAT_MANAGER), label: s.editor.position_manager },
   { value: String(TINGKAT_DIREKTUR), label: s.editor.position_director },
 ];
-
-/** Peran project dari jabatan. Bukan pilihan — turunan aturan. */
-/** True when two id lists differ as sets (order ignored). */
-const himpunanBeda = (a: string[], b: string[]) => a.length !== b.length || a.some((x) => !b.includes(x));
-
-const peranDivisi = (tingkat: number | null): number => (tingkat !== null && tingkat >= TINGKAT_SUPERVISOR ? 20 : 15);
 
 const pesanGagal = (err: unknown, fallback: string): string => {
   const pesan = (err as { error?: string } | undefined)?.error;
@@ -84,23 +75,17 @@ type Props = {
   hierarki:
     | {
         tingkat: number | null;
-        divisi: string[];
-        divisi_diawasi: string[];
         departemen_id?: string | null;
         divisi_id?: string | null;
         departemen_ids?: string[];
         divisi_ids?: string[];
+        /** KEP-93: peran per departemen (Staf/Supervisor). */
+        peran_departemen?: Record<string, number>;
       }
     | undefined;
   /** Pilihan penempatan KEP-29. Kosong = workspace belum memakai struktur divisi/departemen. */
   pilihanDepartemen?: TPilihanDepartemen[];
   pilihanDivisi?: TPilihanDivisi[];
-  /** Identifier divisi (urutan backend). */
-  daftarDivisi: string[];
-  /** Identifier → UUID project. */
-  petaDivisi: Record<string, string>;
-  /** Identifier → nama tampil ("ACC" → "Accounting"). Aditif, boleh kosong. */
-  namaDivisi?: Record<string, string>;
   onSelesai: () => Promise<unknown>;
   onTutup: () => void;
   /** Cabut Super Admin (PATCH false). Grant ditangani internal (butuh konfirmasi ketik). */
@@ -108,16 +93,12 @@ type Props = {
   sibukSuperAdmin?: boolean;
 };
 
-const NAMA_DIVISI_KOSONG: Record<string, string> = {};
 const DEPARTEMEN_KOSONG: TPilihanDepartemen[] = [];
 const DIVISI_KOSONG: TPilihanDivisi[] = [];
 
 export function MemberEditor({
   member,
   hierarki,
-  daftarDivisi,
-  petaDivisi,
-  namaDivisi = NAMA_DIVISI_KOSONG,
   pilihanDepartemen = DEPARTEMEN_KOSONG,
   pilihanDivisi = DIVISI_KOSONG,
   onSelesai,
@@ -136,22 +117,12 @@ export function MemberEditor({
   const [password, setPassword] = useState("");
   // Workspace tempat ia anggota sekarang; "" = belum jadi anggota mana pun.
   const [wsSlug, setWsSlug] = useState(member.workspace_slug ?? "");
-  // --- jabatan + pengawasan + divisi (initial dari hierarki kalau ada) ---
-  // Jabatan kosong dianggap staf; tersimpan sebagai staf saat Simpan.
+  // --- jabatan (initial dari hierarki kalau ada) ---
+  // Jabatan kosong dianggap staf; tersimpan sebagai staf saat Simpan. Penempatan
+  // TIDAK diubah di sini (KEP-93): papan Organization yang mengaturnya, panel ini
+  // hanya menampilkannya. "Other project access" dan "Supervised divisions"
+  // dibuang: akses datang dari penempatan, direktur/Super Admin dari aturannya.
   const [tingkat, setTingkat] = useState<string>(String(hierarki?.tingkat ?? TINGKAT_MEMBER));
-  const [awasi, setAwasi] = useState<string[]>(hierarki ? [...hierarki.divisi_diawasi] : []);
-  // Penempatan (KEP-76): satu daftar, menambah tidak pernah memindahkan.
-  const depAwal = hierarki?.departemen_ids ?? (hierarki?.departemen_id ? [hierarki.departemen_id] : []);
-  const divAwal = hierarki?.divisi_ids ?? (hierarki?.divisi_id ? [hierarki.divisi_id] : []);
-  const [departemenIds, setDepartemenIds] = useState<string[]>(depAwal);
-  const [divisiIds, setDivisiIds] = useState<string[]>(divAwal);
-  // Divisi hanya dipimpin manager ke atas: di bawahnya yang dikirim kosong.
-  const divisiDikirim = Number(tingkat) >= TINGKAT_MANAGER ? divisiIds : [];
-  // Project yang sudah otomatis dari penempatan tidak ditampilkan sebagai
-  // "akses lain": mencentangnya tidak berarti apa-apa (sinkron hierarki menang).
-  const otomatisAwal = projectOtomatis(pilihanDepartemen, depAwal, divAwal, hierarki?.tingkat ?? null);
-  const ekstraAwal = hierarki ? hierarki.divisi.filter((d) => !otomatisAwal.has(d)) : [];
-  const [divisi, setDivisi] = useState<string[]>(ekstraAwal);
   const [sibuk, setSibuk] = useState(false);
   const [frasa, setFrasa] = useState("");
   const [sibukGrant, setSibukGrant] = useState(false);
@@ -220,33 +191,8 @@ export function MemberEditor({
       if (prefBerubah) await memberService.ubahPreferensi(member.id, prefBerubah);
       if (hierarki !== undefined) {
         const tingkatBaru = Number(tingkat);
-        const tingkatBerubah = tingkatBaru !== hierarki.tingkat;
-        const pengawasanBerubah =
-          awasi.length !== hierarki.divisi_diawasi.length || awasi.some((d) => !hierarki.divisi_diawasi.includes(d));
-        const divisiBerubah = himpunanBeda(divisi, ekstraAwal);
-        const departemenBerubah = himpunanBeda(departemenIds, depAwal);
-        const divisiIdBerubah = himpunanBeda(divisiDikirim, divAwal);
-        if (tingkatBerubah || pengawasanBerubah || departemenBerubah || divisiIdBerubah) {
-          // `pengawasan` hanya dikirim kalau diubah: tidak-dikirim = jangan
-          // sentuh, dikirim kosong = cabut semua (kontrak endpoint). Penempatan
-          // ikut panggilan yang sama: satu simpan = satu sinkron akses di server.
-          await hierarkiService.setel({
-            member_id: member.id,
-            ...(tingkatBerubah ? { tingkat: tingkatBaru } : {}),
-            ...(departemenBerubah ? { departemen_ids: departemenIds } : {}),
-            ...(divisiIdBerubah ? { divisi_ids: divisiDikirim } : {}),
-            ...(pengawasanBerubah
-              ? { pengawasan: awasi.map((d) => petaDivisi[d]).filter((id): id is string => typeof id === "string") }
-              : {}),
-          });
-        }
-        if (divisiBerubah) {
-          const peranTarget = peranDivisi(tingkatBaru);
-          await divisiService.ganti(
-            member.id,
-            divisi.map((d) => ({ project_id: petaDivisi[d], role: peranTarget })).filter((b) => b.project_id)
-          );
-        }
+        if (tingkatBaru !== hierarki.tingkat)
+          await hierarkiService.setel({ member_id: member.id, tingkat: tingkatBaru });
       }
       await onSelesai();
       onTutup();
@@ -256,13 +202,8 @@ export function MemberEditor({
         type: TOAST_TYPE.SUCCESS,
         title: s.editor.saved_ok,
         message: sesiBerakhir
-          ? fill(s.editor.saved_message_sessions, {
-              name: namaTampil,
-              jabatan: label,
-              n: divisi.length,
-              sesi: sesiBerakhir,
-            })
-          : fill(s.editor.saved_message, { name: namaTampil, jabatan: label, n: divisi.length }),
+          ? fill(s.editor.saved_message_sessions, { name: namaTampil, jabatan: label, sesi: sesiBerakhir })
+          : fill(s.editor.saved_message, { name: namaTampil, jabatan: label }),
       });
     } catch (err) {
       // Berhenti di panggilan pertama yang gagal: tidak ada keadaan setengah
@@ -277,21 +218,7 @@ export function MemberEditor({
     }
   };
 
-  // Pengawasan hanya punya arti untuk supervisor ke atas (calon penyetuju =
-  // tingkat lebih tinggi). Untuk member/belum-diisi rumusnya sudah cukup.
   const strukturAktif = pilihanDivisi.length > 0;
-  // KEP-76: dengan struktur aktif, wewenang supervisor/manager datang dari
-  // penempatan; baris pengawasan hanya berarti untuk direktur (membatasi).
-  const tampilAwasi =
-    hierarki !== undefined &&
-    (strukturAktif ? Number(tingkat) >= TINGKAT_DIREKTUR : Number(tingkat) >= TINGKAT_SUPERVISOR);
-  const opsiAwasi = strukturAktif ? daftarDivisi : daftarDivisi.filter((d) => divisi.includes(d) || awasi.includes(d));
-  const otomatis = projectOtomatis(pilihanDepartemen, departemenIds, divisiDikirim, Number(tingkat));
-  const opsiEkstra = strukturAktif ? daftarDivisi.filter((d) => !otomatis.has(d)) : daftarDivisi;
-  const namaDivisiOrg = Object.fromEntries(pilihanDivisi.map((v) => [v.id, v.nama]));
-  const divisiDilepas = Number(tingkat) < TINGKAT_MANAGER ? divAwal.map((id) => namaDivisiOrg[id] ?? id) : [];
-  const masuk = hierarki === undefined ? [] : divisi.filter((d) => !ekstraAwal.includes(d));
-  const keluar = hierarki === undefined ? [] : ekstraAwal.filter((d) => !divisi.includes(d));
   const labelPeran: Record<number, string> = {
     20: s.members.role_admin,
     15: s.members.role_member,
@@ -312,12 +239,7 @@ export function MemberEditor({
     wsSlug !== (member.workspace_slug ?? "") ||
     password !== "" ||
     pref.perubahan() !== null ||
-    (hierarki !== undefined &&
-      (Number(tingkat) !== (hierarki.tingkat ?? TINGKAT_MEMBER) ||
-        himpunanBeda(awasi, hierarki.divisi_diawasi) ||
-        himpunanBeda(divisi, ekstraAwal) ||
-        himpunanBeda(departemenIds, depAwal) ||
-        himpunanBeda(divisiDikirim, divAwal)));
+    (hierarki !== undefined && Number(tingkat) !== (hierarki.tingkat ?? TINGKAT_MEMBER));
   useUnsavedChanges({
     isDirty,
     isSaving: sibuk,
@@ -443,53 +365,12 @@ export function MemberEditor({
               </Field>
 
               {strukturAktif && (
-                <Penempatan
+                <PenempatanBaca
                   tingkat={Number(tingkat)}
-                  departemenIds={departemenIds}
-                  divisiIds={divisiIds}
-                  onUbah={(dep, div) => {
-                    setDepartemenIds(dep);
-                    setDivisiIds(div);
-                  }}
+                  hierarki={hierarki}
                   pilihanDepartemen={pilihanDepartemen}
                   pilihanDivisi={pilihanDivisi}
-                  divisiDilepas={divisiDilepas}
                 />
-              )}
-
-              <Field
-                className="sm:col-span-2"
-                label={
-                  strukturAktif
-                    ? fill(s.editor.extra_projects, { n: divisi.length })
-                    : fill(s.editor.divisions, { n: divisi.length })
-                }
-                hint={
-                  strukturAktif && masuk.length === 0 && keluar.length === 0
-                    ? s.editor.extra_projects_note
-                    : masuk.length > 0 || keluar.length > 0
-                      ? [
-                          masuk.length > 0 ? fill(s.editor.joined, { list: masuk.join(", ") }) : "",
-                          keluar.length > 0 ? fill(s.editor.left, { list: keluar.join(", ") }) : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")
-                      : undefined
-                }
-              >
-                <DivisiPicker opsi={opsiEkstra} dipilih={divisi} onUbah={setDivisi} nama={namaDivisi} />
-              </Field>
-
-              {tampilAwasi && (
-                <Field className="sm:col-span-2" label={s.editor.supervised} hint={s.editor.supervised_note}>
-                  <DivisiPicker
-                    opsi={opsiAwasi}
-                    dipilih={awasi}
-                    onUbah={setAwasi}
-                    nama={namaDivisi}
-                    placeholder={s.editor.supervised_empty}
-                  />
-                </Field>
               )}
             </div>
           )}
@@ -571,129 +452,68 @@ export function MemberEditor({
   );
 }
 
-/** Identifier project yang otomatis didapat dari penempatan (departemen + divisi untuk manager). */
-function projectOtomatis(
-  pilihan: TPilihanDepartemen[],
-  departemenIds: string[],
-  divisiIds: string[],
-  tingkat: number | null
-): Set<string> {
-  const hasil = new Set<string>();
-  const pimpin = tingkat !== null && tingkat >= TINGKAT_MANAGER;
-  for (const d of pilihan) {
-    if (departemenIds.includes(d.id) || (pimpin && divisiIds.includes(d.divisi_id))) {
-      for (const p of d.projects ?? []) hasil.add(p);
-    }
-  }
-  return hasil;
-}
-
-const KODE_DEP = "dep:";
-const KODE_DIV = "div:";
-
 /**
- * Satu daftar penempatan (KEP-76): departemen untuk semua jenjang, divisi untuk
- * manager ke atas. Menambah tidak pernah memindahkan; mencabut = hapus centang.
- * Akses project mengikuti otomatis di server sesudah Simpan.
+ * Penempatan orang ini, hanya-baca (KEP-93, 5 Nov 2026): tiap departemen dengan
+ * perannya di sana, tiap divisi yang ia pimpin. Diubah lewat papan Organization,
+ * jadi tidak ada dua tempat yang bisa saling menimpa.
  */
-function Penempatan({
+function PenempatanBaca({
   tingkat,
-  departemenIds,
-  divisiIds,
-  onUbah,
+  hierarki,
   pilihanDepartemen,
   pilihanDivisi,
-  divisiDilepas,
 }: {
   tingkat: number;
-  departemenIds: string[];
-  divisiIds: string[];
-  onUbah: (departemenIds: string[], divisiIds: string[]) => void;
+  hierarki: NonNullable<Props["hierarki"]>;
   pilihanDepartemen: TPilihanDepartemen[];
   pilihanDivisi: TPilihanDivisi[];
-  divisiDilepas: string[];
 }) {
   const { s, fill } = useGodmodeStrings();
-  if (tingkat >= TINGKAT_DIREKTUR) {
-    return (
-      <Field label={s.editor.placement}>
-        <p className="rounded-card border border-subtle bg-layer-2 px-3 py-2 text-12 text-secondary">
-          {s.editor.director_note}
-        </p>
-      </Field>
-    );
-  }
-  const pimpin = tingkat >= TINGKAT_MANAGER;
+  if (tingkat >= TINGKAT_DIREKTUR) return null;
   const namaDivisi = Object.fromEntries(pilihanDivisi.map((v) => [v.id, v.nama]));
-  const namaDep = Object.fromEntries(pilihanDepartemen.map((d) => [d.id, d.nama]));
-  const dipilih = [
-    ...(pimpin ? divisiIds.map((id) => KODE_DIV + id) : []),
-    ...departemenIds.map((id) => KODE_DEP + id),
+  const depById = Object.fromEntries(pilihanDepartemen.map((d) => [d.id, d]));
+  const deps = hierarki.departemen_ids ?? (hierarki.departemen_id ? [hierarki.departemen_id] : []);
+  const divs =
+    (hierarki.tingkat ?? TINGKAT_MEMBER) >= TINGKAT_MANAGER
+      ? (hierarki.divisi_ids ?? (hierarki.divisi_id ? [hierarki.divisi_id] : []))
+      : [];
+  const peran = hierarki.peran_departemen ?? {};
+  const baris = [
+    ...divs.map((id) => ({
+      id: `div:${id}`,
+      tempat: fill(s.org.div_of, { div: namaDivisi[id] ?? "" }),
+      induk: undefined as string | undefined,
+      peran: s.editor.position_manager,
+    })),
+    ...deps.map((id) => ({
+      id: `dep:${id}`,
+      tempat: depById[id]?.nama ?? "",
+      induk: namaDivisi[depById[id]?.divisi_id ?? ""],
+      peran:
+        (peran[id] ?? Math.min(hierarki.tingkat ?? TINGKAT_MEMBER, TINGKAT_SUPERVISOR)) >= TINGKAT_SUPERVISOR
+          ? s.editor.position_supervisor
+          : s.editor.position_member,
+    })),
   ];
-  const label = (kode: string) =>
-    kode.startsWith(KODE_DIV)
-      ? fill(s.org.div_of, { div: namaDivisi[kode.slice(KODE_DIV.length)] ?? "" })
-      : (namaDep[kode.slice(KODE_DEP.length)] ?? "");
-  const ringkas =
-    dipilih.length === 0 ? (
-      <span className="text-placeholder">{s.editor.not_placed}</span>
-    ) : dipilih.length <= 2 ? (
-      dipilih.map(label).join(", ")
-    ) : (
-      fill(s.picker.chosen_count, { n: dipilih.length })
-    );
-  const catatan = pimpin
-    ? s.editor.placement_manager_note
-    : tingkat >= TINGKAT_SUPERVISOR
-      ? s.editor.placement_supervisor_note
-      : s.editor.placement_staff_note;
-  const opsiDivisi = pimpin
-    ? pilihanDivisi.map((v) => ({
-        value: KODE_DIV + v.id,
-        query: `${v.nama} ${v.kode} ${s.editor.placement_group_divisions}`,
-        content: (
-          <span className="flex w-full items-center justify-between gap-2">
-            <span className="truncate">{fill(s.org.div_of, { div: v.nama })}</span>
-            <span className="shrink-0 text-11 text-tertiary">{s.editor.placement_group_divisions}</span>
-          </span>
-        ),
-      }))
-    : [];
-  const opsiDepartemen = pilihanDepartemen.map((d) => ({
-    value: KODE_DEP + d.id,
-    query: `${d.nama} ${d.kode} ${namaDivisi[d.divisi_id] ?? ""}`,
-    content: (
-      <span className="flex w-full items-center justify-between gap-2">
-        <span className="min-w-0 truncate">
-          {d.nama} <span className="text-11 text-tertiary">{d.kode}</span>
-        </span>
-        <span className="shrink-0 text-11 text-tertiary">{namaDivisi[d.divisi_id]}</span>
-      </span>
-    ),
-  }));
-  const ubah = (kode: string[]) => {
-    const dep = kode.filter((k) => k.startsWith(KODE_DEP)).map((k) => k.slice(KODE_DEP.length));
-    const div = kode.filter((k) => k.startsWith(KODE_DIV)).map((k) => k.slice(KODE_DIV.length));
-    // Divisi lama tetap di state selama jenjang di bawah Manager: kembali ke
-    // Manager sebelum Simpan mengembalikannya. Yang dikirim disaring pemanggil.
-    onUbah(dep, pimpin ? div : divisiIds);
-  };
-  const hint =
-    divisiDilepas.length > 0 ? fill(s.editor.placement_divisions_dropped, { list: divisiDilepas.join(", ") }) : catatan;
   return (
-    <Field label={s.editor.placement} hint={hint}>
-      <CustomSearchSelect
-        multiple
-        value={dipilih}
-        onChange={(v: string[]) => ubah(v)}
-        label={<span className="truncate">{ringkas}</span>}
-        buttonClassName="w-full"
-        className="w-full"
-        input
-        maxHeight="lg"
-        noResultsMessage={s.picker.empty}
-        options={[...opsiDivisi, ...opsiDepartemen]}
-      />
+    <Field className="sm:col-span-2" label={s.editor.placement} hint={s.editor.placement_readonly_note}>
+      {baris.length === 0 ? (
+        <p className="rounded-card border border-subtle bg-layer-2 px-3 py-2 text-12 text-placeholder">
+          {s.editor.not_placed}
+        </p>
+      ) : (
+        <ul className="divide-y divide-subtle rounded-card border border-subtle bg-layer-2">
+          {baris.map((b) => (
+            <li key={b.id} className="flex items-center justify-between gap-3 px-3 py-2 text-12">
+              <span className="min-w-0 truncate text-primary">
+                {b.tempat}
+                {b.induk ? <span className="ml-1.5 text-11 text-tertiary">{b.induk}</span> : null}
+              </span>
+              <span className="shrink-0 text-11 text-secondary">{b.peran}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </Field>
   );
 }

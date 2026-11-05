@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "プロジェクトIDを入力",
+      "enter_project_id": "部署IDを入力",
       "please_select_a_timezone": "タイムゾーンを選択してください",
       "archive_project": {
-        "title": "プロジェクトをアーカイブ",
-        "description": "プロジェクトをアーカイブすると、サイドナビゲーションから非表示になりますが、プロジェクトページからアクセスすることはできます。プロジェクトを復元または削除することもできます。",
-        "button": "プロジェクトをアーカイブ"
+        "title": "部署をアーカイブ",
+        "description": "部署をアーカイブすると、サイドナビゲーションから非表示になりますが、部署ページからアクセスすることはできます。部署を復元または削除することもできます。",
+        "button": "部署をアーカイブ"
       },
       "delete_project": {
-        "title": "プロジェクトを削除",
-        "description": "プロジェクトを削除すると、そのプロジェクト内のすべてのデータとリソースが永久に削除され、復元できなくなります。",
-        "button": "プロジェクトを削除"
+        "title": "部署を削除",
+        "description": "部署を削除すると、その部署内のすべてのデータとリソースが永久に削除され、復元できなくなります。",
+        "button": "部署を削除"
       },
       "toast": {
-        "success": "プロジェクトが正常に更新されました",
-        "error": "プロジェクトを更新できませんでした。もう一度お試しください。"
+        "success": "部署が正常に更新されました",
+        "error": "部署を更新できませんでした。もう一度お試しください。"
       }
     },
     "members": {
       "label": "メンバー",
-      "project_lead": "プロジェクトリーダー",
-      "project_lead_description": "プロジェクトのプロジェクトリーダーを選択してください。",
+      "project_lead": "部署リーダー",
+      "project_lead_description": "部署のリーダーを選択してください。",
       "default_assignee": "デフォルトの担当者",
-      "default_assignee_description": "プロジェクトのデフォルトの担当者を選択してください。",
-      "project_subscribers": "プロジェクトの購読者",
-      "project_subscribers_description": "このプロジェクトの通知を受け取るメンバーを選択してください。",
+      "default_assignee_description": "部署のデフォルトの担当者を選択してください。",
+      "project_subscribers": "部署の購読者",
+      "project_subscribers_description": "この部署の通知を受け取るメンバーを選択してください。",
       "guest_super_permissions": {
         "title": "ゲストユーザーにすべての作業項目の閲覧権限を付与:",
-        "sub_heading": "これにより、ゲストはプロジェクトのすべての作業項目を閲覧できるようになります。"
+        "sub_heading": "これにより、ゲストは部署のすべての作業項目を閲覧できるようになります。"
       },
       "invite_members": {
         "title": "メンバーを招待",
-        "sub_heading": "プロジェクトに参加するメンバーを招待します。",
+        "sub_heading": "部署に参加するメンバーを招待します。",
         "select_co_worker": "共同作業者を選択"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "見積もり",
       "description": "チームの複雑さと作業負荷を伝えるのに役立ちます。",
       "label": "見積もり",
-      "title": "プロジェクトの見積もりを有効にする",
+      "title": "部署の見積もりを有効にする",
       "enable_description": "チームの複雑さと作業負荷を伝えるのに役立ちます。",
       "no_estimate": "見積もりなし",
       "new": "新しい見積もりシステム",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "見積もりを更新",
-            "message": "プロジェクトの見積もりが更新されました。"
+            "message": "部署の見積もりが更新されました。"
           },
           "error": {
             "title": "見積もり更新に失敗",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "見積もりを並べ替えました",
-            "message": "プロジェクトの見積もりが並べ替えられました。"
+            "message": "部署の見積もりが並べ替えられました。"
           },
           "error": {
             "title": "見積もりの並べ替えに失敗",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "自動化",
       "heading": "自動化",
-      "description": "プロジェクト管理ワークフローを効率化し、手動タスクを削減するために自動化アクションを設定します。",
+      "description": "部署の管理ワークフローを効率化し、手動タスクを削減するために自動化アクションを設定します。",
       "auto-archive": {
         "title": "完了した作業項目を自動的にアーカイブ",
         "description": "Paradise Task Trackerは完了またはキャンセルされた作業項目を自動的にアーカイブします。",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "ラベルがまだありません",
-        "description": "プロジェクトの作業項目を整理してフィルタリングするためのラベルを作成します。"
+        "description": "部署の作業項目を整理してフィルタリングするためのラベルを作成します。"
       },
       "estimates": {
         "title": "見積もりシステムがまだありません",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "設定された統合がありません",
-        "description": "GitHubやその他の統合を設定して、プロジェクトの作業項目を同期します。"
+        "description": "GitHubやその他の統合を設定して、部署の作業項目を同期します。"
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "ワークフロー",
-      "description": "作業項目のトランジションを自動化し、タスクがプロジェクトのパイプラインを移動する方法を制御するルールを設定します。",
+      "description": "作業項目のトランジションを自動化し、タスクが部署のパイプラインを移動する方法を制御するルールを設定します。",
       "add_button": "新しいワークフローを追加",
       "search": "ワークフローを検索",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "すべてのステータスが使用中です",
-          "description": "このプロジェクトに定義されたすべてのステータスは、現在のワークフローにすでに含まれています。"
+          "description": "この部署に定義されたすべてのステータスは、現在のワークフローにすでに含まれています。"
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "サイクル",
         "short_title": "サイクル",
-        "description": "このプロジェクト独自のリズムとペースに適応する柔軟な期間で作業をスケジュールします。",
+        "description": "この部署独自のリズムとペースに適応する柔軟な期間で作業をスケジュールします。",
         "toggle_title": "サイクルを有効にする",
         "toggle_description": "集中的な期間で作業を計画します。"
       },
       "modules": {
         "title": "モジュール",
         "short_title": "モジュール",
-        "description": "専任のリーダーと担当者を持つサブプロジェクトに作業を整理します。",
+        "description": "専任のリーダーと担当者を持つサブ部署に作業を整理します。",
         "toggle_title": "モジュールを有効にする",
-        "toggle_description": "プロジェクトメンバーはモジュールを作成および編集できるようになります。"
+        "toggle_description": "部署メンバーはモジュールを作成および編集できるようになります。"
       },
       "views": {
         "title": "ビュー",
         "short_title": "ビュー",
         "description": "カスタムソート、フィルター、表示オプションを保存したり、チームと共有したりします。",
         "toggle_title": "ビューを有効にする",
-        "toggle_description": "プロジェクトメンバーはビューを作成および編集できるようになります。"
+        "toggle_description": "部署メンバーはビューを作成および編集できるようになります。"
       },
       "pages": {
         "title": "ページ",
         "short_title": "ページ",
         "description": "自由形式のコンテンツを作成および編集します：メモ、ドキュメント、何でも。",
         "toggle_title": "ページを有効にする",
-        "toggle_description": "プロジェクトメンバーはページを作成および編集できるようになります。"
+        "toggle_description": "部署メンバーはページを作成および編集できるようになります。"
       },
       "intake": {
         "intake_responsibility": "受付責任",
@@ -358,9 +358,9 @@
         "short_title": "受付",
         "description": "ワークフローを中断することなく、非メンバーがバグ、フィードバック、提案を共有できるようにします。",
         "toggle_title": "受付を有効にする",
-        "toggle_description": "プロジェクトメンバーがアプリ内で受付リクエストを作成できるようにします。",
-        "toggle_tooltip_on": "プロジェクト管理者に有効化を依頼してください。",
-        "toggle_tooltip_off": "プロジェクト管理者に無効化を依頼してください。",
+        "toggle_description": "部署メンバーがアプリ内で受付リクエストを作成できるようにします。",
+        "toggle_tooltip_on": "部署管理者に有効化を依頼してください。",
+        "toggle_tooltip_off": "部署管理者に無効化を依頼してください。",
         "notify_assignee": {
           "title": "担当者に通知",
           "description": "新しい受付リクエストの場合、デフォルトの担当者が通知を通じてアラートを受け取ります"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "時間追跡",
         "short_title": "時間追跡",
-        "description": "作業項目やプロジェクトに費やした時間を記録します。",
+        "description": "作業項目や部署に費やした時間を記録します。",
         "toggle_title": "時間追跡を有効にする",
-        "toggle_description": "プロジェクトメンバーは作業時間を記録できるようになります。"
+        "toggle_description": "部署メンバーは作業時間を記録できるようになります。"
       },
       "milestones": {
         "title": "マイルストーン",
@@ -425,18 +425,18 @@
         "toggle_description": "マイルストーンの期限ごとに作業項目を整理します。"
       },
       "toasts": {
-        "loading": "プロジェクト機能を更新中...",
-        "success": "プロジェクト機能が正常に更新されました。",
-        "error": "プロジェクト機能の更新中に問題が発生しました。もう一度お試しください。"
+        "loading": "部署機能を更新中...",
+        "success": "部署機能が正常に更新されました。",
+        "error": "部署機能の更新中に問題が発生しました。もう一度お試しください。"
       }
     },
     "project_updates": {
-      "heading": "プロジェクトの更新",
-      "description": "このプロジェクトの統合された追跡と進捗監視"
+      "heading": "部署の更新",
+      "description": "この部署の統合された追跡と進捗監視"
     },
     "templates": {
       "heading": "テンプレート",
-      "description": "テンプレートを使用すると、プロジェクト、作業項目、ページの作成にかかる時間を80%短縮できます。"
+      "description": "テンプレートを使用すると、部署、作業項目、ページの作成にかかる時間を80%短縮できます。"
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "ごみ箱",
-      "description": "削除された項目は完全に削除される前にここに入ります。プロジェクト管理者は復元または完全に削除できます。"
+      "description": "削除された項目は完全に削除される前にここに入ります。部署管理者は復元または完全に削除できます。"
     }
   }
 }

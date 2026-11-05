@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Pouze správci projektu mohou odkládat/zrušit odložení pracovních položek",
-      "accept_permission": "Pouze správci projektu mohou přijímat pracovní položky",
-      "decline_permission": "Pouze správci projektu mohou odmítnout pracovní položky"
+      "snooze_permission": "Pouze správci oddělení mohou odkládat/zrušit odložení pracovních položek",
+      "accept_permission": "Pouze správci oddělení mohou přijímat pracovní položky",
+      "decline_permission": "Pouze správci oddělení mohou odmítnout pracovní položky"
     },
     "actions": {
       "accept": "Přijmout",
@@ -47,7 +47,7 @@
       "delete": "Smazat",
       "open": "Otevřít pracovní položku",
       "mark_as_duplicate": "Označit jako duplikát",
-      "move": "Přesunout {value} do pracovních položek projektu"
+      "move": "Přesunout {value} do pracovních položek oddělení"
     },
     "source": {
       "in-app": "v aplikaci"

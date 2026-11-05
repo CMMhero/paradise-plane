@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Šablóny",
-      "description": "Ušetríte 80% času stráveného vytváraním projektov, pracovných položiek a stránok, keď použijete šablóny.",
-      "new_project_template": "Nová šablóna projektu",
+      "description": "Ušetríte 80% času stráveného vytváraním oddelení, pracovných položiek a stránok, keď použijete šablóny.",
+      "new_project_template": "Nová šablóna oddelenia",
       "new_work_item_template": "Nová šablóna pracovnej položky",
       "new_page_template": "Nová šablóna stránky",
       "options": {
         "project": {
-          "label": "Šablóny projektov"
+          "label": "Šablóny oddelení"
         },
         "work_item": {
           "label": "Šablóny pracovných položiek"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Vytvoriť šablónu",
         "no_permission": {
-          "project": "Kontaktujte administrátora projektu na vytvorenie šablón",
+          "project": "Kontaktujte administrátora oddelenia na vytvorenie šablón",
           "workspace": "Kontaktujte administrátora workspace na vytvorenie šablón"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Odvodené od workspace"
         },
         "project": {
-          "info": "Odvodené od projektu"
+          "info": "Odvodené od oddelenia"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Pomenujte svoju šablónu projektu.",
+              "placeholder": "Pomenujte svoju šablónu oddelenia.",
               "validation": {
                 "required": "Názov šablóny je povinný",
                 "maxLength": "Názov šablóny by nemal presiahnuť 255 znakov"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Pomenujte svoj projekt.",
+            "placeholder": "Pomenujte svoje oddelenie.",
             "validation": {
-              "required": "Názov projektu je povinný",
-              "maxLength": "Názov projektu by nemal presiahnuť 255 znakov"
+              "required": "Názov oddelenia je povinný",
+              "maxLength": "Názov oddelenia by nemal presiahnuť 255 znakov"
             }
           },
           "description": {
-            "placeholder": "Popíšte účel a ciele tohto projektu."
+            "placeholder": "Popíšte účel a ciele tohto oddelenia."
           },
           "button": {
-            "create": "Vytvoriť šablónu projektu",
-            "update": "Aktualizovať šablónu projektu"
+            "create": "Vytvoriť šablónu oddelenia",
+            "update": "Aktualizovať šablónu oddelenia"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Krátky popis",
-            "placeholder": "Táto šablóna je skvelá pre projektových manažérov, ktorí riadia niekoľko projektov súčasne.",
+            "placeholder": "Táto šablóna je skvelá pre projektových manažérov, ktorí riadia niekoľko oddelení súčasne.",
             "validation": {
               "required": "Krátky popis je povinný"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Šablóny",
-        "description": "S projektmi, pracovnými položkami a stránkami v Paradise Task Tracker, nemusíte vytvárať projekty od začiatku alebo nastavovať vlastnosti pracovných položiek ručne.",
+        "description": "S oddeleniami, pracovnými položkami a stránkami v Paradise Task Tracker, nemusíte vytvárať oddelenia od začiatku alebo nastavovať vlastnosti pracovných položiek ručne.",
         "sub_description": "Ušetríte 80% času, keď použijete šablóny."
       },
       "no_templates": {
         "button": "Vytvoriť svoju prvú šablónu"
       },
       "no_labels": {
-        "description": "Žiadne štítky ešte neexistujú. Vytvorte štítky na pomoc organizácii a filtrovaniu pracovných položiek v projekte."
+        "description": "Žiadne štítky ešte neexistujú. Vytvorte štítky na pomoc organizácii a filtrovaniu pracovných položiek v oddelení."
       },
       "no_modules": {
-        "description": "Zatiaľ žiadne moduly. Zorganizujte prácu do podprojektov s vyhradenými vedúcimi a priradenými."
+        "description": "Zatiaľ žiadne moduly. Zorganizujte prácu do menších celkov s vyhradenými vedúcimi a priradenými."
       },
       "no_work_items": {
         "description": "Ešte nemáte pracovné položky. Pridajte jednu, aby ste lepšie struktúrovali svoju prácu."
@@ -318,7 +318,7 @@
         "project": "Pridať novú šablónu"
       },
       "label": {
-        "project": "Vybrať šablónu projektu",
+        "project": "Vybrať šablónu oddelenia",
         "page": "Vybrať šablónu"
       },
       "tooltip": {

@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Doar administratorii proiectului pot amâna/dezactiva amânarea activităților",
-      "accept_permission": "Doar administratorii proiectului pot accepta activități",
-      "decline_permission": "Doar administratorii proiectului pot respinge activități"
+      "snooze_permission": "Doar administratorii departamentului pot amâna/dezactiva amânarea activităților",
+      "accept_permission": "Doar administratorii departamentului pot accepta activități",
+      "decline_permission": "Doar administratorii departamentului pot respinge activități"
     },
     "actions": {
       "accept": "Acceptă",
@@ -47,7 +47,7 @@
       "delete": "Șterge",
       "open": "Deschide activitatea",
       "mark_as_duplicate": "Marchează ca duplicat",
-      "move": "Mută {value} în activitățile proiectului"
+      "move": "Mută {value} în activitățile departamentului"
     },
     "source": {
       "in-app": "în aplicație"

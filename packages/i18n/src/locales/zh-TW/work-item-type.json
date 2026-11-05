@@ -4,12 +4,12 @@
     "label_lowercase": "工作項目類型",
     "settings": {
       "description": "自訂並新增您自己的屬性，以符合您團隊的需求。",
-      "cant_delete_default_message": "無法刪除此工作項目類型，因為它已設置為該專案的預設類型。",
+      "cant_delete_default_message": "無法刪除此工作項目類型，因為它已設置為該部門的預設類型。",
       "set_as_default": "設為預設",
       "cant_set_default_inactive_message": "請先啟用此類型再將其設為預設",
       "set_default_confirmation": {
         "title": "設為預設工作項目類型",
-        "description": "將 {name} 設為預設後，它將被匯入到此工作區的所有專案中。所有新工作項目將預設使用此類型。",
+        "description": "將 {name} 設為預設後，它將被匯入到此工作區的所有部門中。所有新工作項目將預設使用此類型。",
         "confirm_button": "設為預設"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "公式有效！回傳 {resultType}（參照了 {count} 個欄位）",
           "error": {
             "empty": "請輸入公式",
-            "missing_context": "缺少工作空間、專案或工作項目類型上下文",
+            "missing_context": "缺少工作空間、部門或工作項目類型上下文",
             "validation_failed": "驗證失敗"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "類型",
         "description": "建立和自訂具有屬性的工作事項類型。",
         "sort_options": {
-          "project_count": "參與專案的數量"
+          "project_count": "參與部門的數量"
         },
         "filter_options": {
           "show_active": "顯示啟用中",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "啟用工作項目類型",
-        "description": "使用工作項目類型為您的工作塑造工作項目。使用圖標、背景和屬性自定義它們，並為此專案配置它們。",
+        "description": "使用工作項目類型為您的工作塑造工作項目。使用圖標、背景和屬性自定義它們，並為此部門配置它們。",
         "primary_button": {
           "text": "啟用"
         },
         "confirmation": {
           "title": "一旦啟用，工作項目類型不能被禁用。",
-          "description": "Paradise Task Tracker的工作項目將成為此專案的默認工作項目類型，並將在此專案中顯示其圖標和背景。",
+          "description": "Paradise Task Tracker的工作項目將成為此部門的默認工作項目類型，並將在此部門中顯示其圖標和背景。",
           "button": {
             "default": "啟用",
             "loading": "設置中"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "獲取專業版以啟用工作項目類型。",
-        "description": "使用工作項目類型為您的工作塑造工作項目。使用圖標、背景和屬性自定義它們，並為此專案配置它們。",
+        "description": "使用工作項目類型為您的工作塑造工作項目。使用圖標、背景和屬性自定義它們，並為此部門配置它們。",
         "primary_button": {
           "text": "獲取專業版"
         }
       },
       "upgrade": {
         "title": "升級以啟用工作項目類型。",
-        "description": "使用工作項目類型為您的工作塑造工作項目。使用圖標、背景和屬性自定義它們，並為此專案配置它們。",
+        "description": "使用工作項目類型為您的工作塑造工作項目。使用圖標、背景和屬性自定義它們，並為此部門配置它們。",
         "primary_button": {
           "text": "升級"
         }

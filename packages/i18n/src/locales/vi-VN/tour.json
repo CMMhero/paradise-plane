@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Chào mừng đến với không gian làm việc của bạn",
-        "description": "Để giúp bạn bắt đầu, chúng tôi đã tạo một Dự án Demo cho bạn. Hãy thêm mục công việc đầu tiên của bạn."
+        "description": "Để giúp bạn bắt đầu, chúng tôi đã tạo một Phòng ban Demo cho bạn. Hãy thêm mục công việc đầu tiên của bạn."
       },
       "step_one": {
         "title": "Nhấp vào \"+ Thêm mục công việc\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Đạt tiến độ với Chu kỳ",
-        "description": "Nhấn Q để tạo Chu kỳ. Đặt tên và thiết lập ngày—chỉ một chu kỳ cho mỗi dự án."
+        "description": "Nhấn Q để tạo Chu kỳ. Đặt tên và thiết lập ngày—chỉ một chu kỳ cho mỗi phòng ban."
       },
       "step_one": {
         "title": "Tạo chu kỳ mới",
-        "description": "Nhấn Q để tạo Chu kỳ. Đặt tên và thiết lập ngày—chỉ một chu kỳ cho mỗi dự án."
+        "description": "Nhấn Q để tạo Chu kỳ. Đặt tên và thiết lập ngày—chỉ một chu kỳ cho mỗi phòng ban."
       },
       "step_two": {
         "title": "Nhấp vào \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Chia dự án của bạn thành các Mô-đun",
-        "description": "Mô-đun là các dự án nhỏ hơn, tập trung giúp người dùng nhóm và tổ chức các mục công việc trong khung thời gian cụ thể."
+        "title": "Chia phòng ban của bạn thành các Mô-đun",
+        "description": "Mô-đun là các đơn vị nhỏ hơn, tập trung giúp người dùng nhóm và tổ chức các mục công việc trong khung thời gian cụ thể."
       },
       "step_one": {
         "title": "Tạo Mô-đun",
-        "description": "Mô-đun là các dự án nhỏ hơn, tập trung giúp người dùng nhóm và tổ chức các mục công việc trong khung thời gian cụ thể."
+        "description": "Mô-đun là các đơn vị nhỏ hơn, tập trung giúp người dùng nhóm và tổ chức các mục công việc trong khung thời gian cụ thể."
       },
       "step_two": {
         "title": "Nhấp vào \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Tài liệu hóa với Trang hỗ trợ AI",
-        "description": "Trang trong Paradise Task Tracker cho phép bạn nắm bắt, tổ chức và cộng tác về thông tin dự án—không cần công cụ bên ngoài."
+        "description": "Trang trong Paradise Task Tracker cho phép bạn nắm bắt, tổ chức và cộng tác về thông tin phòng ban—không cần công cụ bên ngoài."
       },
       "step_one": {
         "title": "Đặt trang thành Công khai hoặc Riêng tư",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Chấp nhận/từ chối yêu cầu đang chờ",
-        "description": "Chấp nhận để chỉnh sửa và di chuyển mục công việc vào dự án của bạn, hoặc từ chối để đánh dấu là Đã hủy."
+        "description": "Chấp nhận để chỉnh sửa và di chuyển mục công việc vào phòng ban của bạn, hoặc từ chối để đánh dấu là Đã hủy."
       },
       "step_three": {
         "title": "Hoãn lại bây giờ",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Tìm bất cứ thứ gì ngay lập tức",
-        "description": "Sử dụng tìm kiếm toàn cầu để nhảy đến nhiệm vụ, dự án, trang và mọi người—mà không rời khỏi luồng của bạn."
+        "description": "Sử dụng tìm kiếm toàn cầu để nhảy đến nhiệm vụ, phòng ban, trang và mọi người—mà không rời khỏi luồng của bạn."
       },
       "step_one": {
         "title": "Kiểm soát các cập nhật",
@@ -148,8 +148,8 @@
       "got_it": "Hiểu rồi"
     },
     "seed_data": {
-      "title": "Đây là dự án demo của bạn",
-      "description": "Dự án cho phép bạn quản lý nhóm, nhiệm vụ và mọi thứ bạn cần để hoàn thành công việc trong không gian làm việc của bạn."
+      "title": "Đây là phòng ban demo của bạn",
+      "description": "Phòng ban cho phép bạn quản lý nhóm, nhiệm vụ và mọi thứ bạn cần để hoàn thành công việc trong không gian làm việc của bạn."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Bắt đầu thiết lập của bạn và xem ý tưởng của bạn trở thành hiện thực nhanh hơn.",
       "checklist_items": {
         "item_1": {
-          "title": "Tạo dự án"
+          "title": "Tạo phòng ban"
         },
         "item_2": {
           "title": "Tạo mục công việc"

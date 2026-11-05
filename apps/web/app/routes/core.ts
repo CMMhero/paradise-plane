@@ -108,6 +108,7 @@ export const coreRoutes: RouteConfigEntry[] = [
           // Segmen statis `materi` didaftarkan LEBIH DULU dari `:folderId`
           // supaya react-router tidak pernah menganggap kata itu sebuah id.
           route(":workspaceSlug/wiki/materi/:assetId", "./(all)/[workspaceSlug]/(projects)/wiki/materi.tsx"),
+          route(":workspaceSlug/wiki/trash", "./(all)/[workspaceSlug]/(projects)/wiki/trash.tsx"),
           route(":workspaceSlug/wiki/:folderId", "./(all)/[workspaceSlug]/(projects)/wiki/folder.tsx"),
         ]),
 

@@ -6,7 +6,10 @@
  */
 
 import { observer } from "mobx-react";
-import { Library } from "lucide-react";
+import { Library, Trash2 } from "lucide-react";
+import { Link, useParams } from "react-router";
+import { useTranslation } from "@plane/i18n";
+import { getButtonStyling } from "@plane/propel/button";
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
@@ -20,6 +23,8 @@ import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
  * ketika bilang Wiki tidak seharusnya terlihat seperti project biasa.
  */
 export const WikiHeader = observer(function WikiHeader() {
+  const { t } = useTranslation();
+  const { workspaceSlug } = useParams();
   return (
     <Header>
       <Header.LeftItem>
@@ -29,6 +34,12 @@ export const WikiHeader = observer(function WikiHeader() {
           />
         </Breadcrumbs>
       </Header.LeftItem>
+      <Header.RightItem>
+        <Link to={`/${workspaceSlug}/wiki/trash`} className={getButtonStyling("secondary", "base")}>
+          <Trash2 className="size-3.5" />
+          {t("wiki_ui.trash.button")}
+        </Link>
+      </Header.RightItem>
     </Header>
   );
 });

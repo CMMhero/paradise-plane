@@ -123,7 +123,7 @@ class DraftIssueCreateSerializer(BaseSerializer):
             _actor = aktor_dari_context(self.context)
             _project = _ProjectHierarki.objects.filter(pk=self.context.get("project_id")).first()
             _tingkat = (
-                tingkat_anggota(_actor.id, _project.workspace_id)
+                tingkat_anggota(_actor.id, _project.workspace_id, _project.id)
                 if (_actor is not None and _project is not None)
                 else None
             )

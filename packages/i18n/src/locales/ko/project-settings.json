@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "프로젝트 ID 입력",
+      "enter_project_id": "부서 ID 입력",
       "please_select_a_timezone": "시간대를 선택하세요",
       "archive_project": {
-        "title": "프로젝트 아카이브",
-        "description": "프로젝트를 아카이브하면 사이드 내비게이션에서 프로젝트가 목록에서 제외되지만 프로젝트 페이지에서 여전히 접근할 수 있습니다. 언제든지 프로젝트를 복원하거나 삭제할 수 있습니다.",
-        "button": "프로젝트 아카이브"
+        "title": "부서 아카이브",
+        "description": "부서를 아카이브하면 사이드 내비게이션에서 부서가 목록에서 제외되지만 부서 페이지에서 여전히 접근할 수 있습니다. 언제든지 부서를 복원하거나 삭제할 수 있습니다.",
+        "button": "부서 아카이브"
       },
       "delete_project": {
-        "title": "프로젝트 삭제",
-        "description": "프로젝트를 삭제하면 해당 프로젝트 내의 모든 데이터와 리소스가 영구적으로 삭제되며 복구할 수 없습니다.",
-        "button": "프로젝트 삭제"
+        "title": "부서 삭제",
+        "description": "부서를 삭제하면 해당 부서 내의 모든 데이터와 리소스가 영구적으로 삭제되며 복구할 수 없습니다.",
+        "button": "부서 삭제"
       },
       "toast": {
-        "success": "프로젝트가 성공적으로 업데이트되었습니다",
-        "error": "프로젝트를 업데이트할 수 없습니다. 다시 시도해주세요."
+        "success": "부서가 성공적으로 업데이트되었습니다",
+        "error": "부서를 업데이트할 수 없습니다. 다시 시도해주세요."
       }
     },
     "members": {
       "label": "멤버",
-      "project_lead": "프로젝트 리드",
-      "project_lead_description": "프로젝트의 프로젝트 리더를 선택하세요.",
+      "project_lead": "부서 리드",
+      "project_lead_description": "부서의 리더를 선택하세요.",
       "default_assignee": "기본 담당자",
-      "default_assignee_description": "프로젝트의 기본 담당자를 선택하세요.",
-      "project_subscribers": "프로젝트 구독자",
-      "project_subscribers_description": "이 프로젝트의 알림을 받을 멤버를 선택하세요.",
+      "default_assignee_description": "부서의 기본 담당자를 선택하세요.",
+      "project_subscribers": "부서 구독자",
+      "project_subscribers_description": "이 부서의 알림을 받을 멤버를 선택하세요.",
       "guest_super_permissions": {
         "title": "게스트 사용자에게 모든 작업 항목에 대한 보기 권한 부여:",
-        "sub_heading": "이렇게 하면 게스트가 모든 프로젝트 작업 항목에 대한 보기 권한을 갖게 됩니다."
+        "sub_heading": "이렇게 하면 게스트가 모든 부서 작업 항목에 대한 보기 권한을 갖게 됩니다."
       },
       "invite_members": {
         "title": "멤버 초대",
-        "sub_heading": "프로젝트에서 작업할 멤버를 초대하세요.",
+        "sub_heading": "부서에서 작업할 멤버를 초대하세요.",
         "select_co_worker": "동료 선택"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "추정",
       "description": "각 작업 항목에 필요한 노력을 추적하고 전달할 수 있는 추정 시스템을 설정하세요.",
       "label": "추정",
-      "title": "프로젝트 추정 활성화",
+      "title": "부서 추정 활성화",
       "enable_description": "팀의 복잡성과 작업량을 전달하는 데 도움이 됩니다.",
       "no_estimate": "추정 없음",
       "new": "새 추정 시스템",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "추정 수정됨",
-            "message": "프로젝트의 추정이 업데이트되었습니다."
+            "message": "부서의 추정이 업데이트되었습니다."
           },
           "error": {
             "title": "추정 수정 실패",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "견적 순서 변경됨",
-            "message": "프로젝트의 견적 순서가 변경되었습니다."
+            "message": "부서의 견적 순서가 변경되었습니다."
           },
           "error": {
             "title": "견적 순서 변경 실패",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "자동화",
       "heading": "자동화",
-      "description": "자동화된 액션을 구성하여 프로젝트 관리 워크플로우를 간소화하고 수동 작업을 줄이세요.",
+      "description": "자동화된 액션을 구성하여 부서 관리 워크플로우를 간소화하고 수동 작업을 줄이세요.",
       "auto-archive": {
         "title": "완료된 작업 항목 자동 보관",
         "description": "Paradise Task Tracker은 완료되거나 취소된 작업 항목을 자동으로 보관합니다.",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "레이블 없음",
-        "description": "프로젝트에서 작업 항목을 구성하고 필터링하는 데 도움이 되는 레이블을 생성하세요."
+        "description": "부서에서 작업 항목을 구성하고 필터링하는 데 도움이 되는 레이블을 생성하세요."
       },
       "estimates": {
         "title": "추정 시스템 없음",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "구성된 인테그레이션 없음",
-        "description": "GitHub 및 기타 인테그레이션을 구성하여 프로젝트 작업 항목을 동기화하세요."
+        "description": "GitHub 및 기타 인테그레이션을 구성하여 부서 작업 항목을 동기화하세요."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "워크플로우",
-      "description": "작업 항목 전환을 자동화하고 태스크가 프로젝트 파이프라인을 이동하는 방식을 제어하는 규칙을 설정하세요.",
+      "description": "작업 항목 전환을 자동화하고 태스크가 부서 파이프라인을 이동하는 방식을 제어하는 규칙을 설정하세요.",
       "add_button": "새 워크플로우 추가",
       "search": "워크플로우 검색",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "모든 상태가 사용 중입니다",
-          "description": "이 프로젝트에 정의된 모든 상태가 이미 현재 워크플로우에 포함되어 있습니다."
+          "description": "이 부서에 정의된 모든 상태가 이미 현재 워크플로우에 포함되어 있습니다."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "사이클",
         "short_title": "사이클",
-        "description": "이 프로젝트의 고유한 리듬과 속도에 적응하는 유연한 기간으로 작업을 예약합니다.",
+        "description": "이 부서의 고유한 리듬과 속도에 적응하는 유연한 기간으로 작업을 예약합니다.",
         "toggle_title": "사이클 활성화",
         "toggle_description": "집중된 기간에 작업을 계획합니다."
       },
       "modules": {
         "title": "모듈",
         "short_title": "모듈",
-        "description": "전담 리더와 담당자가 있는 하위 프로젝트로 작업을 구성합니다.",
+        "description": "전담 리더와 담당자가 있는 하위 단위로 작업을 구성합니다.",
         "toggle_title": "모듈 활성화",
-        "toggle_description": "프로젝트 멤버가 모듈을 생성하고 편집할 수 있습니다."
+        "toggle_description": "부서 멤버가 모듈을 생성하고 편집할 수 있습니다."
       },
       "views": {
         "title": "보기",
         "short_title": "보기",
         "description": "사용자 정의 정렬, 필터 및 표시 옵션을 저장하거나 팀과 공유합니다.",
         "toggle_title": "보기 활성화",
-        "toggle_description": "프로젝트 멤버가 보기를 생성하고 편집할 수 있습니다."
+        "toggle_description": "부서 멤버가 보기를 생성하고 편집할 수 있습니다."
       },
       "pages": {
         "title": "페이지",
         "short_title": "페이지",
         "description": "자유 형식 콘텐츠를 생성하고 편집합니다: 메모, 문서, 무엇이든.",
         "toggle_title": "페이지 활성화",
-        "toggle_description": "프로젝트 멤버가 페이지를 생성하고 편집할 수 있습니다."
+        "toggle_description": "부서 멤버가 페이지를 생성하고 편집할 수 있습니다."
       },
       "intake": {
         "intake_responsibility": "인테이크 책임",
@@ -358,9 +358,9 @@
         "short_title": "접수",
         "description": "워크플로를 방해하지 않고 비회원이 버그, 피드백 및 제안을 공유할 수 있도록 합니다.",
         "toggle_title": "접수 활성화",
-        "toggle_description": "프로젝트 멤버가 앱 내에서 접수 요청을 생성할 수 있도록 허용합니다.",
-        "toggle_tooltip_on": "프로젝트 관리자에게 활성화를 요청하세요.",
-        "toggle_tooltip_off": "프로젝트 관리자에게 비활성화를 요청하세요.",
+        "toggle_description": "부서 멤버가 앱 내에서 접수 요청을 생성할 수 있도록 허용합니다.",
+        "toggle_tooltip_on": "부서 관리자에게 활성화를 요청하세요.",
+        "toggle_tooltip_off": "부서 관리자에게 비활성화를 요청하세요.",
         "notify_assignee": {
           "title": "담당자에게 알림",
           "description": "새로운 인테이크 요청의 경우 기본 담당자가 알림을 통해 알림을 받습니다"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "시간 추적",
         "short_title": "시간 추적",
-        "description": "작업 항목 및 프로젝트에 소요된 시간을 기록합니다.",
+        "description": "작업 항목 및 부서에 소요된 시간을 기록합니다.",
         "toggle_title": "시간 추적 활성화",
-        "toggle_description": "프로젝트 멤버가 작업 시간을 기록할 수 있습니다."
+        "toggle_description": "부서 멤버가 작업 시간을 기록할 수 있습니다."
       },
       "milestones": {
         "title": "마일스톤",
@@ -425,18 +425,18 @@
         "toggle_description": "마일스톤 마감일별로 작업 항목을 구성합니다."
       },
       "toasts": {
-        "loading": "프로젝트 기능 업데이트 중...",
-        "success": "프로젝트 기능이 성공적으로 업데이트되었습니다.",
-        "error": "프로젝트 기능 업데이트 중 문제가 발생했습니다. 다시 시도해 주세요."
+        "loading": "부서 기능 업데이트 중...",
+        "success": "부서 기능이 성공적으로 업데이트되었습니다.",
+        "error": "부서 기능 업데이트 중 문제가 발생했습니다. 다시 시도해 주세요."
       }
     },
     "project_updates": {
-      "heading": "프로젝트 업데이트",
-      "description": "이 프로젝트에 대한 통합된 추적 및 진행 상황 모니터링"
+      "heading": "부서 업데이트",
+      "description": "이 부서에 대한 통합된 추적 및 진행 상황 모니터링"
     },
     "templates": {
       "heading": "템플릿",
-      "description": "템플릿을 사용하면 프로젝트, 작업 항목, 페이지를 생성하는 데 걸리는 시간을 80% 절약할 수 있습니다."
+      "description": "템플릿을 사용하면 부서, 작업 항목, 페이지를 생성하는 데 걸리는 시간을 80% 절약할 수 있습니다."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "휴지통",
-      "description": "삭제된 항목은 완전히 삭제되기 전에 여기로 이동합니다. 프로젝트 관리자는 복원하거나 영구적으로 삭제할 수 있습니다."
+      "description": "삭제된 항목은 완전히 삭제되기 전에 여기로 이동합니다. 부서 관리자는 복원하거나 영구적으로 삭제할 수 있습니다."
     }
   }
 }

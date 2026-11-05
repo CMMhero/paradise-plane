@@ -89,6 +89,39 @@ fi
 
 paradise/bin/healthcheck.sh
 
+# ---------------------------------------------------------------------------
+# Migrasi dan changelog DIBUKTIKAN dari dalam `api`, bukan diandaikan.
+#
+# Exit 0 dari migrator belum berarti skema sama dengan kode yang sekarang
+# jalan: migrator bisa saja memakai image lain, atau container lama yang sudah
+# berhenti lebih dulu dan `docker wait` menjawab kode lamanya. `showmigrations`
+# dijalankan di image `api` yang BARU, jadi `[ ]` di sana berarti ada migrasi
+# yang belum diterapkan. Kalau begitu, diterapkan di sini, lalu dicek ulang.
+#
+# Changelog diterbitkan entrypoint `api` saat start, tapi galatnya DITELAN di
+# sana supaya gunicorn tidak tertahan. Akibatnya changelog yang gagal terbit
+# tidak pernah terlihat. Di sini perintahnya dijalankan sekali lagi
+# (idempoten, dijaga advisory lock), dan galatnya menggagalkan deploy.
+# ---------------------------------------------------------------------------
+echo "== Memeriksa migrasi dari dalam api =="
+belum=$(docker exec api python manage.py showmigrations --plan 2>&1 | grep -c '^\[ \]' || true)
+if [ "$belum" != "0" ]; then
+  echo "Ada $belum migrasi belum diterapkan, menjalankan migrate"
+  docker exec api python manage.py migrate --noinput 2>&1 | tail -15 | sed 's/^/  migrate: /'
+  belum=$(docker exec api python manage.py showmigrations --plan 2>&1 | grep -c '^\[ \]' || true)
+  if [ "$belum" != "0" ]; then
+    echo "MIGRASI GAGAL: masih $belum belum diterapkan"
+    exit 1
+  fi
+fi
+echo "Migrasi lengkap (0 tertunda)."
+
+echo "== Menerbitkan changelog =="
+if ! docker exec api python manage.py terbitkan_changelog 2>&1 | sed 's/^/  /'; then
+  echo "CHANGELOG GAGAL. Lihat: docker exec api python manage.py terbitkan_changelog"
+  exit 1
+fi
+
 # Versi yang benar-benar dilayani, dibaca dari API (register_instance mengambilnya
 # dari apps/api/package.json saat api start). Ini bukti perubahan sudah naik,
 # bukan sekadar container hidup.

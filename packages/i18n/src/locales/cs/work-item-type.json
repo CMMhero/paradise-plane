@@ -4,12 +4,12 @@
     "label_lowercase": "typy pracovních položek",
     "settings": {
       "description": "Přizpůsobte si a přidejte vlastní vlastnosti, abyste to upravili podle potřeb vašeho týmu.",
-      "cant_delete_default_message": "Tento typ pracovního položky nelze odstranit, protože je nastaven jako výchozí pro tento projekt.",
+      "cant_delete_default_message": "Tento typ pracovního položky nelze odstranit, protože je nastaven jako výchozí pro toto oddělení.",
       "set_as_default": "Nastavit jako výchozí",
       "cant_set_default_inactive_message": "Před nastavením jako výchozí tento typ aktivujte",
       "set_default_confirmation": {
         "title": "Nastavit jako výchozí typ pracovní položky",
-        "description": "Nastavením {name} jako výchozího se tento typ importuje do všech projektů v tomto pracovním prostoru. Všechny nové pracovní položky budou tento typ používat ve výchozím nastavení.",
+        "description": "Nastavením {name} jako výchozího se tento typ importuje do všech oddělení v tomto pracovním prostoru. Všechny nové pracovní položky budou tento typ používat ve výchozím nastavení.",
         "confirm_button": "Nastavit jako výchozí"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "Vzorec je platný! Vrací {resultType} ({count} odkazovaných polí)",
           "error": {
             "empty": "Zadejte prosím vzorec",
-            "missing_context": "Chybí kontext pracovního prostoru, projektu nebo typu pracovní položky",
+            "missing_context": "Chybí kontext pracovního prostoru, oddělení nebo typu pracovní položky",
             "validation_failed": "Ověření se nezdařilo"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Typy",
         "description": "Vytvářejte a přizpůsobujte typy pracovních položek s vlastnostmi.",
         "sort_options": {
-          "project_count": "Počet projektů, do kterých patří"
+          "project_count": "Počet oddělení, do kterých patří"
         },
         "filter_options": {
           "show_active": "Zobrazit aktivní",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Povolit typy pracovních položek",
-        "description": "Upravte pracovní položky podle svých potřeb s typy pracovních položek. Přizpůsobte je ikonami, pozadím a vlastnostmi a nakonfigurujte je pro tento projekt.",
+        "description": "Upravte pracovní položky podle svých potřeb s typy pracovních položek. Přizpůsobte je ikonami, pozadím a vlastnostmi a nakonfigurujte je pro toto oddělení.",
         "primary_button": {
           "text": "Povolit"
         },
         "confirmation": {
           "title": "Jakmile budou povoleny, typy pracovních položek nelze zakázat.",
-          "description": "Typ pracovních položek Paradise Task Tracker se stane výchozím typem pracovních položek pro tento projekt a zobrazí se s ikonou a pozadím v tomto projektu.",
+          "description": "Typ pracovních položek Paradise Task Tracker se stane výchozím typem pracovních položek pro toto oddělení a zobrazí se s ikonou a pozadím v tomto oddělení.",
           "button": {
             "default": "Povolit",
             "loading": "Nastavuji"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Získejte Pro pro povolení typů pracovních položek.",
-        "description": "Upravte pracovní položky podle svých potřeb s typy pracovních položek. Přizpůsobte je ikonami, pozadím a vlastnostmi a nakonfigurujte je pro tento projekt.",
+        "description": "Upravte pracovní položky podle svých potřeb s typy pracovních položek. Přizpůsobte je ikonami, pozadím a vlastnostmi a nakonfigurujte je pro toto oddělení.",
         "primary_button": {
           "text": "Získejte Pro"
         }
       },
       "upgrade": {
         "title": "Upgradujte pro povolení typů pracovních položek.",
-        "description": "Upravte pracovní položky podle svých potřeb s typy pracovních položek. Přizpůsobte je ikonami, pozadím a vlastnostmi a nakonfigurujte je pro tento projekt.",
+        "description": "Upravte pracovní položky podle svých potřeb s typy pracovních položek. Přizpůsobte je ikonami, pozadím a vlastnostmi a nakonfigurujte je pro toto oddělení.",
         "primary_button": {
           "text": "Upgradovat"
         }

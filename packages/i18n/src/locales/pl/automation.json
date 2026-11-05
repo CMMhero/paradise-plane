@@ -123,7 +123,7 @@
     "table": {
       "title": "Tytuł automatyzacji",
       "scope": "Zakres",
-      "projects": "Projekty",
+      "projects": "Działy",
       "last_run_on": "Ostatnie uruchomienie",
       "created_on": "Utworzono",
       "last_updated_on": "Ostatnia aktualizacja",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Automatyzacja usunięta",
-          "message": "{name}, automatyzacja, została usunięta z Twojego projektu."
+          "message": "{name}, automatyzacja, została usunięta z Twojego działu."
         },
         "error": {
           "title": "Nie udało się usunąć tej automatyzacji tym razem.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Automatyzacje",
-        "description": "Automatyzacje to sposób na automatyzację zadań w Twoim projekcie.",
+        "description": "Automatyzacje to sposób na automatyzację zadań w Twoim dziale.",
         "sub_description": "Odzyskaj 80% czasu administracyjnego, gdy używasz Automatyzacji."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Wybierz projekty, w których ma działać ta automatyzacja",
+        "label": "Wybierz działy, w których ma działać ta automatyzacja",
         "all_projects": {
-          "label": "Wszystkie projekty",
-          "description": "Automatyzacja będzie działać dla wszystkich projektów w przestrzeni roboczej."
+          "label": "Wszystkie działy",
+          "description": "Automatyzacja będzie działać dla wszystkich działów w przestrzeni roboczej."
         },
         "select_projects": {
-          "label": "Wybierz projekty",
-          "description": "Automatyzacja będzie działać dla wybranych projektów w przestrzeni roboczej.",
-          "placeholder": "Wybierz projekty"
+          "label": "Wybierz działy",
+          "description": "Automatyzacja będzie działać dla wybranych działów w przestrzeni roboczej.",
+          "placeholder": "Wybierz działy"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Globalny",
           "project": {
-            "label": "Projekt",
+            "label": "Dział",
             "multiple": "Wiele",
             "all": "Wszystkie"
           }

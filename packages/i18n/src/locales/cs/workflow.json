@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Opravdu chcete resetovat tento pracovní tok?",
-        "description": "Pokud resetujete tento pracovní tok, všechna vaše pravidla pro změnu stavu budou smazána a budete je muset znovu vytvořit, abyste je mohli v tomto projektu používat."
+        "description": "Pokud resetujete tento pracovní tok, všechna vaše pravidla pro změnu stavu budou smazána a budete je muset znovu vytvořit, abyste je mohli v tomto oddělení používat."
       },
       "delete_state_change": {
         "title": "Opravdu chcete smazat toto pravidlo změny stavu?",
-        "description": "Jakmile bude smazáno, tuto změnu nelze vrátit zpět a budete muset pravidlo znovu nastavit, pokud ho chcete mít v tomto projektu."
+        "description": "Jakmile bude smazáno, tuto změnu nelze vrátit zpět a budete muset pravidlo znovu nastavit, pokud ho chcete mít v tomto oddělení."
       }
     },
     "toasts": {

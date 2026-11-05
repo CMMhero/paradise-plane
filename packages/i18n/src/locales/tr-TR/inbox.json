@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Yalnızca proje yöneticileri iş öğelerini erteleyebilir/ertelemeyi kaldırabilir",
-      "accept_permission": "Yalnızca proje yöneticileri iş öğelerini kabul edebilir",
-      "decline_permission": "Yalnızca proje yöneticileri iş öğelerini reddedebilir"
+      "snooze_permission": "Yalnızca departman yöneticileri iş öğelerini erteleyebilir/ertelemeyi kaldırabilir",
+      "accept_permission": "Yalnızca departman yöneticileri iş öğelerini kabul edebilir",
+      "decline_permission": "Yalnızca departman yöneticileri iş öğelerini reddedebilir"
     },
     "actions": {
       "accept": "Kabul Et",
@@ -47,7 +47,7 @@
       "delete": "Sil",
       "open": "İş öğesini aç",
       "mark_as_duplicate": "Kopya olarak işaretle",
-      "move": "{value} proje iş öğelerine taşı"
+      "move": "{value} departman iş öğelerine taşı"
     },
     "source": {
       "in-app": "uygulama içi"

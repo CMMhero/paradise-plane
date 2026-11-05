@@ -13,6 +13,7 @@ import type { TCustomComponentsMetaData } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 // plane web hooks
+import { getRujukanLabel } from "@/hooks/editor/rujukan-label-cache";
 import { useAdditionalEditorMention } from "@/hooks/use-additional-editor-mention";
 
 type TArgs = {
@@ -51,6 +52,17 @@ export const useParseEditorContent = (args: TArgs) => {
         const id = component.getAttribute("entity_identifier") || "";
         const entityType = (component.getAttribute("entity_name") || "user_mention") as TSearchEntities;
         let textContent = "user";
+        // Paradise (KEP-91): @all dan #kanal/#work item jadi teks biasa.
+        if (entityType === "everyone_mention") {
+          span.textContent = "@all";
+          component.replaceWith(span);
+          return;
+        }
+        if (entityType === "channel_mention" || entityType === "issue_mention") {
+          span.textContent = `#${getRujukanLabel(entityType, id) ?? id}`;
+          component.replaceWith(span);
+          return;
+        }
         if (entityType === "user_mention") {
           const userDetails = getUserDetails(id);
           textContent = userDetails?.display_name ?? "";
@@ -179,6 +191,15 @@ export const useParseEditorContent = (args: TArgs) => {
       parsedMarkdownContent = parsedMarkdownContent.replace(mentionRegex, (_match, id, entity_type) => {
         const entityType = entity_type as TSearchEntities;
         if (!id || !entityType) return "";
+        // Paradise (KEP-91): @all tanpa tautan; kanal dan work item bertautan bila labelnya sudah dikenal.
+        if (entityType === "everyone_mention") return "@all";
+        if (entityType === "channel_mention") {
+          return `[#${getRujukanLabel(entityType, id) ?? id}](${originUrl}/${workspaceSlug}/chat/?ruang=${id})`;
+        }
+        if (entityType === "issue_mention") {
+          const nomor = getRujukanLabel(entityType, id);
+          return nomor ? `[#${nomor}](${originUrl}/${workspaceSlug}/browse/${nomor}/)` : `#${id}`;
+        }
         if (entityType === "user_mention") {
           const userDetails = getUserDetails(id);
           if (!userDetails) return "";

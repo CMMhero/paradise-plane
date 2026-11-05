@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Chỉ quản trị viên dự án mới có thể tạm hoãn/hủy tạm hoãn mục công việc",
-      "accept_permission": "Chỉ quản trị viên dự án mới có thể chấp nhận mục công việc",
-      "decline_permission": "Chỉ quản trị viên dự án mới có thể từ chối mục công việc"
+      "snooze_permission": "Chỉ quản trị viên phòng ban mới có thể tạm hoãn/hủy tạm hoãn mục công việc",
+      "accept_permission": "Chỉ quản trị viên phòng ban mới có thể chấp nhận mục công việc",
+      "decline_permission": "Chỉ quản trị viên phòng ban mới có thể từ chối mục công việc"
     },
     "actions": {
       "accept": "Chấp nhận",
@@ -47,7 +47,7 @@
       "delete": "Xóa",
       "open": "Mở mục công việc",
       "mark_as_duplicate": "Đánh dấu là trùng lặp",
-      "move": "Di chuyển {value} đến mục công việc dự án"
+      "move": "Di chuyển {value} đến mục công việc phòng ban"
     },
     "source": {
       "in-app": "Trong ứng dụng"

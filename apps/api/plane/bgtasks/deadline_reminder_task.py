@@ -178,13 +178,13 @@ def penyetuju_tugas_menunggu(tenggat) -> tuple[list, dict]:
     peta, calon, hasil = {}, {}, {}
     for issue in antrian:
         ws = issue.workspace_id
-        if ws not in peta:
-            peta[ws] = peta_tingkat(ws)
+        # KEP-93: jenjang yang berlaku DI project itu, jadi peta per project.
         kunci = (ws, issue.project_id)
-        if kunci not in calon:
-            calon[kunci] = calon_penyetuju(ws, issue.project_id, peta=peta[ws])
+        if kunci not in peta:
+            peta[kunci] = peta_tingkat(ws, issue.project_id)
+            calon[kunci] = calon_penyetuju(ws, issue.project_id, peta=peta[kunci])
         pid = pemohon.get(issue.id)
-        hasil[issue.id] = {uid for uid in saring_penyetuju(calon[kunci], peta[ws], pid) if uid != pid}
+        hasil[issue.id] = {uid for uid in saring_penyetuju(calon[kunci], peta[kunci], pid) if uid != pid}
     return antrian, hasil
 
 

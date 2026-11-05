@@ -4,8 +4,8 @@
       "quickstart_guide": "クイックスタートガイド",
       "not_right_now": "今はしない",
       "create_project": {
-        "title": "プロジェクトを作成",
-        "description": "Paradise Task Trackerのほとんどはプロジェクトから始まります。",
+        "title": "部署を作成",
+        "description": "Paradise Task Trackerのほとんどは部署から始まります。",
         "cta": "始める"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "最近",
       "empty": {
-        "project": "プロジェクトを訪問すると、最近のプロジェクトがここに表示されます。",
+        "project": "部署を訪問すると、最近の部署がここに表示されます。",
         "page": "ページを訪問すると、最近のページがここに表示されます。",
         "issue": "作業項目を訪問すると、最近の作業項目がここに表示されます。",
         "default": "まだ最近の項目がありません。"
       },
       "filters": {
         "all": "すべて",
-        "projects": "プロジェクト",
+        "projects": "部署",
         "pages": "ページ",
         "issues": "作業項目"
       }

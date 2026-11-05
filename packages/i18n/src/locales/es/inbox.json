@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Solo los administradores del proyecto pueden posponer/desposponer elementos de trabajo",
-      "accept_permission": "Solo los administradores del proyecto pueden aceptar elementos de trabajo",
-      "decline_permission": "Solo los administradores del proyecto pueden rechazar elementos de trabajo"
+      "snooze_permission": "Solo los administradores del departamento pueden posponer/desposponer elementos de trabajo",
+      "accept_permission": "Solo los administradores del departamento pueden aceptar elementos de trabajo",
+      "decline_permission": "Solo los administradores del departamento pueden rechazar elementos de trabajo"
     },
     "actions": {
       "accept": "Aceptar",
@@ -47,7 +47,7 @@
       "delete": "Eliminar",
       "open": "Abrir elemento de trabajo",
       "mark_as_duplicate": "Marcar como duplicado",
-      "move": "Mover {value} a elementos de trabajo del proyecto"
+      "move": "Mover {value} a elementos de trabajo del departamento"
     },
     "source": {
       "in-app": "en-app"

@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Soukromé a sdílené stránky nelze přesunout do týmového prostoru.",
       "placeholders": {
-        "workspace_to_all": "Hledat projekty a týmové prostory",
-        "workspace_to_project": "Hledat projekty",
-        "project_to_all": "Hledat projekty a týmové prostory",
-        "project_to_project": "Hledat projekty",
-        "project_to_all_with_wiki": "Hledat wiki kolekce, projekty a týmové prostory",
-        "project_to_project_with_wiki": "Hledat wiki kolekce a projekty"
+        "workspace_to_all": "Hledat oddělení a týmové prostory",
+        "workspace_to_project": "Hledat oddělení",
+        "project_to_all": "Hledat oddělení a týmové prostory",
+        "project_to_project": "Hledat oddělení",
+        "project_to_all_with_wiki": "Hledat wiki kolekce, oddělení a týmové prostory",
+        "project_to_project_with_wiki": "Hledat wiki kolekce a oddělení"
       },
       "toasts": {
         "success": {

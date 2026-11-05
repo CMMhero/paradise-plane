@@ -181,7 +181,7 @@ def beritahu_diajukan(baris, issue=None):
         issue = _muat_issue(baris.issue_id) or issue or baris.issue
         if issue is None:
             return
-        peta = peta_tingkat(baris.workspace_id)
+        peta = peta_tingkat(baris.workspace_id, baris.project_id)
         # Pengajuan atasan (KEP-83) hanya dikirim ke yang lebih tinggi darinya;
         # pengajuan staf tetap ke semua calon, sama seperti sebelumnya.
         manajer = saring_penyetuju(

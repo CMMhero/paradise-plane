@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Introdu ID-ul proiectului",
+      "enter_project_id": "Introdu ID-ul departamentului",
       "please_select_a_timezone": "Te rugăm să selectezi un fus orar",
       "archive_project": {
-        "title": "Arhivează proiectul",
-        "description": "Arhivarea unui proiect îl va elimina din navigarea laterală, dar vei putea accesa proiectul din pagina ta de proiecte. Poți restaura sau șterge proiectul oricând dorești.",
-        "button": "Arhivează proiectul"
+        "title": "Arhivează departamentul",
+        "description": "Arhivarea unui departament îl va elimina din navigarea laterală, dar vei putea accesa departamentul din pagina ta de departamente. Poți restaura sau șterge departamentul oricând dorești.",
+        "button": "Arhivează departamentul"
       },
       "delete_project": {
-        "title": "Șterge proiectul",
-        "description": "La ștergerea unui proiect, toate datele și resursele din cadrul proiectului vor fi eliminate definitiv și nu vor putea fi recuperate.",
-        "button": "Șterge proiectul meu"
+        "title": "Șterge departamentul",
+        "description": "La ștergerea unui departament, toate datele și resursele din cadrul departamentului vor fi eliminate definitiv și nu vor putea fi recuperate.",
+        "button": "Șterge departamentul meu"
       },
       "toast": {
-        "success": "Proiect actualizat cu succes",
-        "error": "Proiectul nu a putut fi actualizat. Te rugăm să încerci din nou."
+        "success": "Departament actualizat cu succes",
+        "error": "Departamentul nu a putut fi actualizat. Te rugăm să încerci din nou."
       }
     },
     "members": {
       "label": "Membri",
-      "project_lead": "Lider de proiect",
-      "project_lead_description": "Selectați liderul proiectului.",
+      "project_lead": "Lider de departament",
+      "project_lead_description": "Selectați liderul departamentului.",
       "default_assignee": "Persoană atribuită implicit",
-      "default_assignee_description": "Selectați persoana implicită atribuită proiectului.",
-      "project_subscribers": "Abonații proiectului",
-      "project_subscribers_description": "Selectați membrii care vor primi notificări pentru acest proiect.",
+      "default_assignee_description": "Selectați persoana implicită atribuită departamentului.",
+      "project_subscribers": "Abonații departamentului",
+      "project_subscribers_description": "Selectați membrii care vor primi notificări pentru acest departament.",
       "guest_super_permissions": {
         "title": "Acordă acces la perspectivă pentru toți utilizatorii de tip Invitat:",
-        "sub_heading": "Aceasta va permite utilizatorilor din categoria Invitați să vadă toate activitățile din proiect."
+        "sub_heading": "Aceasta va permite utilizatorilor din categoria Invitați să vadă toate activitățile din departament."
       },
       "invite_members": {
         "title": "Invită membri",
-        "sub_heading": "Invită membri să lucreze la proiectul tău.",
+        "sub_heading": "Invită membri să lucreze la departamentul tău.",
         "select_co_worker": "Selectează colegul de echipă"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Estimări",
       "description": "Te ajută să comunici complexitatea și volumul de muncă al echipei.",
       "label": "Estimări",
-      "title": "Activează estimările pentru proiectul meu",
+      "title": "Activează estimările pentru departamentul meu",
       "enable_description": "Te ajută să comunici complexitatea și volumul de muncă al echipei.",
       "no_estimate": "Fără estimare",
       "new": "Noul sistem de estimare",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Estimare modificată",
-            "message": "Estimarea a fost actualizată în proiectul tău."
+            "message": "Estimarea a fost actualizată în departamentul tău."
           },
           "error": {
             "title": "Modificarea estimării a eșuat",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Estimări reordonate",
-            "message": "Estimările au fost reordonate în proiectul tău."
+            "message": "Estimările au fost reordonate în departamentul tău."
           },
           "error": {
             "title": "Reordonarea estimărilor a eșuat",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Automatizări",
       "heading": "Automatizări",
-      "description": "Configurează acțiuni automate pentru a-ți eficientiza fluxul de lucru al proiectului și a reduce sarcinile manuale.",
+      "description": "Configurează acțiuni automate pentru a-ți eficientiza fluxul de lucru al departamentului și a reduce sarcinile manuale.",
       "auto-archive": {
         "title": "Auto-arhivează activitățile finalizate",
         "description": "Paradise Task Tracker va arhiva automat activitățile care au fost finalizate sau anulate.",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "Nicio etichetă încă",
-        "description": "Creează etichete pentru a organiza și filtra activitățile din proiect."
+        "description": "Creează etichete pentru a organiza și filtra activitățile din departament."
       },
       "estimates": {
         "title": "Nicio estimare configurată",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Nicio integrare configurată",
-        "description": "Configurează GitHub și alte integrări pentru a sincroniza elementele de lucru ale proiectului tău."
+        "description": "Configurează GitHub și alte integrări pentru a sincroniza elementele de lucru ale departamentului tău."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Fluxuri de lucru",
-      "description": "Automatizează tranzițiile activităților și setează reguli pentru a controla modul în care sarcinile se deplasează prin fluxul proiectului tău.",
+      "description": "Automatizează tranzițiile activităților și setează reguli pentru a controla modul în care sarcinile se deplasează prin fluxul departamentului tău.",
       "add_button": "Adaugă flux de lucru nou",
       "search": "Caută fluxuri de lucru",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Toate stările sunt utilizate",
-          "description": "Toate stările definite pentru acest proiect sunt deja prezente în fluxul tău de lucru curent."
+          "description": "Toate stările definite pentru acest departament sunt deja prezente în fluxul tău de lucru curent."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Cicluri",
         "short_title": "Cicluri",
-        "description": "Programați munca în perioade flexibile care se adaptează ritmului și ritmului unic al acestui proiect.",
+        "description": "Programați munca în perioade flexibile care se adaptează ritmului și ritmului unic al acestui departament.",
         "toggle_title": "Activați ciclurile",
         "toggle_description": "Planificați munca în intervale de timp concentrate."
       },
       "modules": {
         "title": "Module",
         "short_title": "Module",
-        "description": "Organizați munca în subproiecte cu lideri și responsabili dedicați.",
+        "description": "Organizați munca în părți mai mici, cu lideri și responsabili dedicați.",
         "toggle_title": "Activați modulele",
-        "toggle_description": "Membrii proiectului vor putea crea și edita module."
+        "toggle_description": "Membrii departamentului vor putea crea și edita module."
       },
       "views": {
         "title": "Vizualizări",
         "short_title": "Vizualizări",
         "description": "Salvați sortări personalizate, filtre și opțiuni de afișare sau partajați-le cu echipa dvs.",
         "toggle_title": "Activați vizualizările",
-        "toggle_description": "Membrii proiectului vor putea crea și edita vizualizări."
+        "toggle_description": "Membrii departamentului vor putea crea și edita vizualizări."
       },
       "pages": {
         "title": "Pagini",
         "short_title": "Pagini",
         "description": "Creați și editați conținut liber: note, documente, orice.",
         "toggle_title": "Activați paginile",
-        "toggle_description": "Membrii proiectului vor putea crea și edita pagini."
+        "toggle_description": "Membrii departamentului vor putea crea și edita pagini."
       },
       "intake": {
         "intake_responsibility": "Responsabilitate de primire",
@@ -358,9 +358,9 @@
         "short_title": "Recepție",
         "description": "Permiteți non-membrilor să partajeze erori, feedback și sugestii; fără a perturba fluxul de lucru.",
         "toggle_title": "Activați recepția",
-        "toggle_description": "Permiteți membrilor proiectului să creeze solicitări de recepție în aplicație.",
-        "toggle_tooltip_on": "Solicitați administratorului proiectului să activeze.",
-        "toggle_tooltip_off": "Solicitați administratorului proiectului să dezactiveze.",
+        "toggle_description": "Permiteți membrilor departamentului să creeze solicitări de recepție în aplicație.",
+        "toggle_tooltip_on": "Solicitați administratorului departamentului să activeze.",
+        "toggle_tooltip_off": "Solicitați administratorului departamentului să dezactiveze.",
         "notify_assignee": {
           "title": "Notifică persoanele desemnate",
           "description": "Pentru o nouă cerere de primire, persoanele desemnate implicit vor fi alertate prin notificări"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Urmărire timp",
         "short_title": "Urmărire timp",
-        "description": "Înregistrați timpul petrecut pe elemente de lucru și proiecte.",
+        "description": "Înregistrați timpul petrecut pe elemente de lucru și departamente.",
         "toggle_title": "Activați urmărirea timpului",
-        "toggle_description": "Membrii proiectului vor putea înregistra timpul lucrat."
+        "toggle_description": "Membrii departamentului vor putea înregistra timpul lucrat."
       },
       "milestones": {
         "title": "Etape importante",
@@ -425,18 +425,18 @@
         "toggle_description": "Organizați elementele de lucru după termenele etapelor importante."
       },
       "toasts": {
-        "loading": "Se actualizează funcționalitatea proiectului...",
-        "success": "Funcționalitatea proiectului a fost actualizată cu succes.",
-        "error": "Ceva a mers greșit la actualizarea funcționalității proiectului. Vă rugăm să încercați din nou."
+        "loading": "Se actualizează funcționalitatea departamentului...",
+        "success": "Funcționalitatea departamentului a fost actualizată cu succes.",
+        "error": "Ceva a mers greșit la actualizarea funcționalității departamentului. Vă rugăm să încercați din nou."
       }
     },
     "project_updates": {
-      "heading": "Actualizări proiect",
-      "description": "Urmărire consolidată și monitorizare a progresului pentru acest proiect"
+      "heading": "Actualizări departament",
+      "description": "Urmărire consolidată și monitorizare a progresului pentru acest departament"
     },
     "templates": {
       "heading": "Șabloane",
-      "description": "Economisește 80% din timpul petrecut creând proiecte, activități și pagini atunci când folosești șabloane."
+      "description": "Economisește 80% din timpul petrecut creând departamente, activități și pagini atunci când folosești șabloane."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Coș de gunoi",
-      "description": "Elementele șterse ajung aici înainte de a fi eliminate definitiv. Administratorii proiectului le pot restaura sau elimina permanent."
+      "description": "Elementele șterse ajung aici înainte de a fi eliminate definitiv. Administratorii departamentului le pot restaura sau elimina permanent."
     }
   }
 }

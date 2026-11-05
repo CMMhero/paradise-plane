@@ -198,15 +198,6 @@ from .chat import (
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
 )
-from .page.wiki_permissions import WikiPermissionsEndpoint
-from .page.wiki_material import (
-    WikiFolderEndpoint,
-    WikiMaterialCountEndpoint,
-    WikiMaterialEndpoint,
-    WikiMaterialPreviewEndpoint,
-    WikiMaterialSearchEndpoint,
-    WikiTopicMaterialEndpoint,
-)
 
 from .search.base import GlobalSearchEndpoint, SearchEndpoint
 from .search.issue import IssueSearchEndpoint

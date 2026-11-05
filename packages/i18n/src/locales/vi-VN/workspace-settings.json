@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Xuất",
-        "description": "Xuất dữ liệu dự án của bạn dưới nhiều định dạng và truy cập lịch sử xuất với các liên kết tải xuống.",
+        "description": "Xuất dữ liệu phòng ban của bạn dưới nhiều định dạng và truy cập lịch sử xuất với các liên kết tải xuống.",
         "title": "Xuất",
         "exporting": "Đang xuất",
         "previous_exports": "Xuất trước đây",
         "export_separate_files": "Xuất dữ liệu thành các tệp riêng biệt",
-        "exporting_projects": "Đang xuất dự án",
+        "exporting_projects": "Đang xuất phòng ban",
         "format": "Định dạng",
         "filters_info": "Áp dụng bộ lọc để xuất các mục công việc cụ thể dựa trên tiêu chí của bạn.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhook",
-        "description": "Tự động hóa thông báo đến các dịch vụ bên ngoài khi các sự kiện dự án xảy ra.",
+        "description": "Tự động hóa thông báo đến các dịch vụ bên ngoài khi các sự kiện phòng ban xảy ra.",
         "title": "Webhooks",
         "add_webhook": "Thêm webhook",
         "modal": {
@@ -182,27 +182,27 @@
       "imports": {
         "title": "Nhập dữ liệu",
         "heading": "Nhập",
-        "description": "Kết nối và nhập dữ liệu từ các công cụ quản lý dự án hiện có của bạn để tinh giản việc tích hợp quy trình làm việc."
+        "description": "Kết nối và nhập dữ liệu từ các công cụ quản lý công việc hiện có của bạn để tinh giản việc tích hợp quy trình làm việc."
       },
       "worklogs": {
         "title": "Nhật ký công việc",
         "heading": "Nhật ký công việc",
-        "description": "Tải xuống nhật ký công việc (bảng chấm công) cho bất kỳ ai trong bất kỳ dự án nào."
+        "description": "Tải xuống nhật ký công việc (bảng chấm công) cho bất kỳ ai trong bất kỳ phòng ban nào."
       },
       "group_syncing": {
         "title": "Đồng bộ nhóm",
         "heading": "Đồng bộ nhóm",
-        "description": "Liên kết các nhóm nhà cung cấp danh tính với dự án và vai trò. Quyền truy cập người dùng được cập nhật tự động khi thành viên nhóm thay đổi trong IdP của bạn, đơn giản hóa quy trình onboarding và offboarding.",
+        "description": "Liên kết các nhóm nhà cung cấp danh tính với phòng ban và vai trò. Quyền truy cập người dùng được cập nhật tự động khi thành viên nhóm thay đổi trong IdP của bạn, đơn giản hóa quy trình onboarding và offboarding.",
         "enable": {
           "title": "Bật đồng bộ nhóm",
-          "description": "Tự động thêm người dùng vào dự án dựa trên các nhóm nhà cung cấp danh tính."
+          "description": "Tự động thêm người dùng vào phòng ban dựa trên các nhóm nhà cung cấp danh tính."
         },
         "config": {
           "title": "Cấu hình đồng bộ nhóm",
-          "description": "Thiết lập cách các nhóm nhà cung cấp danh tính được ánh xạ tới dự án và vai trò.",
+          "description": "Thiết lập cách các nhóm nhà cung cấp danh tính được ánh xạ tới phòng ban và vai trò.",
           "sync_on_login": {
             "title": "Đồng bộ khi đăng nhập",
-            "description": "Cập nhật thành viên nhóm và quyền truy cập dự án khi người dùng đăng nhập."
+            "description": "Cập nhật thành viên nhóm và quyền truy cập phòng ban khi người dùng đăng nhập."
           },
           "sync_offline": {
             "title": "Đồng bộ ngoại tuyến",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Tự động xóa",
-            "description": "Tự động xóa người dùng khỏi dự án khi họ không còn khớp với nhóm."
+            "description": "Tự động xóa người dùng khỏi phòng ban khi họ không còn khớp với nhóm."
           },
           "group_attribute_key": {
             "title": "Khóa thuộc tính nhóm",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Ánh xạ nhóm",
-          "description": "Liên kết các nhóm nhà cung cấp danh tính với dự án và vai trò.",
+          "description": "Liên kết các nhóm nhà cung cấp danh tính với phòng ban và vai trò.",
           "button_text": "Thêm đồng bộ nhóm mới"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Xóa đồng bộ nhóm",
-          "content": "Người dùng mới từ nhóm danh tính này sẽ không còn được thêm vào dự án. Người dùng đã thêm sẽ giữ vai trò hiện tại của họ."
+          "content": "Người dùng mới từ nhóm danh tính này sẽ không còn được thêm vào phòng ban. Người dùng đã thêm sẽ giữ vai trò hiện tại của họ."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Nhập tên nhóm IdP"
           },
           "project": {
-            "text": "Dự án",
-            "required": "Dự án là bắt buộc",
-            "placeholder": "Chọn dự án"
+            "text": "Phòng ban",
+            "required": "Phòng ban là bắt buộc",
+            "placeholder": "Chọn phòng ban"
           },
           "default_role": {
-            "text": "Vai trò dự án",
-            "required": "Vai trò dự án là bắt buộc",
-            "placeholder": "Chọn vai trò dự án"
+            "text": "Vai trò phòng ban",
+            "required": "Vai trò phòng ban là bắt buộc",
+            "placeholder": "Chọn vai trò phòng ban"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Cấu hình miền của bạn và bật Đăng nhập một lần"
       },
       "project_states": {
-        "title": "Trạng thái dự án",
-        "heading": "Xem tổng quan tiến độ cho tất cả dự án.",
-        "description": "Trạng thái Dự án là tính năng chỉ có trong Paradise Task Tracker để theo dõi tiến độ của tất cả các dự án của bạn theo bất kỳ thuộc tính dự án nào.",
+        "title": "Trạng thái phòng ban",
+        "heading": "Xem tổng quan tiến độ cho tất cả phòng ban.",
+        "description": "Trạng thái Phòng ban là tính năng chỉ có trong Paradise Task Tracker để theo dõi tiến độ của tất cả các phòng ban của bạn theo bất kỳ thuộc tính phòng ban nào.",
         "go_to_settings": "Đi đến cài đặt"
       },
       "projects": {
-        "title": "Dự án",
-        "description": "Quản lý trạng thái dự án, bật nhãn dự án và các cấu hình khác.",
+        "title": "Phòng ban",
+        "description": "Quản lý trạng thái phòng ban, bật nhãn phòng ban và các cấu hình khác.",
         "tabs": {
-          "states": "Trạng thái dự án",
-          "labels": "Nhãn dự án"
+          "states": "Trạng thái phòng ban",
+          "labels": "Nhãn phòng ban"
         }
       },
       "templates": {
         "title": "Mẫu",
         "heading": "Mẫu",
-        "description": "Tiết kiệm 80% thời gian dành cho việc tạo dự án, mục công việc và trang khi bạn sử dụng mẫu."
+        "description": "Tiết kiệm 80% thời gian dành cho việc tạo phòng ban, mục công việc và trang khi bạn sử dụng mẫu."
       },
       "relations": {
         "title": "Quan hệ",
@@ -465,7 +465,7 @@
         "read": "Đọc",
         "write": "Ghi",
         "scope_description": {
-          "projects": "Truy cập dự án và mọi thực thể liên quan đến dự án",
+          "projects": "Truy cập phòng ban và mọi thực thể liên quan đến phòng ban",
           "wiki": "Truy cập wiki và mọi thực thể liên quan đến wiki",
           "workspaces": "Truy cập không gian làm việc và mọi thực thể liên quan",
           "stickies": "Truy cập ghi chú dán và mọi thực thể liên quan",

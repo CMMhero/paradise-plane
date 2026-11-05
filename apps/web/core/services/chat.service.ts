@@ -104,6 +104,27 @@ export type TPesan = {
   /** Belum dibaca saat percakapan ini dimuat. Dihitung server SEBELUM menandai
    * terbaca, jadi hanya benar pada muatan pertama sesudah pesan itu masuk. */
   baru: boolean;
+  /** Tersemat di ruang ini. Tidak ada di respons server lama; anggap false. */
+  disematkan?: boolean;
+  disematkan_pada?: string | null;
+  disematkan_oleh?: string | null;
+};
+
+/** Satu baris bilah pesan tersemat. `isi` sudah dipotong server. */
+export type TPesanTersemat = {
+  id: string;
+  pengirim: string | null;
+  isi: string;
+  jenis: TJenisPesan;
+  created_at: string;
+  disematkan_pada: string;
+  disematkan_oleh: string | null;
+};
+
+export type TDaftarSematan = {
+  /** Boleh menyematkan di ruang ini (anggota yang boleh menulis). */
+  boleh_sematkan: boolean;
+  pesan: TPesanTersemat[];
 };
 
 /** Kunci SWR untuk jumlah belum dibaca.
@@ -129,6 +150,75 @@ export type THasilCari = {
   ruang: string;
   /** Kosong untuk pesan kanal, karena tidak ada lawan tunggal. */
   lawan_bicara: string | null;
+};
+
+/**
+ * Rujukan di satu pesan yang dikirim (KEP-91): `@orang`, `@all`, `#kanal`, `#PRJ-12`.
+ * Semuanya ID; server menyaring ke yang boleh dilihat pengirim.
+ */
+export type TRujukanKirim = {
+  /** ID orang yang disebut `@nama`. Boleh memuat diri sendiri (cuma disorot, tanpa kartu). */
+  sebut?: string[];
+  /** ID kanal yang dirujuk `#nama`. */
+  kanal?: string[];
+  /** ID work item yang dirujuk `#PRJ-12`. */
+  tugas?: string[];
+  /** `@all`: semua anggota ruang ini. */
+  semua?: boolean;
+};
+
+/** `muatan.kanal[]` di pesan, SUDAH disamarkan server per penonton. */
+export type TKanalDirujuk = {
+  id: string;
+  /** Untuk kanal privat yang penonton bukan anggotanya: "private-channel". */
+  nama: string;
+  privat: boolean;
+  /** false = kanal privat yang tidak bisa dibuka penonton ini. */
+  boleh: boolean;
+};
+
+/** `muatan.tugas[]` di pesan. */
+export type TTugasDirujuk = { id: string; nomor: string; project_id: string };
+
+/** Hasil `chat/rujukan/`: calon untuk pemilih `#`. */
+export type TCalonRujukan = {
+  kanal: { id: string; nama: string; tipe: Exclude<TTipeRuang, "dm"> }[];
+  tugas: { id: string; nomor: string; judul: string; project_id: string; state_group: string }[];
+};
+
+/** Info satu kanal yang dirujuk. `boleh: false` = penonton tak boleh melihatnya, semua bidang lain kosong. */
+export type TInfoKanal = {
+  id: string;
+  boleh: boolean;
+  nama?: string;
+  tipe?: Exclude<TTipeRuang, "dm">;
+  /** Bahan kartu pratinjau hover. */
+  topik?: string;
+  jumlah_anggota?: number;
+};
+
+/** Info satu work item yang dirujuk, termasuk ringkasan untuk kartu pratinjau hover. */
+export type TInfoTugas = {
+  id: string;
+  boleh: boolean;
+  nomor?: string;
+  judul?: string;
+  project_id?: string;
+  state_group?: string;
+  project_nama?: string;
+  state_nama?: string | null;
+  prioritas?: "urgent" | "high" | "medium" | "low" | "none";
+  /** YYYY-MM-DD, atau null. */
+  tenggat?: string | null;
+  /** Maks 3 nama; sisanya lewat `assignee_jumlah`. */
+  assignee?: string[];
+  assignee_jumlah?: number;
+};
+
+/** Hasil `chat/rujukan/info/`: detail per ID, `boleh: false` tanpa nama/judul. */
+export type TInfoRujukan = {
+  kanal: Record<string, TInfoKanal>;
+  tugas: Record<string, TInfoTugas>;
 };
 
 export class ChatService extends APIService {
@@ -198,6 +288,44 @@ export class ChatService extends APIService {
       });
   }
 
+  /** Sematkan (true) atau lepas sematan (false). Idempoten di kedua arah. */
+  async aturSematan(workspaceSlug: string, pesanId: string, sematkan: boolean): Promise<void> {
+    const url = `/api/workspaces/${workspaceSlug}/chat/pesan/${pesanId}/sematkan/`;
+    return (sematkan ? this.post(url) : this.delete(url))
+      .then(() => undefined)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async getSematan(workspaceSlug: string, ruangId: string): Promise<TDaftarSematan> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/sematan/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  /** Calon `#`: kanal yang boleh saya lihat + work item di project saya (KEP-91). */
+  async cariRujukan(workspaceSlug: string, q: string, count = 6): Promise<TCalonRujukan> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/rujukan/`, { params: { q, count } })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  /** Detail kanal & work item yang dirujuk, dengan penjaga akses per penonton. */
+  async infoRujukan(workspaceSlug: string, kanal: string[], tugas: string[]): Promise<TInfoRujukan> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/rujukan/info/`, {
+      params: { kanal: kanal.join(","), tugas: tugas.join(",") },
+    })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async getPesan(workspaceSlug: string, userId: string): Promise<TPesan[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/${userId}/`)
       .then((res) => res?.data)
@@ -212,13 +340,16 @@ export class ChatService extends APIService {
     isi: string,
     lampiran: string[] = [],
     balasanKe?: string,
-    sebut: string[] = []
+    rujukan: TRujukanKirim = {}
   ): Promise<TPesan> {
     return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, {
       isi,
       lampiran,
       balasan_ke: balasanKe ?? null,
-      sebut,
+      sebut: rujukan.sebut ?? [],
+      kanal: rujukan.kanal ?? [],
+      tugas: rujukan.tugas ?? [],
+      semua: rujukan.semua ?? false,
     })
       .then((res) => res?.data)
       .catch((e) => {
@@ -366,13 +497,16 @@ export class ChatService extends APIService {
     isi: string,
     lampiran: string[] = [],
     balasanKe?: string,
-    sebut: string[] = []
+    rujukan: TRujukanKirim = {}
   ): Promise<TPesan> {
     return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`, {
       isi,
       lampiran,
       balasan_ke: balasanKe ?? null,
-      sebut,
+      sebut: rujukan.sebut ?? [],
+      kanal: rujukan.kanal ?? [],
+      tugas: rujukan.tugas ?? [],
+      semua: rujukan.semua ?? false,
     })
       .then((res) => res?.data)
       .catch((e) => {

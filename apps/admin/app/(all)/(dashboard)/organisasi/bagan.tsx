@@ -11,7 +11,7 @@
  */
 
 import type { ReactNode } from "react";
-import { Building2, Crown, FolderKanban, Plus } from "lucide-react";
+import { Building2, Crown, Plus } from "lucide-react";
 // plane imports
 import {
   TINGKAT_DIREKTUR,
@@ -108,14 +108,7 @@ function KotakDepartemen({
       }
     >
       <div className="mt-1 text-10 text-tertiary">{fill(s.org.sup_staff, { sup, staff: d.anggota.length - sup })}</div>
-      <div className="mt-1 flex items-center gap-1 text-10">
-        <FolderKanban className="size-3 shrink-0 text-placeholder" aria-hidden />
-        {d.projects[0] ? (
-          <span className="truncate text-secondary">{d.projects[0].name}</span>
-        ) : (
-          <span className="text-warning-primary">{s.org.project_none}</span>
-        )}
-      </div>
+      {!d.projects[0] && <div className="mt-1 text-10 text-warning-primary">{s.org.project_none}</div>}
     </KotakBagan>
   );
 }

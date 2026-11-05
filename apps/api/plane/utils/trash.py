@@ -28,7 +28,6 @@ from plane.bgtasks.deletion_task import restore_related_objects
 from plane.db.models import (
     AkunTerhapus,
     Cycle,
-    FileAsset,
     Initiative,
     JabatanOrganisasi,
     Issue,
@@ -61,24 +60,6 @@ def _induk_hidup(qs):
     # satu per satu: mereka kembali bersama project-nya. Tanpa saringan ini satu
     # project terhapus membanjiri TPA dengan ratusan work item.
     return qs.filter(project__deleted_at__isnull=True)
-
-
-def _materi(qs):
-    return _induk_hidup(qs.filter(entity_type=FileAsset.EntityTypeContext.WIKI_MATERIAL))
-
-
-def _nama_materi(o):
-    attributes = o.attributes or {}
-    return attributes.get("title") or attributes.get("name") or "(untitled)"
-
-
-def _pulihkan_materi(obj):
-    # Penghapusan materi menyetel DUA kolom (`is_deleted` + `deleted_at`);
-    # pemulihan generik hanya mengembalikan `deleted_at`.
-    obj.is_deleted = False
-    obj.deleted_at = None
-    obj.save(update_fields=["is_deleted", "deleted_at"])
-    return 1
 
 
 def _pid(o):
@@ -130,15 +111,6 @@ TRASH_MODELS = {
         "filter_project": _filter_page_project,
         "nama": lambda o: o.name or "(untitled)",
         "project_id": lambda o: o.project_pages.first().project_id if o.project_pages.exists() else None,
-    },
-    "wiki_material": {
-        "model": FileAsset,
-        "label": "Wiki material",
-        "filter_project": _filter_langsung,
-        "saring": _materi,
-        "nama": _nama_materi,
-        "project_id": _pid,
-        "pulihkan": _pulihkan_materi,
     },
     "cycle": {
         "model": Cycle,

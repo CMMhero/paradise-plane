@@ -172,6 +172,48 @@ class TestChangelog:
         )
         assert urut == ["2.0.0", "2.2.0"]
 
+    @pytest.mark.django_db
+    def test_catatan_yang_dikoreksi_menyusul_ke_kartu_yang_sudah_terbit(self, kantor, tmp_path):
+        workspace, *_ = kantor
+        tulis = lambda versi, tanggal, teks: (tmp_path / f"{versi}.json").write_text(  # noqa: E731
+            json.dumps({"version": versi, "date": tanggal, "entries": [{"type": "Added", "text": teks}]}),
+            encoding="utf-8",
+        )
+        tulis("3.0.0", "2026-11-05", "salah tanggal")
+        tulis("3.1.0", "2026-11-05", "kini")
+        assert catatan_rilis.terbitkan("3.1.0", folder=tmp_path) == 2
+
+        tulis("3.0.0", "2026-11-04", "tanggal benar")
+        assert catatan_rilis.terbitkan("3.1.0", folder=tmp_path) == 0  # tidak ada kartu baru
+
+        kanal = _kanal(workspace, KUNCI_CHANGELOG)
+        pesan = PesanLangsung.objects.get(ruang=kanal, muatan__versi="3.0.0")
+        assert pesan.muatan["tanggal"] == "2026-11-04"
+        assert pesan.muatan["entri"] == [{"type": "Added", "text": "tanggal benar"}]
+        assert "2026-11-04" in pesan.isi
+        assert timezone.localtime(pesan.created_at).date().isoformat() == "2026-11-04"
+        assert PesanLangsung.objects.filter(ruang=kanal).count() == 2
+
+    def test_tanggal_catatan_sama_dengan_changelog(self):
+        """Tanggal JSON = tanggal rilis di CHANGELOG.md, bukan tanggal ditulis."""
+        from pathlib import Path
+
+        changelog = Path(catatan_rilis.FOLDER_CATATAN).parents[3] / "CHANGELOG.md"
+        if not changelog.exists():
+            pytest.skip("CHANGELOG.md tidak ada (image API)")
+        tanggal_rilis, tanggal = {}, None
+        for baris in changelog.read_text(encoding="utf-8").splitlines():
+            if baris.startswith("## 20"):
+                tanggal = baris[3:].strip()
+            elif baris.startswith("### Versi ") and tanggal:
+                tanggal_rilis.setdefault(baris[len("### Versi ") :].strip(), tanggal)
+        salah = {
+            c["versi"]: (c["tanggal"], tanggal_rilis[c["versi"]])
+            for c in catatan_rilis.baca_catatan()
+            if c["versi"] in tanggal_rilis and c["tanggal"] != tanggal_rilis[c["versi"]]
+        }
+        assert salah == {}
+
     def test_berkas_bawaan_sah(self):
         catatan = catatan_rilis.baca_catatan()
         assert {"1.5.0", "1.6.0", "2.0.0", "2.1.0", "2.2.0"} <= {c["versi"] for c in catatan}
@@ -203,14 +245,56 @@ def _notif(workspace, project, issue, pemicu, penerima, field, sender="in_app:is
 @pytest.mark.unit
 class TestKartuKabar:
     @pytest.mark.django_db
-    def test_kartu_masuk_ruang_kabar_pribadi(self, tugas):
+    def test_kartu_dengan_pelaku_masuk_dm_pelaku_dan_penerima(self, tugas):
+        # KEP-90: pelaku = pengirim, orang yang terdampak = penerima, satu DM per orang.
         workspace, admin, staf, project, issue = tugas
+        kedua = _orang("kedua")
+        WorkspaceMember.objects.create(workspace=workspace, member=kedua, role=15)
         notifs = [
             _notif(workspace, project, issue, admin, staf, "comment"),
-            _notif(workspace, project, issue, admin, staf, "state"),
-            _notif(workspace, project, issue, admin, staf, "description", sender="in_app:issue_activities:mentioned"),
+            _notif(workspace, project, issue, admin, kedua, "comment"),
+            _notif(workspace, project, issue, staf, admin, "approval", verb="submitted"),
         ]
         assert kirim_kartu_notifikasi(notifs) == 3
+
+        assert not Ruang.objects.filter(kunci_sistem__startswith="kabar:").exists()
+        for pelaku, penerima, jenis in (
+            (admin, staf, JenisPesan.KOMENTAR),
+            (admin, kedua, JenisPesan.KOMENTAR),
+            (staf, admin, JenisPesan.PERSETUJUAN),
+        ):
+            ruang = Ruang.objects.get(kunci_dm=Ruang.buat_kunci_dm(pelaku.id, penerima.id))
+            kartu = PesanLangsung.objects.filter(ruang=ruang, jenis=jenis).get()
+            assert (kartu.pengirim_id, kartu.penerima_id) == (pelaku.id, penerima.id)
+        # Kedua arah berbagi satu DM: komentar admin keluar, pengajuan staf masuk.
+        dm = Ruang.objects.get(kunci_dm=Ruang.buat_kunci_dm(admin.id, staf.id))
+        dibaca = _klien(admin).get(f"/api/workspaces/{workspace.slug}/chat/ruang/{dm.id}/").json()
+        assert {(p["jenis"], p["pengirim"]) for p in dibaca} == {
+            (JenisPesan.KOMENTAR, str(admin.id)),
+            (JenisPesan.PERSETUJUAN, str(staf.id)),
+        }
+
+    @pytest.mark.django_db
+    def test_saklar_mati_semua_kartu_kembali_ke_ruang_kabar(self, tugas, monkeypatch):
+        workspace, admin, staf, project, issue = tugas
+        monkeypatch.setattr("plane.utils.kartu_obrolan._tugas_ke_dm_aktif", lambda: False)
+        assert kirim_kartu_notifikasi([_notif(workspace, project, issue, admin, staf, "comment")]) == 1
+        assert Ruang.objects.filter(kunci_sistem=f"kabar:{staf.id}").exists()
+        assert not Ruang.objects.filter(tipe=Ruang.Tipe.DM).exists()
+
+    @pytest.mark.django_db
+    def test_kartu_tanpa_pelaku_manusia_masuk_ruang_kabar_pribadi(self, tugas):
+        workspace, admin, staf, project, issue = tugas
+        bot = User.objects.create(
+            id=uuid4(), username="bot-impor", email="bot-impor@x.test", display_name="Bot", is_bot=True
+        )
+        notifs = [
+            _notif(workspace, project, issue, None, staf, "comment"),
+            _notif(workspace, project, issue, bot, staf, "state"),
+            _notif(workspace, project, issue, None, staf, "description", sender="in_app:issue_activities:mentioned"),
+        ]
+        assert kirim_kartu_notifikasi(notifs) == 3
+        assert not Ruang.objects.filter(tipe=Ruang.Tipe.DM).exists()
 
         ruang = Ruang.objects.get(workspace=workspace, kunci_sistem=f"kabar:{staf.id}")
         assert ruang.tipe == Ruang.Tipe.PRIVAT and ruang.sistem
@@ -248,10 +332,12 @@ class TestKartuKabar:
         pastikan_kanal_sistem(workspace.id)
         kirim_kartu_notifikasi([_notif(workspace, project, issue, admin, staf, "comment")])
         kartu = PesanLangsung.objects.get(jenis=JenisPesan.KOMENTAR)
-        jawab = _klien(staf).patch(
-            f"/api/workspaces/{workspace.slug}/chat/pesan/{kartu.id}/", {"isi": "x"}, format="json"
-        )
-        assert jawab.status_code == 404
+        # Kartu di DM berpengirim pelaku (KEP-90), tapi pelakunya pun tidak bisa menyuntingnya.
+        for orang in (staf, admin):
+            jawab = _klien(orang).patch(
+                f"/api/workspaces/{workspace.slug}/chat/pesan/{kartu.id}/", {"isi": "x"}, format="json"
+            )
+            assert jawab.status_code == 404
 
 
 @pytest.mark.unit

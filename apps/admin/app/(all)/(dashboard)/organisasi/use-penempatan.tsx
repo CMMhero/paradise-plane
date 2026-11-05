@@ -35,15 +35,11 @@ import {
   terapkanKePohon,
   type TRencana,
 } from "./papan-logika";
+import { pesanGagalSimpan } from "./util";
 
 const hierarkiService = new InstanceHierarkiService();
 
 type TKirim = Extract<TRencana, { hasil: "kirim" }>;
-
-const pesanGalat = (err: unknown, cadangan: string): string => {
-  const pesan = (err as { error?: string } | undefined)?.error;
-  return typeof pesan === "string" && pesan.length > 0 ? pesan : cadangan;
-};
 
 export function usePenempatanOptimis({
   mutatePohon,
@@ -88,9 +84,11 @@ export function usePenempatanOptimis({
       const pesan =
         hasil.member.divisi_dilepas.length > 0
           ? s.org.level_saved_divisions_released
-          : rencana.mode === "lepas"
-            ? pesanCabut(hasil.member.tingkat ?? rencana.sesudah.tingkat)
-            : undefined;
+          : (hasil.member.departemen_dilepas?.length ?? 0) > 0
+            ? s.org.board.departments_released
+            : rencana.mode === "lepas"
+              ? pesanCabut(hasil.member.tingkat ?? rencana.sesudah.tingkat)
+              : undefined;
       const id = setToast({ type: TOAST_TYPE.SUCCESS, title: judul, message: pesan });
       // Tombol Undo dipasang sesudah id toast diketahui, supaya bisa menutup toastnya sendiri.
       if (bisaUndo && id)
@@ -124,7 +122,11 @@ export function usePenempatanOptimis({
           mutateHierarki(potretHierarki, { revalidate: false }),
         ]);
       }
-      setToast({ type: TOAST_TYPE.ERROR, title: s.org.failed, message: pesanGalat(err, s.org.save_failed_message) });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: s.org.failed,
+        message: pesanGagalSimpan(err, s.org.save_failed_message, s.org.session_expired),
+      });
       return false;
     } finally {
       berjalan.current -= 1;

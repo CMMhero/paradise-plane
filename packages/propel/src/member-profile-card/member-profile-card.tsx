@@ -10,6 +10,7 @@
  * semua teks masuk lewat props.
  */
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { Building2, Mail, Phone } from "lucide-react";
 import { Popover } from "../popover";
@@ -20,16 +21,19 @@ export type TMemberProfileUnit = { id: string; nama: string };
 
 export type TMemberProfilePlacement = {
   key: string;
-  /** Departemen kalau ada, kalau tidak divisi. */
-  unit: TMemberProfileUnit | null;
-  /** Divisi induk, hanya saat `unit` adalah departemen. */
-  parent: TMemberProfileUnit | null;
+  /** Divisi tempat orang ini berada. */
+  division: TMemberProfileUnit | null;
+  /** Departemen di bawah divisi itu, kalau penempatannya sampai tingkat departemen. */
+  department: TMemberProfileUnit | null;
   /** Nama jenjang yang sudah diterjemahkan (Staff, Manager, ...), atau null. */
   levelLabel: string | null;
 };
 
 export type TMemberProfileFieldLabels = {
+  /** Tooltip ikon baris penempatan. */
   placement: string;
+  /** Teks tombol "+N lagi" untuk `count` penempatan yang masih tersembunyi. */
+  morePlacements: (count: number) => string;
   email: string;
   phoneExtension: string;
   notSet: string;
@@ -60,13 +64,54 @@ export function MemberProfileDetailRow({
   );
 }
 
-function PlacementLine({ placement }: { placement: TMemberProfilePlacement }) {
+/** Penempatan yang langsung tampil; sisanya dilipat di balik "+N lagi". */
+const PLACEMENT_VISIBLE_LIMIT = 3;
+
+/** Satu baris unit. Tanpa label jenjang: ikon gedung di baris induk sudah menandai penempatan. */
+function PlacementUnitRow({ name, isPrimary }: { name: string; isPrimary: boolean }) {
   return (
-    <span className="min-w-0">
-      {placement.unit ? <span className="font-medium text-primary">{placement.unit.nama}</span> : null}
-      {placement.parent ? <span className="text-tertiary"> · {placement.parent.nama}</span> : null}
-      {placement.levelLabel ? <span className="block text-11 text-secondary">{placement.levelLabel}</span> : null}
-    </span>
+    <span className={cn("min-w-0 break-words", isPrimary ? "font-medium text-primary" : "text-secondary")}>{name}</span>
+  );
+}
+
+/** Satu penempatan, teks polos: divisi, departemen, lalu jenjang sebagai teks redup. Tanpa kotak atau lencana. */
+function PlacementBlock({ placement }: { placement: TMemberProfilePlacement }) {
+  const { division, department, levelLabel } = placement;
+  return (
+    <div className="flex min-w-0 flex-col">
+      {division ? <PlacementUnitRow name={division.nama} isPrimary /> : null}
+      {department ? <PlacementUnitRow name={department.nama} isPrimary={!division} /> : null}
+      {levelLabel ? <span className="text-12 text-tertiary">{levelLabel}</span> : null}
+    </div>
+  );
+}
+
+/** Daftar penempatan, dibatasi `PLACEMENT_VISIBLE_LIMIT` dengan tombol "+N lagi" untuk membukanya. */
+function PlacementList({
+  placements,
+  labels,
+}: {
+  placements: TMemberProfilePlacement[];
+  labels: TMemberProfileFieldLabels;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const hiddenCount = placements.length - PLACEMENT_VISIBLE_LIMIT;
+  const visible = isExpanded || hiddenCount <= 0 ? placements : placements.slice(0, PLACEMENT_VISIBLE_LIMIT);
+  return (
+    <div className="flex flex-col gap-2">
+      {visible.map((p) => (
+        <PlacementBlock key={p.key} placement={p} />
+      ))}
+      {!isExpanded && hiddenCount > 0 ? (
+        <button
+          type="button"
+          className="self-start rounded-control px-1 text-12 text-secondary outline-none hover:text-primary focus-visible:text-primary"
+          onClick={() => setIsExpanded(true)}
+        >
+          {labels.morePlacements(hiddenCount)}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -90,15 +135,7 @@ export function MemberProfileFields({
   return (
     <div className="flex flex-col gap-2">
       <MemberProfileDetailRow icon={Building2} label={labels.placement}>
-        {placements.length > 0 ? (
-          <span className="flex flex-col gap-1">
-            {placements.map((p) => (
-              <PlacementLine key={p.key} placement={p} />
-            ))}
-          </span>
-        ) : (
-          notSet
-        )}
+        {placements.length > 0 ? <PlacementList placements={placements} labels={labels} /> : notSet}
       </MemberProfileDetailRow>
       {email ? (
         <MemberProfileDetailRow icon={Mail} label={labels.email}>
@@ -189,9 +226,12 @@ export function MemberProfilePopover({
   triggerClassName,
   side = "bottom",
   align = "start",
+  hoverHandlers,
   card,
   children,
 }: {
+  /** Pointer masuk/keluar pemicu DAN kartu; dipakai untuk membuka kartu saat hover. */
+  hoverHandlers?: { onMouseEnter: () => void; onMouseLeave: () => void };
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ariaLabel: string;
@@ -209,6 +249,8 @@ export function MemberProfilePopover({
         // base-ui memberi role="button" + tabIndex sendiri saat nativeButton=false.
         aria-label={ariaLabel}
         className={cn("inline-flex max-w-full cursor-pointer items-center rounded-sm outline-none", triggerClassName)}
+        onMouseEnter={hoverHandlers?.onMouseEnter}
+        onMouseLeave={hoverHandlers?.onMouseLeave}
         onClick={(e) => {
           // Jangan biarkan klik membuka kartu work item / mengikuti tautan induk.
           e.stopPropagation();
@@ -227,6 +269,8 @@ export function MemberProfilePopover({
         // di popup: dengan z di popup, kartu tertutup peek overview work item (z-25).
         positionerClassName="z-40"
         className={POPOVER_PANEL_CLASS}
+        onMouseEnter={hoverHandlers?.onMouseEnter}
+        onMouseLeave={hoverHandlers?.onMouseLeave}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-3">{card}</div>

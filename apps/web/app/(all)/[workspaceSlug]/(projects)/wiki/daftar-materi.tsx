@@ -7,27 +7,25 @@
 
 import { useId, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { ArrowUpRight, ChevronRight, Lock, Pencil, Trash2, Upload } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Pencil, Trash2, Upload } from "lucide-react";
 import { Link } from "react-router";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
 import { Button, getButtonStyling } from "@plane/propel/button";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { TPage } from "@plane/types";
-import { cn, getPageName, renderFormattedDate } from "@plane/utils";
+import { cn, renderFormattedDate } from "@plane/utils";
 // components
 import { GridKartu, KartuKerangka, KartuMateri } from "@/components/wiki/kartu";
 // hooks
+import { useMember } from "@/hooks/store/use-member";
 import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import useLocalStorage from "@/hooks/use-local-storage";
 // services
-import { WikiMaterialService } from "@/services/wiki_material.service";
+import type { TWikiFolder, TWikiMaterialList } from "@/services/wiki.service";
 // local imports
 import { GantiNamaMateri } from "./ganti-nama";
-import { anakDari, jumlahMateriDalam, labelTipe, ukuranTerbaca } from "./data";
-
-const layananMateri = new WikiMaterialService();
+import { anakDari, jumlahMateriDalam, labelTipe, layananWiki, ukuranTerbaca } from "./data";
 
 /** Kunci SWR daftar materi satu topik. Dipakai bersama, jadi folder dan seksinya tidak mengambil dua kali. */
 export const kunciMateriTopik = (topikId: string) => `WIKI_MATERIALS_${topikId}`;
@@ -42,11 +40,9 @@ const TIDAK_ADA: string[] = [];
 
 type TKonteks = {
   workspaceSlug: string;
-  projectId: string;
-  /** Seluruh halaman Wiki yang terlihat, untuk menelusuri sub-topik bertingkat. */
-  halaman: TPage[];
-  jumlahMateri: Record<string, number> | undefined;
-  /** Dipanggil sesudah unggah atau hapus, supaya angka di kartu Divisi ikut benar. */
+  /** Seluruh folder Wiki yang terlihat, untuk menelusuri sub-topik bertingkat. */
+  folder: TWikiFolder[];
+  /** Dipanggil sesudah unggah atau hapus, supaya angka di kartu folder ikut benar. */
   onJumlahBerubah: () => Promise<unknown>;
 };
 
@@ -59,13 +55,13 @@ type TUnggah = { bolehUnggah: boolean; sedangUnggah: boolean; pilihBerkas: () =>
  * kelola SELALU datang dari jawaban server untuk topik itu sendiri. Sub-topik
  * tidak mewarisi tombol unggah induknya hanya karena tampil di halaman yang sama.
  */
-export function useMateriTopik(konteks: TKonteks, topik: TPage | undefined, aktif = true) {
+export function useMateriTopik(konteks: TKonteks, topik: TWikiFolder | undefined, aktif = true) {
   const { t } = useTranslation();
-  const { workspaceSlug, projectId, onJumlahBerubah } = konteks;
+  const { workspaceSlug, onJumlahBerubah } = konteks;
   const topikId = topik?.id;
   const { data, isLoading, mutate } = useSWR(
     aktif && topikId ? kunciMateriTopik(topikId) : null,
-    topikId ? () => layananMateri.fetchByTopic(workspaceSlug, projectId, topikId) : null
+    topikId ? () => layananWiki.fetchMaterials(workspaceSlug, topikId) : null
   );
   const berkasRef = useRef<HTMLInputElement>(null);
   const [sedangUnggah, setSedangUnggah] = useState(false);
@@ -80,7 +76,7 @@ export function useMateriTopik(konteks: TKonteks, topik: TPage | undefined, akti
     for (const file of Array.from(files)) {
       try {
         // oxlint-disable-next-line no-await-in-loop
-        await layananMateri.upload(workspaceSlug, projectId, topikId, file);
+        await layananWiki.upload(workspaceSlug, topikId, file);
         berhasil += 1;
       } catch (error) {
         // Satu berkas gagal tidak membatalkan sisanya, dan orangnya harus tahu
@@ -98,7 +94,7 @@ export function useMateriTopik(konteks: TKonteks, topik: TPage | undefined, akti
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: t("wiki_ui.folder.uploaded_title"),
-        message: t("wiki_ui.folder.uploaded_message", { count: berhasil, folder: getPageName(topik?.name) }),
+        message: t("wiki_ui.folder.uploaded_message", { count: berhasil, folder: topik?.nama ?? "" }),
       });
     }
     if (berkasRef.current) berkasRef.current.value = "";
@@ -128,13 +124,7 @@ export function TombolUnggah({
   namaTopik: string;
 }) {
   const { t } = useTranslation();
-  if (!unggahan.bolehUnggah)
-    return (
-      <span className="inline-flex items-center gap-1.5 text-11 text-tertiary">
-        <Lock className="size-3" />
-        {!ringkas && t("wiki_ui.folder.only_managers_can_add")}
-      </span>
-    );
+  if (!unggahan.bolehUnggah) return null;
   return (
     <Button
       variant={ringkas ? "secondary" : "primary"}
@@ -155,23 +145,24 @@ const KELAS_AKSI =
   "grid size-7 place-items-center rounded-button bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100 sentuh:size-9 sentuh:opacity-100";
 
 /** Grid kartu materi berikut tombol ganti judul dan hapus, kalau orangnya berhak. */
-export function GridMateri({
+export const GridMateri = observer(function GridMateri({
   konteks,
   materi,
   muatUlang,
 }: {
   konteks: TKonteks;
-  materi: NonNullable<ReturnType<typeof useMateriTopik>["daftar"]>["materials"];
+  materi: TWikiMaterialList["materials"];
   muatUlang: () => Promise<unknown>;
 }) {
   const { t } = useTranslation();
-  const { workspaceSlug, projectId, onJumlahBerubah } = konteks;
-  const [materiDiganti, setMateriDiganti] = useState<{ id: string; title: string; name: string } | null>(null);
+  const { workspaceSlug, onJumlahBerubah } = konteks;
+  const { getUserDetails } = useMember();
+  const [materiDiganti, setMateriDiganti] = useState<{ id: string; judul: string; name: string } | null>(null);
   const { minta, dialog: dialogKonfirmasi } = useKonfirmasi();
 
   const hapus = async (assetId: string, judul: string) => {
     try {
-      await layananMateri.remove(workspaceSlug, projectId, assetId);
+      await layananWiki.deleteMaterial(workspaceSlug, assetId);
       await Promise.all([muatUlang(), onJumlahBerubah()]);
       setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.folder.deleted_title"), message: judul });
     } catch (error) {
@@ -190,40 +181,49 @@ export function GridMateri({
           <KartuMateri
             key={m.id}
             to={`/${workspaceSlug}/wiki/materi/${m.id}`}
-            judul={m.title}
-            keterangan={[m.uploaded_by?.display_name, renderFormattedDate(m.created_at)].filter(Boolean).join(" · ")}
+            judul={m.judul}
+            keterangan={[
+              m.created_by ? getUserDetails(m.created_by)?.display_name : undefined,
+              renderFormattedDate(m.created_at),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
             tipe={m.type}
             label={labelTipe(m.type, t)}
             ukuran={ukuranTerbaca(m.size)}
             aksi={
-              m.can_manage ? (
+              m.can_manage || m.can_delete ? (
                 <>
-                  <button
-                    type="button"
-                    title={t("wiki_ui.folder.rename")}
-                    aria-label={t("wiki_ui.folder.rename_named", { title: m.title })}
-                    onClick={() => setMateriDiganti({ id: m.id, title: m.title, name: m.name })}
-                    className={KELAS_AKSI}
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    title={t("wiki_ui.folder.delete")}
-                    aria-label={t("wiki_ui.folder.delete_named", { title: m.title })}
-                    onClick={() =>
-                      minta(
-                        {
-                          judul: t("wiki_ui.folder.confirm_delete_title"),
-                          isi: t("wiki_ui.folder.confirm_delete_body", { title: m.title }),
-                        },
-                        () => hapus(m.id, m.title)
-                      )
-                    }
-                    className={KELAS_AKSI}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
+                  {m.can_manage && (
+                    <button
+                      type="button"
+                      title={t("wiki_ui.folder.rename")}
+                      aria-label={t("wiki_ui.folder.rename_named", { title: m.judul })}
+                      onClick={() => setMateriDiganti({ id: m.id, judul: m.judul, name: m.name })}
+                      className={KELAS_AKSI}
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                  )}
+                  {m.can_delete && (
+                    <button
+                      type="button"
+                      title={t("wiki_ui.folder.delete")}
+                      aria-label={t("wiki_ui.folder.delete_named", { title: m.judul })}
+                      onClick={() =>
+                        minta(
+                          {
+                            judul: t("wiki_ui.folder.confirm_delete_title"),
+                            isi: t("wiki_ui.folder.confirm_delete_body", { title: m.judul }),
+                          },
+                          () => hapus(m.id, m.judul)
+                        )
+                      }
+                      className={KELAS_AKSI}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
                 </>
               ) : undefined
             }
@@ -236,9 +236,8 @@ export function GridMateri({
       {materiDiganti && (
         <GantiNamaMateri
           workspaceSlug={workspaceSlug}
-          projectId={projectId}
           materiId={materiDiganti.id}
-          judulSekarang={materiDiganti.title}
+          judulSekarang={materiDiganti.judul}
           namaBerkas={materiDiganti.name}
           isOpen
           onClose={() => setMateriDiganti(null)}
@@ -247,7 +246,7 @@ export function GridMateri({
       )}
     </>
   );
-}
+});
 
 /**
  * Sub-topik sebagai seksi yang bisa dibuka-tutup, langsung di dalam Daftar
@@ -268,19 +267,19 @@ export const SeksiSubtopik = observer(function SeksiSubtopik({
   kedalaman = 0,
 }: {
   konteks: TKonteks;
-  topik: TPage;
+  topik: TWikiFolder;
   kedalaman?: number;
 }) {
   const { t } = useTranslation();
   const idIsi = useId();
   const { storedValue: tertutup, setValue: setTertutup } = useLocalStorage<string[]>(KUNCI_TERTUTUP, TIDAK_ADA);
-  const idTopik = topik.id ?? "";
+  const idTopik = topik.id;
   const terbuka = !(tertutup ?? TIDAK_ADA).includes(idTopik);
   const { daftar, sedangMemuat, muatUlang, inputBerkas, unggahan } = useMateriTopik(konteks, topik, terbuka);
 
-  const nama = getPageName(topik.name);
-  const anak = anakDari(konteks.halaman, topik.id);
-  const total = jumlahMateriDalam(konteks.halaman, konteks.jumlahMateri, topik.id);
+  const nama = topik.nama;
+  const anak = anakDari(konteks.folder, topik.id);
+  const total = jumlahMateriDalam(konteks.folder, topik.id);
   const materi = daftar?.materials ?? [];
 
   const alihkan = () => {

@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Aperçu de vos projets, activités et métriques",
-        "description": "Bienvenue sur Paradise Task Tracker, nous sommes ravis de vous avoir parmi nous. Créez votre premier projet et suivez vos éléments de travail, et cette page se transformera en un espace qui vous aide à progresser. Les administrateurs verront également les éléments qui aident leur équipe à progresser.",
+        "title": "Aperçu de vos départements, activités et métriques",
+        "description": "Bienvenue sur Paradise Task Tracker, nous sommes ravis de vous avoir parmi nous. Créez votre premier département et suivez vos éléments de travail, et cette page se transformera en un espace qui vous aide à progresser. Les administrateurs verront également les éléments qui aident leur équipe à progresser.",
         "primary_button": {
-          "text": "Construisez votre premier projet",
+          "text": "Construisez votre premier département",
           "comic": {
-            "title": "Tout commence par un projet dans Paradise Task Tracker",
-            "description": "Un projet peut être la feuille de route d’un produit, une campagne marketing ou le lancement d’une nouvelle voiture."
+            "title": "Tout commence par un département dans Paradise Task Tracker",
+            "description": "Un département peut être la feuille de route d’un produit, une campagne marketing ou le lancement d’une nouvelle voiture."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Total des tâches ouvertes",
     "error": "Une erreur s’est produite lors de la récupération des données.",
     "work_items_closed_in": "Éléments de travail fermés dans",
-    "selected_projects": "Projets sélectionnés",
+    "selected_projects": "Départements sélectionnés",
     "total_members": "Total des membres",
     "total_cycles": "Total des Cycles",
     "total_modules": "Total des Modules",
@@ -100,11 +100,11 @@
     "backlog_work_items": "{entity} en backlog",
     "un_started_work_items": "{entity} non commencés",
     "completed_work_items": "{entity} terminés",
-    "project_insights": "Aperçus du projet",
-    "summary_of_projects": "Résumé des projets",
-    "all_projects": "Tous les projets",
+    "project_insights": "Aperçus du département",
+    "summary_of_projects": "Résumé des départements",
+    "all_projects": "Tous les départements",
     "trend_on_charts": "Tendance sur les graphiques",
-    "active_projects": "Projets actifs",
+    "active_projects": "Départements actifs",
     "customized_insights": "Informations personnalisées",
     "created_vs_resolved": "Créé vs Résolu",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Suivez les progrès, les charges de travail et les affectations. Identifiez les tendances, levez les blocages et travaillez plus rapidement",
-        "description": "Surveillez le scope par rapport à la demande, suivez les estimations et les éventuels glissements de périmètre. Assurez-vous que les membres de votre équipe et vos équipes sont performants, et veillez à ce que votre projet avance dans les délais impartis.",
+        "description": "Surveillez le scope par rapport à la demande, suivez les estimations et les éventuels glissements de périmètre. Assurez-vous que les membres de votre équipe et vos équipes sont performants, et veillez à ce que votre département avance dans les délais impartis.",
         "primary_button": {
-          "text": "Commencez votre premier projet",
+          "text": "Commencez votre premier département",
           "comic": {
             "title": "L’analytics fonctionne mieux avec les Cycles + Modules",
             "description": "D’abord, encadrez vos éléments de travail dans des Cycles et, si possible, regroupez les éléments qui s’étendent sur plus d’un cycle dans des Modules. Consultez les deux dans la navigation de gauche."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Passez à {plan} pour débloquer {tab}",
     "workitem_resolved_vs_pending": "Éléments de travail résolus vs en attente",
-    "projects_by_status": "Projets par statut",
+    "projects_by_status": "Départements par statut",
     "active_users": "Utilisateurs actifs",
     "intake_trends": "Tendances des admissions"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Projet} other {Projets}}",
+    "label": "{count, plural, one {Département} other {Départements}}",
     "create": {
-      "label": "Ajouter un Projet"
+      "label": "Ajouter un Département"
     },
     "network": {
       "label": "Réseau",
@@ -186,7 +186,7 @@
       "members_length": "Nombre de membres"
     },
     "scope": {
-      "my_projects": "Mes projets",
+      "my_projects": "Mes départements",
       "archived_projects": "Archivés"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Aucun projet actif",
-        "description": "Considérez chaque projet comme le parent d’activités axées sur les objectifs. Les projets regroupent les tâches, les cycles et les modules et, avec l'aide de vos collègues, vous aident à atteindre ces objectifs. Créez un nouveau projet ou filtrez les projets archivés.",
+        "title": "Aucun département actif",
+        "description": "Considérez chaque département comme le parent d’activités axées sur les objectifs. Les départements regroupent les tâches, les cycles et les modules et, avec l'aide de vos collègues, vous aident à atteindre ces objectifs. Créez un nouveau département ou filtrez les départements archivés.",
         "primary_button": {
-          "text": "Commencez votre premier projet",
+          "text": "Commencez votre premier département",
           "comic": {
-            "title": "Tout commence par un projet dans Paradise Task Tracker",
-            "description": "Un projet peut être la feuille de route d’un produit, une campagne marketing ou le lancement d’une nouvelle voiture."
+            "title": "Tout commence par un département dans Paradise Task Tracker",
+            "description": "Un département peut être la feuille de route d’un produit, une campagne marketing ou le lancement d’une nouvelle voiture."
           }
         }
       },
       "no_projects": {
-        "title": "Aucun projet",
-        "description": "Pour créer des éléments de travail ou gérer votre travail, vous devez créer un projet ou faire partie d’un projet.",
+        "title": "Aucun département",
+        "description": "Pour créer des éléments de travail ou gérer votre travail, vous devez créer un département ou faire partie d’un département.",
         "primary_button": {
-          "text": "Commencez votre premier projet",
+          "text": "Commencez votre premier département",
           "comic": {
-            "title": "Tout commence par un projet dans Paradise Task Tracker",
-            "description": "Un projet peut être la feuille de route d’un produit, une campagne marketing ou le lancement d’une nouvelle voiture."
+            "title": "Tout commence par un département dans Paradise Task Tracker",
+            "description": "Un département peut être la feuille de route d’un produit, une campagne marketing ou le lancement d’une nouvelle voiture."
           }
         }
       },
       "filter": {
-        "title": "Aucun projet correspondant",
-        "description": "Aucun projet détecté avec les critères correspondants.\n Créez plutôt un nouveau projet."
+        "title": "Aucun département correspondant",
+        "description": "Aucun département détecté avec les critères correspondants.\n Créez plutôt un nouveau département."
       },
       "search": {
-        "description": "Aucun projet détecté avec les critères correspondants.\nCréez plutôt un nouveau projet"
+        "description": "Aucun département détecté avec les critères correspondants.\nCréez plutôt un nouveau département"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "Ajouter une vue",
     "empty_state": {
       "all-issues": {
-        "title": "Aucun élément de travail dans le projet",
-        "description": "Premier projet terminé ! Maintenant, découpez votre travail en tâches gérables à l’aide d’éléments de travail. C’est parti !",
+        "title": "Aucun élément de travail dans le département",
+        "description": "Premier département terminé ! Maintenant, découpez votre travail en tâches gérables à l’aide d’éléments de travail. C’est parti !",
         "primary_button": {
           "text": "Créer un nouvel élément de travail"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Écrivez une note, un document ou une base de connaissances complète. Obtenez l'aide de Galileo, l'assistant IA de Paradise Task Tracker, pour commencer",
-        "description": "Les Pages sont des espaces de réflexion dans Paradise Task Tracker. Prenez des notes de réunion, formatez-les facilement, intégrez des éléments de travail, disposez-les à l'aide d'une bibliothèque de composants et gardez-les tous dans le contexte de votre projet. Pour faciliter la rédaction de tout document, invoquez Galileo, l'IA de Paradise Task Tracker, avec un raccourci ou un clic sur un bouton.",
+        "description": "Les Pages sont des espaces de réflexion dans Paradise Task Tracker. Prenez des notes de réunion, formatez-les facilement, intégrez des éléments de travail, disposez-les à l'aide d'une bibliothèque de composants et gardez-les tous dans le contexte de votre département. Pour faciliter la rédaction de tout document, invoquez Galileo, l'IA de Paradise Task Tracker, avec un raccourci ou un clic sur un bouton.",
         "primary_button": {
           "text": "Créez votre première Page"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Aucun Cycle actif",
-        "description": "Les Cycles de vos projets qui incluent une période englobant la date d'aujourd'hui dans leur intervalle. Trouvez ici la progression et les détails de tous vos Cycles actifs."
+        "description": "Les Cycles de vos départements qui incluent une période englobant la date d'aujourd'hui dans leur intervalle. Trouvez ici la progression et les détails de tous vos Cycles actifs."
       }
     }
   },

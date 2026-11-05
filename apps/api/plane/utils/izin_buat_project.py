@@ -29,6 +29,8 @@ from plane.utils.hierarki import tingkat_efektif
 PERAN_ADMIN_WORKSPACE = 20
 PERAN_MEMBER_WORKSPACE = 15
 
+PESAN_DEPARTEMEN_DI_GODMODE = "Departments are created in God Mode."
+
 PESAN_TOLAK_BUAT_PROJECT = "Only workspace admins and leaders (supervisor and above) can create projects."
 
 

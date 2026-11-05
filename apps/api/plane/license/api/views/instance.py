@@ -14,6 +14,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 # Module imports
+from plane.license.audit_godmode import catat_godmode
 from plane.app.views import BaseAPIView
 from plane.db.models import Workspace
 from plane.license.api.permissions import InstanceAdminPermission
@@ -250,6 +251,13 @@ class InstanceEndpoint(BaseAPIView):
         serializer = InstanceSerializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            catat_godmode(
+                request,
+                kind="instance_profile",
+                label="Instance profile",
+                object_pk=str(instance.pk),
+                changes={"fields": ["", ", ".join(sorted(request.data))]},
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

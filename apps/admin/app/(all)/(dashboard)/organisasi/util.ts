@@ -80,9 +80,28 @@ export const calonManager = (orang: TAnggotaHierarki[], divisi: TDivisiOrganisas
  * (KEP-76: manager boleh duduk di departemen di luar divisinya). Menambah tidak
  * memindahkan penempatan lamanya.
  */
-export const calonAnggota = (orang: TAnggotaHierarki[], dep: TDepartemenOrganisasi): TAnggotaHierarki[] => {
+/**
+ * Pesan galat simpan God Mode. Pesan kita sendiri ada di `error`; galat autentikasi
+ * DRF (401: sesi God Mode habis) hanya membawa `detail`, dan dulu jatuh ke pesan
+ * umum "Could not save." yang tidak menjelaskan apa-apa.
+ */
+export const pesanGagalSimpan = (err: unknown, cadangan: string, sesiHabis: string): string => {
+  const isi = err as { error?: unknown; detail?: unknown } | undefined;
+  if (typeof isi?.error === "string" && isi.error.length > 0) return isi.error;
+  if (typeof isi?.detail === "string") return /authenticat|credentials/i.test(isi.detail) ? sesiHabis : isi.detail;
+  return cadangan;
+};
+
+export const calonAnggota = (
+  orang: TAnggotaHierarki[],
+  dep: TDepartemenOrganisasi,
+  divisiId?: string
+): TAnggotaHierarki[] => {
   const sudah = new Set(dep.anggota.map((a) => a.id));
-  return orang.filter((o) => (o.tingkat === null || o.tingkat < TINGKAT_DIREKTUR) && !sudah.has(o.id));
+  // KEP-93: manager divisi ini sudah memimpin departemennya, bukan calon anggota.
+  const memimpin = (o: TAnggotaHierarki) =>
+    divisiId !== undefined && (o.tingkat ?? 0) >= TINGKAT_MANAGER && (o.divisi_ids ?? []).includes(divisiId);
+  return orang.filter((o) => (o.tingkat === null || o.tingkat < TINGKAT_DIREKTUR) && !sudah.has(o.id) && !memimpin(o));
 };
 
 /** Departemen + divisi orang ini sekarang (semua barisnya), untuk penanda di daftar calon. */

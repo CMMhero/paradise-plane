@@ -17,7 +17,6 @@ from plane.utils.saklar_instance import (
     PERM_TRASH_PURGE,
     PERM_TRASH_RESTORE,
     PERM_VIEW_DELETE,
-    PERM_WIKI_DELETE,
     TRASH_RETENTION_DAYS,
     setelan_angka,
 )
@@ -26,7 +25,6 @@ from plane.db.models import Issue
 from plane.utils.izin_sumber import penilai_untuk, tolak_izin, tolak_izin_module
 from plane.utils.task_access import bisa_hapus_tugas
 from plane.utils.trash import TrashConflict, ambil, buang_permanen, kumpulkan, pulihkan
-from plane.utils.wiki_access import can_manage_wiki_material
 
 _PESAN_ISSUE = {
     "restore": "Hanya pembuat, penerima, atau atasannya yang boleh memulihkan barang ini.",
@@ -65,8 +63,6 @@ def _boleh_milik_sendiri(request, trash_type, obj, project_id):
             )
             is None
         )
-    if trash_type == "wiki_material":
-        return can_manage_wiki_material(request.user, obj, PERM_WIKI_DELETE)
     return False
 
 

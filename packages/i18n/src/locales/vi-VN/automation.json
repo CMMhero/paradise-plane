@@ -123,7 +123,7 @@
     "table": {
       "title": "Tiêu đề tự động hóa",
       "scope": "Phạm vi",
-      "projects": "Dự án",
+      "projects": "Phòng ban",
       "last_run_on": "Chạy lần cuối vào",
       "created_on": "Được tạo vào",
       "last_updated_on": "Cập nhật lần cuối vào",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Đã xóa tự động hóa",
-          "message": "{name}, tự động hóa, hiện đã bị xóa khỏi dự án của bạn."
+          "message": "{name}, tự động hóa, hiện đã bị xóa khỏi phòng ban của bạn."
         },
         "error": {
           "title": "Chúng tôi không thể xóa tự động hóa đó lần này.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Tự động hóa",
-        "description": "Tự động hóa là cách để tự động hóa các tác vụ trong dự án của bạn.",
+        "description": "Tự động hóa là cách để tự động hóa các tác vụ trong phòng ban của bạn.",
         "sub_description": "Lấy lại 80% thời gian quản trị của bạn khi sử dụng Tự động hóa."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Chọn các dự án để chạy tự động hóa này",
+        "label": "Chọn các phòng ban để chạy tự động hóa này",
         "all_projects": {
-          "label": "Tất cả dự án",
-          "description": "Tự động hóa sẽ chạy cho tất cả dự án trong không gian làm việc."
+          "label": "Tất cả phòng ban",
+          "description": "Tự động hóa sẽ chạy cho tất cả phòng ban trong không gian làm việc."
         },
         "select_projects": {
-          "label": "Chọn dự án",
-          "description": "Tự động hóa sẽ chạy cho các dự án đã chọn trong không gian làm việc.",
-          "placeholder": "Chọn dự án"
+          "label": "Chọn phòng ban",
+          "description": "Tự động hóa sẽ chạy cho các phòng ban đã chọn trong không gian làm việc.",
+          "placeholder": "Chọn phòng ban"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Toàn cục",
           "project": {
-            "label": "Dự án",
+            "label": "Phòng ban",
             "multiple": "Nhiều",
             "all": "Tất cả"
           }

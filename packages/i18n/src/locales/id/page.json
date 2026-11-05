@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Halaman pribadi dan yang dibagikan tidak dapat dipindahkan ke teamspace.",
       "placeholders": {
-        "workspace_to_all": "Cari proyek dan teamspace",
-        "workspace_to_project": "Cari proyek",
-        "project_to_all": "Cari proyek dan teamspace",
-        "project_to_project": "Cari proyek",
-        "project_to_all_with_wiki": "Cari koleksi wiki, proyek, dan teamspace",
-        "project_to_project_with_wiki": "Cari koleksi wiki dan proyek"
+        "workspace_to_all": "Cari departemen dan teamspace",
+        "workspace_to_project": "Cari departemen",
+        "project_to_all": "Cari departemen dan teamspace",
+        "project_to_project": "Cari departemen",
+        "project_to_all_with_wiki": "Cari koleksi wiki, departemen, dan teamspace",
+        "project_to_project_with_wiki": "Cari koleksi wiki dan departemen"
       },
       "toasts": {
         "success": {

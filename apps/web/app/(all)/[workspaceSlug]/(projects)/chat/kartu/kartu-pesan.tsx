@@ -9,8 +9,10 @@ import { AtSign, Phone, PhoneMissed, Users, Video } from "lucide-react";
 import { Link } from "react-router";
 import { useTranslation } from "@plane/i18n";
 import { Button, getButtonStyling } from "@plane/propel/button";
+import { cn } from "@plane/utils";
 import type { TPesan } from "@/services/chat.service";
 import { KartuTugas } from "./kartu-tugas";
+import { warnaKartu } from "./warna";
 import { URUTAN_ENTRI, bacaCatatanRilis, bacaLogPanggilan, formatDurasi } from "./muatan";
 import type { TJenisEntri } from "./muatan";
 
@@ -61,12 +63,15 @@ function KartuPanggilan({
   pesan,
   namaOrang,
   onTelepon,
+  terang,
 }: {
   pesan: TPesan;
   namaOrang: (id: string) => string;
   onTelepon?: (video: boolean) => void;
+  terang: boolean;
 }) {
   const { t } = useTranslation();
+  const warna = warnaKartu(terang);
   const log = bacaLogPanggilan(pesan.muatan);
   const terlewat = log.status === "tak_terjawab";
   const Ikon = terlewat ? PhoneMissed : log.konferensi ? Users : log.video ? Video : Phone;
@@ -87,15 +92,16 @@ function KartuPanggilan({
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`grid size-8 shrink-0 place-items-center rounded-full ${
-          terlewat ? "bg-danger-subtle text-danger-primary" : "bg-accent-subtle text-accent-primary"
-        }`}
+        className={cn(
+          "grid size-8 shrink-0 place-items-center rounded-full",
+          terlewat ? "bg-danger-subtle text-danger-primary" : warna.ikon
+        )}
       >
         <Ikon className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-13 font-medium text-primary">{judul}</p>
-        <p className="truncate text-12 text-tertiary">
+        <p className={cn("text-13 font-medium", warna.utama)}>{judul}</p>
+        <p className={cn("truncate text-12", warna.redup)}>
           {[log.oleh ? t("chatkartu_ui.started_by", { name: namaOrang(log.oleh) }) : "", keterangan]
             .filter(Boolean)
             .join(" · ")}
@@ -161,28 +167,30 @@ type Props = {
   namaOrang: (id: string) => string;
   /** Telepon balik di percakapan yang sedang dibuka. Kosong = tombol disembunyikan. */
   onTelepon?: (video: boolean) => void;
+  /** Kartu yang saya picu: digambar di atas warna gelembung keluar saya. */
+  terang?: boolean;
 };
 
 /** Satu kartu, dipilih dari `pesan.jenis`. Jenis yang belum dikenal peramban
  * ini jatuh ke `isi` biasa, jadi server boleh menambah jenis lebih dulu. */
-export function KartuPesan({ pesan, namaOrang, onTelepon }: Props) {
+export function KartuPesan({ pesan, namaOrang, onTelepon, terang = false }: Props) {
   switch (pesan.jenis) {
     case "changelog":
       return <KartuChangelog pesan={pesan} />;
     case "panggilan":
-      return <KartuPanggilan pesan={pesan} namaOrang={namaOrang} onTelepon={onTelepon} />;
+      return <KartuPanggilan pesan={pesan} namaOrang={namaOrang} onTelepon={onTelepon} terang={terang} />;
     case "mention": {
       const sebut = bacaSebutObrolan(pesan.muatan);
       if (sebut) return <KartuSebutObrolan sebut={sebut} namaOrang={namaOrang} />;
-      return <KartuTugas pesan={pesan} namaOrang={namaOrang} />;
+      return <KartuTugas pesan={pesan} namaOrang={namaOrang} terang={terang} />;
     }
     case "tugas":
     case "project":
     case "persetujuan":
     case "komentar":
     case "pembaruan":
-      return <KartuTugas pesan={pesan} namaOrang={namaOrang} />;
+      return <KartuTugas pesan={pesan} namaOrang={namaOrang} terang={terang} />;
     default:
-      return <p className="text-13 whitespace-pre-wrap text-primary">{pesan.isi}</p>;
+      return <p className={cn("text-13 whitespace-pre-wrap", warnaKartu(terang).utama)}>{pesan.isi}</p>;
   }
 }

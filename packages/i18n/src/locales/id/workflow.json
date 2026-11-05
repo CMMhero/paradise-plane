@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Apakah Anda yakin ingin mengatur ulang workflow ini?",
-        "description": "Jika Anda mengatur ulang workflow ini, semua aturan perubahan status Anda akan dihapus dan Anda harus membuatnya lagi untuk menjalankannya di proyek ini."
+        "description": "Jika Anda mengatur ulang workflow ini, semua aturan perubahan status Anda akan dihapus dan Anda harus membuatnya lagi untuk menjalankannya di departemen ini."
       },
       "delete_state_change": {
         "title": "Apakah Anda yakin ingin menghapus aturan perubahan status ini?",
-        "description": "Setelah dihapus, Anda tidak dapat membatalkan perubahan ini dan Anda harus mengatur aturan lagi jika Anda ingin menjalankannya untuk proyek ini."
+        "description": "Setelah dihapus, Anda tidak dapat membatalkan perubahan ini dan Anda harus mengatur aturan lagi jika Anda ingin menjalankannya untuk departemen ini."
       }
     },
     "toasts": {

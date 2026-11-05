@@ -106,6 +106,14 @@ class PenilaiIzin:
 
         return self._sekali("tingkat", lambda: tingkat_efektif(self.user.id, self.workspace_id))
 
+    def tingkat_di(self, project_id) -> int:
+        """Jenjang yang berlaku di satu project (KEP-93: peran per tempat)."""
+        from plane.utils.hierarki import tingkat_efektif  # noqa: PLC0415
+
+        return self._sekali(
+            ("tingkat", str(project_id)), lambda: tingkat_efektif(self.user.id, self.workspace_id, project_id)
+        )
+
     @property
     def diawasi(self) -> set[str]:
         """Project (id teks) yang diawasi orang ini: supervisor/manager/direktur."""
@@ -202,7 +210,7 @@ class PenilaiIzin:
         ambang = self.aturan(kunci)
         if ambang >= STRUKTUR_ADMIN_SAJA or project_id is None:
             return False
-        return self.tingkat >= ambang and str(project_id) in self.diawasi
+        return self.tingkat_di(project_id) >= ambang and str(project_id) in self.diawasi
 
 
 def penilai_untuk(request, workspace_id) -> PenilaiIzin:

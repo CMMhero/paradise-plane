@@ -62,8 +62,8 @@ export function JoinProjectModal(props: TJoinProjectModalProps) {
         <Button variant="secondary" size="lg" onClick={handleClose}>
           Cancel
         </Button>
-        <Button variant="primary" size="lg" tabIndex={1} type="submit" onClick={handleJoin} loading={isJoiningLoading}>
-          {isJoiningLoading ? "Joining..." : "Join Project"}
+        <Button variant="primary" size="lg" type="submit" onClick={handleJoin} loading={isJoiningLoading}>
+          {isJoiningLoading ? "Joining..." : "Join Department"}
         </Button>
       </div>
     </ModalCore>

@@ -168,7 +168,7 @@
       "confirm_message": "Êtes-vous sûr de vouloir archiver l’élément de travail ? Tous vos éléments archivés peuvent être restaurés ultérieurement.",
       "success": {
         "label": "Archivage réussi",
-        "message": "Vos archives se trouvent dans les archives du projet."
+        "message": "Vos archives se trouvent dans les archives du département."
       },
       "failed": {
         "message": "L’élément de travail n’a pas pu être archivé. Veuillez réessayer."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Restauration réussie",
-        "message": "Votre élément de travail se trouve dans les éléments de travail du projet."
+        "message": "Votre élément de travail se trouve dans les éléments de travail du département."
       },
       "failed": {
         "message": "L’élément de travail n’a pas pu être restauré. Veuillez réessayer."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Ouvrir l’élément de travail en plein écran",
     "duplicate": {
       "modal": {
-        "title": "Faire une copie vers un autre projet",
+        "title": "Faire une copie vers un autre département",
         "description1": "Cela crée une copie de l’élément de travail.",
         "description2": "Toutes les données de propriétés seront supprimées lors de la duplication.",
-        "placeholder": "Sélectionner un projet"
+        "placeholder": "Sélectionner un département"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Créer un élément de travail récurrent",
-        "no_permission": "Contactez votre administrateur de projet pour créer des éléments de travail récurrents"
+        "no_permission": "Contactez votre administrateur de département pour créer des éléments de travail récurrents"
       }
     },
     "empty_state": {

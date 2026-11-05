@@ -168,7 +168,7 @@
       "confirm_message": "Tem certeza de que deseja arquivar o item de trabalho? Todos os seus itens de trabalho arquivados podem ser restaurados posteriormente.",
       "success": {
         "label": "Sucesso ao arquivar",
-        "message": "Seus arquivos podem ser encontrados nos arquivos do projeto."
+        "message": "Seus arquivos podem ser encontrados nos arquivos do departamento."
       },
       "failed": {
         "message": "Não foi possível arquivar o item de trabalho. Por favor, tente novamente."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Sucesso ao restaurar",
-        "message": "Seu item de trabalho pode ser encontrado nos itens de trabalho do projeto."
+        "message": "Seu item de trabalho pode ser encontrado nos itens de trabalho do departamento."
       },
       "failed": {
         "message": "Não foi possível restaurar o item de trabalho. Por favor, tente novamente."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Abrir item de trabalho em tela cheia",
     "duplicate": {
       "modal": {
-        "title": "Fazer uma cópia para outro projeto",
+        "title": "Fazer uma cópia para outro departamento",
         "description1": "Isto cria uma cópia do item de trabalho.",
         "description2": "Todos os dados de propriedades serão removidos ao duplicar.",
-        "placeholder": "Selecionar um projeto"
+        "placeholder": "Selecionar um departamento"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Criar item de trabalho recorrente",
-        "no_permission": "Entre em contato com o administrador do projeto para criar itens de trabalho recorrentes"
+        "no_permission": "Entre em contato com o administrador do departamento para criar itens de trabalho recorrentes"
       }
     },
     "empty_state": {

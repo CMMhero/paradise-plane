@@ -123,7 +123,7 @@
     "table": {
       "title": "Título de la automatización",
       "scope": "Alcance",
-      "projects": "Proyectos",
+      "projects": "Departamentos",
       "last_run_on": "Última ejecución",
       "created_on": "Creado el",
       "last_updated_on": "Última actualización",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Automatización eliminada",
-          "message": "{name}, la automatización, ha sido eliminada de tu proyecto."
+          "message": "{name}, la automatización, ha sido eliminada de tu departamento."
         },
         "error": {
           "title": "No pudimos eliminar esa automatización esta vez.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Automatizaciones",
-        "description": "Las automatizaciones son una forma de automatizar tareas en tu proyecto.",
+        "description": "Las automatizaciones son una forma de automatizar tareas en tu departamento.",
         "sub_description": "Recupera el 80% de tu tiempo administrativo cuando uses Automatizaciones."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Selecciona los proyectos en los que ejecutar esta automatización",
+        "label": "Selecciona los departamentos en los que ejecutar esta automatización",
         "all_projects": {
-          "label": "Todos los proyectos",
-          "description": "La automatización se ejecutará para todos los proyectos del espacio de trabajo."
+          "label": "Todos los departamentos",
+          "description": "La automatización se ejecutará para todos los departamentos del espacio de trabajo."
         },
         "select_projects": {
-          "label": "Seleccionar proyectos",
-          "description": "La automatización se ejecutará para los proyectos seleccionados del espacio de trabajo.",
-          "placeholder": "Seleccionar proyectos"
+          "label": "Seleccionar departamentos",
+          "description": "La automatización se ejecutará para los departamentos seleccionados del espacio de trabajo.",
+          "placeholder": "Seleccionar departamentos"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Global",
           "project": {
-            "label": "Proyecto",
+            "label": "Departamento",
             "multiple": "Múltiples",
             "all": "Todos"
           }

@@ -103,7 +103,7 @@
     "empty_state": {
       "general": {
         "title": "Raggruppa e definisci il tempo per il tuo lavoro in cicli.",
-        "description": "Suddividi il lavoro in blocchi temporali, lavora a ritroso dalla scadenza del tuo progetto per impostare le date e fai progressi tangibili come team.",
+        "description": "Suddividi il lavoro in blocchi temporali, lavora a ritroso dalla scadenza del tuo reparto per impostare le date e fai progressi tangibili come team.",
         "primary_button": {
           "text": "Imposta il tuo primo ciclo",
           "comic": {
@@ -132,15 +132,15 @@
       },
       "archived": {
         "title": "Nessun ciclo archiviato ancora",
-        "description": "Per organizzare il tuo progetto, archivia i cicli completati. Li troverai qui una volta archiviati."
+        "description": "Per organizzare il tuo reparto, archivia i cicli completati. Li troverai qui una volta archiviati."
       }
     }
   },
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "Salva visualizzazioni filtrate per il tuo progetto. Crea quante ne vuoi",
-        "description": "Le visualizzazioni sono un insieme di filtri salvati che usi frequentemente o a cui vuoi avere accesso rapido. Tutti i tuoi colleghi in un progetto possono vedere tutte le visualizzazioni e scegliere quella che fa per loro.",
+        "title": "Salva visualizzazioni filtrate per il tuo reparto. Crea quante ne vuoi",
+        "description": "Le visualizzazioni sono un insieme di filtri salvati che usi frequentemente o a cui vuoi avere accesso rapido. Tutti i tuoi colleghi in un reparto possono vedere tutte le visualizzazioni e scegliere quella che fa per loro.",
         "primary_button": {
           "text": "Crea la tua prima visualizzazione",
           "comic": {
@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Nessuna pagina pubblica ancora",
-        "description": "Visualizza qui le pagine condivise con tutti nel tuo progetto.",
+        "description": "Visualizza qui le pagine condivise con tutti nel tuo reparto.",
         "primary_button": {
           "text": "Crea la tua prima pagina"
         }
@@ -191,7 +191,7 @@
     "empty_state": {
       "no_issues": {
         "title": "Crea un elemento di lavoro e assegnalo a qualcuno, anche a te stesso",
-        "description": "Considera gli elementi di lavoro come compiti, attività, lavori o JTBD. Un elemento di lavoro e i suoi sotto-elementi di lavoro sono solitamente attività basate sul tempo assegnate ai membri del team. Il tuo team crea, assegna e completa gli elementi di lavoro per portare il progetto verso il suo obiettivo.",
+        "description": "Considera gli elementi di lavoro come compiti, attività, lavori o JTBD. Un elemento di lavoro e i suoi sotto-elementi di lavoro sono solitamente attività basate sul tempo assegnate ai membri del team. Il tuo team crea, assegna e completa gli elementi di lavoro per portare il reparto verso il suo obiettivo.",
         "primary_button": {
           "text": "Crea il tuo primo elemento di lavoro",
           "comic": {
@@ -224,8 +224,8 @@
     "delete_module": "Elimina modulo",
     "empty_state": {
       "general": {
-        "title": "Associa i traguardi del tuo progetto ai Moduli e traccia facilmente il lavoro aggregato.",
-        "description": "Un gruppo di elementi di lavoro che appartengono a un genitore logico e gerarchico forma un modulo. Considerali come un modo per tracciare il lavoro in base ai traguardi del progetto. Hanno i propri intervalli temporali e scadenze, oltre ad analisi che ti aiutano a vedere quanto sei vicino o lontano da un traguardo.",
+        "title": "Associa i traguardi del tuo reparto ai Moduli e traccia facilmente il lavoro aggregato.",
+        "description": "Un gruppo di elementi di lavoro che appartengono a un genitore logico e gerarchico forma un modulo. Considerali come un modo per tracciare il lavoro in base ai traguardi del reparto. Hanno i propri intervalli temporali e scadenze, oltre ad analisi che ti aiutano a vedere quanto sei vicino o lontano da un traguardo.",
         "primary_button": {
           "text": "Crea il tuo primo modulo",
           "comic": {
@@ -246,7 +246,7 @@
       },
       "archived": {
         "title": "Nessun modulo archiviato ancora",
-        "description": "Per organizzare il tuo progetto, archivia i moduli completati o annullati. Li troverai qui una volta archiviati."
+        "description": "Per organizzare il tuo reparto, archivia i moduli completati o annullati. Li troverai qui una volta archiviati."
       },
       "sidebar": {
         "in_active": "Questo modulo non è ancora attivo.",
@@ -272,7 +272,7 @@
     "empty_state": {
       "general": {
         "title": "Scrivi una nota, un documento o una vera e propria base di conoscenza. Fai partire Galileo, l'assistente AI di Paradise Task Tracker, per aiutarti a iniziare",
-        "description": "Le pagine sono spazi per appunti in Paradise Task Tracker. Prendi note durante le riunioni, formattale facilmente, inserisci elementi di lavoro, disponili usando una libreria di componenti e tienili tutti nel contesto del tuo progetto. Per velocizzare qualsiasi documento, invoca Galileo, l'IA di Paradise Task Tracker, con una scorciatoia o con il clic di un pulsante.",
+        "description": "Le pagine sono spazi per appunti in Paradise Task Tracker. Prendi note durante le riunioni, formattale facilmente, inserisci elementi di lavoro, disponili usando una libreria di componenti e tienili tutti nel contesto del tuo reparto. Per velocizzare qualsiasi documento, invoca Galileo, l'IA di Paradise Task Tracker, con una scorciatoia o con il clic di un pulsante.",
         "primary_button": {
           "text": "Crea la tua prima pagina"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Nessuna pagina pubblica ancora",
-        "description": "Visualizza qui le pagine condivise con tutti nel tuo progetto.",
+        "description": "Visualizza qui le pagine condivise con tutti nel tuo reparto.",
         "primary_button": {
           "text": "Crea la tua prima pagina"
         }
@@ -300,36 +300,36 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "L'accoglienza non è abilitata per il progetto.",
-        "description": "L'accoglienza ti aiuta a gestire le richieste in entrata per il tuo progetto e ad aggiungerle come elementi di lavoro nel tuo flusso. Abilita l'accoglienza dalle impostazioni del progetto per gestire le richieste.",
+        "title": "L'accoglienza non è abilitata per il reparto.",
+        "description": "L'accoglienza ti aiuta a gestire le richieste in entrata per il tuo reparto e ad aggiungerle come elementi di lavoro nel tuo flusso. Abilita l'accoglienza dalle impostazioni del reparto per gestire le richieste.",
         "primary_button": {
           "text": "Gestisci funzionalità"
         }
       },
       "cycle": {
-        "title": "I cicli non sono abilitati per questo progetto.",
-        "description": "Suddividi il lavoro in blocchi temporali, lavora a ritroso dalla scadenza del tuo progetto per impostare le date e fai progressi tangibili come team. Abilita la funzionalità dei cicli per il tuo progetto per iniziare a usarli.",
+        "title": "I cicli non sono abilitati per questo reparto.",
+        "description": "Suddividi il lavoro in blocchi temporali, lavora a ritroso dalla scadenza del tuo reparto per impostare le date e fai progressi tangibili come team. Abilita la funzionalità dei cicli per il tuo reparto per iniziare a usarli.",
         "primary_button": {
           "text": "Gestisci funzionalità"
         }
       },
       "module": {
-        "title": "I moduli non sono abilitati per il progetto.",
-        "description": "I moduli sono i blocchi costitutivi del tuo progetto. Abilita i moduli dalle impostazioni del progetto per iniziare a usarli.",
+        "title": "I moduli non sono abilitati per il reparto.",
+        "description": "I moduli sono i blocchi costitutivi del tuo reparto. Abilita i moduli dalle impostazioni del reparto per iniziare a usarli.",
         "primary_button": {
           "text": "Gestisci funzionalità"
         }
       },
       "page": {
-        "title": "Le pagine non sono abilitate per il progetto.",
-        "description": "Le pagine sono i blocchi costitutivi del tuo progetto. Abilita le pagine dalle impostazioni del progetto per iniziare a usarle.",
+        "title": "Le pagine non sono abilitate per il reparto.",
+        "description": "Le pagine sono i blocchi costitutivi del tuo reparto. Abilita le pagine dalle impostazioni del reparto per iniziare a usarle.",
         "primary_button": {
           "text": "Gestisci funzionalità"
         }
       },
       "view": {
-        "title": "Le visualizzazioni non sono abilitate per il progetto.",
-        "description": "Le visualizzazioni sono i blocchi costitutivi del tuo progetto. Abilita le visualizzazioni dalle impostazioni del progetto per iniziare a usarle.",
+        "title": "Le visualizzazioni non sono abilitate per il reparto.",
+        "description": "Le visualizzazioni sono i blocchi costitutivi del tuo reparto. Abilita le visualizzazioni dalle impostazioni del reparto per iniziare a usarle.",
         "primary_button": {
           "text": "Gestisci funzionalità"
         }
@@ -392,7 +392,7 @@
           "complete": "Importazione completata"
         },
         "message": {
-          "success": "{count} membr{plural} importat{plural} con successo nel progetto.",
+          "success": "{count} membr{plural} importat{plural} con successo nel reparto.",
           "no_imports": "Nessun nuovo membro è stato importato dal file CSV."
         },
         "stats": {

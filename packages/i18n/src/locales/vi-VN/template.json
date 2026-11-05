@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Mẫu",
-      "description": "Lưu 80% thời gian đã tiêu tốn trong việc tạo dự án, mục công việc và trang khi bạn sử dụng các mẫu.",
-      "new_project_template": "Mẫu dự án mới",
+      "description": "Lưu 80% thời gian đã tiêu tốn trong việc tạo phòng ban, mục công việc và trang khi bạn sử dụng các mẫu.",
+      "new_project_template": "Mẫu phòng ban mới",
       "new_work_item_template": "Mẫu mục công việc mới",
       "new_page_template": "Mẫu trang mới",
       "options": {
         "project": {
-          "label": "Mẫu dự án"
+          "label": "Mẫu phòng ban"
         },
         "work_item": {
           "label": "Mẫu mục công việc"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Tạo mẫu",
         "no_permission": {
-          "project": "Liên hệ quản trị dự án của bạn để tạo mẫu",
+          "project": "Liên hệ quản trị phòng ban của bạn để tạo mẫu",
           "workspace": "Liên hệ quản trị workspace của bạn để tạo mẫu"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Được thừa kế từ workspace"
         },
         "project": {
-          "info": "Được thừa kế từ dự án"
+          "info": "Được thừa kế từ phòng ban"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Đặt tên cho mẫu dự án của bạn.",
+              "placeholder": "Đặt tên cho mẫu phòng ban của bạn.",
               "validation": {
                 "required": "Tên mẫu là bắt buộc",
                 "maxLength": "Tên mẫu không nên vượt quá 255 ký tự"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Đặt tên cho dự án của bạn.",
+            "placeholder": "Đặt tên cho phòng ban của bạn.",
             "validation": {
-              "required": "Tên dự án là bắt buộc",
-              "maxLength": "Tên dự án không nên vượt quá 255 ký tự"
+              "required": "Tên phòng ban là bắt buộc",
+              "maxLength": "Tên phòng ban không nên vượt quá 255 ký tự"
             }
           },
           "description": {
-            "placeholder": "Mô tả mục tiêu và mục tiêu của dự án này."
+            "placeholder": "Mô tả mục tiêu và mục tiêu của phòng ban này."
           },
           "button": {
-            "create": "Tạo mẫu dự án",
-            "update": "Cập nhật mẫu dự án"
+            "create": "Tạo mẫu phòng ban",
+            "update": "Cập nhật mẫu phòng ban"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Mô tả ngắn",
-            "placeholder": "Mẫu này rất phù hợp cho các Quản lý Dự án đang quản lý nhiều dự án cùng lúc.",
+            "placeholder": "Mẫu này rất phù hợp cho những người quản lý phụ trách nhiều phòng ban cùng lúc.",
             "validation": {
               "required": "Mô tả ngắn là bắt buộc"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Mẫu",
-        "description": "Với mẫu dự án, mẫu mục công việc và mẫu trang trong Paradise Task Tracker, bạn không phải tạo dự án từ đầu hoặc thiết lập thuộc tính mục công việc theo cách thủ công.",
+        "description": "Với mẫu phòng ban, mẫu mục công việc và mẫu trang trong Paradise Task Tracker, bạn không phải tạo phòng ban từ đầu hoặc thiết lập thuộc tính mục công việc theo cách thủ công.",
         "sub_description": "Nhận lại 80% thời gian quản lý của bạn khi bạn sử dụng Mẫu."
       },
       "no_templates": {
         "button": "Tạo mẫu của bạn"
       },
       "no_labels": {
-        "description": "Chưa có nhãn nào. Tạo nhãn để giúp tổ chức và lọc mục công việc trong dự án của bạn."
+        "description": "Chưa có nhãn nào. Tạo nhãn để giúp tổ chức và lọc mục công việc trong phòng ban của bạn."
       },
       "no_modules": {
-        "description": "Chưa có mô-đun nào. Tổ chức công việc thành các dự án phụ với người dẫn đầu và người được phân công chuyên trách."
+        "description": "Chưa có mô-đun nào. Tổ chức công việc thành các đơn vị con với người dẫn đầu và người được phân công chuyên trách."
       },
       "no_work_items": {
         "description": "Chưa có mục công việc nào. Thêm một để cấu trúc công việc của bạn tốt hơn."
@@ -318,7 +318,7 @@
         "project": "Thêm mẫu mới"
       },
       "label": {
-        "project": "Chọn mẫu dự án",
+        "project": "Chọn mẫu phòng ban",
         "page": "Chọn từ mẫu"
       },
       "tooltip": {

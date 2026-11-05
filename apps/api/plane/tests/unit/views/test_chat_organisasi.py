@@ -140,8 +140,11 @@ class TestSebutan:
             format="json",
         )
         assert jawab.status_code == 201
-        # Orang luar ruang dan diri sendiri dibuang; sampah diabaikan.
-        assert jawab.json()["muatan"] == {"sebut": [str(manager.id)]}
+        # Orang luar ruang dibuang, sampah diabaikan. Diri sendiri (@yourself,
+        # KEP-91) tetap tersimpan untuk disorot, tapi tidak dikirimi kartu.
+        assert jawab.json()["muatan"] == {"sebut": [str(manager.id), str(ani.id)]}
+        kartu_diri = PesanLangsung.objects.filter(ruang__kunci_sistem=kunci_kabar(ani.id), jenis=JenisPesan.MENTION)
+        assert not kartu_diri.exists()
 
         kartu = PesanLangsung.objects.filter(ruang__kunci_sistem=kunci_kabar(manager.id), jenis=JenisPesan.MENTION)
         assert kartu.count() == 1
@@ -189,6 +192,8 @@ class TestKartuDariCelery:
             data={"issue_activity": {"field": "comment", "new_value": "Tolong cek", "old_value": ""}},
         )
         assert kirim_kartu_notifikasi([notif]) == 1
-        kartu = PesanLangsung.objects.get(ruang__kunci_sistem=kunci_kabar(ani.id))
+        # KEP-90: ada pelaku manusia, jadi kartunya di DM manager <-> ani.
+        kartu = PesanLangsung.objects.get(ruang__kunci_dm=Ruang.buat_kunci_dm(manager.id, ani.id))
         assert kartu.jenis == JenisPesan.KOMENTAR
+        assert str(kartu.pengirim_id) == str(manager.id)
         assert kartu.muatan["tugas"]["id"] == str(issue.id)

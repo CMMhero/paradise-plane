@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "Pas encore de mises à jour.",
-      "description": "Lorsque les membres du projet ajoutent des mises à jour, elles apparaissent ici"
+      "description": "Lorsque les membres du département ajoutent des mises à jour, elles apparaissent ici"
     },
     "search": {
       "title": "Aucun résultat correspondant.",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "Il semble que vous n’ayez pas accès à ce projet",
+      "title": "Il semble que vous n’ayez pas accès à ce département",
       "restricted_description": "Contactez l’administrateur pour demander l’accès afin de pouvoir continuer ici.",
-      "join_description": "Cliquez sur le bouton ci-dessous pour rejoindre le projet.",
-      "cta_primary": "Rejoindre le projet",
-      "cta_loading": "Rejoindre le projet…"
+      "join_description": "Cliquez sur le bouton ci-dessous pour rejoindre le département.",
+      "cta_primary": "Rejoindre le département",
+      "cta_loading": "Rejoindre le département…"
     },
     "invalid_project": {
-      "title": "Projet non trouvé",
-      "description": "Le projet que vous recherchez n’existe pas."
+      "title": "Département non trouvé",
+      "description": "Le département que vous recherchez n’existe pas."
     },
     "work_items": {
       "title": "Commencez avec votre premier élément de travail.",
-      "description": "Les éléments de travail sont les éléments constitutifs de votre projet — attribuez des propriétaires, définissez des priorités et suivez facilement les progrès.",
+      "description": "Les éléments de travail sont les éléments constitutifs de votre département — attribuez des propriétaires, définissez des priorités et suivez facilement les progrès.",
       "cta_primary": "Créer votre premier élément de travail"
     },
     "cycles": {
       "title": "Regroupez et définissez des délais pour votre travail dans les Cycles.",
-      "description": "Décomposez le travail en morceaux délimités dans le temps, travaillez à rebours à partir de la date limite de votre projet pour définir des dates, et faites des progrès tangibles en équipe.",
+      "description": "Décomposez le travail en morceaux délimités dans le temps, travaillez à rebours à partir de la date limite de votre département pour définir des dates, et faites des progrès tangibles en équipe.",
       "cta_primary": "Définir votre premier cycle"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "Ajouter un élément de travail existant"
     },
     "modules": {
-      "title": "Associez vos objectifs de projet aux Modules et suivez-les facilement.",
-      "description": "Les modules sont composés d’éléments de travail interconnectés. Ils aident à suivre les progrès à travers les phases du projet, chacune avec des délais spécifiques et des analyses pour indiquer à quel point vous êtes proche de la réalisation de ces phases.",
+      "title": "Associez vos objectifs de département aux Modules et suivez-les facilement.",
+      "description": "Les modules sont composés d’éléments de travail interconnectés. Ils aident à suivre les progrès à travers les phases du département, chacune avec des délais spécifiques et des analyses pour indiquer à quel point vous êtes proche de la réalisation de ces phases.",
       "cta_primary": "Définir votre premier module"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "Ajouter un élément de travail existant"
     },
     "views": {
-      "title": "Enregistrez des vues personnalisées pour votre projet",
+      "title": "Enregistrez des vues personnalisées pour votre département",
       "description": "Les vues sont des filtres enregistrés qui vous aident à accéder rapidement aux informations que vous utilisez le plus. Collaborez sans effort pendant que les coéquipiers partagent et adaptent les vues à leurs besoins spécifiques.",
       "cta_primary": "Créer une vue"
     },
     "no_work_items_in_project": {
-      "title": "Aucun élément de travail dans le projet pour le moment",
-      "description": "Ajoutez des éléments de travail à votre projet et découpez votre travail en éléments traçables avec des vues.",
+      "title": "Aucun élément de travail dans le département pour le moment",
+      "description": "Ajoutez des éléments de travail à votre département et découpez votre travail en éléments traçables avec des vues.",
       "cta_primary": "Ajouter un élément de travail"
     },
     "work_item_filter": {
@@ -79,7 +79,7 @@
     },
     "pages": {
       "title": "Documentez tout — des notes aux PRD",
-      "description": "Les pages vous permettent de capturer et d’organiser des informations en un seul endroit. Rédigez des notes de réunion, de la documentation de projet et des PRD, intégrez des éléments de travail et structurez-les avec des composants prêts à l'emploi.",
+      "description": "Les pages vous permettent de capturer et d’organiser des informations en un seul endroit. Rédigez des notes de réunion, de la documentation de département et des PRD, intégrez des éléments de travail et structurez-les avec des composants prêts à l'emploi.",
       "cta_primary": "Créer votre première Page"
     },
     "archive_pages": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "Enregistrer les demandes d’Intake",
-      "description": "Soumettez de nouvelles demandes à examiner, prioriser et suivre dans le flux de travail de votre projet.",
+      "description": "Soumettez de nouvelles demandes à examiner, prioriser et suivre dans le flux de travail de votre département.",
       "cta_primary": "Créer une demande d’Intake"
     },
     "intake_main": {
       "title": "Sélectionnez un élément de travail Intake pour voir ses détails"
     },
     "epics": {
-      "title": "Transformez des projets complexes en épiques structurées.",
+      "title": "Transformez des départements complexes en épiques structurées.",
       "description": "Une épique vous aide à organiser de grands objectifs en tâches plus petites et traçables.",
       "cta_primary": "Créer une Épique",
       "cta_secondary": "Documentation"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "Aucun cycle archivé pour le moment",
-      "description": "Pour organiser votre projet, archivez les cycles terminés. Retrouvez-les ici une fois archivés."
+      "description": "Pour organiser votre département, archivez les cycles terminés. Retrouvez-les ici une fois archivés."
     },
     "archive_modules": {
       "title": "Aucun Module archivé pour le moment",
-      "description": "Pour organiser votre projet, archivez les modules terminés ou annulés. Retrouvez-les ici une fois archivés."
+      "description": "Pour organiser votre département, archivez les modules terminés ou annulés. Retrouvez-les ici une fois archivés."
     },
     "home_widget_quick_links": {
       "title": "Gardez les références, ressources ou documents importants à portée de main pour votre travail"
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "Aucune vue pour le moment",
-      "description": "Ajoutez des éléments de travail à votre projet et utilisez les vues pour filtrer, trier et suivre les progrès sans effort.",
+      "description": "Ajoutez des éléments de travail à votre département et utilisez les vues pour filtrer, trier et suivre les progrès sans effort.",
       "cta_primary": "Ajouter un élément de travail"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "Créer un brouillon d’élément de travail"
     },
     "projects_archived": {
-      "title": "Aucun projet archivé",
-      "description": "On dirait que tous vos projets sont toujours actifs — excellent travail !"
+      "title": "Aucun département archivé",
+      "description": "On dirait que tous vos départements sont toujours actifs — excellent travail !"
     },
     "analytics_projects": {
-      "title": "Créez des projets pour visualiser les métriques de projet ici."
+      "title": "Créez des départements pour visualiser les métriques de département ici."
     },
     "analytics_work_items": {
-      "title": "Créez des projets avec des éléments de travail et des personnes assignées pour commencer à suivre les performances, les progrès et l’impact de l’équipe ici."
+      "title": "Créez des départements avec des éléments de travail et des personnes assignées pour commencer à suivre les performances, les progrès et l’impact de l’équipe ici."
     },
     "analytics_no_cycle": {
       "title": "Créez des cycles pour organiser le travail en phases délimitées dans le temps et suivre les progrès à travers les sprints."
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "Écrivez une note, un document ou une base de connaissances complète.",
-      "description": "Les pages sont un espace de repérage de pensées dans Paradise Task Tracker. Prenez des notes de réunion, formatez-les facilement, intégrez des éléments de travail, organisez-les à l'aide d'une bibliothèque de composants, et gardez-les tous dans le contexte de votre projet.",
+      "description": "Les pages sont un espace de repérage de pensées dans Paradise Task Tracker. Prenez des notes de réunion, formatez-les facilement, intégrez des éléments de travail, organisez-les à l'aide d'une bibliothèque de composants, et gardez-les tous dans le contexte de votre département.",
       "cta_primary": "Créer votre page"
     },
     "project_overview_state_sidebar": {
-      "title": "Activer les états du projet",
-      "description": "Activez les états du projet pour afficher et gérer les propriétés comme l'état, la priorité, les dates d'échéance et plus encore."
+      "title": "Activer les états du département",
+      "description": "Activez les états du département pour afficher et gérer les propriétés comme l'état, la priorité, les dates d'échéance et plus encore."
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "Aucun Webhook ajouté pour le moment",
-      "description": "Automatisez les notifications vers des services externes lorsque des événements de projet se produisent.",
+      "description": "Automatisez les notifications vers des services externes lorsque des événements de département se produisent.",
       "cta_primary": "Ajouter un webhook"
     },
     "work_item_types": {
       "title": "Créer et personnaliser les types d'éléments de travail",
-      "description": "Définissez des types d'éléments de travail uniques pour votre projet. Chaque type peut avoir ses propres propriétés, flux de travail et champs - adaptés aux besoins de votre projet et de votre équipe.",
+      "description": "Définissez des types d'éléments de travail uniques pour votre département. Chaque type peut avoir ses propres propriétés, flux de travail et champs - adaptés aux besoins de votre département et de votre équipe.",
       "cta_primary": "Activer"
     },
     "work_item_type_properties": {
-      "title": "Définissez la propriété et les détails que vous souhaitez capturer pour ce type d'élément de travail. Personnalisez-le pour correspondre au flux de travail de votre projet.",
+      "title": "Définissez la propriété et les détails que vous souhaitez capturer pour ce type d'élément de travail. Personnalisez-le pour correspondre au flux de travail de votre département.",
       "cta_secondary": "Ajouter une propriété"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "Suivez les feuilles de temps pour tous les membres",
-      "description": "Enregistrez le temps sur les éléments de travail pour afficher des feuilles de temps détaillées pour tout membre de l'équipe à travers les projets."
+      "description": "Enregistrez le temps sur les éléments de travail pour afficher des feuilles de temps détaillées pour tout membre de l'équipe à travers les départements."
     },
     "group_syncing": {
       "title": "Aucun mappage de groupe pour le moment"
     },
     "template_setting": {
       "title": "Aucun modèle pour le moment",
-      "description": "Réduisez le temps de configuration en créant des modèles pour les projets, les éléments de travail et les pages — et démarrez un nouveau travail en quelques secondes.",
+      "description": "Réduisez le temps de configuration en créant des modèles pour les départements, les éléments de travail et les pages — et démarrez un nouveau travail en quelques secondes.",
       "cta_primary": "Créer un modèle"
     },
     "workflows": {

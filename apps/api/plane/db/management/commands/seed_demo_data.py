@@ -78,7 +78,7 @@ from plane.db.direktur import sinkronkan_direktur
 from plane.db.jangkauan import sinkronkan_workspace, tunda_sinkron
 from plane.db.management.commands import _demo_data as data
 from plane.db.management.commands._demo_berkas import hapus_berkas_demo
-from plane.db.management.commands._demo_konten import SUMBER as SUMBER_KONTEN
+from plane.db.management.commands._demo_konten import SUB_TOPIK, SUMBER as SUMBER_KONTEN
 from plane.db.management.commands._demo_konten import isi_konten
 from plane.db.management.commands._demo_obrolan import isi_obrolan
 from plane.db.management.commands._demo_pribadi import isi_pribadi
@@ -116,6 +116,7 @@ from plane.db.models import (
     TINGKAT_MEMBER,
     TINGKAT_SUPERVISOR,
     User,
+    WikiFolder,
     Workspace,
     WorkspaceMember,
 )
@@ -237,12 +238,19 @@ class Command(BaseCommand):
         # - semua berkas bertanda seed (objek MinIO + barisnya). Lampiran obrolan
         #   hanya menempel ke workspace; hapus user cuma menolkan created_by-nya,
         #   jadi tanpa ini barisnya tertinggal menunjuk objek yang sudah hilang.
-        # - sub-topik Wiki (project WIKI sendiri tetap).
+        # - sub-topik Wiki (WikiFolder bukan anak project, jadi tidak ikut kaskade).
         # - ruang obrolan yang punya pelanggan akun demo (DM ke Super Admin dan
         #   kanal Umum ikut, karena keduanya lahir dari seed).
         berkas_demo = FileAsset.all_objects.filter(workspace=self.ws, external_source=SUMBER_KONTEN)
         hapus_berkas_demo(berkas_demo)
-        sub_topik = Page.all_objects.filter(workspace=self.ws, external_source=SUMBER_KONTEN)
+        sub_topik = WikiFolder.all_objects.filter(
+            workspace=self.ws,
+            parent__isnull=False,
+            divisi__isnull=True,
+            departemen__isnull=True,
+            umum=False,
+            nama__in=[judul for judul, _ in SUB_TOPIK],
+        )
         ruang_demo = Ruang.objects.filter(workspace=self.ws, langganan__user__in=demo_users).distinct()
         with transaction.atomic(), tunda_sinkron():
             berkas_demo.delete()
@@ -254,8 +262,7 @@ class Command(BaseCommand):
                 entity_identifier__in=list(ruang_demo.values_list("id", flat=True)),
             ).delete()
             ruang_demo.delete()
-            ProjectPage.all_objects.filter(page__in=sub_topik).delete()
-            sub_topik.delete()
+            sub_topik.delete(soft=False)
             # Jabatan dulu: menghapus departemen men-SET_NULL penempatan, dan supervisor
             # dua departemen lalu punya dua baris "tanpa tempat" yang melanggar constraint.
             JabatanOrganisasi.all_objects.filter(workspace=self.ws, member__in=demo_users).delete()

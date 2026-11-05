@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Ekspor",
-        "description": "Ekspor data proyek Anda dalam berbagai format dan akses riwayat ekspor Anda dengan tautan unduhan.",
+        "description": "Ekspor data departemen Anda dalam berbagai format dan akses riwayat ekspor Anda dengan tautan unduhan.",
         "title": "Ekspor",
         "exporting": "Mengeskpor",
         "previous_exports": "Ekspor sebelumnya",
         "export_separate_files": "Ekspor data ke file terpisah",
-        "exporting_projects": "Mengekspor proyek",
+        "exporting_projects": "Mengekspor departemen",
         "format": "Format",
         "filters_info": "Terapkan filter untuk mengekspor item kerja tertentu berdasarkan kriteria Anda.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhook",
-        "description": "Otomatiskan notifikasi ke layanan eksternal saat peristiwa proyek terjadi.",
+        "description": "Otomatiskan notifikasi ke layanan eksternal saat peristiwa departemen terjadi.",
         "title": "Webhook",
         "add_webhook": "Tambah webhook",
         "modal": {
@@ -187,22 +187,22 @@
       "worklogs": {
         "title": "Log kerja",
         "heading": "Log kerja",
-        "description": "Unduh log kerja alias lembar waktu untuk siapa pun dalam proyek apa pun."
+        "description": "Unduh log kerja alias lembar waktu untuk siapa pun dalam departemen apa pun."
       },
       "group_syncing": {
         "title": "Sinkronisasi grup",
         "heading": "Sinkronisasi grup",
-        "description": "Tautkan grup penyedia identitas ke proyek dan peran. Akses pengguna diperbarui secara otomatis saat keanggotaan grup berubah di IdP Anda, menyederhanakan onboarding dan offboarding.",
+        "description": "Tautkan grup penyedia identitas ke departemen dan peran. Akses pengguna diperbarui secara otomatis saat keanggotaan grup berubah di IdP Anda, menyederhanakan onboarding dan offboarding.",
         "enable": {
           "title": "Aktifkan sinkronisasi grup",
-          "description": "Secara otomatis menambahkan pengguna ke proyek berdasarkan grup penyedia identitas."
+          "description": "Secara otomatis menambahkan pengguna ke departemen berdasarkan grup penyedia identitas."
         },
         "config": {
           "title": "Konfigurasi sinkronisasi grup",
-          "description": "Atur cara grup penyedia identitas dipetakan ke proyek dan peran.",
+          "description": "Atur cara grup penyedia identitas dipetakan ke departemen dan peran.",
           "sync_on_login": {
             "title": "Sinkronisasi saat login",
-            "description": "Perbarui keanggotaan grup dan akses proyek saat pengguna masuk."
+            "description": "Perbarui keanggotaan grup dan akses departemen saat pengguna masuk."
           },
           "sync_offline": {
             "title": "Sinkronisasi offline",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Hapus otomatis",
-            "description": "Secara otomatis menghapus pengguna dari proyek ketika mereka tidak lagi cocok dengan grup."
+            "description": "Secara otomatis menghapus pengguna dari departemen ketika mereka tidak lagi cocok dengan grup."
           },
           "group_attribute_key": {
             "title": "Kunci atribut grup",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Pemetaan grup",
-          "description": "Tautkan grup penyedia identitas ke proyek dan peran.",
+          "description": "Tautkan grup penyedia identitas ke departemen dan peran.",
           "button_text": "Tambah sinkronisasi grup baru"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Hapus sinkronisasi grup",
-          "content": "Pengguna baru dari grup identitas ini tidak akan lagi ditambahkan ke proyek. Pengguna yang sudah ditambahkan akan mempertahankan peran mereka saat ini."
+          "content": "Pengguna baru dari grup identitas ini tidak akan lagi ditambahkan ke departemen. Pengguna yang sudah ditambahkan akan mempertahankan peran mereka saat ini."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Masukkan nama grup IdP"
           },
           "project": {
-            "text": "Proyek",
-            "required": "Proyek wajib diisi",
-            "placeholder": "Pilih proyek"
+            "text": "Departemen",
+            "required": "Departemen wajib diisi",
+            "placeholder": "Pilih departemen"
           },
           "default_role": {
-            "text": "Peran proyek",
-            "required": "Peran proyek wajib diisi",
-            "placeholder": "Pilih peran proyek"
+            "text": "Peran departemen",
+            "required": "Peran departemen wajib diisi",
+            "placeholder": "Pilih peran departemen"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Konfigurasi domain Anda dan aktifkan Single sign-on"
       },
       "project_states": {
-        "title": "Status proyek",
-        "heading": "Lihat ikhtisar kemajuan untuk semua proyek.",
-        "description": "Status Proyek adalah fitur khusus Paradise Task Tracker untuk melacak kemajuan semua proyek Anda berdasarkan properti proyek apa pun.",
+        "title": "Status departemen",
+        "heading": "Lihat ikhtisar kemajuan untuk semua departemen.",
+        "description": "Status Departemen adalah fitur khusus Paradise Task Tracker untuk melacak kemajuan semua departemen Anda berdasarkan properti departemen apa pun.",
         "go_to_settings": "Pergi ke pengaturan"
       },
       "projects": {
-        "title": "Proyek",
-        "description": "Kelola status proyek, aktifkan label proyek, dan konfigurasi lainnya.",
+        "title": "Departemen",
+        "description": "Kelola status departemen, aktifkan label departemen, dan konfigurasi lainnya.",
         "tabs": {
-          "states": "Status proyek",
-          "labels": "Label proyek"
+          "states": "Status departemen",
+          "labels": "Label departemen"
         }
       },
       "templates": {
         "title": "Templat",
         "heading": "Templat",
-        "description": "Hemat 80% waktu yang dihabiskan untuk membuat proyek, item kerja, dan halaman saat Anda menggunakan templat."
+        "description": "Hemat 80% waktu yang dihabiskan untuk membuat departemen, item kerja, dan halaman saat Anda menggunakan templat."
       },
       "relations": {
         "title": "Relasi",
@@ -465,7 +465,7 @@
         "read": "Baca",
         "write": "Tulis",
         "scope_description": {
-          "projects": "Akses ke proyek dan semua entitas terkait proyek",
+          "projects": "Akses ke departemen dan semua entitas terkait departemen",
           "wiki": "Akses ke wiki dan semua entitas terkait wiki",
           "workspaces": "Akses ke workspace dan semua entitas terkait workspace",
           "stickies": "Akses ke stickies dan semua entitas terkait sticky",

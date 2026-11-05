@@ -6,7 +6,6 @@
 
 import { observer } from "mobx-react";
 // plane imports
-import { EUserPermissionsLevel, EUserPermissions } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EmptyStateDetailed } from "@plane/propel/empty-state";
 import { ContentWrapper } from "@plane/ui";
@@ -14,12 +13,8 @@ import { ContentWrapper } from "@plane/ui";
 import { calculateTotalFilters } from "@plane/utils";
 import { ProjectsLoader } from "@/components/ui/loader/projects-loader";
 // hooks
-import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectFilter } from "@/hooks/store/use-project-filter";
-import { useUserPermissions } from "@/hooks/store/user";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
-import { isWikiProject } from "@/lib/wiki-project";
 // local imports
 import { ProjectCard } from "./card";
 
@@ -33,7 +28,6 @@ export const ProjectCardList = observer(function ProjectCardList(props: TProject
   // plane hooks
   const { t } = useTranslation();
   // store hooks
-  const { toggleCreateProjectModal } = useCommandPalette();
   const {
     loader,
     fetchStatus,
@@ -42,21 +36,10 @@ export const ProjectCardList = observer(function ProjectCardList(props: TProject
     getProjectById,
   } = useProject();
   const { currentWorkspaceDisplayFilters, currentWorkspaceFilters } = useProjectFilter();
-  const { allowPermissions } = useUserPermissions();
 
   // derived values
-  // Paradise: Wiki bukan project bagi pengguna, jadi tidak ikut menentukan layar kosong.
-  const workspaceProjectIds = (totalProjectIdsProps ?? storeWorkspaceProjectIds)?.filter(
-    (id) => !isWikiProject(getProjectById(id))
-  );
+  const workspaceProjectIds = totalProjectIdsProps ?? storeWorkspaceProjectIds;
   const filteredProjectIds = filteredProjectIdsProps ?? storeFilteredProjectIds;
-
-  // permissions
-  // Paradise: tombol di sini membuat project, jadi staf / member biasa tidak boleh.
-  const bolehBuatProject = useBolehBuatProject();
-  const canPerformEmptyStateActions =
-    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
-    bolehBuatProject;
 
   if (!filteredProjectIds || !workspaceProjectIds || loader === "init-loader" || fetchStatus !== "complete")
     return <ProjectsLoader />;
@@ -68,16 +51,6 @@ export const ProjectCardList = observer(function ProjectCardList(props: TProject
         description={t("workspace_projects.empty_state.general.description")}
         assetKey="project"
         assetClassName="size-40"
-        actions={[
-          {
-            label: t("workspace_projects.empty_state.general.primary_button.text"),
-            onClick: () => {
-              toggleCreateProjectModal(true);
-            },
-            disabled: !canPerformEmptyStateActions,
-            variant: "primary",
-          },
-        ]}
       />
     );
 

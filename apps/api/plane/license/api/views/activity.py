@@ -30,6 +30,7 @@ from rest_framework.response import Response
 
 # Module imports
 from .base import BaseAPIView
+from plane.license.audit_godmode import catat_godmode
 from plane.db.models import (
     DOMAIN_AKUN_TERHAPUS,
     AMBANG_AKTIF_MENIT,
@@ -162,6 +163,14 @@ class InstanceMemberSessionEndpoint(BaseAPIView):
             permukaan="kick",
         )
 
+        catat_godmode(
+            request,
+            kind="account_session",
+            label=f"Account session: {u.email}",
+            object_pk=str(u.pk),
+            changes={"sessions": [str(jumlah), "0"]},
+            detail="Sessions ended" + (" and account deactivated" if nonaktifkan else ""),
+        )
         return Response(
             {
                 "sesi_diputus": jumlah,

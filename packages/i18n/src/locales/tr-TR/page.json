@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Özel ve paylaşılan sayfalar takım alanına taşınamaz.",
       "placeholders": {
-        "workspace_to_all": "Projeleri ve takım alanlarını ara",
-        "workspace_to_project": "Projeleri ara",
-        "project_to_all": "Projeleri ve takım alanlarını ara",
-        "project_to_project": "Projeleri ara",
-        "project_to_all_with_wiki": "Wiki koleksiyonlarını, projeleri ve takım alanlarını ara",
-        "project_to_project_with_wiki": "Wiki koleksiyonlarını ve projeleri ara"
+        "workspace_to_all": "Departmanları ve takım alanlarını ara",
+        "workspace_to_project": "Departmanları ara",
+        "project_to_all": "Departmanları ve takım alanlarını ara",
+        "project_to_project": "Departmanları ara",
+        "project_to_all_with_wiki": "Wiki koleksiyonlarını, departmanları ve takım alanlarını ara",
+        "project_to_project_with_wiki": "Wiki koleksiyonlarını ve departmanları ara"
       },
       "toasts": {
         "success": {

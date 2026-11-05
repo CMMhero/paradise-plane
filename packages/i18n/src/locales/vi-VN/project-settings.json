@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Nhập ID dự án",
+      "enter_project_id": "Nhập ID phòng ban",
       "please_select_a_timezone": "Vui lòng chọn múi giờ",
       "archive_project": {
-        "title": "Lưu trữ dự án",
-        "description": "Lưu trữ dự án sẽ hủy liệt kê dự án của bạn khỏi thanh điều hướng bên, nhưng bạn vẫn có thể truy cập nó từ trang dự án. Bạn có thể khôi phục hoặc xóa dự án bất cứ lúc nào.",
-        "button": "Lưu trữ dự án"
+        "title": "Lưu trữ phòng ban",
+        "description": "Lưu trữ phòng ban sẽ hủy liệt kê phòng ban của bạn khỏi thanh điều hướng bên, nhưng bạn vẫn có thể truy cập nó từ trang phòng ban. Bạn có thể khôi phục hoặc xóa phòng ban bất cứ lúc nào.",
+        "button": "Lưu trữ phòng ban"
       },
       "delete_project": {
-        "title": "Xóa dự án",
-        "description": "Khi xóa dự án, tất cả dữ liệu và tài nguyên trong dự án đó sẽ bị xóa vĩnh viễn và không thể khôi phục.",
-        "button": "Xóa dự án của tôi"
+        "title": "Xóa phòng ban",
+        "description": "Khi xóa phòng ban, tất cả dữ liệu và tài nguyên trong phòng ban đó sẽ bị xóa vĩnh viễn và không thể khôi phục.",
+        "button": "Xóa phòng ban của tôi"
       },
       "toast": {
-        "success": "Dự án đã được cập nhật thành công",
-        "error": "Không thể cập nhật dự án. Vui lòng thử lại."
+        "success": "Phòng ban đã được cập nhật thành công",
+        "error": "Không thể cập nhật phòng ban. Vui lòng thử lại."
       }
     },
     "members": {
       "label": "Thành viên",
-      "project_lead": "Người phụ trách dự án",
-      "project_lead_description": "Chọn trưởng dự án cho dự án.",
+      "project_lead": "Người phụ trách phòng ban",
+      "project_lead_description": "Chọn người phụ trách phòng ban.",
       "default_assignee": "Người nhận mặc định",
-      "default_assignee_description": "Chọn người được giao mặc định cho dự án.",
-      "project_subscribers": "Người theo dõi dự án",
-      "project_subscribers_description": "Chọn các thành viên sẽ nhận thông báo cho dự án này.",
+      "default_assignee_description": "Chọn người được giao mặc định cho phòng ban.",
+      "project_subscribers": "Người theo dõi phòng ban",
+      "project_subscribers_description": "Chọn các thành viên sẽ nhận thông báo cho phòng ban này.",
       "guest_super_permissions": {
         "title": "Cấp quyền cho người dùng khách xem tất cả mục công việc:",
-        "sub_heading": "Điều này sẽ cho phép khách xem tất cả mục công việc của dự án."
+        "sub_heading": "Điều này sẽ cho phép khách xem tất cả mục công việc của phòng ban."
       },
       "invite_members": {
         "title": "Mời thành viên",
-        "sub_heading": "Mời thành viên tham gia dự án của bạn.",
+        "sub_heading": "Mời thành viên tham gia phòng ban của bạn.",
         "select_co_worker": "Chọn đồng nghiệp"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Ước tính",
       "description": "Thiết lập hệ thống ước tính để theo dõi và truyền đạt nỗ lực cần thiết cho mỗi mục công việc.",
       "label": "Ước tính",
-      "title": "Bật ước tính cho dự án của tôi",
+      "title": "Bật ước tính cho phòng ban của tôi",
       "enable_description": "Chúng giúp bạn truyền đạt độ phức tạp và khối lượng công việc của nhóm.",
       "no_estimate": "Không có ước tính",
       "new": "Hệ thống ước tính mới",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Đã cập nhật ước tính",
-            "message": "Điểm ước tính đã được cập nhật trong dự án của bạn"
+            "message": "Điểm ước tính đã được cập nhật trong phòng ban của bạn"
           },
           "error": {
             "title": "Không thể cập nhật ước tính",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Đã sắp xếp lại ước tính",
-            "message": "Ước tính đã được sắp xếp lại trong dự án của bạn."
+            "message": "Ước tính đã được sắp xếp lại trong phòng ban của bạn."
           },
           "error": {
             "title": "Sắp xếp lại ước tính thất bại",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Tự động hóa",
       "heading": "Tự động hóa",
-      "description": "Cấu hình các hành động tự động để tinh giản quy trình quản lý dự án và giảm công việc thủ công.",
+      "description": "Cấu hình các hành động tự động để tinh giản quy trình quản lý phòng ban và giảm công việc thủ công.",
       "auto-archive": {
         "title": "Tự động lưu trữ mục công việc đã đóng",
         "description": "Paradise Task Tracker sẽ tự động lưu trữ các mục công việc đã hoàn thành hoặc đã hủy.",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "Chưa có nhãn",
-        "description": "Tạo nhãn để giúp tổ chức và lọc mục công việc trong dự án của bạn."
+        "description": "Tạo nhãn để giúp tổ chức và lọc mục công việc trong phòng ban của bạn."
       },
       "estimates": {
         "title": "Chưa có hệ thống ước tính",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Không có tích hợp nào được cấu hình",
-        "description": "Cấu hình GitHub và các tích hợp khác để đồng bộ hóa các mục công việc dự án của bạn."
+        "description": "Cấu hình GitHub và các tích hợp khác để đồng bộ hóa các mục công việc phòng ban của bạn."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Quy trình làm việc",
-      "description": "Tự động hóa việc chuyển đổi mục công việc và đặt quy tắc để kiểm soát cách các nhiệm vụ di chuyển qua luồng dự án của bạn.",
+      "description": "Tự động hóa việc chuyển đổi mục công việc và đặt quy tắc để kiểm soát cách các nhiệm vụ di chuyển qua luồng phòng ban của bạn.",
       "add_button": "Thêm quy trình làm việc mới",
       "search": "Tìm kiếm quy trình làm việc",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Tất cả trạng thái đang được sử dụng",
-          "description": "Tất cả trạng thái đã xác định cho dự án này đã có trong quy trình làm việc hiện tại của bạn."
+          "description": "Tất cả trạng thái đã xác định cho phòng ban này đã có trong quy trình làm việc hiện tại của bạn."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Chu kỳ",
         "short_title": "Chu kỳ",
-        "description": "Lên lịch công việc trong các khoảng thời gian linh hoạt thích ứng với nhịp điệu và tốc độ độc đáo của dự án này.",
+        "description": "Lên lịch công việc trong các khoảng thời gian linh hoạt thích ứng với nhịp điệu và tốc độ độc đáo của phòng ban này.",
         "toggle_title": "Bật chu kỳ",
         "toggle_description": "Lập kế hoạch công việc trong khung thời gian tập trung."
       },
       "modules": {
         "title": "Mô-đun",
         "short_title": "Mô-đun",
-        "description": "Tổ chức công việc thành các dự án phụ với người dẫn đầu và người được phân công chuyên trách.",
+        "description": "Tổ chức công việc thành các đơn vị con với người dẫn đầu và người được phân công chuyên trách.",
         "toggle_title": "Bật mô-đun",
-        "toggle_description": "Thành viên dự án sẽ có thể tạo và chỉnh sửa mô-đun."
+        "toggle_description": "Thành viên phòng ban sẽ có thể tạo và chỉnh sửa mô-đun."
       },
       "views": {
         "title": "Chế độ xem",
         "short_title": "Chế độ xem",
         "description": "Lưu các tùy chọn sắp xếp, bộ lọc và hiển thị tùy chỉnh hoặc chia sẻ chúng với nhóm của bạn.",
         "toggle_title": "Bật chế độ xem",
-        "toggle_description": "Thành viên dự án sẽ có thể tạo và chỉnh sửa chế độ xem."
+        "toggle_description": "Thành viên phòng ban sẽ có thể tạo và chỉnh sửa chế độ xem."
       },
       "pages": {
         "title": "Trang",
         "short_title": "Trang",
         "description": "Tạo và chỉnh sửa nội dung tự do: ghi chú, tài liệu, bất cứ thứ gì.",
         "toggle_title": "Bật trang",
-        "toggle_description": "Thành viên dự án sẽ có thể tạo và chỉnh sửa trang."
+        "toggle_description": "Thành viên phòng ban sẽ có thể tạo và chỉnh sửa trang."
       },
       "intake": {
         "intake_responsibility": "Trách nhiệm tiếp nhận",
@@ -358,9 +358,9 @@
         "short_title": "Tiếp nhận",
         "description": "Cho phép những người không phải thành viên chia sẻ lỗi, phản hồi và đề xuất; mà không làm gián đoạn quy trình làm việc của bạn.",
         "toggle_title": "Bật tiếp nhận",
-        "toggle_description": "Cho phép thành viên dự án tạo yêu cầu tiếp nhận trong ứng dụng.",
-        "toggle_tooltip_on": "Yêu cầu Quản trị viên Dự án bật tính năng này.",
-        "toggle_tooltip_off": "Yêu cầu Quản trị viên Dự án tắt tính năng này.",
+        "toggle_description": "Cho phép thành viên phòng ban tạo yêu cầu tiếp nhận trong ứng dụng.",
+        "toggle_tooltip_on": "Yêu cầu Quản trị viên Phòng ban bật tính năng này.",
+        "toggle_tooltip_off": "Yêu cầu Quản trị viên Phòng ban tắt tính năng này.",
         "notify_assignee": {
           "title": "Thông báo người được chỉ định",
           "description": "Đối với yêu cầu tiếp nhận mới, người được chỉ định mặc định sẽ được cảnh báo qua thông báo"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Theo dõi thời gian",
         "short_title": "Theo dõi thời gian",
-        "description": "Ghi lại thời gian dành cho các mục công việc và dự án.",
+        "description": "Ghi lại thời gian dành cho các mục công việc và phòng ban.",
         "toggle_title": "Bật theo dõi thời gian",
-        "toggle_description": "Thành viên dự án sẽ có thể ghi lại thời gian làm việc."
+        "toggle_description": "Thành viên phòng ban sẽ có thể ghi lại thời gian làm việc."
       },
       "milestones": {
         "title": "Cột mốc",
@@ -425,18 +425,18 @@
         "toggle_description": "Tổ chức các mục công việc theo thời hạn cột mốc."
       },
       "toasts": {
-        "loading": "Đang cập nhật tính năng dự án...",
-        "success": "Đã cập nhật tính năng dự án thành công.",
-        "error": "Đã xảy ra lỗi khi cập nhật tính năng dự án. Vui lòng thử lại."
+        "loading": "Đang cập nhật tính năng phòng ban...",
+        "success": "Đã cập nhật tính năng phòng ban thành công.",
+        "error": "Đã xảy ra lỗi khi cập nhật tính năng phòng ban. Vui lòng thử lại."
       }
     },
     "project_updates": {
-      "heading": "Cập nhật dự án",
-      "description": "Theo dõi và giám sát tiến độ được hợp nhất cho dự án này"
+      "heading": "Cập nhật phòng ban",
+      "description": "Theo dõi và giám sát tiến độ được hợp nhất cho phòng ban này"
     },
     "templates": {
       "heading": "Mẫu",
-      "description": "Tiết kiệm 80% thời gian dành cho việc tạo dự án, mục công việc và trang khi bạn sử dụng mẫu."
+      "description": "Tiết kiệm 80% thời gian dành cho việc tạo phòng ban, mục công việc và trang khi bạn sử dụng mẫu."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Thùng rác",
-      "description": "Các mục đã xóa sẽ nằm ở đây trước khi bị xóa vĩnh viễn. Quản trị viên dự án có thể khôi phục hoặc xóa vĩnh viễn."
+      "description": "Các mục đã xóa sẽ nằm ở đây trước khi bị xóa vĩnh viễn. Quản trị viên phòng ban có thể khôi phục hoặc xóa vĩnh viễn."
     }
   }
 }

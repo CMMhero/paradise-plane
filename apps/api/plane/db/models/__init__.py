@@ -85,6 +85,7 @@ from .issue_property import IssueProperty, IssuePropertyOption, IssuePropertyVal
 from .issue_template import IssueTemplate, RecurringIssue
 from .initiative import Initiative, InitiativeProject
 from .wiki_access import WikiGovernedProject, WikiFolderAccess
+from .wiki import WikiFolder, WikiMaterial
 from .plan import WorkspacePlan
 from .superadmin_visibility import SuperAdminTerlihatDiProject
 from .akun_terhapus import AkunTerhapus, DOMAIN_AKUN_TERHAPUS, NAMA_AKUN_TERHAPUS, adalah_akun_terhapus, email_akun_terhapus

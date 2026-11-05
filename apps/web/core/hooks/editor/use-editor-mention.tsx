@@ -5,24 +5,30 @@
  */
 
 import { useCallback } from "react";
+import { useTranslation } from "@plane/i18n";
 // plane editor
 import type { TMentionSection, TMentionSuggestion } from "@plane/editor";
 // plane types
-import type { TSearchEntities, TSearchEntityRequestPayload, TSearchResponse, TUserSearchResponse } from "@plane/types";
+import type { TSearchEntityRequestPayload, TSearchResponse, TUserSearchResponse } from "@plane/types";
 // plane ui
 import { Avatar } from "@plane/ui";
 // helpers
 import { getFileURL } from "@plane/utils";
 // plane web hooks
 import { useAdditionalEditorMention } from "@/hooks/use-additional-editor-mention";
+import { getRujukanLabel } from "./rujukan-label-cache";
+import { useRujukanMention } from "./use-rujukan-mention";
 
 type TArgs = {
   enableAdvancedMentions?: boolean;
+  workspaceSlug?: string;
   searchEntity: (payload: TSearchEntityRequestPayload) => Promise<TSearchResponse>;
 };
 
 export const useEditorMention = (args: TArgs) => {
-  const { enableAdvancedMentions = false, searchEntity } = args;
+  const { enableAdvancedMentions = false, searchEntity, workspaceSlug } = args;
+  const { t } = useTranslation();
+  const { getEveryoneSection, fetchHashMentions, tip } = useRujukanMention({ workspaceSlug });
   // additional mentions
   const { editorMentionTypes, updateAdditionalSections } = useAdditionalEditorMention({
     enableAdvancedMentions,
@@ -41,7 +47,7 @@ export const useEditorMention = (args: TArgs) => {
           throw new Error("No response found");
         }
         Object.keys(res).map((key) => {
-          const responseKey = key as TSearchEntities;
+          const responseKey = key as keyof TSearchResponse;
           const response = res[responseKey];
           if (responseKey === "user_mention" && response && response.length > 0) {
             const items: TMentionSuggestion[] = (response as TUserSearchResponse[]).map((user) => ({
@@ -59,7 +65,7 @@ export const useEditorMention = (args: TArgs) => {
             }));
             suggestionSections.push({
               key: "users",
-              title: "Users",
+              title: t("rujukan_ui.section_people"),
               items,
             });
           }
@@ -67,16 +73,19 @@ export const useEditorMention = (args: TArgs) => {
         const { sections } = updateAdditionalSections({
           response: res,
         });
-        return [...suggestionSections, ...sections];
+        return [...getEveryoneSection(query), ...suggestionSections, ...sections];
       } catch (error) {
         console.error("Error in fetching mentions:", error);
         throw error;
       }
     },
-    [editorMentionTypes, searchEntity, updateAdditionalSections]
+    [editorMentionTypes, getEveryoneSection, searchEntity, t, updateAdditionalSections]
   );
 
   return {
     fetchMentions,
+    fetchHashMentions,
+    getMentionedEntityLabel: getRujukanLabel,
+    tip,
   };
 };

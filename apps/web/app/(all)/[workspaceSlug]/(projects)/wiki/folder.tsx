@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: isi folder Wiki
+ * Kustomisasi Paradise Task Tracker: folder Wiki
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { ArrowLeft, Plus, Settings2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -13,93 +13,64 @@ import { useSWRConfig } from "swr";
 import { useTranslation } from "@plane/i18n";
 import { Button, getButtonStyling } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { cn, getPageName } from "@plane/utils";
+import { cn, sanitizeRichHTML } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
-import { GridKartu, KartuKerangka } from "@/components/wiki/kartu";
-// services
-import { ProjectPageService } from "@/services/page";
+import { GridKartu, KartuFolder, KartuKerangka } from "@/components/wiki/kartu";
 // local imports
-import {
-  anakDari,
-  divisiDari,
-  halamanDenganId,
-  halamanTerlihat,
-  izinFolderDari,
-  jumlahMateriDalam,
-  useIzinWiki,
-  useJumlahMateriWiki,
-  usePohonWiki,
-  useProjectWiki,
-} from "./data";
+import { anakDari, folderDenganId, folderTerlihat, jumlahMateriDalam, layananWiki, usePohonWiki } from "./data";
 import { GridMateri, SeksiSubtopik, TombolUnggah, useMateriTopik } from "./daftar-materi";
 import { KelolaFolder } from "./kelola";
-
-const layananHalaman = new ProjectPageService();
 
 /**
  * Isi sebuah folder Wiki: materinya sendiri, lalu tiap sub-topik sebagai seksi
  * yang bisa dibuka-tutup di daftar yang sama.
  *
- * Satu halaman dipakai untuk Divisi maupun Topik, dan itu disengaja. Yang
- * membedakan keduanya cuma apa yang kebetulan ada di dalamnya, bukan aturan
- * kaku soal kedalaman. Divisi yang cukup menaruh berkasnya langsung tidak
- * dipaksa membuat Topik kosong hanya demi bentuk.
+ * Satu halaman dipakai untuk divisi, departemen, dan topik, dan itu disengaja.
+ * Yang membedakan hanya apa yang kebetulan ada di dalamnya. Folder divisi
+ * menampilkan folder departemennya lebih dulu, lalu topiknya, lalu materinya.
  */
 function WikiFolderPage() {
   const { t } = useTranslation();
   const { workspaceSlug, folderId } = useParams();
   const slug = workspaceSlug?.toString() ?? "";
   const idFolder = folderId?.toString() ?? "";
-  const { projectId } = useProjectWiki();
-  const { halaman, sedangMemuat, muatUlang } = usePohonWiki(slug, projectId);
-  const { izin, muatUlangIzin } = useIzinWiki(slug, projectId);
-  const { jumlahMateri, muatUlangJumlah } = useJumlahMateriWiki(slug, projectId);
+  const { folder: semuaFolder, sedangMemuat, muatUlang } = usePohonWiki(slug);
   const [sedangMembuatSub, setSedangMembuatSub] = useState(false);
   const [kelolaTerbuka, setKelolaTerbuka] = useState(false);
   const navigate = useNavigate();
   const { mutate: segarkan } = useSWRConfig();
 
-  const terlihat = halamanTerlihat(halaman);
-  const folder = halamanDenganId(terlihat, idFolder);
-  const divisi = divisiDari(terlihat, folder?.id);
-  const izinDivisi = izinFolderDari(izin, divisi?.id);
-  const subtopik = anakDari(terlihat, idFolder);
+  const terlihat = useMemo(() => folderTerlihat(semuaFolder), [semuaFolder]);
+  const folder = folderDenganId(terlihat, idFolder);
+  const induk = folderDenganId(terlihat, folder?.parent_id);
+  const anak = anakDari(terlihat, idFolder);
+  const departemen = anak.filter((f) => f.departemen_id);
+  const subtopik = anak.filter((f) => !f.departemen_id);
+  const adalahDivisi = !!folder?.divisi_id;
+  const isiLama = folder?.isi_lama_html ? sanitizeRichHTML(folder.isi_lama_html).trim() : "";
 
-  const konteks = {
-    workspaceSlug: slug,
-    projectId: projectId ?? "",
-    halaman: terlihat,
-    jumlahMateri,
-    onJumlahBerubah: muatUlangJumlah,
-  };
-  // Tanpa `revalidateOnFocus: false`: daftar ini membawa `can_upload` dan
-  // `can_manage`, jadi ia harus ikut segar sama seperti useIzinWiki.
+  const konteks = { workspaceSlug: slug, folder: terlihat, onJumlahBerubah: muatUlang };
+  // Tanpa `revalidateOnFocus: false`: daftar ini membawa `can_upload`, jadi ia
+  // harus ikut segar sama seperti pohonnya.
   const {
     daftar,
     sedangMemuat: memuatMateri,
     muatUlang: muatUlangMateri,
     inputBerkas,
     unggahan,
-  } = useMateriTopik(konteks, projectId ? folder : undefined);
+  } = useMateriTopik(konteks, folder);
   const materi = daftar?.materials ?? [];
-  // Boleh mengurus folder ini. Jawabannya datang dari server, bukan dihitung
-  // ulang di sini, supaya aturan izinnya tidak pernah bercabang dua.
-  const bolehKelola = !!folder?.id && !!izin?.manageable_page_ids?.includes(folder.id);
+  // Jawaban server, bukan dihitung ulang di sini, supaya aturan izinnya tidak pernah bercabang dua.
+  const bolehKelola = !!folder?.can_manage;
 
   const buatSubtopik = async () => {
-    if (!projectId || !idFolder || sedangMembuatSub) return;
+    if (!idFolder || sedangMembuatSub) return;
     setSedangMembuatSub(true);
     try {
-      await layananHalaman.create(slug, projectId, { name: t("wiki_ui.folder.new_topic_name"), parent: idFolder });
-      // Izin ikut dimuat ulang: folder baru belum ada di manageable_page_ids
-      // cache, jadi tanpa ini tombol Kelola/unggah baru muncul setelah refresh.
-      await Promise.all([muatUlang(), muatUlangIzin()]);
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: t("wiki_ui.folder.subtopic_created_title"),
-        message: t("wiki_ui.folder.subtopic_created_message"),
-      });
+      await layananWiki.createFolder(slug, { nama: t("wiki_ui.folder.new_topic_name"), parent_id: idFolder });
+      await muatUlang();
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.folder.subtopic_created_title") });
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -124,12 +95,74 @@ function WikiFolderPage() {
       </div>
     );
 
-  const judul = getPageName(folder?.name);
-  // Angkanya mencakup sub-topik, karena semuanya sekarang terlihat di daftar ini.
-  const totalMateri = jumlahMateriDalam(terlihat, jumlahMateri, folder?.id);
-  // Folder yang isinya cuma sub-topik tidak perlu kotak "belum ada materi" yang
-  // besar; sub-topiknya sendiri sudah menjawab di mana materinya.
-  const tampilkanKosong = !memuatMateri && materi.length === 0 && subtopik.length === 0;
+  const judul = folder?.nama ?? "";
+  // Angkanya mencakup sub-folder, karena semuanya terlihat di daftar ini.
+  const totalMateri = jumlahMateriDalam(terlihat, folder?.id);
+  // Folder yang isinya cuma sub-folder tidak perlu kotak "belum ada materi" yang besar.
+  const tampilkanKosong = !memuatMateri && materi.length === 0 && anak.length === 0;
+
+  const bagianMateri = (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.folder.material_list")}</h2>
+          <span className="rounded-control bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
+            {t("wiki_ui.folder.material_count", { count: totalMateri })}
+          </span>
+        </div>
+        {inputBerkas}
+        <TombolUnggah unggahan={unggahan} namaTopik={judul} />
+      </div>
+
+      {memuatMateri ? (
+        <GridKartu>
+          <KartuKerangka />
+          <KartuKerangka />
+        </GridKartu>
+      ) : (
+        materi.length > 0 && <GridMateri konteks={konteks} materi={materi} muatUlang={muatUlangMateri} />
+      )}
+
+      {tampilkanKosong && (
+        <div className="rounded-card border border-dashed border-subtle px-6 py-14 text-center">
+          <p className="text-14 font-medium text-secondary">{t("wiki_ui.folder.empty_title")}</p>
+          <p className="mt-1 text-12 text-tertiary">
+            {unggahan.bolehUnggah ? t("wiki_ui.folder.empty_can_upload") : t("wiki_ui.folder.empty_cannot_upload")}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  const bagianTopik = subtopik.length > 0 && (
+    <div className="space-y-4">
+      {subtopik.map((s) => (
+        <SeksiSubtopik key={s.id} konteks={konteks} topik={s} />
+      ))}
+    </div>
+  );
+
+  const bagianDepartemen = departemen.length > 0 && (
+    <div className="space-y-4">
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.folder.departments")}</h2>
+        <span className="rounded-control bg-layer-3 px-2 py-0.5 text-11 text-tertiary">{departemen.length}</span>
+      </div>
+      <GridKartu>
+        {departemen.map((d) => (
+          <KartuFolder
+            key={d.id}
+            to={`/${slug}/wiki/${d.id}`}
+            judul={d.nama}
+            logoProps={d.logo_props ?? undefined}
+            keterangan={d.keterangan}
+            jumlahAnak={jumlahMateriDalam(terlihat, d.id)}
+            satuanAnak={t("wiki_ui.common.material_unit")}
+          />
+        ))}
+      </GridKartu>
+    </div>
+  );
 
   return (
     <>
@@ -137,13 +170,11 @@ function WikiFolderPage() {
       <div className="flex h-full w-full flex-col overflow-y-auto">
         <div className="border-b border-subtle bg-surface-1 px-page-x py-8">
           <Link
-            to={folder?.parent ? `/${slug}/wiki/${folder.parent}` : `/${slug}/wiki`}
+            to={folder?.parent_id ? `/${slug}/wiki/${folder.parent_id}` : `/${slug}/wiki`}
             className="inline-flex items-center gap-1.5 text-12 text-tertiary transition-colors hover:text-secondary"
           >
             <ArrowLeft className="size-3.5" />
-            {folder?.parent
-              ? t("wiki_ui.folder.back_to_parent", { name: getPageName(divisi?.name) })
-              : t("wiki_ui.common.back_to_home")}
+            {induk ? t("wiki_ui.folder.back_to_parent", { name: induk.nama }) : t("wiki_ui.common.back_to_home")}
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <h1 className="text-24 font-semibold tracking-tight text-primary">{judul}</h1>
@@ -160,73 +191,56 @@ function WikiFolderPage() {
               </Button>
             )}
           </div>
-          <p className="mt-1 text-13 text-tertiary">
-            {izinDivisi?.is_general
-              ? t("wiki_ui.folder.access_general")
-              : izinDivisi?.divisions.length
-                ? t("wiki_ui.folder.managed_by", { names: izinDivisi.divisions.map((d) => d.name).join(", ") })
-                : t("wiki_ui.folder.no_managing_division")}
-          </p>
+          {(folder?.keterangan || folder?.umum) && (
+            <p className="mt-1 max-w-3xl text-13 text-tertiary">
+              {folder.keterangan || t("wiki_ui.folder.access_general")}
+            </p>
+          )}
+          {isiLama && (
+            <div className="mt-4 max-w-3xl">
+              <h2 className="text-12 font-medium text-secondary">{t("wiki_ui.folder.legacy_title")}</h2>
+              <div
+                className="mt-2 rounded-card border border-subtle bg-layer-1 p-4 text-13 text-secondary [&_a]:text-accent-primary [&_a]:underline [&_h1]:text-16 [&_h1]:font-semibold [&_h2]:text-14 [&_h2]:font-semibold [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5"
+                // Sudah disanitasi dengan allowlist (sanitizeRichHTML); hanya baca.
+                // oxlint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{ __html: isiLama }}
+              />
+            </div>
+          )}
         </div>
 
-        <section className="flex-1 px-page-x py-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-baseline gap-2">
-              <h2 className="text-14 font-semibold text-primary">{t("wiki_ui.folder.material_list")}</h2>
-              <span className="rounded-control bg-layer-3 px-2 py-0.5 text-11 text-tertiary">
-                {t("wiki_ui.folder.material_count", { count: totalMateri })}
-              </span>
-            </div>
-            {inputBerkas}
-            <TombolUnggah unggahan={unggahan} namaTopik={judul} />
-          </div>
-
-          <div className="space-y-4">
-            {memuatMateri ? (
-              <GridKartu>
-                <KartuKerangka />
-                <KartuKerangka />
-              </GridKartu>
-            ) : (
-              materi.length > 0 && <GridMateri konteks={konteks} materi={materi} muatUlang={muatUlangMateri} />
-            )}
-
-            {tampilkanKosong && (
-              <div className="rounded-card border border-dashed border-subtle px-6 py-14 text-center">
-                <p className="text-14 font-medium text-secondary">{t("wiki_ui.folder.empty_title")}</p>
-                <p className="mt-1 text-12 text-tertiary">
-                  {unggahan.bolehUnggah
-                    ? t("wiki_ui.folder.empty_can_upload")
-                    : t("wiki_ui.folder.empty_cannot_upload")}
-                </p>
-              </div>
-            )}
-
-            {projectId && subtopik.map((s) => <SeksiSubtopik key={s.id} konteks={konteks} topik={s} />)}
-          </div>
+        <section className="flex-1 space-y-8 px-page-x py-6">
+          {adalahDivisi ? (
+            <>
+              {bagianDepartemen}
+              {bagianTopik}
+              {bagianMateri}
+            </>
+          ) : (
+            <>
+              {bagianDepartemen}
+              {bagianMateri}
+              {bagianTopik}
+            </>
+          )}
         </section>
       </div>
 
       {folder && kelolaTerbuka && (
         <KelolaFolder
           workspaceSlug={slug}
-          projectId={projectId ?? ""}
           folder={folder}
-          izin={izin}
           isOpen={kelolaTerbuka}
           onClose={() => setKelolaTerbuka(false)}
-          // Materi ikut dimuat ulang: mengganti pemilik divisi mengubah `can_upload`
-          // folder ini DAN semua sub-topiknya, yang datang dari daftar materi.
+          // Materi ikut dimuat ulang: perubahan struktur bisa mengubah `can_upload`
+          // folder ini dan sub-foldernya, yang datang dari daftar materi.
           onBerubah={() =>
-            Promise.all([
-              muatUlang(),
-              muatUlangIzin(),
-              segarkan((k) => typeof k === "string" && k.startsWith("WIKI_MATERIALS_")),
-            ])
+            Promise.all([muatUlang(), segarkan((k) => typeof k === "string" && k.startsWith("WIKI_MATERIALS_"))])
           }
           onTerhapus={() => {
             setKelolaTerbuka(false);
-            navigate(folder.parent ? `/${slug}/wiki/${folder.parent}` : `/${slug}/wiki`);
+            void muatUlang();
+            navigate(folder.parent_id ? `/${slug}/wiki/${folder.parent_id}` : `/${slug}/wiki`);
           }}
         />
       )}

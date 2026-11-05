@@ -103,7 +103,7 @@
     "empty_state": {
       "general": {
         "title": "Kelompokkan dan bagi pekerjaan Anda dalam Siklus.",
-        "description": "Pecah pekerjaan menjadi bagian yang dibatasi waktu, kerjakan mundur dari tenggat waktu proyek Anda untuk menetapkan tanggal, dan buat kemajuan nyata sebagai tim.",
+        "description": "Pecah pekerjaan menjadi bagian yang dibatasi waktu, kerjakan mundur dari tenggat waktu departemen Anda untuk menetapkan tanggal, dan buat kemajuan nyata sebagai tim.",
         "primary_button": {
           "text": "Tetapkan siklus pertama Anda",
           "comic": {
@@ -132,15 +132,15 @@
       },
       "archived": {
         "title": "Belum ada siklus yang diarsipkan",
-        "description": "Untuk membersihkan proyek Anda, arsipkan siklus yang telah diselesaikan. Temukan di sini setelah diarsipkan."
+        "description": "Untuk membersihkan departemen Anda, arsipkan siklus yang telah diselesaikan. Temukan di sini setelah diarsipkan."
       }
     }
   },
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "Simpan tampilan yang difilter untuk proyek Anda. Buat sebanyak yang Anda perlukan",
-        "description": "Tampilan adalah sekumpulan filter yang disimpan yang Anda gunakan secara sering atau ingin akses mudah. Semua rekan Anda dalam proyek dapat melihat tampilan semua orang dan memilih yang paling sesuai dengan kebutuhan mereka.",
+        "title": "Simpan tampilan yang difilter untuk departemen Anda. Buat sebanyak yang Anda perlukan",
+        "description": "Tampilan adalah sekumpulan filter yang disimpan yang Anda gunakan secara sering atau ingin akses mudah. Semua rekan Anda dalam departemen dapat melihat tampilan semua orang dan memilih yang paling sesuai dengan kebutuhan mereka.",
         "primary_button": {
           "text": "Buat tampilan pertama Anda",
           "comic": {
@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Belum ada halaman publik",
-        "description": "Lihat halaman yang dibagikan dengan semua orang di proyek Anda tepat di sini.",
+        "description": "Lihat halaman yang dibagikan dengan semua orang di departemen Anda tepat di sini.",
         "primary_button": {
           "text": "Buat halaman pertama Anda"
         }
@@ -191,7 +191,7 @@
     "empty_state": {
       "no_issues": {
         "title": "Buat item kerja dan tugaskan kepada seseorang, bahkan kepada diri Anda sendiri",
-        "description": "Anggap item kerja sebagai pekerjaan, tugas, atau JTBD. Yang kami suka. Item kerja dan sub-item kerjanya biasanya merupakan tindakan berbasis waktu yang ditugaskan kepada anggota tim Anda. Tim Anda membuat, menetapkan, dan menyelesaikan item kerja untuk memindahkan proyek Anda menuju tujuannya.",
+        "description": "Anggap item kerja sebagai pekerjaan, tugas, atau JTBD. Yang kami suka. Item kerja dan sub-item kerjanya biasanya merupakan tindakan berbasis waktu yang ditugaskan kepada anggota tim Anda. Tim Anda membuat, menetapkan, dan menyelesaikan item kerja untuk memindahkan departemen Anda menuju tujuannya.",
         "primary_button": {
           "text": "Buat item kerja pertama Anda",
           "comic": {
@@ -224,8 +224,8 @@
     "delete_module": "Hapus modul",
     "empty_state": {
       "general": {
-        "title": "Peta tonggak proyek Anda ke Modul dan lacak pekerjaan terakumulasi dengan mudah.",
-        "description": "Sekelompok item kerja yang tergolong dalam induk yang logis dan hierarkis membentuk satu modul. Anggap saja mereka sebagai cara untuk melacak pekerjaan berdasarkan tonggak proyek. Mereka memiliki periode dan tenggat waktu sendiri serta analitik untuk membantu Anda melihat seberapa dekat atau jauh Anda dari tonggak tersebut.",
+        "title": "Peta tonggak departemen Anda ke Modul dan lacak pekerjaan terakumulasi dengan mudah.",
+        "description": "Sekelompok item kerja yang tergolong dalam induk yang logis dan hierarkis membentuk satu modul. Anggap saja mereka sebagai cara untuk melacak pekerjaan berdasarkan tonggak departemen. Mereka memiliki periode dan tenggat waktu sendiri serta analitik untuk membantu Anda melihat seberapa dekat atau jauh Anda dari tonggak tersebut.",
         "primary_button": {
           "text": "Buat modul pertama Anda",
           "comic": {
@@ -246,7 +246,7 @@
       },
       "archived": {
         "title": "Belum ada Modul yang diarsipkan",
-        "description": "Untuk membersihkan proyek Anda, arsipkan modul yang telah selesai atau dibatalkan. Temukan di sini setelah diarsipkan."
+        "description": "Untuk membersihkan departemen Anda, arsipkan modul yang telah selesai atau dibatalkan. Temukan di sini setelah diarsipkan."
       },
       "sidebar": {
         "in_active": "Modul ini belum aktif.",
@@ -272,7 +272,7 @@
     "empty_state": {
       "general": {
         "title": "Tulis catatan, dokumen, atau seluruh basis pengetahuan. Dapatkan Galileo, asisten AI Paradise Task Tracker, untuk membantu Anda memulai",
-        "description": "Halaman adalah ruang pemikiran di Paradise Task Tracker. Catat notul rapat, format dengan mudah, sertakan item kerja, tata letak menggunakan perpustakaan komponen, dan simpan semua di dalam konteks proyek Anda. Untuk menyelesaikan dokumen dengan cepat, panggil Galileo, AI Paradise Task Tracker, dengan pintasan atau dengan mengklik tombol.",
+        "description": "Halaman adalah ruang pemikiran di Paradise Task Tracker. Catat notul rapat, format dengan mudah, sertakan item kerja, tata letak menggunakan perpustakaan komponen, dan simpan semua di dalam konteks departemen Anda. Untuk menyelesaikan dokumen dengan cepat, panggil Galileo, AI Paradise Task Tracker, dengan pintasan atau dengan mengklik tombol.",
         "primary_button": {
           "text": "Buat halaman pertama Anda"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Belum ada halaman publik",
-        "description": "Lihat halaman yang dibagikan dengan semua orang di proyek Anda tepat di sini.",
+        "description": "Lihat halaman yang dibagikan dengan semua orang di departemen Anda tepat di sini.",
         "primary_button": {
           "text": "Buat halaman pertama Anda"
         }
@@ -300,36 +300,36 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "Intake tidak diaktifkan untuk proyek ini.",
-        "description": "Intake membantu Anda mengelola permintaan yang masuk ke proyek Anda dan menambahkannya sebagai item kerja dalam alur kerja Anda. Aktifkan intake dari pengaturan proyek untuk mengelola permintaan.",
+        "title": "Intake tidak diaktifkan untuk departemen ini.",
+        "description": "Intake membantu Anda mengelola permintaan yang masuk ke departemen Anda dan menambahkannya sebagai item kerja dalam alur kerja Anda. Aktifkan intake dari pengaturan departemen untuk mengelola permintaan.",
         "primary_button": {
           "text": "Kelola fitur"
         }
       },
       "cycle": {
-        "title": "Siklus tidak diaktifkan untuk proyek ini.",
-        "description": "Pecah pekerjaan menjadi bagian yang dibatasi waktu, kerjakan mundur dari tenggat waktu proyek Anda untuk menetapkan tanggal, dan buat kemajuan nyata sebagai tim. Aktifkan fitur siklus untuk proyek Anda agar dapat mulai menggunakannya.",
+        "title": "Siklus tidak diaktifkan untuk departemen ini.",
+        "description": "Pecah pekerjaan menjadi bagian yang dibatasi waktu, kerjakan mundur dari tenggat waktu departemen Anda untuk menetapkan tanggal, dan buat kemajuan nyata sebagai tim. Aktifkan fitur siklus untuk departemen Anda agar dapat mulai menggunakannya.",
         "primary_button": {
           "text": "Kelola fitur"
         }
       },
       "module": {
-        "title": "Modul tidak diaktifkan untuk proyek ini.",
-        "description": "Modul adalah blok bangunan dari proyek Anda. Aktifkan modul dari pengaturan proyek untuk mulai menggunakannya.",
+        "title": "Modul tidak diaktifkan untuk departemen ini.",
+        "description": "Modul adalah blok bangunan dari departemen Anda. Aktifkan modul dari pengaturan departemen untuk mulai menggunakannya.",
         "primary_button": {
           "text": "Kelola fitur"
         }
       },
       "page": {
-        "title": "Halaman tidak diaktifkan untuk proyek ini.",
-        "description": "Halaman adalah blok bangunan dari proyek Anda. Aktifkan halaman dari pengaturan proyek untuk mulai menggunakannya.",
+        "title": "Halaman tidak diaktifkan untuk departemen ini.",
+        "description": "Halaman adalah blok bangunan dari departemen Anda. Aktifkan halaman dari pengaturan departemen untuk mulai menggunakannya.",
         "primary_button": {
           "text": "Kelola fitur"
         }
       },
       "view": {
-        "title": "Tampilan tidak diaktifkan untuk proyek ini.",
-        "description": "Tampilan adalah blok bangunan dari proyek Anda. Aktifkan tampilan dari pengaturan proyek untuk mulai menggunakannya.",
+        "title": "Tampilan tidak diaktifkan untuk departemen ini.",
+        "description": "Tampilan adalah blok bangunan dari departemen Anda. Aktifkan tampilan dari pengaturan departemen untuk mulai menggunakannya.",
         "primary_button": {
           "text": "Kelola fitur"
         }
@@ -392,7 +392,7 @@
           "complete": "Impor Selesai"
         },
         "message": {
-          "success": "Berhasil mengimpor {count} anggota ke proyek.",
+          "success": "Berhasil mengimpor {count} anggota ke departemen.",
           "no_imports": "Tidak ada anggota baru yang diimpor dari file CSV."
         },
         "stats": {

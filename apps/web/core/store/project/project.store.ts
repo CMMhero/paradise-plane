@@ -17,7 +17,6 @@ import { IssueLabelService, IssueService } from "@/services/issue";
 import { ProjectService, ProjectStateService, ProjectArchiveService } from "@/services/project";
 // lib
 import { withParadiseFeatureGates } from "@/lib/paradise-features";
-import { isWikiProject } from "@/lib/wiki-project";
 // store
 import type { CoreRootStore } from "../root.store";
 
@@ -171,7 +170,6 @@ export class ProjectStore implements IProjectStore {
     let workspaceProjects = Object.values(this.projectMap).filter(
       (p) =>
         p.workspace === workspaceDetails.id &&
-        !isWikiProject(p) &&
         (p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.identifier.toLowerCase().includes(searchQuery.toLowerCase())) &&
         shouldFilterProject(p, displayFilters, filters)
@@ -219,8 +217,7 @@ export class ProjectStore implements IProjectStore {
 
     const workspaceProjects = this.workspaceProjectIds ?? [];
     const archivedProjects = this.archivedProjectIds ?? [];
-    // Paradise: Wiki punya rute sendiri, jadi tidak dihitung di halaman Projects.
-    return [...workspaceProjects, ...archivedProjects].filter((id) => !isWikiProject(this.projectMap[id]));
+    return [...workspaceProjects, ...archivedProjects];
   }
 
   /**
@@ -256,12 +253,9 @@ export class ProjectStore implements IProjectStore {
     return projectIds;
   }
 
-  /**
-   * Paradise: joinedProjectIds tanpa project Wiki, untuk daftar project di sidebar.
-   * Wiki tetap muncul lewat item `/wiki` di sidebar workspace.
-   */
+  /** Paradise: daftar project di sidebar. Wiki bukan project, jadi tidak perlu disaring. */
   get sidebarProjectIds() {
-    return this.joinedProjectIds.filter((id) => !isWikiProject(this.projectMap[id]));
+    return this.joinedProjectIds;
   }
 
   /**

@@ -223,7 +223,7 @@ export function ExistingIssuesListModal(props: Props) {
                 {searchTerm}
                 {'"'}
               </span>{" "}
-              in project:
+              in department:
             </h5>
           )}
 

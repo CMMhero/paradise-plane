@@ -105,7 +105,7 @@ export const commandGroups: TCommandGroups = {
     icon: <ProjectIcon className="h-3 w-3" />,
     itemName: (project: IWorkspaceProjectSearchResult) => project?.name,
     path: (project: IWorkspaceProjectSearchResult) => `/${project?.workspace__slug}/projects/${project?.id}/issues/`,
-    title: "Projects",
+    title: "Departments",
   },
   workspace: {
     icon: <LayoutGrid className="h-3 w-3" />,

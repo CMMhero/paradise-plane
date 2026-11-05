@@ -1,1 +1,2 @@
 pnpm lint-staged
+bash paradise/bin/cek-lokal.sh pre-commit

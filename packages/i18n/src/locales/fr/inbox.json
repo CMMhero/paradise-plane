@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Seuls les administrateurs du projet peuvent reporter/annuler le report des éléments de travail",
-      "accept_permission": "Seuls les administrateurs du projet peuvent accepter les éléments de travail",
-      "decline_permission": "Seuls les administrateurs du projet peuvent refuser les éléments de travail"
+      "snooze_permission": "Seuls les administrateurs du département peuvent reporter/annuler le report des éléments de travail",
+      "accept_permission": "Seuls les administrateurs du département peuvent accepter les éléments de travail",
+      "decline_permission": "Seuls les administrateurs du département peuvent refuser les éléments de travail"
     },
     "actions": {
       "accept": "Accepter",
@@ -47,7 +47,7 @@
       "delete": "Supprimer",
       "open": "Ouvrir l’élément de travail",
       "mark_as_duplicate": "Marquer comme doublon",
-      "move": "Déplacer {value} vers les éléments de travail du projet"
+      "move": "Déplacer {value} vers les éléments de travail du département"
     },
     "source": {
       "in-app": "in-app"

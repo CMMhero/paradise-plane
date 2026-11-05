@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "私有和共享页面无法移动到团队空间。",
       "placeholders": {
-        "workspace_to_all": "搜索项目和团队空间",
-        "workspace_to_project": "搜索项目",
-        "project_to_all": "搜索项目和团队空间",
-        "project_to_project": "搜索项目",
-        "project_to_all_with_wiki": "搜索 Wiki 集合、项目和团队空间",
-        "project_to_project_with_wiki": "搜索 Wiki 集合和项目"
+        "workspace_to_all": "搜索部门和团队空间",
+        "workspace_to_project": "搜索部门",
+        "project_to_all": "搜索部门和团队空间",
+        "project_to_project": "搜索部门",
+        "project_to_all_with_wiki": "搜索 Wiki 集合、部门和团队空间",
+        "project_to_project_with_wiki": "搜索 Wiki 集合和部门"
       },
       "toasts": {
         "success": {

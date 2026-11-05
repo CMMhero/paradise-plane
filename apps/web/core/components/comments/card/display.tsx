@@ -18,6 +18,7 @@ import { calculateTimeAgo, cn, getFileURL, renderFormattedDate, renderFormattedT
 // components
 import { LiteTextEditor } from "@/components/editor/lite-text";
 import { MemberProfileTrigger } from "@/components/member-profile";
+import { PratinjauTautanHtml } from "@/components/pratinjau-tautan/kartu";
 // local imports
 import { CommentReactions } from "../comment-reaction";
 import { CommentCardEditForm } from "./edit-form";
@@ -179,6 +180,7 @@ export const CommentCardDisplay = observer(function CommentCardDisplay(props: TC
             }}
             parentClassName="border-none"
           />
+          <PratinjauTautanHtml html={comment.comment_html} />
           {shouldRenderReactions &&
             (renderFooter ? (
               renderFooter(

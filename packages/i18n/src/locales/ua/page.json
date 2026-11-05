@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Приватні та спільні сторінки не можна перемістити до командного простору.",
       "placeholders": {
-        "workspace_to_all": "Шукати проєкти та командні простори",
-        "workspace_to_project": "Шукати проєкти",
-        "project_to_all": "Шукати проєкти та командні простори",
-        "project_to_project": "Шукати проєкти",
-        "project_to_all_with_wiki": "Шукати колекції wiki, проєкти та командні простори",
-        "project_to_project_with_wiki": "Шукати колекції wiki та проєкти"
+        "workspace_to_all": "Шукати відділи та командні простори",
+        "workspace_to_project": "Шукати відділи",
+        "project_to_all": "Шукати відділи та командні простори",
+        "project_to_project": "Шукати відділи",
+        "project_to_all_with_wiki": "Шукати колекції wiki, відділи та командні простори",
+        "project_to_project_with_wiki": "Шукати колекції wiki та відділи"
       },
       "toasts": {
         "success": {

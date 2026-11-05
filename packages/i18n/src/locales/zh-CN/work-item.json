@@ -168,7 +168,7 @@
       "confirm_message": "您确定要归档此工作项吗？所有已归档的工作项稍后可以恢复。",
       "success": {
         "label": "归档成功",
-        "message": "您的归档可以在项目归档中找到。"
+        "message": "您的归档可以在部门归档中找到。"
       },
       "failed": {
         "message": "无法归档工作项。请重试。"
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "恢复成功",
-        "message": "您的工作项可以在项目工作项中找到。"
+        "message": "您的工作项可以在部门工作项中找到。"
       },
       "failed": {
         "message": "无法恢复工作项。请重试。"
@@ -297,10 +297,10 @@
     "open_in_full_screen": "在全屏中打开工作项",
     "duplicate": {
       "modal": {
-        "title": "复制到另一个项目",
+        "title": "复制到另一个部门",
         "description1": "这将创建工作项的副本。",
         "description2": "复制时将移除所有属性数据。",
-        "placeholder": "选择一个项目"
+        "placeholder": "选择一个部门"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "创建重复工作项",
-        "no_permission": "请联系您的项目管理员以创建重复工作项"
+        "no_permission": "请联系您的部门管理员以创建重复工作项"
       }
     },
     "empty_state": {

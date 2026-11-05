@@ -123,7 +123,7 @@
     "table": {
       "title": "自動化標題",
       "scope": "範圍",
-      "projects": "專案",
+      "projects": "部門",
       "last_run_on": "最後執行時間",
       "created_on": "建立時間",
       "last_updated_on": "最後更新時間",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "已刪除自動化",
-          "message": "{name}，該自動化，現已從您的專案中刪除。"
+          "message": "{name}，該自動化，現已從您的部門中刪除。"
         },
         "error": {
           "title": "本次無法刪除該自動化。",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "自動化",
-        "description": "自動化是在您的專案中自動執行任務的方式。",
+        "description": "自動化是在您的部門中自動執行任務的方式。",
         "sub_description": "使用自動化可以節省80%的管理時間。"
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "選擇要執行此自動化的專案",
+        "label": "選擇要執行此自動化的部門",
         "all_projects": {
-          "label": "所有專案",
-          "description": "自動化將針對工作區中的所有專案執行。"
+          "label": "所有部門",
+          "description": "自動化將針對工作區中的所有部門執行。"
         },
         "select_projects": {
-          "label": "選擇專案",
-          "description": "自動化將針對工作區中選取的專案執行。",
-          "placeholder": "選擇專案"
+          "label": "選擇部門",
+          "description": "自動化將針對工作區中選取的部門執行。",
+          "placeholder": "選擇部門"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "全域",
           "project": {
-            "label": "專案",
+            "label": "部門",
             "multiple": "多個",
             "all": "全部"
           }

@@ -18,6 +18,7 @@ import { EditorMentionsRoot } from "@/components/editor/embeds/mentions";
 import { IssueCommentToolbar } from "@/components/editor/lite-text/toolbar";
 // hooks
 import { useEditorConfig, useEditorMention } from "@/hooks/editor";
+import { placeholderDenganTip } from "@/hooks/editor/placeholder-rujukan";
 import { useMember } from "@/hooks/store/use-member";
 import { useParseEditorContent } from "@/hooks/use-parse-editor-content";
 // plane web hooks
@@ -26,6 +27,10 @@ import { useEditorFlagging } from "@/hooks/use-editor-flagging";
 import { WorkspaceService } from "@/services/workspace.service";
 import { LiteToolbar } from "./lite-toolbar";
 const workspaceService = new WorkspaceService();
+
+function isMutableRefObject<T>(candidate: React.ForwardedRef<T>): candidate is React.MutableRefObject<T | null> {
+  return !!candidate && typeof candidate === "object" && "current" in candidate;
+}
 
 type LiteTextEditorWrapperProps = MakeOptional<
   Omit<ILiteTextEditorProps, "fileHandler" | "mentionHandler" | "extendedEditorProps">,
@@ -45,6 +50,12 @@ type LiteTextEditorWrapperProps = MakeOptional<
   parentClassName?: string;
   editorClassName?: string;
   submitButtonText?: string;
+  /**
+   * Paradise: status kosong dari pemanggil. Tanpa ini status kosong dihitung
+   * dari `initialValue`, yang memaksa pemanggil mengoper nilai hidup dan
+   * merender ulang editor tiap huruf.
+   */
+  isEmpty?: boolean;
 } & (
     | {
         editable: false;
@@ -83,6 +94,7 @@ export const LiteTextEditor = React.forwardRef(function LiteTextEditor(
     editorClassName = "",
     showPlaceholderOnEmpty = true,
     submitButtonText = "common.comment",
+    isEmpty: isEmptyDariPemanggil,
     ...rest
   } = props;
   // states
@@ -103,7 +115,8 @@ export const LiteTextEditor = React.forwardRef(function LiteTextEditor(
     workspaceSlug,
   });
   // use editor mention
-  const { fetchMentions } = useEditorMention({
+  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip } = useEditorMention({
+    workspaceSlug,
     searchEntity: async (payload) =>
       await workspaceService.searchEntity(workspaceSlug, {
         ...payload,
@@ -113,11 +126,8 @@ export const LiteTextEditor = React.forwardRef(function LiteTextEditor(
   });
   // editor config
   const { getEditorFileHandlers } = useEditorConfig();
-  function isMutableRefObject<T>(ref: React.ForwardedRef<T>): ref is React.MutableRefObject<T | null> {
-    return !!ref && typeof ref === "object" && "current" in ref;
-  }
   // derived values
-  const isEmpty = isCommentEmpty(props.initialValue);
+  const isEmpty = isEmptyDariPemanggil ?? isCommentEmpty(props.initialValue);
 
   return (
     <div
@@ -160,12 +170,15 @@ export const LiteTextEditor = React.forwardRef(function LiteTextEditor(
                 if (!res) throw new Error("Failed in fetching mentions");
                 return res;
               },
+              searchHashCallback: fetchHashMentions,
+              tip,
+              getMentionedEntityLabel,
               renderComponent: EditorMentionsRoot,
               getMentionedEntityDetails: (id) => ({
                 display_name: getUserDetails(id)?.display_name ?? "",
               }),
             }}
-            placeholder={placeholder}
+            placeholder={editable ? placeholderDenganTip(placeholder, t("rujukan_ui.tip_inline")) : placeholder}
             showPlaceholderOnEmpty={showPlaceholderOnEmpty}
             containerClassName={cn(containerClassName, "relative", {
               "p-2": !editable,

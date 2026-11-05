@@ -106,7 +106,8 @@ export const PageEditorBody = observer(function PageEditorBody(props: Props) {
   } = page;
   const workspaceId = getWorkspaceBySlug(workspaceSlug)?.id ?? "";
   // use editor mention
-  const { fetchMentions } = useEditorMention({
+  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip } = useEditorMention({
+    workspaceSlug,
     enableAdvancedMentions: true,
     searchEntity: handlers.fetchEntity,
   });
@@ -246,9 +247,18 @@ export const PageEditorBody = observer(function PageEditorBody(props: Props) {
               <div className="group/page-toc relative px-page-x">
                 <div
                   className="max-h-[50vh] !cursor-pointer overflow-hidden"
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- wraps the outline, whose items are themselves clickable; a button cannot nest them
                   role="button"
+                  tabIndex={0}
                   aria-label={t("page_navigation_pane.outline_floating_button")}
                   onClick={handleOpenNavigationPane}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleOpenNavigationPane();
+                    }
+                  }}
                 >
                   <PageContentBrowser className="overflow-y-auto" editorRef={editorRef} showOutline />
                 </div>
@@ -281,7 +291,10 @@ export const PageEditorBody = observer(function PageEditorBody(props: Props) {
                 if (!res) throw new Error("Failed in fetching mentions");
                 return res;
               },
-              renderComponent: (props) => <EditorMentionsRoot {...props} />,
+              searchHashCallback: fetchHashMentions,
+              tip,
+              getMentionedEntityLabel,
+              renderComponent: (mentionProps) => <EditorMentionsRoot {...mentionProps} />,
               getMentionedEntityDetails: (id: string) => ({ display_name: getUserDetails(id)?.display_name ?? "" }),
             }}
             updatePageProperties={updatePageProperties}

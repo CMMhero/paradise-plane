@@ -229,7 +229,7 @@ export function InstanceGoogleConfigForm(props: Props) {
 
               {/* web service details */}
               <div className="flex flex-col overflow-hidden rounded-card">
-                <div className="flex items-center gap-x-3 bg-layer-3 px-6 py-3 text-11 font-medium text-secondary uppercase">
+                <div className="flex items-center gap-x-3 bg-layer-3 px-6 py-3 text-11 font-medium text-secondary">
                   <Monitor className="h-3 w-3" />
                   Web
                 </div>

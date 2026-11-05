@@ -91,6 +91,7 @@ export const Exporter = observer(function Exporter(props: Props) {
               entity: provider === "csv" ? "CSV" : provider === "xlsx" ? "Excel" : provider === "json" ? "JSON" : "",
             }),
           });
+          return;
         })
         .catch(() => {
           setExportLoading(false);
@@ -136,7 +137,7 @@ export const Exporter = observer(function Exporter(props: Props) {
                       return projectDetails?.identifier;
                     })
                     .join(", ")
-                : "All projects"
+                : "All departments"
             }
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}

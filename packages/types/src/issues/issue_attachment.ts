@@ -18,6 +18,8 @@ export type TIssueAttachment = {
   updated_at: string;
   updated_by: string;
   created_by: string;
+  /** Paradise KEP-88: "attachment" = uploaded file; "description" / "comment" = image taken from that text, read-only. */
+  sumber?: "attachment" | "description" | "comment";
 };
 
 export type TIssueAttachmentUploadResponse = TFileSignedURLResponse & {

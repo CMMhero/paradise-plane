@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "项目、活动和指标概览",
-        "description": "欢迎使用 Paradise Task Tracker，我们很高兴您能来到这里。创建您的第一个项目并跟踪您的工作项，这个页面将转变为帮助您进展的空间。管理员还将看到帮助团队进展的项目。",
+        "title": "部门、活动和指标概览",
+        "description": "欢迎使用 Paradise Task Tracker，我们很高兴您能来到这里。创建您的第一个部门并跟踪您的工作项，这个页面将转变为帮助您进展的空间。管理员还将看到帮助团队进展的部门。",
         "primary_button": {
-          "text": "构建您的第一个项目",
+          "text": "构建您的第一个部门",
           "comic": {
-            "title": "在 Paradise Task Tracker 中一切都从项目开始",
-            "description": "项目可以是产品路线图、营销活动或新车发布。"
+            "title": "在 Paradise Task Tracker 中一切都从部门开始",
+            "description": "部门可以是产品路线图、营销活动或新车发布。"
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "总开放任务",
     "error": "获取数据时出现错误。",
     "work_items_closed_in": "已关闭的工作项",
-    "selected_projects": "已选择的项目",
+    "selected_projects": "已选择的部门",
     "total_members": "总成员数",
     "total_cycles": "总周期数",
     "total_modules": "总模块数",
@@ -100,11 +100,11 @@
     "backlog_work_items": "待办的{entity}",
     "un_started_work_items": "未开始的{entity}",
     "completed_work_items": "已完成的{entity}",
-    "project_insights": "项目洞察",
-    "summary_of_projects": "项目概览",
-    "all_projects": "所有项目",
+    "project_insights": "部门洞察",
+    "summary_of_projects": "部门概览",
+    "all_projects": "所有部门",
     "trend_on_charts": "图表趋势",
-    "active_projects": "活跃项目",
+    "active_projects": "活跃部门",
     "customized_insights": "自定义洞察",
     "created_vs_resolved": "已创建 vs 已解决",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "跟踪进度、工作量和分配。发现趋势，消除障碍，加速工作进展",
-        "description": "查看范围与需求、估算和范围蔓延。获取团队成员和团队的性能，确保您的项目按时运行。",
+        "description": "查看范围与需求、估算和范围蔓延。获取团队成员和团队的性能，确保您的部门按时运行。",
         "primary_button": {
-          "text": "开始您的第一个项目",
+          "text": "开始您的第一个部门",
           "comic": {
             "title": "分析功能在周期 + 模块中效果最佳",
             "description": "首先，将您的问题在周期中进行时间限制，如果可能的话，将跨越多个周期的问题分组到模块中。在左侧导航中查看这两个功能。"
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "升级到 {plan} 以解锁 {tab}",
     "workitem_resolved_vs_pending": "已解决 vs 待处理的工作项",
-    "projects_by_status": "按状态分类的项目",
+    "projects_by_status": "按状态分类的部门",
     "active_users": "活跃用户",
     "intake_trends": "入学趋势"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {项目} other {项目}}",
+    "label": "{count, plural, one {部门} other {部门}}",
     "create": {
-      "label": "添加项目"
+      "label": "添加部门"
     },
     "network": {
       "label": "网络",
@@ -186,7 +186,7 @@
       "members_length": "成员数量"
     },
     "scope": {
-      "my_projects": "我的项目",
+      "my_projects": "我的部门",
       "archived_projects": "已归档"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "没有活动项目",
-        "description": "将每个项目视为目标导向工作的父级。项目是工作项、周期和模块所在的地方，与您的同事一起帮助您实现目标。创建新项目或筛选已归档的项目。",
+        "title": "没有活动部门",
+        "description": "将每个部门视为目标导向工作的父级。部门是工作项、周期和模块所在的地方，与您的同事一起帮助您实现目标。创建新部门或筛选已归档的部门。",
         "primary_button": {
-          "text": "开始您的第一个项目",
+          "text": "开始您的第一个部门",
           "comic": {
-            "title": "在 Paradise Task Tracker 中一切都从项目开始",
-            "description": "项目可以是产品路线图、营销活动或新车发布。"
+            "title": "在 Paradise Task Tracker 中一切都从部门开始",
+            "description": "部门可以是产品路线图、营销活动或新车发布。"
           }
         }
       },
       "no_projects": {
-        "title": "没有项目",
-        "description": "要创建工作项或管理您的工作，您需要创建一个项目或成为项目的一部分。",
+        "title": "没有部门",
+        "description": "要创建工作项或管理您的工作，您需要创建一个部门或成为部门的一部分。",
         "primary_button": {
-          "text": "开始您的第一个项目",
+          "text": "开始您的第一个部门",
           "comic": {
-            "title": "在 Paradise Task Tracker 中一切都从项目开始",
-            "description": "项目可以是产品路线图、营销活动或新车发布。"
+            "title": "在 Paradise Task Tracker 中一切都从部门开始",
+            "description": "部门可以是产品路线图、营销活动或新车发布。"
           }
         }
       },
       "filter": {
-        "title": "没有匹配的项目",
-        "description": "未检测到符合匹配条件的项目。\n创建一个新项目。"
+        "title": "没有匹配的部门",
+        "description": "未检测到符合匹配条件的部门。\n创建一个新部门。"
       },
       "search": {
-        "description": "未检测到符合匹配条件的项目。\n创建一个新项目"
+        "description": "未检测到符合匹配条件的部门。\n创建一个新部门"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "添加视图",
     "empty_state": {
       "all-issues": {
-        "title": "项目中没有工作项",
-        "description": "第一个项目完成！现在，将您的工作分解成可跟踪的工作项。让我们开始吧！",
+        "title": "部门中没有工作项",
+        "description": "第一个部门完成！现在，将您的工作分解成可跟踪的工作项。让我们开始吧！",
         "primary_button": {
           "text": "创建新工作项"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "写笔记、文档或完整的知识库。让 Galileo，Paradise Task Tracker 的 AI 助手，帮助您开始",
-        "description": "页面是 Paradise Task Tracker 中的思考空间。记录会议笔记，轻松格式化，嵌入工作项，使用组件库布局，并将它们全部保存在项目的上下文中。要快速完成任何文档，使用快捷键或点击按钮调用 Paradise Task Tracker 的 AI Galileo。",
+        "description": "页面是 Paradise Task Tracker 中的思考空间。记录会议笔记，轻松格式化，嵌入工作项，使用组件库布局，并将它们全部保存在部门的上下文中。要快速完成任何文档，使用快捷键或点击按钮调用 Paradise Task Tracker 的 AI Galileo。",
         "primary_button": {
           "text": "创建您的第一个页面"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "没有活动的周期",
-        "description": "您的项目中包含当前日期在其范围内的任何时期的周期。在这里查看所有活动周期的进度和详细信息。"
+        "description": "您的部门中包含当前日期在其范围内的任何时期的周期。在这里查看所有活动周期的进度和详细信息。"
       }
     }
   },

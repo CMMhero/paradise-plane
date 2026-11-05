@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Tổng quan về dự án, hoạt động và chỉ số",
-        "description": "Chào mừng đến với Paradise Task Tracker, chúng tôi rất vui khi bạn ở đây. Tạo dự án đầu tiên của bạn và theo dõi mục công việc, trang này sẽ trở thành không gian giúp bạn tiến triển. Quản trị viên cũng sẽ thấy dự án giúp nhóm tiến triển.",
+        "title": "Tổng quan về phòng ban, hoạt động và chỉ số",
+        "description": "Chào mừng đến với Paradise Task Tracker, chúng tôi rất vui khi bạn ở đây. Tạo phòng ban đầu tiên của bạn và theo dõi mục công việc, trang này sẽ trở thành không gian giúp bạn tiến triển. Quản trị viên cũng sẽ thấy phòng ban giúp nhóm tiến triển.",
         "primary_button": {
-          "text": "Xây dựng dự án đầu tiên của bạn",
+          "text": "Xây dựng phòng ban đầu tiên của bạn",
           "comic": {
-            "title": "Trong Paradise Task Tracker, mọi thứ đều bắt đầu với dự án",
-            "description": "Dự án có thể là lộ trình sản phẩm, chiến dịch tiếp thị hoặc ra mắt xe mới."
+            "title": "Trong Paradise Task Tracker, mọi thứ đều bắt đầu với phòng ban",
+            "description": "Phòng ban có thể là lộ trình sản phẩm, chiến dịch tiếp thị hoặc ra mắt xe mới."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Tổng nhiệm vụ đang mở",
     "error": "Đã xảy ra lỗi khi truy xuất dữ liệu.",
     "work_items_closed_in": "Mục công việc đã đóng trong",
-    "selected_projects": "Dự án đã chọn",
+    "selected_projects": "Phòng ban đã chọn",
     "total_members": "Tổng số thành viên",
     "total_cycles": "Tổng số chu kỳ",
     "total_modules": "Tổng số mô-đun",
@@ -100,11 +100,11 @@
     "backlog_work_items": "{entity} tồn đọng",
     "un_started_work_items": "{entity} chưa bắt đầu",
     "completed_work_items": "{entity} đã hoàn thành",
-    "project_insights": "Thông tin chi tiết dự án",
-    "summary_of_projects": "Tóm tắt dự án",
-    "all_projects": "Tất cả dự án",
+    "project_insights": "Thông tin chi tiết phòng ban",
+    "summary_of_projects": "Tóm tắt phòng ban",
+    "all_projects": "Tất cả phòng ban",
     "trend_on_charts": "Xu hướng trên biểu đồ",
-    "active_projects": "Dự án đang hoạt động",
+    "active_projects": "Phòng ban đang hoạt động",
     "customized_insights": "Thông tin chi tiết tùy chỉnh",
     "created_vs_resolved": "Đã tạo vs Đã giải quyết",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Theo dõi tiến độ, khối lượng công việc và phân bổ. Phát hiện xu hướng, loại bỏ rào cản và tăng tốc công việc",
-        "description": "Xem phạm vi so với nhu cầu, ước tính và mở rộng phạm vi. Theo dõi hiệu suất của các thành viên trong nhóm và đội nhóm, đảm bảo dự án của bạn hoạt động đúng tiến độ.",
+        "description": "Xem phạm vi so với nhu cầu, ước tính và mở rộng phạm vi. Theo dõi hiệu suất của các thành viên trong nhóm và đội nhóm, đảm bảo phòng ban của bạn hoạt động đúng tiến độ.",
         "primary_button": {
-          "text": "Bắt đầu dự án đầu tiên của bạn",
+          "text": "Bắt đầu phòng ban đầu tiên của bạn",
           "comic": {
             "title": "Phân tích hoạt động tốt nhất với Chu kỳ + Mô-đun",
             "description": "Đầu tiên, giới hạn thời gian các vấn đề của bạn trong Chu kỳ và, nếu có thể, nhóm các vấn đề kéo dài hơn một chu kỳ vào Mô-đun. Kiểm tra cả hai trong điều hướng bên trái."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Nâng cấp lên {plan} để mở khóa {tab}",
     "workitem_resolved_vs_pending": "Mục công việc đã giải quyết vs đang chờ",
-    "projects_by_status": "Dự án theo trạng thái",
+    "projects_by_status": "Phòng ban theo trạng thái",
     "active_users": "Người dùng hoạt động",
     "intake_trends": "Xu hướng tiếp nhận"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {dự án} other {dự án}}",
+    "label": "{count, plural, one {phòng ban} other {phòng ban}}",
     "create": {
-      "label": "Thêm dự án"
+      "label": "Thêm phòng ban"
     },
     "network": {
       "label": "Mạng",
@@ -186,7 +186,7 @@
       "members_length": "Số lượng thành viên"
     },
     "scope": {
-      "my_projects": "Dự án của tôi",
+      "my_projects": "Phòng ban của tôi",
       "archived_projects": "Đã lưu trữ"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Không có dự án hoạt động",
-        "description": "Coi mỗi dự án như là cấp cha của công việc định hướng mục tiêu. Dự án là nơi chứa mục công việc, chu kỳ và mô-đun, cùng với đồng nghiệp giúp bạn đạt được mục tiêu. Tạo dự án mới hoặc lọc dự án đã lưu trữ.",
+        "title": "Không có phòng ban hoạt động",
+        "description": "Coi mỗi phòng ban như là cấp cha của công việc định hướng mục tiêu. Phòng ban là nơi chứa mục công việc, chu kỳ và mô-đun, cùng với đồng nghiệp giúp bạn đạt được mục tiêu. Tạo phòng ban mới hoặc lọc phòng ban đã lưu trữ.",
         "primary_button": {
-          "text": "Bắt đầu dự án đầu tiên của bạn",
+          "text": "Bắt đầu phòng ban đầu tiên của bạn",
           "comic": {
-            "title": "Trong Paradise Task Tracker, mọi thứ đều bắt đầu với dự án",
-            "description": "Dự án có thể là lộ trình sản phẩm, chiến dịch tiếp thị hoặc ra mắt xe mới."
+            "title": "Trong Paradise Task Tracker, mọi thứ đều bắt đầu với phòng ban",
+            "description": "Phòng ban có thể là lộ trình sản phẩm, chiến dịch tiếp thị hoặc ra mắt xe mới."
           }
         }
       },
       "no_projects": {
-        "title": "Không có dự án",
-        "description": "Để tạo mục công việc hoặc quản lý công việc của bạn, bạn cần tạo dự án hoặc trở thành một phần của dự án.",
+        "title": "Không có phòng ban",
+        "description": "Để tạo mục công việc hoặc quản lý công việc của bạn, bạn cần tạo phòng ban hoặc trở thành một phần của phòng ban.",
         "primary_button": {
-          "text": "Bắt đầu dự án đầu tiên của bạn",
+          "text": "Bắt đầu phòng ban đầu tiên của bạn",
           "comic": {
-            "title": "Trong Paradise Task Tracker, mọi thứ đều bắt đầu với dự án",
-            "description": "Dự án có thể là lộ trình sản phẩm, chiến dịch tiếp thị hoặc ra mắt xe mới."
+            "title": "Trong Paradise Task Tracker, mọi thứ đều bắt đầu với phòng ban",
+            "description": "Phòng ban có thể là lộ trình sản phẩm, chiến dịch tiếp thị hoặc ra mắt xe mới."
           }
         }
       },
       "filter": {
-        "title": "Không có dự án phù hợp",
-        "description": "Không phát hiện dự án nào phù hợp với điều kiện tìm kiếm.\nTạo dự án mới."
+        "title": "Không có phòng ban phù hợp",
+        "description": "Không phát hiện phòng ban nào phù hợp với điều kiện tìm kiếm.\nTạo phòng ban mới."
       },
       "search": {
-        "description": "Không phát hiện dự án nào phù hợp với điều kiện tìm kiếm.\nTạo dự án mới"
+        "description": "Không phát hiện phòng ban nào phù hợp với điều kiện tìm kiếm.\nTạo phòng ban mới"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "Thêm chế độ xem",
     "empty_state": {
       "all-issues": {
-        "title": "Không có mục công việc trong dự án",
-        "description": "Dự án đầu tiên hoàn thành! Bây giờ, hãy chia nhỏ công việc của bạn thành các mục công việc có thể theo dõi. Hãy bắt đầu nào!",
+        "title": "Không có mục công việc trong phòng ban",
+        "description": "Phòng ban đầu tiên hoàn thành! Bây giờ, hãy chia nhỏ công việc của bạn thành các mục công việc có thể theo dõi. Hãy bắt đầu nào!",
         "primary_button": {
           "text": "Tạo mục công việc mới"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Viết ghi chú, tài liệu, hoặc cơ sở kiến thức đầy đủ. Nhờ Galileo, trợ lý AI của Paradise Task Tracker, giúp bạn bắt đầu",
-        "description": "Trang là không gian lưu trữ ý tưởng trong Paradise Task Tracker. Ghi lại ghi chú cuộc họp, định dạng chúng dễ dàng, nhúng mục công việc, bố trí chúng bằng thư viện các thành phần, và giữ tất cả trong ngữ cảnh dự án của bạn. Để làm ngắn gọn bất kỳ tài liệu nào, gọi Galileo, AI của Paradise Task Tracker, bằng phím tắt hoặc nhấp vào nút.",
+        "description": "Trang là không gian lưu trữ ý tưởng trong Paradise Task Tracker. Ghi lại ghi chú cuộc họp, định dạng chúng dễ dàng, nhúng mục công việc, bố trí chúng bằng thư viện các thành phần, và giữ tất cả trong ngữ cảnh phòng ban của bạn. Để làm ngắn gọn bất kỳ tài liệu nào, gọi Galileo, AI của Paradise Task Tracker, bằng phím tắt hoặc nhấp vào nút.",
         "primary_button": {
           "text": "Tạo trang đầu tiên của bạn"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Không có chu kỳ đang hoạt động",
-        "description": "Chu kỳ của các dự án của bạn bao gồm bất kỳ khoảng thời gian nào bao gồm ngày hôm nay trong phạm vi của nó. Tìm tiến độ và chi tiết của tất cả chu kỳ đang hoạt động của bạn tại đây."
+        "description": "Chu kỳ của các phòng ban của bạn bao gồm bất kỳ khoảng thời gian nào bao gồm ngày hôm nay trong phạm vi của nó. Tìm tiến độ và chi tiết của tất cả chu kỳ đang hoạt động của bạn tại đây."
       }
     }
   },

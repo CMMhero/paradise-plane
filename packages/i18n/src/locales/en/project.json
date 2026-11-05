@@ -103,7 +103,7 @@
     "empty_state": {
       "general": {
         "title": "Group and timebox your work in Cycles.",
-        "description": "Break work down by timeboxed chunks, work backwards from your project deadline to set dates, and make tangible progress as a team.",
+        "description": "Break work down by timeboxed chunks, work backwards from your department deadline to set dates, and make tangible progress as a team.",
         "primary_button": {
           "text": "Set your first cycle",
           "comic": {
@@ -132,15 +132,15 @@
       },
       "archived": {
         "title": "No archived cycles yet",
-        "description": "To tidy up your project, archive completed cycles. Find them here once archived."
+        "description": "To tidy up your department, archive completed cycles. Find them here once archived."
       }
     }
   },
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "Save filtered views for your project. Create as many as you need",
-        "description": "Views are a set of saved filters that you use frequently or want easy access to. All your colleagues in a project can see everyone's views and choose whichever suits their needs best.",
+        "title": "Save filtered views for your department. Create as many as you need",
+        "description": "Views are a set of saved filters that you use frequently or want easy access to. All your colleagues in a department can see everyone's views and choose whichever suits their needs best.",
         "primary_button": {
           "text": "Create your first view",
           "comic": {
@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "No public pages yet",
-        "description": "See pages shared with everyone in your project right here.",
+        "description": "See pages shared with everyone in your department right here.",
         "primary_button": {
           "text": "Create your first page"
         }
@@ -191,7 +191,7 @@
     "empty_state": {
       "no_issues": {
         "title": "Create a work item and assign it to someone, even yourself",
-        "description": "Think of work items as jobs, tasks, work, or JTBD. Which we like. A work item and its sub-work items are usually time-based actionables assigned to members of your team. Your team creates, assigns, and completes work items to move your project towards its goal.",
+        "description": "Think of work items as jobs, tasks, work, or JTBD. Which we like. A work item and its sub-work items are usually time-based actionables assigned to members of your team. Your team creates, assigns, and completes work items to move your department towards its goal.",
         "primary_button": {
           "text": "Create your first work item",
           "comic": {
@@ -224,8 +224,8 @@
     "delete_module": "Delete module",
     "empty_state": {
       "general": {
-        "title": "Map your project milestones to Modules and track aggregated work easily.",
-        "description": "A group of work items that belong to a logical, hierarchical parent form a module. Think of them as a way to track work by project milestones. They have their own periods and deadlines as well as analytics to help you see how close or far you are from a milestone.",
+        "title": "Map your department milestones to Modules and track aggregated work easily.",
+        "description": "A group of work items that belong to a logical, hierarchical parent form a module. Think of them as a way to track work by department milestones. They have their own periods and deadlines as well as analytics to help you see how close or far you are from a milestone.",
         "primary_button": {
           "text": "Build your first module",
           "comic": {
@@ -246,7 +246,7 @@
       },
       "archived": {
         "title": "No archived Modules yet",
-        "description": "To tidy up your project, archive completed or cancelled modules. Find them here once archived."
+        "description": "To tidy up your department, archive completed or cancelled modules. Find them here once archived."
       },
       "sidebar": {
         "in_active": "This module isn't active yet.",
@@ -272,7 +272,7 @@
     "empty_state": {
       "general": {
         "title": "Write a note, a doc, or a full knowledge base. Get Galileo, Paradise Task Tracker's AI assistant, to help you get started",
-        "description": "Pages are thoughts potting space in Paradise Task Tracker. Take down meeting notes, format them easily, embed work items, lay them out using a library of components, and keep them all in your project's context. To make short work of any doc, invoke Galileo, Paradise Task Tracker's AI, with a shortcut or the click of a button.",
+        "description": "Pages are thoughts potting space in Paradise Task Tracker. Take down meeting notes, format them easily, embed work items, lay them out using a library of components, and keep them all in your department's context. To make short work of any doc, invoke Galileo, Paradise Task Tracker's AI, with a shortcut or the click of a button.",
         "primary_button": {
           "text": "Create your first page"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "No public pages yet",
-        "description": "See pages shared with everyone in your project right here.",
+        "description": "See pages shared with everyone in your department right here.",
         "primary_button": {
           "text": "Create your first page"
         }
@@ -300,36 +300,36 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "Intake is not enabled for the project.",
-        "description": "Intake helps you manage incoming requests to your project and add them as work items in your workflow. Enable intake from project settings to manage requests.",
+        "title": "Intake is not enabled for the department.",
+        "description": "Intake helps you manage incoming requests to your department and add them as work items in your workflow. Enable intake from department settings to manage requests.",
         "primary_button": {
           "text": "Manage features"
         }
       },
       "cycle": {
-        "title": "Cycles is not enabled for this project.",
-        "description": "Break work down by timeboxed chunks, work backwards from your project deadline to set dates, and make tangible progress as a team. Enable the cycles feature for your project to start using them.",
+        "title": "Cycles is not enabled for this department.",
+        "description": "Break work down by timeboxed chunks, work backwards from your department deadline to set dates, and make tangible progress as a team. Enable the cycles feature for your department to start using them.",
         "primary_button": {
           "text": "Manage features"
         }
       },
       "module": {
-        "title": "Modules are not enabled for the project.",
-        "description": "Modules are the building blocks of your project. Enable modules from project settings to start using them.",
+        "title": "Modules are not enabled for the department.",
+        "description": "Modules are the building blocks of your department. Enable modules from department settings to start using them.",
         "primary_button": {
           "text": "Manage features"
         }
       },
       "page": {
-        "title": "Pages are not enabled for the project.",
-        "description": "Pages are the building blocks of your project. Enable pages from project settings to start using them.",
+        "title": "Pages are not enabled for the department.",
+        "description": "Pages are the building blocks of your department. Enable pages from department settings to start using them.",
         "primary_button": {
           "text": "Manage features"
         }
       },
       "view": {
-        "title": "Views are not enabled for the project.",
-        "description": "Views are the building blocks of your project. Enable views from project settings to start using them.",
+        "title": "Views are not enabled for the department.",
+        "description": "Views are the building blocks of your department. Enable views from department settings to start using them.",
         "primary_button": {
           "text": "Manage features"
         }
@@ -392,7 +392,7 @@
           "complete": "Import Complete"
         },
         "message": {
-          "success": "Successfully imported {count} member{plural} to the project.",
+          "success": "Successfully imported {count} member{plural} to the department.",
           "no_imports": "No new members were imported from the CSV file."
         },
         "stats": {

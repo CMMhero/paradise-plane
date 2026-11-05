@@ -103,7 +103,7 @@
     "empty_state": {
       "general": {
         "title": "Nhóm và đặt khung thời gian cho công việc của bạn trong chu kỳ.",
-        "description": "Chia nhỏ công việc theo khung thời gian, đặt ngày từ thời hạn dự án và đạt được tiến độ cụ thể với tư cách là một nhóm.",
+        "description": "Chia nhỏ công việc theo khung thời gian, đặt ngày từ thời hạn phòng ban và đạt được tiến độ cụ thể với tư cách là một nhóm.",
         "primary_button": {
           "text": "Thiết lập chu kỳ đầu tiên của bạn",
           "comic": {
@@ -132,15 +132,15 @@
       },
       "archived": {
         "title": "Chưa có chu kỳ đã lưu trữ",
-        "description": "Để tổ chức dự án của bạn, hãy lưu trữ chu kỳ đã hoàn thành. Bạn có thể tìm thấy chúng ở đây sau khi lưu trữ."
+        "description": "Để tổ chức phòng ban của bạn, hãy lưu trữ chu kỳ đã hoàn thành. Bạn có thể tìm thấy chúng ở đây sau khi lưu trữ."
       }
     }
   },
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "Lưu chế độ xem đã lọc cho dự án của bạn. Tạo bao nhiêu tùy ý",
-        "description": "Chế độ xem là bộ bộ lọc đã lưu mà bạn thường xuyên sử dụng hoặc muốn truy cập dễ dàng. Tất cả đồng nghiệp trong dự án có thể thấy chế độ xem của mọi người và chọn cái phù hợp nhất với nhu cầu của họ.",
+        "title": "Lưu chế độ xem đã lọc cho phòng ban của bạn. Tạo bao nhiêu tùy ý",
+        "description": "Chế độ xem là bộ bộ lọc đã lưu mà bạn thường xuyên sử dụng hoặc muốn truy cập dễ dàng. Tất cả đồng nghiệp trong phòng ban có thể thấy chế độ xem của mọi người và chọn cái phù hợp nhất với nhu cầu của họ.",
         "primary_button": {
           "text": "Tạo chế độ xem đầu tiên của bạn",
           "comic": {
@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Chưa có trang công khai",
-        "description": "Xem các trang được chia sẻ với mọi người trong dự án của bạn tại đây.",
+        "description": "Xem các trang được chia sẻ với mọi người trong phòng ban của bạn tại đây.",
         "primary_button": {
           "text": "Tạo trang đầu tiên của bạn"
         }
@@ -191,7 +191,7 @@
     "empty_state": {
       "no_issues": {
         "title": "Tạo mục công việc và giao nó cho ai đó, thậm chí là chính bạn",
-        "description": "Xem mục công việc như công việc, nhiệm vụ hoặc công việc cần hoàn thành. Mục công việc và các mục công việc con của chúng thường dựa trên thời gian, được giao cho thành viên nhóm để thực hiện. Nhóm của bạn thúc đẩy dự án đạt được mục tiêu bằng cách tạo, giao và hoàn thành mục công việc.",
+        "description": "Xem mục công việc như công việc, nhiệm vụ hoặc công việc cần hoàn thành. Mục công việc và các mục công việc con của chúng thường dựa trên thời gian, được giao cho thành viên nhóm để thực hiện. Nhóm của bạn thúc đẩy phòng ban đạt được mục tiêu bằng cách tạo, giao và hoàn thành mục công việc.",
         "primary_button": {
           "text": "Tạo mục công việc đầu tiên của bạn",
           "comic": {
@@ -224,8 +224,8 @@
     "delete_module": "Xóa mô-đun",
     "empty_state": {
       "general": {
-        "title": "Ánh xạ cột mốc dự án vào mô-đun, dễ dàng theo dõi công việc tổng hợp.",
-        "description": "Một nhóm mục công việc thuộc cấp cha trong cấu trúc logic tạo thành một mô-đun. Xem nó như một cách theo dõi công việc theo cột mốc dự án. Chúng có chu kỳ riêng và thời hạn cùng với các tính năng phân tích giúp bạn hiểu bạn đang ở đâu so với cột mốc.",
+        "title": "Ánh xạ cột mốc phòng ban vào mô-đun, dễ dàng theo dõi công việc tổng hợp.",
+        "description": "Một nhóm mục công việc thuộc cấp cha trong cấu trúc logic tạo thành một mô-đun. Xem nó như một cách theo dõi công việc theo cột mốc phòng ban. Chúng có chu kỳ riêng và thời hạn cùng với các tính năng phân tích giúp bạn hiểu bạn đang ở đâu so với cột mốc.",
         "primary_button": {
           "text": "Xây dựng mô-đun đầu tiên của bạn",
           "comic": {
@@ -246,7 +246,7 @@
       },
       "archived": {
         "title": "Chưa có mô-đun đã lưu trữ",
-        "description": "Để tổ chức dự án của bạn, hãy lưu trữ mô-đun đã hoàn thành hoặc đã hủy. Bạn có thể tìm thấy chúng ở đây sau khi lưu trữ."
+        "description": "Để tổ chức phòng ban của bạn, hãy lưu trữ mô-đun đã hoàn thành hoặc đã hủy. Bạn có thể tìm thấy chúng ở đây sau khi lưu trữ."
       },
       "sidebar": {
         "in_active": "Mô-đun này chưa được kích hoạt.",
@@ -272,7 +272,7 @@
     "empty_state": {
       "general": {
         "title": "Viết ghi chú, tài liệu hoặc cơ sở kiến thức đầy đủ. Để trợ lý AI Galileo của Paradise Task Tracker giúp bạn bắt đầu",
-        "description": "Trang là không gian ghi lại suy nghĩ trong Paradise Task Tracker. Ghi lại các ghi chú cuộc họp, định dạng dễ dàng, nhúng mục công việc, sử dụng thư viện thành phần để bố cục và lưu tất cả trong ngữ cảnh dự án. Để hoàn thành nhanh bất kỳ tài liệu nào, bạn có thể gọi AI Galileo của Paradise Task Tracker thông qua phím tắt hoặc nhấp nút.",
+        "description": "Trang là không gian ghi lại suy nghĩ trong Paradise Task Tracker. Ghi lại các ghi chú cuộc họp, định dạng dễ dàng, nhúng mục công việc, sử dụng thư viện thành phần để bố cục và lưu tất cả trong ngữ cảnh phòng ban. Để hoàn thành nhanh bất kỳ tài liệu nào, bạn có thể gọi AI Galileo của Paradise Task Tracker thông qua phím tắt hoặc nhấp nút.",
         "primary_button": {
           "text": "Tạo trang đầu tiên của bạn"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Chưa có trang công khai",
-        "description": "Xem các trang được chia sẻ với mọi người trong dự án tại đây.",
+        "description": "Xem các trang được chia sẻ với mọi người trong phòng ban tại đây.",
         "primary_button": {
           "text": "Tạo trang đầu tiên của bạn"
         }
@@ -300,36 +300,36 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "Dự án chưa bật tính năng thu thập.",
-        "description": "Tính năng thu thập giúp bạn quản lý các yêu cầu đến của dự án và thêm chúng như mục công việc trong quy trình làm việc. Bật tính năng thu thập từ cài đặt dự án để quản lý yêu cầu.",
+        "title": "Phòng ban chưa bật tính năng thu thập.",
+        "description": "Tính năng thu thập giúp bạn quản lý các yêu cầu đến của phòng ban và thêm chúng như mục công việc trong quy trình làm việc. Bật tính năng thu thập từ cài đặt phòng ban để quản lý yêu cầu.",
         "primary_button": {
           "text": "Quản lý tính năng"
         }
       },
       "cycle": {
-        "title": "Dự án này chưa bật tính năng chu kỳ.",
-        "description": "Chia nhỏ công việc theo khung thời gian, đặt ngày từ thời hạn dự án, và đạt được tiến độ cụ thể với tư cách là một nhóm. Bật tính năng chu kỳ cho dự án của bạn để bắt đầu sử dụng.",
+        "title": "Phòng ban này chưa bật tính năng chu kỳ.",
+        "description": "Chia nhỏ công việc theo khung thời gian, đặt ngày từ thời hạn phòng ban, và đạt được tiến độ cụ thể với tư cách là một nhóm. Bật tính năng chu kỳ cho phòng ban của bạn để bắt đầu sử dụng.",
         "primary_button": {
           "text": "Quản lý tính năng"
         }
       },
       "module": {
-        "title": "Dự án chưa bật tính năng mô-đun.",
-        "description": "Mô-đun là khối xây dựng cơ bản của dự án. Bật mô-đun từ cài đặt dự án để bắt đầu sử dụng chúng.",
+        "title": "Phòng ban chưa bật tính năng mô-đun.",
+        "description": "Mô-đun là khối xây dựng cơ bản của phòng ban. Bật mô-đun từ cài đặt phòng ban để bắt đầu sử dụng chúng.",
         "primary_button": {
           "text": "Quản lý tính năng"
         }
       },
       "page": {
-        "title": "Dự án chưa bật tính năng trang.",
-        "description": "Trang là khối xây dựng cơ bản của dự án. Bật trang từ cài đặt dự án để bắt đầu sử dụng chúng.",
+        "title": "Phòng ban chưa bật tính năng trang.",
+        "description": "Trang là khối xây dựng cơ bản của phòng ban. Bật trang từ cài đặt phòng ban để bắt đầu sử dụng chúng.",
         "primary_button": {
           "text": "Quản lý tính năng"
         }
       },
       "view": {
-        "title": "Dự án chưa bật tính năng chế độ xem.",
-        "description": "Chế độ xem là khối xây dựng cơ bản của dự án. Bật chế độ xem từ cài đặt dự án để bắt đầu sử dụng chúng.",
+        "title": "Phòng ban chưa bật tính năng chế độ xem.",
+        "description": "Chế độ xem là khối xây dựng cơ bản của phòng ban. Bật chế độ xem từ cài đặt phòng ban để bắt đầu sử dụng chúng.",
         "primary_button": {
           "text": "Quản lý tính năng"
         }
@@ -392,7 +392,7 @@
           "complete": "Nhập hoàn tất"
         },
         "message": {
-          "success": "Đã nhập thành công {count} thành viên vào dự án.",
+          "success": "Đã nhập thành công {count} thành viên vào phòng ban.",
           "no_imports": "Không có thành viên mới nào được nhập từ tệp CSV."
         },
         "stats": {

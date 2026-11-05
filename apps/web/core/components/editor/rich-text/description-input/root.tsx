@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { debounce } from "lodash-es";
 import { observer } from "mobx-react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 // plane imports
 import type { EditorRefApi, TExtensions, TFileHandler } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
@@ -145,7 +145,7 @@ export const DescriptionInput = observer(function DescriptionInput(props: Props)
   // translation
   const { t } = useTranslation();
   // form info
-  const { handleSubmit, reset, control, setValue } = useForm<TFormData>({
+  const { handleSubmit, reset, setValue } = useForm<TFormData>({
     defaultValues: {
       id: entityId,
       description_html: initialValue?.trim() ?? "",
@@ -229,75 +229,75 @@ export const DescriptionInput = observer(function DescriptionInput(props: Props)
 
   if (!localDescription.description_html) return <DescriptionInputLoader />;
 
+  // Paradise: sengaja TANPA <Controller>. Controller berlangganan nilai
+  // description_html, jadi tiap huruf merender ulang RichTextEditor; useEditor
+  // lalu membangun ulang semua extension dan memanggil editor.setOptions, yang
+  // menghitung ulang dekorasi seluruh dokumen. Di deskripsi panjang itulah yang
+  // membuat mengetik terasa berat. setValue cukup: handleSubmit membaca nilai
+  // form, bukan render, sama seperti description_json di bawah.
   return (
-    <Controller
-      name="description_html"
-      control={control}
-      render={({ field: { onChange } }) => (
-        <RichTextEditor
-          key={entityId}
-          editable={!disabled}
-          ref={editorRef}
-          id={entityId}
-          issueSequenceId={issueSequenceId}
-          disabledExtensions={disabledExtensions}
-          initialValue={localDescription.description_html ?? "<p></p>"}
-          value={swrDescription ?? null}
-          workspaceSlug={workspaceSlug}
-          workspaceId={workspaceDetails.id}
-          projectId={projectId}
-          dragDropEnabled
-          onChange={(description_json, description_html, options) => {
-            if (description_html === lastSavedContent.current) return;
-            setIsSubmitting("submitting");
-            onChange(description_html);
-            setValue("isMigrationUpdate", !!options?.isMigrationUpdate);
-            setValue("description_json", description_json);
-            hasUnsavedChanges.current = true;
-            debouncedFormSave();
-          }}
-          placeholder={placeholder ?? ((isFocused, value) => t(getDescriptionPlaceholderI18n(isFocused, value)))}
-          searchMentionCallback={async (payload) =>
-            await workspaceService.searchEntity(workspaceSlug?.toString() ?? "", {
-              ...payload,
-              project_id: projectId,
-            })
-          }
-          containerClassName={containerClassName}
-          attachFiles={attachFiles}
-          uploadFile={async (blockId, file) => {
-            try {
-              const { asset_id } = await uploadEditorAsset({
-                blockId,
-                data: {
-                  entity_identifier: entityId,
-                  entity_type: fileAssetType,
-                },
-                file,
-                projectId,
-                workspaceSlug,
-              });
-              return asset_id;
-            } catch (error) {
-              console.log("Error in uploading asset:", error);
-              throw new Error("Asset upload failed. Please try again later.");
-            }
-          }}
-          duplicateFile={async (assetId: string) => {
-            try {
-              const { asset_id } = await duplicateEditorAsset({
-                assetId,
-                entityType: fileAssetType,
-                projectId,
-                workspaceSlug,
-              });
-              return asset_id;
-            } catch {
-              throw new Error("Asset duplication failed. Please try again later.");
-            }
-          }}
-        />
-      )}
+    <RichTextEditor
+      key={entityId}
+      editable={!disabled}
+      ref={editorRef}
+      id={entityId}
+      issueSequenceId={issueSequenceId}
+      disabledExtensions={disabledExtensions}
+      initialValue={localDescription.description_html ?? "<p></p>"}
+      value={swrDescription ?? null}
+      workspaceSlug={workspaceSlug}
+      workspaceId={workspaceDetails.id}
+      projectId={projectId}
+      dragDropEnabled
+      onChange={(description_json, description_html, options) => {
+        if (description_html === lastSavedContent.current) return;
+        setIsSubmitting("submitting");
+        setValue("description_html", description_html);
+        setValue("isMigrationUpdate", !!options?.isMigrationUpdate);
+        setValue("description_json", description_json);
+        hasUnsavedChanges.current = true;
+        debouncedFormSave();
+      }}
+      placeholder={placeholder ?? ((isFocused, value) => t(getDescriptionPlaceholderI18n(isFocused, value)))}
+      searchMentionCallback={async (payload) =>
+        await workspaceService.searchEntity(workspaceSlug?.toString() ?? "", {
+          ...payload,
+          project_id: projectId,
+        })
+      }
+      containerClassName={containerClassName}
+      attachFiles={attachFiles}
+      uploadFile={async (blockId, file) => {
+        try {
+          const { asset_id } = await uploadEditorAsset({
+            blockId,
+            data: {
+              entity_identifier: entityId,
+              entity_type: fileAssetType,
+            },
+            file,
+            projectId,
+            workspaceSlug,
+          });
+          return asset_id;
+        } catch (error) {
+          console.log("Error in uploading asset:", error);
+          throw new Error("Asset upload failed. Please try again later.", { cause: error });
+        }
+      }}
+      duplicateFile={async (assetId: string) => {
+        try {
+          const { asset_id } = await duplicateEditorAsset({
+            assetId,
+            entityType: fileAssetType,
+            projectId,
+            workspaceSlug,
+          });
+          return asset_id;
+        } catch {
+          throw new Error("Asset duplication failed. Please try again later.");
+        }
+      }}
     />
   );
 });

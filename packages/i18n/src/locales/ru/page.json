@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Приватные и общие страницы нельзя переместить в командное пространство.",
       "placeholders": {
-        "workspace_to_all": "Искать проекты и командные пространства",
-        "workspace_to_project": "Искать проекты",
-        "project_to_all": "Искать проекты и командные пространства",
-        "project_to_project": "Искать проекты",
-        "project_to_all_with_wiki": "Искать коллекции wiki, проекты и командные пространства",
-        "project_to_project_with_wiki": "Искать коллекции wiki и проекты"
+        "workspace_to_all": "Искать отделы и командные пространства",
+        "workspace_to_project": "Искать отделы",
+        "project_to_all": "Искать отделы и командные пространства",
+        "project_to_project": "Искать отделы",
+        "project_to_all_with_wiki": "Искать коллекции wiki, отделы и командные пространства",
+        "project_to_project_with_wiki": "Искать коллекции wiki и отделы"
       },
       "toasts": {
         "success": {

@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Übersicht über Projekte, Aktivitäten und Kennzahlen",
-        "description": "Willkommen bei Paradise Task Tracker, wir freuen uns, dass Sie hier sind. Erstellen Sie Ihr erstes Projekt, verfolgen Sie Arbeitselemente und diese Seite verwandelt sich in einen Ort für Ihren Fortschritt. Administratoren sehen hier zusätzlich teamrelevante Elemente.",
+        "title": "Übersicht über Abteilungen, Aktivitäten und Kennzahlen",
+        "description": "Willkommen bei Paradise Task Tracker, wir freuen uns, dass Sie hier sind. Erstellen Sie Ihre erste Abteilung, verfolgen Sie Arbeitselemente und diese Seite verwandelt sich in einen Ort für Ihren Fortschritt. Administratoren sehen hier zusätzlich teamrelevante Elemente.",
         "primary_button": {
-          "text": "Erstes Projekt erstellen",
+          "text": "Erste Abteilung erstellen",
           "comic": {
-            "title": "Alles beginnt mit einem Projekt in Paradise Task Tracker",
-            "description": "Ein Projekt kann eine Produkt-Roadmap, eine Marketingkampagne oder die Markteinführung eines neuen Autos sein."
+            "title": "Alles beginnt mit einer Abteilung in Paradise Task Tracker",
+            "description": "Eine Abteilung kann eine Produkt-Roadmap, eine Marketingkampagne oder die Markteinführung eines neuen Autos sein."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Insgesamt offene Aufgaben",
     "error": "Fehler beim Laden der Daten.",
     "work_items_closed_in": "Arbeitselemente, die abgeschlossen wurden in",
-    "selected_projects": "Ausgewählte Projekte",
+    "selected_projects": "Ausgewählte Abteilungen",
     "total_members": "Gesamtmitglieder",
     "total_cycles": "Zyklen insgesamt",
     "total_modules": "Module insgesamt",
@@ -100,11 +100,11 @@
     "backlog_work_items": "Backlog-{entity}",
     "un_started_work_items": "Nicht begonnene {entity}",
     "completed_work_items": "Abgeschlossene {entity}",
-    "project_insights": "Projekteinblicke",
-    "summary_of_projects": "Projektübersicht",
-    "all_projects": "Alle Projekte",
+    "project_insights": "Abteilungseinblicke",
+    "summary_of_projects": "Abteilungsübersicht",
+    "all_projects": "Alle Abteilungen",
     "trend_on_charts": "Trend in Diagrammen",
-    "active_projects": "Aktive Projekte",
+    "active_projects": "Aktive Abteilungen",
     "customized_insights": "Individuelle Einblicke",
     "created_vs_resolved": "Erstellt vs Gelöst",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Verfolgen Sie Fortschritt, Arbeitsbelastung und Zuweisungen. Erkennen Sie Trends, beseitigen Sie Hindernisse und arbeiten Sie schneller",
-        "description": "Sehen Sie Umfang vs. Nachfrage, Schätzungen und Scope Creep. Messen Sie die Leistung von Teammitgliedern und Teams und stellen Sie sicher, dass Ihr Projekt rechtzeitig abgeschlossen wird.",
+        "description": "Sehen Sie Umfang vs. Nachfrage, Schätzungen und Scope Creep. Messen Sie die Leistung von Teammitgliedern und Teams und stellen Sie sicher, dass Ihre Abteilung rechtzeitig abgeschlossen wird.",
         "primary_button": {
-          "text": "Erstes Projekt starten",
+          "text": "Erste Abteilung starten",
           "comic": {
             "title": "Analytics funktioniert am besten mit Zyklen + Modulen",
             "description": "Begrenzen Sie zunächst Ihre Arbeitselemente zeitlich in Zyklen und gruppieren Sie, wenn möglich, Arbeitselemente, die mehr als einen Zyklus umfassen, in Module. Schauen Sie sich beide in der linken Navigation an."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Upgrade auf {plan}, um {tab} freizuschalten",
     "workitem_resolved_vs_pending": "Gelöste vs. ausstehende Arbeitsaufgaben",
-    "projects_by_status": "Projekte nach Status",
+    "projects_by_status": "Abteilungen nach Status",
     "active_users": "Aktive Nutzer",
     "intake_trends": "Aufnahmetrends"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Projekt} few {Projekte} other {Projekte}}",
+    "label": "{count, plural, one {Abteilung} few {Abteilungen} other {Abteilungen}}",
     "create": {
-      "label": "Projekt hinzufügen"
+      "label": "Abteilung hinzufügen"
     },
     "network": {
       "label": "Netzwerk",
@@ -186,7 +186,7 @@
       "members_length": "Mitgliederanzahl"
     },
     "scope": {
-      "my_projects": "Meine Projekte",
+      "my_projects": "Meine Abteilungen",
       "archived_projects": "Archiviert"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Keine aktiven Projekte",
-        "description": "Ein Projekt ist einem übergeordneten Ziel zugeordnet. Projekte enthalten Aufgaben, Zyklen und Module. Erstellen Sie ein neues oder filtern Sie archivierte.",
+        "title": "Keine aktiven Abteilungen",
+        "description": "Eine Abteilung ist einem übergeordneten Ziel zugeordnet. Abteilungen enthalten Aufgaben, Zyklen und Module. Erstellen Sie eine neue oder filtern Sie archivierte.",
         "primary_button": {
-          "text": "Erstes Projekt erstellen",
+          "text": "Erste Abteilung erstellen",
           "comic": {
-            "title": "Alles beginnt mit einem Projekt in Paradise Task Tracker",
-            "description": "Ein Projekt kann eine Produkt-Roadmap, eine Marketingkampagne oder die Markteinführung eines neuen Autos sein."
+            "title": "Alles beginnt mit einer Abteilung in Paradise Task Tracker",
+            "description": "Eine Abteilung kann eine Produkt-Roadmap, eine Marketingkampagne oder die Markteinführung eines neuen Autos sein."
           }
         }
       },
       "no_projects": {
-        "title": "Keine Projekte",
-        "description": "Um Arbeitselemente zu erstellen, müssen Sie ein Projekt erstellen oder Teil eines Projekts sein.",
+        "title": "Keine Abteilungen",
+        "description": "Um Arbeitselemente zu erstellen, müssen Sie eine Abteilung erstellen oder Teil einer Abteilung sein.",
         "primary_button": {
-          "text": "Erstes Projekt erstellen",
+          "text": "Erste Abteilung erstellen",
           "comic": {
-            "title": "Alles beginnt mit einem Projekt in Paradise Task Tracker",
-            "description": "Ein Projekt kann eine Produkt-Roadmap, eine Marketingkampagne oder die Markteinführung eines neuen Autos sein."
+            "title": "Alles beginnt mit einer Abteilung in Paradise Task Tracker",
+            "description": "Eine Abteilung kann eine Produkt-Roadmap, eine Marketingkampagne oder die Markteinführung eines neuen Autos sein."
           }
         }
       },
       "filter": {
-        "title": "Keine passenden Projekte",
-        "description": "Keine Projekte entsprechen Ihren Kriterien.\nErstellen Sie ein neues."
+        "title": "Keine passenden Abteilungen",
+        "description": "Keine Abteilungen entsprechen Ihren Kriterien.\nErstellen Sie eine neue."
       },
       "search": {
-        "description": "Keine Projekte entsprechen Ihren Suchkriterien.\nErstellen Sie ein neues."
+        "description": "Keine Abteilungen entsprechen Ihren Suchkriterien.\nErstellen Sie eine neue."
       }
     }
   },
@@ -229,7 +229,7 @@
     "add_view": "Ansicht hinzufügen",
     "empty_state": {
       "all-issues": {
-        "title": "Keine Arbeitselemente im Projekt",
+        "title": "Keine Arbeitselemente in der Abteilung",
         "description": "Erstellen Sie Ihr erstes Element und verfolgen Sie Ihren Fortschritt!",
         "primary_button": {
           "text": "Arbeitselement erstellen"
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Schreiben Sie eine Notiz, ein Dokument oder eine vollständige Wissensdatenbank. Holen Sie sich Galileo, Planes KI-Assistent, um Ihnen den Einstieg zu erleichtern",
-        "description": "Seiten sind Gedankenspeicher in Paradise Task Tracker. Notieren Sie Meeting-Notizen, formatieren Sie sie einfach, betten Sie Arbeitsaufgaben ein, gestalten Sie sie mit einer Bibliothek von Komponenten und behalten Sie sie alle im Kontext Ihres Projekts. Um die Arbeit an einem Dokument zu verkürzen, rufen Sie Galileo, Planes KI, mit einer Tastenkombination oder einem Knopfdruck auf.",
+        "description": "Seiten sind Gedankenspeicher in Paradise Task Tracker. Notieren Sie Meeting-Notizen, formatieren Sie sie einfach, betten Sie Arbeitsaufgaben ein, gestalten Sie sie mit einer Bibliothek von Komponenten und behalten Sie sie alle im Kontext Ihrer Abteilung. Um die Arbeit an einem Dokument zu verkürzen, rufen Sie Galileo, Planes KI, mit einer Tastenkombination oder einem Knopfdruck auf.",
         "primary_button": {
           "text": "Erstellen Sie Ihre erste Seite"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Keine aktiven Zyklen",
-        "description": "Zyklen Ihrer Projekte, die einen Zeitraum einschließen, der das heutige Datum umfasst. Finden Sie hier den Fortschritt und Details zu all Ihren aktiven Zyklen."
+        "description": "Zyklen Ihrer Abteilungen, die einen Zeitraum einschließen, der das heutige Datum umfasst. Finden Sie hier den Fortschritt und Details zu all Ihren aktiven Zyklen."
       }
     }
   },

@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "您的專案、活動和指標概覽",
-        "description": "歡迎使用 Paradise Task Tracker，我們很高興您在這裡。建立您的第一個專案並追蹤您的工作事項，這個頁面將會變成一個協助您進展的空間。管理員也會看到協助他們團隊進展的項目。",
+        "title": "您的部門、活動和指標概覽",
+        "description": "歡迎使用 Paradise Task Tracker，我們很高興您在這裡。建立您的第一個部門並追蹤您的工作事項，這個頁面將會變成一個協助您進展的空間。管理員也會看到協助他們團隊進展的項目。",
         "primary_button": {
-          "text": "建立您的第一個專案",
+          "text": "建立您的第一個部門",
           "comic": {
-            "title": "在 Paradise Task Tracker 中，一切都始於專案",
-            "description": "專案可以是產品的藍圖、行銷活動，或是推出新車。"
+            "title": "在 Paradise Task Tracker 中，一切都始於部門",
+            "description": "部門可以是產品團隊、行銷團隊，或是負責新車上市的團隊。"
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "開啟任務總數",
     "error": "取得資料時發生錯誤。",
     "work_items_closed_in": "已完成的工作事項數量在",
-    "selected_projects": "已選取的專案",
+    "selected_projects": "已選取的部門",
     "total_members": "成員總數",
     "total_cycles": "週期總數",
     "total_modules": "模組總數",
@@ -100,11 +100,11 @@
     "backlog_work_items": "待辦的{entity}",
     "un_started_work_items": "未開始的{entity}",
     "completed_work_items": "已完成的{entity}",
-    "project_insights": "專案洞察",
-    "summary_of_projects": "專案摘要",
-    "all_projects": "所有專案",
+    "project_insights": "部門洞察",
+    "summary_of_projects": "部門摘要",
+    "all_projects": "所有部門",
     "trend_on_charts": "圖表趨勢",
-    "active_projects": "啟用中的專案",
+    "active_projects": "啟用中的部門",
     "customized_insights": "自訂化洞察",
     "created_vs_resolved": "已建立 vs 已解決",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "追蹤進度、工作量和分配。發現趨勢，消除障礙，加速工作進展",
-        "description": "查看範圍與需求、估算和範圍蔓延。獲取團隊成員和團隊的績效，確保您的專案按時運行。",
+        "description": "查看範圍與需求、估算和範圍蔓延。獲取團隊成員和團隊的績效，確保您的部門按時運行。",
         "primary_button": {
-          "text": "開始您的第一個專案",
+          "text": "開始您的第一個部門",
           "comic": {
             "title": "分析功能在週期 + 模組中效果最佳",
             "description": "首先，將您的問題在週期中進行時間限制，如果可能的話，將跨越多個週期的問題分組到模組中。在左側導覽中查看這兩個功能。"
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "升級至 {plan} 以解鎖 {tab}",
     "workitem_resolved_vs_pending": "已解決 vs 待處理的工作項目",
-    "projects_by_status": "按狀態分類的專案",
+    "projects_by_status": "按狀態分類的部門",
     "active_users": "活躍使用者",
     "intake_trends": "入學趨勢"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {專案} other {專案}}",
+    "label": "{count, plural, one {部門} other {部門}}",
     "create": {
-      "label": "新增專案"
+      "label": "新增部門"
     },
     "network": {
       "label": "網路",
@@ -186,7 +186,7 @@
       "members_length": "成員數量"
     },
     "scope": {
-      "my_projects": "我的專案",
+      "my_projects": "我的部門",
       "archived_projects": "已封存"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "沒有使用中的專案",
-        "description": "請將每個專案視為目標導向工作的上層。專案是工作、週期和模組所在的地方，並與您的同事一起協助您達成目標。建立新專案或篩選已封存的專案。",
+        "title": "沒有使用中的部門",
+        "description": "請將每個部門視為目標導向工作的上層。部門是工作、週期和模組所在的地方，並與您的同事一起協助您達成目標。建立新部門或篩選已封存的部門。",
         "primary_button": {
-          "text": "開始您的第一個專案",
+          "text": "開始您的第一個部門",
           "comic": {
-            "title": "在 Paradise Task Tracker 中，一切都始於專案",
-            "description": "專案可以是產品的藍圖、行銷活動，或是推出新車。"
+            "title": "在 Paradise Task Tracker 中，一切都始於部門",
+            "description": "部門可以是產品團隊、行銷團隊，或是負責新車上市的團隊。"
           }
         }
       },
       "no_projects": {
-        "title": "沒有專案",
-        "description": "若要建立工作事項或管理您的工作，您需要建立專案或成為專案的一部分。",
+        "title": "沒有部門",
+        "description": "若要建立工作事項或管理您的工作，您需要建立部門或成為部門的一部分。",
         "primary_button": {
-          "text": "開始您的第一個專案",
+          "text": "開始您的第一個部門",
           "comic": {
-            "title": "在 Paradise Task Tracker 中，一切都始於專案",
-            "description": "專案可以是產品的藍圖、行銷活動，或是推出新車。"
+            "title": "在 Paradise Task Tracker 中，一切都始於部門",
+            "description": "部門可以是產品團隊、行銷團隊，或是負責新車上市的團隊。"
           }
         }
       },
       "filter": {
-        "title": "沒有符合的專案",
-        "description": "找不到符合篩選條件的專案。\n改為建立新專案。"
+        "title": "沒有符合的部門",
+        "description": "找不到符合篩選條件的部門。\n改為建立新部門。"
       },
       "search": {
-        "description": "找不到符合篩選條件的專案。\n改為建立新專案"
+        "description": "找不到符合篩選條件的部門。\n改為建立新部門"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "新增檢視",
     "empty_state": {
       "all-issues": {
-        "title": "專案中沒有工作事項",
-        "description": "第一個專案完成！現在，將您的工作分割成可追蹤的工作事項。讓我們開始吧！",
+        "title": "部門中沒有工作事項",
+        "description": "第一個部門完成！現在，將您的工作分割成可追蹤的工作事項。讓我們開始吧！",
         "primary_button": {
           "text": "建立新工作事項"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "寫一個筆記、文檔或完整的知識庫。讓 Galileo，Paradise Task Tracker 的 AI 助手，幫助您開始",
-        "description": "頁面是 Paradise Task Tracker 中的思想沉澱空間。記下會議筆記，輕鬆格式化，嵌入工作項目，使用組件庫佈局，並將它們全部保存在您的專案上下文中。要快速完成任何文檔，使用快捷方式或點擊按鈕來調用 Galileo，Paradise Task Tracker 的 AI。",
+        "description": "頁面是 Paradise Task Tracker 中的思想沉澱空間。記下會議筆記，輕鬆格式化，嵌入工作項目，使用組件庫佈局，並將它們全部保存在您的部門上下文中。要快速完成任何文檔，使用快捷方式或點擊按鈕來調用 Galileo，Paradise Task Tracker 的 AI。",
         "primary_button": {
           "text": "創建您的第一個頁面"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "沒有活動週期",
-        "description": "您的專案的週期，包括其範圍內包含今天日期的任何期間。在這裡查找所有活動週期的進度和詳情。"
+        "description": "您的部門的週期，包括其範圍內包含今天日期的任何期間。在這裡查找所有活動週期的進度和詳情。"
       }
     }
   },

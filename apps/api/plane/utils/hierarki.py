@@ -40,7 +40,6 @@ from plane.utils.saklar_instance import (
 )
 from plane.db.models import (
     JabatanOrganisasi,
-    PengawasanDivisi,
     ProjectMember,
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
@@ -149,8 +148,57 @@ def aktor_dari_context(context):
     return actor
 
 
-def peta_tingkat(workspace_id):
+def _tempat_project(project_id):
+    """({departemen_id str}, {divisi_id str}) tempat satu project berada (KEP-93)."""
+    from plane.db.models import DepartemenProject  # noqa: PLC0415
+
+    deps, divs = set(), set()
+    for dep, div in DepartemenProject.objects.filter(
+        project_id=project_id, departemen__deleted_at__isnull=True
+    ).values_list("departemen_id", "departemen__divisi_id"):
+        deps.add(str(dep))
+        if div:
+            divs.add(str(div))
+    return deps, divs
+
+
+def _tingkat_lokal(baris, tempat):
+    """Jenjang yang BERLAKU di satu project dari baris (tingkat, dep, div) satu orang.
+
+    KEP-93 (5 Nov 2026): peran melekat pada TEMPAT. Manager divisi A yang duduk
+    sebagai Staf di departemen divisi B adalah Staf di project B, Manager di project
+    A. Baris yang menjangkau project ini (departemennya, atau divisinya untuk
+    manager) yang menentukan; kalau tidak ada satu pun (anggota project eksplisit,
+    atau struktur belum aktif) jenjang orangnya (tertinggi) yang berlaku, seperti
+    sebelum KEP-93. Direktur selalu direktur.
+    """
+    if not baris:
+        return None
+    puncak = max(t for t, _, _ in baris)
+    if tempat is None or puncak >= TINGKAT_DIREKTUR:
+        return puncak
+    deps, divs = tempat
+    lokal = [
+        t
+        for t, dep, div in baris
+        if (dep and str(dep) in deps) or (div and t >= TINGKAT_MANAGER and str(div) in divs)
+    ]
+    return max(lokal) if lokal else puncak
+
+
+def _tempat_jika_aktif(workspace_id, project_id):
+    if project_id is None or not struktur_aktif(workspace_id):
+        return None
+    return _tempat_project(project_id)
+
+
+def peta_tingkat(workspace_id, project_id=None):
     """{user_id: tingkat} untuk seluruh workspace, satu query.
+
+    `project_id` (KEP-93): jenjang yang BERLAKU di project itu (`_tingkat_lokal`),
+    bukan jenjang tertinggi orangnya. Semua keputusan wewenang di dalam satu
+    project wajib mengirimnya; tanpa itu manager divisi lain yang duduk sebagai
+    staf di sini akan dihitung manager.
 
     Dipakai resolver yang perlu membandingkan banyak orang sekaligus (mis. mencari
     calon penyetuju). Sengaja tidak difilter `is_active`: orang yang akunnya
@@ -160,26 +208,39 @@ def peta_tingkat(workspace_id):
     Satu orang bisa punya beberapa baris (supervisor multi-departemen): yang dipakai
     adalah TERTINGGI. Tingkat menentukan WEWENANG, departemen menentukan CAKUPAN.
     """
-    peta = {}
-    for uid, tingkat in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
-        "member_id", "tingkat"
+    tempat = _tempat_jika_aktif(workspace_id, project_id)
+    if tempat is None:
+        peta = {}
+        for uid, tingkat in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
+            "member_id", "tingkat"
+        ):
+            if uid not in peta or tingkat > peta[uid]:
+                peta[uid] = tingkat
+        return peta
+    baris = {}
+    for uid, tingkat, dep, div in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
+        "member_id", "tingkat", "departemen_id", "divisi_id"
     ):
-        if uid not in peta or tingkat > peta[uid]:
-            peta[uid] = tingkat
-    return peta
+        baris.setdefault(uid, []).append((tingkat, dep, div))
+    return {uid: _tingkat_lokal(b, tempat) for uid, b in baris.items()}
 
 
-def tingkat_anggota(user_id, workspace_id):
+def tingkat_anggota(user_id, workspace_id, project_id=None):
     """Tingkat satu orang, atau None kalau jenjangnya BELUM DIISI.
 
     None bukan 0 dan bukan TINGKAT_MEMBER. Perbedaan ini yang membuat "datanya kurang"
     tidak pernah diam-diam berubah arti jadi "dia staf".
 
-    Multi-baris (supervisor dua departemen) menyimpan tingkat yang sama di tiap
-    baris; MAX di sini pengaman kalau datanya sempat miring, bukan fitur.
+    Tanpa `project_id`: jenjang ORANGNYA = baris tertinggi. Sejak KEP-93 baris
+    departemen membawa peran per tempat, jadi MAX ini memang disengaja.
+
+    `project_id` (KEP-93): jenjang yang berlaku di project itu, lihat `_tingkat_lokal`.
     """
     if user_id is None:
         return None
+    if project_id is not None:
+        tempat = _tempat_jika_aktif(workspace_id, project_id)
+        return _tingkat_lokal(penempatan_semua(user_id, workspace_id), tempat)
     return (
         JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
         .order_by("-tingkat")
@@ -188,14 +249,14 @@ def tingkat_anggota(user_id, workspace_id):
     )
 
 
-def tingkat_efektif(user_id, workspace_id):
+def tingkat_efektif(user_id, workspace_id, project_id=None):
     """Tingkat dengan bawaan staf: jabatan belum diisi dihitung MEMBER.
 
     Keputusan user 2026-10-26. `tingkat_anggota` tetap mengembalikan None untuk
     "belum diisi" (God Mode & laporan butuh pembedanya); fungsi ini untuk
     keputusan wewenang yang cukup tahu "setidaknya staf".
     """
-    tingkat = tingkat_anggota(user_id, workspace_id)
+    tingkat = tingkat_anggota(user_id, workspace_id, project_id)
     return TINGKAT_MEMBER if tingkat is None else tingkat
 
 
@@ -294,16 +355,22 @@ def project_divisi(divisi_id):
     )
 
 
-def project_penempatan(baris, tingkat):
+def project_penempatan(baris, tingkat, min_peran=None):
     """Project yang dijangkau satu orang dari SEMUA baris penempatannya (KEP-76).
 
     Satu orang boleh di banyak departemen (jenjang apa pun), dan manager boleh
     memimpin banyak divisi sekaligus duduk di departemen di luar divisinya.
     Jangkauan = gabungan. Baris divisi hanya berlaku untuk manager ke atas:
     endpoint God Mode membuangnya saat jenjang turun, ini penjaga keduanya.
+
+    `min_peran` (KEP-93): hanya baris yang perannya sendiri setidaknya itu. Wewenang
+    (`divisi_diawasi`) memakai Supervisor, supaya manager yang duduk sebagai Staf di
+    departemen divisi lain tidak mengawasi departemen itu.
     """
     pids = set()
-    for _, dep_id, div_id in baris:
+    for peran, dep_id, div_id in baris:
+        if min_peran is not None and peran < min_peran:
+            continue
         if dep_id:
             pids |= project_departemen(dep_id)
         if div_id and tingkat >= TINGKAT_MANAGER:
@@ -338,53 +405,36 @@ def jangkauan_hierarki(user_id, workspace_id):
     tingkat = max(t for t, _, _ in baris)
     if tingkat >= TINGKAT_DIREKTUR:
         return {pid: 20 for pid in _semua_project(workspace_id)}
-    role = 20 if tingkat >= TINGKAT_SUPERVISOR else 15
-    return {pid: role for pid in project_penempatan(baris, tingkat)}
+    # KEP-93: role per project mengikuti peran di tempat yang menjangkaunya.
+    atasan = project_penempatan(baris, tingkat, min_peran=TINGKAT_SUPERVISOR)
+    return {pid: 20 if pid in atasan else 15 for pid in project_penempatan(baris, tingkat)}
 
 
 def divisi_diawasi(user_id, workspace_id):
     """Set id project yang diawasi orang ini ("divisi yang dia bawahi").
 
     Dengan struktur aktif (KEP-29) jawabannya datang dari hierarki, BUKAN dari
-    keanggotaan project: supervisor = project SEMUA departemennya, manager =
-    project divisinya, direktur = semua (dibatasi baris `PengawasanDivisi` kalau
-    ada). Keanggotaan project eksplisit memberi akses kolaborasi, tidak memberi
-    wewenang.
+    keanggotaan project: supervisor = project departemen tempat perannya
+    Supervisor, manager = project divisinya, direktur = semua. Keanggotaan project
+    eksplisit memberi akses kolaborasi, tidak memberi wewenang.
 
-    Tanpa struktur, perilaku lama di bawah ini yang berlaku.
+    Tanpa struktur: direktur = semua divisi, supervisor/manager = divisi tempat ia
+    memang anggota ("tidak cross divisi kecuali direktur").
 
-    Dua sumber, dan urutannya penting:
-
-    1. **Baris eksplisit** di `PengawasanDivisi`. Untuk **direktur**, baris ini
-       MEMBATASI: kosong = semua divisi, terisi = hanya divisi yang ditulis.
-       Untuk supervisor/manager, baris ini tidak menambah kewenangan lintas divisi
-       (keputusan user: "tidak cross divisi kecuali direktur").
-    2. **Rumus jenjang**, kalau tidak ada baris sama sekali:
-         direktur   -> semua divisi di workspace
-         manager    -> divisi tempat ia memang anggota
-         supervisor -> divisi tempat ia memang anggota
-       Tanpa rumus ini, sistem BUNTU sebelum ada yang mengisi tabel: direktur tidak bisa
-       apa-apa, padahal kata user "direktur bisa create task cross divisi manapun
-       karena tingkat teratas".
+    Baris `PengawasanDivisi` ("Supervised divisions") TIDAK dibaca lagi sejak
+    KEP-93 (5 Nov 2026): wewenang hanya dari penempatan dan aturan jenjang, tanpa
+    setelan per orang yang tak terlihat di papan. Tabelnya dibiarkan (data lama
+    tidak dihapus), tapi tidak berpengaruh apa-apa.
 
     Kosong dikembalikan apa adanya (bukan buntu) kalau orangnya bukan siapa-siapa.
     """
     if user_id is None:
         return set()
 
-    eksplisit = set(
-        PengawasanDivisi.objects.filter(workspace_id=workspace_id, member_id=user_id).values_list(
-            "project_id", flat=True
-        )
-    )
     baris = penempatan_semua(user_id, workspace_id)
     tingkat = max((t for t, _, _ in baris), default=None)
 
     if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
-        # Direktur: semua divisi, KECUALI kalau ada baris eksplisit -- di situ ia
-        # dibatasi ke divisi yang ditulis (mis. direktur operasional hanya 12 divisi).
-        if eksplisit:
-            return eksplisit
         return _semua_project(workspace_id)
 
     if tingkat is None:
@@ -392,7 +442,7 @@ def divisi_diawasi(user_id, workspace_id):
 
     if struktur_aktif(workspace_id):
         if tingkat >= TINGKAT_SUPERVISOR:
-            return project_penempatan(baris, tingkat)
+            return project_penempatan(baris, tingkat, min_peran=TINGKAT_SUPERVISOR)
         return set()
 
     # Supervisor DAN manager: HANYA divisi tempat ia memang anggota.
@@ -421,7 +471,7 @@ def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None, peta=None):
     daripada tidak ada seorang pun, karena yang terakhir itu membuat penugasan
     menggantung tanpa jalan keluar.
 
-    `peta` boleh dikirim pemanggil yang sudah memegang `peta_tingkat(workspace_id)`
+    `peta` boleh dikirim pemanggil yang sudah memegang `peta_tingkat(workspace_id, project_id)`
     (antrean persetujuan) supaya tidak dibaca dua kali. Fungsi ini MAHAL: satu
     `divisi_diawasi` per calon (~5 kueri tiap orang). Pemanggil yang melayani banyak
     baris wajib menghitungnya sekali per project, bukan per baris (BUG-11).
@@ -430,7 +480,7 @@ def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None, peta=None):
         return []
 
     if peta is None:
-        peta = peta_tingkat(workspace_id)
+        peta = peta_tingkat(workspace_id, project_id)
     kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
     if tingkat_pembuat is not None:
         kandidat = [uid for uid in kandidat if peta[uid] > tingkat_pembuat]
@@ -517,7 +567,7 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 
     # Kolaborasi staf: boleh menambah rekan setingkat di departemen yang sama,
     # tapi dirinya sendiri WAJIB tetap ada (staf hanya membuat tugasnya sendiri).
-    if _adalah_staf(actor.id, workspace_id):
+    if _adalah_staf(actor.id, workspace_id, project_id):
         return _galat_kolaborasi_staf(actor.id, workspace_id, project_id, assignee_ids)
 
     # Batas KEP-02: orang luar divisi memang tidak boleh menugaskan ke dalamnya.
@@ -526,7 +576,7 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
     if project_id not in divisi_anggota(actor.id, workspace_id):
         return f"Anda bukan anggota divisi {project.identifier}, jadi tidak dapat menugaskan pekerjaan di sana."
 
-    tingkat = tingkat_anggota(actor.id, workspace_id)
+    tingkat = tingkat_anggota(actor.id, workspace_id, project_id)
 
     if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
         # "direktur bisa create task cross divisi manapun karena tingkat teratas".
@@ -534,7 +584,7 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 
     if project_id in divisi_diawasi(actor.id, workspace_id):
         if periksa_tingkat_penerima():
-            peta = peta_tingkat(workspace_id)
+            peta = peta_tingkat(workspace_id, project_id)
             for uid in assignee_ids:
                 if uid in dari_id:
                     continue
@@ -549,12 +599,12 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
     return _pesan_tolak(tingkat, project.identifier)
 
 
-def _adalah_staf(user_id, workspace_id):
-    tingkat = tingkat_anggota(user_id, workspace_id)
+def _adalah_staf(user_id, workspace_id, project_id=None):
+    tingkat = tingkat_anggota(user_id, workspace_id, project_id)
     return tingkat is None or tingkat < TINGKAT_SUPERVISOR
 
 
-def _wajib_persetujuan_jenjang(user_id, workspace_id):
+def _wajib_persetujuan_jenjang(user_id, workspace_id, project_id=None):
     """Apakah jenjang orang ini harus menunggu persetujuan saat menyelesaikan tugasnya.
 
     KEP-83: ambangnya APPROVAL_REQUIRED_BELOW_LEVEL di God Mode. Jenjang DI BAWAH
@@ -565,7 +615,7 @@ def _wajib_persetujuan_jenjang(user_id, workspace_id):
     menunggu persetujuan, bukan siapa yang terkunci aturan penugasan staf
     (`_galat_kolaborasi_staf`).
     """
-    tingkat = tingkat_anggota(user_id, workspace_id)
+    tingkat = tingkat_anggota(user_id, workspace_id, project_id)
     return tingkat is None or tingkat < setelan_angka(APPROVAL_REQUIRED_BELOW_LEVEL)
 
 
@@ -595,8 +645,8 @@ def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
     rekan = set(assignee_ids) - {actor_id}
     if not rekan:
         return None
-    tingkat = tingkat_efektif(actor_id, workspace_id)
-    peta = peta_tingkat(workspace_id)
+    tingkat = tingkat_efektif(actor_id, workspace_id, project_id)
+    peta = peta_tingkat(workspace_id, project_id)
     dept_saya = semua_departemen_ids(actor_id, workspace_id)
     for uid in rekan:
         if peta.get(uid, TINGKAT_MEMBER) != tingkat:
@@ -610,13 +660,13 @@ def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
 
 def rekan_staf_ids(actor_id, workspace_id, project_id):
     """Id rekan yang boleh diajak staf: setingkat, satu departemen, anggota project ini."""
-    tingkat = tingkat_efektif(actor_id, workspace_id)
+    tingkat = tingkat_efektif(actor_id, workspace_id, project_id)
     if tingkat >= TINGKAT_SUPERVISOR:
         return set()
     dept_saya = semua_departemen_ids(actor_id, workspace_id)
     if not dept_saya:
         return set()
-    peta = peta_tingkat(workspace_id)
+    peta = peta_tingkat(workspace_id, project_id)
     # Kandidat = yang ditempatkan di departemen yang sama (tanpa jabatan = staf).
     kandidat = set(
         JabatanOrganisasi.objects.filter(workspace_id=workspace_id, departemen_id__in=dept_saya).values_list(
@@ -644,7 +694,7 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
     """
     if actor_id is None:
         return set()
-    peta = peta_tingkat(workspace_id)
+    peta = peta_tingkat(workspace_id, project_id)
     tingkat_actor = peta.get(actor_id)
     if tingkat_actor is None or tingkat_actor < TINGKAT_SUPERVISOR:
         return set()
@@ -795,6 +845,14 @@ def pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
     peta = peta_tingkat(workspace_id)
     kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
     diawasi = {}
+    # KEP-93: perbandingan jenjang memakai jenjang yang berlaku DI project itu.
+    peta_project = {}
+
+    def lokal(project_id):
+        kunci = str(project_id)
+        if kunci not in peta_project:
+            peta_project[kunci] = peta_tingkat(workspace_id, project_id)
+        return peta_project[kunci]
 
     def awasi(uid):
         # Dibandingkan sebagai string, sama dengan `calon_penyetuju`.
@@ -806,13 +864,13 @@ def pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
         # `calon_penyetuju` (mengawasi project) + `saring_penyetuju` (lebih tinggi
         # dari pemohon atasan). Kandidat sudah pasti berjenjang >= supervisor.
         staf = tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR
-        return (staf or peta[uid] > tingkat_pemohon) and str(project_id) in awasi(uid)
+        return (staf or lokal(project_id).get(uid, 0) > tingkat_pemohon) and str(project_id) in awasi(uid)
 
     saya_kandidat = peta.get(user.id, 0) >= TINGKAT_SUPERVISOR
     super_admin = None
     hasil = set()
     for project_id, pemohon_id in pasangan:
-        tingkat_pemohon = peta.get(pemohon_id)
+        tingkat_pemohon = lokal(project_id).get(pemohon_id)
         if saya_kandidat and sah(user.id, project_id, tingkat_pemohon):
             hasil.add((project_id, pemohon_id))
             continue
@@ -864,7 +922,7 @@ def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, aba
     if project is None:
         return "Project tujuan tidak ditemukan."
     workspace_id = project.workspace_id
-    tingkat = tingkat_anggota(actor.id, workspace_id)
+    tingkat = tingkat_anggota(actor.id, workspace_id, project_id)
 
     assignee_ids = set(issue.issue_assignee.values_list("assignee_id", flat=True))
     saya_terlibat = actor.id in assignee_ids or issue.created_by_id == actor.id
@@ -931,7 +989,7 @@ def periksa_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False)
         return None  # tugas tanpa penerima: tidak ada penugasan yang perlu disetujui
 
     workspace_id = project.workspace_id
-    tingkat = tingkat_anggota(actor.id, workspace_id)
+    tingkat = tingkat_anggota(actor.id, workspace_id, project_id)
 
     # Kalau sampai di sini, `galat_penugasan` sudah menyatakan "boleh". Yang tersisa
     # adalah pertanyaan KEDUA: bolehnya langsung, atau menunggu persetujuan?
@@ -980,7 +1038,7 @@ def butuh_persetujuan(actor, project_id, assignee_ids):
         return False
 
     # KEP-83: ambang jenjangnya dari God Mode (bawaan = staf saja, aturan di atas).
-    return _wajib_persetujuan_jenjang(actor.id, project.workspace_id)
+    return _wajib_persetujuan_jenjang(actor.id, project.workspace_id, project_id)
 
 
 def catat_persetujuan(issue, actor=None, state_sebelumnya_id=None):

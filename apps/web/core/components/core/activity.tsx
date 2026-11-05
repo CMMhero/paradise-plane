@@ -22,6 +22,10 @@ import {
   SignalMediumIcon,
   MessageSquareIcon,
   UsersIcon,
+  CircleDotIcon,
+  Clock,
+  SmileIcon,
+  ThumbsUpIcon,
 } from "lucide-react";
 import {
   BlockedIcon,
@@ -33,6 +37,7 @@ import {
   RelatedIcon,
   WorkItemsIcon,
 } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { IIssueActivity } from "@plane/types";
 import { renderFormattedDate, generateWorkItemLink, capitalizeFirstLetter } from "@plane/utils";
@@ -149,6 +154,79 @@ const getInboxUserActivityMessage = (activity: IIssueActivity, showIssue: boolea
       return "updated intake work item status.";
   }
 };
+
+// Messages in the "paradise" namespace end with a colon and are followed by the
+// work item link, so one sentence shape works in every locale.
+const humanizeField = (field: string | null | undefined) => (field ?? "").replace(/_/g, " ");
+
+function IssueTail({ activity, showIssue }: { activity: IIssueActivity; showIssue: boolean }) {
+  const { t } = useTranslation();
+  return showIssue ? <IssueLink activity={activity} /> : <>{t("aktivitas_riwayat_ui.this_work_item")}</>;
+}
+
+function SimpleActivityMessage({
+  activity,
+  showIssue,
+  messageKey,
+}: {
+  activity: IIssueActivity;
+  showIssue: boolean;
+  messageKey: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {t(`aktivitas_riwayat_ui.${messageKey}`)} <IssueTail activity={activity} showIssue={showIssue} />
+    </>
+  );
+}
+
+// created / updated / deleted verbs map to `<prefix>_<verb>`; anything else uses the fallback verb.
+const verbKey = (prefix: string, verb: string | undefined, fallback: string) =>
+  `${prefix}_${verb === "created" || verb === "deleted" || verb === "updated" ? verb : fallback}`;
+
+function ApprovalActivityMessage({ activity, showIssue }: { activity: IIssueActivity; showIssue: boolean }) {
+  const { t } = useTranslation();
+  const verb = activity.verb;
+  if (verb !== "requested" && verb !== "approved" && verb !== "rejected")
+    return <GenericActivityMessage activity={activity} showIssue={showIssue} />;
+  return (
+    <>
+      {t(`aktivitas_riwayat_ui.approval_${verb}`)} <IssueTail activity={activity} showIssue={showIssue} />
+      {activity.new_value && (
+        <span className="text-tertiary"> {t("issue.approval.activity.reason", { reason: activity.new_value })}</span>
+      )}
+    </>
+  );
+}
+
+// Safety net for any IssueActivity.field without a dedicated message (legacy rows from
+// removed features, future fields). A row must never render as just an actor and a time.
+function GenericActivityMessage({ activity, showIssue }: { activity: IIssueActivity; showIssue: boolean }) {
+  const { t } = useTranslation();
+  const field = humanizeField(activity.field) || humanizeField(activity.verb) || "-";
+  const messageKey =
+    activity.verb === "created"
+      ? "generic_created"
+      : activity.verb === "deleted" || activity.verb === "removed"
+        ? "generic_deleted"
+        : "generic_updated";
+  const hasChange = Boolean(activity.old_value || activity.new_value);
+  return (
+    <>
+      {t(`aktivitas_riwayat_ui.${messageKey}`, { field })} <IssueTail activity={activity} showIssue={showIssue} />
+      {hasChange && (
+        <>
+          {" ("}
+          {activity.old_value && <span className="break-all text-tertiary">{activity.old_value}</span>}
+          {activity.old_value && activity.new_value && " -> "}
+          {activity.new_value && <span className="font-medium break-all text-primary">{activity.new_value}</span>}
+          {")"}
+        </>
+      )}
+    </>
+  );
+}
 
 const activityDetails: {
   [key: string]: {
@@ -732,6 +810,50 @@ const activityDetails: {
     },
     icon: <Calendar size={12} className="text-secondary" aria-hidden="true" />,
   },
+  reaction: {
+    message: (activity, showIssue) => (
+      <SimpleActivityMessage
+        activity={activity}
+        showIssue={showIssue}
+        messageKey={activity.verb === "created" ? "reaction_added" : "reaction_removed"}
+      />
+    ),
+    icon: <SmileIcon size={12} className="text-secondary" aria-hidden="true" />,
+  },
+  vote: {
+    message: (activity, showIssue) => (
+      <SimpleActivityMessage
+        activity={activity}
+        showIssue={showIssue}
+        messageKey={activity.verb === "deleted" ? "vote_removed" : "vote_added"}
+      />
+    ),
+    icon: <ThumbsUpIcon size={12} className="text-secondary" aria-hidden="true" />,
+  },
+  draft: {
+    message: (activity, showIssue) => (
+      <SimpleActivityMessage
+        activity={activity}
+        showIssue={showIssue}
+        messageKey={verbKey("draft", activity.verb, "updated")}
+      />
+    ),
+    icon: <MessageSquareIcon size={12} className="text-secondary" aria-hidden="true" />,
+  },
+  comment: {
+    message: (activity, showIssue) => (
+      <SimpleActivityMessage
+        activity={activity}
+        showIssue={showIssue}
+        messageKey={verbKey("comment", activity.verb, "updated")}
+      />
+    ),
+    icon: <MessageSquareIcon size={12} className="text-secondary" aria-hidden="true" />,
+  },
+  approval: {
+    message: (activity, showIssue) => <ApprovalActivityMessage activity={activity} showIssue={showIssue} />,
+    icon: <Clock size={12} className="text-secondary" aria-hidden="true" />,
+  },
   inbox: {
     message: (activity, showIssue) => (
       <>
@@ -749,8 +871,20 @@ const activityDetails: {
   },
 };
 
+// Field names the backend writes that share a renderer with another entry.
+// `intake` is what issue_activities_task writes (the renderer used to key on `inbox`);
+// estimate fields are `estimate_<estimate.type>` (points / categories).
+const FIELD_ALIASES: Record<string, string> = {
+  intake: "inbox",
+  estimate_points: "estimate_point",
+  estimate_categories: "estimate_point",
+};
+
+const getActivityDetail = (field: string) => activityDetails[FIELD_ALIASES[field] ?? field];
+
 export function ActivityIcon({ activity }: { activity: IIssueActivity }) {
-  return <>{activityDetails[activity.field as keyof typeof activityDetails]?.icon}</>;
+  const detail = getActivityDetail(activity.field ?? "issue");
+  return <>{detail ? detail.icon : <CircleDotIcon size={12} className="text-secondary" aria-hidden="true" />}</>;
 }
 
 type ActivityMessageProps = {
@@ -763,9 +897,13 @@ export function ActivityMessage({ activity, showIssue = false }: ActivityMessage
   const { workspaceSlug } = useParams();
   const activityField = activity.field ?? "issue";
 
+  const detail = getActivityDetail(activityField);
+
+  if (!detail) return <GenericActivityMessage activity={activity} showIssue={showIssue} />;
+
   return (
     <>
-      {activityDetails[activityField as keyof typeof activityDetails]?.message(
+      {detail.message(
         activity,
         showIssue,
         workspaceSlug ? workspaceSlug.toString() : (activity.workspace_detail?.slug ?? "")

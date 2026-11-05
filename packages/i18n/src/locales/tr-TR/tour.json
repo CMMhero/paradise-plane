@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Çalışma alanınıza hoş geldiniz",
-        "description": "Başlamanıza yardımcı olmak için sizin için bir Demo Proje oluşturduk. İlk çalışma öğenizi ekleyelim."
+        "description": "Başlamanıza yardımcı olmak için sizin için bir Demo Departman oluşturduk. İlk çalışma öğenizi ekleyelim."
       },
       "step_one": {
         "title": "\"+ Çalışma öğesi ekle\"ye tıklayın",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Döngülerle ilerleme kaydedin",
-        "description": "Bir Döngü oluşturmak için Q tuşuna basın. Adlandırın ve tarihleri ayarlayın—proje başına yalnızca bir döngü."
+        "description": "Bir Döngü oluşturmak için Q tuşuna basın. Adlandırın ve tarihleri ayarlayın—departman başına yalnızca bir döngü."
       },
       "step_one": {
         "title": "Yeni bir döngü oluşturun",
-        "description": "Bir Döngü oluşturmak için Q tuşuna basın. Adlandırın ve tarihleri ayarlayın—proje başına yalnızca bir döngü."
+        "description": "Bir Döngü oluşturmak için Q tuşuna basın. Adlandırın ve tarihleri ayarlayın—departman başına yalnızca bir döngü."
       },
       "step_two": {
         "title": "\"+\" tuşuna tıklayın",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Projenizi Modüllere ayırın",
-        "description": "Modüller, kullanıcıların belirli zaman dilimlerinde çalışma öğelerini gruplandırmasına ve düzenlemesine yardımcı olan daha küçük, odaklı projelerdir."
+        "title": "Departmanınızı Modüllere ayırın",
+        "description": "Modüller, kullanıcıların belirli zaman dilimlerinde çalışma öğelerini gruplandırmasına ve düzenlemesine yardımcı olan daha küçük, odaklı birimlerdir."
       },
       "step_one": {
         "title": "Modül oluşturun",
-        "description": "Modüller, kullanıcıların belirli zaman dilimlerinde çalışma öğelerini gruplandırmasına ve düzenlemesine yardımcı olan daha küçük, odaklı projelerdir."
+        "description": "Modüller, kullanıcıların belirli zaman dilimlerinde çalışma öğelerini gruplandırmasına ve düzenlemesine yardımcı olan daha küçük, odaklı birimlerdir."
       },
       "step_two": {
         "title": "\"+\" tuşuna tıklayın",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "AI destekli Sayfalarla belgeleyin",
-        "description": "Paradise Task Tracker deki Sayfalar, proje bilgilerini yakalamanıza, düzenlemenize ve işbirliği yapmanıza olanak tanır—harici araçlara gerek yoktur."
+        "description": "Paradise Task Tracker deki Sayfalar, departman bilgilerini yakalamanıza, düzenlemenize ve işbirliği yapmanıza olanak tanır—harici araçlara gerek yoktur."
       },
       "step_one": {
         "title": "Sayfayı Genel veya Özel yapın",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Bekleyen bir isteği kabul edin/reddedin",
-        "description": "Çalışma öğesini düzenlemek ve projenize taşımak için kabul edin veya İptal Edildi olarak işaretlemek için reddedin."
+        "description": "Çalışma öğesini düzenlemek ve departmanınıza taşımak için kabul edin veya İptal Edildi olarak işaretlemek için reddedin."
       },
       "step_three": {
         "title": "Şimdilik erteleyin",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Anında herhangi bir şeyi bulun",
-        "description": "Görevlere, projelere, sayfalara ve kişilere atlamak için evrensel aramayı kullanın—akışınızdan ayrılmadan."
+        "description": "Görevlere, departmanlara, sayfalara ve kişilere atlamak için evrensel aramayı kullanın—akışınızdan ayrılmadan."
       },
       "step_one": {
         "title": "Güncellemelerin kontrolünü elinizde tutun",
@@ -148,8 +148,8 @@
       "got_it": "Anladım"
     },
     "seed_data": {
-      "title": "İşte demo projeniz",
-      "description": "Projeler, çalışma alanınızda ekiplerinizi, görevlerinizi ve işleri bitirmek için ihtiyacınız olan her şeyi yönetmenize olanak tanır."
+      "title": "İşte demo departmanınız",
+      "description": "Departmanlar, çalışma alanınızda ekiplerinizi, görevlerinizi ve işleri bitirmek için ihtiyacınız olan her şeyi yönetmenize olanak tanır."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Kurulumunuza başlayın ve fikirlerinizin daha hızlı hayata geçtiğini görün.",
       "checklist_items": {
         "item_1": {
-          "title": "Bir proje oluşturun"
+          "title": "Bir departman oluşturun"
         },
         "item_2": {
           "title": "Bir çalışma öğesi oluşturun"

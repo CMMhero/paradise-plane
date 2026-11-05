@@ -17,6 +17,9 @@ export type TIssueLink = TIssueLinkEditableFields & {
 
   //need
   created_at: Date;
+  /** Paradise KEP-88: "link" = added by hand; "description" / "comment" = written in that text, read-only. */
+  sumber?: "link" | "description" | "comment";
+  comment_id?: string | null;
 };
 
 export type TIssueLinkMap = {

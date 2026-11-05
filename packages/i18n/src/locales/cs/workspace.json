@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Přehled projektů, aktivit a metrik",
-        "description": "Vítejte v Paradise Task Tracker, jsme rádi, že jste zde. Vytvořte první projekt, sledujte pracovní položky a tato stránka se promění v prostor pro váš pokrok. Správci zde uvidí i položky pomáhající týmu.",
+        "title": "Přehled oddělení, aktivit a metrik",
+        "description": "Vítejte v Paradise Task Tracker, jsme rádi, že jste zde. Vytvořte první oddělení, sledujte pracovní položky a tato stránka se promění v prostor pro váš pokrok. Správci zde uvidí i položky pomáhající týmu.",
         "primary_button": {
-          "text": "Vytvořte první projekt",
+          "text": "Vytvořte první oddělení",
           "comic": {
-            "title": "Vše začíná projektem v Paradise Task Tracker",
-            "description": "Projektem může být roadmapa produktu, marketingová kampaň nebo uvedení nového auta."
+            "title": "Vše začíná oddělením v Paradise Task Tracker",
+            "description": "Oddělení se může věnovat roadmapě produktu, marketingové kampani nebo uvedení nového auta."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Celkem otevřených úkolů",
     "error": "Při načítání dat došlo k chybě.",
     "work_items_closed_in": "Pracovní položky uzavřené v",
-    "selected_projects": "Vybrané projekty",
+    "selected_projects": "Vybraná oddělení",
     "total_members": "Celkem členů",
     "total_cycles": "Celkem cyklů",
     "total_modules": "Celkem modulů",
@@ -100,11 +100,11 @@
     "backlog_work_items": "Backlog {entity}",
     "un_started_work_items": "Nezahájené {entity}",
     "completed_work_items": "Dokončené {entity}",
-    "project_insights": "Přehled projektu",
-    "summary_of_projects": "Souhrn projektů",
-    "all_projects": "Všechny projekty",
+    "project_insights": "Přehled oddělení",
+    "summary_of_projects": "Souhrn oddělení",
+    "all_projects": "Všechna oddělení",
     "trend_on_charts": "Trend na grafech",
-    "active_projects": "Aktivní projekty",
+    "active_projects": "Aktivní oddělení",
     "customized_insights": "Přizpůsobené přehledy",
     "created_vs_resolved": "Vytvořeno vs Vyřešeno",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Sledujte pokrok, pracovní zátěž a alokace. Odhalte trendy, odstraňte překážky a zrychlete práci",
-        "description": "Porovnávejte rozsah s poptávkou, odhady a rozšiřování rozsahu. Získejte výkonnost podle členů týmu a týmů a zajistěte, aby váš projekt běžel včas.",
+        "description": "Porovnávejte rozsah s poptávkou, odhady a rozšiřování rozsahu. Získejte výkonnost podle členů týmu a týmů a zajistěte, aby vaše oddělení fungovalo včas.",
         "primary_button": {
-          "text": "Začněte svůj první projekt",
+          "text": "Začněte své první oddělení",
           "comic": {
             "title": "Analytika funguje nejlépe s Cykly + Moduly",
             "description": "Nejprve časově ohraničte své problémy do Cyklů a pokud můžete, seskupte problémy, které trvají déle než jeden cyklus, do Modulů. Podívejte se na obojí v levé navigaci."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Přejděte na plán {plan}, abyste odemkli kartu {tab}",
     "workitem_resolved_vs_pending": "Vyřešené vs. čekající pracovní položky",
-    "projects_by_status": "Projekty podle stavu",
+    "projects_by_status": "Oddělení podle stavu",
     "active_users": "Aktivní uživatelé",
     "intake_trends": "Trendy příjmů"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Projekt} few {Projekty} other {Projektů}}",
+    "label": "{count, plural, one {Oddělení} few {Oddělení} many {Oddělení} other {Oddělení}}",
     "create": {
-      "label": "Přidat projekt"
+      "label": "Přidat oddělení"
     },
     "network": {
       "label": "Síť",
@@ -186,7 +186,7 @@
       "members_length": "Počet členů"
     },
     "scope": {
-      "my_projects": "Moje projekty",
+      "my_projects": "Moje oddělení",
       "archived_projects": "Archivované"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Žádné aktivní projekty",
-        "description": "Projekt je nadřazený cílům. Projekty obsahují Úkoly, Cykly a Moduly. Vytvořte nový nebo filtrujte archivované.",
+        "title": "Žádná aktivní oddělení",
+        "description": "Oddělení je nadřazené cílům. Oddělení obsahují Úkoly, Cykly a Moduly. Vytvořte nové nebo filtrujte archivovaná.",
         "primary_button": {
-          "text": "Začněte první projekt",
+          "text": "Začněte první oddělení",
           "comic": {
-            "title": "Vše začíná projektem v Paradise Task Tracker",
-            "description": "Projektem může být roadmapa produktu, marketingová kampaň nebo uvedení nového auta."
+            "title": "Vše začíná oddělením v Paradise Task Tracker",
+            "description": "Oddělení se může věnovat roadmapě produktu, marketingové kampani nebo uvedení nového auta."
           }
         }
       },
       "no_projects": {
-        "title": "Žádné projekty",
-        "description": "Pro vytváření pracovních položek potřebujete vytvořit nebo být součástí projektu.",
+        "title": "Žádná oddělení",
+        "description": "Pro vytváření pracovních položek potřebujete vytvořit nebo být součástí oddělení.",
         "primary_button": {
-          "text": "Začněte první projekt",
+          "text": "Začněte první oddělení",
           "comic": {
-            "title": "Vše začíná projektem v Paradise Task Tracker",
-            "description": "Projektem může být roadmapa produktu, marketingová kampaň nebo uvedení nového auta."
+            "title": "Vše začíná oddělením v Paradise Task Tracker",
+            "description": "Oddělení se může věnovat roadmapě produktu, marketingové kampani nebo uvedení nového auta."
           }
         }
       },
       "filter": {
-        "title": "Žádné odpovídající projekty",
-        "description": "Nenalezeny projekty odpovídající kritériím.\n Vytvořte nový."
+        "title": "Žádná odpovídající oddělení",
+        "description": "Nenalezena oddělení odpovídající kritériím.\n Vytvořte nové."
       },
       "search": {
-        "description": "Nenalezeny projekty odpovídající kritériím.\nVytvořte nový."
+        "description": "Nenalezena oddělení odpovídající kritériím.\nVytvořte nové."
       }
     }
   },
@@ -229,7 +229,7 @@
     "add_view": "Přidat pohled",
     "empty_state": {
       "all-issues": {
-        "title": "Žádné pracovní položky v projektu",
+        "title": "Žádné pracovní položky v oddělení",
         "description": "Vytvořte první položku a sledujte svůj pokrok!",
         "primary_button": {
           "text": "Vytvořit pracovní položku"
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Napište poznámku, dokument nebo celou znalostní bázi. Získejte pomoc od Galilea, AI asistenta Paradise Task Tracker, abyste začali",
-        "description": "Stránky jsou prostor pro myšlenky v Paradise Task Tracker. Zaznamenejte si poznámky z jednání, snadno je naformátujte, vložte pracovní položky, uspořádejte je pomocí knihovny komponent a udržujte je všechny v kontextu vašeho projektu. Abychom usnadnili práci s jakýmkoli dokumentem, vyvolejte Galilea, AI Paradise Task Tracker, pomocí zkratky nebo kliknutím na tlačítko.",
+        "description": "Stránky jsou prostor pro myšlenky v Paradise Task Tracker. Zaznamenejte si poznámky z jednání, snadno je naformátujte, vložte pracovní položky, uspořádejte je pomocí knihovny komponent a udržujte je všechny v kontextu vašeho oddělení. Abychom usnadnili práci s jakýmkoli dokumentem, vyvolejte Galilea, AI Paradise Task Tracker, pomocí zkratky nebo kliknutím na tlačítko.",
         "primary_button": {
           "text": "Vytvořit svou první stránku"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Žádné aktivní cykly",
-        "description": "Cyklus vašich projektů, který zahrnuje jakékoli období, které zahrnuje dnešní datum ve svém rozsahu. Najděte pokrok a detaily všech vašich aktivních cyklů zde."
+        "description": "Cyklus vašich oddělení, který zahrnuje jakékoli období, které zahrnuje dnešní datum ve svém rozsahu. Najděte pokrok a detaily všech vašich aktivních cyklů zde."
       }
     }
   },

@@ -47,6 +47,7 @@ export const ProjectFiltersSelection = observer(function ProjectFiltersSelection
             placeholder="Search"
             value={filtersSearchQuery}
             onChange={(e) => setFiltersSearchQuery(e.target.value)}
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- search field intentionally takes focus on open (desktop only)
             autoFocus={!isMobile}
           />
           {filtersSearchQuery !== "" && (
@@ -65,7 +66,7 @@ export const ProjectFiltersSelection = observer(function ProjectFiltersSelection
                 my_projects: !displayFilters.my_projects,
               })
             }
-            title="My projects"
+            title="My departments"
           />
         </div>
 

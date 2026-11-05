@@ -17,8 +17,6 @@ import {
   Upload,
   Pencil,
   Search,
-  Send,
-  SmilePlus,
   X,
   Hash,
   Lock,
@@ -26,11 +24,10 @@ import {
   Compass,
   Phone,
   Video,
+  ArrowDown,
 } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
-import { EmojiReactionPicker } from "@plane/propel/emoji-reaction";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
 import { Button } from "@plane/propel/button";
 import { IconButton } from "@plane/propel/icon-button";
@@ -55,19 +52,22 @@ import {
   type THasilCari,
   type TPercakapan,
   type TPesan,
+  type TRujukanKirim,
 } from "@/services/chat.service";
 // local imports
 import { susunBaris } from "./baris";
+import { BilahSematan } from "./bilah-sematan";
 import { useObrolanLangsung } from "./langsung";
 import { usePanggilanWorkspace } from "./penyedia-panggilan";
 import { Gelembung } from "./gelembung";
 import { KutipanBalasan } from "./kutipan-balasan";
-import { DaftarSebut, useSebutan } from "./pemilih-sebut";
+import { KotakTulis } from "./kotak-tulis";
+import type { TKendaliKotakTulis } from "./kotak-tulis";
 import type { TCalonSebut } from "./pemilih-sebut";
 import { DialogBuatKanal, DialogJelajahKanal } from "./kanal-dialog";
 import { DialogSetelanKanal } from "./kanal-setelan";
 import { ukuranTerbaca } from "./lampiran";
-import { berkasDariTempel, seretBerkas, useUnggahLampiran } from "./unggah-lampiran";
+import { seretBerkas, useUnggahLampiran } from "./unggah-lampiran";
 import { DenganKehadiran, StatusKehadiranTeks, TitikKehadiran } from "@/components/chat/titik-kehadiran";
 import { MemberProfileTrigger } from "@/components/member-profile";
 import { usePetaKehadiran } from "@/hooks/use-kehadiran";
@@ -84,7 +84,6 @@ const SELANG_PESAN = 5000;
 // terlewat saat soket sempat putus dan menyambung lagi.
 const SELANG_PESAN_CADANGAN = 30000;
 const SELANG_DAFTAR = 15000;
-const TINGGI_TULIS_MAKS = 160;
 /** Berapa lama sesudah aksi di tab ini gema soketnya dianggap milik aksi itu. */
 const JENDELA_GEMA_MS = 3000;
 /** Dipanggil penangan aksi pesan, di luar render; lihat `onPerubahan`. */
@@ -96,6 +95,10 @@ const tandaiAksiLokal = (ref: { current: number }): void => {
 const idElemenPesan = (pesanId: string) => `pesan-${pesanId}`;
 /** Paling banyak halaman riwayat yang dimuat untuk mencari pesan asli kutipan. */
 const BATAS_HALAMAN_LOMPAT = 10;
+
+/** Sejauh ini (px) dari dasar daftar pesan, tombol "ke pesan terbaru" muncul dan
+ * pesan masuk tidak lagi menarik layar ke bawah. Kira-kira dua gelembung. */
+const JARAK_TOMBOL_TERBARU_PX = 160;
 const LAMA_SOROT_MS = 1600;
 
 type TBarisDaftar = { id: string; terakhir: TPercakapan | undefined };
@@ -135,9 +138,13 @@ function ChatPage() {
   // mengetik nama tidak memanggil server tiap huruf.
   const [hasilCari, setHasilCari] = useState<THasilCari[] | null>(null);
   const [mencari, setMencari] = useState(false);
-  const [draf, setDraf] = useState("");
+  // Draf tidak lagi disimpan di state halaman: tiap huruf dulu merender ulang
+  // seluruh halaman. Ia hidup di KotakTulis; halaman cuma memegang kendalinya
+  // dan salinan terakhir (drafRef) supaya draf bertahan saat kotaknya dilepas.
+  const kendaliTulisRef = useRef<TKendaliKotakTulis>(null);
+  const drafRef = useRef("");
+  const setDraf = (teks: string) => kendaliTulisRef.current?.setDraf(teks);
   const [mengirim, setMengirim] = useState(false);
-  const [emojiTerbuka, setEmojiTerbuka] = useState(false);
   const [setelanTerbuka, setSetelanTerbuka] = useState(false);
   /** Berkas sedang diseret di atas percakapan: tampilkan area lepas. */
   const [diseret, setDiseret] = useState(false);
@@ -155,6 +162,12 @@ function ChatPage() {
   const [jelajah, setJelajah] = useState(false);
   const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
+  /** Tombol "ke pesan terbaru" muncul sejauh ini dari bawah. */
+  const [jauhDariBawah, setJauhDariBawah] = useState(false);
+  const jauhDariBawahRef = useRef(false);
+  /** Ada pesan masuk selagi orangnya membaca riwayat di atas. */
+  const [adaPesanBaru, setAdaPesanBaru] = useState(false);
+  const percakapanRef = useRef<string | null>(null);
   const { bunyikan } = useSuaraNotifikasi();
   const pesanTerakhirRef = useRef<string | null>(null);
   /** Waktu aksi pesan terakhir dari tab ini; lihat `onPerubahan`. */
@@ -194,6 +207,9 @@ function ChatPage() {
   const adaPercakapanTerbuka = Boolean(dengan || ruangParam);
 
   const kunciIsi = slug && (ruangParam || dengan) ? `CHAT_ISI_${slug}_${ruangParam ?? dengan}` : null;
+  // Sematan dikunci per ruang, bukan per `?dengan=`: DM yang belum berisi pesan
+  // belum punya ruang, dan memang belum punya apa pun untuk disematkan.
+  const kunciSematan = slug && ruangSaatIni ? `CHAT_SEMATAN_${slug}_${ruangSaatIni}` : null;
 
   // Sengaja memakai `mutate` global, bukan handle dari useSWR di bawah: hook ini
   // harus berdiri SEBELUM SWR isi percakapan supaya `tersambung` bisa dipakai
@@ -211,6 +227,9 @@ function ChatPage() {
         !!kejadian.oleh && kejadian.oleh === currentUser?.id && Date.now() - aksiLokalRef.current < JENDELA_GEMA_MS;
       if (gemaSendiri) return;
       if (kunciIsi) void mutate(kunciIsi);
+      // Cuplikan bilah sematan ikut berubah saat pesannya disunting atau dihapus.
+      if (kunciSematan && (kejadian.tipe === "sematan" || kejadian.tipe === "sunting" || kejadian.tipe === "hapus"))
+        void mutate(kunciSematan);
       void mutate(`CHAT_PERCAKAPAN_${slug}`);
       void mutate(KUNCI_BELUM_DIBACA);
       // Nama/topik/anggota kanal berubah (chat_kelola.py menyiarkan "ruang"/"anggota").
@@ -243,22 +262,31 @@ function ChatPage() {
     { refreshInterval: tersambung ? SELANG_PESAN_CADANGAN : SELANG_PESAN }
   );
 
+  // Siaran "sematan" lewat soket yang memicu tarik ulang; penarikan berkala di
+  // sini cuma jaring pengaman saat soket putus, jadi jarang.
+  const { data: sematan, mutate: muatSematan } = useSWR(
+    kunciSematan,
+    slug && ruangSaatIni ? () => chatService.getSematan(slug, ruangSaatIni) : null,
+    { refreshInterval: tersambung ? SELANG_PESAN_CADANGAN : SELANG_DAFTAR }
+  );
+
   // Sebutan @: hanya orang di percakapan ini. Kanal memakai kunci SWR yang
   // sama dengan panel anggota (kanal-setelan), jadi tidak menambah permintaan.
   const { data: anggotaRuang } = useSWR(
     slug && ruangParam ? `CHAT_ANGGOTA_RUANG_${ruangParam}` : null,
     slug && ruangParam ? () => chatService.getAnggotaRuang(slug, ruangParam) : null
   );
+  const meId = currentUser?.id;
   const calonSebut: TCalonSebut[] = useMemo(() => {
-    const ids = ruangParam ? (anggotaRuang ?? []) : dengan ? [dengan] : [];
-    return ids
-      .filter((id) => id !== currentUser?.id)
-      .flatMap((id) => {
-        const anggota = getWorkspaceMemberDetails(id)?.member;
-        return anggota?.display_name ? [{ id, nama: anggota.display_name, avatar: anggota.avatar_url }] : [];
-      });
-  }, [ruangParam, anggotaRuang, dengan, currentUser?.id, getWorkspaceMemberDetails]);
-  const sebutan = useSebutan({ calon: calonSebut, draf, setDraf, tulisRef });
+    const ids = ruangParam ? (anggotaRuang ?? []) : dengan ? [dengan, ...(meId ? [meId] : [])] : [];
+    return ids.flatMap((id) => {
+      const anggota = getWorkspaceMemberDetails(id)?.member;
+      // Diri sendiri ikut ditawarkan (KEP-91): cuma disorot, tanpa kartu.
+      return anggota?.display_name
+        ? [{ id, nama: anggota.display_name, avatar: anggota.avatar_url, saya: id === meId }]
+        : [];
+    });
+  }, [ruangParam, anggotaRuang, dengan, meId, getWorkspaceMemberDetails]);
 
   // Ganti lawan bicara = buang riwayat lama yang sudah dimuat, kalau tidak
   // pesan orang sebelumnya ikut menempel di atas percakapan berikutnya.
@@ -295,15 +323,48 @@ function ChatPage() {
     pesanTerakhirRef.current = penanda;
   }, [pesan, kunciIsi, currentUser?.id, bunyikan]);
 
-  // Selalu tampilkan pesan terbaru saat percakapan bertambah atau berganti.
+  // Pesan terbaru: selalu saat percakapan BERGANTI. Saat percakapan bertambah,
+  // hanya kalau orangnya sedang di bawah atau pesannya kiriman sendiri; yang
+  // sedang membaca riwayat tidak ditarik paksa ke bawah, ia dapat titik di
+  // tombol "ke pesan terbaru".
+  // Sengaja hanya bergantung pada jumlah pesan dan percakapan: `pesan` berganti
+  // identitas tiap revalidasi SWR, dan memicunya di sana menyalakan titik "pesan
+  // baru" padahal tidak ada yang baru. Posisi gulir dibaca dari DOM lewat ref.
+  /* oxlint-disable react/set-state-in-effect, react/exhaustive-effect-dependencies, react-hooks/exhaustive-deps */
   useEffect(() => {
-    akhirRef.current?.scrollIntoView({ block: "end" });
+    const kunci = `${dengan ?? ""}|${ruangParam ?? ""}`;
+    const berganti = percakapanRef.current !== kunci;
+    percakapanRef.current = kunci;
+    const terakhir = pesan?.[pesan.length - 1];
+    if (berganti || !jauhDariBawahRef.current || terakhir?.pengirim === currentUser?.id) {
+      akhirRef.current?.scrollIntoView({ block: "end" });
+      jauhDariBawahRef.current = false;
+      setJauhDariBawah(false);
+      setAdaPesanBaru(false);
+    } else {
+      setAdaPesanBaru(true);
+    }
     // Memuat percakapan berarti menandainya terbaca di server, jadi lencana di
     // sidebar sudah basi sejak detik itu. Disegarkan di sini supaya angkanya
     // turun seketika, bukan pada tarikan 30 detik berikutnya.
     void mutate(KUNCI_BELUM_DIBACA);
-    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- dengan/ruangParam re-scroll on conversation switch
   }, [pesan?.length, dengan, ruangParam]);
+  /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies, react-hooks/exhaustive-deps */
+
+  /** Dipanggil tiap gulir daftar pesan. Ref untuk efek di atas (tanpa render
+   * ulang), state untuk tombolnya. */
+  const saatGulir = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const jauh = el.scrollHeight - el.scrollTop - el.clientHeight > JARAK_TOMBOL_TERBARU_PX;
+    jauhDariBawahRef.current = jauh;
+    setJauhDariBawah(jauh);
+    if (!jauh) setAdaPesanBaru(false);
+  };
+
+  const keTerbaru = () => {
+    akhirRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    setAdaPesanBaru(false);
+  };
 
   const daftar: TBarisDaftar[] = useMemo(() => {
     // Hanya baris DM yang masuk daftar orang. Sejak kanal ikut dikirim endpoint
@@ -360,15 +421,6 @@ function ChatPage() {
   );
 
   const lawanBicara = dengan ? getWorkspaceMemberDetails(dengan)?.member : undefined;
-
-  const aturTinggiTulis = () => {
-    const el = tulisRef.current;
-    if (!el) return;
-    // Tinggi dinolkan dulu; tanpa itu scrollHeight ikut tinggi lama dan kotaknya
-    // tumbuh terus tapi tidak pernah menyusut lagi.
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, TINGGI_TULIS_MAKS)}px`;
-  };
 
   const batasParadise = useParadiseLimits();
   // Tombol klip, tempel, dan seret semuanya lewat `tambahLampiran`: batas
@@ -507,8 +559,8 @@ function ChatPage() {
     return () => clearTimeout(jeda);
   }, [disorot]);
 
-  const simpanSuntingan = async () => {
-    const isi = draf.trim();
+  /** `isi` sudah di-trim oleh KotakTulis, pemilik draf. */
+  const simpanSuntingan = async (isi: string) => {
     if (!slug || !menyunting || !isi) return;
     tandaiAksiLokal(aksiLokalRef);
     setMengirim(true);
@@ -561,22 +613,36 @@ function ChatPage() {
     }
   };
 
-  const kirim = async () => {
-    const isi = draf.trim();
+  const sematkan = async (pesanId: string, aktif: boolean) => {
+    if (!slug) return;
+    tandaiAksiLokal(aksiLokalRef);
+    try {
+      await chatService.aturSematan(slug, pesanId, aktif);
+      // Riwayat lama disimpan di luar SWR, jadi tandanya diperbarui di sini.
+      setLama((sebelumnya) => sebelumnya.map((x) => (x.id === pesanId ? { ...x, disematkan: aktif } : x)));
+      await Promise.all([muatPesan(), muatSematan()]);
+    } catch (galat) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: aktif ? t("chat_ui.pin_failed") : t("chat_ui.unpin_failed"),
+        message: (galat as { error?: string })?.error ?? t("chat_ui.try_again_shortly"),
+      });
+    }
+  };
+
+  /** `isi` sudah di-trim dan `sebut` sudah disaring oleh KotakTulis. */
+  const kirim = async (isi: string, rujukan: TRujukanKirim) => {
     // Boleh mengirim tanpa teks asal ada lampiran.
     if ((!isi && lampiran.length === 0) || !slug || (!dengan && !ruangParam) || mengirim || mengunggah) return;
     setMengirim(true);
     tandaiAksiLokal(aksiLokalRef);
     try {
       const berkas = lampiran.map((l) => l.id);
-      const sebut = sebutan.idUntukKirim(isi);
-      if (ruangParam) await chatService.kirimPesanRuang(slug, ruangParam, isi, berkas, membalas?.id, sebut);
-      else await chatService.kirimPesan(slug, dengan as string, isi, berkas, membalas?.id, sebut);
-      setDraf("");
-      sebutan.reset();
+      if (ruangParam) await chatService.kirimPesanRuang(slug, ruangParam, isi, berkas, membalas?.id, rujukan);
+      else await chatService.kirimPesan(slug, dengan as string, isi, berkas, membalas?.id, rujukan);
+      kendaliTulisRef.current?.kosongkan();
       kosongkanLampiran();
       setMembalas(null);
-      if (tulisRef.current) tulisRef.current.style.height = "auto";
       await Promise.all([muatPesan(), muatPercakapan()]);
     } catch (galat) {
       setToast({
@@ -590,6 +656,11 @@ function ChatPage() {
   };
 
   const kanalAktif = (daftarKanal ?? []).find((r) => r.id === ruangParam);
+  /** Nama tampilan untuk gelembung dan bilah sematan; "Anda" untuk diri sendiri. */
+  const namaOrang = (id: string) =>
+    id === currentUser?.id
+      ? t("chat_ui.you")
+      : (getWorkspaceMemberDetails(id)?.member?.display_name ?? t("chat_ui.member"));
   /** Konferensi di kanal yang sedang dibuka. Tidak berlaku di DM. */
   const mulaiKonferensi = (video: boolean) => {
     if (!ruangParam) return;
@@ -714,7 +785,7 @@ function ChatPage() {
           {!hasilCari ? (
             <div className="border-b border-subtle pb-1">
               <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
-                <p className="text-12 font-semibold tracking-wide text-tertiary uppercase">{t("chat_ui.channels")}</p>
+                <p className="text-12 font-semibold text-tertiary">{t("chat_ui.channels")}</p>
                 <div className="flex items-center gap-0.5">
                   <IconButton
                     type="button"
@@ -1059,130 +1130,166 @@ function ChatPage() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              {/* Tombol riwayat hanya muncul kalau memang ada kemungkinan ada
+            <BilahSematan
+              // Kunci per ruang: posisi putaran "1 dari N" tidak terbawa ke ruang lain.
+              key={ruangSaatIni ?? "kosong"}
+              daftar={sematan?.pesan ?? []}
+              namaOrang={namaOrang}
+              onLompat={lompatKePesan}
+              onLepas={sematan?.boleh_sematkan ? (pesanId) => void sematkan(pesanId, false) : undefined}
+            />
+
+            <div className="relative flex min-h-0 flex-1 flex-col">
+              <div className="flex-1 overflow-y-auto px-4 py-3" onScroll={saatGulir}>
+                {/* Tombol riwayat hanya muncul kalau memang ada kemungkinan ada
                   yang lebih lama, dan menghilang setelah server bilang habis. */}
-              {barisPesan.length > 0 && !habis ? (
-                <div className="mb-2 flex justify-center">
-                  <Button
-                    variant="secondary"
-                    size="base"
-                    prependIcon={<ChevronUp />}
-                    onClick={() => void muatLama()}
-                    disabled={memuatLama}
-                  >
-                    {memuatLama ? t("chat_ui.loading") : t("chat_ui.load_older")}
-                  </Button>
-                </div>
-              ) : null}
+                {barisPesan.length > 0 && !habis ? (
+                  <div className="mb-2 flex justify-center">
+                    <Button
+                      variant="secondary"
+                      size="base"
+                      prependIcon={<ChevronUp />}
+                      onClick={() => void muatLama()}
+                      disabled={memuatLama}
+                    >
+                      {memuatLama ? t("chat_ui.loading") : t("chat_ui.load_older")}
+                    </Button>
+                  </div>
+                ) : null}
 
-              {barisPesan.length === 0 ? (
-                <EmptyStateCompact
-                  assetKey="inbox"
-                  title={t("chat_ui.no_messages")}
-                  description={t("chat_ui.empty_thread")}
-                  assetClassName="size-20"
-                />
-              ) : (
-                <div className="flex flex-col">
-                  {barisPesan.map((baris) => {
-                    if (baris.jenis === "tanggal")
-                      return (
-                        <div key={baris.kunci} className="my-3 flex items-center justify-center">
-                          <span className="rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">
-                            {baris.relatif === "hari-ini"
-                              ? t("chat_ui.today")
-                              : baris.relatif === "kemarin"
-                                ? t("chat_ui.yesterday")
-                                : baris.label}
-                          </span>
-                        </div>
-                      );
-
-                    if (baris.jenis === "belum-dibaca")
-                      return (
-                        <div key={baris.kunci} className="my-3 flex items-center gap-2">
-                          <div className="h-px flex-1 bg-accent-primary/40" />
-                          <span className="text-12 font-medium text-accent-primary">
-                            {t("chat_ui.unread_messages")}
-                          </span>
-                          <div className="h-px flex-1 bg-accent-primary/40" />
-                        </div>
-                      );
-
-                    const { pesan: p, dariSaya, awalKelompok, akhirKelompok } = baris;
-                    // Di kanal tiap pesan bisa dari orang lain, jadi avatarnya
-                    // dari pengirim pesan itu, bukan dari lawan bicara DM.
-                    const pengirim = p.pengirim ? getWorkspaceMemberDetails(p.pengirim)?.member : undefined;
-                    return (
-                      <div
-                        key={baris.kunci}
-                        id={idElemenPesan(p.id)}
-                        className={`flex scroll-my-16 items-end gap-2 rounded-item transition-colors duration-700 ${
-                          awalKelompok ? "mt-2" : "mt-0.5"
-                        } ${dariSaya ? "justify-end" : "justify-start"} ${disorot === p.id ? "bg-accent-subtle" : ""}`}
-                      >
-                        {!dariSaya ? (
-                          <div className="w-7 shrink-0">
-                            {awalKelompok && p.pengirim ? (
-                              <MemberProfileTrigger userId={p.pengirim}>
-                                <Avatar
-                                  name={pengirim?.display_name}
-                                  src={getFileURL(pengirim?.avatar_url ?? "")}
-                                  size={28}
-                                  shape="circle"
-                                />
-                              </MemberProfileTrigger>
-                            ) : null}
+                {barisPesan.length === 0 ? (
+                  <EmptyStateCompact
+                    assetKey="inbox"
+                    title={t("chat_ui.no_messages")}
+                    description={t("chat_ui.empty_thread")}
+                    assetClassName="size-20"
+                  />
+                ) : (
+                  <div className="flex flex-col">
+                    {barisPesan.map((baris) => {
+                      if (baris.jenis === "tanggal")
+                        return (
+                          <div key={baris.kunci} className="my-3 flex items-center justify-center">
+                            <span className="rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">
+                              {baris.relatif === "hari-ini"
+                                ? t("chat_ui.today")
+                                : baris.relatif === "kemarin"
+                                  ? t("chat_ui.yesterday")
+                                  : baris.label}
+                            </span>
                           </div>
-                        ) : null}
-                        <Gelembung
-                          pesan={p}
-                          dariSaya={dariSaya}
-                          awalKelompok={awalKelompok}
-                          akhirKelompok={akhirKelompok}
-                          sayaId={currentUser?.id}
-                          namaOrang={(id) =>
-                            id === currentUser?.id
-                              ? t("chat_ui.you")
-                              : (getWorkspaceMemberDetails(id)?.member?.display_name ?? t("chat_ui.member"))
-                          }
-                          namaSebutan={(id) =>
-                            id === currentUser?.id
-                              ? (currentUser?.display_name ?? "")
-                              : (getWorkspaceMemberDetails(id)?.member?.display_name ?? "")
-                          }
-                          onBukaKutipan={lompatKePesan}
-                          onBalas={(pesanIni) => {
-                            setMenyunting(null);
-                            setMembalas(pesanIni);
-                            tulisRef.current?.focus();
-                          }}
-                          onSunting={(pesanIni) => {
-                            setMembalas(null);
-                            setMenyunting(pesanIni);
-                            setDraf(pesanIni.isi);
-                            tulisRef.current?.focus();
-                          }}
-                          onHapus={(pesanIni) =>
-                            minta(
-                              { judul: t("chat_ui.confirm_delete_title"), isi: t("chat_ui.confirm_delete_body") },
-                              () => hapus(pesanIni)
-                            )
-                          }
-                          batasHapusJam={batasHapusJam}
-                          onReaksi={(pesanIni, emoji) => void reaksi(pesanIni, emoji)}
-                          onTelepon={(video) => {
-                            if (adalahKanal) mulaiKonferensi(video);
-                            else telepon(video);
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              <div ref={akhirRef} />
+                        );
+
+                      if (baris.jenis === "belum-dibaca")
+                        return (
+                          <div key={baris.kunci} className="my-3 flex items-center gap-2">
+                            <div className="h-px flex-1 bg-accent-primary/40" />
+                            <span className="text-12 font-medium text-accent-primary">
+                              {t("chat_ui.unread_messages")}
+                            </span>
+                            <div className="h-px flex-1 bg-accent-primary/40" />
+                          </div>
+                        );
+
+                      const { pesan: p, dariSaya, awalKelompok, akhirKelompok } = baris;
+                      // Di kanal tiap pesan bisa dari orang lain, jadi avatarnya
+                      // dari pengirim pesan itu, bukan dari lawan bicara DM.
+                      const pengirim = p.pengirim ? getWorkspaceMemberDetails(p.pengirim)?.member : undefined;
+                      return (
+                        <div
+                          key={baris.kunci}
+                          id={idElemenPesan(p.id)}
+                          className={`flex scroll-my-16 items-end gap-2 rounded-item transition-colors duration-700 ${
+                            awalKelompok ? "mt-3" : "mt-0.5"
+                          } ${dariSaya ? "justify-end" : "justify-start"} ${disorot === p.id ? "bg-accent-subtle" : ""}`}
+                        >
+                          {!dariSaya ? (
+                            <div className="w-7 shrink-0">
+                              {awalKelompok && p.pengirim ? (
+                                <MemberProfileTrigger userId={p.pengirim}>
+                                  <Avatar
+                                    name={pengirim?.display_name}
+                                    src={getFileURL(pengirim?.avatar_url ?? "")}
+                                    size={28}
+                                    shape="circle"
+                                  />
+                                </MemberProfileTrigger>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          <Gelembung
+                            pesan={p}
+                            dariSaya={dariSaya}
+                            awalKelompok={awalKelompok}
+                            akhirKelompok={akhirKelompok}
+                            sayaId={currentUser?.id}
+                            namaOrang={namaOrang}
+                            namaSebutan={(id) =>
+                              id === currentUser?.id
+                                ? (currentUser?.display_name ?? "")
+                                : (getWorkspaceMemberDetails(id)?.member?.display_name ?? "")
+                            }
+                            onBukaKutipan={lompatKePesan}
+                            onBalas={(pesanIni) => {
+                              setMenyunting(null);
+                              setMembalas(pesanIni);
+                              tulisRef.current?.focus();
+                            }}
+                            onSunting={(pesanIni) => {
+                              setMembalas(null);
+                              setMenyunting(pesanIni);
+                              setDraf(pesanIni.isi);
+                              tulisRef.current?.focus();
+                            }}
+                            onHapus={(pesanIni) =>
+                              minta(
+                                { judul: t("chat_ui.confirm_delete_title"), isi: t("chat_ui.confirm_delete_body") },
+                                () => hapus(pesanIni)
+                              )
+                            }
+                            batasHapusJam={batasHapusJam}
+                            onReaksi={(pesanIni, emoji, reaksiBaru) => {
+                              // Riwayat lama disimpan di luar SWR dan tidak ikut
+                              // ditarik ulang `reaksi()`; tanpa ini reaksi pada
+                              // pesan lama tersimpan di server tapi tidak tampak,
+                              // lalu klik berikutnya malah membatalkannya.
+                              setLama((sebelumnya) =>
+                                sebelumnya.map((x) => (x.id === pesanIni.id ? { ...x, reaksi: reaksiBaru } : x))
+                              );
+                              void reaksi(pesanIni, emoji);
+                            }}
+                            onSematkan={
+                              sematan?.boleh_sematkan
+                                ? (pesanIni, aktif) => void sematkan(pesanIni.id, aktif)
+                                : undefined
+                            }
+                            onTelepon={(video) => {
+                              if (adalahKanal) mulaiKonferensi(video);
+                              else telepon(video);
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div ref={akhirRef} />
+              </div>
+              {jauhDariBawah ? (
+                <button
+                  type="button"
+                  onClick={keTerbaru}
+                  aria-label={t("chat_ui.jump_to_latest")}
+                  title={t("chat_ui.jump_to_latest")}
+                  className="absolute right-4 bottom-3 grid size-9 place-items-center rounded-button border border-subtle bg-layer-1 text-secondary shadow-raised-200 transition-colors hover:bg-layer-2 hover:text-primary"
+                >
+                  {" "}
+                  <ArrowDown className="size-4" />{" "}
+                  {adaPesanBaru ? (
+                    <span className="ring-layer-1 absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-accent-primary ring-2" />
+                  ) : null}{" "}
+                </button>
+              ) : null}{" "}
             </div>
 
             {/* Kanal sistem yang hanya bisa dibaca: Changelog, ruang kabar
@@ -1214,30 +1321,20 @@ function ChatPage() {
                 />
               ) : null}
               {menyunting ? (
-                <div className="flex items-start gap-2 rounded-item border-l-2 border-accent-strong bg-layer-1 px-2.5 py-1.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1 text-12 font-medium text-accent-primary">
-                      <Pencil className="size-3" />
-                      {t("chat_ui.editing_message")}
-                    </p>
-                    <p className="truncate text-12 text-tertiary">{menyunting.isi || t("chat_ui.attachment")}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Batal menyunting mengembalikan kotak tulis ke kosong,
-                      // bukan meninggalkan teks lama yang lalu terkirim sebagai
-                      // pesan baru tanpa disadari.
-                      if (menyunting) setDraf("");
-                      setMenyunting(null);
-                      setMembalas(null);
-                    }}
-                    aria-label={t("cancel")}
-                    className="-m-1.5 rounded-button p-1.5 text-tertiary hover:text-primary"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                </div>
+                <KutipanBalasan
+                  nama={t("chat_ui.editing_message")}
+                  ikon={<Pencil className="size-3 shrink-0" />}
+                  isi={menyunting.isi || t("chat_ui.attachment")}
+                  labelBatal={t("cancel")}
+                  onBatal={() => {
+                    // Batal menyunting mengembalikan kotak tulis ke kosong,
+                    // bukan meninggalkan teks lama yang lalu terkirim sebagai
+                    // pesan baru tanpa disadari.
+                    setDraf("");
+                    setMenyunting(null);
+                    setMembalas(null);
+                  }}
+                />
               ) : null}
               {lampiran.length > 0 || mengunggah ? (
                 <div className="flex flex-wrap items-center gap-2">
@@ -1283,101 +1380,42 @@ function ChatPage() {
                   ))}
                 </div>
               ) : null}
-              <div className="flex items-end gap-2">
-                <input ref={berkasRef} type="file" multiple hidden onChange={(e) => void unggah(e.target.files)} />
-                <IconButton
-                  type="button"
-                  onClick={() => berkasRef.current?.click()}
-                  disabled={mengunggah}
-                  aria-label={t("chat_ui.attach_file")}
-                  variant="ghost"
-                  size="xl"
-                  icon={Paperclip}
-                />
-                <EmojiReactionPicker
-                  isOpen={emojiTerbuka}
-                  handleToggle={setEmojiTerbuka}
-                  placement="top-start"
-                  onChange={(emoji) => {
-                    // Picker memberi kode desimal, bukan karakternya. Tanpa
-                    // stringToEmoji yang masuk ke pesan adalah angka.
-                    setDraf((sebelumnya) => `${sebelumnya}${stringToEmoji(emoji)}`);
-                    setEmojiTerbuka(false);
-                    tulisRef.current?.focus();
-                  }}
-                  label={
-                    <span
-                      className="flex size-9 items-center justify-center rounded-button text-secondary hover:bg-layer-transparent-hover"
-                      aria-label={t("chat_ui.insert_emoji")}
-                    >
-                      <SmilePlus className="size-4" />
-                    </span>
-                  }
-                />
-                <div className="relative min-w-0 flex-1">
-                  {sebutan.terbuka ? (
-                    <DaftarSebut
-                      cocok={sebutan.cocok}
-                      sorot={sebutan.sorot}
-                      onSorot={sebutan.setSorot}
-                      onPilih={sebutan.pilih}
+              {/* Draf hidup di KotakTulis supaya mengetik tidak merender ulang
+                  seluruh halaman (daftar orang dan semua gelembung pesan). */}
+              <KotakTulis
+                kendaliRef={kendaliTulisRef}
+                tulisRef={tulisRef}
+                drafRef={drafRef}
+                calonSebut={calonSebut}
+                slug={slug}
+                bolehSemua={kanalAktif?.tipe === "kanal" || kanalAktif?.tipe === "privat"}
+                maksPanjang={batasParadise.chat_message_max_length}
+                menyunting={Boolean(menyunting)}
+                membalas={Boolean(membalas)}
+                adaLampiran={lampiran.length > 0}
+                sibuk={mengirim || mengunggah}
+                onKirim={(isi, rujukan) => void kirim(isi, rujukan)}
+                onSimpanSuntingan={(isi) => void simpanSuntingan(isi)}
+                onBatal={() => {
+                  setMenyunting(null);
+                  setMembalas(null);
+                }}
+                onTempelBerkas={(berkas) => void unggah(berkas)}
+                sebelumTulis={
+                  <>
+                    <input ref={berkasRef} type="file" multiple hidden onChange={(e) => void unggah(e.target.files)} />
+                    <IconButton
+                      type="button"
+                      onClick={() => berkasRef.current?.click()}
+                      disabled={mengunggah}
+                      aria-label={t("chat_ui.attach_file")}
+                      variant="ghost"
+                      size="xl"
+                      icon={Paperclip}
                     />
-                  ) : null}
-                  <textarea
-                    ref={tulisRef}
-                    maxLength={batasParadise.chat_message_max_length}
-                    value={draf}
-                    onChange={(e) => {
-                      setDraf(e.target.value);
-                      sebutan.onChange(e);
-                      aturTinggiTulis();
-                    }}
-                    onClick={(e) => sebutan.onKursor(e.currentTarget.value, e.currentTarget.selectionStart ?? 0)}
-                    onBlur={() => sebutan.onKursor("", 0)}
-                    onPaste={(e) => {
-                      // Tempel gambar/berkas = lampiran. Tempelan teks biasa
-                      // dibiarkan jalan seperti biasa.
-                      const berkas = berkasDariTempel(e.clipboardData);
-                      if (berkas.length === 0) return;
-                      e.preventDefault();
-                      void unggah(berkas);
-                    }}
-                    onKeyDown={(e) => {
-                      // Pemilih sebutan yang terbuka menang atas Enter/Escape.
-                      if (sebutan.onKeyDown(e)) return;
-                      // Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
-                      // sudah dibawa orang dari aplikasi obrolan lain.
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        void (menyunting ? simpanSuntingan() : kirim());
-                      }
-                      // Escape membatalkan balas atau sunting. Tanpa ini, satu
-                      // satunya jalan keluar adalah mengklik tanda silang kecil.
-                      if (e.key === "Escape" && (menyunting || membalas)) {
-                        if (menyunting) setDraf("");
-                        setMenyunting(null);
-                        setMembalas(null);
-                      }
-                    }}
-                    rows={1}
-                    placeholder={t("chat_ui.write_message")}
-                    aria-label={t("chat_ui.write_message")}
-                    className="block min-h-9 w-full resize-none rounded-field border border-subtle bg-transparent px-3 py-2 text-13 text-primary outline-none placeholder:text-placeholder focus:border-accent-strong"
-                  />
-                </div>
-                <IconButton
-                  variant="primary"
-                  size="xl"
-                  icon={Send}
-                  onClick={() => void (menyunting ? simpanSuntingan() : kirim())}
-                  disabled={
-                    mengirim ||
-                    mengunggah ||
-                    (menyunting ? draf.trim().length === 0 : draf.trim().length === 0 && lampiran.length === 0)
-                  }
-                  aria-label={t("chat_ui.send_message")}
-                />
-              </div>
+                  </>
+                }
+              />
             </div>
           </>
         )}

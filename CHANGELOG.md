@@ -6,6 +6,180 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-05
+
+### Versi 4.0.0
+
+- **Naik 3.0.0 ke 4.0.0, major.** 3.1.0 tidak pernah dirilis; peran per
+  tempat (KEP-93) menaikkannya ke major karena migrasi 0169 membentuk ulang
+  baris penempatan yang sudah ada dan arti izin berubah. Langkah operator:
+  tidak ada yang manual (deploy.sh menjalankan 0169), tapi setelah deploy cek
+  papan Organization: manager yang dulu duduk di departemen divisi lain kini
+  tercatat Supervisor di sana, dan barisnya di departemen divisinya sendiri
+  dicabut. Data `PengawasanDivisi` dan keanggotaan project eksplisit TIDAK
+  dihapus.
+- **Peran per tempat (KEP-93).** Baris departemen membawa peran orang itu di
+  departemen tersebut (Staf/Supervisor, tidak pernah Manager). Semua keputusan
+  wewenang di satu project memakai peran di tempat yang menjangkau project itu
+  (`tingkat_anggota(..., project_id)`, `peta_tingkat(..., project_id)`), jadi
+  manager divisi A yang duduk sebagai Staf di departemen divisi B hanya staf di
+  B. Jenjang orangnya = peran tertinggi; manager tanpa divisi menyimpan
+  jenjangnya di baris tanpa tempat.
+- **Tidak ada manager departemen.** Menambah manager ke departemen di divisi
+  yang ia pimpin ditolak (400 `sudah-memimpin-divisi`); memimpin divisi melepas
+  departemen di dalamnya (`departemen_dilepas`). Ke departemen divisi lain:
+  papan menanyakan perannya (Staf/Supervisor) lewat dialog.
+- **Papan Organization.** Lajur Levels menampilkan anggotanya (kotak tetap,
+  bisa digulir) dan bisa diseret. Hanya lajur Director yang menerima lepasan;
+  Staf/Supervisor diatur di lajur departemen, Manager lewat divisi. Lajur
+  "Managers" di kartu departemen dibuang. Seret dari People = tambah, dari
+  struktur = pindah (kini juga lintas jenis); manager diseret DARI STRUKTUR ke
+  departemen divisinya sendiri = diturunkan (lepas divisi, `pertahankan_peran`),
+  dari People tetap dikunci. Direktur diseret ke People = turun ke Staf. People
+  panel lengket mulai md, zona Managers bergaya lajur, kartu departemen tanpa
+  bingkai, tombol New division di ujung daftar.
+- **Dibuang: Other project access dan Supervised divisions** di editor
+  member. Penempatan tampil hanya-baca; diubah di papan. Resolver tidak lagi
+  membaca `PengawasanDivisi`, dan POST `pengawasan` ditolak 400.
+- **Sebelumnya disiapkan sebagai 3.1.0 (minor):** fitur baru di chat plus
+  satu migrasi aditif (0167, kolom baru yang boleh kosong, jalan sendiri saat
+  deploy).
+- **Migrasi dan changelog tidak lagi dijalankan tangan.** Produksi:
+  `deploy.sh` memastikan nol migrasi tertunda dari dalam `api` baru dan
+  menerbitkan changelog dengan galat yang menggagalkan deploy; `rilis.sh`
+  menolak commit tanpa `release_notes/<versi>.json` atau entri CHANGELOG.
+  Lokal: `api` menerapkan migrasi sendiri saat start (tidak lagi macet
+  menunggu migrator), lalu `plane/db/sinkron_lokal.py` menerapkan migrasi
+  baru dan changelog beberapa detik sesudah berkasnya disimpan. Migrasi 0168
+  menyelaraskan pilihan `user_timezone` dengan pytz terpatok (SQL no-op),
+  supaya `makemigrations --check` bersih dan bisa jadi gerbang.
+- **Catatan rilis 3.0.0 bertanggal 2026-11-04**, bukan 05 (berkasnya ditulis
+  sehari sesudah rilis). Kartu Changelog yang sudah terbit kini mengikuti
+  berkasnya kalau berkas itu dikoreksi (`selaraskan()`), tanpa kartu baru
+  dan tanpa lencana belum-dibaca; produksi terkoreksi sendiri saat deploy.
+- **Gerbang lokal otomatis.** pre-commit: ruff menolak galat baru di `.py`
+  yang di-stage (dibanding HEAD) dan `makemigrations --check` saat model
+  berubah. pre-push: `turbo check:format check:lint check:types --affected`
+  seperti CI, plus catatan rilis. Darurat: `PARADISE_LEWATI_CEK=1`.
+- **Sebutan @all, diri sendiri, #kanal, dan #work item (KEP-91).** Di chat,
+  deskripsi, dan komentar: `@` menawarkan orang, diri sendiri, dan `@all`;
+  `#` menawarkan kanal dan work item. Server menyaring ke yang boleh dilihat
+  pengirim (kanal privat: anggotanya saja; work item: project yang ia ikuti),
+  lalu menyamarkan nama kanal privat jadi `#private-channel` bagi pembaca
+  yang bukan anggota, di gelembung, kutipan, sematan, pencarian, kartu, inbox,
+  dan email. `@all` di kanal mengirim kartu sebutan ke semua anggota; di
+  deskripsi/komentar mengirim notifikasi sebutan ke semua anggota project
+  tanpa menjadikan mereka subscriber. Endpoint baru `chat/rujukan/` dan
+  `chat/rujukan/info/`. Petunjuk `@ mention · # channel or work item` tampil di
+  placeholder kotak tulis chat, komentar, dan deskripsi selama masih kosong.
+  Arahkan pointer ke sebutan untuk kartu pratinjau: orang = kartu profil yang
+  sudah ada (kini terbuka saat hover), kanal = nama, publik/privat, topik, jumlah
+  anggota, work item = nomor, project, judul, state, prioritas, tenggat,
+  penanggung jawab. `chat/rujukan/info/` ikut membawa bahan kartunya
+  (komponen `HoverCard` baru di `@plane/propel/popover`, Base UI PreviewCard).
+  Kartu profil tidak lagi mencetak label "Division"/"Department" di tiap unit;
+  ikon gedung sudah menandai penempatan.
+  Tanpa migrasi. Ikut diperbaiki: email sebutan deskripsi dulu
+  dialamatkan ke variabel sisa loop (`subscriber`), bukan orang yang disebut.
+- **Sematkan, salin, dan reaksi cepat di chat (KEP-87).** Anggota yang boleh
+  menulis di ruang bisa menyematkan pesan siapa pun (Pengumuman: admin saja,
+  Changelog: tidak bisa), maksimal 20 per ruang, tampil di bilah atas
+  percakapan. Kolom `disematkan_pada`/`disematkan_oleh` di `PesanLangsung`
+  (migrasi 0167), endpoint `chat/pesan/<id>/sematkan/` dan
+  `chat/ruang/<id>/sematan/`, siaran WebSocket `sematan`. Menu pesan dapat
+  Salin, dan baris reaksi cepat plus pemilih emoji lengkap; di
+  layar sentuh lewat tekan lama.
+- **Gelembung chat lebih rapat.** Jarak lebar antarpesan ternyata dari bilah
+  aksi tak terlihat (`opacity-0`) yang tetap memakan ~30px di bawah tiap
+  pesan. Bilah itu dibuang: aksi (reaksi cepat, Balas, Salin, Sematkan,
+  Sunting, Hapus) pindah ke menu klik kanan / tekan lama / Shift+F10, plus
+  tombol emoji dan "..." yang melayang di samping gelembung saat diarahkan.
+  Semua gelembung, termasuk kartu panggilan/tugas/rilis, memakai satu radius
+  kecil (`rounded-item`). Reaksi menumpang tepi bawah gelembung.
+- **Kartu aktivitas masuk DM pelaku (KEP-90).** Persetujuan, komentar,
+  sebutan, dan pembaruan work item kini dikirim ke DM antara orang yang
+  bertindak dan tiap orang yang terdampak (penerima notifikasi: assignee,
+  penyetuju, pembuat), dengan pelaku sebagai pengirim. Aksi sistem, bot, dan
+  aksi atas tugas sendiri tetap ke ruang "Paradise". Saklar yang sama dengan
+  penugasan ke DM (`ENABLE_TUGAS_KE_DM`); dimatikan, semua kartu kembali ke
+  ruang "Paradise". Tidak ada migrasi; kartu lama tetap di tempatnya.
+- **Kartu milik sendiri berwarna gelembung sendiri.** Kartu panggilan, tugas,
+  dan persetujuan yang saya picu tampil di warna aksen seperti pesan keluar;
+  tombol Approve/Reject tidak muncul di kartu pengajuan saya sendiri.
+- **Perbaikan chat 5 Nov sore.** Tombol emoji/"..." di samping gelembung
+  tidak lagi hilang saat diarahkan (celah 4px di luar area hover), kini rata
+  bawah dan menempel (sticky) untuk pesan panjang. Reaksi ganda/tak bisa
+  ditambah: klik menu konteks Base UI terpicu dua kali di Windows (disaring
+  `chat/reaksi.ts`), toggle reaksi di server kini atomik (kunci baris pesan,
+  duplikat lama ikut bersih), dan reaksi pada riwayat lama kini tampil. Menu
+  klik kanan tidak lagi tertutup chip reaksi (`z-50` dipindah ke Positioner
+  di propel). Pratinjau tautan diberi jarak bawah 12px.
+- **Mengetik terasa lebih ringan.** Kotak tulis chat jadi komponen sendiri
+  (`chat/kotak-tulis.tsx`), jadi ketikan tidak lagi merender ulang seluruh
+  daftar pesan. Deskripsi work item dan komentar baru tidak lagi merender
+  ulang editor Tiptap tiap ketukan (Controller react-hook-form diganti
+  `setValue`).
+- **Kartu profil anggota.** Divisi dan departemen di baris terpisah, peran
+  jadi lencana sendiri; penempatan ganda tampil per blok (3 pertama, sisanya
+  "+N lagi").
+- **Ilustrasi empty state di tengah.** `EmptyStateDetailed` di propel kini
+  bawaannya `align="center"`; semua halaman kosong/tidak ditemukan ikut.
+- **Folder favorit dicabut.** Tombol buat folder di sidebar Favorites
+  dihapus dan folder tidak lagi ditampilkan. Favorit yang dulu di dalam folder
+  naik ke daftar utama, jadi tidak ada yang hilang; baris folder lama tetap di
+  database, tanpa migrasi.
+- **Tombol "ke pesan terbaru" di chat.** Muncul saat menggulir ke atas, diberi
+  titik kalau ada pesan masuk. Pesan masuk tidak lagi menarik layar ke bawah
+  selagi membaca riwayat; percakapan yang baru dibuka dan pesan kiriman
+  sendiri tetap langsung ke bawah.
+- **Your Work tidak lagi menampilkan baris kosong.** `ActivityMessage` hanya
+  kenal sebagian `field`; reaction, vote, draft, comment, approval, `intake`
+  (web memakai kunci `inbox`) dan `estimate_points` jatuh ke kosong, jadi yang
+  tampil cuma "You, 1 day ago". Kini ada pesan untuk semuanya dan field tak
+  dikenal dapat kalimat umum. Tidak ada data yang dihapus.
+- **Audit log God Mode berlabel lengkap.** Tipe objek kosong karena label di
+  web cuma kenal lima model, sementara perubahan setelan tercatat sebagai
+  `instanceconfiguration`. Semua endpoint tulis God Mode kini mencatat lewat
+  `plane/license/audit_godmode.py` dengan tipe dan nama objek; baris lama yang
+  kosong dapat label cadangan.
+- **Gambar chat dibuka di penampil work item (KEP-88).** Klik gambar lampiran
+  chat membuka lightbox yang sama dengan deskripsi work item (zoom, geser,
+  Esc/Back), bukan tab baru. `ImageFullScreenModal` kini diekspor dari
+  `@plane/editor`.
+- **Tautan & gambar di deskripsi/komentar ikut tampil di Links dan
+  Attachments (KEP-88).** Tidak disimpan sebagai baris baru: daftar
+  `issue-links/` dan `attachments/` menambahkan turunan dari teks
+  (`plane/utils/turunan_konten.py`) berpenanda `sumber`, hanya-baca di web.
+  Hapus dari teks = hilang dari daftar. Gambar deskripsi tidak bisa lagi
+  dihapus lewat endpoint lampiran. Lencana jumlah di daftar work item masih
+  menghitung yang manual saja.
+- **Kartu pratinjau tautan (KEP-88).** Endpoint baru
+  `workspaces/<slug>/link-preview/?url=` mengambil judul, ringkasan, gambar
+  Open Graph lewat `safe_get` (IP dipatok tiap hop), cache 24 jam (gagal: 1
+  jam), 120 permintaan/menit per orang. Kartu tampil di bawah deskripsi,
+  komentar, pesan chat, dan di atas kotak tulis chat saat mengetik. Tanpa
+  migrasi, tanpa setelan baru, masuk ke 3.1.0 yang belum dirilis.
+- **Project disebut departemen di mana-mana (KEP-92).** Tiap departemen sudah
+  punya tepat satu project (0146), jadi yang berubah cuma sebutannya: 19
+  locale, teks hardcode web, dan God Mode. Tombol, modal, perintah palet, dan
+  pintasan "buat project" di web dibuang; `ProjectViewSet.create` menjawab 403
+  "Departments are created in God Mode." API v1 tidak diubah. Kartu departemen
+  di papan Organization tidak lagi mengulang nama project-nya, dan kelas
+  `uppercase` dibuang dari semua label teks.
+- **Wiki lepas dari project (KEP-94), major.** Migrasi 0170 membuat
+  `wiki_folder` dan `wiki_material`; 0171 memindah tiap halaman project WIKI
+  jadi folder ber-id sama dan tiap materi jadi `WikiMaterial` ber-id sama
+  dengan berkasnya (tautan lama tetap hidup), lalu mem-soft-delete project
+  WIKI, keanggotaannya, halaman lamanya, dan baris ACL lamanya dengan satu cap
+  waktu. Objek MinIO tidak disentuh. Tiap Divisi dan Departemen otomatis punya
+  folder. Hak unggah dibaca dari penempatan organisasi, bukan keanggotaan
+  project. Endpoint baru di `/api/workspaces/<slug>/wiki/`, endpoint Wiki lama
+  di bawah `projects/` dibuang, Wiki punya tempat sampah sendiri. Langkah
+  operator: tidak ada yang manual (deploy menjalankan 0170/0171), tapi
+  sesudah deploy buka /wiki dan cek folder lama tetap berisi; migrasi bisa
+  dimundurkan (`migrate db 0170`) selama project WIKI belum dihapus permanen
+  oleh tugas harian (lihat `TRASH_RETENTION_DAYS`).
+
 ## 2026-11-04
 
 ### Versi 3.0.0

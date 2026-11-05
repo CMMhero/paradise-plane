@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Bu iş akışını sıfırlamak istediğinizden emin misiniz?",
-        "description": "Bu iş akışını sıfırlarsanız, tüm durum değişikliği kurallarınız silinecek ve bunları bu projede çalıştırmak için yeniden oluşturmanız gerekecektir."
+        "description": "Bu iş akışını sıfırlarsanız, tüm durum değişikliği kurallarınız silinecek ve bunları bu departmanda çalıştırmak için yeniden oluşturmanız gerekecektir."
       },
       "delete_state_change": {
         "title": "Bu durum değişikliği kuralını silmek istediğinizden emin misiniz?",
-        "description": "Silindikten sonra, bu değişikliği geri alamazsınız ve bu kuralı bu proje için çalıştırmak istiyorsanız tekrar ayarlamanız gerekecektir."
+        "description": "Silindikten sonra, bu değişikliği geri alamazsınız ve bu kuralı bu departman için çalıştırmak istiyorsanız tekrar ayarlamanız gerekecektir."
       }
     },
     "toasts": {

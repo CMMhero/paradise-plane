@@ -4,8 +4,8 @@
       "quickstart_guide": "您的快速入門指南",
       "not_right_now": "現在不要",
       "create_project": {
-        "title": "建立專案",
-        "description": "Paradise Task Tracker 中的大多數事情都始於一個專案。",
+        "title": "建立部門",
+        "description": "Paradise Task Tracker 中的大多數事情都始於一個部門。",
         "cta": "開始使用"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "最近",
       "empty": {
-        "project": "一旦您造訪專案，您的最近專案就會出現在這裡。",
+        "project": "一旦您造訪部門，您的最近部門就會出現在這裡。",
         "page": "一旦您造訪頁面，您的最近頁面就會出現在這裡。",
         "issue": "一旦您造訪工作事項，您的最近工作事項就會出現在這裡。",
         "default": "您還沒有任何最近項目。"
       },
       "filters": {
         "all": "所有",
-        "projects": "專案",
+        "projects": "部門",
         "pages": "頁面",
         "issues": "工作事項"
       }

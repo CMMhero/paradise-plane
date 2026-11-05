@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
+from plane.license.audit_godmode import catat_godmode
 from plane.license.api.views.base import BaseAPIView
 from plane.utils.cache import invalidate_cache
 from plane.utils.bawaan_member import (
@@ -38,6 +39,13 @@ class InstanceMemberDefaultsEndpoint(BaseAPIView):
         if galat:
             return Response({"error": galat}, status=status.HTTP_400_BAD_REQUEST)
         simpan_bawaan(bawaan)
+        catat_godmode(
+            request,
+            kind="member_defaults",
+            label="Member defaults",
+            changes={"sections": ["", ", ".join(sorted(k for k in request.data if k in bawaan))]},
+            detail="New-member defaults updated",
+        )
         return self._balas(bawaan)
 
 
@@ -56,7 +64,15 @@ class InstanceMemberDefaultsApplyEndpoint(BaseAPIView):
                 {"error": "Sections must be a non-empty list of 'navigasi' and/or 'work_items'."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        return Response({"updated": terapkan_ke_semua(set(bagian))}, status=status.HTTP_200_OK)
+        hasil = terapkan_ke_semua(set(bagian))
+        catat_godmode(
+            request,
+            kind="member_defaults_apply",
+            label="Member defaults: applied to all members",
+            changes={"sections": ["", ", ".join(sorted(bagian))]},
+            detail="Defaults applied to existing members",
+        )
+        return Response({"updated": hasil}, status=status.HTTP_200_OK)
 
 
 class InstanceProjectDefaultsEndpoint(BaseAPIView):
@@ -81,4 +97,11 @@ class InstanceProjectDefaultsEndpoint(BaseAPIView):
         if galat:
             return Response({"error": galat}, status=status.HTTP_400_BAD_REQUEST)
         bawaan_project.simpan_bawaan(bawaan)
+        catat_godmode(
+            request,
+            kind="project_defaults",
+            label="Project defaults",
+            changes={"sections": ["", ", ".join(sorted(k for k in request.data if k in bawaan))]},
+            detail="New-project defaults updated",
+        )
         return self._balas(bawaan)

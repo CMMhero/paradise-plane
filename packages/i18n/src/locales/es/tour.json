@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Bienvenido a tu espacio de trabajo",
-        "description": "Para ayudarte a comenzar, hemos creado un Proyecto Demo para ti. Agreguemos tu primer elemento de trabajo."
+        "description": "Para ayudarte a comenzar, hemos creado un Departamento Demo para ti. Agreguemos tu primer elemento de trabajo."
       },
       "step_one": {
         "title": "Haz clic en \"+ Agregar elemento de trabajo\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Progresa con Ciclos",
-        "description": "Presiona Q para crear un Ciclo. Nómbralo y establece fechas—solo un ciclo por proyecto."
+        "description": "Presiona Q para crear un Ciclo. Nómbralo y establece fechas—solo un ciclo por departamento."
       },
       "step_one": {
         "title": "Crear un nuevo ciclo",
-        "description": "Presiona Q para crear un Ciclo. Nómbralo y establece fechas—solo un ciclo por proyecto."
+        "description": "Presiona Q para crear un Ciclo. Nómbralo y establece fechas—solo un ciclo por departamento."
       },
       "step_two": {
         "title": "Haz clic en \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Divide tu proyecto en Módulos",
-        "description": "Los módulos son proyectos más pequeños y enfocados que ayudan a los usuarios a agrupar y organizar elementos de trabajo dentro de marcos de tiempo específicos."
+        "title": "Divide tu departamento en Módulos",
+        "description": "Los módulos son departamentos más pequeños y enfocados que ayudan a los usuarios a agrupar y organizar elementos de trabajo dentro de marcos de tiempo específicos."
       },
       "step_one": {
         "title": "Crear Módulo",
-        "description": "Los módulos son proyectos más pequeños y enfocados que ayudan a los usuarios a agrupar y organizar elementos de trabajo dentro de marcos de tiempo específicos."
+        "description": "Los módulos son departamentos más pequeños y enfocados que ayudan a los usuarios a agrupar y organizar elementos de trabajo dentro de marcos de tiempo específicos."
       },
       "step_two": {
         "title": "Haz clic en \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Documenta con Páginas potenciadas por IA",
-        "description": "Las Páginas en Paradise Task Tracker te permiten capturar, organizar y colaborar en información del proyecto—sin herramientas externas."
+        "description": "Las Páginas en Paradise Task Tracker te permiten capturar, organizar y colaborar en información del departamento—sin herramientas externas."
       },
       "step_one": {
         "title": "Hacer página Pública o Privada",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Aceptar/rechazar una solicitud pendiente",
-        "description": "Acepta para editar y mover el elemento de trabajo a tu proyecto, o recházalo para marcarlo como Cancelado."
+        "description": "Acepta para editar y mover el elemento de trabajo a tu departamento, o recházalo para marcarlo como Cancelado."
       },
       "step_three": {
         "title": "Posponer por ahora",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Encuentra cualquier cosa al instante",
-        "description": "Usa la búsqueda universal para saltar a tareas, proyectos, páginas y personas—sin salir de tu flujo."
+        "description": "Usa la búsqueda universal para saltar a tareas, departamentos, páginas y personas—sin salir de tu flujo."
       },
       "step_one": {
         "title": "Mantén el control de las actualizaciones",
@@ -148,8 +148,8 @@
       "got_it": "Entendido"
     },
     "seed_data": {
-      "title": "Aquí está tu proyecto demo",
-      "description": "Los proyectos te permiten administrar tus equipos, tareas y todo lo que necesitas para hacer las cosas dentro de tu espacio de trabajo."
+      "title": "Aquí está tu departamento demo",
+      "description": "Los departamentos te permiten administrar tus equipos, tareas y todo lo que necesitas para hacer las cosas dentro de tu espacio de trabajo."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Comienza tu configuración y ve tus ideas cobrar vida más rápido.",
       "checklist_items": {
         "item_1": {
-          "title": "Crear un proyecto"
+          "title": "Crear un departamento"
         },
         "item_2": {
           "title": "Crear un elemento de trabajo"

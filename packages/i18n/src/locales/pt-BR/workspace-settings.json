@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Exportações",
-        "description": "Exporte os dados do seu projeto em vários formatos e acesse seu histórico de exportações com links para download.",
+        "description": "Exporte os dados do seu departamento em vários formatos e acesse seu histórico de exportações com links para download.",
         "title": "Exportações",
         "exporting": "Exportando",
         "previous_exports": "Exportações anteriores",
         "export_separate_files": "Exporte os dados em arquivos separados",
-        "exporting_projects": "Exportando projeto",
+        "exporting_projects": "Exportando departamento",
         "format": "Formato",
         "filters_info": "Aplique filtros para exportar itens de trabalho específicos com base em seus critérios.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhooks",
-        "description": "Automatize notificações para serviços externos quando ocorrerem eventos do projeto.",
+        "description": "Automatize notificações para serviços externos quando ocorrerem eventos do departamento.",
         "title": "Webhooks",
         "add_webhook": "Adicionar webhook",
         "modal": {
@@ -182,27 +182,27 @@
       "imports": {
         "title": "Importações",
         "heading": "Importações",
-        "description": "Conecte e importe dados das suas ferramentas de gerenciamento de projetos existentes para otimizar a integração do seu fluxo de trabalho."
+        "description": "Conecte e importe dados das suas ferramentas de gerenciamento de departamentos existentes para otimizar a integração do seu fluxo de trabalho."
       },
       "worklogs": {
         "title": "Registros de trabalho",
         "heading": "Registros de trabalho",
-        "description": "Baixe registros de trabalho, também conhecidos como folhas de ponto, de qualquer pessoa em qualquer projeto."
+        "description": "Baixe registros de trabalho, também conhecidos como folhas de ponto, de qualquer pessoa em qualquer departamento."
       },
       "group_syncing": {
         "title": "Sincronização de grupos",
         "heading": "Sincronização de grupos",
-        "description": "Vincule grupos do provedor de identidade a projetos e funções. O acesso do usuário é atualizado automaticamente quando a associação ao grupo muda no seu IdP, simplificando onboarding e offboarding.",
+        "description": "Vincule grupos do provedor de identidade a departamentos e funções. O acesso do usuário é atualizado automaticamente quando a associação ao grupo muda no seu IdP, simplificando onboarding e offboarding.",
         "enable": {
           "title": "Ativar sincronização de grupos",
-          "description": "Adicione automaticamente usuários a projetos com base nos grupos do provedor de identidade."
+          "description": "Adicione automaticamente usuários a departamentos com base nos grupos do provedor de identidade."
         },
         "config": {
           "title": "Configurar sincronização de grupos",
-          "description": "Configure como os grupos do provedor de identidade são mapeados para projetos e funções.",
+          "description": "Configure como os grupos do provedor de identidade são mapeados para departamentos e funções.",
           "sync_on_login": {
             "title": "Sincronizar no login",
-            "description": "Atualize a associação ao grupo e o acesso ao projeto quando um usuário fizer login."
+            "description": "Atualize a associação ao grupo e o acesso ao departamento quando um usuário fizer login."
           },
           "sync_offline": {
             "title": "Sincronização offline",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Remoção automática",
-            "description": "Remova automaticamente usuários dos projetos quando não corresponderem mais ao grupo."
+            "description": "Remova automaticamente usuários dos departamentos quando não corresponderem mais ao grupo."
           },
           "group_attribute_key": {
             "title": "Chave do atributo de grupo",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Mapeamento de grupos",
-          "description": "Vincule grupos do provedor de identidade a projetos e funções.",
+          "description": "Vincule grupos do provedor de identidade a departamentos e funções.",
           "button_text": "Adicionar nova sincronização de grupo"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Excluir sincronização de grupo",
-          "content": "Novos usuários deste grupo de identidade não serão mais adicionados ao projeto. Usuários já adicionados manterão sua função atual."
+          "content": "Novos usuários deste grupo de identidade não serão mais adicionados ao departamento. Usuários já adicionados manterão sua função atual."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Digite os nomes dos grupos IdP"
           },
           "project": {
-            "text": "Projeto",
-            "required": "O projeto é obrigatório",
-            "placeholder": "Selecione um projeto"
+            "text": "Departamento",
+            "required": "O departamento é obrigatório",
+            "placeholder": "Selecione um departamento"
           },
           "default_role": {
-            "text": "Função do projeto",
-            "required": "A função do projeto é obrigatória",
-            "placeholder": "Selecione uma função do projeto"
+            "text": "Função do departamento",
+            "required": "A função do departamento é obrigatória",
+            "placeholder": "Selecione uma função do departamento"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Configure seu domínio e habilite o Single sign-on"
       },
       "project_states": {
-        "title": "Estados do projeto",
-        "heading": "Veja uma visão geral do progresso de todos os projetos.",
-        "description": "Os Estados de projeto são um recurso exclusivo do Paradise Task Tracker para acompanhar o progresso de todos os seus projetos por qualquer propriedade do projeto.",
+        "title": "Estados do departamento",
+        "heading": "Veja uma visão geral do progresso de todos os departamentos.",
+        "description": "Os Estados de departamento são um recurso exclusivo do Paradise Task Tracker para acompanhar o progresso de todos os seus departamentos por qualquer propriedade do departamento.",
         "go_to_settings": "Ir para as configurações"
       },
       "projects": {
-        "title": "Projetos",
-        "description": "Gerencie estados de projetos, ative etiquetas de projetos e outras configurações.",
+        "title": "Departamentos",
+        "description": "Gerencie estados de departamentos, ative etiquetas de departamentos e outras configurações.",
         "tabs": {
-          "states": "Estados do projeto",
-          "labels": "Etiquetas do projeto"
+          "states": "Estados do departamento",
+          "labels": "Etiquetas do departamento"
         }
       },
       "templates": {
         "title": "Modelos",
         "heading": "Modelos",
-        "description": "Economize 80% do tempo gasto na criação de projetos, itens de trabalho e páginas quando você usar modelos."
+        "description": "Economize 80% do tempo gasto na criação de departamentos, itens de trabalho e páginas quando você usar modelos."
       },
       "relations": {
         "title": "Relações",
@@ -465,7 +465,7 @@
         "read": "Leitura",
         "write": "Gravação",
         "scope_description": {
-          "projects": "Acesso a projetos e todas as entidades relacionadas a projetos",
+          "projects": "Acesso a departamentos e todas as entidades relacionadas a departamentos",
           "wiki": "Acesso ao wiki e todas as entidades relacionadas ao wiki",
           "workspaces": "Acesso a workspaces e todas as entidades relacionadas",
           "stickies": "Acesso a stickies e todas as entidades relacionadas a stickies",

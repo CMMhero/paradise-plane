@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Êtes-vous sûr de vouloir réinitialiser ce workflow ?",
-        "description": "Si vous réinitialisez ce workflow, toutes vos règles de changement d'état seront supprimées et vous devrez les créer à nouveau pour qu'elles fonctionnent dans ce projet."
+        "description": "Si vous réinitialisez ce workflow, toutes vos règles de changement d'état seront supprimées et vous devrez les créer à nouveau pour qu'elles fonctionnent dans ce département."
       },
       "delete_state_change": {
         "title": "Êtes-vous sûr de vouloir supprimer cette règle de changement d'état ?",
-        "description": "Une fois supprimée, vous ne pourrez pas annuler ce changement et vous devrez établir la règle à nouveau si vous la souhaitez pour ce projet."
+        "description": "Une fois supprimée, vous ne pourrez pas annuler ce changement et vous devrez établir la règle à nouveau si vous la souhaitez pour ce département."
       }
     },
     "toasts": {

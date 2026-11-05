@@ -6,6 +6,7 @@
 
 import { memo, useMemo } from "react";
 import { Popover as BasePopover } from "@base-ui-components/react/popover";
+import { PreviewCard as BasePreviewCard } from "@base-ui-components/react/preview-card";
 import type { TPlacement, TSide, TAlign } from "../utils/placement";
 import { convertPlacementToSideAndAlign } from "../utils/placement";
 
@@ -40,6 +41,7 @@ const PopoverContent = memo(function PopoverContent({
   }, [placement, side, align]);
 
   return (
+    // oxlint-disable-next-line react/refs -- container must be resolved on first render so the portal mounts in the right node; a state/effect copy would mount it in the default container first
     <PopoverPortal container={containerRef?.current}>
       <PopoverPositioner side={finalSide} sideOffset={sideOffset} align={finalAlign} className={positionerClassName}>
         <BasePopover.Popup data-slot="popover-content" className={className} {...props}>
@@ -81,4 +83,54 @@ PopoverPortal.displayName = "PopoverPortal";
 PopoverTrigger.displayName = "PopoverTrigger";
 PopoverPositioner.displayName = "PopoverPositioner";
 
-export { Popover };
+// Paradise (KEP-91): kartu pratinjau saat hover/fokus (mention orang, kanal, work item).
+// Lain dengan Popover: tidak butuh klik, dan tertutup sendiri saat pointer pergi.
+export type HoverCardProps = {
+  /** Pemicu: satu elemen yang menerima ref dan props hover. */
+  children: React.ReactElement;
+  /** Isi kartu. */
+  content: React.ReactNode;
+  side?: TSide;
+  align?: TAlign;
+  delay?: number;
+  closeDelay?: number;
+  /** Mati = hanya anak yang dirender, tanpa kartu. */
+  disabled?: boolean;
+  className?: string;
+};
+
+const HOVER_CARD_CLASS =
+  "w-64 max-w-[calc(100vw-2rem)] rounded-popover border-[0.5px] border-strong bg-surface-1 p-3 shadow-raised-200";
+
+const HoverCard = memo(function HoverCard({
+  children,
+  content,
+  side = "bottom",
+  align = "start",
+  delay = 350,
+  closeDelay = 120,
+  disabled = false,
+  className,
+}: HoverCardProps) {
+  if (disabled) return children;
+  return (
+    <BasePreviewCard.Root delay={delay} closeDelay={closeDelay}>
+      <BasePreviewCard.Trigger render={children} />
+      <BasePreviewCard.Portal>
+        {/* z-index di positioner, sama alasannya dengan kartu profil: tanpa itu tertutup peek overview. */}
+        <BasePreviewCard.Positioner side={side} align={align} sideOffset={6} className="z-40">
+          <BasePreviewCard.Popup
+            data-slot="hover-card-content"
+            className={className ?? HOVER_CARD_CLASS}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {content}
+          </BasePreviewCard.Popup>
+        </BasePreviewCard.Positioner>
+      </BasePreviewCard.Portal>
+    </BasePreviewCard.Root>
+  );
+});
+HoverCard.displayName = "HoverCard";
+
+export { Popover, HoverCard };

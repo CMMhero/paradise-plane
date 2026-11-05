@@ -358,9 +358,6 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
           key={diedit.id}
           member={diedit}
           hierarki={diedit.h}
-          daftarDivisi={Object.keys(hierarki?.projects ?? {})}
-          petaDivisi={hierarki?.projects ?? {}}
-          namaDivisi={hierarki?.project_names ?? {}}
           pilihanDepartemen={hierarki?.departemen_pilihan ?? []}
           pilihanDivisi={hierarki?.divisi_pilihan ?? []}
           onSelesai={async () => {

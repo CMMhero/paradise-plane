@@ -123,7 +123,7 @@
     "table": {
       "title": "Otomasyon başlığı",
       "scope": "Kapsam",
-      "projects": "Projeler",
+      "projects": "Departmanlar",
       "last_run_on": "Son çalıştırma",
       "created_on": "Oluşturulma tarihi",
       "last_updated_on": "Son güncelleme",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Otomasyon silindi",
-          "message": "{name} adlı otomasyon artık projenizden silindi."
+          "message": "{name} adlı otomasyon artık departmanınızdan silindi."
         },
         "error": {
           "title": "Bu sefer o otomasyonu silemedik.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Otomasyonlar",
-        "description": "Otomasyonlar, projenizdeki görevleri otomatikleştirmenin bir yoludur.",
+        "description": "Otomasyonlar, departmanınızdaki görevleri otomatikleştirmenin bir yoludur.",
         "sub_description": "Otomasyonları kullandığınızda yönetim zamanınızın %80'ini geri kazanın."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Bu otomasyonun çalıştırılacağı projeleri seçin",
+        "label": "Bu otomasyonun çalıştırılacağı departmanları seçin",
         "all_projects": {
-          "label": "Tüm projeler",
-          "description": "Otomasyon, çalışma alanındaki tüm projeler için çalışacak."
+          "label": "Tüm departmanlar",
+          "description": "Otomasyon, çalışma alanındaki tüm departmanlar için çalışacak."
         },
         "select_projects": {
-          "label": "Projeleri seç",
-          "description": "Otomasyon, çalışma alanındaki seçilen projeler için çalışacak.",
-          "placeholder": "Projeleri seç"
+          "label": "Departmanları seç",
+          "description": "Otomasyon, çalışma alanındaki seçilen departmanlar için çalışacak.",
+          "placeholder": "Departmanları seç"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Global",
           "project": {
-            "label": "Proje",
+            "label": "Departman",
             "multiple": "Birden fazla",
             "all": "Tümü"
           }

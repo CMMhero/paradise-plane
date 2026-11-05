@@ -168,7 +168,7 @@
       "confirm_message": "¿Estás seguro de que quieres archivar el elemento de trabajo? Todos tus elementos archivados pueden ser restaurados más tarde.",
       "success": {
         "label": "Archivo exitoso",
-        "message": "Tus archivos se pueden encontrar en los archivos del proyecto."
+        "message": "Tus archivos se pueden encontrar en los archivos del departamento."
       },
       "failed": {
         "message": "No se pudo archivar el elemento de trabajo. Por favor, inténtalo de nuevo."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Restauración exitosa",
-        "message": "Tu elemento de trabajo se puede encontrar en los elementos de trabajo del proyecto."
+        "message": "Tu elemento de trabajo se puede encontrar en los elementos de trabajo del departamento."
       },
       "failed": {
         "message": "No se pudo restaurar el elemento de trabajo. Por favor, inténtalo de nuevo."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Abrir elemento de trabajo en pantalla completa",
     "duplicate": {
       "modal": {
-        "title": "Hacer una copia a otro proyecto",
+        "title": "Hacer una copia a otro departamento",
         "description1": "Esto crea una copia del elemento de trabajo.",
         "description2": "Todos los datos de propiedades se eliminarán al duplicar.",
-        "placeholder": "Selecciona un proyecto"
+        "placeholder": "Selecciona un departamento"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Crear tarea recurrente",
-        "no_permission": "Contacta a tu administrador de proyecto para crear tareas recurrentes"
+        "no_permission": "Contacta a tu administrador de departamento para crear tareas recurrentes"
       }
     },
     "empty_state": {

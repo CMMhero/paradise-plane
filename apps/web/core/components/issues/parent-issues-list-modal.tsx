@@ -124,7 +124,7 @@ export function ParentIssuesListModal({
                 {searchTerm}
                 {'"'}
               </span>{" "}
-              in project:
+              in department:
             </h5>
           )}
 

@@ -7,17 +7,20 @@
 
 ## Ke mana kartunya dikirim
 
-Ke ruang kabar pribadi (`kabar:<user_id>`, nama "Paradise", privat, satu
-pelanggan), BUKAN ke DM dengan pelakunya. Alasannya:
+KEP-90 (5 Nov 2026, permintaan user, membalik aturan lama): kalau aksinya punya
+pelaku manusia yang bukan penerimanya sendiri, kartu masuk DM antara PELAKU dan
+ORANG YANG TERDAMPAK, dengan pelaku sebagai pengirim. "Siapa yang terdampak" =
+penerima baris Notification (assignee, penyetuju, pembuat, yang disebut), jadi
+tiap orang dapat DM-nya sendiri. Pelaku melihat kartu itu di DM-nya sebagai
+pesan keluar.
 
-* Kabar seperti "status tugasmu berubah" atau "atasan menyetujui pekerjaanmu"
-  bukan percakapan dengan pelakunya; menaruhnya di DM mengubur obrolan sungguhan
-  di bawah tumpukan kartu.
-* Satu ruang = satu tempat untuk membisukan semuanya.
+Ruang kabar pribadi (`kabar:<user_id>`, nama "Paradise") tetap dipakai untuk
+yang tak punya lawan bicara: aksi sistem/otomasi (tanpa pelaku), pelaku bot,
+dan aksi atas tugas sendiri.
 
-Pengecualian: penugasan tetap DM dari pemberi tugas (`tugas_ke_dm_task`), dan
-itu sekarang juga kartu. Supaya tidak dobel, penugasan TIDAK dikirim ke ruang
-kabar selama saklar `ENABLE_TUGAS_KE_DM` menyala.
+Satu saklar untuk keduanya: `ENABLE_TUGAS_KE_DM`. Mati = semua kartu kembali ke
+ruang kabar. Penugasan tetap lewat `tugas_ke_dm_task` (kartu dengan rincian
+lengkap), jadi di sini dilewati selama saklar menyala supaya tidak dobel.
 
 ## Pemicunya
 
@@ -45,7 +48,9 @@ from plane.db.models import (
     JenisPesan,
     PesanLangsung,
     Ruang,
+    User,
 )
+from plane.utils.chat_ruang import ruang_dm
 from plane.utils.kanal_sistem import kirim_pesan_sistem, kunci_kabar, ruang_kabar
 from plane.utils.obrolan_siaran import siarkan
 
@@ -196,9 +201,13 @@ def _kirim(notifs, persetujuan) -> int:
         return 0
 
     issues, assignees = _muat_tugas({n.entity_identifier for _, n in pilihan})
+    dm = _tugas_ke_dm_aktif() if tugas_dm is None else tugas_dm
+    bot = _id_bot({n.triggered_by_id for _, n in pilihan if n.triggered_by_id}) if dm else set()
+    lewat_dm = {id(n) for _, n in pilihan if dm and _pelaku_manusia_lain(n, bot)}
     per_ws = {}
     for _, n in pilihan:
-        per_ws.setdefault(str(n.workspace_id), set()).add(str(n.receiver_id))
+        if id(n) not in lewat_dm:
+            per_ws.setdefault(str(n.workspace_id), set()).add(str(n.receiver_id))
     ruang = {ws: _peta_ruang_kabar(ws, ids) for ws, ids in per_ws.items()}
 
     jumlah = 0
@@ -215,10 +224,37 @@ def _kirim(notifs, persetujuan) -> int:
         }
         if jenis == JenisPesan.PERSETUJUAN and persetujuan:
             muatan["persetujuan"] = {k: (str(v) if v is not None else None) for k, v in persetujuan.items()}
-        tujuan = ruang[str(n.workspace_id)][str(n.receiver_id)]
-        kirim_pesan_sistem(tujuan, jenis, muatan, ringkasan(jenis, muatan))
+        if id(n) in lewat_dm:
+            # KEP-90: kartu masuk DM pelaku <-> orang yang terdampak, pelaku
+            # sebagai pengirim. Tiap penerima notifikasi dapat DM-nya sendiri.
+            tujuan = ruang_dm(n.workspace_id, n.triggered_by_id, n.receiver_id)
+            kirim_pesan_sistem(
+                tujuan,
+                jenis,
+                muatan,
+                ringkasan(jenis, muatan),
+                pengirim_id=n.triggered_by_id,
+                penerima_id=n.receiver_id,
+            )
+        else:
+            tujuan = ruang[str(n.workspace_id)][str(n.receiver_id)]
+            kirim_pesan_sistem(tujuan, jenis, muatan, ringkasan(jenis, muatan))
         jumlah += 1
     return jumlah
+
+
+def _id_bot(user_ids) -> set:
+    """Id pelaku yang bot (impor, integrasi). Kartunya tetap ke ruang kabar:
+    DM dengan bot adalah percakapan yang tidak bisa dibalas siapa pun."""
+    if not user_ids:
+        return set()
+    return {str(u) for u in User.objects.filter(id__in=user_ids, is_bot=True).values_list("id", flat=True)}
+
+
+def _pelaku_manusia_lain(notif, bot_ids) -> bool:
+    """Kartu ini punya pelaku manusia yang BUKAN penerimanya sendiri."""
+    pelaku = notif.triggered_by_id
+    return bool(pelaku) and str(pelaku) != str(notif.receiver_id) and str(pelaku) not in bot_ids
 
 
 def kartu_ditambahkan_ke_project(project_member, pengundang_id) -> None:
@@ -258,22 +294,29 @@ def kartu_disebut_di_obrolan(pesan, ruang, penerima_ids) -> int:
         tujuan = penyaring({u for u in penerima_ids if str(u) != str(pesan.pengirim_id)}, "inbox_mention")
         if not tujuan:
             return 0
-        muatan = {
-            "aksi": JenisPesan.MENTION,
-            "aktor": str(pesan.pengirim_id) if pesan.pengirim_id else None,
-            "workspace_slug": ruang.workspace.slug,
-            "obrolan": {
-                "ruang_id": str(ruang.id),
-                "nama": ruang.nama or "",
-                "tipe": ruang.tipe,
-                "pesan_id": str(pesan.id),
-            },
-            "detail": {"komentar": _cuplikan(pesan.isi)},
-        }
-        isi = f"You were mentioned in #{ruang.nama or ''}: {_cuplikan(pesan.isi)}"
+        from plane.utils.rujukan_obrolan import kanal_privat_milik, samarkan  # noqa: PLC0415
+
         urut = sorted(tujuan, key=str)
         peta = _peta_ruang_kabar(ruang.workspace_id, urut)
+        # KEP-91: cuplikan disamarkan PER PENERIMA. Rujukan #kanal-privat di
+        # pesan tidak boleh terbaca lewat kartu oleh yang bukan anggotanya.
+        # Satu kueri keanggotaan untuk semua penerima.
+        privat = kanal_privat_milik(urut, [pesan.muatan])
         for uid in urut:
+            teks, _ = samarkan(pesan.isi, pesan.muatan, uid, boleh=privat.get(str(uid), set()))
+            muatan = {
+                "aksi": JenisPesan.MENTION,
+                "aktor": str(pesan.pengirim_id) if pesan.pengirim_id else None,
+                "workspace_slug": ruang.workspace.slug,
+                "obrolan": {
+                    "ruang_id": str(ruang.id),
+                    "nama": ruang.nama or "",
+                    "tipe": ruang.tipe,
+                    "pesan_id": str(pesan.id),
+                },
+                "detail": {"komentar": _cuplikan(teks)},
+            }
+            isi = f"You were mentioned in #{ruang.nama or ''}: {_cuplikan(teks)}"
             kirim_pesan_sistem(peta[str(uid)], JenisPesan.MENTION, muatan, isi)
         return len(tujuan)
     except Exception:  # noqa: BLE001

@@ -148,3 +148,68 @@ class TestLoginHistoryFilter:
     def test_urutan_orang(self, admin, peristiwa):
         hasil = self._hasil(admin, {"sort": "-person"})["results"]
         assert hasil[0]["display_name"] == "Sari"
+
+
+@pytest.mark.django_db
+class TestAuditLabels:
+    """Setiap baris audit punya jenis objek dan nama objek yang terbaca."""
+
+    def _semua(self, admin):
+        r = _get(InstanceAuditLogEndpoint, admin, {})
+        assert r.status_code == 200
+        return r.data["results"]
+
+    def test_baris_lama_tanpa_nama_jatuh_ke_label_umum(self, admin):
+        from plane.license.models import InstanceConfiguration
+
+        # Bentuk baris lama: content type instanceconfiguration, object_repr kosong.
+        _log(InstanceConfiguration, LogEntry.Action.UPDATE, admin, repr_="", changes={"value": ["0", "1"]})
+        [e] = self._semua(admin)
+        assert e["model_label"] == "Instance setting"
+        assert e["object_label"] == "System setting"
+
+    def test_baris_lama_membaca_kunci_dari_additional_data(self, admin):
+        from plane.license.models import InstanceConfiguration
+
+        entry = _log(InstanceConfiguration, LogEntry.Action.UPDATE, admin, repr_="")
+        LogEntry.objects.filter(pk=entry.pk).update(additional_data={"key": "ENABLE_X"})
+        [e] = self._semua(admin)
+        assert e["object_label"] == "Instance setting: ENABLE_X"
+
+    def test_model_terdaftar_memakai_verbose_name(self, admin):
+        _log(Issue, LogEntry.Action.CREATE, admin, "Task A")
+        [e] = self._semua(admin)
+        assert e["model_label"] and e["object_label"] == "Task A"
+
+    def test_catat_godmode_selalu_berlabel(self, admin):
+        from plane.license.audit_godmode import JENIS_LABEL, catat_godmode
+
+        req = APIRequestFactory().patch("/")
+        force_authenticate(req, user=admin)
+        req.user = admin
+        for kind in JENIS_LABEL:
+            catat_godmode(req, kind=kind, label="", changes={"a": ["1", "2"]})
+        hasil = self._semua(admin)
+        assert len(hasil) == len(JENIS_LABEL)
+        for e in hasil:
+            assert e["model_label"] in JENIS_LABEL.values()
+            assert e["object_label"] == "System setting"
+            assert e["actor"]["email"] == admin.email
+
+    def test_patch_bawaan_member_dan_project_tercatat_berlabel(self, admin):
+        from plane.license.api.views.bawaan_member import (
+            InstanceMemberDefaultsEndpoint,
+            InstanceProjectDefaultsEndpoint,
+        )
+        from plane.utils.bawaan_member import baca_bawaan
+
+        req = APIRequestFactory().patch("/", {"profile": baca_bawaan()["profile"]}, format="json")
+        force_authenticate(req, user=admin)
+        assert InstanceMemberDefaultsEndpoint.as_view()(req).status_code == 200
+
+        req = APIRequestFactory().patch("/", {}, format="json")
+        force_authenticate(req, user=admin)
+        InstanceProjectDefaultsEndpoint.as_view()(req)
+
+        labels = {(e["model_label"], e["object_label"]) for e in self._semua(admin)}
+        assert ("Member defaults", "Member defaults") in labels

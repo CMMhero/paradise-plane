@@ -125,7 +125,7 @@ export function PilihDepartemen() {
         >
           {Object.entries(perDivisi).map(([divisi, daftar]) => (
             <fieldset key={divisi} className="flex flex-col gap-1">
-              <legend className="mb-1 text-12 font-medium tracking-wide text-tertiary uppercase">{divisi}</legend>
+              <legend className="mb-1 text-12 font-medium text-tertiary">{divisi}</legend>
               {daftar.map((d) => (
                 <RadioGroup.Item
                   key={d.id}

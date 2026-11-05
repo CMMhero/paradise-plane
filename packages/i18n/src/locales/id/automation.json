@@ -123,7 +123,7 @@
     "table": {
       "title": "Judul otomatisasi",
       "scope": "Cakupan",
-      "projects": "Proyek",
+      "projects": "Departemen",
       "last_run_on": "Terakhir dijalankan pada",
       "created_on": "Dibuat pada",
       "last_updated_on": "Terakhir diperbarui pada",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Otomatisasi dihapus",
-          "message": "{name}, otomatisasi, telah dihapus dari proyek Anda."
+          "message": "{name}, otomatisasi, telah dihapus dari departemen Anda."
         },
         "error": {
           "title": "Kami tidak dapat menghapus otomatisasi tersebut kali ini.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Otomatisasi",
-        "description": "Otomatisasi adalah cara untuk mengotomatisasi tugas dalam proyek Anda.",
+        "description": "Otomatisasi adalah cara untuk mengotomatisasi tugas dalam departemen Anda.",
         "sub_description": "Dapatkan kembali 80% waktu admin Anda ketika menggunakan Otomatisasi."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Pilih proyek untuk menjalankan otomatisasi ini",
+        "label": "Pilih departemen untuk menjalankan otomatisasi ini",
         "all_projects": {
-          "label": "Semua proyek",
-          "description": "Otomatisasi akan berjalan untuk semua proyek di ruang kerja."
+          "label": "Semua departemen",
+          "description": "Otomatisasi akan berjalan untuk semua departemen di ruang kerja."
         },
         "select_projects": {
-          "label": "Pilih proyek",
-          "description": "Otomatisasi akan berjalan untuk proyek yang dipilih di ruang kerja.",
-          "placeholder": "Pilih proyek"
+          "label": "Pilih departemen",
+          "description": "Otomatisasi akan berjalan untuk departemen yang dipilih di ruang kerja.",
+          "placeholder": "Pilih departemen"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Global",
           "project": {
-            "label": "Proyek",
+            "label": "Departemen",
             "multiple": "Beberapa",
             "all": "Semua"
           }

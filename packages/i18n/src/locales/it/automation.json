@@ -123,7 +123,7 @@
     "table": {
       "title": "Titolo automazione",
       "scope": "Ambito",
-      "projects": "Progetti",
+      "projects": "Reparti",
       "last_run_on": "Ultima esecuzione il",
       "created_on": "Creata il",
       "last_updated_on": "Ultimo aggiornamento il",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Automazione eliminata",
-          "message": "{name}, l'automazione, è stata eliminata dal tuo progetto."
+          "message": "{name}, l'automazione, è stata eliminata dal tuo reparto."
         },
         "error": {
           "title": "Non siamo riusciti a eliminare quell'automazione questa volta.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Automazioni",
-        "description": "Le automazioni sono un modo per automatizzare le attività nel tuo progetto.",
+        "description": "Le automazioni sono un modo per automatizzare le attività nel tuo reparto.",
         "sub_description": "Recupera l'80% del tuo tempo amministrativo quando usi le Automazioni."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Seleziona i progetti su cui eseguire questa automazione",
+        "label": "Seleziona i reparti su cui eseguire questa automazione",
         "all_projects": {
-          "label": "Tutti i progetti",
-          "description": "L'automazione verrà eseguita per tutti i progetti nello spazio di lavoro."
+          "label": "Tutti i reparti",
+          "description": "L'automazione verrà eseguita per tutti i reparti nello spazio di lavoro."
         },
         "select_projects": {
-          "label": "Seleziona progetti",
-          "description": "L'automazione verrà eseguita per i progetti selezionati nello spazio di lavoro.",
-          "placeholder": "Seleziona progetti"
+          "label": "Seleziona reparti",
+          "description": "L'automazione verrà eseguita per i reparti selezionati nello spazio di lavoro.",
+          "placeholder": "Seleziona reparti"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Globale",
           "project": {
-            "label": "Progetto",
+            "label": "Reparto",
             "multiple": "Multipli",
             "all": "Tutti"
           }

@@ -4,8 +4,8 @@
       "quickstart_guide": "Ghid de pornire rapidă",
       "not_right_now": "Nu acum",
       "create_project": {
-        "title": "Creează un proiect",
-        "description": "Majoritatea lucrurilor încep cu un proiect în Paradise Task Tracker.",
+        "title": "Creează un departament",
+        "description": "Majoritatea lucrurilor încep cu un departament în Paradise Task Tracker.",
         "cta": "Începe acum"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "Recente",
       "empty": {
-        "project": "Proiectele vizitate recent vor apărea aici.",
+        "project": "Departamentele vizitate recent vor apărea aici.",
         "page": "Documentele din Documentație vizitate recent vor apărea aici.",
         "issue": "Activitățile vizitate recent vor apărea aici.",
         "default": "Nu ai nimic recent încă."
       },
       "filters": {
         "all": "Toate",
-        "projects": "Proiecte",
+        "projects": "Departamente",
         "pages": "Documentație",
         "issues": "Activități"
       }

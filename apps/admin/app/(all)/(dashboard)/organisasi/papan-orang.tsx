@@ -22,7 +22,7 @@ import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-d
 // plane imports
 import { Button } from "@plane/propel/button";
 import { Tabs } from "@plane/propel/tabs";
-import type { TPohonOrganisasi } from "@plane/services";
+import { TINGKAT_DIREKTUR, TINGKAT_MEMBER, TINGKAT_SUPERVISOR, type TPohonOrganisasi } from "@plane/services";
 import { CustomMenu, CustomSearchSelect, Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
@@ -36,7 +36,6 @@ import {
   belumDitempatkan,
   dataSeret,
   dataTujuan,
-  LAJUR_JENJANG,
   modeLepas,
   namaJenjang,
   tombolSalin,
@@ -54,12 +53,13 @@ export type TModeLepas = ReturnType<typeof modeLepas> | null;
  * Daftarkan `ref` sebagai tujuan lepas. Mode hanya terisi selagi elemen ini
  * tujuan TERDALAM (lajur di dalam kartu departemen menang atas kartunya).
  */
-export function useTujuanLepas(ref: RefObject<HTMLElement | null>, tujuan: TTujuan): TModeLepas {
+export function useTujuanLepas(ref: RefObject<HTMLElement | null>, tujuan: TTujuan, aktif = true): TModeLepas {
   const [mode, setMode] = useState<TModeLepas>(null);
   const kunci = JSON.stringify(tujuan);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    // `aktif=false`: elemen ini hanya sumber seretan (lajur Levels selain Direktur, KEP-93).
+    if (!el || !aktif) return;
     const t = JSON.parse(kunci) as TTujuan;
     return dropTargetForElements({
       element: el,
@@ -73,7 +73,7 @@ export function useTujuanLepas(ref: RefObject<HTMLElement | null>, tujuan: TTuju
       onDragLeave: () => setMode(null),
       onDrop: () => setMode(null),
     });
-  }, [ref, kunci]);
+  }, [ref, kunci, aktif]);
   return mode;
 }
 
@@ -126,14 +126,34 @@ function MenuOrang({ orangId, nama, asal, tingkat }: { orangId: string; nama: st
           {s.org.board.menu_move_to}
         </CustomMenu.MenuItem>
       )}
-      {LAJUR_JENJANG.filter((t) => t !== tingkat).map((t) => (
+      {/* KEP-93: peran melekat pada tempat. Di departemen: ganti peran di sana saja.
+          Jenjang umum hanya Direktur (satu-satunya jenjang tanpa tempat). */}
+      {asal?.jenis === "departemen" && tingkat < TINGKAT_DIREKTUR && (
         <CustomMenu.MenuItem
-          key={t}
-          onClick={() => void eksekusi(orangId, asal, { jenis: "jenjang", tingkat: t }, false)}
+          onClick={() => {
+            const lain = tingkat >= TINGKAT_SUPERVISOR ? TINGKAT_MEMBER : TINGKAT_SUPERVISOR;
+            void eksekusi(orangId, asal, { jenis: "departemen", id: asal.id, tingkat: lain }, false);
+          }}
         >
-          {fill(s.org.board.menu_level, { level: namaJenjang(t, s) })}
+          {fill(s.org.board.menu_role_here, {
+            role: namaJenjang(tingkat >= TINGKAT_SUPERVISOR ? TINGKAT_MEMBER : TINGKAT_SUPERVISOR, s),
+            place: namaTempat(asal),
+          })}
         </CustomMenu.MenuItem>
-      ))}
+      )}
+      {tingkat >= TINGKAT_DIREKTUR ? (
+        <CustomMenu.MenuItem
+          onClick={() => void eksekusi(orangId, asal, { jenis: "jenjang", tingkat: TINGKAT_MEMBER }, false)}
+        >
+          {s.org.board.menu_remove_director}
+        </CustomMenu.MenuItem>
+      ) : (
+        <CustomMenu.MenuItem
+          onClick={() => void eksekusi(orangId, asal, { jenis: "jenjang", tingkat: TINGKAT_DIREKTUR }, false)}
+        >
+          {fill(s.org.board.menu_level, { level: namaJenjang(TINGKAT_DIREKTUR, s) })}
+        </CustomMenu.MenuItem>
+      )}
       {asal && (
         <CustomMenu.MenuItem variant="danger" onClick={() => void cabut(orangId, asal)}>
           {fill(s.org.board.menu_remove_from, { place: namaTempat(asal) })}
@@ -153,12 +173,15 @@ export function ChipOrang({
   email,
   tingkat,
   asal,
+  ringkas = false,
 }: {
   orangId: string;
   nama: string;
   email: string;
   tingkat: number;
   asal?: TAsal;
+  /** Lajur Levels: jenjangnya sudah jadi judul lajur, jadi tanpa label dan tanpa menu. */
+  ringkas?: boolean;
 }) {
   const { orangById } = usePapan();
   const ref = useRef<HTMLDivElement>(null);
@@ -166,6 +189,8 @@ export function ChipOrang({
   // Orang yang tak ada di daftar member (mis. akun terhapus) tampil tapi tak bisa diseret.
   const bisa = orangById.has(orangId);
   const kunciAsal = asal ? `${asal.jenis}:${asal.id}` : "";
+  // Hanya chip lajur Levels: direktur di daftar People sendiri tidak ikut turun saat dilepas di panelnya.
+  const direktur = ringkas && !asal && tingkat >= TINGKAT_DIREKTUR;
 
   useEffect(() => {
     const el = ref.current;
@@ -174,11 +199,11 @@ export function ChipOrang({
     const a: TAsal | undefined = kunciAsal ? { jenis: jenis as TAsal["jenis"], id } : undefined;
     return draggable({
       element: el,
-      getInitialData: () => dataSeret({ orangId, asal: a }),
+      getInitialData: () => dataSeret({ orangId, asal: a, direktur }),
       onDragStart: () => setDiseret(true),
       onDrop: () => setDiseret(false),
     });
-  }, [orangId, kunciAsal, bisa]);
+  }, [orangId, kunciAsal, bisa, direktur]);
 
   return (
     <div
@@ -192,8 +217,8 @@ export function ChipOrang({
     >
       <PersonAvatar name={nama || email} size="sm" />
       <span className="min-w-0 flex-1 truncate text-12 text-primary">{nama || email}</span>
-      <BadgeJabatan tingkat={tingkat} size="sm" />
-      {bisa && <MenuOrang orangId={orangId} nama={nama || email} asal={asal} tingkat={tingkat} />}
+      {!ringkas && <BadgeJabatan tingkat={tingkat} size="sm" />}
+      {bisa && !ringkas && <MenuOrang orangId={orangId} nama={nama || email} asal={asal} tingkat={tingkat} />}
     </div>
   );
 }
@@ -206,29 +231,38 @@ export function ChipOrang({
  * Panel People sebagai tujuan "lepas". Tidak memakai useTujuanLepas karena labelnya
  * butuh nama tempat ASAL seretan ("Remove from Finance"), bukan nama tujuan.
  */
-function useLepasKePanel(ref: RefObject<HTMLElement | null>): TAsal | null {
-  const [asal, setAsal] = useState<TAsal | null>(null);
+type TLepasPanel = { asal: TAsal } | { direktur: true } | null;
+
+function useLepasKePanel(ref: RefObject<HTMLElement | null>): TLepasPanel {
+  const [lepas, setLepas] = useState<TLepasPanel>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    const baca = (data: Record<string | symbol, unknown>): TLepasPanel => {
+      const seret = bacaSeret(data);
+      if (seret?.asal) return { asal: seret.asal };
+      // Direktur tidak punya tempat; diseret ke People = turun ke Staf.
+      return seret?.direktur ? { direktur: true } : null;
+    };
     return dropTargetForElements({
       element: el,
       getData: () => dataTujuan({ jenis: "lepas" }),
-      // Chip milik daftar ini sendiri (tanpa asal) tidak punya tempat untuk dilepas.
-      canDrop: ({ source }) => Boolean(bacaSeret(source.data)?.asal),
-      onDragEnter: ({ source }) => setAsal(bacaSeret(source.data)?.asal ?? null),
-      onDragLeave: () => setAsal(null),
-      onDrop: () => setAsal(null),
+      // Chip tanpa tempat (daftar ini sendiri, lajur Levels) tidak bisa dilepas,
+      // kecuali direktur.
+      canDrop: ({ source }) => baca(source.data) !== null,
+      onDragEnter: ({ source }) => setLepas(baca(source.data)),
+      onDragLeave: () => setLepas(null),
+      onDrop: () => setLepas(null),
     });
   }, [ref]);
-  return asal;
+  return lepas;
 }
 
 export function PanelOrangPapan() {
   const { s, fill } = useGodmodeStrings();
   const { orangById, namaTempat } = usePapan();
   const ref = useRef<HTMLElement>(null);
-  const asalLepas = useLepasKePanel(ref);
+  const lepas = useLepasKePanel(ref);
   const [cari, setCari] = useState("");
   const [saring, setSaring] = useState<"semua" | "belum">("semua");
   const semua = sortBy([...orangById.values()], (o) => o.display_name.toLowerCase());
@@ -243,20 +277,24 @@ export function PanelOrangPapan() {
       ref={ref}
       title={s.org.board.drop_remove_hint}
       className={cn(
-        "relative space-y-3 rounded-card border border-subtle bg-layer-1 p-3 transition-colors lg:sticky lg:top-4",
-        asalLepas && "bg-danger-subtle outline-2 outline-offset-2 outline-danger-strong outline-dashed"
+        // Lengket selama papan digulir (md ke atas, saat dua kolom). Tingginya dibatasi
+        // layar supaya panel tidak pernah lebih tinggi dari viewport (sticky mati kalau iya).
+        "relative space-y-3 rounded-card border border-subtle bg-layer-1 p-3 transition-colors md:sticky md:top-2 md:max-h-[calc(100dvh-7rem)] md:self-start",
+        lepas && "bg-danger-subtle outline-2 outline-offset-2 outline-danger-strong outline-dashed"
       )}
     >
-      {asalLepas && (
+      {lepas && (
         <span
           className="pointer-events-none absolute -top-2.5 right-2 z-[1] rounded-control bg-danger-primary px-1.5 text-11 font-medium text-on-color"
           aria-hidden
         >
-          {fill(s.org.board.drop_remove, { place: namaTempat(asalLepas) })}
+          {"asal" in lepas
+            ? fill(s.org.board.drop_remove, { place: namaTempat(lepas.asal) })
+            : s.org.board.menu_remove_director}
         </span>
       )}
       <div className="flex items-center justify-between px-1">
-        <span className="text-11 font-semibold tracking-wide text-tertiary uppercase">{s.org.board.people}</span>
+        <span className="text-11 font-semibold text-tertiary">{s.org.board.people}</span>
         <span className="text-11 text-tertiary">{fill(s.org.people_count, { n: semua.length })}</span>
       </div>
       <div className="flex h-8 items-center gap-1.5 search-field border border-subtle bg-layer-2 px-2.5 focus-within:border-accent-strong">
@@ -284,7 +322,7 @@ export function PanelOrangPapan() {
       {tampil.length === 0 ? (
         <p className="px-1 py-4 text-center text-12 text-tertiary">{s.org.board.people_empty}</p>
       ) : (
-        <ul className="vertical-scrollbar -mr-1 scrollbar-sm max-h-[calc(100vh-280px)] space-y-1 overflow-y-auto pr-1">
+        <ul className="vertical-scrollbar -mr-1 scrollbar-sm max-h-[calc(100dvh-280px)] space-y-1 overflow-y-auto pr-1">
           {tampil.map((o) => (
             <li key={o.id}>
               <ChipOrang orangId={o.id} nama={o.display_name} email={o.email} tingkat={o.tingkat ?? 10} />

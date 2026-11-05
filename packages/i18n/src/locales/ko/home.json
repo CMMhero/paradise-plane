@@ -4,8 +4,8 @@
       "quickstart_guide": "빠른 시작 가이드",
       "not_right_now": "지금은 안 함",
       "create_project": {
-        "title": "프로젝트 생성",
-        "description": "Paradise Task Tracker에서 대부분의 작업은 프로젝트로 시작됩니다.",
+        "title": "부서 생성",
+        "description": "Paradise Task Tracker에서 대부분의 작업은 부서로 시작됩니다.",
         "cta": "시작하기"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "최근 항목",
       "empty": {
-        "project": "최근 방문한 프로젝트가 여기에 표시됩니다.",
+        "project": "최근 방문한 부서가 여기에 표시됩니다.",
         "page": "최근 방문한 페이지가 여기에 표시됩니다.",
         "issue": "최근 방문한 작업 항목이 여기에 표시됩니다.",
         "default": "아직 최근 항목이 없습니다."
       },
       "filters": {
         "all": "모든",
-        "projects": "프로젝트",
+        "projects": "부서",
         "pages": "페이지",
         "issues": "작업 항목"
       }

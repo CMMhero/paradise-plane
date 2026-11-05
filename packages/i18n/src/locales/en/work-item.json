@@ -168,7 +168,7 @@
       "confirm_message": "Are you sure you want to archive the work item? All your archived work items can be restored later.",
       "success": {
         "label": "Archive success",
-        "message": "Your archives can be found in project archives."
+        "message": "Your archives can be found in department archives."
       },
       "failed": {
         "message": "Work item could not be archived. Please try again."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Restore success",
-        "message": "Your work item can be found in project work items."
+        "message": "Your work item can be found in department work items."
       },
       "failed": {
         "message": "Work item could not be restored. Please try again."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Open work item in full screen",
     "duplicate": {
       "modal": {
-        "title": "Make a copy to another project",
+        "title": "Make a copy to another department",
         "description1": "This creates a copy of the work item.",
         "description2": "All property data will be removed while duplicating.",
-        "placeholder": "Select a project"
+        "placeholder": "Select a department"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Create recurring work item",
-        "no_permission": "Contact your project admin to create recurring work items"
+        "no_permission": "Contact your department admin to create recurring work items"
       }
     },
     "empty_state": {

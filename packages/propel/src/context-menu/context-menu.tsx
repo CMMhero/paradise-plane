@@ -61,11 +61,15 @@ const ContextMenuContent = React.forwardRef(function ContextMenuContent(
       side={side}
       sideOffset={sideOffset}
       {...props}
-      className={positionerClassName}
+      // z-index lives on the Positioner: it is the positioned box in the portal.
+      // The Popup inside it is not positioned, so a z-index there has no effect
+      // and the menu used to paint under any positive z-index on the page.
+      // Callers can still lower or raise it (e.g. "z-30"); cn lets theirs win.
+      className={cn("z-50", positionerClassName)}
     >
       <ContextMenuPrimitive.Popup
         className={cn(
-          "shadow-md z-50 min-w-32 overflow-hidden rounded-popover border border-subtle bg-surface-1 p-1",
+          "shadow-md min-w-32 overflow-hidden rounded-popover border border-subtle bg-surface-1 p-1",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",

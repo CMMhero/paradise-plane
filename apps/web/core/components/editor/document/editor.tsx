@@ -65,7 +65,8 @@ export const DocumentEditor = forwardRef(function DocumentEditor(
     projectId,
   });
   // use editor mention
-  const { fetchMentions } = useEditorMention({
+  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip } = useEditorMention({
+    workspaceSlug,
     enableAdvancedMentions: true,
     searchEntity: editable ? async (payload) => await props.searchMentionCallback(payload) : async () => ({}),
   });
@@ -92,6 +93,9 @@ export const DocumentEditor = forwardRef(function DocumentEditor(
           if (!res) throw new Error("Failed in fetching mentions");
           return res;
         },
+        searchHashCallback: fetchHashMentions,
+        tip,
+        getMentionedEntityLabel,
         renderComponent: EditorMentionsRoot,
         getMentionedEntityDetails: (id: string) => ({ display_name: getUserDetails(id)?.display_name ?? "" }),
       }}

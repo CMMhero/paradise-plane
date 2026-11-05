@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Geben Sie eine Projekt-ID ein",
+      "enter_project_id": "Geben Sie eine Abteilungs-ID ein",
       "please_select_a_timezone": "Bitte wählen Sie eine Zeitzone aus",
       "archive_project": {
-        "title": "Projekt archivieren",
-        "description": "Durch das Archivieren wird das Projekt im Menü ausgeblendet. Der Zugriff bleibt über die Projektseite bestehen.",
-        "button": "Projekt archivieren"
+        "title": "Abteilung archivieren",
+        "description": "Durch das Archivieren wird die Abteilung im Menü ausgeblendet. Der Zugriff bleibt über die Abteilungsseite bestehen.",
+        "button": "Abteilung archivieren"
       },
       "delete_project": {
-        "title": "Projekt löschen",
-        "description": "Durch das Löschen des Projekts werden alle zugehörigen Daten entfernt. Diese Aktion ist nicht umkehrbar.",
-        "button": "Projekt löschen"
+        "title": "Abteilung löschen",
+        "description": "Durch das Löschen der Abteilung werden alle zugehörigen Daten entfernt. Diese Aktion ist nicht umkehrbar.",
+        "button": "Abteilung löschen"
       },
       "toast": {
-        "success": "Projekt aktualisiert",
+        "success": "Abteilung aktualisiert",
         "error": "Aktualisierung fehlgeschlagen. Bitte versuchen Sie es erneut."
       }
     },
     "members": {
       "label": "Mitglieder",
-      "project_lead": "Projektleitung",
-      "project_lead_description": "Wählen Sie den Projektleiter für das Projekt aus.",
+      "project_lead": "Abteilungsleitung",
+      "project_lead_description": "Wählen Sie den Abteilungsleiter für die Abteilung aus.",
       "default_assignee": "Standardzuweisung",
-      "default_assignee_description": "Wählen Sie den Standard-Zuständigen für das Projekt aus.",
-      "project_subscribers": "Projektabonnenten",
-      "project_subscribers_description": "Wählen Sie Mitglieder aus, die Benachrichtigungen für dieses Projekt erhalten.",
+      "default_assignee_description": "Wählen Sie den Standard-Zuständigen für die Abteilung aus.",
+      "project_subscribers": "Abteilungsabonnenten",
+      "project_subscribers_description": "Wählen Sie Mitglieder aus, die Benachrichtigungen für diese Abteilung erhalten.",
       "guest_super_permissions": {
         "title": "Gastbenutzern Zugriff auf alle Elemente gewähren:",
-        "sub_heading": "Gäste sehen alle Elemente im Projekt."
+        "sub_heading": "Gäste sehen alle Elemente in der Abteilung."
       },
       "invite_members": {
         "title": "Mitglieder einladen",
-        "sub_heading": "Laden Sie Mitglieder in das Projekt ein.",
+        "sub_heading": "Laden Sie Mitglieder in die Abteilung ein.",
         "select_co_worker": "Wählen Sie einen Mitarbeiter"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Schätzungen",
       "description": "Sie helfen Ihnen, die Komplexität und Arbeitsbelastung des Teams zu kommunizieren.",
       "label": "Schätzungen",
-      "title": "Schätzungen für mein Projekt aktivieren",
+      "title": "Schätzungen für meine Abteilung aktivieren",
       "enable_description": "Sie helfen Ihnen, die Komplexität und Arbeitsbelastung des Teams zu kommunizieren.",
       "no_estimate": "Keine Schätzung",
       "new": "Neues Schätzungssystem",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Schätzung geändert",
-            "message": "Die Schätzung wurde in deinem Projekt aktualisiert."
+            "message": "Die Schätzung wurde in deiner Abteilung aktualisiert."
           },
           "error": {
             "title": "Schätzungsänderung fehlgeschlagen",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Schätzungen neu geordnet",
-            "message": "Die Schätzungen wurden in Ihrem Projekt neu geordnet."
+            "message": "Die Schätzungen wurden in Ihrer Abteilung neu geordnet."
           },
           "error": {
             "title": "Neuordnung der Schätzungen fehlgeschlagen",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Keine Integrationen konfiguriert",
-        "description": "Konfigurieren Sie GitHub und andere Integrationen, um Ihre Projektarbeitsaufgaben zu synchronisieren."
+        "description": "Konfigurieren Sie GitHub und andere Integrationen, um Ihre Abteilungsarbeitsaufgaben zu synchronisieren."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Workflows",
-      "description": "Automatisieren Sie Übergänge von Arbeitselementen und legen Sie Regeln fest, um zu steuern, wie Aufgaben durch Ihre Projektpipeline fließen.",
+      "description": "Automatisieren Sie Übergänge von Arbeitselementen und legen Sie Regeln fest, um zu steuern, wie Aufgaben durch Ihre Abteilungspipeline fließen.",
       "add_button": "Neuen Workflow hinzufügen",
       "search": "Workflows suchen",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Alle Status werden verwendet",
-          "description": "Alle für dieses Projekt definierten Status sind bereits in Ihrem aktuellen Workflow vorhanden."
+          "description": "Alle für diese Abteilung definierten Status sind bereits in Ihrem aktuellen Workflow vorhanden."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Zyklen",
         "short_title": "Zyklen",
-        "description": "Planen Sie die Arbeit in flexiblen Zeiträumen, die sich dem einzigartigen Rhythmus und Tempo dieses Projekts anpassen.",
+        "description": "Planen Sie die Arbeit in flexiblen Zeiträumen, die sich dem einzigartigen Rhythmus und Tempo dieser Abteilung anpassen.",
         "toggle_title": "Zyklen aktivieren",
         "toggle_description": "Planen Sie die Arbeit in fokussierten Zeiträumen."
       },
       "modules": {
         "title": "Module",
         "short_title": "Module",
-        "description": "Organisieren Sie die Arbeit in Teilprojekte mit engagierten Leitern und Verantwortlichen.",
+        "description": "Organisieren Sie die Arbeit in Teilbereiche mit engagierten Leitern und Verantwortlichen.",
         "toggle_title": "Module aktivieren",
-        "toggle_description": "Projektmitglieder können Module erstellen und bearbeiten."
+        "toggle_description": "Abteilungsmitglieder können Module erstellen und bearbeiten."
       },
       "views": {
         "title": "Ansichten",
         "short_title": "Ansichten",
         "description": "Speichern Sie benutzerdefinierte Sortierungen, Filter und Anzeigeoptionen oder teilen Sie sie mit Ihrem Team.",
         "toggle_title": "Ansichten aktivieren",
-        "toggle_description": "Projektmitglieder können Ansichten erstellen und bearbeiten."
+        "toggle_description": "Abteilungsmitglieder können Ansichten erstellen und bearbeiten."
       },
       "pages": {
         "title": "Seiten",
         "short_title": "Seiten",
         "description": "Erstellen und bearbeiten Sie freie Inhalte: Notizen, Dokumente, alles.",
         "toggle_title": "Seiten aktivieren",
-        "toggle_description": "Projektmitglieder können Seiten erstellen und bearbeiten."
+        "toggle_description": "Abteilungsmitglieder können Seiten erstellen und bearbeiten."
       },
       "intake": {
         "intake_responsibility": "Intake-Verantwortung",
@@ -358,9 +358,9 @@
         "short_title": "Aufnahme",
         "description": "Ermöglichen Sie Nicht-Mitgliedern, Fehler, Feedback und Vorschläge zu teilen, ohne Ihren Workflow zu unterbrechen.",
         "toggle_title": "Aufnahme aktivieren",
-        "toggle_description": "Projektmitgliedern erlauben, In-App-Aufnahmeanfragen zu erstellen.",
-        "toggle_tooltip_on": "Bitten Sie Ihren Projekt-Admin, dies zu aktivieren.",
-        "toggle_tooltip_off": "Bitten Sie Ihren Projekt-Admin, dies zu deaktivieren.",
+        "toggle_description": "Abteilungsmitgliedern erlauben, In-App-Aufnahmeanfragen zu erstellen.",
+        "toggle_tooltip_on": "Bitten Sie Ihren Abteilungs-Admin, dies zu aktivieren.",
+        "toggle_tooltip_off": "Bitten Sie Ihren Abteilungs-Admin, dies zu deaktivieren.",
         "notify_assignee": {
           "title": "Zuständige benachrichtigen",
           "description": "Für eine neue Intake-Anfrage werden die Standard-Zuständigen über Benachrichtigungen informiert"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Zeiterfassung",
         "short_title": "Zeiterfassung",
-        "description": "Erfassen Sie die für Arbeitselemente und Projekte aufgewendete Zeit.",
+        "description": "Erfassen Sie die für Arbeitselemente und Abteilungen aufgewendete Zeit.",
         "toggle_title": "Zeiterfassung aktivieren",
-        "toggle_description": "Projektmitglieder können die geleistete Arbeit protokollieren."
+        "toggle_description": "Abteilungsmitglieder können die geleistete Arbeit protokollieren."
       },
       "milestones": {
         "title": "Meilensteine",
@@ -425,18 +425,18 @@
         "toggle_description": "Organisieren Sie Arbeitselemente nach Meilenstein-Fristen."
       },
       "toasts": {
-        "loading": "Projektfunktion wird aktualisiert...",
-        "success": "Projektfunktion erfolgreich aktualisiert.",
-        "error": "Beim Aktualisieren der Projektfunktion ist etwas schiefgelaufen. Bitte versuchen Sie es erneut."
+        "loading": "Abteilungsfunktion wird aktualisiert...",
+        "success": "Abteilungsfunktion erfolgreich aktualisiert.",
+        "error": "Beim Aktualisieren der Abteilungsfunktion ist etwas schiefgelaufen. Bitte versuchen Sie es erneut."
       }
     },
     "project_updates": {
-      "heading": "Projektaktualisierungen",
-      "description": "Konsolidierte Nachverfolgung und Fortschrittsüberwachung für dieses Projekt"
+      "heading": "Abteilungsaktualisierungen",
+      "description": "Konsolidierte Nachverfolgung und Fortschrittsüberwachung für diese Abteilung"
     },
     "templates": {
       "heading": "Vorlagen",
-      "description": "Sparen Sie 80% der Zeit beim Erstellen von Projekten, Arbeitselementen und Seiten, wenn Sie Vorlagen verwenden."
+      "description": "Sparen Sie 80% der Zeit beim Erstellen von Abteilungen, Arbeitselementen und Seiten, wenn Sie Vorlagen verwenden."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Papierkorb",
-      "description": "Gelöschte Elemente landen hier, bevor sie endgültig entfernt werden. Projektadmins können sie wiederherstellen oder endgültig löschen."
+      "description": "Gelöschte Elemente landen hier, bevor sie endgültig entfernt werden. Abteilungsadmins können sie wiederherstellen oder endgültig löschen."
     }
   }
 }

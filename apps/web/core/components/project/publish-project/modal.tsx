@@ -119,7 +119,7 @@ export const PublishProjectModal = observer(function PublishProjectModal(props: 
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "Error!",
-          message: "Something went wrong while unpublishing the project.",
+          message: "Something went wrong while unpublishing the department.",
         })
       )
       .finally(() => setIsUnPublishing(false));
@@ -137,7 +137,7 @@ export const PublishProjectModal = observer(function PublishProjectModal(props: 
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "Error!",
-        message: "Please select at least one view layout to publish the project.",
+        message: "Please select at least one view layout to publish the department.",
       });
       return;
     }
@@ -237,7 +237,7 @@ export const PublishProjectModal = observer(function PublishProjectModal(props: 
                     <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-primary opacity-75" />
                     <span className="relative inline-flex size-1.5 rounded-full bg-accent-primary" />
                   </span>
-                  This project is now live on web
+                  This department is now live on web
                 </p>
               </>
             )}

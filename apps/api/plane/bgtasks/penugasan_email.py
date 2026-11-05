@@ -182,7 +182,8 @@ def kirim_email_penugasan(issue_id, actor_id, penerima_ids):
     if not penerima:
         return {"terkirim": 0, "gagal": 0}
 
-    tingkat = tingkat_anggota(pemberi.id, issue.workspace_id)
+    # KEP-93: jabatan pemberi DI project ini, bukan jenjang tertingginya.
+    tingkat = tingkat_anggota(pemberi.id, issue.workspace_id, issue.project_id)
     jabatan = TINGKAT_NAMA.get(tingkat, "") if tingkat else ""
     url = _base_url()
     tautan = f"{url}/{issue.workspace.slug}/projects/{issue.project_id}/issues/{issue.id}" if url else ""

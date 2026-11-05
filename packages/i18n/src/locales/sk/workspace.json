@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Prehľad projektov, aktivít a metrík",
-        "description": "Vitajte v Paradise Task Tracker, teší nás, že ste tu. Vytvorte prvý projekt, sledujte pracovné položky a táto stránka sa zmení na priestor pre váš pokrok. Správcovia tu uvidia aj položky pomáhajúce tímu.",
+        "title": "Prehľad oddelení, aktivít a metrík",
+        "description": "Vitajte v Paradise Task Tracker, teší nás, že ste tu. Vytvorte prvé oddelenie, sledujte pracovné položky a táto stránka sa zmení na priestor pre váš pokrok. Správcovia tu uvidia aj položky pomáhajúce tímu.",
         "primary_button": {
-          "text": "Vytvorte prvý projekt",
+          "text": "Vytvorte prvé oddelenie",
           "comic": {
-            "title": "Všetko začína projektom v Paradise Task Tracker",
-            "description": "Projektom môže byť roadmapa produktu, marketingová kampaň alebo uvedenie nového auta."
+            "title": "Všetko začína oddelením v Paradise Task Tracker",
+            "description": "Oddelením môže byť roadmapa produktu, marketingová kampaň alebo uvedenie nového auta."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Celkovo otvorených úloh",
     "error": "Pri načítaní dát došlo k chybe.",
     "work_items_closed_in": "Pracovné položky uzavreté v",
-    "selected_projects": "Vybrané projekty",
+    "selected_projects": "Vybrané oddelenia",
     "total_members": "Celkovo členov",
     "total_cycles": "Celkovo cyklov",
     "total_modules": "Celkovo modulov",
@@ -100,11 +100,11 @@
     "backlog_work_items": "{entity} v backlogu",
     "un_started_work_items": "Nespustené {entity}",
     "completed_work_items": "Dokončené {entity}",
-    "project_insights": "Prehľad projektu",
-    "summary_of_projects": "Súhrn projektov",
-    "all_projects": "Všetky projekty",
+    "project_insights": "Prehľad oddelenia",
+    "summary_of_projects": "Súhrn oddelení",
+    "all_projects": "Všetky oddelenia",
     "trend_on_charts": "Trend na grafoch",
-    "active_projects": "Aktívne projekty",
+    "active_projects": "Aktívne oddelenia",
     "customized_insights": "Prispôsobené prehľady",
     "created_vs_resolved": "Vytvorené vs Vyriešené",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Sledujte pokrok, pracovné zaťaženie a alokácie. Identifikujte trendy, odstráňte prekážky a urýchlite prácu",
-        "description": "Porovnávajte rozsah s dopytom, odhady a rozširovanie rozsahu. Získajte výkonnosť podľa členov tímu a tímov, a uistite sa, že váš projekt beží načas.",
+        "description": "Porovnávajte rozsah s dopytom, odhady a rozširovanie rozsahu. Získajte výkonnosť podľa členov tímu a tímov, a uistite sa, že vaše oddelenie beží načas.",
         "primary_button": {
-          "text": "Začnite svoj prvý projekt",
+          "text": "Začnite svoje prvé oddelenie",
           "comic": {
             "title": "Analytika funguje najlepšie s Cyklami + Modulmi",
             "description": "Najprv časovo ohraničte svoje problémy do Cyklov a, ak môžete, zoskupte problémy, ktoré trvajú viac ako jeden cyklus, do Modulov. Pozrite si oboje v ľavej navigácii."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Inovujte na {plan}, aby ste odomkli kartu {tab}",
     "workitem_resolved_vs_pending": "Vyriešené vs. čakajúce pracovné položky",
-    "projects_by_status": "Projekty podľa stavu",
+    "projects_by_status": "Oddelenia podľa stavu",
     "active_users": "Aktívni používatelia",
     "intake_trends": "Trendy prijímania"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Projekt} few {Projekty} other {Projektov}}",
+    "label": "{count, plural, one {Oddelenie} few {Oddelenia} many {Oddelenia} other {Oddelení}}",
     "create": {
-      "label": "Pridať projekt"
+      "label": "Pridať oddelenie"
     },
     "network": {
       "label": "Sieť",
@@ -186,7 +186,7 @@
       "members_length": "Počet členov"
     },
     "scope": {
-      "my_projects": "Moje projekty",
+      "my_projects": "Moje oddelenia",
       "archived_projects": "Archivované"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Žiadne aktívne projekty",
-        "description": "Projekt je nadradený cieľom. Projekty obsahujú Úlohy, Cykly a Moduly. Vytvorte nový alebo filtrujte archivované.",
+        "title": "Žiadne aktívne oddelenia",
+        "description": "Oddelenie je nadradené cieľom. Oddelenia obsahujú Úlohy, Cykly a Moduly. Vytvorte nové alebo filtrujte archivované.",
         "primary_button": {
-          "text": "Začnite prvý projekt",
+          "text": "Začnite prvé oddelenie",
           "comic": {
-            "title": "Všetko začína projektom v Paradise Task Tracker",
-            "description": "Projektom môže byť roadmapa produktu, marketingová kampaň alebo uvedenie nového auta."
+            "title": "Všetko začína oddelením v Paradise Task Tracker",
+            "description": "Oddelením môže byť roadmapa produktu, marketingová kampaň alebo uvedenie nového auta."
           }
         }
       },
       "no_projects": {
-        "title": "Žiadne projekty",
-        "description": "Na vytváranie pracovných položiek potrebujete vytvoriť alebo byť súčasťou projektu.",
+        "title": "Žiadne oddelenia",
+        "description": "Na vytváranie pracovných položiek potrebujete vytvoriť alebo byť súčasťou oddelenia.",
         "primary_button": {
-          "text": "Začnite prvý projekt",
+          "text": "Začnite prvé oddelenie",
           "comic": {
-            "title": "Všetko začína projektom v Paradise Task Tracker",
-            "description": "Projektom môže byť roadmapa produktu, marketingová kampaň alebo uvedenie nového auta."
+            "title": "Všetko začína oddelením v Paradise Task Tracker",
+            "description": "Oddelením môže byť roadmapa produktu, marketingová kampaň alebo uvedenie nového auta."
           }
         }
       },
       "filter": {
-        "title": "Žiadne zodpovedajúce projekty",
-        "description": "Nenašli sa projekty zodpovedajúce kritériám.\n Vytvorte nový."
+        "title": "Žiadne zodpovedajúce oddelenia",
+        "description": "Nenašli sa oddelenia zodpovedajúce kritériám.\n Vytvorte nové."
       },
       "search": {
-        "description": "Nenašli sa projekty zodpovedajúce kritériám.\nVytvorte nový."
+        "description": "Nenašli sa oddelenia zodpovedajúce kritériám.\nVytvorte nové."
       }
     }
   },
@@ -229,7 +229,7 @@
     "add_view": "Pridať pohľad",
     "empty_state": {
       "all-issues": {
-        "title": "Žiadne pracovné položky v projekte",
+        "title": "Žiadne pracovné položky v oddelení",
         "description": "Vytvorte prvú položku a sledujte svoj pokrok!",
         "primary_button": {
           "text": "Vytvoriť pracovnú položku"
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Napíšte poznámku, dokument alebo úplnú znalostnej bázu. Nechajte Galilea, Plenovho AI asistenta, aby vám pomohol začať",
-        "description": "Stránky sú priestor pre myšlienky v Plene. Zapíšte si poznámky zo stretnutí, jednoducho ich formátujte, vložte pracovné položky, rozložte ich pomocou knižnice komponentov a uchovajte ich všetky v kontexte vášho projektu. Aby ste skrátili prácu na akomkoľvek dokumente, vyvolajte Galilea, AI Plena, pomocou skratky alebo kliknutia na tlačidlo.",
+        "description": "Stránky sú priestor pre myšlienky v Plene. Zapíšte si poznámky zo stretnutí, jednoducho ich formátujte, vložte pracovné položky, rozložte ich pomocou knižnice komponentov a uchovajte ich všetky v kontexte vášho oddelenia. Aby ste skrátili prácu na akomkoľvek dokumente, vyvolajte Galilea, AI Plena, pomocou skratky alebo kliknutia na tlačidlo.",
         "primary_button": {
           "text": "Vytvorte svoju prvú stránku"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Žiadne aktívne cykly",
-        "description": "Cykly vašich projektov, ktoré zahŕňajú akékoľvek obdobie, ktoré zahŕňa dnešný dátum v rámci svojho rozsahu. Nájdite tu pokrok a detaily všetkých vašich aktívnych cyklov."
+        "description": "Cykly vašich oddelení, ktoré zahŕňajú akékoľvek obdobie, ktoré zahŕňa dnešný dátum v rámci svojho rozsahu. Nájdite tu pokrok a detaily všetkých vašich aktívnych cyklov."
       }
     }
   },

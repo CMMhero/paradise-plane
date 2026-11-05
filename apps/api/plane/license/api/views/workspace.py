@@ -9,6 +9,7 @@ from django.db import IntegrityError
 from django.db.models import OuterRef, Func, F
 
 # Module imports
+from plane.license.audit_godmode import catat_godmode
 from plane.app.views.base import BaseAPIView
 from plane.license.api.permissions import InstanceAdminPermission
 from plane.db.models import Workspace, WorkspaceMember, Project
@@ -95,6 +96,13 @@ class InstanceWorkSpaceEndpoint(BaseAPIView):
                     member=request.user,
                     role=20,
                     company_role=request.data.get("company_role", ""),
+                )
+                catat_godmode(
+                    request,
+                    kind="workspace",
+                    label=f"Workspace: {slug}",
+                    action=1,
+                    object_pk=str(serializer.data["id"]),
                 )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(

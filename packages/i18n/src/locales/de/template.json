@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Vorlagen",
-      "description": "Sparen Sie 80% der Zeit, die für die Erstellung von Projekten, Arbeitsaufgaben und Seiten aufgewendet wird, wenn Sie Vorlagen verwenden.",
-      "new_project_template": "Neue Projektvorlage",
+      "description": "Sparen Sie 80% der Zeit, die für die Erstellung von Abteilungen, Arbeitsaufgaben und Seiten aufgewendet wird, wenn Sie Vorlagen verwenden.",
+      "new_project_template": "Neue Abteilungsvorlage",
       "new_work_item_template": "Neue Arbeitselementvorlage",
       "new_page_template": "Neue Seitenvorlage",
       "options": {
         "project": {
-          "label": "Projektvorlagen"
+          "label": "Abteilungsvorlagen"
         },
         "work_item": {
           "label": "Arbeitsaufgabenvorlagen"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Vorlage erstellen",
         "no_permission": {
-          "project": "Kontaktieren Sie Ihren Projektadministrator, um Vorlagen zu erstellen",
+          "project": "Kontaktieren Sie Ihren Abteilungsadministrator, um Vorlagen zu erstellen",
           "workspace": "Kontaktieren Sie Ihren Workspace-Administrator, um Vorlagen zu erstellen"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Vom Workspace abgeleitet"
         },
         "project": {
-          "info": "Vom Projekt abgeleitet"
+          "info": "Von der Abteilung abgeleitet"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Benennen Sie Ihre Projektvorlage.",
+              "placeholder": "Benennen Sie Ihre Abteilungsvorlage.",
               "validation": {
                 "required": "Vorlagenname ist erforderlich",
                 "maxLength": "Vorlagenname sollte weniger als 255 Zeichen enthalten"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Benennen Sie Ihr Projekt.",
+            "placeholder": "Benennen Sie Ihre Abteilung.",
             "validation": {
-              "required": "Projekttitel ist erforderlich",
-              "maxLength": "Projekttitel sollte weniger als 255 Zeichen enthalten"
+              "required": "Abteilungstitel ist erforderlich",
+              "maxLength": "Abteilungstitel sollte weniger als 255 Zeichen enthalten"
             }
           },
           "description": {
-            "placeholder": "Beschreiben Sie den Zweck und die Ziele dieses Projekts."
+            "placeholder": "Beschreiben Sie den Zweck und die Ziele dieser Abteilung."
           },
           "button": {
-            "create": "Projektvorlage erstellen",
-            "update": "Projektvorlage aktualisieren"
+            "create": "Abteilungsvorlage erstellen",
+            "update": "Abteilungsvorlage aktualisieren"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Kurze Beschreibung",
-            "placeholder": "Diese Vorlage ist ideal für Projektmanager, die mehrere Projekte gleichzeitig verwalten.",
+            "placeholder": "Diese Vorlage ist ideal für Abteilungsmanager, die mehrere Abteilungen gleichzeitig verwalten.",
             "validation": {
               "required": "Kurze Beschreibung ist erforderlich"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Vorlagen",
-        "description": "Mit Projekt-, Arbeitsaufgaben- und Seitenvorlagen in Paradise Task Tracker müssen Sie kein Projekt von Grund auf neu erstellen oder Arbeitsaufgabeneigenschaften manuell festlegen.",
+        "description": "Mit Abteilungs-, Arbeitsaufgaben- und Seitenvorlagen in Paradise Task Tracker müssen Sie keine Abteilung von Grund auf neu erstellen oder Arbeitsaufgabeneigenschaften manuell festlegen.",
         "sub_description": "Sparen Sie 80% Ihrer Administrationszeit, wenn Sie Vorlagen verwenden."
       },
       "no_templates": {
         "button": "Erstellen Sie Ihre erste Vorlage"
       },
       "no_labels": {
-        "description": "Noch keine Labels vorhanden. Erstellen Sie Labels, um Arbeitsaufgaben in Ihrem Projekt zu organisieren und zu filtern."
+        "description": "Noch keine Labels vorhanden. Erstellen Sie Labels, um Arbeitsaufgaben in Ihrer Abteilung zu organisieren und zu filtern."
       },
       "no_modules": {
-        "description": "Noch keine Module. Organisieren Sie Arbeit in Unterprojekte mit dedizierten Verantwortlichen und Bearbeitern."
+        "description": "Noch keine Module. Organisieren Sie Arbeit in Teilbereiche mit dedizierten Verantwortlichen und Bearbeitern."
       },
       "no_work_items": {
         "description": "Noch keine Arbeitsaufgaben. Fügen Sie eine hinzu, um Ihre Arbeit besser zu strukturieren."
@@ -318,7 +318,7 @@
         "project": "Neue Vorlage hinzufügen"
       },
       "label": {
-        "project": "Projektvorlage auswählen",
+        "project": "Abteilungsvorlage auswählen",
         "page": "Aus Vorlage wählen"
       },
       "tooltip": {

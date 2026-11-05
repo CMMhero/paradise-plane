@@ -113,6 +113,7 @@ export const ProjectSettingsMemberDefaults = observer(function ProjectSettingsMe
           type: TOAST_TYPE.SUCCESS,
           message: t("project_settings.general.toast.success"),
         });
+        return;
       })
       .catch((err) => {
         console.error(err);
@@ -131,6 +132,7 @@ export const ProjectSettingsMemberDefaults = observer(function ProjectSettingsMe
           type: TOAST_TYPE.SUCCESS,
           message: t("project_settings.general.toast.success"),
         });
+        return;
       })
       .catch((err) => {
         console.error(err);
@@ -139,7 +141,7 @@ export const ProjectSettingsMemberDefaults = observer(function ProjectSettingsMe
 
   return (
     <div className="my-6 flex flex-col gap-y-6">
-      <DefaultSettingItem title="Project Lead" description="Select the project lead for the project.">
+      <DefaultSettingItem title="Department Lead" description="Select the department lead for the department.">
         {currentProjectDetails ? (
           <Controller
             control={control}
@@ -160,7 +162,7 @@ export const ProjectSettingsMemberDefaults = observer(function ProjectSettingsMe
           </Loader>
         )}
       </DefaultSettingItem>
-      <DefaultSettingItem title="Default Assignee" description="Select the default assignee for the project.">
+      <DefaultSettingItem title="Default Assignee" description="Select the default assignee for the department.">
         {currentProjectDetails ? (
           <Controller
             control={control}
@@ -184,7 +186,7 @@ export const ProjectSettingsMemberDefaults = observer(function ProjectSettingsMe
       {currentProjectDetails && (
         <DefaultSettingItem
           title="Guest access"
-          description="This will allow guests to have view access to all the project work items."
+          description="This will allow guests to have view access to all the department work items."
         >
           <div className="flex items-center justify-end">
             <ToggleSwitch

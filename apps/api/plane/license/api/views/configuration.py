@@ -21,6 +21,7 @@ from rest_framework.response import Response
 
 # Module imports
 from .base import BaseAPIView
+from plane.license.audit_godmode import catat_godmode
 from plane.license.api.permissions import InstanceAdminPermission
 from plane.license.models import InstanceConfiguration
 from plane.license.api.serializers import InstanceConfigurationSerializer
@@ -103,6 +104,7 @@ class InstanceConfigurationEndpoint(BaseAPIView):
                 )
 
         configurations = InstanceConfiguration.objects.filter(key__in=request.data.keys())
+        lama_nilai = {c.key: c.value for c in configurations}
 
         bulk_configurations = []
         for configuration in configurations:
@@ -115,6 +117,21 @@ class InstanceConfigurationEndpoint(BaseAPIView):
             bulk_configurations.append(configuration)
 
         InstanceConfiguration.objects.bulk_update(bulk_configurations, ["value"], batch_size=100)
+        for configuration in bulk_configurations:
+            tersembunyi = configuration.is_encrypted
+            catat_godmode(
+                request,
+                kind="instance_config",
+                label=f"Instance configuration: {configuration.key}",
+                object_pk=str(configuration.pk),
+                changes={
+                    "value": [
+                        "[hidden]" if tersembunyi else lama_nilai.get(configuration.key, ""),
+                        "[hidden]" if tersembunyi else configuration.value,
+                    ]
+                },
+                extra={"key": configuration.key, "sensitive": tersembunyi},
+            )
 
         serializer = InstanceConfigurationSerializer(configurations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -138,6 +155,13 @@ class DisableEmailFeatureEndpoint(BaseAPIView):
                     ]
                 )
             ).update(value=Case(When(key="ENABLE_SMTP", then=Value("0")), default=Value("")))
+            catat_godmode(
+                request,
+                kind="email_config",
+                label="Email configuration: disabled",
+                changes={"ENABLE_SMTP": ["", "0"]},
+                detail="Email feature disabled, SMTP settings cleared",
+            )
             return Response(status=status.HTTP_200_OK)
         except Exception:
             return Response(

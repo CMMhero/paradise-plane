@@ -4,12 +4,12 @@
     "label_lowercase": "types d'éléments de travail",
     "settings": {
       "description": "Personnalisez et ajoutez vos propres propriétés pour l’adapter aux besoins de votre équipe.",
-      "cant_delete_default_message": "Ce type d'élément de travail ne peut pas être supprimé car il est défini comme le type par défaut pour ce projet.",
+      "cant_delete_default_message": "Ce type d'élément de travail ne peut pas être supprimé car il est défini comme le type par défaut pour ce département.",
       "set_as_default": "Définir par défaut",
       "cant_set_default_inactive_message": "Activez ce type avant de le définir par défaut",
       "set_default_confirmation": {
         "title": "Définir comme type d'élément de travail par défaut",
-        "description": "Définir {name} par défaut l'importera dans tous les projets de cet espace de travail. Tous les nouveaux éléments de travail utiliseront ce type par défaut.",
+        "description": "Définir {name} par défaut l'importera dans tous les départements de cet espace de travail. Tous les nouveaux éléments de travail utiliseront ce type par défaut.",
         "confirm_button": "Définir par défaut"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "La formule est valide ! Retourne {resultType} ({count} champ(s) référencé(s))",
           "error": {
             "empty": "Veuillez entrer une formule",
-            "missing_context": "Contexte d'espace de travail, de projet ou de type d'élément de travail manquant",
+            "missing_context": "Contexte d'espace de travail, de département ou de type d'élément de travail manquant",
             "validation_failed": "La validation a échoué"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Types",
         "description": "Créez et personnalisez les types d’éléments de travail avec des propriétés.",
         "sort_options": {
-          "project_count": "Nombre de projets concernés"
+          "project_count": "Nombre de départements concernés"
         },
         "filter_options": {
           "show_active": "Afficher les actifs",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Activer les types d'éléments de travail",
-        "description": "Adaptez les éléments de travail à votre travail avec les types d'éléments de travail. Personnalisez avec des icônes, des arrière-plans et des propriétés et configurez-les pour ce projet.",
+        "description": "Adaptez les éléments de travail à votre travail avec les types d'éléments de travail. Personnalisez avec des icônes, des arrière-plans et des propriétés et configurez-les pour ce département.",
         "primary_button": {
           "text": "Activer"
         },
         "confirmation": {
           "title": "Une fois activés, les types d'éléments de travail ne peuvent pas être désactivés.",
-          "description": "L'élément de travail de Paradise Task Tracker deviendra le type d'élément de travail par défaut pour ce projet et apparaîtra avec son icône et son arrière-plan dans ce projet.",
+          "description": "L'élément de travail de Paradise Task Tracker deviendra le type d'élément de travail par défaut pour ce département et apparaîtra avec son icône et son arrière-plan dans ce département.",
           "button": {
             "default": "Activer",
             "loading": "Configuration en cours"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Passez à Pro pour activer les types d'éléments de travail.",
-        "description": "Adaptez les éléments de travail à votre travail avec les types d'éléments de travail. Personnalisez avec des icônes, des arrière-plans et des propriétés et configurez-les pour ce projet.",
+        "description": "Adaptez les éléments de travail à votre travail avec les types d'éléments de travail. Personnalisez avec des icônes, des arrière-plans et des propriétés et configurez-les pour ce département.",
         "primary_button": {
           "text": "Obtenir Pro"
         }
       },
       "upgrade": {
         "title": "Mettez à niveau pour activer les types d'éléments de travail.",
-        "description": "Adaptez les éléments de travail à votre travail avec les types d'éléments de travail. Personnalisez avec des icônes, des arrière-plans et des propriétés et configurez-les pour ce projet.",
+        "description": "Adaptez les éléments de travail à votre travail avec les types d'éléments de travail. Personnalisez avec des icônes, des arrière-plans et des propriétés et configurez-les pour ce département.",
         "primary_button": {
           "text": "Mettre à niveau"
         }
