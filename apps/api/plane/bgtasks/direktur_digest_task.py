@@ -12,8 +12,8 @@ selesai di jendela laporan, terlambat (dan yang macet > STUCK_AFTER_DAYS, bawaan
 hari), jatuh tempo hari ini, dan DIGEST_LOOKAHEAD_DAYS (bawaan 7) hari ke depan.
 Render ada di `direktur_digest_email` (murni).
 
-Cakupan = `divisi_diawasi()`: seluruh project, atau yang dibatasi
-`PengawasanDivisi`. Struktur divisi belum diisi = tiap project jadi satu unit di
+Cakupan = `divisi_diawasi()`: seluruh project (baris `PengawasanDivisi` tidak
+lagi membatasi, KEP-93). Struktur divisi belum diisi = tiap project jadi satu unit di
 bawah "Tanpa divisi".
 
 Tetap tanpa opt-in (KEP-42: "keep it always on"). Ringkasan harian direktur

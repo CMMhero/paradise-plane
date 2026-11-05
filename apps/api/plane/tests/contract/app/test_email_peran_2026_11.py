@@ -151,10 +151,11 @@ class TestLaporanDirektur:
         assert "Perlu perhatian" in html
 
     @pytest.mark.django_db
-    def test_pengawasan_divisi_membatasi_cakupan(self, dunia):
+    def test_baris_pengawasan_lama_tidak_membatasi_cakupan(self, dunia):
+        # KEP-93: "Supervised divisions" dibuang; baris lama tidak berpengaruh.
+        sebelum = [d.nama for d in self._laporan(dunia, dunia.dir).divisi]
         PengawasanDivisi.objects.create(workspace=dunia.ws, member=dunia.dir, project=dunia.project["REK"])
-        lap = self._laporan(dunia, dunia.dir)
-        assert [d.nama for d in lap.divisi] == ["HRGA"]
+        assert [d.nama for d in self._laporan(dunia, dunia.dir).divisi] == sebelum
 
     @pytest.mark.django_db
     def test_hanya_direktur_yang_dikirimi_sekali(self, dunia, settings):

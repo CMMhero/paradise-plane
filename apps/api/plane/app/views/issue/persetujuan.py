@@ -114,12 +114,13 @@ class _Wewenang:
     def _hitung(self, workspace_id, project_id):
         kunci = (str(workspace_id), str(project_id))
         if kunci not in self._cache:
-            if kunci[0] not in self._peta:
-                self._peta[kunci[0]] = peta_tingkat(workspace_id)
-            peta = self._peta[kunci[0]]
+            # KEP-93: jenjang yang berlaku DI project ini, jadi peta per project.
+            if kunci not in self._peta:
+                self._peta[kunci] = peta_tingkat(workspace_id, project_id)
+            peta = self._peta[kunci]
             calon = calon_penyetuju(workspace_id, project_id, peta=peta)
             self._cache[kunci] = (
-                # Tingkat dari peta yang sama dengan `tingkat_anggota` (MAX per orang).
+                # Tingkat dari peta yang sama dengan `tingkat_anggota(..., project_id)`.
                 [{"id": str(uid), "tingkat": peta.get(uid)} for uid in calon],
                 boleh_memutuskan(self.user, workspace_id, project_id, penyetuju=calon),
             )
@@ -133,7 +134,7 @@ class _Wewenang:
         tinggi dari pemohon, dan "boleh" dihitung ulang dari daftar yang tersaring.
         """
         calon, boleh = self._hitung(baris.workspace_id, baris.project_id)
-        peta = self._peta[str(baris.workspace_id)]
+        peta = self._peta[(str(baris.workspace_id), str(baris.project_id))]
         tingkat_pemohon = peta.get(baris.pemohon_id)
         if tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR:
             return calon, boleh
@@ -162,7 +163,7 @@ def _serial(baris, peran, boleh_memutuskan, penyetuju=None):
     """
     if penyetuju is None:
         penyetuju = [
-            {"id": str(uid), "tingkat": tingkat_anggota(uid, baris.workspace_id)}
+            {"id": str(uid), "tingkat": tingkat_anggota(uid, baris.workspace_id, baris.project_id)}
             for uid in calon_penyetuju(baris.workspace_id, baris.project_id)
         ]
     return {
@@ -261,7 +262,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             return Response(
                 {
                     "mode": "semua",
-                    "tingkat_saya": tingkat_anggota(saya, project.workspace_id),
+                    "tingkat_saya": tingkat_anggota(saya, project.workspace_id, project.id),
                     "user_ids": [str(u) for u in anggota],
                     # Klien memakai dua kunci ini untuk mencerminkan `galat_ubah_tugas`:
                     # gerbang mati = tidak ada kunci edit; Super Admin dibaca klien sendiri.
@@ -271,7 +272,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 }
             )
 
-        tingkat = tingkat_anggota(saya, project.workspace_id)
+        tingkat = tingkat_anggota(saya, project.workspace_id, project.id)
         if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
             anggota = list(
                 ProjectMember.objects.filter(project_id=project_id, is_active=True).values_list(
@@ -455,7 +456,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             {
                 "gerbang_aktif": gerbang_aktif(),
                 "aturan": _aturan_tugas(),
-                "tingkat_saya": tingkat_anggota(request.user.id, project.workspace_id),
+                "tingkat_saya": tingkat_anggota(request.user.id, project.workspace_id, project.id),
                 "jumlah": len(hasil),
                 "hasil": hasil,
             }

@@ -57,8 +57,11 @@ from plane.utils.hierarki import (
     FLAG_GERBANG,
     calon_penyetuju,
     divisi_diawasi,
+    galat_penugasan,
     jangkauan_hierarki,
+    peta_tingkat,
     struktur_aktif,
+    tingkat_anggota,
 )
 
 URL_ISSUES = "/api/workspaces/{slug}/projects/{project_id}/issues/"
@@ -749,13 +752,15 @@ class TestPenempatanMenambahBukanMemindah:
             super_admin,
             {
                 "member_id": str(org.manager.id),
-                "divisi_ids": [str(org.sales.id), str(org.hrga.id)],
+                # KEP-93: departemennya di divisi LAIN (HR di HRGA, ia memimpin Sales).
+                "divisi_ids": [str(org.sales.id)],
                 "departemen_ids": [str(org.hr.id)],
             },
         )
         assert r.status_code == status.HTTP_200_OK, r.data
-        assert set(r.data["member"]["divisi_ids"]) == {str(org.sales.id), str(org.hrga.id)}
+        assert r.data["member"]["divisi_ids"] == [str(org.sales.id)]
         assert r.data["member"]["departemen_ids"] == [str(org.hr.id)]
+        assert r.data["member"]["peran_departemen"] == {str(org.hr.id): TINGKAT_SUPERVISOR}
         for p in (org.p1, org.p2, org.p3):
             assert _aktif(org.manager, p) and _role(org.manager, p) == 20
 
@@ -857,3 +862,257 @@ class TestPenempatanMenambahBukanMemindah:
         legal = Departemen.objects.get(kode="LEGAL")
         assert _tempat(org.staf2, org.ws) == {(org.smt2.id, None), (legal.id, None)}
         assert _aktif(org.staf2, org.p2) and _aktif(org.staf2, p)
+
+
+# --------------------------------------------------------------------------
+# KEP-93: peran per tempat, tidak ada "manager departemen"
+# --------------------------------------------------------------------------
+
+
+def _tingkat_baris(user, workspace):
+    """{(departemen_id|None, divisi_id|None): tingkat} baris aktif orang ini."""
+    return {
+        (d, v): t
+        for t, d, v in JabatanOrganisasi.objects.filter(workspace=workspace, member=user).values_list(
+            "tingkat", "departemen_id", "divisi_id"
+        )
+    }
+
+
+@pytest.mark.contract
+class TestPeranPerTempat:
+    """Manager Sales yang duduk di departemen HR (divisi HRGA) memegang peran
+    Staf/Supervisor DI HR, dan tetap Manager di Sales."""
+
+    @pytest.mark.django_db
+    def test_manager_ke_departemen_divisinya_sendiri_ditolak(self, org, super_admin):
+        sebelum = _tingkat_baris(org.manager, org.ws)
+        r = _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "departemen_id": str(org.smt1.id)})
+        assert r.status_code == status.HTTP_400_BAD_REQUEST
+        assert r.data["kode"] == "sudah-memimpin-divisi"
+        assert _tingkat_baris(org.manager, org.ws) == sebelum
+
+    @pytest.mark.django_db
+    def test_peran_departemen_manager_ditolak(self, org, super_admin):
+        r = _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(org.manager.id),
+                "departemen_id": str(org.hr.id),
+                "peran_departemen": {str(org.hr.id): TINGKAT_MANAGER},
+            },
+        )
+        assert r.status_code == status.HTTP_400_BAD_REQUEST
+        assert (org.hr.id, None) not in _tingkat_baris(org.manager, org.ws)
+
+    @pytest.mark.django_db
+    def test_manager_jadi_staf_di_departemen_divisi_lain(self, org, super_admin, monkeypatch):
+        r = _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(org.manager.id),
+                "departemen_id": str(org.hr.id),
+                "peran_departemen": {str(org.hr.id): TINGKAT_MEMBER},
+            },
+        )
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert r.data["member"]["tingkat"] == TINGKAT_MANAGER
+        assert _tingkat_baris(org.manager, org.ws) == {
+            (None, org.sales.id): TINGKAT_MANAGER,
+            (org.hr.id, None): TINGKAT_MEMBER,
+        }
+        # Jenjangnya per project: Manager di Sales, Staf di HR.
+        assert tingkat_anggota(org.manager.id, org.ws.id) == TINGKAT_MANAGER
+        assert tingkat_anggota(org.manager.id, org.ws.id, org.p1.id) == TINGKAT_MANAGER
+        assert tingkat_anggota(org.manager.id, org.ws.id, org.p3.id) == TINGKAT_MEMBER
+        assert peta_tingkat(org.ws.id, org.p3.id)[org.manager.id] == TINGKAT_MEMBER
+        # Melihat HR sebagai staf, tidak mengawasinya, bukan penyetujunya.
+        assert jangkauan_hierarki(org.manager.id, org.ws.id)[org.p3.id] == 15
+        assert _role(org.manager, org.p3) == 15
+        assert org.p3.id not in divisi_diawasi(org.manager.id, org.ws.id)
+        assert org.manager.id not in calon_penyetuju(org.ws.id, org.p3.id, tingkat_pembuat=TINGKAT_MEMBER)
+        # Gerbang: di HR ia staf, jadi tidak bisa menugaskan rekan HR; di Sales tetap bisa.
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        rekan = _user("hrsup", org.ws)
+        _tempatkan(org.ws, rekan, TINGKAT_SUPERVISOR, departemen=org.hr)
+        assert galat_penugasan(org.p3.id, [rekan.id], actor=org.manager) is not None
+        assert galat_penugasan(org.p2.id, [org.staf2.id], actor=org.manager) is None
+
+    @pytest.mark.django_db
+    def test_manager_jadi_supervisor_di_departemen_divisi_lain(self, org, super_admin):
+        r = _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "departemen_id": str(org.hr.id)})
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert r.data["member"]["peran_departemen"] == {str(org.hr.id): TINGKAT_SUPERVISOR}
+        assert tingkat_anggota(org.manager.id, org.ws.id, org.p3.id) == TINGKAT_SUPERVISOR
+        assert org.p3.id in divisi_diawasi(org.manager.id, org.ws.id)
+        assert org.manager.id in calon_penyetuju(org.ws.id, org.p3.id, tingkat_pembuat=TINGKAT_MEMBER)
+
+    @pytest.mark.django_db
+    def test_ganti_peran_saja(self, org, super_admin):
+        _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "departemen_id": str(org.hr.id)})
+        r = _setel_hierarki(
+            super_admin,
+            {"member_id": str(org.manager.id), "peran_departemen": {str(org.hr.id): TINGKAT_MEMBER}},
+        )
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert _tingkat_baris(org.manager, org.ws)[(org.hr.id, None)] == TINGKAT_MEMBER
+
+    @pytest.mark.django_db
+    def test_memimpin_divisi_melepas_departemen_di_dalamnya(self, org, super_admin):
+        _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "departemen_id": str(org.hr.id)})
+        r = _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "divisi_id": str(org.hrga.id)})
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert r.data["member"]["departemen_dilepas"] == [str(org.hr.id)]
+        assert _tempat(org.manager, org.ws) == {(None, org.sales.id), (None, org.hrga.id)}
+        assert _role(org.manager, org.p3) == 20
+
+    @pytest.mark.django_db
+    def test_manager_tanpa_divisi_tetap_manager(self, org, super_admin):
+        _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "departemen_id": str(org.hr.id)})
+        r = _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "divisi_ids": []})
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert r.data["member"]["tingkat"] == TINGKAT_MANAGER
+        assert _tingkat_baris(org.manager, org.ws) == {
+            (None, None): TINGKAT_MANAGER,
+            (org.hr.id, None): TINGKAT_SUPERVISOR,
+        }
+
+    @pytest.mark.django_db
+    def test_supervisor_bisa_staf_di_departemen_lain(self, org, super_admin):
+        r = _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(org.sup1.id),
+                "departemen_id": str(org.hr.id),
+                "peran_departemen": {str(org.hr.id): TINGKAT_MEMBER},
+            },
+        )
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert _tingkat_baris(org.sup1, org.ws) == {
+            (org.smt1.id, None): TINGKAT_SUPERVISOR,
+            (org.hr.id, None): TINGKAT_MEMBER,
+        }
+        assert r.data["member"]["tingkat"] == TINGKAT_SUPERVISOR
+        assert tingkat_anggota(org.sup1.id, org.ws.id, org.p3.id) == TINGKAT_MEMBER
+        assert org.p3.id not in divisi_diawasi(org.sup1.id, org.ws.id)
+
+    @pytest.mark.django_db
+    def test_staf_jadi_supervisor_di_satu_departemen_saja(self, org, super_admin):
+        _setel_hierarki(super_admin, {"member_id": str(org.staf1.id), "departemen_id": str(org.hr.id)})
+        r = _setel_hierarki(
+            super_admin,
+            {"member_id": str(org.staf1.id), "peran_departemen": {str(org.hr.id): TINGKAT_SUPERVISOR}},
+        )
+        assert r.status_code == status.HTTP_200_OK, r.data
+        # Jenjang orangnya = peran tertingginya; SMT1 tetap Staf.
+        assert r.data["member"]["tingkat"] == TINGKAT_SUPERVISOR
+        assert _tingkat_baris(org.staf1, org.ws) == {
+            (org.smt1.id, None): TINGKAT_MEMBER,
+            (org.hr.id, None): TINGKAT_SUPERVISOR,
+        }
+        assert divisi_diawasi(org.staf1.id, org.ws.id) == {org.p3.id}
+        # Turun lagi ke Staf di HR: jenjangnya ikut turun, tidak ada supervisor tanpa tempat.
+        r = _setel_hierarki(
+            super_admin,
+            {"member_id": str(org.staf1.id), "peran_departemen": {str(org.hr.id): TINGKAT_MEMBER}},
+        )
+        assert r.data["member"]["tingkat"] == TINGKAT_MEMBER
+        assert (None, None) not in _tingkat_baris(org.staf1, org.ws)
+
+    @pytest.mark.django_db
+    def test_jenjang_eksplisit_tetap_seragam(self, org, super_admin):
+        _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(org.sup1.id),
+                "departemen_id": str(org.hr.id),
+                "peran_departemen": {str(org.hr.id): TINGKAT_MEMBER},
+            },
+        )
+        r = _setel_hierarki(super_admin, {"member_id": str(org.sup1.id), "tingkat": TINGKAT_SUPERVISOR})
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert set(_tingkat_baris(org.sup1, org.ws).values()) == {TINGKAT_SUPERVISOR}
+
+    @pytest.mark.django_db
+    def test_manager_diturunkan_ke_departemen_divisinya_dari_papan(self, org, super_admin):
+        """Seret dari struktur: lepas divisi, duduk di departemennya, jenjang ikut turun.
+        Peran di departemen lain (HR = Staf) tidak diseragamkan."""
+        _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(org.manager.id),
+                "departemen_id": str(org.hr.id),
+                "peran_departemen": {str(org.hr.id): TINGKAT_MEMBER},
+            },
+        )
+        r = _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(org.manager.id),
+                "divisi_ids": [],
+                "departemen_ids": [str(org.hr.id), str(org.smt1.id)],
+                "peran_departemen": {str(org.smt1.id): TINGKAT_SUPERVISOR},
+                "tingkat": TINGKAT_SUPERVISOR,
+                "pertahankan_peran": True,
+            },
+        )
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert r.data["member"]["tingkat"] == TINGKAT_SUPERVISOR
+        assert _tingkat_baris(org.manager, org.ws) == {
+            (org.smt1.id, None): TINGKAT_SUPERVISOR,
+            (org.hr.id, None): TINGKAT_MEMBER,
+        }
+        assert org.p2.id not in divisi_diawasi(org.manager.id, org.ws.id)
+
+    @pytest.mark.django_db
+    def test_direktur_ditempatkan_berarti_diturunkan(self, org, super_admin):
+        """Papan: direktur dilepas di lajur Staf departemen / zona Managers divisi."""
+        dir1, dir2 = _user("dir1", org.ws), _user("dir2", org.ws)
+        for d in (dir1, dir2):
+            _setel_hierarki(super_admin, {"member_id": str(d.id), "tingkat": 40})
+        r = _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(dir1.id),
+                "tingkat": TINGKAT_MEMBER,
+                "departemen_ids": [str(org.hr.id)],
+                "divisi_ids": [],
+                "peran_departemen": {str(org.hr.id): TINGKAT_MEMBER},
+            },
+        )
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert _tingkat_baris(dir1, org.ws) == {(org.hr.id, None): TINGKAT_MEMBER}
+        r = _setel_hierarki(
+            super_admin,
+            {
+                "member_id": str(dir2.id),
+                "tingkat": TINGKAT_MANAGER,
+                "divisi_ids": [str(org.hrga.id)],
+                "departemen_ids": [],
+            },
+        )
+        assert r.status_code == status.HTTP_200_OK, r.data
+        assert _tingkat_baris(dir2, org.ws) == {(None, org.hrga.id): TINGKAT_MANAGER}
+
+    @pytest.mark.django_db
+    def test_migrasi_0169_merapikan_manager_departemen(self, org):
+        import importlib
+
+        from django.apps import apps as django_apps
+
+        manager2 = _user("mgr2", org.ws)
+        _tempatkan(org.ws, org.manager, TINGKAT_MANAGER, departemen=org.smt1)
+        _tempatkan(org.ws, org.manager, TINGKAT_MANAGER, departemen=org.hr)
+        _tempatkan(org.ws, manager2, TINGKAT_MANAGER, departemen=org.hr)
+
+        importlib.import_module("plane.db.migrations.0169_peran_per_tempat").maju(django_apps, None)
+
+        assert _tingkat_baris(org.manager, org.ws) == {
+            (None, org.sales.id): TINGKAT_MANAGER,
+            (org.hr.id, None): TINGKAT_SUPERVISOR,
+        }
+        assert _tingkat_baris(manager2, org.ws) == {
+            (None, None): TINGKAT_MANAGER,
+            (org.hr.id, None): TINGKAT_SUPERVISOR,
+        }
+        assert tingkat_anggota(manager2.id, org.ws.id) == TINGKAT_MANAGER

@@ -37,9 +37,12 @@ export const PageWrapper = (props: TPageWrapperProps) => {
           </div>
         )
       )}
-      <div className="vertical-scrollbar scrollbar-sm flex-grow overflow-hidden overflow-y-scroll px-4 pb-4">
-        {children}
-      </div>
+      {/* Paradise: BUKAN wadah gulir. Tingginya tidak dibatasi, jadi ia tak pernah
+          menggulir sendiri (yang menggulir wadah di layout dashboard), tapi
+          overflow-y-scroll tetap menjadikannya induk gulir terdekat dan membunuh
+          `position: sticky` di dalamnya (panel People papan Organization).
+          overflow-x-clip tetap memotong konten lebar tanpa jadi wadah gulir. */}
+      <div className="overflow-x-clip px-4 pb-4">{children}</div>
     </div>
   );
 };

@@ -53,7 +53,13 @@ from plane.db.models import (
     Workspace,
     WorkspaceMember,
 )
-from plane.db.penempatan import penempatan_sekarang, setel_penempatan
+from plane.db.penempatan import (
+    PERAN_DEPARTEMEN_SAH,
+    departemen_dalam_divisi,
+    penempatan_sekarang,
+    peran_departemen_sekarang,
+    setel_penempatan,
+)
 from plane.license.api.views.base import BaseAPIView
 from plane.utils.hierarki import FLAG_GERBANG, gerbang_aktif
 
@@ -75,6 +81,11 @@ _AKUN_UJI = {"tester@paradiseperkasa.com"}
 # patut dicurigai sebagai warisan, bukan penunjukan. 5 dipilih karena admin divisi
 # yang sah memimpin 1–2 divisi (terukur: maksimum 2 di luar warisan).
 _AMBANG_ADMIN_LINTAS = 5
+
+
+def dep_ditambah_ids(baru, lama):
+    """Departemen yang BARU ditambahkan permintaan ini (bukan yang sudah dipegang)."""
+    return set(baru) - set(lama)
 
 
 class InstanceHierarkiEndpoint(BaseAPIView):
@@ -125,11 +136,14 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         # ada di `departemen_ids` tiap baris anggota.
         dept_orang = {}
         div_orang = {}
-        for uid, dep, div in JabatanOrganisasi.objects.filter(workspace=workspace).values_list(
-            "member_id", "departemen_id", "divisi_id"
+        peran_orang = {}
+        for uid, dep, div, t in JabatanOrganisasi.objects.filter(workspace=workspace).values_list(
+            "member_id", "departemen_id", "divisi_id", "tingkat"
         ):
             if dep:
                 dept_orang.setdefault(uid, set()).add(str(dep))
+                # KEP-93: peran orang ini DI departemen itu (manager = Staf/Supervisor).
+                peran_orang.setdefault(uid, {})[str(dep)] = t
             if div:
                 div_orang.setdefault(uid, set()).add(str(div))
 
@@ -193,6 +207,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     "divisi_id": sorted(div_orang.get(uid, set()))[0] if div_orang.get(uid) else None,
                     "departemen_ids": dept_ids,
                     "divisi_ids": sorted(div_orang.get(uid, set())),
+                    "peran_departemen": peran_orang.get(uid, {}),
                     "punya_atasan": punya_atasan,
                 }
             )
@@ -301,7 +316,6 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                                                  # orangnya kembali Staf tanpa tempat
           "sumber": "...",                    # opsional, default "manual"
           "catatan": "...",                   # opsional
-          "pengawasan": ["<project_id>", ...] # opsional: MENGGANTI seluruh baris pengawasan
           "departemen_ids": ["<dep_id>", ...] # opsional: MENGGANTI himpunan departemen
                                                  # (jenjang apa pun boleh banyak)
           "divisi_ids": ["<div_id>", ...]     # opsional: MENGGANTI himpunan divisi
@@ -310,6 +324,9 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                                                  # (null = cabut semua departemen)
           "divisi_id": "<div_id>"|null       # singkatan: TAMBAH satu divisi
                                                  # (null = cabut semua divisi)
+          "peran_departemen": {"<dep_id>": 10|20}  # opsional, KEP-93: peran per departemen
+          "pertahankan_peran": true         # opsional: `tingkat` tidak menyeragamkan
+                                                 # peran departemen yang lain
         }
         ```
 
@@ -356,23 +373,13 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         else:
             tingkat = "tidak-diubah"
 
-        # --- validasi pengawasan sebelum menulis apa pun -------------------
-        pengawasan = None
+        # "Supervised divisions" dibuang (KEP-93): resolver tidak membacanya lagi, jadi
+        # menulisnya hanya menyimpan data mati. Ditolak terang, bukan diabaikan diam-diam.
         if "pengawasan" in request.data:
-            diminta = request.data.get("pengawasan") or []
-            if not isinstance(diminta, list):
-                return Response({"error": "pengawasan must be a list of project ids."}, status=400)
-            sah = set(
-                Project.objects.filter(workspace=workspace, deleted_at__isnull=True).values_list("id", flat=True)
+            return Response(
+                {"error": "Supervised divisions were removed. Authority comes from placements."},
+                status=400,
             )
-            asing = [str(pid) for pid in diminta if str(pid) not in {str(s) for s in sah}]
-            if asing:
-                # Gagal-tertutup: id yang tidak dikenal lebih mungkin salah kirim daripada
-                # niat, dan menyimpannya berarti memberi kewenangan atas project asing.
-                return Response(
-                    {"error": f"Unknown projects in this workspace: {', '.join(asing)}."}, status=400
-                )
-            pengawasan = [pid for pid in diminta]
 
         # --- penempatan (KEP-76): satu daftar tempat, menambah != memindah ------
         # `departemen_ids` / `divisi_ids`: daftar PENGGANTI (kosong = cabut semua
@@ -408,6 +415,30 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             return Response({"error": galat}, status=400)
         tempat_diubah = dep_baru != dep_lama or div_baru != div_lama
 
+        # KEP-93: peran per departemen (hanya bermakna untuk manager ke atas).
+        peran_departemen = None
+        if "peran_departemen" in request.data:
+            diminta = request.data.get("peran_departemen") or {}
+            if not isinstance(diminta, dict):
+                return Response({"error": "peran_departemen must be an object of department id to level."}, status=400)
+            peran_departemen = {}
+            for dep_id, nilai in diminta.items():
+                if str(dep_id) not in sah_dep:
+                    return Response({"error": f"Unknown department in this workspace: {dep_id}."}, status=400)
+                try:
+                    nilai = int(nilai)
+                except (TypeError, ValueError):
+                    nilai = None
+                if nilai not in PERAN_DEPARTEMEN_SAH:  # tidak ada manager departemen
+                    return Response(
+                        {"error": "A department role is Staff (10) or Supervisor (20), never Manager."},
+                        status=400,
+                    )
+                peran_departemen[str(dep_id)] = nilai
+            peran_lama = peran_departemen_sekarang(workspace.id, user.id)
+            if any(peran_lama.get(d) != v for d, v in peran_departemen.items()):
+                tempat_diubah = True
+
         # Jenjang efektif. Tidak pernah menolak hanya karena urutan langkah:
         # orang tanpa jenjang yang ditempatkan jadi Staf (departemen) atau Manager
         # (divisi); memimpin divisi baru menaikkan jenjang ke Manager kalau jenjang
@@ -432,13 +463,42 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         else:
             tingkat_baru = "tidak-diubah"  # tidak ada apa pun untuk ditulis
 
+        # KEP-93: manager tidak duduk di departemen divisi yang ia pimpin. Menambahkannya
+        # = ditolak (jelas salah niat); departemen lama yang tertelan divisi yang BARU
+        # dipimpin = dilepas dan dilaporkan, karena divisinya sudah menjangkaunya.
+        departemen_dilepas = set()
+        if tingkat_baru not in (None, "tidak-diubah") and tingkat_baru >= TINGKAT_MANAGER:
+            tertelan = departemen_dalam_divisi(dep_baru, div_baru)
+            if tertelan & dep_ditambah_ids(dep_baru, dep_lama):
+                return Response(
+                    {
+                        "error": (
+                            f"{user.display_name} already leads this department's division as manager. "
+                            "There is no department manager role."
+                        ),
+                        "kode": "sudah-memimpin-divisi",
+                    },
+                    status=400,
+                )
+            departemen_dilepas = tertelan
+            dep_baru = dep_baru - tertelan
+
         divisi_dilepas = set()
         with transaction.atomic():
             from plane.db.jangkauan import sinkronkan_satu, tunda_sinkron  # noqa: PLC0415
 
             with tunda_sinkron():
+                # Jenjang yang sama dikirim ulang tetap menyeragamkan peran departemen
+                # yang menyimpang (KEP-93), jadi ia juga dihitung perubahan.
+                peran_menyimpang = (
+                    tingkat_baru not in (None, "tidak-diubah")
+                    and "tingkat" in request.data
+                    and not request.data.get("pertahankan_peran")
+                    and tingkat_baru < TINGKAT_MANAGER
+                    and any(t != tingkat_baru for t in peran_departemen_sekarang(workspace.id, user.id).values())
+                )
                 if tingkat_baru != "tidak-diubah" and (
-                    tingkat_baru != tingkat_lama or tempat_diubah or "catatan" in request.data
+                    tingkat_baru != tingkat_lama or tempat_diubah or peran_menyimpang or "catatan" in request.data
                 ):
                     divisi_dilepas = setel_penempatan(
                         workspace,
@@ -448,28 +508,13 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                         div_baru,
                         sumber=request.data.get("sumber") or "manual",
                         catatan=request.data.get("catatan") if "catatan" in request.data else None,
+                        peran_departemen=peran_departemen,
+                        # Jenjang dipilih eksplisit = semua departemen ikut (KEP-93),
+                        # kecuali `pertahankan_peran`: jenjang turun karena manager
+                        # dipindah ke departemen divisinya sendiri (papan), peran
+                        # departemen lainnya tetap.
+                        seragam="tingkat" in request.data and not request.data.get("pertahankan_peran"),
                     )
-                if pengawasan is not None:
-                    sekarang = {
-                        str(pid)
-                        for pid in PengawasanDivisi.objects.filter(workspace=workspace, member=user).values_list(
-                            "project_id", flat=True
-                        )
-                    }
-                    ingin = {str(pid) for pid in pengawasan}
-                    for pid in sekarang - ingin:
-                        obj = PengawasanDivisi.objects.filter(workspace=workspace, member=user, project_id=pid).first()
-                        if obj:
-                            obj.delete()
-                    for pid in ingin - sekarang:
-                        lama = PengawasanDivisi.all_objects.filter(
-                            workspace=workspace, member=user, project_id=pid
-                        ).first()
-                        if lama is None:
-                            PengawasanDivisi.objects.create(workspace=workspace, member=user, project_id=pid)
-                        else:
-                            lama.deleted_at = None
-                            lama.save(update_fields=["deleted_at", "updated_at"])
 
             sinkronkan_satu(workspace.id, user.id)
 
@@ -478,6 +523,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             .order_by("departemen_id", "divisi_id")
             .values_list("tingkat", "departemen_id", "divisi_id")
         )
+        peran_semua = {str(d): t for t, d, _ in semua if d}
         tingkat_sekarang = max((t for t, _, _ in semua), default=TINGKAT_MEMBER)
         dept_semua = sorted({str(d) for _, d, _ in semua if d})
         divisi_semua = sorted({str(v) for _, _, v in semua if v})
@@ -496,13 +542,10 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     # Divisi yang dicabut otomatis karena jenjangnya turun di bawah
                     # Manager (KEP-76). UI menampilkannya, bukan menolak simpan.
                     "divisi_dilepas": sorted(divisi_dilepas),
+                    # Departemen yang tertelan divisi yang kini ia pimpin (KEP-93).
+                    "departemen_dilepas": sorted(departemen_dilepas),
+                    "peran_departemen": peran_semua,
                     "tingkat_nama": TINGKAT_NAMA.get(tingkat_sekarang) if tingkat_sekarang is not None else None,
-                    "pengawasan": sorted(
-                        str(pid)
-                        for pid in PengawasanDivisi.objects.filter(workspace=workspace, member=user).values_list(
-                            "project_id", flat=True
-                        )
-                    ),
                 }
             }
         )

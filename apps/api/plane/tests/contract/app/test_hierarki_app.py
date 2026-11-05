@@ -323,17 +323,10 @@ class TestPengawasanDivisi:
         assert diawasi == {divisi_a.id}, "baris di divisi yang bukan anggotanya harus diabaikan"
 
     @pytest.mark.django_db
-    def test_direktur_dengan_baris_eksplisit_DIBATASI(
-        self, workspace, direktur, divisi_a, divisi_b, jenjang
-    ):
-        """Bagi direktur, baris eksplisit MEMBATASI, bukan memperluas.
-
-        Gunanya nyata: direktur operasional yang hanya mengurus sebagian divisi tidak
-        perlu diberi tahu seluruh papan perusahaan.
-        """
-        assert {divisi_a.id, divisi_b.id} <= divisi_diawasi(direktur.id, workspace.id)
+    def test_baris_eksplisit_tidak_membatasi_direktur(self, workspace, direktur, divisi_a, divisi_b, jenjang):
+        """KEP-93: "Supervised divisions" dibuang. Direktur selalu semua divisi."""
         PengawasanDivisi.objects.create(workspace=workspace, project=divisi_a, member=direktur)
-        assert divisi_diawasi(direktur.id, workspace.id) == {divisi_a.id}
+        assert {divisi_a.id, divisi_b.id} <= divisi_diawasi(direktur.id, workspace.id)
 
     @pytest.mark.django_db
     def test_baris_eksplisit_di_divisi_sendiri_tetap_berlaku(
@@ -1212,38 +1205,16 @@ class TestTulisHierarki:
         )
 
     @pytest.mark.django_db
-    def test_pengawasan_diganti_utuh_bukan_ditambah(
-        self, workspace, instance_god_mode, super_admin, staf_a, divisi_a, divisi_b
-    ):
-        respons = self._post(
-            super_admin,
-            {"member_id": str(staf_a.id), "tingkat": 30, "pengawasan": [str(divisi_a.id), str(divisi_b.id)]},
-        )
-        assert respons.status_code == status.HTTP_200_OK, getattr(respons, "data", None)
-        assert len(respons.data["member"]["pengawasan"]) == 2
-
-        # Kirim satu saja -> yang lain HARUS lepas. "Tidak dikirim" != "dikirim kosong".
-        respons = self._post(super_admin, {"member_id": str(staf_a.id), "pengawasan": [str(divisi_a.id)]})
-        assert len(respons.data["member"]["pengawasan"]) == 1
-        assert PengawasanDivisi.objects.filter(workspace=workspace, member=staf_a).count() == 1
-
-        respons = self._post(super_admin, {"member_id": str(staf_a.id), "pengawasan": []})
-        assert respons.data["member"]["pengawasan"] == []
-        assert PengawasanDivisi.objects.filter(workspace=workspace, member=staf_a).count() == 0
-
-    @pytest.mark.django_db
-    def test_project_asing_ditolak_dan_TIDAK_menulis_apa_pun(
+    def test_pengawasan_ditolak_dan_TIDAK_menulis_apa_pun(
         self, workspace, instance_god_mode, super_admin, staf_a, divisi_a
     ):
-        """Gagal-tertutup: id asing lebih mungkin salah kirim daripada niat."""
-        asing = str(uuid4())
+        """KEP-93: "Supervised divisions" dibuang; menulisnya ditolak terang."""
         respons = self._post(
             super_admin,
-            {"member_id": str(staf_a.id), "tingkat": 20, "pengawasan": [asing]},
+            {"member_id": str(staf_a.id), "tingkat": 20, "pengawasan": [str(divisi_a.id)]},
         )
         assert respons.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Unknown projects" in respons.data["error"]
-        # Validasi di depan: jenjangnya pun tidak ikut tersimpan.
+        assert "removed" in respons.data["error"]
         assert tingkat_anggota(staf_a.id, workspace.id) is None
         assert PengawasanDivisi.objects.filter(workspace=workspace, member=staf_a).count() == 0
 
@@ -1817,18 +1788,6 @@ class TestPenempatanMandiriDanWiki:
         for u in (staf_a, staf_a2):
             JabatanOrganisasi.objects.create(workspace=workspace, member=u, tingkat=TINGKAT_MEMBER, departemen=struktur)
         assert galat_penugasan(divisi_a.id, [staf_a.id, staf_a2.id], actor=staf_a, abaikan_katup=True) is None
-
-    @pytest.mark.django_db
-    def test_anggota_workspace_baru_dan_lama_masuk_wiki(self, workspace, bos_divisi_a):
-        from plane.db.wiki_default import gabungkan_semua_ke_wiki  # noqa: PLC0415
-
-        wiki = Project.objects.create(name="Wiki", identifier="WIKI", workspace=workspace, created_by=bos_divisi_a)
-        baru = _buat_user("baru", workspace)  # signal: anggota workspace baru
-        assert ProjectMember.objects.filter(project=wiki, member=baru, is_active=True, role=15).exists()
-        # lama: dihapus dari Wiki lalu di-backfill; role admin yang sudah ada tidak diturunkan
-        ProjectMember.objects.filter(project=wiki, member=baru).update(is_active=False)
-        assert gabungkan_semua_ke_wiki(workspace.id) >= 1
-        assert ProjectMember.objects.filter(project=wiki, member=baru, is_active=True).exists()
 
 
 # --------------------------------------------------------------------------

@@ -7,8 +7,10 @@
 
 Model orang di struktur organisasi, sesudah KEP-76:
 
-- **Satu jenjang per orang** (Staf / Supervisor / Manager / Direktur), disimpan
-  sama di setiap barisnya.
+- **Satu jenjang per orang** (Staf / Supervisor / Manager / Direktur) = baris
+  tertingginya. Sejak KEP-93 baris departemen membawa PERAN orang itu di
+  departemen tersebut: manager boleh jadi Staf/Supervisor di departemen divisi
+  LAIN, tidak pernah "manager departemen".
 - **Daftar penempatan**: departemen (jenjang apa pun, boleh banyak) dan divisi
   (hanya manager ke atas, boleh banyak). Satu baris per tempat.
 - Menambah tempat = MENAMBAH baris, tidak pernah memindahkan. Memindahkan adalah
@@ -73,7 +75,50 @@ def penempatan_sekarang(workspace_id, user_id):
     return tingkat, deps, divs
 
 
-def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumber="manual", catatan=None):
+def departemen_dalam_divisi(departemen_ids, divisi_ids):
+    """Id departemen (str) di `departemen_ids` yang berada di salah satu `divisi_ids`.
+
+    KEP-93: manager memimpin divisinya, jadi ia tidak pernah DUDUK di departemen
+    divisi itu. Tidak ada "manager departemen"; baris semacam itu hanya menurunkan
+    dia diam-diam ke jenjang departemen.
+    """
+    from plane.db.models import Departemen  # noqa: PLC0415
+
+    if not departemen_ids or not divisi_ids:
+        return set()
+    return {
+        str(d)
+        for d in Departemen.objects.filter(id__in=list(departemen_ids), divisi_id__in=list(divisi_ids)).values_list(
+            "id", flat=True
+        )
+    }
+
+
+def peran_departemen_sekarang(workspace_id, user_id):
+    """{departemen_id (str): tingkat baris itu}, peran orang ini per departemen (KEP-93)."""
+    return {
+        str(d): t
+        for t, d in JabatanOrganisasi.objects.filter(
+            workspace_id=workspace_id, member_id=user_id, departemen__isnull=False
+        ).values_list("tingkat", "departemen_id")
+    }
+
+
+# Peran yang boleh dipegang di satu departemen (KEP-93): tidak ada "manager departemen".
+PERAN_DEPARTEMEN_SAH = (TINGKAT_MEMBER, TINGKAT_SUPERVISOR)
+
+
+def setel_penempatan(
+    workspace,
+    user,
+    tingkat,
+    departemen_ids,
+    divisi_ids,
+    sumber="manual",
+    catatan=None,
+    peran_departemen=None,
+    seragam=False,
+):
     """Jadikan baris aktif orang ini TEPAT (tingkat, departemen_ids, divisi_ids).
 
     Tidak ada lagi "jenjang belum diisi" (4 Nov 2026): orang selalu setidaknya Staf.
@@ -83,6 +128,19 @@ def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumbe
     - Supervisor/manager yang dicabut dari tempat terakhirnya jatuh ke Staf
       (`tingkat_sesudah_cabut`). Pemanggil membaca jenjang akhir dari barisnya.
     - Divisi di bawah Manager dibuang di sini juga (penjaga terakhir).
+
+    Peran per tempat (KEP-93, 5 Nov 2026): `tingkat` adalah jenjang ORANGNYA,
+    baris departemen membawa peran orang itu DI departemen tersebut:
+
+    - Peran di satu departemen selalu Staf atau Supervisor, tidak pernah Manager:
+      `peran_departemen` kalau dikirim, lalu peran lama, lalu min(jenjang, Supervisor)
+      untuk departemen baru. Orang bisa Supervisor di X sekaligus Staf di Y.
+    - `seragam=True` (jenjang dipilih eksplisit, mis. halaman Members): di bawah
+      Manager semua departemen ikut jenjang itu, seperti sebelum KEP-93.
+    - Di bawah Manager jenjang orangnya DITURUNKAN dari perannya: peran tertinggi.
+    - Manager ke atas: baris divisi = jenjangnya. Departemen di dalam divisi yang
+      ia pimpin dibuang. Manager tanpa divisi menyimpan jenjangnya di satu baris
+      tanpa tempat.
 
     Mengembalikan himpunan divisi yang dibuang karena jenjangnya di bawah Manager,
     supaya pemanggil bisa melaporkannya.
@@ -96,6 +154,7 @@ def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumbe
     divs = {str(v) for v in divisi_ids}
     dep_lama = {str(b.departemen_id) for b in aktif if b.departemen_id}
     div_lama = {str(b.divisi_id) for b in aktif if b.divisi_id}
+    peran_lama = {str(b.departemen_id): b.tingkat for b in aktif if b.departemen_id}
     tingkat_akhir = tingkat_sesudah_cabut(tingkat, dep_lama, div_lama, deps, divs)
     if tingkat_akhir != tingkat:
         tingkat = tingkat_akhir
@@ -103,11 +162,26 @@ def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumbe
     dibuang = set()
     if tingkat < TINGKAT_MANAGER and divs:
         dibuang, divs = divs, set()
+    if tingkat >= TINGKAT_MANAGER:
+        deps -= departemen_dalam_divisi(deps, divs)
 
-    ingin = {(d, None) for d in deps} | {(None, v) for v in divs}
-    if not ingin:
-        # Jenjang tanpa tempat (direktur, atau orang yang belum ditempatkan).
-        ingin = {TANPA_TEMPAT}
+    diminta = {str(k): v for k, v in (peran_departemen or {}).items()}
+
+    def peran(dep_id):
+        if dep_id in diminta:
+            return min(diminta[dep_id], TINGKAT_SUPERVISOR)
+        if seragam and tingkat < TINGKAT_MANAGER:
+            return tingkat
+        return min(peran_lama.get(dep_id, tingkat), TINGKAT_SUPERVISOR)
+
+    peran_dep = {d: peran(d) for d in deps}
+    if tingkat < TINGKAT_MANAGER and peran_dep:
+        tingkat = max(peran_dep.values())
+    ingin = {(d, None): t for d, t in peran_dep.items()} | {(None, v): tingkat for v in divs}
+    if not ingin or max(ingin.values()) < tingkat:
+        # Jenjang yang tidak terwakili satu tempat pun: direktur, orang belum
+        # ditempatkan, atau manager yang belum (atau tidak lagi) memimpin divisi.
+        ingin[TANPA_TEMPAT] = tingkat
 
     def kunci(b):
         return (str(b.departemen_id) if b.departemen_id else None, str(b.divisi_id) if b.divisi_id else None)
@@ -122,8 +196,8 @@ def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumbe
 
     for k, b in sudah.items():
         kolom = []
-        if b.tingkat != tingkat:
-            b.tingkat = tingkat
+        if b.tingkat != ingin[k]:
+            b.tingkat = ingin[k]
             kolom.append("tingkat")
         if catatan is not None and b.catatan != catatan:
             b.catatan = catatan
@@ -131,7 +205,9 @@ def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumbe
         if kolom:
             b.save(update_fields=[*kolom, "updated_at"])
 
-    for dep_id, div_id in ingin - set(sudah):
+    for (dep_id, div_id), t in ingin.items():
+        if (dep_id, div_id) in sudah:
+            continue
         # `all_objects` + hidupkan kembali, BUKAN create polos: pasangan yang pernah
         # dicabut masih ada sebagai baris ber-deleted_at (jebakan A21).
         lama = (
@@ -145,7 +221,7 @@ def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumbe
             JabatanOrganisasi.objects.create(
                 workspace=workspace,
                 member=user,
-                tingkat=tingkat,
+                tingkat=t,
                 departemen_id=dep_id,
                 divisi_id=div_id,
                 sumber=sumber,
@@ -153,7 +229,7 @@ def setel_penempatan(workspace, user, tingkat, departemen_ids, divisi_ids, sumbe
             )
         else:
             lama.deleted_at = None
-            lama.tingkat = tingkat
+            lama.tingkat = t
             lama.sumber = sumber
             if catatan is not None:
                 lama.catatan = catatan

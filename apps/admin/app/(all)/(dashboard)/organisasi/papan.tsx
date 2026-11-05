@@ -21,15 +21,8 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import {
-  Building2,
-  ChevronRight,
-  ChevronsDownUp,
-  ChevronsUpDown,
-  FolderKanban,
-  AlertTriangle,
-  Plus,
-} from "lucide-react";
+import { sortBy } from "lodash-es";
+import { Building2, ChevronRight, ChevronsDownUp, ChevronsUpDown, AlertTriangle, Plus } from "lucide-react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -37,7 +30,7 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
-  TINGKAT_MANAGER,
+  TINGKAT_DIREKTUR,
   TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
   type TAnggotaHierarki,
@@ -53,7 +46,7 @@ import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { BadgeJabatan } from "../members/jabatan";
 import { MenuDepartemen, MenuDivisi } from "./menu-node";
 import { PemilihOrang } from "./orang";
-import { KonteksPapan, type TKonteksPapan, type TPemilihTujuan } from "./papan-konteks";
+import { KonteksPapan, usePapan, type TKonteksPapan, type TPemilihTujuan } from "./papan-konteks";
 import {
   akunTerhapus,
   bacaSeret,
@@ -67,6 +60,7 @@ import {
   type TRencana,
   type TTujuan,
 } from "./papan-logika";
+import { DialogPeran, type TTawaranPeran } from "./dialog-peran";
 import { ChipOrang, kelasSorot, LabelLepas, ModalPilihTujuan, PanelOrangPapan, useTujuanLepas } from "./papan-orang";
 import { asalOrang, calonAnggota, type TAksiOrganisasi, type TKelola } from "./util";
 
@@ -95,26 +89,53 @@ const tampilOrang = (daftar: TOrangOrganisasi[]) => daftar.filter((o) => !akunTe
 // Lajur jenjang
 // ---------------------------------------------------------------------------
 
-function LajurJenjang({ tingkat, jumlah }: { tingkat: number; jumlah: number }) {
+/**
+ * Satu lajur jenjang: siapa saja yang berjenjang ini, dalam kotak setinggi tetap
+ * yang bisa digulir (permintaan user 5 Nov 2026). Chipnya bisa diseret ke lajur
+ * lain, ke departemen, atau ke divisi; tanpa asal, jadi seretan dari sini = tambah.
+ */
+function LajurJenjang({ tingkat, orang }: { tingkat: number; orang: TAnggotaHierarki[] }) {
   const { s, fill } = useGodmodeStrings();
   const ref = useRef<HTMLDivElement>(null);
-  const mode = useTujuanLepas(ref, { jenis: "jenjang", tingkat });
+  // KEP-93: Staf/Supervisor/Manager melekat pada tempat (lajur departemen, zona
+  // manager divisi), jadi lajur ini hanya tampilan + sumber seretan. Direktur
+  // satu-satunya jenjang tanpa tempat, jadi hanya lajurnya yang menerima lepasan.
+  const bisaLepas = tingkat >= TINGKAT_DIREKTUR;
+  const mode = useTujuanLepas(ref, { jenis: "jenjang", tingkat }, bisaLepas);
+  const nama = namaJenjang(tingkat, s);
   return (
     <div
       ref={ref}
       className={cn(
-        "relative flex min-h-14 flex-col justify-center gap-1 rounded-card border border-dashed border-strong bg-layer-1 px-3 py-2 transition-colors",
+        "relative flex flex-col gap-1.5 rounded-card border bg-layer-1 p-2 transition-colors",
+        bisaLepas ? "border-dashed border-strong" : "border-subtle",
         kelasSorot(mode)
       )}
     >
       <LabelLepas mode={mode} tingkat={tingkat} />
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 px-1">
         <BadgeJabatan tingkat={tingkat} />
-        <span className="text-11 text-tertiary">{fill(s.org.people_count, { n: jumlah })}</span>
+        <span className="text-11 text-tertiary">{fill(s.org.people_count, { n: orang.length })}</span>
       </div>
-      <span className="truncate text-11 text-tertiary">
-        {fill(s.org.board.drop_level, { level: namaJenjang(tingkat, s) })}
-      </span>
+      <ul aria-label={nama} className="h-44 space-y-1 overflow-y-auto overscroll-contain pr-0.5">
+        {orang.length === 0 ? (
+          <li className="rounded-item border border-dashed border-subtle px-2 py-1.5 text-11 text-placeholder">
+            {bisaLepas ? fill(s.org.board.drop_level, { level: nama }) : s.org.board.level_empty}
+          </li>
+        ) : (
+          orang.map((o) => (
+            <li key={o.id}>
+              <ChipOrang
+                orangId={o.id}
+                nama={o.display_name}
+                email={o.email}
+                tingkat={o.tingkat ?? TINGKAT_MEMBER}
+                ringkas
+              />
+            </li>
+          ))
+        )}
+      </ul>
     </div>
   );
 }
@@ -138,9 +159,9 @@ function LajurDepartemen({
   const ref = useRef<HTMLDivElement>(null);
   const mode = useTujuanLepas(ref, { jenis: "departemen", id: dep.id, tingkat });
   return (
-    <div ref={ref} className={cn("relative space-y-1 rounded-item p-1.5 transition-colors", kelasSorot(mode))}>
+    <div ref={ref} className={cn("relative space-y-1 rounded-item py-1.5 transition-colors", kelasSorot(mode))}>
       <LabelLepas mode={mode} />
-      <div className="px-0.5 text-10 font-semibold tracking-wide text-tertiary uppercase">
+      <div className="px-0.5 text-10 font-semibold text-tertiary">
         {judul} · {orang.length}
       </div>
       {orang.length === 0 ? (
@@ -231,6 +252,7 @@ function NamaDiTempat({ dep, aksi }: { dep: TDepartemenOrganisasi; aksi: TAksiOr
 
 function KartuDepartemen({
   dep,
+  divisiId,
   aksi,
   orang,
   namaDepartemen,
@@ -238,6 +260,8 @@ function KartuDepartemen({
   onKelola,
 }: {
   dep: TDepartemenOrganisasi;
+  /** Divisi induk: managernya tidak ditawarkan sebagai calon (KEP-93). */
+  divisiId: string;
   aksi: TAksiOrganisasi;
   orang: TAnggotaHierarki[];
   namaDepartemen: Record<string, string>;
@@ -245,11 +269,15 @@ function KartuDepartemen({
   onKelola: TKelola;
 }) {
   const { s, fill } = useGodmodeStrings();
+  const { eksekusi } = usePapan();
   const ref = useRef<HTMLDivElement>(null);
-  const mode = useTujuanLepas(ref, { jenis: "departemen", id: dep.id });
+  // Kartunya sendiri bukan tujuan lepas (5 Nov 2026): orang selalu masuk departemen
+  // SEBAGAI Supervisor atau Staf, jadi hanya lajurnya yang menerima seretan.
+  const mode = useTujuanLepas(ref, { jenis: "departemen", id: dep.id }, false);
   const anggota = tampilOrang(dep.anggota);
-  const manager = anggota.filter((a) => a.tingkat >= TINGKAT_MANAGER);
-  const supervisor = anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR && a.tingkat < TINGKAT_MANAGER);
+  // KEP-93: tidak ada "manager departemen". Tingkat di sini = peran orang itu DI
+  // departemen ini (Staf/Supervisor); baris lama yang masih Manager ikut Supervisor.
+  const supervisor = anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR);
   const staf = anggota.filter((a) => a.tingkat < TINGKAT_SUPERVISOR);
 
   return (
@@ -257,7 +285,8 @@ function KartuDepartemen({
       ref={ref}
       id={idDepartemen(dep.id)}
       className={cn(
-        "relative scroll-mt-4 space-y-1 rounded-card border border-subtle bg-layer-1 p-2 transition-colors",
+        // Tanpa bingkai dan padding sendiri (5 Nov 2026): lajur di dalamnya yang memberi jarak.
+        "relative scroll-mt-4 space-y-1 rounded-card transition-colors",
         kelasSorot(mode)
       )}
     >
@@ -267,32 +296,12 @@ function KartuDepartemen({
         <span className="shrink-0 text-10 text-placeholder">{dep.kode}</span>
         <MenuDepartemen id={dep.id} nama={dep.nama} onKelola={onKelola} />
       </div>
-      <div className="flex items-center gap-1 px-1 text-11">
-        <FolderKanban className="size-3 shrink-0 text-placeholder" aria-hidden />
-        {dep.projects[0] ? (
-          <span className="truncate text-tertiary">{dep.projects[0].name}</span>
-        ) : (
-          <span className="flex items-center gap-1 text-warning-primary">
-            <AlertTriangle className="size-3" aria-hidden />
-            {s.org.project_none}
-          </span>
-        )}
-      </div>
-      {manager.length > 0 && (
-        <div className="space-y-1 p-1.5">
-          <div className="px-0.5 text-10 font-semibold tracking-wide text-tertiary uppercase">
-            {s.org.managers} · {manager.length}
-          </div>
-          {manager.map((o) => (
-            <ChipOrang
-              key={o.id}
-              orangId={o.id}
-              nama={o.nama}
-              email={o.email}
-              tingkat={o.tingkat}
-              asal={{ jenis: "departemen", id: dep.id }}
-            />
-          ))}
+      {/* Departemen = project-nya (1:1, 0146), jadi namanya tidak diulang.
+          Baris ini cuma muncul saat project-nya belum ada. */}
+      {!dep.projects[0] && (
+        <div className="flex items-center gap-1 px-1 text-11 text-warning-primary">
+          <AlertTriangle className="size-3 shrink-0" aria-hidden />
+          {s.org.project_none}
         </div>
       )}
       <LajurDepartemen dep={dep} tingkat={TINGKAT_SUPERVISOR} judul={s.org.supervisors} orang={supervisor} />
@@ -300,9 +309,10 @@ function KartuDepartemen({
       <div className="flex justify-end pt-1">
         <PemilihOrang
           label={s.org.add_to}
-          calon={calonAnggota(orang, dep)}
+          calon={calonAnggota(orang, dep, divisiId)}
           keterangan={(o) => asalOrang(o, namaDepartemen, namaDivisi, s, fill)}
-          onTambah={(o) => aksi.tambahKeDepartemen(o, dep.id)}
+          // Lewat jalur seretan: aturan KEP-93 + dialog peran manager berlaku sama.
+          onTambah={(o) => eksekusi(o.id, undefined, { jenis: "departemen", id: dep.id }, true)}
         />
       </div>
     </div>
@@ -313,27 +323,40 @@ function KartuDepartemen({
 // Divisi
 // ---------------------------------------------------------------------------
 
+/** Tombol tambah di ujung daftar (divisi, departemen): satu gaya untuk keduanya. */
+function TombolTambah({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-center gap-1.5 rounded-card border border-dashed border-subtle px-4 py-3 text-12 text-tertiary transition-colors hover:border-strong hover:bg-layer-transparent-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-accent-strong"
+    >
+      <Plus className="size-3.5" aria-hidden />
+      {label}
+    </button>
+  );
+}
+
 function ZonaManager({ v }: { v: TDivisiOrganisasi }) {
   const { s } = useGodmodeStrings();
   const ref = useRef<HTMLDivElement>(null);
   const mode = useTujuanLepas(ref, { jenis: "divisi", id: v.id });
   const manager = tampilOrang(v.manager);
+  // Sama dengan lajur Supervisor/Staf di kartu departemen (permintaan user 5 Nov):
+  // tanpa kartu berlatar sendiri, chip bertumpuk selebar satu kolom departemen.
   return (
-    <div
-      ref={ref}
-      className={cn("relative space-y-1.5 rounded-card border border-subtle bg-layer-2 p-2", kelasSorot(mode))}
-    >
+    <div ref={ref} className={cn("relative space-y-1 rounded-item py-1.5 transition-colors", kelasSorot(mode))}>
       <LabelLepas mode={mode} />
-      <div className="px-0.5 text-10 font-semibold tracking-wide text-tertiary uppercase">
+      <div className="px-0.5 text-10 font-semibold text-tertiary">
         {s.org.board.managers} · {manager.length}
       </div>
-      {manager.length === 0 ? (
-        <p className="rounded-item border border-dashed border-subtle px-2 py-1.5 text-11 text-placeholder">
-          {s.org.board.no_manager}
-        </p>
-      ) : (
-        <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
-          {manager.map((m) => (
+      <div className="space-y-1 md:max-w-[calc(50%-0.375rem)] 2xl:max-w-[calc(33.333%-0.5rem)]">
+        {manager.length === 0 ? (
+          <p className="rounded-item border border-dashed border-subtle px-2 py-1.5 text-11 text-placeholder">
+            {s.org.board.no_manager}
+          </p>
+        ) : (
+          manager.map((m) => (
             <ChipOrang
               key={m.id}
               orangId={m.id}
@@ -342,9 +365,9 @@ function ZonaManager({ v }: { v: TDivisiOrganisasi }) {
               tingkat={m.tingkat}
               asal={{ jenis: "divisi", id: v.id }}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -398,17 +421,13 @@ function BarisDivisi({
           <ZonaManager v={v} />
           <div className="grid items-start gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {v.departemen.map((d) => (
-              <KartuDepartemen key={d.id} dep={d} {...bersama} />
+              <KartuDepartemen key={d.id} dep={d} divisiId={v.id} {...bersama} />
             ))}
-            <button
-              type="button"
-              onClick={() => bersama.onKelola({ jenis: "buat-departemen", divisiId: v.id })}
-              className="flex min-h-24 items-center justify-center gap-1 rounded-card border border-dashed border-subtle text-12 text-tertiary transition-colors hover:border-strong hover:text-primary"
-            >
-              <Plus className="size-3.5" aria-hidden />
-              {s.org.new_department}
-            </button>
           </div>
+          <TombolTambah
+            label={s.org.new_department}
+            onClick={() => bersama.onKelola({ jenis: "buat-departemen", divisiId: v.id })}
+          />
         </div>
       )}
     </section>
@@ -445,9 +464,12 @@ export function PapanOrganisasi({
   const { s, fill } = useGodmodeStrings();
   const akar = useRef<HTMLDivElement>(null);
   const [pemilih, setPemilih] = useState<TPemilihTujuan | null>(null);
+  const [tawaran, setTawaran] = useState<TTawaranPeran | null>(null);
   // Satu objek konteks per perubahan data, supaya chip tidak dirender ulang tanpa sebab.
   const konteks = useMemo<TKonteksPapan>(() => {
     const orangById = new Map(anggota.map((o) => [o.id, o]));
+    const indukDep = new Map(pohon.divisi.flatMap((v) => v.departemen.map((d) => [d.id, v.id] as const)));
+    const divisiDari = (depId: string) => indukDep.get(depId);
     const namaTempat = (a: TAsal): string => (a.jenis === "departemen" ? namaDepartemen[a.id] : namaDivisi[a.id]) ?? "";
     const namaTujuan = (t: TTujuan): string =>
       t.jenis === "jenjang"
@@ -459,19 +481,43 @@ export function PapanOrganisasi({
     const judulCabut = (o: TAnggotaHierarki, asal: TAsal) =>
       fill(s.org.board.removed_from, { name: o.display_name, place: namaTempat(asal) });
 
-    const eksekusi: TKonteksPapan["eksekusi"] = async (orangId, asal, tujuan, salin) => {
+    const eksekusi: TKonteksPapan["eksekusi"] = async (orangId, asal, tujuanAwal, salin) => {
       const o = orangById.get(orangId);
       if (!o) return;
-      const r = rencanakan(o, asal, tujuan, salin);
+      // Direktur (tanpa tempat) diseret ke People = turun ke Staf, sama dengan menu
+      // "Remove Director". Selain direktur, chip tanpa asal tidak bisa dilepas ke sana.
+      const turunDirektur = tujuanAwal.jenis === "lepas" && !asal && (o.tingkat ?? 0) >= TINGKAT_DIREKTUR;
+      const tujuan: TTujuan = turunDirektur ? { jenis: "jenjang", tingkat: TINGKAT_MEMBER } : tujuanAwal;
+      const r = rencanakan(o, asal, tujuan, salin, divisiDari);
       const nama = o.display_name;
-      if (r.hasil === "direktur") {
+      if (r.hasil === "divisi-sendiri" && tujuan.jenis === "departemen") {
         setToast({
           type: TOAST_TYPE.WARNING,
-          title: s.org.board.director_blocked,
-          message: s.org.board.director_blocked_message,
+          title: fill(s.org.board.own_division_blocked, {
+            name: nama,
+            division: namaTempat({ jenis: "divisi", id: divisiDari(tujuan.id) ?? "" }),
+          }),
+          message: s.org.board.own_division_blocked_message,
         });
         return;
       }
+      if (r.hasil === "peran") {
+        // KEP-93: manager ke departemen divisi lain, tanya perannya di sana dulu.
+        const tempat = namaTujuan(tujuan);
+        setTawaran({
+          nama,
+          tempat,
+          bawaan: r.bawaan,
+          kirim: (peran) =>
+            jalankan(
+              o,
+              r.pilih(peran),
+              fill(s.org.board.role_saved, { name: nama, role: namaJenjang(peran, s), place: tempat })
+            ),
+        });
+        return;
+      }
+      if (r.hasil === "divisi-sendiri") return;
       // Dilepas kembali di tempatnya sendiri: tidak ada yang berubah, tak perlu toast.
       if (
         r.hasil === "sudah" &&
@@ -487,14 +533,30 @@ export function PapanOrganisasi({
         return;
       }
       const ke = namaTujuan(tujuan);
-      const judul =
-        r.mode === "jenjang"
-          ? fill(s.org.level_saved, { name: nama, level: ke })
-          : r.mode === "pindah"
-            ? fill(s.org.board.moved_to, { name: nama, to: ke })
-            : r.mode === "pimpin"
-              ? fill(s.org.board.leads, { name: nama, to: ke })
-              : fill(s.org.board.added_to, { name: nama, to: ke });
+      // Lajur departemen = peran di departemen itu (KEP-93), bukan jenjang umum.
+      const peranBaru = tujuan.jenis === "departemen" ? r.badan.peran_departemen?.[tujuan.id] : undefined;
+      const judul = r.turunDirektur
+        ? fill(s.org.board.director_demoted, {
+            name: nama,
+            role: namaJenjang(r.sesudah.tingkat, s),
+            place: ke,
+          })
+        : r.turunDari
+          ? fill(s.org.board.role_demoted, {
+              name: nama,
+              division: namaTempat({ jenis: "divisi", id: r.turunDari }),
+              role: namaJenjang(peranBaru ?? TINGKAT_SUPERVISOR, s),
+              place: ke,
+            })
+          : peranBaru !== undefined && r.mode === "jenjang"
+            ? fill(s.org.board.role_saved, { name: nama, role: namaJenjang(peranBaru, s), place: ke })
+            : r.mode === "jenjang"
+              ? fill(s.org.level_saved, { name: nama, level: ke })
+              : r.mode === "pindah"
+                ? fill(s.org.board.moved_to, { name: nama, to: ke })
+                : r.mode === "pimpin"
+                  ? fill(s.org.board.leads, { name: nama, to: ke })
+                  : fill(s.org.board.added_to, { name: nama, to: ke });
       await jalankan(o, r, judul);
     };
 
@@ -505,7 +567,7 @@ export function PapanOrganisasi({
     };
 
     return { orangById, eksekusi, cabut, bukaPemilih: setPemilih, namaTempat };
-  }, [anggota, namaDepartemen, namaDivisi, jalankan, s, fill]);
+  }, [anggota, pohon, namaDepartemen, namaDivisi, jalankan, s, fill]);
 
   // Monitor didaftar sekali; ia memanggil fungsi terbaru lewat ref (diperbarui sesudah render).
   const eksekusiRef = useRef(konteks.eksekusi);
@@ -531,13 +593,16 @@ export function PapanOrganisasi({
     );
   }, []);
 
-  const jumlahJenjang = (t: number) =>
-    anggota.filter((o) => {
-      const tk = o.tingkat ?? TINGKAT_MEMBER;
-      const idx = LAJUR_JENJANG.indexOf(t as (typeof LAJUR_JENJANG)[number]);
-      const atas = LAJUR_JENJANG[idx + 1];
-      return tk >= t && (atas === undefined || tk < atas);
-    }).length;
+  const orangJenjang = (t: number) =>
+    sortBy(
+      anggota.filter((o) => {
+        const tk = o.tingkat ?? TINGKAT_MEMBER;
+        const idx = LAJUR_JENJANG.indexOf(t as (typeof LAJUR_JENJANG)[number]);
+        const atas = LAJUR_JENJANG[idx + 1];
+        return tk >= t && (atas === undefined || tk < atas);
+      }),
+      (o) => o.display_name.toLowerCase()
+    );
 
   const bisaDibuka = pohon.divisi.map((v) => v.id);
   const semuaTerbuka = bisaDibuka.length > 0 && bisaDibuka.every((id) => dibuka.has(id));
@@ -552,26 +617,29 @@ export function PapanOrganisasi({
 
   return (
     <KonteksPapan.Provider value={konteks}>
-      <div ref={akar} className="grid items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div
+        ref={akar}
+        className="grid items-start gap-6 md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)]"
+      >
         <PanelOrangPapan />
         <div className="min-w-0 space-y-4">
           <p className="text-12 text-tertiary">{s.org.board.hint}</p>
 
           <div className="space-y-2">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-11 font-semibold tracking-wide text-tertiary uppercase">{s.org.board.levels}</span>
+              <span className="text-11 font-semibold text-tertiary">{s.org.board.levels}</span>
               <span className="text-11 text-tertiary">{s.org.board.levels_hint}</span>
             </div>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {LAJUR_JENJANG.map((t) => (
-                <LajurJenjang key={t} tingkat={t} jumlah={jumlahJenjang(t)} />
+                <LajurJenjang key={t} tingkat={t} orang={orangJenjang(t)} />
               ))}
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-11 font-semibold tracking-wide text-tertiary uppercase">{s.org.structure}</span>
+              <span className="text-11 font-semibold text-tertiary">{s.org.structure}</span>
               <div className="flex items-center gap-2">
                 {bisaDibuka.length > 0 && (
                   <Button
@@ -594,10 +662,12 @@ export function PapanOrganisasi({
                 <BarisDivisi key={v.id} v={v} buka={dibuka.has(v.id)} onLipat={() => lipat(v.id)} {...bersama} />
               ))
             )}
+            <TombolTambah label={s.org.new_division} onClick={() => onKelola({ jenis: "buat-divisi" })} />
           </div>
         </div>
       </div>
       <ModalPilihTujuan pemilih={pemilih} pohon={pohon} onTutup={() => setPemilih(null)} />
+      <DialogPeran tawaran={tawaran} onTutup={() => setTawaran(null)} />
     </KonteksPapan.Provider>
   );
 }
