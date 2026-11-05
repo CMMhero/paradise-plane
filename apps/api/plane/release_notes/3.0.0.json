@@ -1,0 +1,66 @@
+{
+  "version": "3.0.0",
+  "date": "2026-11-05",
+  "entries": [
+    {
+      "type": "Changed",
+      "text": "Modules, pages, views, comments and Wiki files can now only be changed, archived or deleted by their owner, the owner's supervisors, a workspace admin or a Super Admin. Being a project admin no longer covers other people's work."
+    },
+    {
+      "type": "Changed",
+      "text": "Project settings, states, labels, estimates, intake and archiving a project now need a supervisor or higher in that project."
+    },
+    {
+      "type": "Changed",
+      "text": "You can only add work items to modules you created, lead or belong to. Changing states and their order needs workflow authority."
+    },
+    {
+      "type": "Added",
+      "text": "Buttons for actions you are not allowed to do are now hidden instead of failing after you click."
+    },
+    {
+      "type": "Added",
+      "text": "Needs attention widget on Home, with an approvals queue."
+    },
+    {
+      "type": "Added",
+      "text": "Shared quick links: one dialog for Private and Public links, with an icon picker like projects."
+    },
+    {
+      "type": "Added",
+      "text": "Member profile cards show job title and extension."
+    },
+    {
+      "type": "Added",
+      "text": "Email notifications can be batched and threaded, and only go to active members."
+    },
+    {
+      "type": "Added",
+      "text": "God Mode has eight menus and a Ctrl+K search that finds any setting."
+    },
+    {
+      "type": "Added",
+      "text": "God Mode now controls work rules: approvals, delete and archive, due date changes, upload size, session length, invite expiry, chat limits and reminder schedule. Sensitive rules ask you to type CHANGE RULES and are written to the audit log."
+    },
+    {
+      "type": "Changed",
+      "text": "People > Organization is one page: the structure chart on top and a drag-and-drop board below."
+    },
+    {
+      "type": "Changed",
+      "text": "Phone layout reworked: the top bar, project tabs, work item toolbar, members table, dialogs and sidebar drawer all fit small screens."
+    },
+    {
+      "type": "Fixed",
+      "text": "API tokens could edit or delete anyone's comments, and guests could change states. Both are closed."
+    },
+    {
+      "type": "Fixed",
+      "text": "Any member could rename another person's Wiki file, archive their module or archive a project. Not anymore."
+    },
+    {
+      "type": "Fixed",
+      "text": "Names in the Members table no longer break into one letter per line."
+    }
+  ]
+}
