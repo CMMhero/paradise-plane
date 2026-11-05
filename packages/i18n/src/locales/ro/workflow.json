@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Ești sigur că vrei să resetezi acest flux de lucru?",
-        "description": "Dacă resetezi acest flux de lucru, toate regulile tale de schimbare a stării vor fi șterse și va trebui să le creezi din nou pentru a le rula în acest proiect."
+        "description": "Dacă resetezi acest flux de lucru, toate regulile tale de schimbare a stării vor fi șterse și va trebui să le creezi din nou pentru a le rula în acest departament."
       },
       "delete_state_change": {
         "title": "Ești sigur că vrei să ștergi această regulă de schimbare a stării?",
-        "description": "Odată ștearsă, nu poți anula această schimbare și va trebui să setezi regula din nou dacă vrei să o rulezi pentru acest proiect."
+        "description": "Odată ștearsă, nu poți anula această schimbare și va trebui să setezi regula din nou dacă vrei să o rulezi pentru acest departament."
       }
     },
     "toasts": {

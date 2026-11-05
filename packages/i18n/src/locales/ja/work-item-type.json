@@ -4,12 +4,12 @@
     "label_lowercase": "作業項目タイプ",
     "settings": {
       "description": "チームのニーズに合わせて独自のプロパティをカスタマイズして追加できます。",
-      "cant_delete_default_message": "この作業項目タイプは削除できません。このプロジェクトのデフォルトの作業項目タイプとして設定されているためです。",
+      "cant_delete_default_message": "この作業項目タイプは削除できません。この部署のデフォルトの作業項目タイプとして設定されているためです。",
       "set_as_default": "デフォルトに設定",
       "cant_set_default_inactive_message": "デフォルトに設定する前にこのタイプを有効にしてください",
       "set_default_confirmation": {
         "title": "デフォルトの作業項目タイプに設定",
-        "description": "{name}をデフォルトに設定すると、このワークスペース内のすべてのプロジェクトにインポートされます。すべての新しい作業項目はデフォルトでこのタイプを使用します。",
+        "description": "{name}をデフォルトに設定すると、このワークスペース内のすべての部署にインポートされます。すべての新しい作業項目はデフォルトでこのタイプを使用します。",
         "confirm_button": "デフォルトに設定"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "数式は有効です！{resultType}を返します（{count}フィールド参照）",
           "error": {
             "empty": "数式を入力してください",
-            "missing_context": "ワークスペース、プロジェクト、またはワークアイテムタイプのコンテキストがありません",
+            "missing_context": "ワークスペース、部署、またはワークアイテムタイプのコンテキストがありません",
             "validation_failed": "検証に失敗しました"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "タイプ",
         "description": "プロパティを持つ作業項目タイプを作成・カスタマイズします。",
         "sort_options": {
-          "project_count": "所属プロジェクト数"
+          "project_count": "所属部署数"
         },
         "filter_options": {
           "show_active": "アクティブを表示",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "作業項目タイプを有効化",
-        "description": "作業項目タイプで作業項目を形作ります。アイコン、背景、プロパティでカスタマイズし、このプロジェクト用に設定します。",
+        "description": "作業項目タイプで作業項目を形作ります。アイコン、背景、プロパティでカスタマイズし、この部署用に設定します。",
         "primary_button": {
           "text": "有効化"
         },
         "confirmation": {
           "title": "一度有効化すると、作業項目タイプは無効化できません。",
-          "description": "Paradise Task TrackerのWork itemがこのプロジェクトのデフォルトの作業項目タイプとなり、そのアイコンと背景がこのプロジェクトに表示されます。",
+          "description": "Paradise Task TrackerのWork itemがこの部署のデフォルトの作業項目タイプとなり、そのアイコンと背景がこの部署に表示されます。",
           "button": {
             "default": "有効化",
             "loading": "設定中"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "作業項目タイプを有効化するにはProにアップグレードしてください。",
-        "description": "作業項目タイプで作業項目を形作ります。アイコン、背景、プロパティでカスタマイズし、このプロジェクト用に設定します。",
+        "description": "作業項目タイプで作業項目を形作ります。アイコン、背景、プロパティでカスタマイズし、この部署用に設定します。",
         "primary_button": {
           "text": "Proを取得"
         }
       },
       "upgrade": {
         "title": "作業項目タイプを有効化するにはアップグレードしてください。",
-        "description": "作業項目タイプで作業項目を形作ります。アイコン、背景、プロパティでカスタマイズし、このプロジェクト用に設定します。",
+        "description": "作業項目タイプで作業項目を形作ります。アイコン、背景、プロパティでカスタマイズし、この部署用に設定します。",
         "primary_button": {
           "text": "アップグレード"
         }

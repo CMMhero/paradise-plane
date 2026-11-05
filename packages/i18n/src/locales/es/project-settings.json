@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Ingresa el ID del proyecto",
+      "enter_project_id": "Ingresa el ID del departamento",
       "please_select_a_timezone": "Por favor selecciona una zona horaria",
       "archive_project": {
-        "title": "Archivar proyecto",
-        "description": "Archivar un proyecto lo eliminará de tu navegación lateral aunque aún podrás acceder a él desde tu página de proyectos. Puedes restaurar el proyecto o eliminarlo cuando quieras.",
-        "button": "Archivar proyecto"
+        "title": "Archivar departamento",
+        "description": "Archivar un departamento lo eliminará de tu navegación lateral aunque aún podrás acceder a él desde tu página de departamentos. Puedes restaurar el departamento o eliminarlo cuando quieras.",
+        "button": "Archivar departamento"
       },
       "delete_project": {
-        "title": "Eliminar proyecto",
-        "description": "Al eliminar un proyecto, todos los datos y recursos dentro de ese proyecto se eliminarán permanentemente y no podrán recuperarse.",
-        "button": "Eliminar mi proyecto"
+        "title": "Eliminar departamento",
+        "description": "Al eliminar un departamento, todos los datos y recursos dentro de ese departamento se eliminarán permanentemente y no podrán recuperarse.",
+        "button": "Eliminar mi departamento"
       },
       "toast": {
-        "success": "Proyecto actualizado exitosamente",
-        "error": "No se pudo actualizar el proyecto. Por favor intenta de nuevo."
+        "success": "Departamento actualizado exitosamente",
+        "error": "No se pudo actualizar el departamento. Por favor intenta de nuevo."
       }
     },
     "members": {
       "label": "Miembros",
-      "project_lead": "Líder del proyecto",
-      "project_lead_description": "Seleccione el responsable del proyecto.",
+      "project_lead": "Líder del departamento",
+      "project_lead_description": "Seleccione el responsable del departamento.",
       "default_assignee": "Asignado por defecto",
-      "default_assignee_description": "Seleccione el asignado predeterminado para el proyecto.",
-      "project_subscribers": "Suscriptores del proyecto",
-      "project_subscribers_description": "Seleccione los miembros que recibirán notificaciones para este proyecto.",
+      "default_assignee_description": "Seleccione el asignado predeterminado para el departamento.",
+      "project_subscribers": "Suscriptores del departamento",
+      "project_subscribers_description": "Seleccione los miembros que recibirán notificaciones para este departamento.",
       "guest_super_permissions": {
         "title": "Otorgar acceso de visualización a todos los elementos de trabajo para usuarios invitados:",
-        "sub_heading": "Esto permitirá a los invitados tener acceso de visualización a todos los elementos de trabajo del proyecto."
+        "sub_heading": "Esto permitirá a los invitados tener acceso de visualización a todos los elementos de trabajo del departamento."
       },
       "invite_members": {
         "title": "Invitar miembros",
-        "sub_heading": "Invita miembros para trabajar en tu proyecto.",
+        "sub_heading": "Invita miembros para trabajar en tu departamento.",
         "select_co_worker": "Seleccionar compañero de trabajo"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Estimaciones",
       "description": "Te ayudan a comunicar la complejidad y la carga de trabajo del equipo.",
       "label": "Estimaciones",
-      "title": "Activar estimaciones para mi proyecto",
+      "title": "Activar estimaciones para mi departamento",
       "enable_description": "Te ayudan a comunicar la complejidad y la carga de trabajo del equipo.",
       "no_estimate": "Sin estimación",
       "new": "Nuevo sistema de estimación",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Estimación modificada",
-            "message": "La estimación se ha actualizado en tu proyecto."
+            "message": "La estimación se ha actualizado en tu departamento."
           },
           "error": {
             "title": "Error al modificar la estimación",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Estimaciones reordenadas",
-            "message": "Las estimaciones han sido reordenadas en tu proyecto."
+            "message": "Las estimaciones han sido reordenadas en tu departamento."
           },
           "error": {
             "title": "Error al reordenar estimaciones",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Automatizaciones",
       "heading": "Automatizaciones",
-      "description": "Configura acciones automatizadas para optimizar tu flujo de trabajo de gestión de proyectos y reducir tareas manuales.",
+      "description": "Configura acciones automatizadas para optimizar tu flujo de trabajo de gestión de departamentos y reducir tareas manuales.",
       "auto-archive": {
         "title": "Archivar automáticamente elementos de trabajo cerrados",
         "description": "Paradise Task Tracker archivará automáticamente los elementos de trabajo que hayan sido completados o cancelados.",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "Aún no hay etiquetas",
-        "description": "Crea etiquetas para organizar y filtrar elementos de trabajo en tu proyecto."
+        "description": "Crea etiquetas para organizar y filtrar elementos de trabajo en tu departamento."
       },
       "estimates": {
         "title": "Aún no hay sistemas de estimación",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "No hay integraciones configuradas",
-        "description": "Configura GitHub y otras integraciones para sincronizar los elementos de trabajo de tu proyecto."
+        "description": "Configura GitHub y otras integraciones para sincronizar los elementos de trabajo de tu departamento."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Flujos de trabajo",
-      "description": "Automatiza las transiciones de elementos de trabajo y establece reglas para controlar cómo se mueven las tareas a través del flujo de tu proyecto.",
+      "description": "Automatiza las transiciones de elementos de trabajo y establece reglas para controlar cómo se mueven las tareas a través del flujo de tu departamento.",
       "add_button": "Agregar nuevo flujo de trabajo",
       "search": "Buscar flujos de trabajo",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Todos los estados están en uso",
-          "description": "Todos los estados definidos para este proyecto ya están presentes en tu flujo de trabajo actual."
+          "description": "Todos los estados definidos para este departamento ya están presentes en tu flujo de trabajo actual."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Ciclos",
         "short_title": "Ciclos",
-        "description": "Programa el trabajo en períodos flexibles que se adaptan al ritmo y al tempo únicos de este proyecto.",
+        "description": "Programa el trabajo en períodos flexibles que se adaptan al ritmo y al tempo únicos de este departamento.",
         "toggle_title": "Habilitar ciclos",
         "toggle_description": "Planifica el trabajo en períodos de tiempo enfocados."
       },
       "modules": {
         "title": "Módulos",
         "short_title": "Módulos",
-        "description": "Organiza el trabajo en subproyectos con líderes y responsables dedicados.",
+        "description": "Organiza el trabajo en subdepartamentos con líderes y responsables dedicados.",
         "toggle_title": "Habilitar módulos",
-        "toggle_description": "Los miembros del proyecto podrán crear y editar módulos."
+        "toggle_description": "Los miembros del departamento podrán crear y editar módulos."
       },
       "views": {
         "title": "Vistas",
         "short_title": "Vistas",
         "description": "Guarda ordenaciones, filtros y opciones de visualización personalizadas o compártelos con tu equipo.",
         "toggle_title": "Habilitar vistas",
-        "toggle_description": "Los miembros del proyecto podrán crear y editar vistas."
+        "toggle_description": "Los miembros del departamento podrán crear y editar vistas."
       },
       "pages": {
         "title": "Páginas",
         "short_title": "Páginas",
         "description": "Crea y edita contenido libre: notas, documentos, cualquier cosa.",
         "toggle_title": "Habilitar páginas",
-        "toggle_description": "Los miembros del proyecto podrán crear y editar páginas."
+        "toggle_description": "Los miembros del departamento podrán crear y editar páginas."
       },
       "intake": {
         "intake_responsibility": "Responsabilidad de ingreso",
@@ -358,9 +358,9 @@
         "short_title": "Recepción",
         "description": "Permite que los no miembros compartan errores, comentarios y sugerencias; sin interrumpir tu flujo de trabajo.",
         "toggle_title": "Habilitar recepción",
-        "toggle_description": "Permitir a los miembros del proyecto crear solicitudes de recepción en la aplicación.",
-        "toggle_tooltip_on": "Pide a tu administrador del proyecto que active esto.",
-        "toggle_tooltip_off": "Pide a tu administrador del proyecto que desactive esto.",
+        "toggle_description": "Permitir a los miembros del departamento crear solicitudes de recepción en la aplicación.",
+        "toggle_tooltip_on": "Pide a tu administrador del departamento que active esto.",
+        "toggle_tooltip_off": "Pide a tu administrador del departamento que desactive esto.",
         "notify_assignee": {
           "title": "Notificar asignados",
           "description": "Para una nueva solicitud de ingreso, los asignados predeterminados serán alertados mediante notificaciones"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Seguimiento de tiempo",
         "short_title": "Seguimiento de tiempo",
-        "description": "Registra el tiempo dedicado a elementos de trabajo y proyectos.",
+        "description": "Registra el tiempo dedicado a elementos de trabajo y departamentos.",
         "toggle_title": "Habilitar seguimiento de tiempo",
-        "toggle_description": "Los miembros del proyecto podrán registrar el tiempo trabajado."
+        "toggle_description": "Los miembros del departamento podrán registrar el tiempo trabajado."
       },
       "milestones": {
         "title": "Hitos",
@@ -425,18 +425,18 @@
         "toggle_description": "Organiza elementos de trabajo por plazos de hitos."
       },
       "toasts": {
-        "loading": "Actualizando función del proyecto...",
-        "success": "Función del proyecto actualizada correctamente.",
-        "error": "Algo salió mal al actualizar la función del proyecto. Por favor, inténtalo de nuevo."
+        "loading": "Actualizando función del departamento...",
+        "success": "Función del departamento actualizada correctamente.",
+        "error": "Algo salió mal al actualizar la función del departamento. Por favor, inténtalo de nuevo."
       }
     },
     "project_updates": {
-      "heading": "Actualizaciones del proyecto",
-      "description": "Seguimiento consolidado y monitoreo del progreso de este proyecto"
+      "heading": "Actualizaciones del departamento",
+      "description": "Seguimiento consolidado y monitoreo del progreso de este departamento"
     },
     "templates": {
       "heading": "Plantillas",
-      "description": "Ahorra el 80 % del tiempo dedicado a crear proyectos, elementos de trabajo y páginas cuando usas plantillas."
+      "description": "Ahorra el 80 % del tiempo dedicado a crear departamentos, elementos de trabajo y páginas cuando usas plantillas."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Papelera",
-      "description": "Los elementos eliminados llegan aquí antes de borrarse definitivamente. Los administradores del proyecto pueden restaurarlos o eliminarlos de forma permanente."
+      "description": "Los elementos eliminados llegan aquí antes de borrarse definitivamente. Los administradores del departamento pueden restaurarlos o eliminarlos de forma permanente."
     }
   }
 }

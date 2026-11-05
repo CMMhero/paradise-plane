@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Apenas administradores do projeto podem adiar/reativar itens de trabalho",
-      "accept_permission": "Apenas administradores do projeto podem aceitar itens de trabalho",
-      "decline_permission": "Apenas administradores do projeto podem recusar itens de trabalho"
+      "snooze_permission": "Apenas administradores do departamento podem adiar/reativar itens de trabalho",
+      "accept_permission": "Apenas administradores do departamento podem aceitar itens de trabalho",
+      "decline_permission": "Apenas administradores do departamento podem recusar itens de trabalho"
     },
     "actions": {
       "accept": "Aceitar",
@@ -47,7 +47,7 @@
       "delete": "Excluir",
       "open": "Abrir item de trabalho",
       "mark_as_duplicate": "Marcar como duplicado",
-      "move": "Mover {value} para os itens de trabalho do projeto"
+      "move": "Mover {value} para os itens de trabalho do departamento"
     },
     "source": {
       "in-app": "no aplicativo"

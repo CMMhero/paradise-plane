@@ -168,7 +168,7 @@
       "confirm_message": "Bu iş öğesini arşivlemek istediğinizden emin misiniz? Arşivlenen tüm iş öğelerinizi daha sonra geri yükleyebilirsiniz.",
       "success": {
         "label": "Arşivleme başarılı",
-        "message": "Arşivleriniz proje arşivlerinde bulunabilir."
+        "message": "Arşivleriniz departman arşivlerinde bulunabilir."
       },
       "failed": {
         "message": "İş öğesi arşivlenemedi. Lütfen tekrar deneyin."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Geri yükleme başarılı",
-        "message": "İş öğeniz proje iş öğelerinde bulunabilir."
+        "message": "İş öğeniz departman iş öğelerinde bulunabilir."
       },
       "failed": {
         "message": "İş öğesi geri yüklenemedi. Lütfen tekrar deneyin."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "İş öğesini tam ekranda aç",
     "duplicate": {
       "modal": {
-        "title": "Başka bir projeye kopya oluştur",
+        "title": "Başka bir departmana kopya oluştur",
         "description1": "Bu, iş öğesinin bir kopyasını oluşturur.",
         "description2": "Çoğaltılırken tüm özellik verileri kaldırılacaktır.",
-        "placeholder": "Bir proje seçin"
+        "placeholder": "Bir departman seçin"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Yinelenen iş öğesi oluştur",
-        "no_permission": "Yinelenen iş öğeleri oluşturmak için proje yöneticinizle iletişime geçin"
+        "no_permission": "Yinelenen iş öğeleri oluşturmak için departman yöneticinizle iletişime geçin"
       }
     },
     "empty_state": {

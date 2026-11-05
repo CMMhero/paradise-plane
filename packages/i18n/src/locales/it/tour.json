@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Benvenuto nel tuo spazio di lavoro",
-        "description": "Per aiutarti a iniziare, abbiamo creato un Progetto Demo per te. Aggiungiamo il tuo primo elemento di lavoro."
+        "description": "Per aiutarti a iniziare, abbiamo creato un Reparto Demo per te. Aggiungiamo il tuo primo elemento di lavoro."
       },
       "step_one": {
         "title": "Fai clic su \"+ Aggiungi elemento di lavoro\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Fai progressi con i Cicli",
-        "description": "Premi Q per creare un Ciclo. Nominalo e imposta le date—solo un ciclo per progetto."
+        "description": "Premi Q per creare un Ciclo. Nominalo e imposta le date—solo un ciclo per reparto."
       },
       "step_one": {
         "title": "Crea un nuovo ciclo",
-        "description": "Premi Q per creare un Ciclo. Nominalo e imposta le date—solo un ciclo per progetto."
+        "description": "Premi Q per creare un Ciclo. Nominalo e imposta le date—solo un ciclo per reparto."
       },
       "step_two": {
         "title": "Fai clic su \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Dividi il tuo progetto in Moduli",
-        "description": "I moduli sono progetti più piccoli e focalizzati che aiutano gli utenti a raggruppare e organizzare gli elementi di lavoro entro tempi specifici."
+        "title": "Dividi il tuo reparto in Moduli",
+        "description": "I moduli sono reparti più piccoli e focalizzati che aiutano gli utenti a raggruppare e organizzare gli elementi di lavoro entro tempi specifici."
       },
       "step_one": {
         "title": "Crea Modulo",
-        "description": "I moduli sono progetti più piccoli e focalizzati che aiutano gli utenti a raggruppare e organizzare gli elementi di lavoro entro tempi specifici."
+        "description": "I moduli sono reparti più piccoli e focalizzati che aiutano gli utenti a raggruppare e organizzare gli elementi di lavoro entro tempi specifici."
       },
       "step_two": {
         "title": "Fai clic su \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Documenta con Pagine potenziate dall IA",
-        "description": "Le Pagine in Paradise Task Tracker ti consentono di acquisire, organizzare e collaborare su informazioni di progetto—senza strumenti esterni."
+        "description": "Le Pagine in Paradise Task Tracker ti consentono di acquisire, organizzare e collaborare su informazioni di reparto—senza strumenti esterni."
       },
       "step_one": {
         "title": "Rendi la pagina Pubblica o Privata",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Accetta/rifiuta una richiesta in sospeso",
-        "description": "Accetta per modificare e spostare l elemento di lavoro nel tuo progetto, o rifiutalo per contrassegnarlo come Annullato."
+        "description": "Accetta per modificare e spostare l elemento di lavoro nel tuo reparto, o rifiutalo per contrassegnarlo come Annullato."
       },
       "step_three": {
         "title": "Posponi per ora",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Trova qualsiasi cosa istantaneamente",
-        "description": "Usa la ricerca universale per passare a attività, progetti, pagine e persone—senza lasciare il tuo flusso."
+        "description": "Usa la ricerca universale per passare a attività, reparti, pagine e persone—senza lasciare il tuo flusso."
       },
       "step_one": {
         "title": "Mantieni il controllo sugli aggiornamenti",
@@ -148,8 +148,8 @@
       "got_it": "Capito"
     },
     "seed_data": {
-      "title": "Ecco il tuo progetto demo",
-      "description": "I progetti ti consentono di gestire i tuoi team, le attività e tutto ciò di cui hai bisogno per portare a termine le cose nel tuo spazio di lavoro."
+      "title": "Ecco il tuo reparto demo",
+      "description": "I reparti ti consentono di gestire i tuoi team, le attività e tutto ciò di cui hai bisogno per portare a termine le cose nel tuo spazio di lavoro."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Inizia la tua configurazione e vedi le tue idee prendere vita più velocemente.",
       "checklist_items": {
         "item_1": {
-          "title": "Crea un progetto"
+          "title": "Crea un reparto"
         },
         "item_2": {
           "title": "Crea un elemento di lavoro"

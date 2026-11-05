@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Template",
-      "description": "Hemat 80% waktu yang dihabiskan untuk membuat proyek, item kerja, dan halaman ketika Anda menggunakan template.",
-      "new_project_template": "Template proyek baru",
+      "description": "Hemat 80% waktu yang dihabiskan untuk membuat departemen, item kerja, dan halaman ketika Anda menggunakan template.",
+      "new_project_template": "Template departemen baru",
       "new_work_item_template": "Template item kerja baru",
       "new_page_template": "Template halaman baru",
       "options": {
         "project": {
-          "label": "Template proyek"
+          "label": "Template departemen"
         },
         "work_item": {
           "label": "Template item kerja"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Buat template",
         "no_permission": {
-          "project": "Hubungi admin proyek Anda untuk membuat template",
+          "project": "Hubungi admin departemen Anda untuk membuat template",
           "workspace": "Hubungi admin workspace Anda untuk membuat template"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Berasal dari workspace"
         },
         "project": {
-          "info": "Berasal dari proyek"
+          "info": "Berasal dari departemen"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Beri nama template proyek Anda.",
+              "placeholder": "Beri nama template departemen Anda.",
               "validation": {
                 "required": "Nama template diperlukan",
                 "maxLength": "Nama template harus kurang dari 255 karakter"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Beri nama proyek Anda.",
+            "placeholder": "Beri nama departemen Anda.",
             "validation": {
-              "required": "Judul proyek diperlukan",
-              "maxLength": "Judul proyek harus kurang dari 255 karakter"
+              "required": "Judul departemen diperlukan",
+              "maxLength": "Judul departemen harus kurang dari 255 karakter"
             }
           },
           "description": {
-            "placeholder": "Jelaskan tujuan dan sasaran proyek ini."
+            "placeholder": "Jelaskan tujuan dan sasaran departemen ini."
           },
           "button": {
-            "create": "Buat template proyek",
-            "update": "Perbarui template proyek"
+            "create": "Buat template departemen",
+            "update": "Perbarui template departemen"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Deskripsi singkat",
-            "placeholder": "Template ini cocok untuk Manajer Proyek yang mengelola beberapa proyek sekaligus.",
+            "placeholder": "Template ini cocok untuk Manajer Departemen yang mengelola beberapa departemen sekaligus.",
             "validation": {
               "required": "Deskripsi singkat diperlukan"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Template",
-        "description": "Dengan template proyek, item kerja, dan halaman di Paradise Task Tracker, Anda tidak perlu membuat proyek dari awal atau mengatur properti item kerja secara manual.",
+        "description": "Dengan template departemen, item kerja, dan halaman di Paradise Task Tracker, Anda tidak perlu membuat departemen dari awal atau mengatur properti item kerja secara manual.",
         "sub_description": "Dapatkan kembali 80% waktu administrasi Anda saat menggunakan Template."
       },
       "no_templates": {
         "button": "Buat template pertama Anda"
       },
       "no_labels": {
-        "description": " Belum ada label. Buat label untuk membantu mengatur dan memfilter item kerja dalam proyek Anda."
+        "description": " Belum ada label. Buat label untuk membantu mengatur dan memfilter item kerja dalam departemen Anda."
       },
       "no_modules": {
-        "description": "Belum ada modul. Atur pekerjaan ke dalam sub-proyek dengan pemimpin dan penanggung jawab khusus."
+        "description": "Belum ada modul. Atur pekerjaan ke dalam sub-kelompok dengan pemimpin dan penanggung jawab khusus."
       },
       "no_work_items": {
         "description": "Belum ada item kerja. Tambahkan satu untuk membantu mengatur pekerjaan Anda lebih baik."
@@ -318,7 +318,7 @@
         "project": "Tambah template baru"
       },
       "label": {
-        "project": "Pilih template proyek",
+        "project": "Pilih template departemen",
         "page": "Pilih template"
       },
       "tooltip": {

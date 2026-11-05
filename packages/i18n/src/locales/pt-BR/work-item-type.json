@@ -4,12 +4,12 @@
     "label_lowercase": "tipos de item de trabalho",
     "settings": {
       "description": "Personalize e adicione suas próprias propriedades para adaptar às necessidades da sua equipe.",
-      "cant_delete_default_message": "Não é possível excluir este tipo de item de trabalho, pois ele está definido como o tipo padrão para este projeto.",
+      "cant_delete_default_message": "Não é possível excluir este tipo de item de trabalho, pois ele está definido como o tipo padrão para este departamento.",
       "set_as_default": "Definir como padrão",
       "cant_set_default_inactive_message": "Ative este tipo antes de defini-lo como padrão",
       "set_default_confirmation": {
         "title": "Definir como tipo de item de trabalho padrão",
-        "description": "Definir {name} como padrão irá importá-lo para todos os projetos neste espaço de trabalho. Todos os novos itens de trabalho usarão este tipo por padrão.",
+        "description": "Definir {name} como padrão irá importá-lo para todos os departamentos neste espaço de trabalho. Todos os novos itens de trabalho usarão este tipo por padrão.",
         "confirm_button": "Definir como padrão"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "A fórmula é válida! Retorna {resultType} ({count} campo(s) referenciado(s))",
           "error": {
             "empty": "Por favor, insira uma fórmula",
-            "missing_context": "Contexto de espaço de trabalho, projeto ou tipo de item de trabalho ausente",
+            "missing_context": "Contexto de espaço de trabalho, departamento ou tipo de item de trabalho ausente",
             "validation_failed": "Falha na validação"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Tipos",
         "description": "Crie e personalize tipos de itens de trabalho com propriedades.",
         "sort_options": {
-          "project_count": "Número de projetos dos quais faz parte"
+          "project_count": "Número de departamentos dos quais faz parte"
         },
         "filter_options": {
           "show_active": "Mostrar ativos",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Ativar Tipos de Item de Trabalho",
-        "description": "Molde itens de trabalho para seu trabalho com Tipos de Item de Trabalho. Personalize com ícones, planos de fundo e propriedades e configure-os para este projeto.",
+        "description": "Molde itens de trabalho para seu trabalho com Tipos de Item de Trabalho. Personalize com ícones, planos de fundo e propriedades e configure-os para este departamento.",
         "primary_button": {
           "text": "Ativar"
         },
         "confirmation": {
           "title": "Uma vez ativados, os Tipos de Item de Trabalho não podem ser desativados.",
-          "description": "O Item de Trabalho do Paradise Task Tracker se tornará o tipo de item de trabalho padrão para este projeto e aparecerá com seu ícone e plano de fundo neste projeto.",
+          "description": "O Item de Trabalho do Paradise Task Tracker se tornará o tipo de item de trabalho padrão para este departamento e aparecerá com seu ícone e plano de fundo neste departamento.",
           "button": {
             "default": "Ativar",
             "loading": "Configurando"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Obtenha Pro para ativar Tipos de Item de Trabalho.",
-        "description": "Molde itens de trabalho para seu trabalho com Tipos de Item de Trabalho. Personalize com ícones, planos de fundo e propriedades e configure-os para este projeto.",
+        "description": "Molde itens de trabalho para seu trabalho com Tipos de Item de Trabalho. Personalize com ícones, planos de fundo e propriedades e configure-os para este departamento.",
         "primary_button": {
           "text": "Obter Pro"
         }
       },
       "upgrade": {
         "title": "Faça upgrade para ativar Tipos de Item de Trabalho.",
-        "description": "Molde itens de trabalho para seu trabalho com Tipos de Item de Trabalho. Personalize com ícones, planos de fundo e propriedades e configure-os para este projeto.",
+        "description": "Molde itens de trabalho para seu trabalho com Tipos de Item de Trabalho. Personalize com ícones, planos de fundo e propriedades e configure-os para este departamento.",
         "primary_button": {
           "text": "Fazer upgrade"
         }

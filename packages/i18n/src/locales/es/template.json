@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Plantillas",
-      "description": "Ahorra un 80% del tiempo dedicado a crear proyectos, elementos de trabajo y páginas cuando utilizas plantillas.",
-      "new_project_template": "Nueva plantilla de proyecto",
+      "description": "Ahorra un 80% del tiempo dedicado a crear departamentos, elementos de trabajo y páginas cuando utilizas plantillas.",
+      "new_project_template": "Nueva plantilla de departamento",
       "new_work_item_template": "Nueva plantilla de elemento de trabajo",
       "new_page_template": "Nueva plantilla de página",
       "options": {
         "project": {
-          "label": "Plantillas de proyecto"
+          "label": "Plantillas de departamento"
         },
         "work_item": {
           "label": "Plantillas de elementos de trabajo"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Crear plantilla",
         "no_permission": {
-          "project": "Contacta con el administrador de tu proyecto para crear plantillas",
+          "project": "Contacta con el administrador de tu departamento para crear plantillas",
           "workspace": "Contacta con el administrador de tu espacio de trabajo para crear plantillas"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Derivado del espacio de trabajo"
         },
         "project": {
-          "info": "Derivado del proyecto"
+          "info": "Derivado del departamento"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Nombra tu plantilla de proyecto.",
+              "placeholder": "Nombra tu plantilla de departamento.",
               "validation": {
                 "required": "El nombre de la plantilla es obligatorio",
                 "maxLength": "El nombre de la plantilla debe tener menos de 255 caracteres"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Nombra tu proyecto.",
+            "placeholder": "Nombra tu departamento.",
             "validation": {
-              "required": "El título del proyecto es obligatorio",
-              "maxLength": "El título del proyecto debe tener menos de 255 caracteres"
+              "required": "El título del departamento es obligatorio",
+              "maxLength": "El título del departamento debe tener menos de 255 caracteres"
             }
           },
           "description": {
-            "placeholder": "Describe el propósito y los objetivos de este proyecto."
+            "placeholder": "Describe el propósito y los objetivos de este departamento."
           },
           "button": {
-            "create": "Crear plantilla de proyecto",
-            "update": "Actualizar plantilla de proyecto"
+            "create": "Crear plantilla de departamento",
+            "update": "Actualizar plantilla de departamento"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Descripción corta",
-            "placeholder": "Esta plantilla es ideal para los Project Managers que gestionan varios proyectos al mismo tiempo.",
+            "placeholder": "Esta plantilla es ideal para los Department Managers que gestionan varios departamentos al mismo tiempo.",
             "validation": {
               "required": "La descripción corta es obligatoria"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Plantillas",
-        "description": "Con las plantillas de proyectos, elementos de trabajo y páginas en Paradise Task Tracker, no tienes que crear un proyecto desde cero ni configurar manualmente las propiedades de los elementos de trabajo.",
+        "description": "Con las plantillas de departamentos, elementos de trabajo y páginas en Paradise Task Tracker, no tienes que crear un departamento desde cero ni configurar manualmente las propiedades de los elementos de trabajo.",
         "sub_description": "Recupera el 80% de tu tiempo de administración cuando utilizas Plantillas."
       },
       "no_templates": {
         "button": "Crea tu primera plantilla"
       },
       "no_labels": {
-        "description": " Aún no hay etiquetas. Crea etiquetas para ayudar a organizar y filtrar elementos de trabajo en tu proyecto."
+        "description": " Aún no hay etiquetas. Crea etiquetas para ayudar a organizar y filtrar elementos de trabajo en tu departamento."
       },
       "no_modules": {
-        "description": "Aún no hay módulos. Organiza el trabajo en subproyectos con líderes y responsables dedicados."
+        "description": "Aún no hay módulos. Organiza el trabajo en subdepartamentos con líderes y responsables dedicados."
       },
       "no_work_items": {
         "description": "Aún no hay elementos de trabajo. Añade uno para estructurar tu trabajo mejor."
@@ -318,7 +318,7 @@
         "project": "Agregar nueva plantilla"
       },
       "label": {
-        "project": "Seleccionar una plantilla de proyecto",
+        "project": "Seleccionar una plantilla de departamento",
         "page": "Elegir desde plantilla"
       },
       "tooltip": {

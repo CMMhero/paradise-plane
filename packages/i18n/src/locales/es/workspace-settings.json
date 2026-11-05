@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Exportaciones",
-        "description": "Exporta los datos de tu proyecto en varios formatos y accede a tu historial de exportaciones con enlaces de descarga.",
+        "description": "Exporta los datos de tu departamento en varios formatos y accede a tu historial de exportaciones con enlaces de descarga.",
         "title": "Exportaciones",
         "exporting": "Exportando",
         "previous_exports": "Exportaciones anteriores",
         "export_separate_files": "Exportar los datos en archivos separados",
-        "exporting_projects": "Exportando proyecto",
+        "exporting_projects": "Exportando departamento",
         "format": "Formato",
         "filters_info": "Aplica filtros para exportar elementos de trabajo específicos según tus criterios.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhooks",
-        "description": "Automatiza las notificaciones a servicios externos cuando ocurren eventos del proyecto.",
+        "description": "Automatiza las notificaciones a servicios externos cuando ocurren eventos del departamento.",
         "title": "Webhooks",
         "add_webhook": "Agregar webhook",
         "modal": {
@@ -182,27 +182,27 @@
       "imports": {
         "title": "Importaciones",
         "heading": "Importaciones",
-        "description": "Conecta e importa datos desde tus herramientas de gestión de proyectos existentes para optimizar la integración de tu flujo de trabajo."
+        "description": "Conecta e importa datos desde tus herramientas de gestión de departamentos existentes para optimizar la integración de tu flujo de trabajo."
       },
       "worklogs": {
         "title": "Registros de trabajo",
         "heading": "Registros de trabajo",
-        "description": "Descarga los registros de trabajo, también conocidos como hojas de tiempo, de cualquier persona en cualquier proyecto."
+        "description": "Descarga los registros de trabajo, también conocidos como hojas de tiempo, de cualquier persona en cualquier departamento."
       },
       "group_syncing": {
         "title": "Sincronización de grupos",
         "heading": "Sincronización de grupos",
-        "description": "Vincule los grupos del proveedor de identidad con proyectos y roles. El acceso de los usuarios se actualiza automáticamente cuando cambia la pertenencia al grupo en su IdP, simplificando la incorporación y baja.",
+        "description": "Vincule los grupos del proveedor de identidad con departamentos y roles. El acceso de los usuarios se actualiza automáticamente cuando cambia la pertenencia al grupo en su IdP, simplificando la incorporación y baja.",
         "enable": {
           "title": "Activar sincronización de grupos",
-          "description": "Añadir automáticamente usuarios a proyectos según los grupos del proveedor de identidad."
+          "description": "Añadir automáticamente usuarios a departamentos según los grupos del proveedor de identidad."
         },
         "config": {
           "title": "Configurar sincronización de grupos",
-          "description": "Configure cómo se asignan los grupos del proveedor de identidad a proyectos y roles.",
+          "description": "Configure cómo se asignan los grupos del proveedor de identidad a departamentos y roles.",
           "sync_on_login": {
             "title": "Sincronizar al iniciar sesión",
-            "description": "Actualizar pertenencia al grupo y acceso al proyecto cuando un usuario inicia sesión."
+            "description": "Actualizar pertenencia al grupo y acceso al departamento cuando un usuario inicia sesión."
           },
           "sync_offline": {
             "title": "Sincronización sin conexión",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Eliminación automática",
-            "description": "Eliminar automáticamente usuarios de proyectos cuando ya no coincidan con el grupo."
+            "description": "Eliminar automáticamente usuarios de departamentos cuando ya no coincidan con el grupo."
           },
           "group_attribute_key": {
             "title": "Clave del atributo de grupo",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Asignación de grupos",
-          "description": "Vincule los grupos del proveedor de identidad con proyectos y roles.",
+          "description": "Vincule los grupos del proveedor de identidad con departamentos y roles.",
           "button_text": "Añadir nueva sincronización de grupos"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Eliminar sincronización de grupos",
-          "content": "Los nuevos usuarios de este grupo de identidad ya no se añadirán al proyecto. Los usuarios ya añadidos conservarán su rol actual."
+          "content": "Los nuevos usuarios de este grupo de identidad ya no se añadirán al departamento. Los usuarios ya añadidos conservarán su rol actual."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Introduzca los nombres de grupos IdP"
           },
           "project": {
-            "text": "Proyecto",
-            "required": "El proyecto es obligatorio",
-            "placeholder": "Seleccione un proyecto"
+            "text": "Departamento",
+            "required": "El departamento es obligatorio",
+            "placeholder": "Seleccione un departamento"
           },
           "default_role": {
-            "text": "Rol del proyecto",
-            "required": "El rol del proyecto es obligatorio",
-            "placeholder": "Seleccione un rol del proyecto"
+            "text": "Rol del departamento",
+            "required": "El rol del departamento es obligatorio",
+            "placeholder": "Seleccione un rol del departamento"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Configure su dominio y habilite el inicio de sesión único"
       },
       "project_states": {
-        "title": "Estados del proyecto",
-        "heading": "Ver resumen de progreso de todos los proyectos.",
-        "description": "Los Estados de proyecto son una función exclusiva de Paradise Task Tracker para rastrear el progreso de todos tus proyectos por cualquier propiedad del proyecto.",
+        "title": "Estados del departamento",
+        "heading": "Ver resumen de progreso de todos los departamentos.",
+        "description": "Los Estados de departamento son una función exclusiva de Paradise Task Tracker para rastrear el progreso de todos tus departamentos por cualquier propiedad del departamento.",
         "go_to_settings": "Ir a configuración"
       },
       "projects": {
-        "title": "Proyectos",
-        "description": "Administrar estados de proyectos, habilitar etiquetas de proyectos y otras configuraciones.",
+        "title": "Departamentos",
+        "description": "Administrar estados de departamentos, habilitar etiquetas de departamentos y otras configuraciones.",
         "tabs": {
-          "states": "Estados del proyecto",
-          "labels": "Etiquetas del proyecto"
+          "states": "Estados del departamento",
+          "labels": "Etiquetas del departamento"
         }
       },
       "templates": {
         "title": "Plantillas",
         "heading": "Plantillas",
-        "description": "Ahorra el 80 % del tiempo dedicado a crear proyectos, elementos de trabajo y páginas cuando usas plantillas."
+        "description": "Ahorra el 80 % del tiempo dedicado a crear departamentos, elementos de trabajo y páginas cuando usas plantillas."
       },
       "relations": {
         "title": "Relaciones",
@@ -459,13 +459,13 @@
         "select_scopes": "Seleccionar ámbitos",
         "read_access_to": "Acceso de solo lectura a",
         "write_access_to": "Acceso de escritura a",
-        "global_permission_expiration": "Los ámbitos globales caducarán pronto. Utilice ámbitos granulares en su lugar. Por ejemplo, use project:read en lugar de una lectura global.",
+        "global_permission_expiration": "Los ámbitos globales caducarán pronto. Utilice ámbitos granulares en su lugar. Por ejemplo, use department:read en lugar de una lectura global.",
         "selected_scopes": "{count} seleccionados",
         "scopes_and_permissions": "Ámbitos y permisos",
         "read": "Lectura",
         "write": "Escritura",
         "scope_description": {
-          "projects": "Acceso a proyectos y todas las entidades relacionadas con proyectos",
+          "projects": "Acceso a departamentos y todas las entidades relacionadas con departamentos",
           "wiki": "Acceso al wiki y todas las entidades relacionadas con el wiki",
           "workspaces": "Acceso a espacios de trabajo y todas las entidades relacionadas",
           "stickies": "Acceso a notas adhesivas y todas las entidades relacionadas",

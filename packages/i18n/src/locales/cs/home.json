@@ -4,8 +4,8 @@
       "quickstart_guide": "Váš průvodce rychlým startem",
       "not_right_now": "Teď ne",
       "create_project": {
-        "title": "Vytvořit projekt",
-        "description": "Většina věcí začíná projektem v Paradise Task Tracker.",
+        "title": "Vytvořit oddělení",
+        "description": "Většina věcí začíná oddělením v Paradise Task Tracker.",
         "cta": "Začít"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "Nedávné",
       "empty": {
-        "project": "Vaše nedávné projekty se zde zobrazí po návštěvě.",
+        "project": "Vaše nedávná oddělení se zde zobrazí po návštěvě.",
         "page": "Vaše nedávné stránky se zde zobrazí po návštěvě.",
         "issue": "Vaše nedávné pracovní položky se zde zobrazí po návštěvě.",
         "default": "Zatím nemáte žádné nedávné položky."
       },
       "filters": {
         "all": "Vše",
-        "projects": "Projekty",
+        "projects": "Oddělení",
         "pages": "Stránky",
         "issues": "Úkoly"
       }

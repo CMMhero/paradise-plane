@@ -4,12 +4,12 @@
     "label_lowercase": "워크 아이템 타입",
     "settings": {
       "description": "팀의 요구에 맞게 자신만의 프로퍼티를 사용자 정의하고 추가하세요.",
-      "cant_delete_default_message": "이 작업 항목 유형은 삭제할 수 없습니다. 이 프로젝트의 기본 작업 항목 유형으로 설정되어 있기 때문입니다.",
+      "cant_delete_default_message": "이 작업 항목 유형은 삭제할 수 없습니다. 이 부서의 기본 작업 항목 유형으로 설정되어 있기 때문입니다.",
       "set_as_default": "기본값으로 설정",
       "cant_set_default_inactive_message": "기본값으로 설정하기 전에 이 유형을 활성화하세요",
       "set_default_confirmation": {
         "title": "기본 작업 항목 유형으로 설정",
-        "description": "{name}을(를) 기본값으로 설정하면 이 워크스페이스의 모든 프로젝트에 가져옵니다. 모든 새 작업 항목은 기본적으로 이 유형을 사용합니다.",
+        "description": "{name}을(를) 기본값으로 설정하면 이 워크스페이스의 모든 부서에 가져옵니다. 모든 새 작업 항목은 기본적으로 이 유형을 사용합니다.",
         "confirm_button": "기본값으로 설정"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "수식이 유효합니다! {resultType}을(를) 반환합니다 ({count}개 필드 참조)",
           "error": {
             "empty": "수식을 입력해 주세요",
-            "missing_context": "워크스페이스, 프로젝트 또는 작업 항목 유형 컨텍스트가 없습니다",
+            "missing_context": "워크스페이스, 부서 또는 작업 항목 유형 컨텍스트가 없습니다",
             "validation_failed": "검증 실패"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "타입",
         "description": "프로퍼티로 작업 항목 유형을 생성하고 사용자 정의하세요.",
         "sort_options": {
-          "project_count": "소속된 프로젝트 수"
+          "project_count": "소속된 부서 수"
         },
         "filter_options": {
           "show_active": "활성 표시",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "워크 아이템 타입 활성화",
-        "description": "워크 아이템 타입으로 작업 항목을 작업에 맞게 조정하세요. 아이콘, 배경 및 프로퍼티로 사용자 정의하고 이 프로젝트에 대해 구성하세요.",
+        "description": "워크 아이템 타입으로 작업 항목을 작업에 맞게 조정하세요. 아이콘, 배경 및 프로퍼티로 사용자 정의하고 이 부서에 대해 구성하세요.",
         "primary_button": {
           "text": "활성화"
         },
         "confirmation": {
           "title": "활성화되면 워크 아이템 타입은 비활성화할 수 없습니다.",
-          "description": "플레인의 워크 아이템이 이 프로젝트의 기본 워크 아이템 타입이 되고 이 프로젝트에 아이콘과 배경과 함께 표시됩니다.",
+          "description": "플레인의 워크 아이템이 이 부서의 기본 워크 아이템 타입이 되고 이 부서에 아이콘과 배경과 함께 표시됩니다.",
           "button": {
             "default": "활성화",
             "loading": "설정 중"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "워크 아이템 타입을 활성화하려면 프로로 업그레이드하세요.",
-        "description": "워크 아이템 타입으로 작업 항목을 작업에 맞게 조정하세요. 아이콘, 배경 및 프로퍼티로 사용자 정의하고 이 프로젝트에 대해 구성하세요.",
+        "description": "워크 아이템 타입으로 작업 항목을 작업에 맞게 조정하세요. 아이콘, 배경 및 프로퍼티로 사용자 정의하고 이 부서에 대해 구성하세요.",
         "primary_button": {
           "text": "프로 구매"
         }
       },
       "upgrade": {
         "title": "워크 아이템 타입을 활성화하려면 업그레이드하세요.",
-        "description": "워크 아이템 타입으로 작업 항목을 작업에 맞게 조정하세요. 아이콘, 배경 및 프로퍼티로 사용자 정의하고 이 프로젝트에 대해 구성하세요.",
+        "description": "워크 아이템 타입으로 작업 항목을 작업에 맞게 조정하세요. 아이콘, 배경 및 프로퍼티로 사용자 정의하고 이 부서에 대해 구성하세요.",
         "primary_button": {
           "text": "업그레이드"
         }

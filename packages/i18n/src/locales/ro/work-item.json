@@ -168,7 +168,7 @@
       "confirm_message": "Ești sigur că vrei să arhivezi această activitate? Toate activitățile arhivate pot fi restaurate ulterior.",
       "success": {
         "label": "Arhivare reușită",
-        "message": "Arhivele tale pot fi găsite în arhiva proiectului."
+        "message": "Arhivele tale pot fi găsite în arhiva departamentului."
       },
       "failed": {
         "message": "Activitatea nu a putut fi arhivată. Te rugăm să încerci din nou."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Restaurare reușită",
-        "message": "Activitatea poate fi găsită în lista de activități ale proiectului."
+        "message": "Activitatea poate fi găsită în lista de activități ale departamentului."
       },
       "failed": {
         "message": "Activitatea nu a putut fi restaurată. Te rugăm să încerci din nou."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Deschide activitatea pe tot ecranul",
     "duplicate": {
       "modal": {
-        "title": "Creează o copie într-un alt proiect",
+        "title": "Creează o copie într-un alt departament",
         "description1": "Aceasta creează o copie a activității.",
         "description2": "Toate datele proprietăților vor fi eliminate la duplicare.",
-        "placeholder": "Selectează un proiect"
+        "placeholder": "Selectează un departament"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Creează element de lucru recurent",
-        "no_permission": "Contactează administratorul proiectului pentru a crea elemente de lucru recurente"
+        "no_permission": "Contactează administratorul departamentului pentru a crea elemente de lucru recurente"
       }
     },
     "empty_state": {

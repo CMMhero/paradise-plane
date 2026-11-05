@@ -168,7 +168,7 @@
       "confirm_message": "Naozaj chcete archivovať túto pracovnú položku? Všetky archivované položky je možné neskôr obnoviť.",
       "success": {
         "label": "Archivácia úspešná",
-        "message": "Vaše archívy nájdete v archívoch projektu."
+        "message": "Vaše archívy nájdete v archívoch oddelenia."
       },
       "failed": {
         "message": "Archivácia pracovnej položky zlyhala. Skúste to prosím znova."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Obnovenie úspešné",
-        "message": "Vaša pracovná položka je na nájdenie v pracovných položkách projektu."
+        "message": "Vaša pracovná položka je na nájdenie v pracovných položkách oddelenia."
       },
       "failed": {
         "message": "Obnovenie pracovnej položky zlyhalo. Skúste to prosím znova."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Otvoriť pracovnú položku na celú obrazovku",
     "duplicate": {
       "modal": {
-        "title": "Vytvoriť kópiu do iného projektu",
+        "title": "Vytvoriť kópiu do iného oddelenia",
         "description1": "Toto vytvorí kópiu pracovnej položky.",
         "description2": "Pri duplikovaní budú odstránené všetky údaje vlastností.",
-        "placeholder": "Vybrať projekt"
+        "placeholder": "Vybrať oddelenie"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Vytvoriť opakujúcu sa úlohu",
-        "no_permission": "Kontaktujte správcu projektu pre vytvorenie opakujúcich sa úloh"
+        "no_permission": "Kontaktujte správcu oddelenia pre vytvorenie opakujúcich sa úloh"
       }
     },
     "empty_state": {

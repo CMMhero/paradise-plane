@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "私人和共享頁面無法移至團隊空間。",
       "placeholders": {
-        "workspace_to_all": "搜尋專案與團隊空間",
-        "workspace_to_project": "搜尋專案",
-        "project_to_all": "搜尋專案與團隊空間",
-        "project_to_project": "搜尋專案",
-        "project_to_all_with_wiki": "搜尋 Wiki 集合、專案和團隊空間",
-        "project_to_project_with_wiki": "搜尋 Wiki 集合和專案"
+        "workspace_to_all": "搜尋部門與團隊空間",
+        "workspace_to_project": "搜尋部門",
+        "project_to_all": "搜尋部門與團隊空間",
+        "project_to_project": "搜尋部門",
+        "project_to_all_with_wiki": "搜尋 Wiki 集合、部門和團隊空間",
+        "project_to_project_with_wiki": "搜尋 Wiki 集合和部門"
       },
       "toasts": {
         "success": {

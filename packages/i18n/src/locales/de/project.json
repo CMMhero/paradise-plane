@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Noch keine öffentlichen Seiten",
-        "description": "Sehen Sie hier Seiten, die mit allen in Ihrem Projekt geteilt wurden.",
+        "description": "Sehen Sie hier Seiten, die mit allen in Ihrer Abteilung geteilt wurden.",
         "primary_button": {
           "text": "Ihre erste Seite erstellen"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Keine öffentlichen Seiten",
-        "description": "Hier sehen Sie die im Projekt geteilten Seiten.",
+        "description": "Hier sehen Sie die in der Abteilung geteilten Seiten.",
         "primary_button": {
           "text": "Seite erstellen"
         }
@@ -301,7 +301,7 @@
     "empty_state": {
       "inbox": {
         "title": "Eingang ist nicht aktiviert",
-        "description": "Aktivieren Sie den Eingang in den Projekteinstellungen, um Anfragen zu verwalten.",
+        "description": "Aktivieren Sie den Eingang in den Abteilungseinstellungen, um Anfragen zu verwalten.",
         "primary_button": {
           "text": "Funktionen verwalten"
         }
@@ -315,21 +315,21 @@
       },
       "module": {
         "title": "Module sind nicht aktiviert",
-        "description": "Aktivieren Sie Module in den Projekteinstellungen.",
+        "description": "Aktivieren Sie Module in den Abteilungseinstellungen.",
         "primary_button": {
           "text": "Funktionen verwalten"
         }
       },
       "page": {
         "title": "Seiten sind nicht aktiviert",
-        "description": "Aktivieren Sie Seiten in den Projekteinstellungen.",
+        "description": "Aktivieren Sie Seiten in den Abteilungseinstellungen.",
         "primary_button": {
           "text": "Funktionen verwalten"
         }
       },
       "view": {
         "title": "Ansichten sind nicht aktiviert",
-        "description": "Aktivieren Sie Ansichten in den Projekteinstellungen.",
+        "description": "Aktivieren Sie Ansichten in den Abteilungseinstellungen.",
         "primary_button": {
           "text": "Funktionen verwalten"
         }
@@ -392,7 +392,7 @@
           "complete": "Import abgeschlossen"
         },
         "message": {
-          "success": "{count} Mitglied{plural} erfolgreich ins Projekt importiert.",
+          "success": "{count} Mitglied{plural} erfolgreich in die Abteilung importiert.",
           "no_imports": "Aus der CSV-Datei wurden keine neuen Mitglieder importiert."
         },
         "stats": {

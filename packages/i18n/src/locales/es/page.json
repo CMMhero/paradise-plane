@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Las páginas privadas y compartidas no se pueden mover a un espacio de equipo.",
       "placeholders": {
-        "workspace_to_all": "Buscar proyectos y espacios de equipo",
-        "workspace_to_project": "Buscar proyectos",
-        "project_to_all": "Buscar proyectos y espacios de equipo",
-        "project_to_project": "Buscar proyectos",
-        "project_to_all_with_wiki": "Buscar colecciones de wiki, proyectos y espacios de equipo",
-        "project_to_project_with_wiki": "Buscar colecciones de wiki y proyectos"
+        "workspace_to_all": "Buscar departamentos y espacios de equipo",
+        "workspace_to_project": "Buscar departamentos",
+        "project_to_all": "Buscar departamentos y espacios de equipo",
+        "project_to_project": "Buscar departamentos",
+        "project_to_all_with_wiki": "Buscar colecciones de wiki, departamentos y espacios de equipo",
+        "project_to_project_with_wiki": "Buscar colecciones de wiki y departamentos"
       },
       "toasts": {
         "success": {

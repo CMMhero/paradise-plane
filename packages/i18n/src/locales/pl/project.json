@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Brak publicznych stron",
-        "description": "Zobacz strony udostępnione wszystkim w Twoim projekcie tutaj.",
+        "description": "Zobacz strony udostępnione wszystkim w Twoim dziale tutaj.",
         "primary_button": {
           "text": "Utwórz pierwszą stronę"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Brak publicznych stron",
-        "description": "Tutaj zobaczysz strony udostępnione w projekcie.",
+        "description": "Tutaj zobaczysz strony udostępnione w dziale.",
         "primary_button": {
           "text": "Utwórz stronę"
         }
@@ -301,7 +301,7 @@
     "empty_state": {
       "inbox": {
         "title": "Zgłoszenia nie są włączone",
-        "description": "Włącz zgłoszenia w ustawieniach projektu, aby zarządzać prośbami.",
+        "description": "Włącz zgłoszenia w ustawieniach działu, aby zarządzać prośbami.",
         "primary_button": {
           "text": "Zarządzaj funkcjami"
         }
@@ -315,21 +315,21 @@
       },
       "module": {
         "title": "Moduły nie są włączone",
-        "description": "Włącz moduły w ustawieniach projektu.",
+        "description": "Włącz moduły w ustawieniach działu.",
         "primary_button": {
           "text": "Zarządzaj funkcjami"
         }
       },
       "page": {
         "title": "Strony nie są włączone",
-        "description": "Włącz strony w ustawieniach projektu.",
+        "description": "Włącz strony w ustawieniach działu.",
         "primary_button": {
           "text": "Zarządzaj funkcjami"
         }
       },
       "view": {
         "title": "Widoki nie są włączone",
-        "description": "Włącz widoki w ustawieniach projektu.",
+        "description": "Włącz widoki w ustawieniach działu.",
         "primary_button": {
           "text": "Zarządzaj funkcjami"
         }
@@ -392,7 +392,7 @@
           "complete": "Import zakończony"
         },
         "message": {
-          "success": "Pomyślnie zaimportowano {count} członk{plural} do projektu.",
+          "success": "Pomyślnie zaimportowano {count} członk{plural} do działu.",
           "no_imports": "Z pliku CSV nie zaimportowano żadnych nowych członków."
         },
         "stats": {

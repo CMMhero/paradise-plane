@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Zadajte ID projektu",
+      "enter_project_id": "Zadajte ID oddelenia",
       "please_select_a_timezone": "Vyberte časové pásmo",
       "archive_project": {
-        "title": "Archivovať projekt",
-        "description": "Archivácia skryje projekt z menu. Prístup zostane cez stránku projektov.",
-        "button": "Archivovať projekt"
+        "title": "Archivovať oddelenie",
+        "description": "Archivácia skryje oddelenie z menu. Prístup zostane cez stránku oddelení.",
+        "button": "Archivovať oddelenie"
       },
       "delete_project": {
-        "title": "Zmazať projekt",
-        "description": "Zmazaním projektu odstránite všetky dáta. Akcia je nevratná.",
-        "button": "Zmazať projekt"
+        "title": "Zmazať oddelenie",
+        "description": "Zmazaním oddelenia odstránite všetky dáta. Akcia je nevratná.",
+        "button": "Zmazať oddelenie"
       },
       "toast": {
-        "success": "Projekt aktualizovaný",
+        "success": "Oddelenie aktualizované",
         "error": "Aktualizácia zlyhala. Skúste to znova."
       }
     },
     "members": {
       "label": "Členovia",
-      "project_lead": "Vedúci projektu",
-      "project_lead_description": "Vyberte vedúceho projektu.",
+      "project_lead": "Vedúci oddelenia",
+      "project_lead_description": "Vyberte vedúceho oddelenia.",
       "default_assignee": "Predvolené priradenie",
-      "default_assignee_description": "Vyberte predvoleného priradeného pre projekt.",
-      "project_subscribers": "Odberatelia projektu",
-      "project_subscribers_description": "Vyberte členov, ktorí budú dostávať upozornenia pre tento projekt.",
+      "default_assignee_description": "Vyberte predvoleného priradeného pre oddelenie.",
+      "project_subscribers": "Odberatelia oddelenia",
+      "project_subscribers_description": "Vyberte členov, ktorí budú dostávať upozornenia pre toto oddelenie.",
       "guest_super_permissions": {
         "title": "Udeľovať hosťom prístup ku všetkým položkám:",
-        "sub_heading": "Hostia uvidia všetky položky v projekte."
+        "sub_heading": "Hostia uvidia všetky položky v oddelení."
       },
       "invite_members": {
         "title": "Pozvať členov",
-        "sub_heading": "Pozvite členov do projektu.",
+        "sub_heading": "Pozvite členov do oddelenia.",
         "select_co_worker": "Vybrať spolupracovníka"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Odhady",
       "description": "Pomáhajú vám komunikovať zložitosť a pracovné zaťaženie tímu.",
       "label": "Odhady",
-      "title": "Povoliť odhady pre môj projekt",
+      "title": "Povoliť odhady pre moje oddelenie",
       "enable_description": "Pomáhajú vám komunikovať zložitosť a vyťaženie tímu.",
       "no_estimate": "Bez odhadu",
       "new": "Nový systém odhadov",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Odhad upravený",
-            "message": "Bod odhadu bol aktualizovaný vo vašom projekte."
+            "message": "Bod odhadu bol aktualizovaný vo vašom oddelení."
           },
           "error": {
             "title": "Úprava odhadu zlyhala",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Odhady boli preusporiadané",
-            "message": "Odhady boli preusporiadané vo vašom projekte."
+            "message": "Odhady boli preusporiadané vo vašom oddelení."
           },
           "error": {
             "title": "Preusporiadanie odhadov zlyhalo",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Automatizácie",
       "heading": "Automatizácie",
-      "description": "Nakonfigurujte automatizované akcie na zefektívnenie riadenia projektu a zníženie manuálnej práce.",
+      "description": "Nakonfigurujte automatizované akcie na zefektívnenie riadenia oddelenia a zníženie manuálnej práce.",
       "auto-archive": {
         "title": "Automaticky archivovať uzavreté položky",
         "description": "Paradise Task Tracker bude archivovať dokončené alebo zrušené položky.",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Žiadne nakonfigurované integrácie",
-        "description": "Nakonfigurujte GitHub a ďalšie integrácie na synchronizáciu vašich projektových pracovných položiek."
+        "description": "Nakonfigurujte GitHub a ďalšie integrácie na synchronizáciu pracovných položiek vášho oddelenia."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Pracovné postupy",
-      "description": "Automatizujte prechody pracovných položiek a nastavte pravidlá, ktorými sa bude riadiť pohyb úloh vaším projektom.",
+      "description": "Automatizujte prechody pracovných položiek a nastavte pravidlá, ktorými sa bude riadiť pohyb úloh vaším oddelením.",
       "add_button": "Pridať nový pracovný postup",
       "search": "Hľadať pracovné postupy",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Všetky stavy sa už používajú",
-          "description": "Všetky definované stavy tohto projektu sú už vo vašom aktuálnom pracovnom postupe."
+          "description": "Všetky definované stavy tohto oddelenia sú už vo vašom aktuálnom pracovnom postupe."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Cykly",
         "short_title": "Cykly",
-        "description": "Naplánujte prácu v flexibilných obdobiach, ktoré sa prispôsobia jedinečnému rytmu a tempu tohto projektu.",
+        "description": "Naplánujte prácu v flexibilných obdobiach, ktoré sa prispôsobia jedinečnému rytmu a tempu tohto oddelenia.",
         "toggle_title": "Povoliť cykly",
         "toggle_description": "Naplánujte prácu v sústredenej časovej osi."
       },
       "modules": {
         "title": "Moduly",
         "short_title": "Moduly",
-        "description": "Organizujte prácu do podprojektov s vyčlenenými vedúcimi a priradenými osobami.",
+        "description": "Organizujte prácu do menších celkov s vyčlenenými vedúcimi a priradenými osobami.",
         "toggle_title": "Povoliť moduly",
-        "toggle_description": "Členovia projektu budú môcť vytvárať a upravovať moduly."
+        "toggle_description": "Členovia oddelenia budú môcť vytvárať a upravovať moduly."
       },
       "views": {
         "title": "Zobrazenia",
         "short_title": "Zobrazenia",
         "description": "Uložte vlastné triedenia, filtre a možnosti zobrazenia alebo ich zdieľajte so svojím tímom.",
         "toggle_title": "Povoliť zobrazenia",
-        "toggle_description": "Členovia projektu budú môcť vytvárať a upravovať zobrazenia."
+        "toggle_description": "Členovia oddelenia budú môcť vytvárať a upravovať zobrazenia."
       },
       "pages": {
         "title": "Stránky",
         "short_title": "Stránky",
         "description": "Vytvárajte a upravujte voľný obsah: poznámky, dokumenty, čokoľvek.",
         "toggle_title": "Povoliť stránky",
-        "toggle_description": "Členovia projektu budú môcť vytvárať a upravovať stránky."
+        "toggle_description": "Členovia oddelenia budú môcť vytvárať a upravovať stránky."
       },
       "intake": {
         "intake_responsibility": "Zodpovednosť za príjem",
@@ -358,9 +358,9 @@
         "short_title": "Príjem",
         "description": "Umožnite nečlenom zdieľať chyby, spätnú väzbu a návrhy; bez narušenia vášho pracovného postupu.",
         "toggle_title": "Povoliť príjem",
-        "toggle_description": "Povoliť členom projektu vytvárať žiadosti o príjem v aplikácii.",
-        "toggle_tooltip_on": "Požiadajte správcu projektu, aby toto zapol.",
-        "toggle_tooltip_off": "Požiadajte správcu projektu, aby toto vypol.",
+        "toggle_description": "Povoliť členom oddelenia vytvárať žiadosti o príjem v aplikácii.",
+        "toggle_tooltip_on": "Požiadajte správcu oddelenia, aby toto zapol.",
+        "toggle_tooltip_off": "Požiadajte správcu oddelenia, aby toto vypol.",
         "notify_assignee": {
           "title": "Upozorniť priradených",
           "description": "Pre novú žiadosť o príjem budú predvolení priradení upozornení prostredníctvom oznámení"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Sledovanie času",
         "short_title": "Sledovanie času",
-        "description": "Zaznamenávajte čas strávený na pracovných položkách a projektoch.",
+        "description": "Zaznamenávajte čas strávený na pracovných položkách a oddeleniach.",
         "toggle_title": "Povoliť sledovanie času",
-        "toggle_description": "Členovia projektu budú môcť zaznamenávať odpracovaný čas."
+        "toggle_description": "Členovia oddelenia budú môcť zaznamenávať odpracovaný čas."
       },
       "milestones": {
         "title": "Míľniky",
@@ -425,18 +425,18 @@
         "toggle_description": "Organizujte pracovné položky podľa termínov míľnikov."
       },
       "toasts": {
-        "loading": "Aktualizácia funkcie projektu...",
-        "success": "Funkcia projektu bola úspešne aktualizovaná.",
-        "error": "Pri aktualizácii funkcie projektu sa niečo pokazilo. Skúste to prosím znova."
+        "loading": "Aktualizácia funkcie oddelenia...",
+        "success": "Funkcia oddelenia bola úspešne aktualizovaná.",
+        "error": "Pri aktualizácii funkcie oddelenia sa niečo pokazilo. Skúste to prosím znova."
       }
     },
     "project_updates": {
-      "heading": "Aktualizácie projektu",
-      "description": "Konsolidované sledovanie a monitorovanie priebehu pre tento projekt"
+      "heading": "Aktualizácie oddelenia",
+      "description": "Konsolidované sledovanie a monitorovanie priebehu pre toto oddelenie"
     },
     "templates": {
       "heading": "Šablóny",
-      "description": "Ušetrite 80 % času stráveného vytváraním projektov, pracovných položiek a stránok pomocou šablón."
+      "description": "Ušetrite 80 % času stráveného vytváraním oddelení, pracovných položiek a stránok pomocou šablón."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Kôš",
-      "description": "Odstránené položky sa sem presunú predtým, než budú trvalo zmazané. Správcovia projektu ich môžu obnoviť alebo trvalo odstrániť."
+      "description": "Odstránené položky sa sem presunú predtým, než budú trvalo zmazané. Správcovia oddelenia ich môžu obnoviť alebo trvalo odstrániť."
     }
   }
 }

@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Șabloane",
-      "description": "Economisește 80% din timpul petrecut pentru crearea proiectelor, a elementelor de lucru și a paginilor când folosești șabloane.",
-      "new_project_template": "Șablon de proiect nou",
+      "description": "Economisește 80% din timpul petrecut pentru crearea departamentelor, a elementelor de lucru și a paginilor când folosești șabloane.",
+      "new_project_template": "Șablon de departament nou",
       "new_work_item_template": "Șablon de activitate nou",
       "new_page_template": "Șablon de pagină nou",
       "options": {
         "project": {
-          "label": "Șabloane de proiect"
+          "label": "Șabloane de departament"
         },
         "work_item": {
           "label": "Șabloane de elemente de lucru"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Creează șablon",
         "no_permission": {
-          "project": "Contactează administratorul proiectului pentru a crea șabloane",
+          "project": "Contactează administratorul departamentului pentru a crea șabloane",
           "workspace": "Contactează administratorul workspace-ului pentru a crea șabloane"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Derivat din workspace"
         },
         "project": {
-          "info": "Derivat din proiect"
+          "info": "Derivat din departament"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Denumește șablonul tău de proiect.",
+              "placeholder": "Denumește șablonul tău de departament.",
               "validation": {
                 "required": "Numele șablonului este obligatoriu",
                 "maxLength": "Numele șablonului trebuie să fie mai mic de 255 de caractere"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Denumește proiectul tău.",
+            "placeholder": "Denumește departamentul tău.",
             "validation": {
-              "required": "Titlul proiectului este obligatoriu",
-              "maxLength": "Titlul proiectului trebuie să fie mai mic de 255 de caractere"
+              "required": "Titlul departamentului este obligatoriu",
+              "maxLength": "Titlul departamentului trebuie să fie mai mic de 255 de caractere"
             }
           },
           "description": {
-            "placeholder": "Descrie scopul și obiectivele acestui proiect."
+            "placeholder": "Descrie scopul și obiectivele acestui departament."
           },
           "button": {
-            "create": "Creează șablon de proiect",
-            "update": "Actualizează șablon de proiect"
+            "create": "Creează șablon de departament",
+            "update": "Actualizează șablon de departament"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Descriere scurtă",
-            "placeholder": "Acest șablon este excelent pentru managerii proiectelor care gestionează mai multe proiecte în același timp.",
+            "placeholder": "Acest șablon este excelent pentru managerii departamentelor care gestionează mai multe departamente în același timp.",
             "validation": {
               "required": "Descrierea scurtă este obligatorie"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Șabloane",
-        "description": "Cu șabloane de proiect, element de lucru și pagină în Paradise Task Tracker, nu trebuie să creezi un proiect de la zero sau să setezi manual proprietățile elementelor de lucru.",
+        "description": "Cu șabloane de departament, element de lucru și pagină în Paradise Task Tracker, nu trebuie să creezi un departament de la zero sau să setezi manual proprietățile elementelor de lucru.",
         "sub_description": "Recuperează 80% din timpul tău administrativ când folosești Șabloane."
       },
       "no_templates": {
         "button": "Creează primul tău șablon"
       },
       "no_labels": {
-        "description": " Nu există etichete încă. Creează etichete pentru a ajuta la organizarea și filtrarea elementelor de lucru în proiectul tău."
+        "description": " Nu există etichete încă. Creează etichete pentru a ajuta la organizarea și filtrarea elementelor de lucru în departamentul tău."
       },
       "no_modules": {
-        "description": "Nu există module încă. Organizează munca în sub-proiecte cu lideri și responsabili dedicați."
+        "description": "Nu există module încă. Organizează munca în părți mai mici, cu lideri și responsabili dedicați."
       },
       "no_work_items": {
         "description": "Nu există elemente de lucru încă. Adaugă unul pentru a structura mai bine munca ta."
@@ -318,7 +318,7 @@
         "project": "Adaugă șablon nou"
       },
       "label": {
-        "project": "Alege un șablon de proiect",
+        "project": "Alege un șablon de departament",
         "page": "Alege un șablon"
       },
       "tooltip": {

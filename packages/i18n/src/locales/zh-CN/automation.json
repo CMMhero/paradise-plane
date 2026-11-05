@@ -123,7 +123,7 @@
     "table": {
       "title": "自动化标题",
       "scope": "范围",
-      "projects": "项目",
+      "projects": "部门",
       "last_run_on": "最后运行时间",
       "created_on": "创建时间",
       "last_updated_on": "最后更新时间",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "自动化已删除",
-          "message": "{name}，该自动化，现已从您的项目中删除。"
+          "message": "{name}，该自动化，现已从您的部门中删除。"
         },
         "error": {
           "title": "本次无法删除该自动化。",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "自动化",
-        "description": "自动化是在您的项目中自动执行任务的方式。",
+        "description": "自动化是在您的部门中自动执行任务的方式。",
         "sub_description": "使用自动化可以节省80%的管理时间。"
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "选择要运行此自动化的项目",
+        "label": "选择要运行此自动化的部门",
         "all_projects": {
-          "label": "所有项目",
-          "description": "自动化将在工作区的所有项目中运行。"
+          "label": "所有部门",
+          "description": "自动化将在工作区的所有部门中运行。"
         },
         "select_projects": {
-          "label": "选择项目",
-          "description": "自动化将在工作区中所选的项目中运行。",
-          "placeholder": "选择项目"
+          "label": "选择部门",
+          "description": "自动化将在工作区中所选的部门中运行。",
+          "placeholder": "选择部门"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "全局",
           "project": {
-            "label": "项目",
+            "label": "部门",
             "multiple": "多个",
             "all": "全部"
           }

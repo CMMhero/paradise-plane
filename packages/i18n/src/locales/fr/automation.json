@@ -123,7 +123,7 @@
     "table": {
       "title": "Titre de l'automatisation",
       "scope": "Portée",
-      "projects": "Projets",
+      "projects": "Départements",
       "last_run_on": "Dernière exécution le",
       "created_on": "Créé le",
       "last_updated_on": "Dernière mise à jour le",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Automatisation supprimée",
-          "message": "{name}, l'automatisation, a été supprimée de votre projet."
+          "message": "{name}, l'automatisation, a été supprimée de votre département."
         },
         "error": {
           "title": "Nous n'avons pas pu supprimer cette automatisation cette fois.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Automatisations",
-        "description": "Les automatisations sont un moyen d'automatiser les tâches dans votre projet.",
+        "description": "Les automatisations sont un moyen d'automatiser les tâches dans votre département.",
         "sub_description": "Récupérez 80% de votre temps administratif lorsque vous utilisez les Automatisations."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Sélectionnez les projets sur lesquels exécuter cette automatisation",
+        "label": "Sélectionnez les départements sur lesquels exécuter cette automatisation",
         "all_projects": {
-          "label": "Tous les projets",
-          "description": "L’automatisation s’exécutera pour tous les projets de l’espace de travail."
+          "label": "Tous les départements",
+          "description": "L’automatisation s’exécutera pour tous les départements de l’espace de travail."
         },
         "select_projects": {
-          "label": "Sélectionner des projets",
-          "description": "L’automatisation s’exécutera pour les projets sélectionnés dans l’espace de travail.",
-          "placeholder": "Sélectionner des projets"
+          "label": "Sélectionner des départements",
+          "description": "L’automatisation s’exécutera pour les départements sélectionnés dans l’espace de travail.",
+          "placeholder": "Sélectionner des départements"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Global",
           "project": {
-            "label": "Projet",
+            "label": "Département",
             "multiple": "Plusieurs",
             "all": "Tous"
           }

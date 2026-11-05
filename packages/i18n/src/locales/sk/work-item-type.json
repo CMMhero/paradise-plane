@@ -4,12 +4,12 @@
     "label_lowercase": "typy pracovných položiek",
     "settings": {
       "description": "Prispôsobte a pridajte si vlastné vlastnosti, aby zodpovedali potrebám vášho tímu.",
-      "cant_delete_default_message": "Tento typ pracovnej položky nie je možné odstrániť, pretože je nastavený ako predvolený pre tento projekt.",
+      "cant_delete_default_message": "Tento typ pracovnej položky nie je možné odstrániť, pretože je nastavený ako predvolený pre toto oddelenie.",
       "set_as_default": "Nastaviť ako predvolený",
       "cant_set_default_inactive_message": "Pred nastavením ako predvolený tento typ aktivujte",
       "set_default_confirmation": {
         "title": "Nastaviť ako predvolený typ pracovnej položky",
-        "description": "Nastavením {name} ako predvoleného sa tento typ importuje do všetkých projektov v tomto pracovnom priestore. Všetky nové pracovné položky budú štandardne používať tento typ.",
+        "description": "Nastavením {name} ako predvoleného sa tento typ importuje do všetkých oddelení v tomto pracovnom priestore. Všetky nové pracovné položky budú štandardne používať tento typ.",
         "confirm_button": "Nastaviť ako predvolený"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "Vzorec je platný! Vracia {resultType} ({count} odkazovaných polí)",
           "error": {
             "empty": "Zadajte prosím vzorec",
-            "missing_context": "Chýba kontext pracovného priestoru, projektu alebo typu pracovnej položky",
+            "missing_context": "Chýba kontext pracovného priestoru, oddelenia alebo typu pracovnej položky",
             "validation_failed": "Overenie zlyhalo"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Typy",
         "description": "Vytvárajte a prispôsobujte typy pracovných položiek s vlastnosťami.",
         "sort_options": {
-          "project_count": "Počet projektov, v ktorých je súčasťou"
+          "project_count": "Počet oddelení, v ktorých je súčasťou"
         },
         "filter_options": {
           "show_active": "Zobraziť aktívne",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Povoliť Typy pracovných položiek",
-        "description": "Formujte pracovné položky podľa vašej práce pomocou Typov pracovných položiek. Prispôsobte ich ikonami, pozadiami a vlastnosťami a nakonfigurujte ich pre tento projekt.",
+        "description": "Formujte pracovné položky podľa vašej práce pomocou Typov pracovných položiek. Prispôsobte ich ikonami, pozadiami a vlastnosťami a nakonfigurujte ich pre toto oddelenie.",
         "primary_button": {
           "text": "Povoliť"
         },
         "confirmation": {
           "title": "Po povolení nemožno Typy pracovných položiek zakázať.",
-          "description": "Pracovná položka Paradise Task Tracker sa stane predvoleným typom pracovnej položky pre tento projekt a zobrazí sa so svojou ikonou a pozadím v tomto projekte.",
+          "description": "Pracovná položka Paradise Task Tracker sa stane predvoleným typom pracovnej položky pre toto oddelenie a zobrazí sa so svojou ikonou a pozadím v tomto oddelení.",
           "button": {
             "default": "Povoliť",
             "loading": "Nastavuje sa"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Získajte Pro pre povolenie Typov pracovných položiek.",
-        "description": "Formujte pracovné položky podľa vašej práce pomocou Typov pracovných položiek. Prispôsobte ich ikonami, pozadiami a vlastnosťami a nakonfigurujte ich pre tento projekt.",
+        "description": "Formujte pracovné položky podľa vašej práce pomocou Typov pracovných položiek. Prispôsobte ich ikonami, pozadiami a vlastnosťami a nakonfigurujte ich pre toto oddelenie.",
         "primary_button": {
           "text": "Získať Pro"
         }
       },
       "upgrade": {
         "title": "Inovácia pre povolenie Typov pracovných položiek.",
-        "description": "Formujte pracovné položky podľa vašej práce pomocou Typov pracovných položiek. Prispôsobte ich ikonami, pozadiami a vlastnosťami a nakonfigurujte ich pre tento projekt.",
+        "description": "Formujte pracovné položky podľa vašej práce pomocou Typov pracovných položiek. Prispôsobte ich ikonami, pozadiami a vlastnosťami a nakonfigurujte ich pre toto oddelenie.",
         "primary_button": {
           "text": "Inovovať"
         }

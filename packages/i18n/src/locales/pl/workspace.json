@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Podgląd projektów, aktywności i metryk",
-        "description": "Witaj w Paradise Task Tracker, cieszymy się, że jesteś. Utwórz pierwszy projekt, śledź elementy pracy, a ta strona stanie się centrum Twojego postępu. Administratorzy zobaczą tu również elementy pomocne zespołowi.",
+        "title": "Podgląd działów, aktywności i metryk",
+        "description": "Witaj w Paradise Task Tracker, cieszymy się, że jesteś. Utwórz pierwszy dział, śledź elementy pracy, a ta strona stanie się centrum Twojego postępu. Administratorzy zobaczą tu również elementy pomocne zespołowi.",
         "primary_button": {
-          "text": "Utwórz pierwszy projekt",
+          "text": "Utwórz pierwszy dział",
           "comic": {
-            "title": "Wszystko zaczyna się od projektu w Paradise Task Tracker",
-            "description": "Projektem może być harmonogram produktu, kampania marketingowa czy wprowadzenie nowego samochodu."
+            "title": "Wszystko zaczyna się od działu w Paradise Task Tracker",
+            "description": "Dział może zajmować się harmonogramem produktu, kampanią marketingową czy wprowadzeniem nowego samochodu."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Łączna liczba otwartych zadań",
     "error": "Wystąpił błąd podczas wczytywania danych.",
     "work_items_closed_in": "Elementy pracy zamknięte w",
-    "selected_projects": "Wybrane projekty",
+    "selected_projects": "Wybrane działy",
     "total_members": "Łączna liczba członków",
     "total_cycles": "Łączna liczba cykli",
     "total_modules": "Łączna liczba modułów",
@@ -100,11 +100,11 @@
     "backlog_work_items": "{entity} w backlogu",
     "un_started_work_items": "Nierozpoczęte {entity}",
     "completed_work_items": "Ukończone {entity}",
-    "project_insights": "Wgląd w projekt",
-    "summary_of_projects": "Podsumowanie projektów",
-    "all_projects": "Wszystkie projekty",
+    "project_insights": "Wgląd w dział",
+    "summary_of_projects": "Podsumowanie działów",
+    "all_projects": "Wszystkie działy",
     "trend_on_charts": "Trend na wykresach",
-    "active_projects": "Aktywne projekty",
+    "active_projects": "Aktywne działy",
     "customized_insights": "Dostosowane informacje",
     "created_vs_resolved": "Utworzone vs Rozwiązane",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Śledź postęp, obciążenie pracą i alokacje. Wykrywaj trendy, usuwaj blokady i pracuj szybciej",
-        "description": "Zobacz zakres vs zapotrzebowanie, oszacowania i rozrost zakresu. Uzyskaj wydajność członków zespołu i zespołów, upewniając się, że projekt jest realizowany na czas.",
+        "description": "Zobacz zakres vs zapotrzebowanie, oszacowania i rozrost zakresu. Uzyskaj wydajność członków zespołu i zespołów, dbając o to, by prace działu szły zgodnie z planem.",
         "primary_button": {
-          "text": "Rozpocznij swój pierwszy projekt",
+          "text": "Rozpocznij swój pierwszy dział",
           "comic": {
             "title": "Analityka działa najlepiej z Cyklami + Modułami",
             "description": "Najpierw umieść swoje elementy pracy w Cyklach, a jeśli można, pogrupuj elementy obejmujące więcej niż jeden cykl w Moduły. Sprawdź oba w lewej nawigacji."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Ulepsz do {plan}, aby odblokować {tab}",
     "workitem_resolved_vs_pending": "Rozwiązane vs oczekujące elementy pracy",
-    "projects_by_status": "Projekty według statusu",
+    "projects_by_status": "Działy według statusu",
     "active_users": "Aktywni użytkownicy",
     "intake_trends": "Trendy przyjęć"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Projekt} few {Projekty} other {Projektów}}",
+    "label": "{count, plural, one {Dział} few {Działy} other {Działów}}",
     "create": {
-      "label": "Dodaj projekt"
+      "label": "Dodaj dział"
     },
     "network": {
       "label": "Sieć",
@@ -186,7 +186,7 @@
       "members_length": "Liczba członków"
     },
     "scope": {
-      "my_projects": "Moje projekty",
+      "my_projects": "Moje działy",
       "archived_projects": "Zarchiwizowane"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Brak aktywnych projektów",
-        "description": "Projekt to główny cel. Zawiera zadania, cykle i moduły. Utwórz nowy lub poszukaj zarchiwizowanych.",
+        "title": "Brak aktywnych działów",
+        "description": "Dział to główna jednostka pracy. Zawiera zadania, cykle i moduły. Utwórz nowy lub poszukaj zarchiwizowanych.",
         "primary_button": {
-          "text": "Rozpocznij pierwszy projekt",
+          "text": "Rozpocznij pierwszy dział",
           "comic": {
-            "title": "Wszystko zaczyna się od projektu w Paradise Task Tracker",
-            "description": "Projekt może dotyczyć planu produktu, kampanii marketingowej lub uruchomienia nowego samochodu."
+            "title": "Wszystko zaczyna się od działu w Paradise Task Tracker",
+            "description": "Dział może dotyczyć planu produktu, kampanii marketingowej lub uruchomienia nowego samochodu."
           }
         }
       },
       "no_projects": {
-        "title": "Brak projektów",
-        "description": "Aby tworzyć elementy pracy, musisz utworzyć lub dołączyć do projektu.",
+        "title": "Brak działów",
+        "description": "Aby tworzyć elementy pracy, musisz utworzyć lub dołączyć do działu.",
         "primary_button": {
-          "text": "Rozpocznij pierwszy projekt",
+          "text": "Rozpocznij pierwszy dział",
           "comic": {
-            "title": "Wszystko zaczyna się od projektu w Paradise Task Tracker",
-            "description": "Projekt może dotyczyć planu produktu, kampanii marketingowej lub uruchomienia nowego samochodu."
+            "title": "Wszystko zaczyna się od działu w Paradise Task Tracker",
+            "description": "Dział może dotyczyć planu produktu, kampanii marketingowej lub uruchomienia nowego samochodu."
           }
         }
       },
       "filter": {
-        "title": "Brak pasujących projektów",
-        "description": "Nie znaleziono projektów spełniających kryteria.\nUtwórz nowy."
+        "title": "Brak pasujących działów",
+        "description": "Nie znaleziono działów spełniających kryteria.\nUtwórz nowy."
       },
       "search": {
-        "description": "Nie znaleziono projektów spełniających kryteria.\nUtwórz nowy."
+        "description": "Nie znaleziono działów spełniających kryteria.\nUtwórz nowy."
       }
     }
   },
@@ -229,7 +229,7 @@
     "add_view": "Dodaj widok",
     "empty_state": {
       "all-issues": {
-        "title": "Brak elementów pracy w projekcie",
+        "title": "Brak elementów pracy w dziale",
         "description": "Utwórz pierwszy element i śledź postępy!",
         "primary_button": {
           "text": "Utwórz element pracy"
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Napisz notatkę, dokument lub pełną bazę wiedzy. Niech Galileo, asystent AI Paradise Task Tracker, pomoże Ci zacząć",
-        "description": "Strony to przestrzeń do przechowywania myśli w Paradise Task Tracker. Sporządzaj notatki ze spotkań, formatuj je łatwo, osadzaj elementy pracy, układaj je za pomocą biblioteki komponentów i trzymaj je wszystkie w kontekście projektu. Aby szybko wykonać dowolny dokument, wywołaj Galileo, AI Paradise Task Tracker, za pomocą skrótu lub kliknięcia przycisku.",
+        "description": "Strony to przestrzeń do przechowywania myśli w Paradise Task Tracker. Sporządzaj notatki ze spotkań, formatuj je łatwo, osadzaj elementy pracy, układaj je za pomocą biblioteki komponentów i trzymaj je wszystkie w kontekście działu. Aby szybko wykonać dowolny dokument, wywołaj Galileo, AI Paradise Task Tracker, za pomocą skrótu lub kliknięcia przycisku.",
         "primary_button": {
           "text": "Utwórz swoją pierwszą stronę"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Brak aktywnych cykli",
-        "description": "Cykle Twoich projektów, które obejmują dowolny okres zawierający dzisiejszą datę w swoim zakresie. Znajdź tutaj postęp i szczegóły wszystkich aktywnych cykli."
+        "description": "Cykle Twoich działów, które obejmują dowolny okres zawierający dzisiejszą datę w swoim zakresie. Znajdź tutaj postęp i szczegóły wszystkich aktywnych cykli."
       }
     }
   },

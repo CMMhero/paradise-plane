@@ -1,45 +1,45 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Wpisz ID projektu",
+      "enter_project_id": "Wpisz ID działu",
       "please_select_a_timezone": "Wybierz strefę czasową",
       "archive_project": {
-        "title": "Archiwizuj projekt",
-        "description": "Archiwizacja ukryje projekt w menu. Dostęp będzie możliwy przez stronę projektów.",
-        "button": "Archiwizuj projekt"
+        "title": "Archiwizuj dział",
+        "description": "Archiwizacja ukryje dział w menu. Dostęp będzie możliwy przez stronę działów.",
+        "button": "Archiwizuj dział"
       },
       "delete_project": {
-        "title": "Usuń projekt",
-        "description": "Usunięcie projektu spowoduje trwałe wymazanie wszystkich danych. Ta akcja jest nieodwracalna.",
-        "button": "Usuń projekt"
+        "title": "Usuń dział",
+        "description": "Usunięcie działu spowoduje trwałe wymazanie wszystkich danych. Ta akcja jest nieodwracalna.",
+        "button": "Usuń dział"
       },
       "toast": {
-        "success": "Projekt zaktualizowano",
+        "success": "Dział zaktualizowano",
         "error": "Aktualizacja nie powiodła się. Spróbuj ponownie."
       }
     },
     "members": {
       "label": "Członkowie",
-      "project_lead": "Lider projektu",
-      "project_lead_description": "Wybierz lidera projektu.",
+      "project_lead": "Lider działu",
+      "project_lead_description": "Wybierz lidera działu.",
       "default_assignee": "Domyślnie przypisany",
-      "default_assignee_description": "Wybierz domyślnego przypisanego do projektu.",
-      "project_subscribers": "Subskrybenci projektu",
-      "project_subscribers_description": "Wybierz członków, którzy będą otrzymywać powiadomienia dotyczące tego projektu.",
+      "default_assignee_description": "Wybierz domyślnego przypisanego do działu.",
+      "project_subscribers": "Subskrybenci działu",
+      "project_subscribers_description": "Wybierz członków, którzy będą otrzymywać powiadomienia dotyczące tego działu.",
       "guest_super_permissions": {
         "title": "Nadaj gościom dostęp do wszystkich elementów:",
-        "sub_heading": "Goście zobaczą wszystkie elementy w projekcie."
+        "sub_heading": "Goście zobaczą wszystkie elementy w dziale."
       },
       "invite_members": {
         "title": "Zaproś członków",
-        "sub_heading": "Zaproś członków do projektu.",
+        "sub_heading": "Zaproś członków do działu.",
         "select_co_worker": "Wybierz współpracownika"
       }
     },
     "states": {
       "heading": "Stany",
       "description": "Definiuj i dostosowuj stany przepływu pracy, aby śledzić postęp elementów pracy.",
-      "describe_this_state_for_your_members": "Opisz ten stan członkom projektu.",
+      "describe_this_state_for_your_members": "Opisz ten stan członkom działu.",
       "empty_state": {
         "title": "Brak stanów w grupie {groupKey}",
         "description": "Utwórz nowy stan"
@@ -59,7 +59,7 @@
       "heading": "Szacunki",
       "description": "Skonfiguruj systemy szacowania, aby śledzić i komunikować nakład pracy wymagany dla każdego elementu pracy.",
       "label": "Szacunki",
-      "title": "Włącz szacunki dla mojego projektu",
+      "title": "Włącz szacunki dla mojego działu",
       "enable_description": "Pomagają w komunikacji o złożoności i obciążeniu zespołu.",
       "no_estimate": "Bez szacunku",
       "new": "Nowy system szacowania",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Zaktualizowano szacunek",
-            "message": "Szacunek został zaktualizowany w Twoim projekcie."
+            "message": "Szacunek został zaktualizowany w Twoim dziale."
           },
           "error": {
             "title": "Błąd aktualizacji szacunku",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Szacunki zostały przestawione",
-            "message": "Szacunki zostały przestawione w Twoim projekcie."
+            "message": "Szacunki zostały przestawione w Twoim dziale."
           },
           "error": {
             "title": "Nie udało się przestawić szacunków",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Automatyzacja",
       "heading": "Automatyzacje",
-      "description": "Skonfiguruj automatyczne akcje, aby usprawnić przepływ zarządzania projektem i zmniejszyć liczbę zadań ręcznych.",
+      "description": "Skonfiguruj automatyczne akcje, aby usprawnić przepływ zarządzania działem i zmniejszyć liczbę zadań ręcznych.",
       "auto-archive": {
         "title": "Automatyczna archiwizacja zamkniętych elementów",
         "description": "Paradise Task Tracker będzie automatycznie archiwizował elementy, które zostały ukończone lub anulowane.",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Brak skonfigurowanych integracji",
-        "description": "Skonfiguruj GitHub i inne integracje, aby synchronizować elementy pracy projektu."
+        "description": "Skonfiguruj GitHub i inne integracje, aby synchronizować elementy pracy działu."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Przepływy pracy",
-      "description": "Automatyzuj przejścia elementów pracy i ustaw reguły kontrolujące, jak zadania przechodzą przez potok projektu.",
+      "description": "Automatyzuj przejścia elementów pracy i ustaw reguły kontrolujące, jak zadania przechodzą przez potok działu.",
       "add_button": "Dodaj nowy przepływ pracy",
       "search": "Szukaj przepływów pracy",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Wszystkie stany są używane",
-          "description": "Wszystkie zdefiniowane stany dla tego projektu są już obecne w Twoim obecnym przepływie pracy."
+          "description": "Wszystkie zdefiniowane stany dla tego działu są już obecne w Twoim obecnym przepływie pracy."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Cykle",
         "short_title": "Cykle",
-        "description": "Planuj pracę w elastycznych okresach, które dostosowują się do unikalnego rytmu i tempa tego projektu.",
+        "description": "Planuj pracę w elastycznych okresach, które dostosowują się do unikalnego rytmu i tempa tego działu.",
         "toggle_title": "Włącz cykle",
         "toggle_description": "Planuj pracę w skoncentrowanych ramach czasowych."
       },
       "modules": {
         "title": "Moduły",
         "short_title": "Moduły",
-        "description": "Organizuj pracę w podprojekty z dedykowanymi liderami i przypisanymi osobami.",
+        "description": "Organizuj pracę w poddziały z dedykowanymi liderami i przypisanymi osobami.",
         "toggle_title": "Włącz moduły",
-        "toggle_description": "Członkowie projektu będą mogli tworzyć i edytować moduły."
+        "toggle_description": "Członkowie działu będą mogli tworzyć i edytować moduły."
       },
       "views": {
         "title": "Widoki",
         "short_title": "Widoki",
         "description": "Zapisuj niestandardowe sortowania, filtry i opcje wyświetlania lub udostępniaj je zespołowi.",
         "toggle_title": "Włącz widoki",
-        "toggle_description": "Członkowie projektu będą mogli tworzyć i edytować widoki."
+        "toggle_description": "Członkowie działu będą mogli tworzyć i edytować widoki."
       },
       "pages": {
         "title": "Strony",
         "short_title": "Strony",
         "description": "Twórz i edytuj dowolne treści: notatki, dokumenty, cokolwiek.",
         "toggle_title": "Włącz strony",
-        "toggle_description": "Członkowie projektu będą mogli tworzyć i edytować strony."
+        "toggle_description": "Członkowie działu będą mogli tworzyć i edytować strony."
       },
       "intake": {
         "intake_responsibility": "Odpowiedzialność za przyjęcie",
@@ -358,9 +358,9 @@
         "short_title": "Odbiór",
         "description": "Pozwól osobom niebędącym członkami dzielić się błędami, opiniami i sugestiami; bez zakłócania przepływu pracy.",
         "toggle_title": "Włącz odbiór",
-        "toggle_description": "Pozwól członkom projektu tworzyć żądania odbioru w aplikacji.",
-        "toggle_tooltip_on": "Poproś administratora projektu o włączenie.",
-        "toggle_tooltip_off": "Poproś administratora projektu o wyłączenie.",
+        "toggle_description": "Pozwól członkom działu tworzyć żądania odbioru w aplikacji.",
+        "toggle_tooltip_on": "Poproś administratora działu o włączenie.",
+        "toggle_tooltip_off": "Poproś administratora działu o wyłączenie.",
         "notify_assignee": {
           "title": "Powiadom przypisanych",
           "description": "Dla nowego żądania przyjęcia domyślni przypisani zostaną powiadomieni poprzez powiadomienia"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Śledzenie czasu",
         "short_title": "Śledzenie czasu",
-        "description": "Rejestruj czas spędzony nad elementami pracy i projektami.",
+        "description": "Rejestruj czas spędzony nad elementami pracy i działami.",
         "toggle_title": "Włącz śledzenie czasu",
-        "toggle_description": "Członkowie projektu będą mogli rejestrować przepracowany czas."
+        "toggle_description": "Członkowie działu będą mogli rejestrować przepracowany czas."
       },
       "milestones": {
         "title": "Kamienie milowe",
@@ -425,18 +425,18 @@
         "toggle_description": "Organizuj elementy pracy według terminów kamieni milowych."
       },
       "toasts": {
-        "loading": "Aktualizowanie funkcji projektu...",
-        "success": "Funkcja projektu zaktualizowana pomyślnie.",
-        "error": "Coś poszło nie tak podczas aktualizacji funkcji projektu. Spróbuj ponownie."
+        "loading": "Aktualizowanie funkcji działu...",
+        "success": "Funkcja działu zaktualizowana pomyślnie.",
+        "error": "Coś poszło nie tak podczas aktualizacji funkcji działu. Spróbuj ponownie."
       }
     },
     "project_updates": {
-      "heading": "Aktualizacje projektu",
-      "description": "Skonsolidowane śledzenie i monitorowanie postępu dla tego projektu"
+      "heading": "Aktualizacje działu",
+      "description": "Skonsolidowane śledzenie i monitorowanie postępu dla tego działu"
     },
     "templates": {
       "heading": "Szablony",
-      "description": "Zaoszczędź 80% czasu poświęcanego na tworzenie projektów, elementów pracy i stron, gdy używasz szablonów."
+      "description": "Zaoszczędź 80% czasu poświęcanego na tworzenie działów, elementów pracy i stron, gdy używasz szablonów."
     },
     "cycles": {
       "auto_schedule": {
@@ -448,7 +448,7 @@
           "cycle_title": {
             "label": "Tytuł cyklu",
             "placeholder": "Tytuł",
-            "tooltip": "Tytuł zostanie uzupełniony o numery dla kolejnych cykli. Na przykład: Projekt - 1/2/3",
+            "tooltip": "Tytuł zostanie uzupełniony o numery dla kolejnych cykli. Na przykład: Dział - 1/2/3",
             "validation": {
               "required": "Tytuł cyklu jest wymagany",
               "max_length": "Tytuł nie może przekraczać 255 znaków"
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Kosz",
-      "description": "Usunięte elementy trafiają tutaj, zanim zostaną trwale usunięte. Administratorzy projektu mogą je przywrócić lub usunąć na stałe."
+      "description": "Usunięte elementy trafiają tutaj, zanim zostaną trwale usunięte. Administratorzy działu mogą je przywrócić lub usunąć na stałe."
     }
   }
 }

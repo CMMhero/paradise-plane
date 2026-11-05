@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "模板",
-      "description": "使用模板可節省80%的專案、工作項目和頁面創建時間。",
-      "new_project_template": "新專案模板",
+      "description": "使用模板可節省80%的部門、工作項目和頁面創建時間。",
+      "new_project_template": "新部門模板",
       "new_work_item_template": "新工作事項模板",
       "new_page_template": "新頁面模板",
       "options": {
         "project": {
-          "label": "專案模板"
+          "label": "部門模板"
         },
         "work_item": {
           "label": "工作項目模板"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "創建模板",
         "no_permission": {
-          "project": "聯繫您的專案管理員創建模板",
+          "project": "聯繫您的部門管理員創建模板",
           "workspace": "聯繫您的workspace管理員創建模板"
         }
       },
@@ -35,14 +35,14 @@
           "info": "源自workspace"
         },
         "project": {
-          "info": "源自專案"
+          "info": "源自部門"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "為您的專案模板命名。",
+              "placeholder": "為您的部門模板命名。",
               "validation": {
                 "required": "模板名稱為必填項",
                 "maxLength": "模板名稱應少於255個字符"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "為您的專案命名。",
+            "placeholder": "為您的部門命名。",
             "validation": {
-              "required": "專案標題為必填項",
-              "maxLength": "專案標題應少於255個字符"
+              "required": "部門標題為必填項",
+              "maxLength": "部門標題應少於255個字符"
             }
           },
           "description": {
-            "placeholder": "描述此專案的目的和目標。"
+            "placeholder": "描述此部門的目的和目標。"
           },
           "button": {
-            "create": "創建專案模板",
-            "update": "更新專案模板"
+            "create": "創建部門模板",
+            "update": "更新部門模板"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "簡短描述",
-            "placeholder": "此模板非常適合同時管理多個專案的專案經理。",
+            "placeholder": "此模板非常適合同時管理多個部門的部門經理。",
             "validation": {
               "required": "簡短描述為必填項"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "模板",
-        "description": "使用Paradise Task Tracker中的專案、工作項目和頁面模板，您無需從頭創建專案或手動設置工作項目屬性。",
+        "description": "使用Paradise Task Tracker中的部門、工作項目和頁面模板，您無需從頭創建部門或手動設置工作項目屬性。",
         "sub_description": "使用模板可節省80%的管理時間。"
       },
       "no_templates": {
         "button": "創建您的第一個模板"
       },
       "no_labels": {
-        "description": " 尚無標籤。創建標籤以幫助組織和篩選專案中的工作項目。"
+        "description": " 尚無標籤。創建標籤以幫助組織和篩選部門中的工作項目。"
       },
       "no_modules": {
-        "description": "尚無模組。將工作組織成具有專門負責人和受讓人的子專案。"
+        "description": "尚無模組。將工作組織成具有專門負責人和受讓人的子部門。"
       },
       "no_work_items": {
         "description": "尚無工作項目。添加一個以更好地組織您的工作。"
@@ -318,7 +318,7 @@
         "project": "新增範本"
       },
       "label": {
-        "project": "選擇專案範本",
+        "project": "選擇部門範本",
         "page": "從範本中選擇"
       },
       "tooltip": {

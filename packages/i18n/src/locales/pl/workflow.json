@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Czy na pewno chcesz zresetować ten workflow?",
-        "description": "Jeśli zresetujesz ten workflow, wszystkie Twoje reguły zmiany stanu zostaną usunięte i będziesz musiał je utworzyć ponownie, aby uruchomić je w tym projekcie."
+        "description": "Jeśli zresetujesz ten workflow, wszystkie Twoje reguły zmiany stanu zostaną usunięte i będziesz musiał je utworzyć ponownie, aby uruchomić je w tym dziale."
       },
       "delete_state_change": {
         "title": "Czy na pewno chcesz usunąć tę regułę zmiany stanu?",
-        "description": "Po usunięciu nie możesz cofnąć tej zmiany i będziesz musiał ponownie ustawić regułę, jeśli chcesz, aby działała dla tego projektu."
+        "description": "Po usunięciu nie możesz cofnąć tej zmiany i będziesz musiał ponownie ustawić regułę, jeśli chcesz, aby działała dla tego działu."
       }
     },
     "toasts": {

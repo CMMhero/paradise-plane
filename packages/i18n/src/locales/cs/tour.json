@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Vítejte ve vašem pracovním prostoru",
-        "description": "Abychom vám pomohli začít, vytvořili jsme pro vás Demo projekt. Přidejme vaši první pracovní položku."
+        "description": "Abychom vám pomohli začít, vytvořili jsme pro vás Demo oddělení. Přidejme vaši první pracovní položku."
       },
       "step_one": {
         "title": "Klikněte na \"+ Přidat pracovní položku\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Dosahujte pokroku s Cykly",
-        "description": "Stiskněte Q pro vytvoření Cyklu. Pojmenujte ho a nastavte data—pouze jeden cyklus na projekt."
+        "description": "Stiskněte Q pro vytvoření Cyklu. Pojmenujte ho a nastavte data—pouze jeden cyklus na oddělení."
       },
       "step_one": {
         "title": "Vytvořte nový cyklus",
-        "description": "Stiskněte Q pro vytvoření Cyklu. Pojmenujte ho a nastavte data—pouze jeden cyklus na projekt."
+        "description": "Stiskněte Q pro vytvoření Cyklu. Pojmenujte ho a nastavte data—pouze jeden cyklus na oddělení."
       },
       "step_two": {
         "title": "Klikněte na \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Rozdělte svůj projekt do Modulů",
-        "description": "Moduly jsou menší, zaměřené projekty, které pomáhají uživatelům seskupovat a organizovat pracovní položky v určitých časových rámcích."
+        "title": "Rozdělte své oddělení do Modulů",
+        "description": "Moduly jsou menší, zaměřené celky, které pomáhají uživatelům seskupovat a organizovat pracovní položky v určitých časových rámcích."
       },
       "step_one": {
         "title": "Vytvořit Modul",
-        "description": "Moduly jsou menší, zaměřené projekty, které pomáhají uživatelům seskupovat a organizovat pracovní položky v určitých časových rámcích."
+        "description": "Moduly jsou menší, zaměřené celky, které pomáhají uživatelům seskupovat a organizovat pracovní položky v určitých časových rámcích."
       },
       "step_two": {
         "title": "Klikněte na \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Dokumentujte s AI stránkami",
-        "description": "Stránky v Paradise Task Tracker vám umožňují zachytit, organizovat a spolupracovat na projektových informacích—bez externích nástrojů."
+        "description": "Stránky v Paradise Task Tracker vám umožňují zachytit, organizovat a spolupracovat na informacích oddělení—bez externích nástrojů."
       },
       "step_one": {
         "title": "Nastavte stránku jako Veřejnou nebo Soukromou",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Přijměte/odmítněte čekající požadavek",
-        "description": "Přijměte pro úpravu a přesunutí pracovní položky do vašeho projektu nebo ji odmítněte a označte ji jako Zrušenou."
+        "description": "Přijměte pro úpravu a přesunutí pracovní položky do vašeho oddělení nebo ji odmítněte a označte ji jako Zrušenou."
       },
       "step_three": {
         "title": "Odložit prozatím",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Najděte cokoli okamžitě",
-        "description": "Použijte univerzální vyhledávání pro přeskok k úkolům, projektům, stránkám a lidem—bez přerušení vaší práce."
+        "description": "Použijte univerzální vyhledávání pro přeskok k úkolům, oddělením, stránkám a lidem—bez přerušení vaší práce."
       },
       "step_one": {
         "title": "Mějte kontrolu nad aktualizacemi",
@@ -148,8 +148,8 @@
       "got_it": "Rozumím"
     },
     "seed_data": {
-      "title": "Zde je váš demo projekt",
-      "description": "Projekty vám umožňují spravovat vaše týmy, úkoly a vše, co potřebujete k dokončení práce ve vašem pracovním prostoru."
+      "title": "Zde je vaše demo oddělení",
+      "description": "Oddělení vám umožňují spravovat vaše týmy, úkoly a vše, co potřebujete k dokončení práce ve vašem pracovním prostoru."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Začněte s nastavením a uvidíte své nápady ožít rychleji.",
       "checklist_items": {
         "item_1": {
-          "title": "Vytvořit projekt"
+          "title": "Vytvořit oddělení"
         },
         "item_2": {
           "title": "Vytvořit pracovní položku"

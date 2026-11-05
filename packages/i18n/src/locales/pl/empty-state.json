@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "Jeszcze brak aktualizacji.",
-      "description": "Gdy członkowie projektu dodadzą aktualizacje, pojawią się one tutaj"
+      "description": "Gdy członkowie działu dodadzą aktualizacje, pojawią się one tutaj"
     },
     "search": {
       "title": "Brak pasujących wyników.",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "Wygląda na to, że nie masz dostępu do tego projektu",
+      "title": "Wygląda na to, że nie masz dostępu do tego działu",
       "restricted_description": "Skontaktuj się z administratorem, aby poprosić o dostęp i móc kontynuować tutaj.",
       "join_description": "Kliknij przycisk poniżej, aby dołączyć.",
-      "cta_primary": "Dołącz do projektu",
-      "cta_loading": "Dołączanie do projektu"
+      "cta_primary": "Dołącz do działu",
+      "cta_loading": "Dołączanie do działu"
     },
     "invalid_project": {
-      "title": "Projekt nie został znaleziony",
-      "description": "Projekt, którego szukasz, nie istnieje."
+      "title": "Dział nie został znaleziony",
+      "description": "Dział, którego szukasz, nie istnieje."
     },
     "work_items": {
       "title": "Zacznij od swojego pierwszego elementu roboczego.",
-      "description": "Elementy robocze są podstawowymi elementami Twojego projektu — przypisuj właścicieli, ustalaj priorytety i łatwo śledź postęp.",
+      "description": "Elementy robocze są podstawowymi elementami Twojego działu — przypisuj właścicieli, ustalaj priorytety i łatwo śledź postęp.",
       "cta_primary": "Utwórz swój pierwszy element roboczy"
     },
     "cycles": {
       "title": "Grupuj i ograniczaj czasowo swoją pracę w Cyklach.",
-      "description": "Podziel pracę na bloki czasowe, pracuj wstecz od terminu projektu, aby ustalić daty, i osiągaj wymierny postęp jako zespół.",
+      "description": "Podziel pracę na bloki czasowe, pracuj wstecz od terminu działu, aby ustalić daty, i osiągaj wymierny postęp jako zespół.",
       "cta_primary": "Ustaw swój pierwszy cykl"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "Dodaj istniejący element roboczy"
     },
     "modules": {
-      "title": "Mapuj cele swojego projektu na Moduły i łatwo śledź.",
-      "description": "Moduły składają się z połączonych elementów roboczych. Pomagają one monitorować postęp przez fazy projektu, każda z konkretnymi terminami i analityką, aby wskazać, jak blisko jesteś osiągnięcia tych faz.",
+      "title": "Mapuj cele swojego działu na Moduły i łatwo śledź.",
+      "description": "Moduły składają się z połączonych elementów roboczych. Pomagają one monitorować postęp przez fazy działu, każda z konkretnymi terminami i analityką, aby wskazać, jak blisko jesteś osiągnięcia tych faz.",
       "cta_primary": "Ustaw swój pierwszy moduł"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "Dodaj istniejący element roboczy"
     },
     "views": {
-      "title": "Zapisz niestandardowe widoki dla swojego projektu",
+      "title": "Zapisz niestandardowe widoki dla swojego działu",
       "description": "Widoki to zapisane filtry, które pomagają szybko uzyskać dostęp do najczęściej używanych informacji. Współpracuj bez wysiłku, gdy członkowie zespołu udostępniają i dostosowują widoki do swoich konkretnych potrzeb.",
       "cta_primary": "Utwórz widok"
     },
     "no_work_items_in_project": {
-      "title": "Brak elementów roboczych w projekcie jeszcze",
-      "description": "Dodaj elementy robocze do swojego projektu i podziel swoją pracę na śledzone części za pomocą widoków.",
+      "title": "Brak jeszcze elementów roboczych w dziale",
+      "description": "Dodaj elementy robocze do swojego działu i podziel swoją pracę na śledzone części za pomocą widoków.",
       "cta_primary": "Dodaj element roboczy"
     },
     "work_item_filter": {
@@ -79,7 +79,7 @@
     },
     "pages": {
       "title": "Dokumentuj wszystko — od notatek po PRD",
-      "description": "Strony pozwalają przechwytywać i organizować informacje w jednym miejscu. Pisz notatki ze spotkań, dokumentację projektu i PRD, osadzaj elementy robocze i strukturyzuj je za pomocą gotowych komponentów.",
+      "description": "Strony pozwalają przechwytywać i organizować informacje w jednym miejscu. Pisz notatki ze spotkań, dokumentację działu i PRD, osadzaj elementy robocze i strukturyzuj je za pomocą gotowych komponentów.",
       "cta_primary": "Utwórz swoją pierwszą Stronę"
     },
     "archive_pages": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "Rejestruj zgłoszenia przyjmowane",
-      "description": "Przesyłaj nowe zgłoszenia do przeglądu, ustalania priorytetów i śledzenia w ramach przepływu pracy Twojego projektu.",
+      "description": "Przesyłaj nowe zgłoszenia do przeglądu, ustalania priorytetów i śledzenia w ramach przepływu pracy Twojego działu.",
       "cta_primary": "Utwórz zgłoszenie przyjmowane"
     },
     "intake_main": {
       "title": "Wybierz element roboczy Intake, aby wyświetlić jego szczegóły"
     },
     "epics": {
-      "title": "Przekształć złożone projekty w uporządkowane epiki.",
+      "title": "Przekształć złożone działy w uporządkowane epiki.",
       "description": "Epik pomaga organizować duże cele w mniejsze, śledzone zadania.",
       "cta_primary": "Utwórz epik",
       "cta_secondary": "Dokumentacja"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "Jeszcze brak zarchiwizowanych cykli",
-      "description": "Aby uporządkować swój projekt, archiwizuj ukończone cykle. Znajdź je tutaj po zarchiwizowaniu."
+      "description": "Aby uporządkować swój dział, archiwizuj ukończone cykle. Znajdź je tutaj po zarchiwizowaniu."
     },
     "archive_modules": {
       "title": "Jeszcze brak zarchiwizowanych Modułów",
-      "description": "Aby uporządkować swój projekt, archiwizuj ukończone lub anulowane moduły. Znajdź je tutaj po zarchiwizowaniu."
+      "description": "Aby uporządkować swój dział, archiwizuj ukończone lub anulowane moduły. Znajdź je tutaj po zarchiwizowaniu."
     },
     "home_widget_quick_links": {
       "title": "Miej pod ręką ważne odniesienia, zasoby lub dokumenty do swojej pracy"
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "Jeszcze brak Widoków",
-      "description": "Dodaj elementy robocze do swojego projektu i używaj widoków do filtrowania, sortowania i monitorowania postępów bez wysiłku.",
+      "description": "Dodaj elementy robocze do swojego działu i używaj widoków do filtrowania, sortowania i monitorowania postępów bez wysiłku.",
       "cta_primary": "Dodaj element roboczy"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "Utwórz szkic elementu roboczego"
     },
     "projects_archived": {
-      "title": "Brak zarchiwizowanych projektów",
-      "description": "Wygląda na to, że wszystkie Twoje projekty są nadal aktywne—świetna robota!"
+      "title": "Brak zarchiwizowanych działów",
+      "description": "Wygląda na to, że wszystkie Twoje działy są nadal aktywne—świetna robota!"
     },
     "analytics_projects": {
-      "title": "Utwórz projekty, aby wizualizować metryki projektu tutaj."
+      "title": "Utwórz działy, aby wizualizować metryki działu tutaj."
     },
     "analytics_work_items": {
-      "title": "Utwórz projekty z elementami roboczymi i osobami przypisanymi, aby rozpocząć śledzenie wydajności, postępów i wpływu zespołu tutaj."
+      "title": "Utwórz działy z elementami roboczymi i osobami przypisanymi, aby rozpocząć śledzenie wydajności, postępów i wpływu zespołu tutaj."
     },
     "analytics_no_cycle": {
       "title": "Utwórz cykle, aby organizować pracę w fazy czasowe i śledzić postępy przez sprinty."
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "Napisz notatkę, dokument lub pełną bazę wiedzy.",
-      "description": "Strony to przestrzeń do wychwytywania myśli w Paradise Task Tracker. Zapisuj notatki ze spotkań, łatwo je formatuj, osadzaj elementy robocze, układaj je za pomocą biblioteki komponentów i zachowuj wszystkie w kontekście projektu.",
+      "description": "Strony to przestrzeń do wychwytywania myśli w Paradise Task Tracker. Zapisuj notatki ze spotkań, łatwo je formatuj, osadzaj elementy robocze, układaj je za pomocą biblioteki komponentów i zachowuj wszystkie w kontekście działu.",
       "cta_primary": "Utwórz swoją stronę"
     },
     "project_overview_state_sidebar": {
-      "title": "Włącz stany projektu",
-      "description": "Włącz stany projektu, aby wyświetlać i zarządzać właściwościami takimi jak stan, priorytet, terminy i inne."
+      "title": "Włącz stany działu",
+      "description": "Włącz stany działu, aby wyświetlać i zarządzać właściwościami takimi jak stan, priorytet, terminy i inne."
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "Nie dodano jeszcze webhooka",
-      "description": "Automatyzuj powiadomienia do usług zewnętrznych, gdy wystąpią zdarzenia projektowe.",
+      "description": "Automatyzuj powiadomienia do usług zewnętrznych, gdy wystąpią zdarzenia działowe.",
       "cta_primary": "Dodaj webhook"
     },
     "work_item_types": {
       "title": "Twórz i dostosowuj typy elementów roboczych",
-      "description": "Zdefiniuj unikalne typy elementów roboczych dla swojego projektu. Każdy typ może mieć własne właściwości, przepływy pracy i pola - dostosowane do potrzeb Twojego projektu i zespołu.",
+      "description": "Zdefiniuj unikalne typy elementów roboczych dla swojego działu. Każdy typ może mieć własne właściwości, przepływy pracy i pola - dostosowane do potrzeb Twojego działu i zespołu.",
       "cta_primary": "Włącz"
     },
     "work_item_type_properties": {
-      "title": "Zdefiniuj właściwości i szczegóły, które chcesz przechwycić dla tego typu elementu roboczego. Dostosuj go do przepływu pracy Twojego projektu.",
+      "title": "Zdefiniuj właściwości i szczegóły, które chcesz przechwycić dla tego typu elementu roboczego. Dostosuj go do przepływu pracy Twojego działu.",
       "cta_secondary": "Dodaj właściwość"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "Śledź karty czasu pracy dla wszystkich członków",
-      "description": "Rejestruj czas w elementach roboczych, aby wyświetlać szczegółowe karty czasu pracy dla każdego członka zespołu w projektach."
+      "description": "Rejestruj czas w elementach roboczych, aby wyświetlać szczegółowe karty czasu pracy dla każdego członka zespołu w działach."
     },
     "group_syncing": {
       "title": "Brak mapowań grup"
     },
     "template_setting": {
       "title": "Brak szablonów",
-      "description": "Skróć czas konfiguracji, tworząc szablony dla projektów, elementów roboczych i stron — i rozpocznij nową pracę w ciągu kilku sekund.",
+      "description": "Skróć czas konfiguracji, tworząc szablony dla działów, elementów roboczych i stron — i rozpocznij nową pracę w ciągu kilku sekund.",
       "cta_primary": "Utwórz szablon"
     },
     "workflows": {

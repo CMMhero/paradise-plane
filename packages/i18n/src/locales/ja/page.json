@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "プライベートページおよび共有ページはチームスペースに移動できません。",
       "placeholders": {
-        "workspace_to_all": "プロジェクトとチームスペースを検索",
-        "workspace_to_project": "プロジェクトを検索",
-        "project_to_all": "プロジェクトとチームスペースを検索",
-        "project_to_project": "プロジェクトを検索",
-        "project_to_all_with_wiki": "Wiki コレクション、プロジェクト、チームスペースを検索",
-        "project_to_project_with_wiki": "Wiki コレクションとプロジェクトを検索"
+        "workspace_to_all": "部署とチームスペースを検索",
+        "workspace_to_project": "部署を検索",
+        "project_to_all": "部署とチームスペースを検索",
+        "project_to_project": "部署を検索",
+        "project_to_all_with_wiki": "Wiki コレクション、部署、チームスペースを検索",
+        "project_to_project_with_wiki": "Wiki コレクションと部署を検索"
       },
       "toasts": {
         "success": {

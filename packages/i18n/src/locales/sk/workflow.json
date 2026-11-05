@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Ste si istí, že chcete resetovať túto vorkflou?",
-        "description": "Ak resetujete túto vorkflou, všetky vaše pravidlá zmien stavu budú odstránené a budete ich musieť vytvoriť znova, aby fungovali v tomto projekte."
+        "description": "Ak resetujete túto vorkflou, všetky vaše pravidlá zmien stavu budú odstránené a budete ich musieť vytvoriť znova, aby fungovali v tomto oddelení."
       },
       "delete_state_change": {
         "title": "Ste si istí, že chcete odstrániť toto pravidlo zmeny stavu?",
-        "description": "Po odstránení nemôžete túto zmenu vrátiť späť a budete musieť nastaviť pravidlo znova, ak chcete, aby fungovalo pre tento projekt."
+        "description": "Po odstránení nemôžete túto zmenu vrátiť späť a budete musieť nastaviť pravidlo znova, ak chcete, aby fungovalo pre toto oddelenie."
       }
     },
     "toasts": {

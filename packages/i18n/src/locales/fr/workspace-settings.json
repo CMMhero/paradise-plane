@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Exportations",
-        "description": "Exportez les données de votre projet dans différents formats et accédez à votre historique d’exportations avec les liens de téléchargement.",
+        "description": "Exportez les données de votre département dans différents formats et accédez à votre historique d’exportations avec les liens de téléchargement.",
         "title": "Exportations",
         "exporting": "Exportation",
         "previous_exports": "Exportations précédentes",
         "export_separate_files": "Exporter les données dans des fichiers séparés",
-        "exporting_projects": "Exportation du projet",
+        "exporting_projects": "Exportation du département",
         "format": "Format",
         "filters_info": "Appliquez des filtres pour exporter des éléments de travail spécifiques selon vos critères.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhooks",
-        "description": "Automatisez les notifications vers des services externes lors d’événements du projet.",
+        "description": "Automatisez les notifications vers des services externes lors d’événements du département.",
         "title": "Webhooks",
         "add_webhook": "Ajouter un webhook",
         "modal": {
@@ -187,22 +187,22 @@
       "worklogs": {
         "title": "Journaux de travail",
         "heading": "Journaux de travail",
-        "description": "Téléchargez les journaux de travail (feuilles de temps) pour n’importe qui dans n’importe quel projet."
+        "description": "Téléchargez les journaux de travail (feuilles de temps) pour n’importe qui dans n’importe quel département."
       },
       "group_syncing": {
         "title": "Synchronisation des groupes",
         "heading": "Synchronisation des groupes",
-        "description": "Associez les groupes du fournisseur d'identité aux projets et rôles. L'accès des utilisateurs est mis à jour automatiquement lorsque l'appartenance au groupe change dans votre IdP, simplifiant l'intégration et le départ.",
+        "description": "Associez les groupes du fournisseur d'identité aux départements et rôles. L'accès des utilisateurs est mis à jour automatiquement lorsque l'appartenance au groupe change dans votre IdP, simplifiant l'intégration et le départ.",
         "enable": {
           "title": "Activer la synchronisation des groupes",
-          "description": "Ajoutez automatiquement les utilisateurs aux projets en fonction des groupes du fournisseur d'identité."
+          "description": "Ajoutez automatiquement les utilisateurs aux départements en fonction des groupes du fournisseur d'identité."
         },
         "config": {
           "title": "Configurer la synchronisation des groupes",
-          "description": "Configurez la façon dont les groupes du fournisseur d'identité sont mappés aux projets et rôles.",
+          "description": "Configurez la façon dont les groupes du fournisseur d'identité sont mappés aux départements et rôles.",
           "sync_on_login": {
             "title": "Synchronisation à la connexion",
-            "description": "Mettez à jour l'appartenance au groupe et l'accès au projet lorsqu'un utilisateur se connecte."
+            "description": "Mettez à jour l'appartenance au groupe et l'accès au département lorsqu'un utilisateur se connecte."
           },
           "sync_offline": {
             "title": "Synchronisation hors ligne",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Suppression automatique",
-            "description": "Supprimez automatiquement les utilisateurs des projets lorsqu'ils ne correspondent plus au groupe."
+            "description": "Supprimez automatiquement les utilisateurs des départements lorsqu'ils ne correspondent plus au groupe."
           },
           "group_attribute_key": {
             "title": "Clé d'attribut de groupe",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Correspondance des groupes",
-          "description": "Associez les groupes du fournisseur d'identité aux projets et rôles.",
+          "description": "Associez les groupes du fournisseur d'identité aux départements et rôles.",
           "button_text": "Ajouter une nouvelle synchronisation de groupe"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Supprimer la synchronisation de groupe",
-          "content": "Les nouveaux utilisateurs de ce groupe d'identité ne seront plus ajoutés au projet. Les utilisateurs déjà ajoutés conserveront leur rôle actuel."
+          "content": "Les nouveaux utilisateurs de ce groupe d'identité ne seront plus ajoutés au département. Les utilisateurs déjà ajoutés conserveront leur rôle actuel."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Saisissez les noms des groupes IdP"
           },
           "project": {
-            "text": "Projet",
-            "required": "Le projet est requis",
-            "placeholder": "Sélectionnez un projet"
+            "text": "Département",
+            "required": "Le département est requis",
+            "placeholder": "Sélectionnez un département"
           },
           "default_role": {
-            "text": "Rôle du projet",
-            "required": "Le rôle du projet est requis",
-            "placeholder": "Sélectionnez un rôle du projet"
+            "text": "Rôle du département",
+            "required": "Le rôle du département est requis",
+            "placeholder": "Sélectionnez un rôle du département"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Configurez votre domaine et activez l'authentification unique"
       },
       "project_states": {
-        "title": "États du projet",
-        "heading": "Consultez la vue d’ensemble de la progression pour tous les projets.",
-        "description": "Les États de projet sont une fonctionnalité exclusive à Paradise Task Tracker pour suivre la progression de tous vos projets par n’importe quelle propriété de projet.",
+        "title": "États du département",
+        "heading": "Consultez la vue d’ensemble de la progression pour tous les départements.",
+        "description": "Les États de département sont une fonctionnalité exclusive à Paradise Task Tracker pour suivre la progression de tous vos départements par n’importe quelle propriété de département.",
         "go_to_settings": "Aller aux paramètres"
       },
       "projects": {
-        "title": "Projets",
-        "description": "Gérer les états des projets, activer les étiquettes de projets et autres configurations.",
+        "title": "Départements",
+        "description": "Gérer les états des départements, activer les étiquettes de départements et autres configurations.",
         "tabs": {
-          "states": "États du projet",
-          "labels": "Étiquettes du projet"
+          "states": "États du département",
+          "labels": "Étiquettes du département"
         }
       },
       "templates": {
         "title": "Modèles",
         "heading": "Modèles",
-        "description": "Économisez 80% du temps consacré à la création de projets, d’éléments de travail et de pages en utilisant des modèles."
+        "description": "Économisez 80% du temps consacré à la création de départements, d’éléments de travail et de pages en utilisant des modèles."
       },
       "relations": {
         "title": "Relations",
@@ -465,7 +465,7 @@
         "read": "Lecture",
         "write": "Écriture",
         "scope_description": {
-          "projects": "Accès aux projets et à toutes les entités liées aux projets",
+          "projects": "Accès aux départements et à toutes les entités liées aux départements",
           "wiki": "Accès au wiki et à toutes les entités liées au wiki",
           "workspaces": "Accès aux espaces de travail et à toutes les entités liées",
           "stickies": "Accès aux stickies et à toutes les entités liées",

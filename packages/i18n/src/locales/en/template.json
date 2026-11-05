@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Templates",
-      "description": "Save 80% time spent on creating projects, work items, and pages when you use templates.",
-      "new_project_template": "New project template",
+      "description": "Save 80% time spent on creating departments, work items, and pages when you use templates.",
+      "new_project_template": "New department template",
       "new_work_item_template": "New work item template",
       "new_page_template": "New page template",
       "options": {
         "project": {
-          "label": "Project templates"
+          "label": "Department templates"
         },
         "work_item": {
           "label": "Work item templates"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Create template",
         "no_permission": {
-          "project": "Contact your project admin to create templates",
+          "project": "Contact your department admin to create templates",
           "workspace": "Contact your workspace admin to create templates"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Derived from workspace"
         },
         "project": {
-          "info": "Derived from project"
+          "info": "Derived from department"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Name your project template.",
+              "placeholder": "Name your department template.",
               "validation": {
                 "required": "Template name is required",
                 "maxLength": "Template name should be less than 255 characters"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Name your project.",
+            "placeholder": "Name your department.",
             "validation": {
-              "required": "Project title is required",
-              "maxLength": "Project title should be less than 255 characters"
+              "required": "Department title is required",
+              "maxLength": "Department title should be less than 255 characters"
             }
           },
           "description": {
-            "placeholder": "Describe the purpose and goals of this project."
+            "placeholder": "Describe the purpose and goals of this department."
           },
           "button": {
-            "create": "Create project template",
-            "update": "Update project template"
+            "create": "Create department template",
+            "update": "Update department template"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Short description",
-            "placeholder": "This template is great for Project Managers who manage several projects at the same time.",
+            "placeholder": "This template is great for Department Managers who manage several departments at the same time.",
             "validation": {
               "required": "Short description is required"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Templates",
-        "description": "With project, work-item, and page templates in Paradise Task Tracker, you don't have to create a project from scratch or set work item props manually.",
+        "description": "With department, work-item, and page templates in Paradise Task Tracker, you don't have to create a department from scratch or set work item props manually.",
         "sub_description": "Get 80% of your admin time back when you use Templates."
       },
       "no_templates": {
         "button": "Create your first template"
       },
       "no_labels": {
-        "description": "No labels yet. Create labels to help organize and filter work items in you project."
+        "description": "No labels yet. Create labels to help organize and filter work items in you department."
       },
       "no_modules": {
-        "description": "No modules yet. Organize work into sub-projects with dedicated leads and assignees."
+        "description": "No modules yet. Organize work into sub-groups with dedicated leads and assignees."
       },
       "no_work_items": {
         "description": "No work items yet. Add one to structure your work better."
@@ -318,7 +318,7 @@
         "project": "Add new template"
       },
       "label": {
-        "project": "Pick a project template",
+        "project": "Pick a department template",
         "page": "Choose from template"
       },
       "tooltip": {

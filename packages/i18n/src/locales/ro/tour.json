@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Bun venit în spațiul tău de lucru",
-        "description": "Pentru a te ajuta să începi, am creat un Proiect Demo pentru tine. Hai să adăugăm primul tău element de lucru."
+        "description": "Pentru a te ajuta să începi, am creat un Departament Demo pentru tine. Hai să adăugăm primul tău element de lucru."
       },
       "step_one": {
         "title": "Fă clic pe \"+ Adaugă element de lucru\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Fă progrese cu Cicluri",
-        "description": "Apasă Q pentru a crea un Ciclu. Numește-l și stabilește datele—doar un ciclu per proiect."
+        "description": "Apasă Q pentru a crea un Ciclu. Numește-l și stabilește datele—doar un ciclu per departament."
       },
       "step_one": {
         "title": "Creează un ciclu nou",
-        "description": "Apasă Q pentru a crea un Ciclu. Numește-l și stabilește datele—doar un ciclu per proiect."
+        "description": "Apasă Q pentru a crea un Ciclu. Numește-l și stabilește datele—doar un ciclu per departament."
       },
       "step_two": {
         "title": "Fă clic pe \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Împarte-ți proiectul în Module",
-        "description": "Modulele sunt proiecte mai mici, focalizate, care ajută utilizatorii să grupeze și să organizeze elementele de lucru în cadre temporale specifice."
+        "title": "Împarte-ți departamentul în Module",
+        "description": "Modulele sunt părți mai mici și focalizate ale departamentului, care ajută utilizatorii să grupeze și să organizeze elementele de lucru în cadre temporale specifice."
       },
       "step_one": {
         "title": "Creează Modul",
-        "description": "Modulele sunt proiecte mai mici, focalizate, care ajută utilizatorii să grupeze și să organizeze elementele de lucru în cadre temporale specifice."
+        "description": "Modulele sunt părți mai mici și focalizate ale departamentului, care ajută utilizatorii să grupeze și să organizeze elementele de lucru în cadre temporale specifice."
       },
       "step_two": {
         "title": "Fă clic pe \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Documentează cu Pagini alimentate de AI",
-        "description": "Paginile în Paradise Task Tracker îți permit să capturezi, să organizezi și să colaborezi la informații despre proiect—fără instrumente externe."
+        "description": "Paginile în Paradise Task Tracker îți permit să capturezi, să organizezi și să colaborezi la informații despre departament—fără instrumente externe."
       },
       "step_one": {
         "title": "Fă pagina Publică sau Privată",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Acceptă/respinge o cerere în așteptare",
-        "description": "Acceptă pentru a edita și muta elementul de lucru în proiectul tău sau respinge-l pentru a-l marca ca Anulat."
+        "description": "Acceptă pentru a edita și muta elementul de lucru în departamentul tău sau respinge-l pentru a-l marca ca Anulat."
       },
       "step_three": {
         "title": "Amână deocamdată",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Găsește orice instant",
-        "description": "Folosește căutarea universală pentru a sări la sarcini, proiecte, pagini și persoane—fără să-ți părăsești fluxul."
+        "description": "Folosește căutarea universală pentru a sări la sarcini, departamente, pagini și persoane—fără să-ți părăsești fluxul."
       },
       "step_one": {
         "title": "Păstrează controlul asupra actualizărilor",
@@ -148,8 +148,8 @@
       "got_it": "Am înțeles"
     },
     "seed_data": {
-      "title": "Iată proiectul tău demo",
-      "description": "Proiectele îți permit să gestionezi echipele, sarcinile și tot ce ai nevoie pentru a duce lucrurile la bun sfârșit în spațiul tău de lucru."
+      "title": "Iată departamentul tău demo",
+      "description": "Departamentele îți permit să gestionezi echipele, sarcinile și tot ce ai nevoie pentru a duce lucrurile la bun sfârșit în spațiul tău de lucru."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Începe configurarea și vezi-ți ideile prind viață mai repede.",
       "checklist_items": {
         "item_1": {
-          "title": "Creează un proiect"
+          "title": "Creează un departament"
         },
         "item_2": {
           "title": "Creează un element de lucru"

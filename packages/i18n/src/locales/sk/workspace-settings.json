@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Exporty",
-        "description": "Exportujte údaje o projektoch v rôznych formátoch a získajte prístup k histórii exportov s odkazmi na stiahnutie.",
+        "description": "Exportujte údaje o oddeleniach v rôznych formátoch a získajte prístup k histórii exportov s odkazmi na stiahnutie.",
         "title": "Exporty",
         "exporting": "Exportovanie",
         "previous_exports": "Predchádzajúce exporty",
         "export_separate_files": "Exportovať dáta do samostatných súborov",
-        "exporting_projects": "Exportovanie projektu",
+        "exporting_projects": "Exportovanie oddelenia",
         "format": "Formát",
         "filters_info": "Použite filtre na export konkrétnych pracovných položiek podľa vašich kritérií.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhooky",
-        "description": "Automatizujte oznámenia do externých služieb pri udalostiach v projekte.",
+        "description": "Automatizujte oznámenia do externých služieb pri udalostiach v oddelení.",
         "title": "Webhooky",
         "add_webhook": "Pridať webhook",
         "modal": {
@@ -187,22 +187,22 @@
       "worklogs": {
         "title": "Pracovné záznamy",
         "heading": "Záznamy práce",
-        "description": "Stiahnite si záznamy práce (timesheety) pre kohokoľvek v akomkoľvek projekte."
+        "description": "Stiahnite si záznamy práce (timesheety) pre kohokoľvek v akomkoľvek oddelení."
       },
       "group_syncing": {
         "title": "Synchronizácia skupín",
         "heading": "Synchronizácia skupín",
-        "description": "Prepojte skupiny poskytovateľa identity s projektami a rolami. Prístup používateľov sa automaticky aktualizuje pri zmene členstva v skupine vo vašom IdP, čím sa zjednodušuje onboarding a offboarding.",
+        "description": "Prepojte skupiny poskytovateľa identity s oddeleniami a rolami. Prístup používateľov sa automaticky aktualizuje pri zmene členstva v skupine vo vašom IdP, čím sa zjednodušuje onboarding a offboarding.",
         "enable": {
           "title": "Povoliť synchronizáciu skupín",
-          "description": "Automaticky pridávajte používateľov do projektov na základe skupín poskytovateľa identity."
+          "description": "Automaticky pridávajte používateľov do oddelení na základe skupín poskytovateľa identity."
         },
         "config": {
           "title": "Konfigurovať synchronizáciu skupín",
-          "description": "Nastavte, ako sú skupiny poskytovateľa identity mapované na projekty a role.",
+          "description": "Nastavte, ako sú skupiny poskytovateľa identity mapované na oddelenia a role.",
           "sync_on_login": {
             "title": "Synchronizácia pri prihlásení",
-            "description": "Aktualizujte členstvo v skupine a prístup k projektu pri prihlásení používateľa."
+            "description": "Aktualizujte členstvo v skupine a prístup k oddeleniu pri prihlásení používateľa."
           },
           "sync_offline": {
             "title": "Offline synchronizácia",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Automatické odstránenie",
-            "description": "Automaticky odstráňte používateľov z projektov, keď už nezodpovedajú skupine."
+            "description": "Automaticky odstráňte používateľov z oddelení, keď už nezodpovedajú skupine."
           },
           "group_attribute_key": {
             "title": "Kľúč atribútu skupiny",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Mapovanie skupín",
-          "description": "Prepojte skupiny poskytovateľa identity s projektami a rolami.",
+          "description": "Prepojte skupiny poskytovateľa identity s oddeleniami a rolami.",
           "button_text": "Pridať novú synchronizáciu skupín"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Zmazať synchronizáciu skupín",
-          "content": "Noví používatelia z tejto skupiny identity už nebudú pridávaní do projektu. Už pridaní používatelia si zachovajú svoju súčasnú rolu."
+          "content": "Noví používatelia z tejto skupiny identity už nebudú pridávaní do oddelenia. Už pridaní používatelia si zachovajú svoju súčasnú rolu."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Zadajte názvy skupín IdP"
           },
           "project": {
-            "text": "Projekt",
-            "required": "Projekt je povinný",
-            "placeholder": "Vyberte projekt"
+            "text": "Oddelenie",
+            "required": "Oddelenie je povinné",
+            "placeholder": "Vyberte oddelenie"
           },
           "default_role": {
-            "text": "Rola projektu",
-            "required": "Rola projektu je povinná",
-            "placeholder": "Vyberte rolu projektu"
+            "text": "Rola oddelenia",
+            "required": "Rola oddelenia je povinná",
+            "placeholder": "Vyberte rolu oddelenia"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Nakonfigurujte svoju doménu a povolte jednotné prihlásenie"
       },
       "project_states": {
-        "title": "Stavy projektu",
-        "heading": "Zobrazte prehľad priebehu všetkých projektov.",
-        "description": "Stavy projektov sú funkcia exkluzívna pre Paradise Task Tracker na sledovanie priebehu všetkých vašich projektov podľa ľubovoľnej vlastnosti projektu.",
+        "title": "Stavy oddelenia",
+        "heading": "Zobrazte prehľad priebehu všetkých oddelení.",
+        "description": "Stavy oddelení sú funkcia exkluzívna pre Paradise Task Tracker na sledovanie priebehu všetkých vašich oddelení podľa ľubovoľnej vlastnosti oddelenia.",
         "go_to_settings": "Prejsť na nastavenia"
       },
       "projects": {
-        "title": "Projekty",
-        "description": "Spravujte stavy projektov, povoľte štítky projektov a ďalšie konfigurácie.",
+        "title": "Oddelenia",
+        "description": "Spravujte stavy oddelení, povoľte štítky oddelení a ďalšie konfigurácie.",
         "tabs": {
-          "states": "Stavy projektu",
-          "labels": "Štítky projektu"
+          "states": "Stavy oddelenia",
+          "labels": "Štítky oddelenia"
         }
       },
       "templates": {
         "title": "Šablóny",
         "heading": "Šablóny",
-        "description": "Ušetrite 80 % času stráveného vytváraním projektov, pracovných položiek a stránok pomocou šablón."
+        "description": "Ušetrite 80 % času stráveného vytváraním oddelení, pracovných položiek a stránok pomocou šablón."
       },
       "relations": {
         "title": "Vzťahy",
@@ -465,7 +465,7 @@
         "read": "Čítanie",
         "write": "Zápis",
         "scope_description": {
-          "projects": "Prístup k projektom a všetkým súvisiacim entitám",
+          "projects": "Prístup k oddeleniam a všetkým súvisiacim entitám",
           "wiki": "Prístup k wiki a všetkým súvisiacim entitám",
           "workspaces": "Prístup k pracovným priestorom a všetkým súvisiacim entitám",
           "stickies": "Prístup k poznámkam a všetkým súvisiacim entitám",

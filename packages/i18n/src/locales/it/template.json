@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Modelli",
-      "description": "Risparmia l'80% del tempo dedicato alla creazione di progetti, elementi di lavoro e pagine quando utilizzi i modelli.",
-      "new_project_template": "Nuovo modello di progetto",
+      "description": "Risparmia l'80% del tempo dedicato alla creazione di reparti, elementi di lavoro e pagine quando utilizzi i modelli.",
+      "new_project_template": "Nuovo modello di reparto",
       "new_work_item_template": "Nuovo modello di elemento di lavoro",
       "new_page_template": "Nuovo modello di pagina",
       "options": {
         "project": {
-          "label": "Modelli di progetto"
+          "label": "Modelli di reparto"
         },
         "work_item": {
           "label": "Modelli di elementi di lavoro"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Crea modello",
         "no_permission": {
-          "project": "Contatta l'amministratore del tuo progetto per creare modelli",
+          "project": "Contatta l'amministratore del tuo reparto per creare modelli",
           "workspace": "Contatta l'amministratore del tuo spazio di lavoro per creare modelli"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Derivato dallo spazio di lavoro"
         },
         "project": {
-          "info": "Derivato dal progetto"
+          "info": "Derivato dal reparto"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Dai un nome al tuo modello di progetto.",
+              "placeholder": "Dai un nome al tuo modello di reparto.",
               "validation": {
                 "required": "Il nome del modello è obbligatorio",
                 "maxLength": "Il nome del modello deve contenere meno di 255 caratteri"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Dai un nome al tuo progetto.",
+            "placeholder": "Dai un nome al tuo reparto.",
             "validation": {
-              "required": "Il titolo del progetto è obbligatorio",
-              "maxLength": "Il titolo del progetto deve contenere meno di 255 caratteri"
+              "required": "Il titolo del reparto è obbligatorio",
+              "maxLength": "Il titolo del reparto deve contenere meno di 255 caratteri"
             }
           },
           "description": {
-            "placeholder": "Descrivi lo scopo e gli obiettivi di questo progetto."
+            "placeholder": "Descrivi lo scopo e gli obiettivi di questo reparto."
           },
           "button": {
-            "create": "Crea modello di progetto",
-            "update": "Aggiorna modello di progetto"
+            "create": "Crea modello di reparto",
+            "update": "Aggiorna modello di reparto"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Descrizione breve",
-            "placeholder": "Questo modello è ottimo per i Project Managers che gestiscono più progetti contemporaneamente.",
+            "placeholder": "Questo modello è ottimo per i Department Managers che gestiscono più reparti contemporaneamente.",
             "validation": {
               "required": "La descrizione breve è obbligatoria"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Modelli",
-        "description": "Con i modelli di progetto, elemento di lavoro e pagina in Paradise Task Tracker, non devi creare un progetto da zero o impostare manualmente le proprietà degli elementi di lavoro.",
+        "description": "Con i modelli di reparto, elemento di lavoro e pagina in Paradise Task Tracker, non devi creare un reparto da zero o impostare manualmente le proprietà degli elementi di lavoro.",
         "sub_description": "Recupera l'80% del tuo tempo di amministrazione quando utilizzi i Modelli."
       },
       "no_templates": {
         "button": "Crea il tuo primo modello"
       },
       "no_labels": {
-        "description": " Nessuna etichetta ancora. Crea etichette per aiutare a organizzare e filtrare gli elementi di lavoro nel tuo progetto."
+        "description": " Nessuna etichetta ancora. Crea etichette per aiutare a organizzare e filtrare gli elementi di lavoro nel tuo reparto."
       },
       "no_modules": {
-        "description": "Nessun modulo ancora. Organizza il lavoro in sotto-progetti con responsabili e assegnatari dedicati."
+        "description": "Nessun modulo ancora. Organizza il lavoro in sotto-reparti con responsabili e assegnatari dedicati."
       },
       "no_work_items": {
         "description": "Nessun elemento di lavoro ancora. Aggiungi uno per strutturare il tuo lavoro meglio."
@@ -318,7 +318,7 @@
         "project": "Aggiungi nuovo modello"
       },
       "label": {
-        "project": "Scegli un modello di progetto",
+        "project": "Scegli un modello di reparto",
         "page": "Scegli dal modello"
       },
       "tooltip": {

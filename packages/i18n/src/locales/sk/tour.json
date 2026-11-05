@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Vitajte vo vašom pracovnom priestore",
-        "description": "Aby sme vám pomohli začať, vytvorili sme pre vás Demo projekt. Pridajme vašu prvú pracovnú položku."
+        "description": "Aby sme vám pomohli začať, vytvorili sme pre vás Demo oddelenie. Pridajme vašu prvú pracovnú položku."
       },
       "step_one": {
         "title": "Kliknite na \"+ Pridať pracovnú položku\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Dosahujte pokrok s Cyklami",
-        "description": "Stlačte Q na vytvorenie Cyklu. Pomenujte ho a nastavte dátumy—len jeden cyklus na projekt."
+        "description": "Stlačte Q na vytvorenie Cyklu. Pomenujte ho a nastavte dátumy—len jeden cyklus na oddelenie."
       },
       "step_one": {
         "title": "Vytvoriť nový cyklus",
-        "description": "Stlačte Q na vytvorenie Cyklu. Pomenujte ho a nastavte dátumy—len jeden cyklus na projekt."
+        "description": "Stlačte Q na vytvorenie Cyklu. Pomenujte ho a nastavte dátumy—len jeden cyklus na oddelenie."
       },
       "step_two": {
         "title": "Kliknite na \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Rozdeľte svoj projekt do Modulov",
-        "description": "Moduly sú menšie, zamerané projekty, ktoré pomáhajú používateľom zoskupovať a organizovať pracovné položky v špecifických časových rámcoch."
+        "title": "Rozdeľte svoje oddelenie do Modulov",
+        "description": "Moduly sú menšie, zamerané celky, ktoré pomáhajú používateľom zoskupovať a organizovať pracovné položky v špecifických časových rámcoch."
       },
       "step_one": {
         "title": "Vytvoriť Modul",
-        "description": "Moduly sú menšie, zamerané projekty, ktoré pomáhajú používateľom zoskupovať a organizovať pracovné položky v špecifických časových rámcoch."
+        "description": "Moduly sú menšie, zamerané celky, ktoré pomáhajú používateľom zoskupovať a organizovať pracovné položky v špecifických časových rámcoch."
       },
       "step_two": {
         "title": "Kliknite na \"+\"",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Prijať/odmietnuť čakajúcu žiadosť",
-        "description": "Prijmite na úpravu a presunutie pracovnej položky do svojho projektu alebo odmiet nite na označenie ako Zrušené."
+        "description": "Prijmite na úpravu a presunutie pracovnej položky do svojho oddelenia alebo odmiet nite na označenie ako Zrušené."
       },
       "step_three": {
         "title": "Odložiť zatiaľ",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Nájdite čokoľvek okamžite",
-        "description": "Použite univerzálne vyhľadávanie na preskok k úlohám, projektom, stránkam a ľuďom—bez opustenia toku."
+        "description": "Použite univerzálne vyhľadávanie na preskok k úlohám, oddeleniam, stránkam a ľuďom—bez opustenia toku."
       },
       "step_one": {
         "title": "Udržujte kontrolu nad aktualizáciami",
@@ -148,8 +148,8 @@
       "got_it": "Rozumiem"
     },
     "seed_data": {
-      "title": "Tu je váš demo projekt",
-      "description": "Projekty vám umožňujú spravovať vaše tímy, úlohy a všetko, čo potrebujete na dokončenie práce vo vašom pracovnom priestore."
+      "title": "Tu je vaše demo oddelenie",
+      "description": "Oddelenia vám umožňujú spravovať vaše tímy, úlohy a všetko, čo potrebujete na dokončenie práce vo vašom pracovnom priestore."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Začnite s nastavením a uvidíte svoje nápady ožívať rýchlejšie.",
       "checklist_items": {
         "item_1": {
-          "title": "Vytvoriť projekt"
+          "title": "Vytvoriť oddelenie"
         },
         "item_2": {
           "title": "Vytvoriť pracovnú položku"

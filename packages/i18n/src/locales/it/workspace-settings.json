@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Esportazioni",
-        "description": "Esporta i dati del tuo progetto in vari formati e accedi alla cronologia delle esportazioni con i link per il download.",
+        "description": "Esporta i dati del tuo reparto in vari formati e accedi alla cronologia delle esportazioni con i link per il download.",
         "title": "Esportazioni",
         "exporting": "Esportazione in corso",
         "previous_exports": "Esportazioni precedenti",
         "export_separate_files": "Esporta i dati in file separati",
-        "exporting_projects": "Esportazione del progetto",
+        "exporting_projects": "Esportazione del reparto",
         "format": "Formato",
         "filters_info": "Applica filtri per esportare elementi di lavoro specifici in base ai tuoi criteri.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhook",
-        "description": "Automatizza le notifiche verso servizi esterni quando si verificano eventi del progetto.",
+        "description": "Automatizza le notifiche verso servizi esterni quando si verificano eventi del reparto.",
         "title": "Webhooks",
         "add_webhook": "Aggiungi webhook",
         "modal": {
@@ -187,22 +187,22 @@
       "worklogs": {
         "title": "Registrazioni di lavoro",
         "heading": "Registrazioni di lavoro",
-        "description": "Scarica le registrazioni di lavoro, alias timesheet, per chiunque in qualsiasi progetto."
+        "description": "Scarica le registrazioni di lavoro, alias timesheet, per chiunque in qualsiasi reparto."
       },
       "group_syncing": {
         "title": "Sincronizzazione gruppi",
         "heading": "Sincronizzazione gruppi",
-        "description": "Collega i gruppi del provider di identità a progetti e ruoli. L'accesso degli utenti si aggiorna automaticamente quando cambia l'appartenenza al gruppo nel tuo IdP, semplificando onboarding e offboarding.",
+        "description": "Collega i gruppi del provider di identità a reparti e ruoli. L'accesso degli utenti si aggiorna automaticamente quando cambia l'appartenenza al gruppo nel tuo IdP, semplificando onboarding e offboarding.",
         "enable": {
           "title": "Abilita sincronizzazione gruppi",
-          "description": "Aggiungi automaticamente gli utenti ai progetti in base ai gruppi del provider di identità."
+          "description": "Aggiungi automaticamente gli utenti ai reparti in base ai gruppi del provider di identità."
         },
         "config": {
           "title": "Configura sincronizzazione gruppi",
-          "description": "Imposta come i gruppi del provider di identità sono mappati a progetti e ruoli.",
+          "description": "Imposta come i gruppi del provider di identità sono mappati a reparti e ruoli.",
           "sync_on_login": {
             "title": "Sincronizza al login",
-            "description": "Aggiorna appartenenza al gruppo e accesso al progetto quando un utente accede."
+            "description": "Aggiorna appartenenza al gruppo e accesso al reparto quando un utente accede."
           },
           "sync_offline": {
             "title": "Sincronizzazione offline",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Rimozione automatica",
-            "description": "Rimuovi automaticamente gli utenti dai progetti quando non corrispondono più al gruppo."
+            "description": "Rimuovi automaticamente gli utenti dai reparti quando non corrispondono più al gruppo."
           },
           "group_attribute_key": {
             "title": "Chiave attributo gruppo",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Mappatura gruppi",
-          "description": "Collega i gruppi del provider di identità a progetti e ruoli.",
+          "description": "Collega i gruppi del provider di identità a reparti e ruoli.",
           "button_text": "Aggiungi nuova sincronizzazione gruppo"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Elimina sincronizzazione gruppo",
-          "content": "I nuovi utenti di questo gruppo di identità non verranno più aggiunti al progetto. Gli utenti già aggiunti conserveranno il loro ruolo attuale."
+          "content": "I nuovi utenti di questo gruppo di identità non verranno più aggiunti al reparto. Gli utenti già aggiunti conserveranno il loro ruolo attuale."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Inserisci i nomi dei gruppi IdP"
           },
           "project": {
-            "text": "Progetto",
-            "required": "Il progetto è obbligatorio",
-            "placeholder": "Seleziona un progetto"
+            "text": "Reparto",
+            "required": "Il reparto è obbligatorio",
+            "placeholder": "Seleziona un reparto"
           },
           "default_role": {
-            "text": "Ruolo progetto",
-            "required": "Il ruolo progetto è obbligatorio",
-            "placeholder": "Seleziona un ruolo progetto"
+            "text": "Ruolo reparto",
+            "required": "Il ruolo reparto è obbligatorio",
+            "placeholder": "Seleziona un ruolo reparto"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Configura il tuo dominio e abilita Single sign-on"
       },
       "project_states": {
-        "title": "Stati del progetto",
-        "heading": "Visualizza una panoramica dei progressi per tutti i progetti.",
-        "description": "Gli stati dei progetti sono una funzionalità esclusiva di Paradise Task Tracker per tracciare i progressi di tutti i tuoi progetti in base a qualsiasi proprietà del progetto.",
+        "title": "Stati del reparto",
+        "heading": "Visualizza una panoramica dei progressi per tutti i reparti.",
+        "description": "Gli stati dei reparti sono una funzionalità esclusiva di Paradise Task Tracker per tracciare i progressi di tutti i tuoi reparti in base a qualsiasi proprietà del reparto.",
         "go_to_settings": "Vai alle impostazioni"
       },
       "projects": {
-        "title": "Progetti",
-        "description": "Gestisci gli stati dei progetti, abilita le etichette dei progetti e altre configurazioni.",
+        "title": "Reparti",
+        "description": "Gestisci gli stati dei reparti, abilita le etichette dei reparti e altre configurazioni.",
         "tabs": {
-          "states": "Stati del progetto",
-          "labels": "Etichette del progetto"
+          "states": "Stati del reparto",
+          "labels": "Etichette del reparto"
         }
       },
       "templates": {
         "title": "Modelli",
         "heading": "Modelli",
-        "description": "Risparmia l'80% del tempo dedicato alla creazione di progetti, elementi di lavoro e pagine quando usi i modelli."
+        "description": "Risparmia l'80% del tempo dedicato alla creazione di reparti, elementi di lavoro e pagine quando usi i modelli."
       },
       "relations": {
         "title": "Relazioni",
@@ -459,13 +459,13 @@
         "select_scopes": "Seleziona ambiti",
         "read_access_to": "Accesso in sola lettura a",
         "write_access_to": "Accesso in scrittura a",
-        "global_permission_expiration": "Gli ambiti globali stanno per scadere. Utilizza ambiti granulari invece. Ad esempio, usa project:read invece di una lettura globale.",
+        "global_permission_expiration": "Gli ambiti globali stanno per scadere. Utilizza ambiti granulari invece. Ad esempio, usa department:read invece di una lettura globale.",
         "selected_scopes": "{count} selezionati",
         "scopes_and_permissions": "Ambiti e autorizzazioni",
         "read": "Lettura",
         "write": "Scrittura",
         "scope_description": {
-          "projects": "Accesso ai progetti e a tutte le entità correlate ai progetti",
+          "projects": "Accesso ai reparti e a tutte le entità correlate ai reparti",
           "wiki": "Accesso al wiki e a tutte le entità correlate al wiki",
           "workspaces": "Accesso agli spazi di lavoro e a tutte le entità correlate",
           "stickies": "Accesso alle note adesive e a tutte le entità correlate",

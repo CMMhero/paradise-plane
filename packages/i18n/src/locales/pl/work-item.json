@@ -168,7 +168,7 @@
       "confirm_message": "Czy na pewno chcesz zarchiwizować ten element pracy? Wszystkie zarchiwizowane elementy można później przywrócić.",
       "success": {
         "label": "Archiwizacja zakończona",
-        "message": "Archiwa znajdziesz w archiwum projektu."
+        "message": "Archiwa znajdziesz w archiwum działu."
       },
       "failed": {
         "message": "Nie udało się zarchiwizować elementu pracy. Spróbuj ponownie."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Przywrócenie zakończone",
-        "message": "Twój element pracy można znaleźć w elementach pracy projektu."
+        "message": "Twój element pracy można znaleźć w elementach pracy działu."
       },
       "failed": {
         "message": "Nie udało się przywrócić elementu pracy. Spróbuj ponownie."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Otwórz element pracy na pełnym ekranie",
     "duplicate": {
       "modal": {
-        "title": "Utwórz kopię w innym projekcie",
+        "title": "Utwórz kopię w innym dziale",
         "description1": "Tworzy to kopię elementu pracy.",
         "description2": "Podczas duplikowania wszystkie dane właściwości zostaną usunięte.",
-        "placeholder": "Wybierz projekt"
+        "placeholder": "Wybierz dział"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Utwórz cykliczny element pracy",
-        "no_permission": "Skontaktuj się z administratorem projektu, aby utworzyć cykliczne elementy pracy"
+        "no_permission": "Skontaktuj się z administratorem działu, aby utworzyć cykliczne elementy pracy"
       }
     },
     "empty_state": {

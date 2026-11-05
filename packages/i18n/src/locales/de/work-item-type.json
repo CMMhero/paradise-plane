@@ -4,12 +4,12 @@
     "label_lowercase": "arbeitsaufgabentypen",
     "settings": {
       "description": "Passen Sie eigene Eigenschaften an und fügen Sie sie hinzu, um sie an die Bedürfnisse Ihres Teams anzupassen.",
-      "cant_delete_default_message": "Dieser Arbeitselementtyp kann nicht gelöscht werden, da er als Standard für dieses Projekt festgelegt ist.",
+      "cant_delete_default_message": "Dieser Arbeitselementtyp kann nicht gelöscht werden, da er als Standard für diese Abteilung festgelegt ist.",
       "set_as_default": "Als Standard festlegen",
       "cant_set_default_inactive_message": "Aktivieren Sie diesen Typ, bevor Sie ihn als Standard festlegen",
       "set_default_confirmation": {
         "title": "Als Standard-Arbeitselementtyp festlegen",
-        "description": "Wenn Sie {name} als Standard festlegen, wird er in alle Projekte in diesem Arbeitsbereich importiert. Alle neuen Arbeitselemente verwenden dann standardmäßig diesen Typ.",
+        "description": "Wenn Sie {name} als Standard festlegen, wird er in alle Abteilungen in diesem Arbeitsbereich importiert. Alle neuen Arbeitselemente verwenden dann standardmäßig diesen Typ.",
         "confirm_button": "Als Standard festlegen"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "Formel ist gültig! Gibt {resultType} zurück ({count} Feld(er) referenziert)",
           "error": {
             "empty": "Bitte geben Sie eine Formel ein",
-            "missing_context": "Fehlender Workspace-, Projekt- oder Arbeitsaufgabentyp-Kontext",
+            "missing_context": "Fehlender Workspace-, Abteilungs- oder Arbeitsaufgabentyp-Kontext",
             "validation_failed": "Validierung fehlgeschlagen"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Typen",
         "description": "Erstellen und passen Sie Arbeitselementtypen mit Eigenschaften an.",
         "sort_options": {
-          "project_count": "Anzahl der zugehörigen Projekte"
+          "project_count": "Anzahl der zugehörigen Abteilungen"
         },
         "filter_options": {
           "show_active": "Aktive anzeigen",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Arbeitsaufgabentypen aktivieren",
-        "description": "Gestalten Sie Arbeitsaufgaben an Ihre Arbeit mit Arbeitsaufgabentypen an. Passen Sie sie mit Icons, Hintergründen und Eigenschaften an und konfigurieren Sie sie für dieses Projekt.",
+        "description": "Gestalten Sie Arbeitsaufgaben an Ihre Arbeit mit Arbeitsaufgabentypen an. Passen Sie sie mit Icons, Hintergründen und Eigenschaften an und konfigurieren Sie sie für diese Abteilung.",
         "primary_button": {
           "text": "Aktivieren"
         },
         "confirmation": {
           "title": "Einmal aktiviert, können Arbeitsaufgabentypen nicht deaktiviert werden.",
-          "description": "Planes Arbeitsaufgabe wird zum Standard-Arbeitsaufgabentyp für dieses Projekt und wird mit seinem Icon und Hintergrund in diesem Projekt angezeigt.",
+          "description": "Planes Arbeitsaufgabe wird zum Standard-Arbeitsaufgabentyp für diese Abteilung und wird mit seinem Icon und Hintergrund in dieser Abteilung angezeigt.",
           "button": {
             "default": "Aktivieren",
             "loading": "Einrichten"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Holen Sie sich Pro, um Arbeitsaufgabentypen zu aktivieren.",
-        "description": "Gestalten Sie Arbeitsaufgaben an Ihre Arbeit mit Arbeitsaufgabentypen an. Passen Sie sie mit Icons, Hintergründen und Eigenschaften an und konfigurieren Sie sie für dieses Projekt.",
+        "description": "Gestalten Sie Arbeitsaufgaben an Ihre Arbeit mit Arbeitsaufgabentypen an. Passen Sie sie mit Icons, Hintergründen und Eigenschaften an und konfigurieren Sie sie für diese Abteilung.",
         "primary_button": {
           "text": "Pro holen"
         }
       },
       "upgrade": {
         "title": "Upgrade durchführen, um Arbeitsaufgabentypen zu aktivieren.",
-        "description": "Gestalten Sie Arbeitsaufgaben an Ihre Arbeit mit Arbeitsaufgabentypen an. Passen Sie sie mit Icons, Hintergründen und Eigenschaften an und konfigurieren Sie sie für dieses Projekt.",
+        "description": "Gestalten Sie Arbeitsaufgaben an Ihre Arbeit mit Arbeitsaufgabentypen an. Passen Sie sie mit Icons, Hintergründen und Eigenschaften an und konfigurieren Sie sie für diese Abteilung.",
         "primary_button": {
           "text": "Upgrade"
         }

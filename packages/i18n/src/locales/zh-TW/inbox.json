@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "只有專案管理員可以延後/取消延後工作事項",
-      "accept_permission": "只有專案管理員可以接受工作事項",
-      "decline_permission": "只有專案管理員可以拒絕工作事項"
+      "snooze_permission": "只有部門管理員可以延後/取消延後工作事項",
+      "accept_permission": "只有部門管理員可以接受工作事項",
+      "decline_permission": "只有部門管理員可以拒絕工作事項"
     },
     "actions": {
       "accept": "接受",
@@ -47,7 +47,7 @@
       "delete": "刪除",
       "open": "開啟工作事項",
       "mark_as_duplicate": "標記為重複",
-      "move": "將 {value} 移至專案工作事項"
+      "move": "將 {value} 移至部門工作事項"
     },
     "source": {
       "in-app": "應用程式內"

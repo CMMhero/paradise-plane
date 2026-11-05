@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Inserisci l'ID del progetto",
+      "enter_project_id": "Inserisci l'ID del reparto",
       "please_select_a_timezone": "Seleziona un fuso orario",
       "archive_project": {
-        "title": "Archivia progetto",
-        "description": "Archiviare un progetto lo rimuoverà dal menu di navigazione laterale, anche se potrai sempre accedervi dalla pagina dei progetti. Potrai ripristinare il progetto o eliminarlo quando vuoi.",
-        "button": "Archivia progetto"
+        "title": "Archivia reparto",
+        "description": "Archiviare un reparto lo rimuoverà dal menu di navigazione laterale, anche se potrai sempre accedervi dalla pagina dei reparti. Potrai ripristinare il reparto o eliminarlo quando vuoi.",
+        "button": "Archivia reparto"
       },
       "delete_project": {
-        "title": "Elimina progetto",
-        "description": "Eliminando un progetto, tutti i dati e le risorse all'interno di esso verranno rimossi definitivamente e non potranno essere recuperati.",
-        "button": "Elimina il mio progetto"
+        "title": "Elimina reparto",
+        "description": "Eliminando un reparto, tutti i dati e le risorse all'interno di esso verranno rimossi definitivamente e non potranno essere recuperati.",
+        "button": "Elimina il mio reparto"
       },
       "toast": {
-        "success": "Progetto aggiornato con successo",
-        "error": "Impossibile aggiornare il progetto. Per favore, riprova."
+        "success": "Reparto aggiornato con successo",
+        "error": "Impossibile aggiornare il reparto. Per favore, riprova."
       }
     },
     "members": {
       "label": "Membri",
-      "project_lead": "Responsabile del progetto",
-      "project_lead_description": "Seleziona il responsabile del progetto.",
+      "project_lead": "Responsabile del reparto",
+      "project_lead_description": "Seleziona il responsabile del reparto.",
       "default_assignee": "Assegnatario predefinito",
-      "default_assignee_description": "Seleziona l’assegnatario predefinito del progetto.",
-      "project_subscribers": "Iscritti al progetto",
-      "project_subscribers_description": "Seleziona i membri che riceveranno le notifiche per questo progetto.",
+      "default_assignee_description": "Seleziona l’assegnatario predefinito del reparto.",
+      "project_subscribers": "Iscritti al reparto",
+      "project_subscribers_description": "Seleziona i membri che riceveranno le notifiche per questo reparto.",
       "guest_super_permissions": {
         "title": "Concedi accesso in sola lettura a tutti gli elementi di lavoro per gli utenti ospiti:",
-        "sub_heading": "Questo permetterà agli ospiti di visualizzare tutti gli elementi di lavoro del progetto."
+        "sub_heading": "Questo permetterà agli ospiti di visualizzare tutti gli elementi di lavoro del reparto."
       },
       "invite_members": {
         "title": "Invita membri",
-        "sub_heading": "Invita membri a lavorare sul tuo progetto.",
+        "sub_heading": "Invita membri a lavorare sul tuo reparto.",
         "select_co_worker": "Seleziona un collega"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Stime",
       "description": "Imposta sistemi di stima per tracciare e comunicare lo sforzo richiesto per ogni elemento di lavoro.",
       "label": "Stime",
-      "title": "Abilita le stime per il mio progetto",
+      "title": "Abilita le stime per il mio reparto",
       "enable_description": "Ti aiutano a comunicare la complessità e il carico di lavoro del team.",
       "no_estimate": "Nessuna stima",
       "new": "Nuovo sistema di stima",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Stima modificata",
-            "message": "La stima è stata aggiornata nel tuo progetto."
+            "message": "La stima è stata aggiornata nel tuo reparto."
           },
           "error": {
             "title": "Modifica stima fallita",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Stime riordinate",
-            "message": "Le stime sono state riordinate nel tuo progetto."
+            "message": "Le stime sono state riordinate nel tuo reparto."
           },
           "error": {
             "title": "Riordinamento stime fallito",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Automatizzazioni",
       "heading": "Automazioni",
-      "description": "Configura azioni automatizzate per ottimizzare il flusso di gestione del progetto e ridurre le attività manuali.",
+      "description": "Configura azioni automatizzate per ottimizzare il flusso di gestione del reparto e ridurre le attività manuali.",
       "auto-archive": {
         "title": "Archivia automaticamente gli elementi di lavoro chiusi",
         "description": "Paradise Task Tracker archiverà automaticamente gli elementi di lavoro che sono stati completati o annullati.",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "Nessuna etichetta ancora",
-        "description": "Crea etichette per aiutare a organizzare e filtrare gli elementi di lavoro nel tuo progetto."
+        "description": "Crea etichette per aiutare a organizzare e filtrare gli elementi di lavoro nel tuo reparto."
       },
       "estimates": {
         "title": "Nessun sistema di stime ancora",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Nessuna integrazione configurata",
-        "description": "Configura GitHub e altre integrazioni per sincronizzare i tuoi elementi di lavoro del progetto."
+        "description": "Configura GitHub e altre integrazioni per sincronizzare i tuoi elementi di lavoro del reparto."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "Flussi di lavoro",
-      "description": "Automatizza le transizioni degli elementi di lavoro e imposta regole per controllare come le attività si spostano nella pipeline del tuo progetto.",
+      "description": "Automatizza le transizioni degli elementi di lavoro e imposta regole per controllare come le attività si spostano nella pipeline del tuo reparto.",
       "add_button": "Aggiungi nuovo flusso di lavoro",
       "search": "Cerca flussi di lavoro",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Tutti gli stati sono in uso",
-          "description": "Tutti gli stati definiti per questo progetto sono già presenti nel tuo flusso di lavoro corrente."
+          "description": "Tutti gli stati definiti per questo reparto sono già presenti nel tuo flusso di lavoro corrente."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Cicli",
         "short_title": "Cicli",
-        "description": "Pianifica il lavoro in periodi flessibili che si adattano al ritmo e al tempo unici di questo progetto.",
+        "description": "Pianifica il lavoro in periodi flessibili che si adattano al ritmo e al tempo unici di questo reparto.",
         "toggle_title": "Abilita cicli",
         "toggle_description": "Pianifica il lavoro in periodi di tempo mirati."
       },
       "modules": {
         "title": "Moduli",
         "short_title": "Moduli",
-        "description": "Organizza il lavoro in sotto-progetti con responsabili e assegnatari dedicati.",
+        "description": "Organizza il lavoro in sotto-reparti con responsabili e assegnatari dedicati.",
         "toggle_title": "Abilita moduli",
-        "toggle_description": "I membri del progetto potranno creare e modificare moduli."
+        "toggle_description": "I membri del reparto potranno creare e modificare moduli."
       },
       "views": {
         "title": "Viste",
         "short_title": "Viste",
         "description": "Salva ordinamenti, filtri e opzioni di visualizzazione personalizzati o condividili con il tuo team.",
         "toggle_title": "Abilita viste",
-        "toggle_description": "I membri del progetto potranno creare e modificare viste."
+        "toggle_description": "I membri del reparto potranno creare e modificare viste."
       },
       "pages": {
         "title": "Pagine",
         "short_title": "Pagine",
         "description": "Crea e modifica contenuti liberi: note, documenti, qualsiasi cosa.",
         "toggle_title": "Abilita pagine",
-        "toggle_description": "I membri del progetto potranno creare e modificare pagine."
+        "toggle_description": "I membri del reparto potranno creare e modificare pagine."
       },
       "intake": {
         "intake_responsibility": "Responsabilità di accettazione",
@@ -358,9 +358,9 @@
         "short_title": "Ricezione",
         "description": "Consenti ai non membri di condividere bug, feedback e suggerimenti; senza interrompere il tuo flusso di lavoro.",
         "toggle_title": "Abilita ricezione",
-        "toggle_description": "Consenti ai membri del progetto di creare richieste di ricezione nell'app.",
-        "toggle_tooltip_on": "Chiedi all'admin del progetto di attivarlo.",
-        "toggle_tooltip_off": "Chiedi all'admin del progetto di disattivarlo.",
+        "toggle_description": "Consenti ai membri del reparto di creare richieste di ricezione nell'app.",
+        "toggle_tooltip_on": "Chiedi all'admin del reparto di attivarlo.",
+        "toggle_tooltip_off": "Chiedi all'admin del reparto di disattivarlo.",
         "notify_assignee": {
           "title": "Notifica assegnatari",
           "description": "Per una nuova richiesta di accettazione, gli assegnatari predefiniti saranno avvisati tramite notifiche"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Monitoraggio del tempo",
         "short_title": "Monitoraggio del tempo",
-        "description": "Registra il tempo trascorso su elementi di lavoro e progetti.",
+        "description": "Registra il tempo trascorso su elementi di lavoro e reparti.",
         "toggle_title": "Abilita monitoraggio del tempo",
-        "toggle_description": "I membri del progetto potranno registrare il tempo lavorato."
+        "toggle_description": "I membri del reparto potranno registrare il tempo lavorato."
       },
       "milestones": {
         "title": "Traguardi",
@@ -425,18 +425,18 @@
         "toggle_description": "Organizza gli elementi di lavoro per scadenze dei traguardi."
       },
       "toasts": {
-        "loading": "Aggiornamento funzionalità progetto...",
-        "success": "Funzionalità progetto aggiornata con successo.",
-        "error": "Qualcosa è andato storto durante l'aggiornamento della funzionalità progetto. Riprova."
+        "loading": "Aggiornamento funzionalità reparto...",
+        "success": "Funzionalità reparto aggiornata con successo.",
+        "error": "Qualcosa è andato storto durante l'aggiornamento della funzionalità reparto. Riprova."
       }
     },
     "project_updates": {
-      "heading": "Aggiornamenti del progetto",
-      "description": "Monitoraggio consolidato e tracciamento dell'avanzamento di questo progetto"
+      "heading": "Aggiornamenti del reparto",
+      "description": "Monitoraggio consolidato e tracciamento dell'avanzamento di questo reparto"
     },
     "templates": {
       "heading": "Modelli",
-      "description": "Risparmia l'80% del tempo speso nella creazione di progetti, elementi di lavoro e pagine quando usi i modelli."
+      "description": "Risparmia l'80% del tempo speso nella creazione di reparti, elementi di lavoro e pagine quando usi i modelli."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Cestino",
-      "description": "Gli elementi eliminati finiscono qui prima di essere rimossi definitivamente. Gli amministratori del progetto possono ripristinarli o eliminarli in modo permanente."
+      "description": "Gli elementi eliminati finiscono qui prima di essere rimossi definitivamente. Gli amministratori del reparto possono ripristinarli o eliminarli in modo permanente."
     }
   }
 }

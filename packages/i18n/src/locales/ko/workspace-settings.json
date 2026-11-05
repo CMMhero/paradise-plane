@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "내보내기",
-        "description": "프로젝트 데이터를 다양한 형식으로 내보내고 다운로드 링크가 포함된 내보내기 기록에 접근하세요.",
+        "description": "부서 데이터를 다양한 형식으로 내보내고 다운로드 링크가 포함된 내보내기 기록에 접근하세요.",
         "title": "내보내기",
         "exporting": "내보내기 중",
         "previous_exports": "이전 내보내기",
         "export_separate_files": "데이터를 별도의 파일로 내보내기",
-        "exporting_projects": "프로젝트 내보내는 중",
+        "exporting_projects": "부서 내보내는 중",
         "format": "포맷",
         "filters_info": "기준에 따라 특정 작업 항목을 내보내려면 필터를 적용하세요.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "웹훅",
-        "description": "프로젝트 이벤트가 발생할 때 외부 서비스로 알림을 자동화하세요.",
+        "description": "부서 이벤트가 발생할 때 외부 서비스로 알림을 자동화하세요.",
         "title": "웹훅",
         "add_webhook": "웹훅 추가",
         "modal": {
@@ -182,27 +182,27 @@
       "imports": {
         "title": "임포트",
         "heading": "임포트",
-        "description": "기존 프로젝트 관리 도구에서 데이터를 연결하고 가져와 워크플로우 통합을 간소화하세요."
+        "description": "기존 작업 관리 도구에서 데이터를 연결하고 가져와 워크플로우 통합을 간소화하세요."
       },
       "worklogs": {
         "title": "워크로그",
         "heading": "워크로그",
-        "description": "어떤 프로젝트의 누구의 워크로그(타임시트)든 다운로드하세요."
+        "description": "어떤 부서의 누구의 워크로그(타임시트)든 다운로드하세요."
       },
       "group_syncing": {
         "title": "그룹 동기화",
         "heading": "그룹 동기화",
-        "description": "ID 공급자 그룹을 프로젝트 및 역할에 연결합니다. IdP에서 그룹 멤버십이 변경되면 사용자 액세스가 자동으로 업데이트되어 온보딩 및 오프보딩이 간소화됩니다.",
+        "description": "ID 공급자 그룹을 부서 및 역할에 연결합니다. IdP에서 그룹 멤버십이 변경되면 사용자 액세스가 자동으로 업데이트되어 온보딩 및 오프보딩이 간소화됩니다.",
         "enable": {
           "title": "그룹 동기화 활성화",
-          "description": "ID 공급자 그룹을 기반으로 사용자를 프로젝트에 자동으로 추가합니다."
+          "description": "ID 공급자 그룹을 기반으로 사용자를 부서에 자동으로 추가합니다."
         },
         "config": {
           "title": "그룹 동기화 구성",
-          "description": "ID 공급자 그룹이 프로젝트 및 역할에 매핑되는 방식을 설정합니다.",
+          "description": "ID 공급자 그룹이 부서 및 역할에 매핑되는 방식을 설정합니다.",
           "sync_on_login": {
             "title": "로그인 시 동기화",
-            "description": "사용자가 로그인할 때 그룹 멤버십 및 프로젝트 액세스를 업데이트합니다."
+            "description": "사용자가 로그인할 때 그룹 멤버십 및 부서 액세스를 업데이트합니다."
           },
           "sync_offline": {
             "title": "오프라인 동기화",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "자동 제거",
-            "description": "그룹과 더 이상 일치하지 않는 사용자를 프로젝트에서 자동으로 제거합니다."
+            "description": "그룹과 더 이상 일치하지 않는 사용자를 부서에서 자동으로 제거합니다."
           },
           "group_attribute_key": {
             "title": "그룹 속성 키",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "그룹 매핑",
-          "description": "ID 공급자 그룹을 프로젝트 및 역할에 연결합니다.",
+          "description": "ID 공급자 그룹을 부서 및 역할에 연결합니다.",
           "button_text": "새 그룹 동기화 추가"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "그룹 동기화 삭제",
-          "content": "이 ID 그룹의 새 사용자는 더 이상 프로젝트에 추가되지 않습니다. 이미 추가된 사용자는 현재 역할을 유지합니다."
+          "content": "이 ID 그룹의 새 사용자는 더 이상 부서에 추가되지 않습니다. 이미 추가된 사용자는 현재 역할을 유지합니다."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "IdP 그룹 이름 입력"
           },
           "project": {
-            "text": "프로젝트",
-            "required": "프로젝트는 필수입니다",
-            "placeholder": "프로젝트 선택"
+            "text": "부서",
+            "required": "부서는 필수입니다",
+            "placeholder": "부서 선택"
           },
           "default_role": {
-            "text": "프로젝트 역할",
-            "required": "프로젝트 역할은 필수입니다",
-            "placeholder": "프로젝트 역할 선택"
+            "text": "부서 역할",
+            "required": "부서 역할은 필수입니다",
+            "placeholder": "부서 역할 선택"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "도메인을 구성하고 Single sign-on을 활성화하세요"
       },
       "project_states": {
-        "title": "프로젝트 스테이트",
-        "heading": "모든 프로젝트의 진행 상황 개요를 확인하세요.",
-        "description": "프로젝트 스테이트는 어떤 프로젝트 속성으로든 모든 프로젝트의 진행 상황을 추적하는 Paradise Task Tracker 전용 기능입니다.",
+        "title": "부서 스테이트",
+        "heading": "모든 부서의 진행 상황 개요를 확인하세요.",
+        "description": "부서 스테이트는 어떤 부서 속성으로든 모든 부서의 진행 상황을 추적하는 Paradise Task Tracker 전용 기능입니다.",
         "go_to_settings": "설정으로 이동"
       },
       "projects": {
-        "title": "프로젝트",
-        "description": "프로젝트 상태 관리, 프로젝트 레이블 활성화 및 기타 구성을 관리합니다.",
+        "title": "부서",
+        "description": "부서 상태 관리, 부서 레이블 활성화 및 기타 구성을 관리합니다.",
         "tabs": {
-          "states": "프로젝트 스테이트",
-          "labels": "프로젝트 레이블"
+          "states": "부서 스테이트",
+          "labels": "부서 레이블"
         }
       },
       "templates": {
         "title": "템플릿",
         "heading": "템플릿",
-        "description": "템플릿을 사용하면 프로젝트, 작업 항목, 페이지를 생성하는 데 걸리는 시간을 80% 절약할 수 있습니다."
+        "description": "템플릿을 사용하면 부서, 작업 항목, 페이지를 생성하는 데 걸리는 시간을 80% 절약할 수 있습니다."
       },
       "relations": {
         "title": "관계",
@@ -465,7 +465,7 @@
         "read": "읽기",
         "write": "쓰기",
         "scope_description": {
-          "projects": "프로젝트 및 프로젝트 관련 엔티티에 대한 액세스",
+          "projects": "부서 및 관련 엔티티에 대한 액세스",
           "wiki": "위키 및 위키 관련 엔티티에 대한 액세스",
           "workspaces": "워크스페이스 및 워크스페이스 관련 엔티티에 대한 액세스",
           "stickies": "스티키 및 스티키 관련 엔티티에 대한 액세스",

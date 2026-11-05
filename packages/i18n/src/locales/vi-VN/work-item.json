@@ -168,7 +168,7 @@
       "confirm_message": "Bạn có chắc chắn muốn lưu trữ mục công việc này không? Tất cả mục công việc đã lưu trữ có thể được khôi phục sau.",
       "success": {
         "label": "Lưu trữ thành công",
-        "message": "Mục đã lưu trữ của bạn có thể được tìm thấy trong phần lưu trữ của dự án."
+        "message": "Mục đã lưu trữ của bạn có thể được tìm thấy trong phần lưu trữ của phòng ban."
       },
       "failed": {
         "message": "Không thể lưu trữ mục công việc. Vui lòng thử lại."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Khôi phục thành công",
-        "message": "Mục công việc của bạn có thể được tìm thấy trong mục công việc của dự án."
+        "message": "Mục công việc của bạn có thể được tìm thấy trong mục công việc của phòng ban."
       },
       "failed": {
         "message": "Không thể khôi phục mục công việc. Vui lòng thử lại."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Mở mục công việc trong chế độ toàn màn hình",
     "duplicate": {
       "modal": {
-        "title": "Tạo một bản sao đến dự án khác",
+        "title": "Tạo một bản sao đến phòng ban khác",
         "description1": "Thao tác này tạo một bản sao của mục công việc.",
         "description2": "Tất cả dữ liệu thuộc tính sẽ bị xóa khi sao chép.",
-        "placeholder": "Chọn một dự án"
+        "placeholder": "Chọn một phòng ban"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Tạo mục công việc lặp lại",
-        "no_permission": "Liên hệ quản trị viên dự án của bạn để tạo mục công việc lặp lại"
+        "no_permission": "Liên hệ quản trị viên phòng ban của bạn để tạo mục công việc lặp lại"
       }
     },
     "empty_state": {

@@ -103,7 +103,7 @@
     "empty_state": {
       "general": {
         "title": "İşlerinizi Döngülerde gruplayın ve zamanlayın.",
-        "description": "İşleri zaman dilimlerine bölün, proje son teslim tarihinden geriye çalışarak tarihler belirleyin ve takım olarak somut ilerleme kaydedin.",
+        "description": "İşleri zaman dilimlerine bölün, departman son teslim tarihinden geriye çalışarak tarihler belirleyin ve takım olarak somut ilerleme kaydedin.",
         "primary_button": {
           "text": "İlk döngünüzü ayarlayın",
           "comic": {
@@ -132,15 +132,15 @@
       },
       "archived": {
         "title": "Henüz arşivlenmiş döngü yok",
-        "description": "Projenizi düzenli tutmak için tamamlanmış döngüleri arşivleyin. Arşivlendikten sonra burada bulabilirsiniz."
+        "description": "Departmanınızı düzenli tutmak için tamamlanmış döngüleri arşivleyin. Arşivlendikten sonra burada bulabilirsiniz."
       }
     }
   },
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "Projeniz için filtreli görünümleri kaydedin. İhtiyacınız olduğu kadar oluşturun",
-        "description": "Görünümler, sık kullandığınız veya kolay erişim istediğiniz kayıtlı filtrelerdir. Bir projedeki tüm meslektaşlarınız herkesin görünümlerini görebilir ve ihtiyaçlarına en uygun olanı seçebilir.",
+        "title": "Departmanınız için filtreli görünümleri kaydedin. İhtiyacınız olduğu kadar oluşturun",
+        "description": "Görünümler, sık kullandığınız veya kolay erişim istediğiniz kayıtlı filtrelerdir. Bir departmandaki tüm meslektaşlarınız herkesin görünümlerini görebilir ve ihtiyaçlarına en uygun olanı seçebilir.",
         "primary_button": {
           "text": "İlk görünümünüzü oluşturun",
           "comic": {
@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Henüz genel sayfa yok",
-        "description": "Projenizdeki herkesle paylaşılan sayfaları burada görün.",
+        "description": "Departmanınızdaki herkesle paylaşılan sayfaları burada görün.",
         "primary_button": {
           "text": "İlk sayfanızı oluşturun"
         }
@@ -191,7 +191,7 @@
     "empty_state": {
       "no_issues": {
         "title": "Bir iş öğesi oluşturun ve birine, hatta kendinize atayın",
-        "description": "İş öğelerini işler, görevler, çalışma veya JTBD olarak düşünün. Bir iş öğesi ve alt iş öğeleri genellikle takım üyelerinize atanan zaman temelli eylemlerdir. Takımınız, projenizi hedefine doğru ilerletmek için iş öğeleri oluşturur, atar ve tamamlar.",
+        "description": "İş öğelerini işler, görevler, çalışma veya JTBD olarak düşünün. Bir iş öğesi ve alt iş öğeleri genellikle takım üyelerinize atanan zaman temelli eylemlerdir. Takımınız, departmanınızı hedefine doğru ilerletmek için iş öğeleri oluşturur, atar ve tamamlar.",
         "primary_button": {
           "text": "İlk iş öğenizi oluşturun",
           "comic": {
@@ -224,7 +224,7 @@
     "delete_module": "Modülü sil",
     "empty_state": {
       "general": {
-        "title": "Proje kilometre taşlarınızı Modüllere eşleyin ve toplu işleri kolayca takip edin.",
+        "title": "Departman kilometre taşlarınızı Modüllere eşleyin ve toplu işleri kolayca takip edin.",
         "description": "Mantıksal bir üst öğeye ait iş öğeleri grubu bir modül oluşturur. Bunları bir kilometre taşını takip etmenin bir yolu olarak düşünün. Kendi dönemleri ve son teslim tarihleri ile birlikte, bir kilometre taşına ne kadar yakın veya uzak olduğunuzu görmenize yardımcı olacak analitiklere sahiptirler.",
         "primary_button": {
           "text": "İlk modülünüzü oluşturun",
@@ -246,7 +246,7 @@
       },
       "archived": {
         "title": "Henüz arşivlenmiş Modül yok",
-        "description": "Projenizi düzenli tutmak için tamamlanmış veya iptal edilmiş modülleri arşivleyin. Arşivlendikten sonra burada bulabilirsiniz."
+        "description": "Departmanınızı düzenli tutmak için tamamlanmış veya iptal edilmiş modülleri arşivleyin. Arşivlendikten sonra burada bulabilirsiniz."
       },
       "sidebar": {
         "in_active": "Bu modül henüz aktif değil.",
@@ -272,7 +272,7 @@
     "empty_state": {
       "general": {
         "title": "Bir not, belge veya tam bir bilgi bankası yazın. Paradise Task Tracker'in AI asistanı Galileo'nun başlamanıza yardımcı olmasını sağlayın",
-        "description": "Sayfalar Paradise Task Tracker'de düşüncelerinizi döktüğünüz alanlardır. Toplantı notları alın, kolayca biçimlendirin, iş öğelerini yerleştirin, bir bileşen kitaplığı kullanarak düzenleyin ve hepsini proje bağlamınızda tutun. Herhangi bir belgeyi hızlıca tamamlamak için bir kısayol veya düğme ile Paradise Task Tracker'in AI'sı Galileo'yu çağırın.",
+        "description": "Sayfalar Paradise Task Tracker'de düşüncelerinizi döktüğünüz alanlardır. Toplantı notları alın, kolayca biçimlendirin, iş öğelerini yerleştirin, bir bileşen kitaplığı kullanarak düzenleyin ve hepsini departman bağlamınızda tutun. Herhangi bir belgeyi hızlıca tamamlamak için bir kısayol veya düğme ile Paradise Task Tracker'in AI'sı Galileo'yu çağırın.",
         "primary_button": {
           "text": "İlk sayfanızı oluşturun"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Henüz genel sayfa yok",
-        "description": "Projenizdeki herkesle paylaşılan sayfaları burada görün.",
+        "description": "Departmanınızdaki herkesle paylaşılan sayfaları burada görün.",
         "primary_button": {
           "text": "İlk sayfanızı oluşturun"
         }
@@ -300,36 +300,36 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "Talep bu proje için etkin değil.",
-        "description": "Talep, projenize gelen istekleri yönetmenize ve bunları iş akışınıza iş öğesi olarak eklemenize yardımcı olur. İstekleri yönetmek için proje ayarlarından talebi etkinleştirin.",
+        "title": "Talep bu departman için etkin değil.",
+        "description": "Talep, departmanınıza gelen istekleri yönetmenize ve bunları iş akışınıza iş öğesi olarak eklemenize yardımcı olur. İstekleri yönetmek için departman ayarlarından talebi etkinleştirin.",
         "primary_button": {
           "text": "Özellikleri yönet"
         }
       },
       "cycle": {
-        "title": "Döngüler bu proje için etkin değil.",
-        "description": "İşleri zaman dilimlerine bölün, proje son teslim tarihinden geriye çalışarak tarihler belirleyin ve takım olarak somut ilerleme kaydedin. Döngüleri kullanmaya başlamak için projenizde döngü özelliğini etkinleştirin.",
+        "title": "Döngüler bu departman için etkin değil.",
+        "description": "İşleri zaman dilimlerine bölün, departman son teslim tarihinden geriye çalışarak tarihler belirleyin ve takım olarak somut ilerleme kaydedin. Döngüleri kullanmaya başlamak için departmanınızda döngü özelliğini etkinleştirin.",
         "primary_button": {
           "text": "Özellikleri yönet"
         }
       },
       "module": {
-        "title": "Modüller bu proje için etkin değil.",
-        "description": "Modüller projenizin yapı taşlarıdır. Kullanmaya başlamak için proje ayarlarından modülleri etkinleştirin.",
+        "title": "Modüller bu departman için etkin değil.",
+        "description": "Modüller departmanınızın yapı taşlarıdır. Kullanmaya başlamak için departman ayarlarından modülleri etkinleştirin.",
         "primary_button": {
           "text": "Özellikleri yönet"
         }
       },
       "page": {
-        "title": "Sayfalar bu proje için etkin değil.",
-        "description": "Sayfalar projenizin yapı taşlarıdır. Kullanmaya başlamak için proje ayarlarından sayfaları etkinleştirin.",
+        "title": "Sayfalar bu departman için etkin değil.",
+        "description": "Sayfalar departmanınızın yapı taşlarıdır. Kullanmaya başlamak için departman ayarlarından sayfaları etkinleştirin.",
         "primary_button": {
           "text": "Özellikleri yönet"
         }
       },
       "view": {
-        "title": "Görünümler bu proje için etkin değil.",
-        "description": "Görünümler projenizin yapı taşlarıdır. Kullanmaya başlamak için proje ayarlarından görünümleri etkinleştirin.",
+        "title": "Görünümler bu departman için etkin değil.",
+        "description": "Görünümler departmanınızın yapı taşlarıdır. Kullanmaya başlamak için departman ayarlarından görünümleri etkinleştirin.",
         "primary_button": {
           "text": "Özellikleri yönet"
         }
@@ -392,7 +392,7 @@
           "complete": "İçe Aktarma Tamamlandı"
         },
         "message": {
-          "success": "Projeye başarıyla {count} üye içe aktarıldı.",
+          "success": "Departmana başarıyla {count} üye içe aktarıldı.",
           "no_imports": "CSV dosyasından yeni üye içe aktarılmadı."
         },
         "stats": {

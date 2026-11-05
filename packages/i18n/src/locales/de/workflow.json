@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Sind Sie sicher, dass Sie diesen Workflow zurücksetzen möchten?",
-        "description": "Wenn Sie diesen Workflow zurücksetzen, werden alle Ihre Statusänderungsregeln gelöscht und Sie müssen sie erneut erstellen, um sie in diesem Projekt auszuführen."
+        "description": "Wenn Sie diesen Workflow zurücksetzen, werden alle Ihre Statusänderungsregeln gelöscht und Sie müssen sie erneut erstellen, um sie in dieser Abteilung auszuführen."
       },
       "delete_state_change": {
         "title": "Sind Sie sicher, dass Sie diese Statusänderungsregel löschen möchten?",
-        "description": "Einmal gelöscht, können Sie diese Änderung nicht rückgängig machen und müssen die Regel erneut festlegen, wenn Sie möchten, dass sie für dieses Projekt gilt."
+        "description": "Einmal gelöscht, können Sie diese Änderung nicht rückgängig machen und müssen die Regel erneut festlegen, wenn Sie möchten, dass sie für diese Abteilung gilt."
       }
     },
     "toasts": {

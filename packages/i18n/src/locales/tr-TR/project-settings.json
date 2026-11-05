@@ -1,38 +1,38 @@
 {
   "project_settings": {
     "general": {
-      "enter_project_id": "Proje ID girin",
+      "enter_project_id": "Departman ID girin",
       "please_select_a_timezone": "Lütfen bir saat dilimi seçin",
       "archive_project": {
-        "title": "Projeyi arşivle",
-        "description": "Bir projeyi arşivlemek, projenizi yan gezintiden kaldırır ancak yine de projeler sayfasından erişebilirsiniz. Projeyi istediğiniz zaman geri yükleyebilir veya silebilirsiniz.",
-        "button": "Projeyi arşivle"
+        "title": "Departmanı arşivle",
+        "description": "Bir departmanı arşivlemek, departmanınızı yan gezintiden kaldırır ancak yine de departmanlar sayfasından erişebilirsiniz. Departmanı istediğiniz zaman geri yükleyebilir veya silebilirsiniz.",
+        "button": "Departmanı arşivle"
       },
       "delete_project": {
-        "title": "Projeyi sil",
-        "description": "Bir proje silindiğinde, içindeki tüm veri ve kaynaklar kalıcı olarak kaldırılır ve kurtarılamaz.",
-        "button": "Projemi sil"
+        "title": "Departmanı sil",
+        "description": "Bir departman silindiğinde, içindeki tüm veri ve kaynaklar kalıcı olarak kaldırılır ve kurtarılamaz.",
+        "button": "Departmanımı sil"
       },
       "toast": {
-        "success": "Proje başarıyla güncellendi",
-        "error": "Proje güncellenemedi. Lütfen tekrar deneyin."
+        "success": "Departman başarıyla güncellendi",
+        "error": "Departman güncellenemedi. Lütfen tekrar deneyin."
       }
     },
     "members": {
       "label": "Üyeler",
-      "project_lead": "Proje lideri",
-      "project_lead_description": "Proje için proje liderini seçin.",
+      "project_lead": "Departman lideri",
+      "project_lead_description": "Departman liderini seçin.",
       "default_assignee": "Varsayılan atanan",
-      "default_assignee_description": "Proje için varsayılan atanacak kişiyi seçin.",
-      "project_subscribers": "Proje aboneleri",
-      "project_subscribers_description": "Bu proje için bildirim alacak üyeleri seçin.",
+      "default_assignee_description": "Departman için varsayılan atanacak kişiyi seçin.",
+      "project_subscribers": "Departman aboneleri",
+      "project_subscribers_description": "Bu departman için bildirim alacak üyeleri seçin.",
       "guest_super_permissions": {
         "title": "Misafir kullanıcılara tüm iş öğelerini görüntüleme izni ver:",
-        "sub_heading": "Bu, misafirlerin tüm proje iş öğelerini görüntülemesine izin verecektir."
+        "sub_heading": "Bu, misafirlerin tüm departman iş öğelerini görüntülemesine izin verecektir."
       },
       "invite_members": {
         "title": "Üyeleri davet et",
-        "sub_heading": "Projenizde çalışmaları için üyeleri davet edin.",
+        "sub_heading": "Departmanınızda çalışmaları için üyeleri davet edin.",
         "select_co_worker": "İş arkadaşı seç"
       }
     },
@@ -59,7 +59,7 @@
       "heading": "Tahminler",
       "description": "Takımınızın karmaşıklık ve iş yükünü iletişim kurmanıza yardımcı olurlar.",
       "label": "Tahminler",
-      "title": "Projem için tahminleri etkinleştir",
+      "title": "Departmanım için tahminleri etkinleştir",
       "enable_description": "Takımın karmaşıklığını ve iş yükünü iletmenize yardımcı olurlar.",
       "no_estimate": "Tahmin yok",
       "new": "Yeni tahmin sistemi",
@@ -86,7 +86,7 @@
         "updated": {
           "success": {
             "title": "Tahmin değiştirildi",
-            "message": "Tahmin puanı projenizde güncellendi."
+            "message": "Tahmin puanı departmanınızda güncellendi."
           },
           "error": {
             "title": "Tahmin değiştirilemedi",
@@ -112,7 +112,7 @@
         "reorder": {
           "success": {
             "title": "Estimasyonlar yeniden sıralandı",
-            "message": "Projenizdeki estimasyonlar yeniden sıralandı."
+            "message": "Departmanınızdaki estimasyonlar yeniden sıralandı."
           },
           "error": {
             "title": "Estimasyonları yeniden sıralama başarısız",
@@ -179,7 +179,7 @@
     "automations": {
       "label": "Otomasyonlar",
       "heading": "Otomasyonlar",
-      "description": "Proje yönetimi iş akışınızı kolaylaştırmak ve manuel görevleri azaltmak için otomatik eylemleri yapılandırın.",
+      "description": "Departman yönetimi iş akışınızı kolaylaştırmak ve manuel görevleri azaltmak için otomatik eylemleri yapılandırın.",
       "auto-archive": {
         "title": "Tamamlanan iş öğelerini otomatik arşivle",
         "description": "Paradise Task Tracker, tamamlanan veya iptal edilen iş öğelerini otomatik arşivleyecek.",
@@ -200,7 +200,7 @@
     "empty_state": {
       "labels": {
         "title": "Henüz etiket yok",
-        "description": "Projenizdeki iş öğelerini düzenlemek ve filtrelemek için etiketler oluşturun."
+        "description": "Departmanınızdaki iş öğelerini düzenlemek ve filtrelemek için etiketler oluşturun."
       },
       "estimates": {
         "title": "Henüz tahmin sistemi yok",
@@ -209,7 +209,7 @@
       },
       "integrations": {
         "title": "Konfigüre edilmiş entegrasyon yok",
-        "description": "Proje iş öğelerinizi senkronize etmek için GitHub ve diğer entegrasyonları konfigüre edin."
+        "description": "Departman iş öğelerinizi senkronize etmek için GitHub ve diğer entegrasyonları konfigüre edin."
       }
     },
     "workflows": {
@@ -235,7 +235,7 @@
         }
       },
       "heading": "İş Akışları",
-      "description": "İş öğesi geçişlerini otomatikleştirin ve görevlerin proje süreciniz boyunca nasıl hareket ettiğini kontrol etmek için kurallar belirleyin.",
+      "description": "İş öğesi geçişlerini otomatikleştirin ve görevlerin departman süreciniz boyunca nasıl hareket ettiğini kontrol etmek için kurallar belirleyin.",
       "add_button": "Yeni iş akışı ekle",
       "search": "İş akışlarında ara",
       "detail": {
@@ -252,7 +252,7 @@
       "select_states": {
         "empty_state": {
           "title": "Tüm durumlar kullanımda",
-          "description": "Bu proje için tanımlanan tüm durumlar zaten mevcut iş akışınızda mevcut."
+          "description": "Bu departman için tanımlanan tüm durumlar zaten mevcut iş akışınızda mevcut."
         }
       },
       "default_footer": {
@@ -326,30 +326,30 @@
       "cycles": {
         "title": "Döngüler",
         "short_title": "Döngüler",
-        "description": "Bu projenin benzersiz ritmine ve hızına uyum sağlayan esnek dönemlerde iş planlayın.",
+        "description": "Bu departmanın benzersiz ritmine ve hızına uyum sağlayan esnek dönemlerde iş planlayın.",
         "toggle_title": "Döngüleri etkinleştir",
         "toggle_description": "Odaklanmış zaman dilimlerinde iş planlayın."
       },
       "modules": {
         "title": "Modüller",
         "short_title": "Modüller",
-        "description": "İşi özel liderler ve atananlarla alt projelere organize edin.",
+        "description": "İşi özel liderler ve atananlarla alt birimlere organize edin.",
         "toggle_title": "Modülleri etkinleştir",
-        "toggle_description": "Proje üyeleri modüller oluşturabilir ve düzenleyebilir."
+        "toggle_description": "Departman üyeleri modüller oluşturabilir ve düzenleyebilir."
       },
       "views": {
         "title": "Görünümler",
         "short_title": "Görünümler",
         "description": "Özel sıralamalar, filtreler ve görüntüleme seçeneklerini kaydedin veya ekibinizle paylaşın.",
         "toggle_title": "Görünümleri etkinleştir",
-        "toggle_description": "Proje üyeleri görünümler oluşturabilir ve düzenleyebilir."
+        "toggle_description": "Departman üyeleri görünümler oluşturabilir ve düzenleyebilir."
       },
       "pages": {
         "title": "Sayfalar",
         "short_title": "Sayfalar",
         "description": "Serbest biçimli içerik oluşturun ve düzenleyin: notlar, belgeler, herhangi bir şey.",
         "toggle_title": "Sayfaları etkinleştir",
-        "toggle_description": "Proje üyeleri sayfalar oluşturabilir ve düzenleyebilir."
+        "toggle_description": "Departman üyeleri sayfalar oluşturabilir ve düzenleyebilir."
       },
       "intake": {
         "intake_responsibility": "Alım sorumluluğu",
@@ -358,9 +358,9 @@
         "short_title": "Alım",
         "description": "Üye olmayanların hataları, geri bildirimleri ve önerileri paylaşmasına izin verin; iş akışınızı aksatmadan.",
         "toggle_title": "Alımı etkinleştir",
-        "toggle_description": "Proje üyelerinin uygulama içinde alım talepleri oluşturmasına izin verin.",
-        "toggle_tooltip_on": "Proje Yöneticinizden bunu açmasını isteyin.",
-        "toggle_tooltip_off": "Proje Yöneticinizden bunu kapatmasını isteyin.",
+        "toggle_description": "Departman üyelerinin uygulama içinde alım talepleri oluşturmasına izin verin.",
+        "toggle_tooltip_on": "Departman Yöneticinizden bunu açmasını isteyin.",
+        "toggle_tooltip_off": "Departman Yöneticinizden bunu kapatmasını isteyin.",
         "notify_assignee": {
           "title": "Atanan kişileri bildir",
           "description": "Yeni bir alım talebi için varsayılan atanan kişiler bildirimler aracılığıyla uyarılacaktır"
@@ -413,9 +413,9 @@
       "time_tracking": {
         "title": "Zaman takibi",
         "short_title": "Zaman takibi",
-        "description": "İş öğelerine ve projelere harcanan zamanı kaydedin.",
+        "description": "İş öğelerine ve departmanlara harcanan zamanı kaydedin.",
         "toggle_title": "Zaman takibini etkinleştir",
-        "toggle_description": "Proje üyeleri çalışılan zamanı kaydedebilecektir."
+        "toggle_description": "Departman üyeleri çalışılan zamanı kaydedebilecektir."
       },
       "milestones": {
         "title": "Kilometre taşları",
@@ -425,18 +425,18 @@
         "toggle_description": "İş öğelerini kilometre taşı son tarihleri ile organize edin."
       },
       "toasts": {
-        "loading": "Proje özelliği güncelleniyor...",
-        "success": "Proje özelliği başarıyla güncellendi.",
-        "error": "Proje özelliği güncellenirken bir şeyler yanlış gitti. Lütfen tekrar deneyin."
+        "loading": "Departman özelliği güncelleniyor...",
+        "success": "Departman özelliği başarıyla güncellendi.",
+        "error": "Departman özelliği güncellenirken bir şeyler yanlış gitti. Lütfen tekrar deneyin."
       }
     },
     "project_updates": {
-      "heading": "Proje Güncellemeleri",
-      "description": "Bu proje için birleştirilmiş takip ve ilerleme izleme"
+      "heading": "Departman Güncellemeleri",
+      "description": "Bu departman için birleştirilmiş takip ve ilerleme izleme"
     },
     "templates": {
       "heading": "Şablonlar",
-      "description": "Şablonları kullandığınızda projeler, iş öğeleri ve sayfalar oluşturmaya harcanan zamanın %80'ini tasarruf edin."
+      "description": "Şablonları kullandığınızda departmanlar, iş öğeleri ve sayfalar oluşturmaya harcanan zamanın %80'ini tasarruf edin."
     },
     "cycles": {
       "auto_schedule": {
@@ -524,7 +524,7 @@
     },
     "trash": {
       "heading": "Çöp kutusu",
-      "description": "Silinen öğeler kalıcı olarak kaldırılmadan önce buraya gelir. Proje yöneticileri bunları geri yükleyebilir veya kalıcı olarak silebilir."
+      "description": "Silinen öğeler kalıcı olarak kaldırılmadan önce buraya gelir. Departman yöneticileri bunları geri yükleyebilir veya kalıcı olarak silebilir."
     }
   }
 }

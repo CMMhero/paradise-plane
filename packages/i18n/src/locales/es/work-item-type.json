@@ -4,12 +4,12 @@
     "label_lowercase": "tipos de elementos de trabajo",
     "settings": {
       "description": "Personaliza y agrega tus propias propiedades para adaptarlo a las necesidades de tu equipo.",
-      "cant_delete_default_message": "No se puede eliminar este tipo de elemento de trabajo porque está establecido como el tipo predeterminado para este proyecto.",
+      "cant_delete_default_message": "No se puede eliminar este tipo de elemento de trabajo porque está establecido como el tipo predeterminado para este departamento.",
       "set_as_default": "Establecer como predeterminado",
       "cant_set_default_inactive_message": "Activa este tipo antes de establecerlo como predeterminado",
       "set_default_confirmation": {
         "title": "Establecer como tipo de elemento de trabajo predeterminado",
-        "description": "Al establecer {name} como predeterminado, se importará a todos los proyectos de este espacio de trabajo. Todos los nuevos elementos de trabajo usarán este tipo de forma predeterminada.",
+        "description": "Al establecer {name} como predeterminado, se importará a todos los departamentos de este espacio de trabajo. Todos los nuevos elementos de trabajo usarán este tipo de forma predeterminada.",
         "confirm_button": "Establecer como predeterminado"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "¡La fórmula es válida! Devuelve {resultType} ({count} campo(s) referenciado(s))",
           "error": {
             "empty": "Por favor ingrese una fórmula",
-            "missing_context": "Falta el contexto de espacio de trabajo, proyecto o tipo de elemento de trabajo",
+            "missing_context": "Falta el contexto de espacio de trabajo, departamento o tipo de elemento de trabajo",
             "validation_failed": "La validación falló"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Tipos",
         "description": "Crea y personaliza tipos de elementos de trabajo con propiedades.",
         "sort_options": {
-          "project_count": "Número de proyectos que forma parte"
+          "project_count": "Número de departamentos que forma parte"
         },
         "filter_options": {
           "show_active": "Mostrar activos",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Habilitar tipos de elementos de trabajo",
-        "description": "Da forma a los elementos de trabajo con tipos de elementos de trabajo. Personaliza con iconos, fondos y propiedades y configúralos para este proyecto.",
+        "description": "Da forma a los elementos de trabajo con tipos de elementos de trabajo. Personaliza con iconos, fondos y propiedades y configúralos para este departamento.",
         "primary_button": {
           "text": "Habilitar"
         },
         "confirmation": {
           "title": "Una vez habilitados, los tipos de elementos de trabajo no se pueden deshabilitar.",
-          "description": "El elemento de trabajo de Paradise Task Tracker se convertirá en el tipo de elemento de trabajo predeterminado para este proyecto y aparecerá con su icono y fondo en este proyecto.",
+          "description": "El elemento de trabajo de Paradise Task Tracker se convertirá en el tipo de elemento de trabajo predeterminado para este departamento y aparecerá con su icono y fondo en este departamento.",
           "button": {
             "default": "Habilitar",
             "loading": "Configurando"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Obtén Pro para habilitar tipos de elementos de trabajo.",
-        "description": "Da forma a los elementos de trabajo con tipos de elementos de trabajo. Personaliza con iconos, fondos y propiedades y configúralos para este proyecto.",
+        "description": "Da forma a los elementos de trabajo con tipos de elementos de trabajo. Personaliza con iconos, fondos y propiedades y configúralos para este departamento.",
         "primary_button": {
           "text": "Obtener Pro"
         }
       },
       "upgrade": {
         "title": "Actualiza para habilitar tipos de elementos de trabajo.",
-        "description": "Da forma a los elementos de trabajo con tipos de elementos de trabajo. Personaliza con iconos, fondos y propiedades y configúralos para este proyecto.",
+        "description": "Da forma a los elementos de trabajo con tipos de elementos de trabajo. Personaliza con iconos, fondos y propiedades y configúralos para este departamento.",
         "primary_button": {
           "text": "Actualizar"
         }

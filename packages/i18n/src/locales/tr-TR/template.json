@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Şablonlar",
-      "description": "Şablonları kullandığınızda projeler, iş öğeleri ve sayfalar oluşturmak için harcanan zamanın %80'ini tasarruf edin.",
-      "new_project_template": "Yeni proje şablonu",
+      "description": "Şablonları kullandığınızda departmanlar, iş öğeleri ve sayfalar oluşturmak için harcanan zamanın %80'ini tasarruf edin.",
+      "new_project_template": "Yeni departman şablonu",
       "new_work_item_template": "Yeni iş öğesi şablonu",
       "new_page_template": "Yeni sayfa şablonu",
       "options": {
         "project": {
-          "label": "Proje şablonları"
+          "label": "Departman şablonları"
         },
         "work_item": {
           "label": "İş öğesi şablonları"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Şablon oluştur",
         "no_permission": {
-          "project": "Şablon oluşturmak için proje admininizle iletişime geçin",
+          "project": "Şablon oluşturmak için departman admininizle iletişime geçin",
           "workspace": "Şablon oluşturmak için workspace admininizle iletişime geçin"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Workspace'den türetildi"
         },
         "project": {
-          "info": "Projeden türetildi"
+          "info": "Departmandan türetildi"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Proje şablonunuzu adlandırın.",
+              "placeholder": "Departman şablonunuzu adlandırın.",
               "validation": {
                 "required": "Şablon adı gereklidir",
                 "maxLength": "Şablon adı 255 karakterden az olmalıdır"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Projenizi adlandırın.",
+            "placeholder": "Departmanınızı adlandırın.",
             "validation": {
-              "required": "Proje başlığı gereklidir",
-              "maxLength": "Proje başlığı 255 karakterden az olmalıdır"
+              "required": "Departman başlığı gereklidir",
+              "maxLength": "Departman başlığı 255 karakterden az olmalıdır"
             }
           },
           "description": {
-            "placeholder": "Bu projenin amacını ve hedeflerini açıklayın."
+            "placeholder": "Bu departmanın amacını ve hedeflerini açıklayın."
           },
           "button": {
-            "create": "Proje şablonu oluştur",
-            "update": "Proje şablonunu güncelle"
+            "create": "Departman şablonu oluştur",
+            "update": "Departman şablonunu güncelle"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Kısa açıklama",
-            "placeholder": "Bu şablon, aynı anda birden fazla projeyi yöneten Proje Yöneticileri için mükemmeldir.",
+            "placeholder": "Bu şablon, aynı anda birden fazla departmanı yöneten Departman Yöneticileri için mükemmeldir.",
             "validation": {
               "required": "Kısa açıklama gereklidir"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Şablonlar",
-        "description": "Paradise Task Tracker'deki proje, iş-öğesi ve sayfa şablonlarıyla, bir projeyi sıfırdan oluşturmanız veya iş öğesi özelliklerini manuel olarak ayarlamanız gerekmez.",
+        "description": "Paradise Task Tracker'deki departman, iş-öğesi ve sayfa şablonlarıyla, bir departmanı sıfırdan oluşturmanız veya iş öğesi özelliklerini manuel olarak ayarlamanız gerekmez.",
         "sub_description": "Şablonları kullandığınızda admin zamanınızın %80'ini geri kazanın."
       },
       "no_templates": {
         "button": "İlk şablonunuzu oluşturun"
       },
       "no_labels": {
-        "description": "Henüz etiket yok. Projenizde iş öğelerini düzenlemek ve filtrelemek için etiketler oluşturun."
+        "description": "Henüz etiket yok. Departmanınızda iş öğelerini düzenlemek ve filtrelemek için etiketler oluşturun."
       },
       "no_modules": {
-        "description": "Henüz modül yok. Özel liderler ve atananlarla işleri alt projelere organize edin."
+        "description": "Henüz modül yok. Özel liderler ve atananlarla işleri alt birimlere organize edin."
       },
       "no_work_items": {
         "description": "Henüz iş öğesi yok. Bir tane ekleyin, işinizi daha iyi yapılandırın."
@@ -318,7 +318,7 @@
         "project": "Yeni şablon ekle"
       },
       "label": {
-        "project": "Bir proje şablonu seçin",
+        "project": "Bir departman şablonu seçin",
         "page": "Şablon seç"
       },
       "tooltip": {

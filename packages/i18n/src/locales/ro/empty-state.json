@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "Încă nu există actualizări.",
-      "description": "Odată ce membrii proiectului adaugă actualizări, acestea vor apărea aici"
+      "description": "Odată ce membrii departamentului adaugă actualizări, acestea vor apărea aici"
     },
     "search": {
       "title": "Niciun rezultat corespunzător.",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "Se pare că nu aveți acces la acest proiect",
+      "title": "Se pare că nu aveți acces la acest departament",
       "restricted_description": "Contactați administratorul pentru a solicita accesul și veți putea continua aici.",
       "join_description": "Faceți clic pe butonul de mai jos pentru a vă alătura.",
-      "cta_primary": "Alăturați-vă proiectului",
-      "cta_loading": "Se alătură proiectului"
+      "cta_primary": "Alăturați-vă departamentului",
+      "cta_loading": "Se alătură departamentului"
     },
     "invalid_project": {
-      "title": "Proiect negăsit",
-      "description": "Proiectul pe care îl căutați nu există."
+      "title": "Departament negăsit",
+      "description": "Departamentul pe care îl căutați nu există."
     },
     "work_items": {
       "title": "Începeți cu primul dvs. element de lucru.",
-      "description": "Elementele de lucru sunt blocurile de construcție ale proiectului dvs. — alocați proprietari, stabiliți priorități și urmăriți progresul cu ușurință.",
+      "description": "Elementele de lucru sunt blocurile de construcție ale departamentului dvs. — alocați proprietari, stabiliți priorități și urmăriți progresul cu ușurință.",
       "cta_primary": "Creați primul dvs. element de lucru"
     },
     "cycles": {
       "title": "Grupați și limitați în timp munca dvs. în Cicluri.",
-      "description": "Împărțiți munca în bucăți limitate în timp, lucrați înapoi de la termenul limită al proiectului pentru a stabili datele și faceți progrese tangibile ca echipă.",
+      "description": "Împărțiți munca în bucăți limitate în timp, lucrați înapoi de la termenul limită al departamentului pentru a stabili datele și faceți progrese tangibile ca echipă.",
       "cta_primary": "Setați primul dvs. ciclu"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "Adăugați element de lucru existent"
     },
     "modules": {
-      "title": "Mapați obiectivele proiectului dvs. la Module și urmăriți cu ușurință.",
-      "description": "Modulele sunt compuse din elemente de lucru interconectate. Acestea ajută la monitorizarea progresului prin fazele proiectului, fiecare cu termene limită și analize specifice pentru a indica cât de aproape sunteți de atingerea acelor faze.",
+      "title": "Mapați obiectivele departamentului dvs. la Module și urmăriți cu ușurință.",
+      "description": "Modulele sunt compuse din elemente de lucru interconectate. Acestea ajută la monitorizarea progresului prin fazele departamentului, fiecare cu termene limită și analize specifice pentru a indica cât de aproape sunteți de atingerea acelor faze.",
       "cta_primary": "Setați primul dvs. modul"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "Adăugați element de lucru existent"
     },
     "views": {
-      "title": "Salvați vizualizări personalizate pentru proiectul dvs.",
+      "title": "Salvați vizualizări personalizate pentru departamentul dvs.",
       "description": "Vizualizările sunt filtre salvate care vă ajută să accesați rapid informațiile pe care le utilizați cel mai mult. Colaborați fără efort pe măsură ce colegii de echipă partajează și personalizează vizualizările conform nevoilor lor specifice.",
       "cta_primary": "Creați vizualizare"
     },
     "no_work_items_in_project": {
-      "title": "Încă nu există elemente de lucru în proiect",
-      "description": "Adăugați elemente de lucru la proiectul dvs. și împărțiți munca în bucăți urmăribile cu vizualizări.",
+      "title": "Încă nu există elemente de lucru în departament",
+      "description": "Adăugați elemente de lucru la departamentul dvs. și împărțiți munca în bucăți urmăribile cu vizualizări.",
       "cta_primary": "Adăugați element de lucru"
     },
     "work_item_filter": {
@@ -79,7 +79,7 @@
     },
     "pages": {
       "title": "Documentați totul — de la notițe la PRD-uri",
-      "description": "Paginile vă permit să capturați și să organizați informații într-un singur loc. Scrieți note de întâlnire, documentație de proiect și PRD-uri, încorporați elemente de lucru și structurați-le cu componente gata de utilizat.",
+      "description": "Paginile vă permit să capturați și să organizați informații într-un singur loc. Scrieți note de întâlnire, documentație de departament și PRD-uri, încorporați elemente de lucru și structurați-le cu componente gata de utilizat.",
       "cta_primary": "Creați prima dvs. Pagină"
     },
     "archive_pages": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "Înregistrați solicitări de Admitere",
-      "description": "Trimiteți solicitări noi pentru a fi revizuite, prioritizate și urmărite în cadrul fluxului de lucru al proiectului dvs.",
+      "description": "Trimiteți solicitări noi pentru a fi revizuite, prioritizate și urmărite în cadrul fluxului de lucru al departamentului dvs.",
       "cta_primary": "Creați solicitare de Admitere"
     },
     "intake_main": {
       "title": "Selectați un element de lucru de Admitere pentru a vedea detaliile"
     },
     "epics": {
-      "title": "Transformați proiecte complexe în epopei structurate.",
+      "title": "Transformați departamente complexe în epopei structurate.",
       "description": "O epopeie vă ajută să organizați obiective mari în sarcini mai mici, urmăribile.",
       "cta_primary": "Creați o Epopeie",
       "cta_secondary": "Documentație"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "Încă nu există cicluri arhivate",
-      "description": "Pentru a vă aranja proiectul, arhivați ciclurile finalizate. Găsiți-le aici odată arhivate."
+      "description": "Pentru a vă aranja departamentul, arhivați ciclurile finalizate. Găsiți-le aici odată arhivate."
     },
     "archive_modules": {
       "title": "Încă nu există Module arhivate",
-      "description": "Pentru a vă aranja proiectul, arhivați modulele finalizate sau anulate. Găsiți-le aici odată arhivate."
+      "description": "Pentru a vă aranja departamentul, arhivați modulele finalizate sau anulate. Găsiți-le aici odată arhivate."
     },
     "home_widget_quick_links": {
       "title": "Păstrați referințe importante, resurse sau documente la îndemână pentru munca dvs."
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "Încă nu există Vizualizări",
-      "description": "Adăugați elemente de lucru la proiectul dvs. și utilizați vizualizări pentru a filtra, sorta și monitoriza progresul fără efort.",
+      "description": "Adăugați elemente de lucru la departamentul dvs. și utilizați vizualizări pentru a filtra, sorta și monitoriza progresul fără efort.",
       "cta_primary": "Adăugați element de lucru"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "Creați element de lucru schiță"
     },
     "projects_archived": {
-      "title": "Niciun proiect arhivat",
-      "description": "Se pare că toate proiectele dvs. sunt încă active — bună treabă!"
+      "title": "Niciun departament arhivat",
+      "description": "Se pare că toate departamentele dvs. sunt încă active — bună treabă!"
     },
     "analytics_projects": {
-      "title": "Creați proiecte pentru a vizualiza metricile proiectului aici."
+      "title": "Creați departamente pentru a vizualiza metricile departamentului aici."
     },
     "analytics_work_items": {
-      "title": "Creați proiecte cu elemente de lucru și responsabili pentru a începe urmărirea performanței, progresului și impactului echipei aici."
+      "title": "Creați departamente cu elemente de lucru și responsabili pentru a începe urmărirea performanței, progresului și impactului echipei aici."
     },
     "analytics_no_cycle": {
       "title": "Creați cicluri pentru a organiza munca în faze limitate în timp și a urmări progresul în sprint-uri."
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "Scrieți o notă, un document sau o bază de cunoștințe completă.",
-      "description": "Paginile sunt spațiu de captare a gândurilor în Paradise Task Tracker. Notați note de întâlnire, formatați-le cu ușurință, încorporați elemente de lucru, aranjați-le folosind o bibliotecă de componente și păstrați-le toate în contextul proiectului dvs.",
+      "description": "Paginile sunt spațiu de captare a gândurilor în Paradise Task Tracker. Notați note de întâlnire, formatați-le cu ușurință, încorporați elemente de lucru, aranjați-le folosind o bibliotecă de componente și păstrați-le toate în contextul departamentului dvs.",
       "cta_primary": "Creați pagina dvs."
     },
     "project_overview_state_sidebar": {
-      "title": "Activați stările proiectului",
-      "description": "Activați stările proiectului pentru a vizualiza și gestiona proprietăți precum starea, prioritatea, datele scadente și altele."
+      "title": "Activați stările departamentului",
+      "description": "Activați stările departamentului pentru a vizualiza și gestiona proprietăți precum starea, prioritatea, datele scadente și altele."
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "Încă nu s-a adăugat niciun Webhook",
-      "description": "Automatizați notificările către servicii externe când apar evenimente ale proiectului.",
+      "description": "Automatizați notificările către servicii externe când apar evenimente ale departamentului.",
       "cta_primary": "Adăugați webhook"
     },
     "work_item_types": {
       "title": "Creați și personalizați tipuri de elemente de lucru",
-      "description": "Definiți tipuri unice de elemente de lucru pentru proiectul dvs. Fiecare tip poate avea propriile proprietăți, fluxuri de lucru și câmpuri - adaptate la nevoile proiectului și echipei dvs.",
+      "description": "Definiți tipuri unice de elemente de lucru pentru departamentul dvs. Fiecare tip poate avea propriile proprietăți, fluxuri de lucru și câmpuri - adaptate la nevoile departamentului și echipei dvs.",
       "cta_primary": "Activați"
     },
     "work_item_type_properties": {
-      "title": "Definiți proprietatea și detaliile pe care doriți să le capturați pentru acest tip de element de lucru. Personalizați-l pentru a se potrivi fluxului de lucru al proiectului dvs.",
+      "title": "Definiți proprietatea și detaliile pe care doriți să le capturați pentru acest tip de element de lucru. Personalizați-l pentru a se potrivi fluxului de lucru al departamentului dvs.",
       "cta_secondary": "Adăugați proprietate"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "Urmăriți foile de pontaj pentru toți membrii",
-      "description": "Înregistrați timpul pe elemente de lucru pentru a vedea foi de pontaj detaliate pentru orice membru al echipei din proiecte."
+      "description": "Înregistrați timpul pe elemente de lucru pentru a vedea foi de pontaj detaliate pentru orice membru al echipei din departamente."
     },
     "group_syncing": {
       "title": "Încă nu există mapări de grup"
     },
     "template_setting": {
       "title": "Încă nu există șabloane",
-      "description": "Reduceți timpul de configurare prin crearea de șabloane pentru proiecte, elemente de lucru și pagini — și începeți munca nouă în câteva secunde.",
+      "description": "Reduceți timpul de configurare prin crearea de șabloane pentru departamente, elemente de lucru și pagini — și începeți munca nouă în câteva secunde.",
       "cta_primary": "Creați șablon"
     },
     "workflows": {

@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "导出",
-        "description": "以多种格式导出项目数据，并通过下载链接访问导出历史记录。",
+        "description": "以多种格式导出部门数据，并通过下载链接访问导出历史记录。",
         "title": "导出",
         "exporting": "导出中",
         "previous_exports": "以前的导出",
         "export_separate_files": "将数据导出为单独的文件",
-        "exporting_projects": "正在导出项目",
+        "exporting_projects": "正在导出部门",
         "format": "格式",
         "filters_info": "应用筛选器以根据您的条件导出特定工作项。",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhooks",
-        "description": "在项目事件发生时自动向外部服务发送通知。",
+        "description": "在部门事件发生时自动向外部服务发送通知。",
         "title": "Webhooks",
         "add_webhook": "添加 webhook",
         "modal": {
@@ -182,27 +182,27 @@
       "imports": {
         "title": "导入",
         "heading": "导入",
-        "description": "连接并从现有的项目管理工具导入数据，以简化您的工作流集成。"
+        "description": "连接并从现有的部门管理工具导入数据，以简化您的工作流集成。"
       },
       "worklogs": {
         "title": "工作日志",
         "heading": "工作日志",
-        "description": "为任何项目中的任何人下载工作日志（即工时表）。"
+        "description": "为任何部门中的任何人下载工作日志（即工时表）。"
       },
       "group_syncing": {
         "title": "组同步",
         "heading": "组同步",
-        "description": "将身份提供者组与项目和角色关联。当 IdP 中的组成员身份发生变化时，用户访问权限将自动更新，简化入职和离职流程。",
+        "description": "将身份提供者组与部门和角色关联。当 IdP 中的组成员身份发生变化时，用户访问权限将自动更新，简化入职和离职流程。",
         "enable": {
           "title": "启用组同步",
-          "description": "根据身份提供者组自动将用户添加到项目。"
+          "description": "根据身份提供者组自动将用户添加到部门。"
         },
         "config": {
           "title": "配置组同步",
-          "description": "设置身份提供者组如何映射到项目和角色。",
+          "description": "设置身份提供者组如何映射到部门和角色。",
           "sync_on_login": {
             "title": "登录时同步",
-            "description": "用户登录时更新组成员身份和项目访问权限。"
+            "description": "用户登录时更新组成员身份和部门访问权限。"
           },
           "sync_offline": {
             "title": "离线同步",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "自动移除",
-            "description": "当用户不再匹配组时，自动将其从项目中移除。"
+            "description": "当用户不再匹配组时，自动将其从部门中移除。"
           },
           "group_attribute_key": {
             "title": "组属性键",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "组映射",
-          "description": "将身份提供者组与项目和角色关联。",
+          "description": "将身份提供者组与部门和角色关联。",
           "button_text": "添加新组同步"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "删除组同步",
-          "content": "此身份组的新用户将不再被添加到项目。已添加的用户将保留其当前角色。"
+          "content": "此身份组的新用户将不再被添加到部门。已添加的用户将保留其当前角色。"
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "输入 IdP 组名称"
           },
           "project": {
-            "text": "项目",
-            "required": "项目为必填项",
-            "placeholder": "选择项目"
+            "text": "部门",
+            "required": "部门为必填项",
+            "placeholder": "选择部门"
           },
           "default_role": {
-            "text": "项目角色",
-            "required": "项目角色为必填项",
-            "placeholder": "选择项目角色"
+            "text": "部门角色",
+            "required": "部门角色为必填项",
+            "placeholder": "选择部门角色"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "配置您的域名并启用单点登录"
       },
       "project_states": {
-        "title": "项目状态",
-        "heading": "查看所有项目的进度概览。",
-        "description": "项目状态是 Paradise Task Tracker 独有的功能，用于按任何项目属性跟踪您所有项目的进度。",
+        "title": "部门状态",
+        "heading": "查看所有部门的进度概览。",
+        "description": "部门状态是 Paradise Task Tracker 独有的功能，用于按任何部门属性跟踪您所有部门的进度。",
         "go_to_settings": "前往设置"
       },
       "projects": {
-        "title": "项目",
-        "description": "管理项目状态、启用项目标签及其他配置。",
+        "title": "部门",
+        "description": "管理部门状态、启用部门标签及其他配置。",
         "tabs": {
-          "states": "项目状态",
-          "labels": "项目标签"
+          "states": "部门状态",
+          "labels": "部门标签"
         }
       },
       "templates": {
         "title": "模板",
         "heading": "模板",
-        "description": "使用模板可节省 80% 创建项目、工作项和页面的时间。"
+        "description": "使用模板可节省 80% 创建部门、工作项和页面的时间。"
       },
       "relations": {
         "title": "关系",
@@ -465,7 +465,7 @@
         "read": "读取",
         "write": "写入",
         "scope_description": {
-          "projects": "访问项目及所有项目相关实体",
+          "projects": "访问部门及所有部门相关实体",
           "wiki": "访问 Wiki 及所有 Wiki 相关实体",
           "workspaces": "访问工作区及所有工作区相关实体",
           "stickies": "访问便签及所有便签相关实体",

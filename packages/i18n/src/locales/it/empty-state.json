@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "Nessun aggiornamento ancora.",
-      "description": "Una volta che i membri del progetto aggiungono aggiornamenti, appariranno qui"
+      "description": "Una volta che i membri del reparto aggiungono aggiornamenti, appariranno qui"
     },
     "search": {
       "title": "Nessun risultato corrispondente.",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "Sembra che tu non abbia accesso a questo progetto",
+      "title": "Sembra che tu non abbia accesso a questo reparto",
       "restricted_description": "Contatta l'amministratore per richiedere l'accesso e potrai continuare qui.",
       "join_description": "Clicca sul pulsante qui sotto per unirti.",
-      "cta_primary": "Unisciti al progetto",
-      "cta_loading": "Unione al progetto in corso"
+      "cta_primary": "Unisciti al reparto",
+      "cta_loading": "Unione al reparto in corso"
     },
     "invalid_project": {
-      "title": "Progetto non trovato",
-      "description": "Il progetto che stai cercando non esiste."
+      "title": "Reparto non trovato",
+      "description": "Il reparto che stai cercando non esiste."
     },
     "work_items": {
       "title": "Inizia con il tuo primo elemento di lavoro.",
-      "description": "Gli elementi di lavoro sono i mattoni del tuo progetto — assegna proprietari, imposta priorità e traccia facilmente i progressi.",
+      "description": "Gli elementi di lavoro sono i mattoni del tuo reparto — assegna proprietari, imposta priorità e traccia facilmente i progressi.",
       "cta_primary": "Crea il tuo primo elemento di lavoro"
     },
     "cycles": {
       "title": "Raggruppa e delimita temporalmente il tuo lavoro in Cicli.",
-      "description": "Suddividi il lavoro in blocchi temporali, lavora a ritroso dalla scadenza del progetto per impostare le date e fai progressi tangibili come team.",
+      "description": "Suddividi il lavoro in blocchi temporali, lavora a ritroso dalla scadenza del reparto per impostare le date e fai progressi tangibili come team.",
       "cta_primary": "Imposta il tuo primo ciclo"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "Aggiungi elemento di lavoro esistente"
     },
     "modules": {
-      "title": "Mappa gli obiettivi del tuo progetto ai Moduli e traccia facilmente.",
-      "description": "I moduli sono costituiti da elementi di lavoro interconnessi. Aiutano a monitorare i progressi attraverso le fasi del progetto, ciascuna con scadenze specifiche e analitiche per indicare quanto sei vicino al raggiungimento di quelle fasi.",
+      "title": "Mappa gli obiettivi del tuo reparto ai Moduli e traccia facilmente.",
+      "description": "I moduli sono costituiti da elementi di lavoro interconnessi. Aiutano a monitorare i progressi attraverso le fasi del reparto, ciascuna con scadenze specifiche e analitiche per indicare quanto sei vicino al raggiungimento di quelle fasi.",
       "cta_primary": "Imposta il tuo primo modulo"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "Aggiungi elemento di lavoro esistente"
     },
     "views": {
-      "title": "Salva viste personalizzate per il tuo progetto",
+      "title": "Salva viste personalizzate per il tuo reparto",
       "description": "Le viste sono filtri salvati che ti aiutano ad accedere rapidamente alle informazioni che usi di più. Collabora senza sforzo mentre i colleghi condividono e personalizzano le viste secondo le loro esigenze specifiche.",
       "cta_primary": "Crea vista"
     },
     "no_work_items_in_project": {
-      "title": "Nessun elemento di lavoro nel progetto ancora",
-      "description": "Aggiungi elementi di lavoro al tuo progetto e suddividi il lavoro in pezzi tracciabili con le viste.",
+      "title": "Nessun elemento di lavoro nel reparto ancora",
+      "description": "Aggiungi elementi di lavoro al tuo reparto e suddividi il lavoro in pezzi tracciabili con le viste.",
       "cta_primary": "Aggiungi elemento di lavoro"
     },
     "work_item_filter": {
@@ -79,7 +79,7 @@
     },
     "pages": {
       "title": "Documenta tutto — dalle note ai PRD",
-      "description": "Le pagine ti permettono di catturare e organizzare informazioni in un unico posto. Scrivi note di riunioni, documentazione di progetto e PRD, incorpora elementi di lavoro e strutturali con componenti pronti all'uso.",
+      "description": "Le pagine ti permettono di catturare e organizzare informazioni in un unico posto. Scrivi note di riunioni, documentazione di reparto e PRD, incorpora elementi di lavoro e strutturali con componenti pronti all'uso.",
       "cta_primary": "Crea la tua prima Pagina"
     },
     "archive_pages": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "Registra richieste di Intake",
-      "description": "Invia nuove richieste da rivedere, dare priorità e tracciare all'interno del flusso di lavoro del tuo progetto.",
+      "description": "Invia nuove richieste da rivedere, dare priorità e tracciare all'interno del flusso di lavoro del tuo reparto.",
       "cta_primary": "Crea richiesta di Intake"
     },
     "intake_main": {
       "title": "Seleziona un elemento di lavoro di Intake per visualizzarne i dettagli"
     },
     "epics": {
-      "title": "Trasforma progetti complessi in epiche strutturate.",
+      "title": "Trasforma reparti complessi in epiche strutturate.",
       "description": "Un'epica ti aiuta a organizzare grandi obiettivi in attività più piccole e tracciabili.",
       "cta_primary": "Crea un'Epica",
       "cta_secondary": "Documentazione"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "Nessun ciclo archiviato ancora",
-      "description": "Per riordinare il tuo progetto, archivia i cicli completati. Trovali qui una volta archiviati."
+      "description": "Per riordinare il tuo reparto, archivia i cicli completati. Trovali qui una volta archiviati."
     },
     "archive_modules": {
       "title": "Nessun Modulo archiviato ancora",
-      "description": "Per riordinare il tuo progetto, archivia i moduli completati o annullati. Trovali qui una volta archiviati."
+      "description": "Per riordinare il tuo reparto, archivia i moduli completati o annullati. Trovali qui una volta archiviati."
     },
     "home_widget_quick_links": {
       "title": "Mantieni a portata di mano riferimenti importanti, risorse o documenti per il tuo lavoro"
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "Nessuna Vista ancora",
-      "description": "Aggiungi elementi di lavoro al tuo progetto e usa le viste per filtrare, ordinare e monitorare i progressi senza sforzo.",
+      "description": "Aggiungi elementi di lavoro al tuo reparto e usa le viste per filtrare, ordinare e monitorare i progressi senza sforzo.",
       "cta_primary": "Aggiungi elemento di lavoro"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "Crea elemento di lavoro bozza"
     },
     "projects_archived": {
-      "title": "Nessun progetto archiviato",
-      "description": "Sembra che tutti i tuoi progetti siano ancora attivi—ottimo lavoro!"
+      "title": "Nessun reparto archiviato",
+      "description": "Sembra che tutti i tuoi reparti siano ancora attivi—ottimo lavoro!"
     },
     "analytics_projects": {
-      "title": "Crea progetti per visualizzare qui le metriche del progetto."
+      "title": "Crea reparti per visualizzare qui le metriche del reparto."
     },
     "analytics_work_items": {
-      "title": "Crea progetti con elementi di lavoro e assegnatari per iniziare a tracciare prestazioni, progressi e impatto del team qui."
+      "title": "Crea reparti con elementi di lavoro e assegnatari per iniziare a tracciare prestazioni, progressi e impatto del team qui."
     },
     "analytics_no_cycle": {
       "title": "Crea cicli per organizzare il lavoro in fasi temporali e tracciare i progressi attraverso gli sprint."
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "Scrivi una nota, un documento o un'intera base di conoscenza.",
-      "description": "Le pagine sono spazi per catturare pensieri in Paradise Task Tracker. Prendi note di riunioni, formattale facilmente, incorpora elementi di lavoro, organizzali usando una libreria di componenti e mantienili tutti nel contesto del tuo progetto.",
+      "description": "Le pagine sono spazi per catturare pensieri in Paradise Task Tracker. Prendi note di riunioni, formattale facilmente, incorpora elementi di lavoro, organizzali usando una libreria di componenti e mantienili tutti nel contesto del tuo reparto.",
       "cta_primary": "Crea la tua pagina"
     },
     "project_overview_state_sidebar": {
-      "title": "Abilita stati del progetto",
-      "description": "Abilita gli stati del progetto per visualizzare e gestire proprietà come stato, priorità, date di scadenza e altro."
+      "title": "Abilita stati del reparto",
+      "description": "Abilita gli stati del reparto per visualizzare e gestire proprietà come stato, priorità, date di scadenza e altro."
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "Nessun Webhook aggiunto ancora",
-      "description": "Automatizza le notifiche a servizi esterni quando si verificano eventi del progetto.",
+      "description": "Automatizza le notifiche a servizi esterni quando si verificano eventi del reparto.",
       "cta_primary": "Aggiungi webhook"
     },
     "work_item_types": {
       "title": "Crea e personalizza tipi di elementi di lavoro",
-      "description": "Definisci tipi di elementi di lavoro unici per il tuo progetto. Ogni tipo può avere le proprie proprietà, flussi di lavoro e campi - personalizzati per le esigenze del tuo progetto e team.",
+      "description": "Definisci tipi di elementi di lavoro unici per il tuo reparto. Ogni tipo può avere le proprie proprietà, flussi di lavoro e campi - personalizzati per le esigenze del tuo reparto e team.",
       "cta_primary": "Abilita"
     },
     "work_item_type_properties": {
-      "title": "Definisci la proprietà e i dettagli che vuoi catturare per questo tipo di elemento di lavoro. Personalizzalo per adattarlo al flusso di lavoro del tuo progetto.",
+      "title": "Definisci la proprietà e i dettagli che vuoi catturare per questo tipo di elemento di lavoro. Personalizzalo per adattarlo al flusso di lavoro del tuo reparto.",
       "cta_secondary": "Aggiungi proprietà"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "Traccia i fogli ore per tutti i membri",
-      "description": "Registra il tempo sugli elementi di lavoro per visualizzare fogli ore dettagliati per qualsiasi membro del team attraverso i progetti."
+      "description": "Registra il tempo sugli elementi di lavoro per visualizzare fogli ore dettagliati per qualsiasi membro del team attraverso i reparti."
     },
     "group_syncing": {
       "title": "Nessuna mappatura di gruppi ancora"
     },
     "template_setting": {
       "title": "Nessun modello ancora",
-      "description": "Riduci i tempi di configurazione creando modelli per progetti, elementi di lavoro e pagine — e inizia nuovi lavori in pochi secondi.",
+      "description": "Riduci i tempi di configurazione creando modelli per reparti, elementi di lavoro e pagine — e inizia nuovi lavori in pochi secondi.",
       "cta_primary": "Crea modello"
     },
     "workflows": {

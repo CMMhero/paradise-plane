@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Šablony",
-      "description": "Ušetřete 80 % času stráveného vytvářením projektů, pracovních položek a stránek, když používáte šablony.",
-      "new_project_template": "Nová šablona projektu",
+      "description": "Ušetřete 80 % času stráveného vytvářením oddělení, pracovních položek a stránek, když používáte šablony.",
+      "new_project_template": "Nová šablona oddělení",
       "new_work_item_template": "Nová šablona pracovní položky",
       "new_page_template": "Nová šablona stránky",
       "options": {
         "project": {
-          "label": "Šablony projektů"
+          "label": "Šablony oddělení"
         },
         "work_item": {
           "label": "Šablony pracovních položek"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Vytvořit šablonu",
         "no_permission": {
-          "project": "Kontaktujte správce projektu, abyste vytvořili šablony",
+          "project": "Kontaktujte správce oddělení, abyste vytvořili šablony",
           "workspace": "Kontaktujte správce workspace, abyste vytvořili šablony"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Odvozeno z workspace"
         },
         "project": {
-          "info": "Odvozeno z projektu"
+          "info": "Odvozeno z oddělení"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Pojmenujte svou šablonu projektu.",
+              "placeholder": "Pojmenujte svou šablonu oddělení.",
               "validation": {
                 "required": "Název šablony je povinný",
                 "maxLength": "Název šablony by měl být kratší než 255 znaků"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Pojmenujte svůj projekt.",
+            "placeholder": "Pojmenujte své oddělení.",
             "validation": {
-              "required": "Název projektu je povinný",
-              "maxLength": "Název projektu by měl být kratší než 255 znaků"
+              "required": "Název oddělení je povinný",
+              "maxLength": "Název oddělení by měl být kratší než 255 znaků"
             }
           },
           "description": {
-            "placeholder": "Popište účel a cíle tohoto projektu."
+            "placeholder": "Popište účel a cíle tohoto oddělení."
           },
           "button": {
-            "create": "Vytvořit šablonu projektu",
-            "update": "Aktualizovat šablonu projektu"
+            "create": "Vytvořit šablonu oddělení",
+            "update": "Aktualizovat šablonu oddělení"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Kráký popis",
-            "placeholder": "Tato šablona je skvělá pro manažery projektů, kteří spravují několik projektů najednou.",
+            "placeholder": "Tato šablona je skvělá pro manažery oddělení, kteří spravují několik oddělení najednou.",
             "validation": {
               "required": "Kráký popis je povinný"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Šablony",
-        "description": "S šablonami projektů, pracovních položek a stránek v Paradise Task Tracker nemusíte vytvářet projekt od nuly nebo nastavovat vlastnosti pracovních položek ručně.",
+        "description": "S šablonami oddělení, pracovních položek a stránek v Paradise Task Tracker nemusíte vytvářet oddělení od nuly nebo nastavovat vlastnosti pracovních položek ručně.",
         "sub_description": "Získejte 80 % svého administrativního času zpět, když používáte šablony."
       },
       "no_templates": {
         "button": "Vytvořte svou první šablonu"
       },
       "no_labels": {
-        "description": "Zatím žádné štítky. Vytvořte štítky, abyste pomohli organizovat a filtrovat pracovní položky v projektu."
+        "description": "Zatím žádné štítky. Vytvořte štítky, abyste pomohli organizovat a filtrovat pracovní položky v oddělení."
       },
       "no_modules": {
-        "description": "Zatím žádné moduly. Organizujte práci do dílčích projektů s vyhrazenými vedoucími a přiřazenými osobami."
+        "description": "Zatím žádné moduly. Organizujte práci do dílčích celků s vyhrazenými vedoucími a přiřazenými osobami."
       },
       "no_work_items": {
         "description": "Zatím žádné pracovní položky. Přidejte jednu, abyste strukturovali svou práci lépe."
@@ -318,7 +318,7 @@
         "project": "Přidat novou šablonu"
       },
       "label": {
-        "project": "Vybrat šablonu projektu",
+        "project": "Vybrat šablonu oddělení",
         "page": "Vybrat šablonu"
       },
       "tooltip": {

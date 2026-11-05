@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "¿Estás seguro de que deseas restablecer este flujo de trabajo?",
-        "description": "Si restableces este flujo de trabajo, todas tus reglas de cambio de estado serán eliminadas y tendrás que crearlas de nuevo para que funcionen en este proyecto."
+        "description": "Si restableces este flujo de trabajo, todas tus reglas de cambio de estado serán eliminadas y tendrás que crearlas de nuevo para que funcionen en este departamento."
       },
       "delete_state_change": {
         "title": "¿Estás seguro de que deseas eliminar esta regla de cambio de estado?",
-        "description": "Una vez eliminada, no podrás deshacer este cambio y tendrás que establecer la regla de nuevo si la deseas para este proyecto."
+        "description": "Una vez eliminada, no podrás deshacer este cambio y tendrás que establecer la regla de nuevo si la deseas para este departamento."
       }
     },
     "toasts": {

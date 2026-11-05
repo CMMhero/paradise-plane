@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Súkromné a zdieľané stránky nie je možné presunúť do tímspejsu.",
       "placeholders": {
-        "workspace_to_all": "Hľadať projekty a tímspejsy",
-        "workspace_to_project": "Hľadať projekty",
-        "project_to_all": "Hľadať projekty a tímspejsy",
-        "project_to_project": "Hľadať projekty",
-        "project_to_all_with_wiki": "Hľadať wiki kolekcie, projekty a tímové priestory",
-        "project_to_project_with_wiki": "Hľadať wiki kolekcie a projekty"
+        "workspace_to_all": "Hľadať oddelenia a tímspejsy",
+        "workspace_to_project": "Hľadať oddelenia",
+        "project_to_all": "Hľadať oddelenia a tímspejsy",
+        "project_to_project": "Hľadať oddelenia",
+        "project_to_all_with_wiki": "Hľadať wiki kolekcie, oddelenia a tímové priestory",
+        "project_to_project_with_wiki": "Hľadať wiki kolekcie a oddelenia"
       },
       "toasts": {
         "success": {

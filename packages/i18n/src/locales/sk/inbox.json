@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Iba správcovia projektu môžu odkladať/zrušiť odloženie pracovných položiek",
-      "accept_permission": "Iba správcovia projektu môžu prijímať pracovné položky",
-      "decline_permission": "Iba správcovia projektu môžu odmietnuť pracovné položky"
+      "snooze_permission": "Iba správcovia oddelenia môžu odkladať/zrušiť odloženie pracovných položiek",
+      "accept_permission": "Iba správcovia oddelenia môžu prijímať pracovné položky",
+      "decline_permission": "Iba správcovia oddelenia môžu odmietnuť pracovné položky"
     },
     "actions": {
       "accept": "Prijať",
@@ -47,7 +47,7 @@
       "delete": "Zmazať",
       "open": "Otvoriť pracovnú položku",
       "mark_as_duplicate": "Označiť ako duplikát",
-      "move": "Presunúť {value} do pracovných položiek projektu"
+      "move": "Presunúť {value} do pracovných položiek oddelenia"
     },
     "source": {
       "in-app": "v aplikácii"

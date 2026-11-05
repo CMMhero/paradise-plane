@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Modèles",
-      "description": "Économisez 80% du temps consacré à la création de projets, d'éléments de travail et de pages lorsque vous utilisez des modèles.",
-      "new_project_template": "Nouveau modèle de projet",
+      "description": "Économisez 80% du temps consacré à la création de départements, d'éléments de travail et de pages lorsque vous utilisez des modèles.",
+      "new_project_template": "Nouveau modèle de département",
       "new_work_item_template": "Nouveau modèle d’élément de travail",
       "new_page_template": "Nouveau modèle de page",
       "options": {
         "project": {
-          "label": "Modèles de projet"
+          "label": "Modèles de département"
         },
         "work_item": {
           "label": "Modèles d'éléments de travail"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Créer un modèle",
         "no_permission": {
-          "project": "Contactez l'administrateur de votre projet pour créer des modèles",
+          "project": "Contactez l'administrateur de votre département pour créer des modèles",
           "workspace": "Contactez l'administrateur de votre espace de travail pour créer des modèles"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Dérivé de l'espace de travail"
         },
         "project": {
-          "info": "Dérivé du projet"
+          "info": "Dérivé du département"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Nommez votre modèle de projet.",
+              "placeholder": "Nommez votre modèle de département.",
               "validation": {
                 "required": "Le nom du modèle est requis",
                 "maxLength": "Le nom du modèle doit comporter moins de 255 caractères"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Nommez votre projet.",
+            "placeholder": "Nommez votre département.",
             "validation": {
-              "required": "Le titre du projet est requis",
-              "maxLength": "Le titre du projet doit comporter moins de 255 caractères"
+              "required": "Le titre du département est requis",
+              "maxLength": "Le titre du département doit comporter moins de 255 caractères"
             }
           },
           "description": {
-            "placeholder": "Décrivez l'objectif et les buts de ce projet."
+            "placeholder": "Décrivez l'objectif et les buts de ce département."
           },
           "button": {
-            "create": "Créer un modèle de projet",
-            "update": "Mettre à jour le modèle de projet"
+            "create": "Créer un modèle de département",
+            "update": "Mettre à jour le modèle de département"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Description courte",
-            "placeholder": "Ce modèle est idéal pour les gestionnaires de projets qui gèrent plusieurs projets en même temps.",
+            "placeholder": "Ce modèle est idéal pour les gestionnaires de départements qui gèrent plusieurs départements en même temps.",
             "validation": {
               "required": "La description courte est requise"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Modèles",
-        "description": "Avec les modèles de projet, d'élément de travail et de page dans Paradise Task Tracker, vous n'avez pas à créer un projet à partir de zéro ou à définir manuellement les propriétés des éléments de travail.",
+        "description": "Avec les modèles de département, d'élément de travail et de page dans Paradise Task Tracker, vous n'avez pas à créer un département à partir de zéro ou à définir manuellement les propriétés des éléments de travail.",
         "sub_description": "Récupérez 80% de votre temps d'administration lorsque vous utilisez des modèles."
       },
       "no_templates": {
         "button": "Créez votre premier modèle"
       },
       "no_labels": {
-        "description": " Aucune étiquette pour le moment. Créez des étiquettes pour aider à organiser et filtrer les éléments de travail dans votre projet."
+        "description": " Aucune étiquette pour le moment. Créez des étiquettes pour aider à organiser et filtrer les éléments de travail dans votre département."
       },
       "no_modules": {
-        "description": "Aucun module pour le moment. Organisez le travail en sous-projets avec des responsables et des acteurs dédiés."
+        "description": "Aucun module pour le moment. Organisez le travail en sous-ensembles avec des responsables et des acteurs dédiés."
       },
       "no_work_items": {
         "description": "Aucun élément de travail pour le moment. Ajoutez-en un pour structurer votre travail mieux."
@@ -318,7 +318,7 @@
         "project": "Ajouter un nouveau modèle"
       },
       "label": {
-        "project": "Choisir un modèle de projet",
+        "project": "Choisir un modèle de département",
         "page": "Choisir à partir du modèle"
       },
       "tooltip": {

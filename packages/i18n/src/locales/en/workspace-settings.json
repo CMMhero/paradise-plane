@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Exports",
-        "description": "Export your project data in various formats and access your export history with download links.",
+        "description": "Export your department data in various formats and access your export history with download links.",
         "title": "Exports",
         "exporting": "Exporting",
         "previous_exports": "Previous exports",
         "export_separate_files": "Export the data into separate files",
-        "exporting_projects": "Exporting project",
+        "exporting_projects": "Exporting department",
         "format": "Format",
         "filters_info": "Apply filters to export specific work items based on your criteria.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhooks",
-        "description": "Automate notifications to external services when project events occur.",
+        "description": "Automate notifications to external services when department events occur.",
         "title": "Webhooks",
         "add_webhook": "Add webhook",
         "modal": {
@@ -187,22 +187,22 @@
       "worklogs": {
         "title": "Worklogs",
         "heading": "Worklogs",
-        "description": "Download worklogs AKA timesheets for anyone in any project."
+        "description": "Download worklogs AKA timesheets for anyone in any department."
       },
       "group_syncing": {
         "title": "Group syncing",
         "heading": "Group syncing",
-        "description": "Link identity provider groups to projects and roles. User access updates automatically when group membership changes in your IdP, simplifying onboarding and offboarding.",
+        "description": "Link identity provider groups to departments and roles. User access updates automatically when group membership changes in your IdP, simplifying onboarding and offboarding.",
         "enable": {
           "title": "Enable group syncing",
-          "description": "Automatically add users to projects based on identity provider groups."
+          "description": "Automatically add users to departments based on identity provider groups."
         },
         "config": {
           "title": "Configure group sync",
-          "description": "Set up how identity provider groups are mapped to projects and roles.",
+          "description": "Set up how identity provider groups are mapped to departments and roles.",
           "sync_on_login": {
             "title": "Sync on login",
-            "description": "Update group membership and project access when a user signs in."
+            "description": "Update group membership and department access when a user signs in."
           },
           "sync_offline": {
             "title": "Offline sync",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Auto remove",
-            "description": "Automatically remove users from projects when they no longer match the group."
+            "description": "Automatically remove users from departments when they no longer match the group."
           },
           "group_attribute_key": {
             "title": "Group attribute key",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Group mapping",
-          "description": "Link identity provider groups to projects and roles.",
+          "description": "Link identity provider groups to departments and roles.",
           "button_text": "Add new group sync"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Delete group sync",
-          "content": "New users from this identity group will no longer be added to the project. Users already added will keep their current role."
+          "content": "New users from this identity group will no longer be added to the department. Users already added will keep their current role."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Enter the IdP group names"
           },
           "project": {
-            "text": "Project",
-            "required": "Project is required",
-            "placeholder": "Select a project"
+            "text": "Department",
+            "required": "Department is required",
+            "placeholder": "Select a department"
           },
           "default_role": {
-            "text": "Project role",
-            "required": "Project role is required",
-            "placeholder": "Select a project role"
+            "text": "Department role",
+            "required": "Department role is required",
+            "placeholder": "Select a department role"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Configure your domain and enable Single sign-on"
       },
       "project_states": {
-        "title": "Project states",
-        "heading": "See progress overview for all projects.",
-        "description": "Project States is a Paradise Task Tracker-only feature for tracking progress of all your projects by any project property.",
+        "title": "Department states",
+        "heading": "See progress overview for all departments.",
+        "description": "Department States is a Paradise Task Tracker-only feature for tracking progress of all your departments by any department property.",
         "go_to_settings": "Go to settings"
       },
       "projects": {
-        "title": "Projects",
-        "description": "Manage project states, and enable project labels, and other configuration.",
+        "title": "Departments",
+        "description": "Manage department states, and enable department labels, and other configuration.",
         "tabs": {
-          "states": "Project states",
-          "labels": "Project labels"
+          "states": "Department states",
+          "labels": "Department labels"
         }
       },
       "templates": {
         "title": "Templates",
         "heading": "Templates",
-        "description": "Save 80% time spent on creating projects, work items, and pages when you use templates."
+        "description": "Save 80% time spent on creating departments, work items, and pages when you use templates."
       },
       "relations": {
         "title": "Relations",
@@ -465,7 +465,7 @@
         "read": "Read",
         "write": "Write",
         "scope_description": {
-          "projects": "Access to projects, and all project related entities",
+          "projects": "Access to departments, and all department related entities",
           "wiki": "Access to wiki, and all wiki related entities",
           "workspaces": "Access to workspaces, and all workspace related entities",
           "stickies": "Access to stickies, and all sticky related entities",

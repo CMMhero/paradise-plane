@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "Henüz güncelleme yok.",
-      "description": "Proje üyeleri güncelleme eklediğinde burada görünecek"
+      "description": "Departman üyeleri güncelleme eklediğinde burada görünecek"
     },
     "search": {
       "title": "Eşleşen sonuç yok.",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "Görünüşe göre bu projeye erişiminiz yok",
+      "title": "Görünüşe göre bu departmana erişiminiz yok",
       "restricted_description": "Erişim talep etmek için yöneticiyle iletişime geçin, sonra burada devam edebilirsiniz.",
       "join_description": "Katılmak için aşağıdaki butona tıklayın.",
-      "cta_primary": "Projeye katıl",
-      "cta_loading": "Projeye katılınıyor"
+      "cta_primary": "Departmana katıl",
+      "cta_loading": "Departmana katılınıyor"
     },
     "invalid_project": {
-      "title": "Proje bulunamadı",
-      "description": "Aradığınız proje mevcut değil."
+      "title": "Departman bulunamadı",
+      "description": "Aradığınız departman mevcut değil."
     },
     "work_items": {
       "title": "İlk iş öğenizle başlayın.",
-      "description": "İş öğeleri projenizin yapı taşlarıdır — sahipler atayın, öncelikleri belirleyin ve ilerlemeyi kolayca takip edin.",
+      "description": "İş öğeleri departmanınızın yapı taşlarıdır — sahipler atayın, öncelikleri belirleyin ve ilerlemeyi kolayca takip edin.",
       "cta_primary": "İlk iş öğenizi oluşturun"
     },
     "cycles": {
       "title": "Çalışmanızı Döngülerde gruplayın ve zaman sınırlayın.",
-      "description": "Çalışmayı zaman sınırlı parçalara bölün, tarihleri belirlemek için proje son tarihinden geriye doğru çalışın ve bir ekip olarak somut ilerleme kaydedin.",
+      "description": "Çalışmayı zaman sınırlı parçalara bölün, tarihleri belirlemek için departman son tarihinden geriye doğru çalışın ve bir ekip olarak somut ilerleme kaydedin.",
       "cta_primary": "İlk döngünüzü ayarlayın"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "Mevcut iş öğesini ekle"
     },
     "modules": {
-      "title": "Proje hedeflerinizi Modüllere eşleyin ve kolayca takip edin.",
-      "description": "Modüller birbirine bağlı iş öğelerinden oluşur. Proje aşamalarındaki ilerlemeyi izlemeye yardımcı olurlar, her biri bu aşamalara ne kadar yakın olduğunuzu göstermek için belirli son tarihler ve analizlerle.",
+      "title": "Departman hedeflerinizi Modüllere eşleyin ve kolayca takip edin.",
+      "description": "Modüller birbirine bağlı iş öğelerinden oluşur. Departman aşamalarındaki ilerlemeyi izlemeye yardımcı olurlar, her biri bu aşamalara ne kadar yakın olduğunuzu göstermek için belirli son tarihler ve analizlerle.",
       "cta_primary": "İlk modülünüzü ayarlayın"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "Mevcut iş öğesini ekle"
     },
     "views": {
-      "title": "Projeniz için özel görünümler kaydedin",
+      "title": "Departmanınız için özel görünümler kaydedin",
       "description": "Görünümler, en çok kullandığınız bilgilere hızlı erişmenize yardımcı olan kaydedilmiş filtrelerdir. Ekip arkadaşları görünümleri paylaşıp kendi özel ihtiyaçlarına göre uyarladıkça zahmetsizce işbirliği yapın.",
       "cta_primary": "Görünüm oluştur"
     },
     "no_work_items_in_project": {
-      "title": "Projede henüz iş öğesi yok",
-      "description": "Projenize iş öğeleri ekleyin ve çalışmanızı görünümlerle takip edilebilir parçalara ayırın.",
+      "title": "Departmanda henüz iş öğesi yok",
+      "description": "Departmanınıza iş öğeleri ekleyin ve çalışmanızı görünümlerle takip edilebilir parçalara ayırın.",
       "cta_primary": "İş öğesi ekle"
     },
     "work_item_filter": {
@@ -79,7 +79,7 @@
     },
     "pages": {
       "title": "Her şeyi belgeleyin — notlardan PRD'lere",
-      "description": "Sayfalar bilgileri tek bir yerde yakalamanıza ve düzenlemenize olanak tanır. Toplantı notları, proje belgeleri ve PRD'ler yazın, iş öğelerini yerleştirin ve kullanıma hazır bileşenlerle yapılandırın.",
+      "description": "Sayfalar bilgileri tek bir yerde yakalamanıza ve düzenlemenize olanak tanır. Toplantı notları, departman belgeleri ve PRD'ler yazın, iş öğelerini yerleştirin ve kullanıma hazır bileşenlerle yapılandırın.",
       "cta_primary": "İlk Sayfanızı oluşturun"
     },
     "archive_pages": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "Giriş isteklerini kaydedin",
-      "description": "Projenizin iş akışı içinde incelenmek, önceliklendirilmek ve takip edilmek üzere yeni istekler gönderin.",
+      "description": "Departmanınızın iş akışı içinde incelenmek, önceliklendirilmek ve takip edilmek üzere yeni istekler gönderin.",
       "cta_primary": "Giriş isteği oluştur"
     },
     "intake_main": {
       "title": "Ayrıntılarını görmek için bir Giriş iş öğesi seçin"
     },
     "epics": {
-      "title": "Karmaşık projeleri yapılandırılmış destanlara dönüştürün.",
+      "title": "Karmaşık departmanları yapılandırılmış destanlara dönüştürün.",
       "description": "Bir destan, büyük hedefleri daha küçük, takip edilebilir görevlere organize etmenize yardımcı olur.",
       "cta_primary": "Destan Oluştur",
       "cta_secondary": "Belgeler"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "Henüz arşivlenmiş döngü yok",
-      "description": "Projenizi düzenlemek için tamamlanmış döngüleri arşivleyin. Arşivlendikten sonra burada bulun."
+      "description": "Departmanınızı düzenlemek için tamamlanmış döngüleri arşivleyin. Arşivlendikten sonra burada bulun."
     },
     "archive_modules": {
       "title": "Henüz arşivlenmiş Modül yok",
-      "description": "Projenizi düzenlemek için tamamlanmış veya iptal edilmiş modülleri arşivleyin. Arşivlendikten sonra burada bulun."
+      "description": "Departmanınızı düzenlemek için tamamlanmış veya iptal edilmiş modülleri arşivleyin. Arşivlendikten sonra burada bulun."
     },
     "home_widget_quick_links": {
       "title": "Çalışmanız için önemli referansları, kaynakları veya belgeleri elinizin altında tutun"
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "Henüz Görünüm yok",
-      "description": "Projenize iş öğeleri ekleyin ve zahmetsizce filtrelemek, sıralamak ve ilerlemeyi izlemek için görünümleri kullanın.",
+      "description": "Departmanınıza iş öğeleri ekleyin ve zahmetsizce filtrelemek, sıralamak ve ilerlemeyi izlemek için görünümleri kullanın.",
       "cta_primary": "İş öğesi ekle"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "Taslak iş öğesi oluştur"
     },
     "projects_archived": {
-      "title": "Arşivlenmiş proje yok",
-      "description": "Görünüşe göre tüm projeleriniz hala aktif—harika iş!"
+      "title": "Arşivlenmiş departman yok",
+      "description": "Görünüşe göre tüm departmanlarınız hala aktif—harika iş!"
     },
     "analytics_projects": {
-      "title": "Proje metriklerini burada görselleştirmek için projeler oluşturun."
+      "title": "Departman metriklerini burada görselleştirmek için departmanlar oluşturun."
     },
     "analytics_work_items": {
-      "title": "Performansı, ilerlemeyi ve ekip etkisini burada izlemeye başlamak için iş öğeleri ve atananlar içeren projeler oluşturun."
+      "title": "Performansı, ilerlemeyi ve ekip etkisini burada izlemeye başlamak için iş öğeleri ve atananlar içeren departmanlar oluşturun."
     },
     "analytics_no_cycle": {
       "title": "Çalışmayı zaman sınırlı aşamalara organize etmek ve sprintler boyunca ilerlemeyi takip etmek için döngüler oluşturun."
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "Bir not, bir belge veya tam bir bilgi tabanı yazın.",
-      "description": "Sayfalar Paradise Task Tracker'de düşünce yakalama alanıdır. Toplantı notları alın, kolayca biçimlendirin, iş öğelerini yerleştirin, bir bileşenler kütüphanesi kullanarak düzenleyin ve hepsini projenizin bağlamında tutun.",
+      "description": "Sayfalar Paradise Task Tracker'de düşünce yakalama alanıdır. Toplantı notları alın, kolayca biçimlendirin, iş öğelerini yerleştirin, bir bileşenler kütüphanesi kullanarak düzenleyin ve hepsini departmanınızın bağlamında tutun.",
       "cta_primary": "Sayfanızı oluşturun"
     },
     "project_overview_state_sidebar": {
-      "title": "Proje durumlarını etkinleştir",
-      "description": "Durum, öncelik, bitiş tarihleri ve daha fazlası gibi özellikleri görüntülemek ve yönetmek için Proje Durumlarını etkinleştirin."
+      "title": "Departman durumlarını etkinleştir",
+      "description": "Durum, öncelik, bitiş tarihleri ve daha fazlası gibi özellikleri görüntülemek ve yönetmek için Departman Durumlarını etkinleştirin."
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "Henüz Webhook eklenmedi",
-      "description": "Proje olayları gerçekleştiğinde harici hizmetlere bildirimleri otomatikleştirin.",
+      "description": "Departman olayları gerçekleştiğinde harici hizmetlere bildirimleri otomatikleştirin.",
       "cta_primary": "Webhook ekle"
     },
     "work_item_types": {
       "title": "İş öğesi türleri oluşturun ve özelleştirin",
-      "description": "Projeniz için benzersiz iş öğesi türleri tanımlayın. Her tür, projenizin ve ekibinizin ihtiyaçlarına göre uyarlanmış kendi özellikleri, iş akışları ve alanlarına sahip olabilir.",
+      "description": "Departmanınız için benzersiz iş öğesi türleri tanımlayın. Her tür, departmanınızın ve ekibinizin ihtiyaçlarına göre uyarlanmış kendi özellikleri, iş akışları ve alanlarına sahip olabilir.",
       "cta_primary": "Etkinleştir"
     },
     "work_item_type_properties": {
-      "title": "Bu iş öğesi türü için yakalamak istediğiniz özelliği ve ayrıntıları tanımlayın. Projenizin iş akışına uyacak şekilde özelleştirin.",
+      "title": "Bu iş öğesi türü için yakalamak istediğiniz özelliği ve ayrıntıları tanımlayın. Departmanınızın iş akışına uyacak şekilde özelleştirin.",
       "cta_secondary": "Özellik ekle"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "Tüm üyeler için zaman çizelgelerini takip edin",
-      "description": "Projeler arasında herhangi bir ekip üyesi için ayrıntılı zaman çizelgelerini görmek için iş öğelerinde zaman kaydedin."
+      "description": "Departmanlar arasında herhangi bir ekip üyesi için ayrıntılı zaman çizelgelerini görmek için iş öğelerinde zaman kaydedin."
     },
     "group_syncing": {
       "title": "Henüz grup eşlemesi yok"
     },
     "template_setting": {
       "title": "Henüz şablon yok",
-      "description": "Projeler, iş öğeleri ve sayfalar için şablonlar oluşturarak kurulum süresini azaltın — ve saniyeler içinde yeni çalışmaya başlayın.",
+      "description": "Departmanlar, iş öğeleri ve sayfalar için şablonlar oluşturarak kurulum süresini azaltın — ve saniyeler içinde yeni çalışmaya başlayın.",
       "cta_primary": "Şablon oluştur"
     },
     "workflows": {

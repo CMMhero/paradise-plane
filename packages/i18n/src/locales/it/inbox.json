@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "Solo gli amministratori del progetto possono snoozare/non snoozare gli elementi di lavoro",
-      "accept_permission": "Solo gli amministratori del progetto possono accettare gli elementi di lavoro",
-      "decline_permission": "Solo gli amministratori del progetto possono rifiutare gli elementi di lavoro"
+      "snooze_permission": "Solo gli amministratori del reparto possono snoozare/non snoozare gli elementi di lavoro",
+      "accept_permission": "Solo gli amministratori del reparto possono accettare gli elementi di lavoro",
+      "decline_permission": "Solo gli amministratori del reparto possono rifiutare gli elementi di lavoro"
     },
     "actions": {
       "accept": "Accetta",
@@ -47,7 +47,7 @@
       "delete": "Elimina",
       "open": "Apri elemento di lavoro",
       "mark_as_duplicate": "Segna come duplicato",
-      "move": "Sposta {value} negli elementi di lavoro del progetto"
+      "move": "Sposta {value} negli elementi di lavoro del reparto"
     },
     "source": {
       "in-app": "nell'app"

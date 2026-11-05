@@ -103,7 +103,7 @@
     "empty_state": {
       "general": {
         "title": "Grupează și delimitează în timp munca ta în Cicluri.",
-        "description": "Împarte munca în intervale de timp, stabilește datele în funcție de termenul limită al proiectului și progresează vizibil ca echipă.",
+        "description": "Împarte munca în intervale de timp, stabilește datele în funcție de termenul limită al departamentului și progresează vizibil ca echipă.",
         "primary_button": {
           "text": "Setează primul tău ciclu",
           "comic": {
@@ -132,15 +132,15 @@
       },
       "archived": {
         "title": "Niciun ciclu arhivat încă",
-        "description": "Pentru a păstra proiectul ordonat, arhivează ciclurile completate. Le vei găsi aici după arhivare."
+        "description": "Pentru a păstra departamentul ordonat, arhivează ciclurile completate. Le vei găsi aici după arhivare."
       }
     }
   },
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "Salvează perspective filtrate pentru proiectul tău. Creează câte ai nevoie",
-        "description": "Perspectivele sunt seturi de filtre salvate pe care le folosești frecvent sau la care vrei acces rapid. Toți colegii tăi dintr-un proiect pot vedea perspectivele tuturor și pot alege ce li se potrivește cel mai bine.",
+        "title": "Salvează perspective filtrate pentru departamentul tău. Creează câte ai nevoie",
+        "description": "Perspectivele sunt seturi de filtre salvate pe care le folosești frecvent sau la care vrei acces rapid. Toți colegii tăi dintr-un departament pot vedea perspectivele tuturor și pot alege ce li se potrivește cel mai bine.",
         "primary_button": {
           "text": "Creează prima ta perspectivă",
           "comic": {
@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Nicio pagină publică încă",
-        "description": "Vezi paginile distribuite cu toată lumea din proiectul tău chiar aici.",
+        "description": "Vezi paginile distribuite cu toată lumea din departamentul tău chiar aici.",
         "primary_button": {
           "text": "Creează prima ta pagină"
         }
@@ -191,7 +191,7 @@
     "empty_state": {
       "no_issues": {
         "title": "Creează o activitate și atribuie-o cuiva, chiar și ție",
-        "description": "Gândește-te la activități ca la sarcini sau lucruri care trebuie făcute. O activitate și sub-activitățile sale sunt acțiuni care trebuie realizate într-un interval de timp de către membrii echipei tale. Echipa creează, atribuie și finalizează activități pentru a duce proiectul spre obiectivul său.",
+        "description": "Gândește-te la activități ca la sarcini sau lucruri care trebuie făcute. O activitate și sub-activitățile sale sunt acțiuni care trebuie realizate într-un interval de timp de către membrii echipei tale. Echipa creează, atribuie și finalizează activități pentru a duce departamentul spre obiectivul său.",
         "primary_button": {
           "text": "Creează prima ta activitate",
           "comic": {
@@ -224,8 +224,8 @@
     "delete_module": "Șterge modulul",
     "empty_state": {
       "general": {
-        "title": "Mapează etapele proiectului în Module și urmărește munca agregată cu ușurință.",
-        "description": "Un grup de activități care aparțin unui părinte logic și ierarhic formează un modul. Gândește-te la module ca la un mod de a urmări munca în funcție de etapele proiectului. Au propriile perioade, termene limită și statistici pentru a-ți arăta cât de aproape sau departe ești de un reper.",
+        "title": "Mapează etapele departamentului în Module și urmărește munca agregată cu ușurință.",
+        "description": "Un grup de activități care aparțin unui părinte logic și ierarhic formează un modul. Gândește-te la module ca la un mod de a urmări munca în funcție de etapele departamentului. Au propriile perioade, termene limită și statistici pentru a-ți arăta cât de aproape sau departe ești de un reper.",
         "primary_button": {
           "text": "Construiește primul tău modul",
           "comic": {
@@ -246,7 +246,7 @@
       },
       "archived": {
         "title": "Niciun modul arhivat încă",
-        "description": "Pentru a păstra proiectul ordonat, arhivează modulele finalizate sau anulate. Le vei găsi aici după arhivare."
+        "description": "Pentru a păstra departamentul ordonat, arhivează modulele finalizate sau anulate. Le vei găsi aici după arhivare."
       },
       "sidebar": {
         "in_active": "Acest modul nu este încă activ.",
@@ -272,7 +272,7 @@
     "empty_state": {
       "general": {
         "title": "Scrie o notiță, un document sau o bază completă de cunoștințe. Folosește-l pe Galileo, Inteligența Artificială a Paradise Task Tracker, ca să te ajute să începi",
-        "description": "Documentația e spațiul în care îți notezi gândurile în Paradise Task Tracker. Ia notițe de la ședințe, formatează-le ușor, inserează activități, așază-le folosind o bibliotecă de componente și păstrează-le pe toate în contextul proiectului tău. Pentru a redacta rapid orice document, apelează la Galileo, Inteligența Artificială a Paradise Task Tracker, cu un shortcut sau un click.",
+        "description": "Documentația e spațiul în care îți notezi gândurile în Paradise Task Tracker. Ia notițe de la ședințe, formatează-le ușor, inserează activități, așază-le folosind o bibliotecă de componente și păstrează-le pe toate în contextul departamentului tău. Pentru a redacta rapid orice document, apelează la Galileo, Inteligența Artificială a Paradise Task Tracker, cu un shortcut sau un click.",
         "primary_button": {
           "text": "Creează primul tău document"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Niciun document public încă",
-        "description": "Vezi aici documentele distribuite cu toată echipa ta din proiect.",
+        "description": "Vezi aici documentele distribuite cu toată echipa ta din departament.",
         "primary_button": {
           "text": "Creează primul tău document"
         }
@@ -300,36 +300,36 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "Funcția Cereri nu este activată pentru proiect.",
-        "description": "Funcția Cereri te ajută să gestionezi cererile care vin în proiectul tău și să le adaugi ca activități în fluxul tău. Activează Cereri din setările proiectului pentru a gestiona cererile.",
+        "title": "Funcția Cereri nu este activată pentru departament.",
+        "description": "Funcția Cereri te ajută să gestionezi cererile care vin în departamentul tău și să le adaugi ca activități în fluxul tău. Activează Cereri din setările departamentului pentru a gestiona cererile.",
         "primary_button": {
           "text": "Gestionează funcțiile"
         }
       },
       "cycle": {
-        "title": "Funcția Cicluri nu este activată pentru acest proiect.",
-        "description": "Împarte munca în intervale de timp, pleacă de la termenul limită al proiectului pentru a seta date și progresează vizibil ca echipă. Activează funcția de cicluri pentru a începe să o folosești.",
+        "title": "Funcția Cicluri nu este activată pentru acest departament.",
+        "description": "Împarte munca în intervale de timp, pleacă de la termenul limită al departamentului pentru a seta date și progresează vizibil ca echipă. Activează funcția de cicluri pentru a începe să o folosești.",
         "primary_button": {
           "text": "Gestionează funcțiile"
         }
       },
       "module": {
-        "title": "Funcția Module nu este activată pentru proiect.",
-        "description": "Modulele sunt componentele de bază ale proiectului tău. Activează modulele din setările proiectului pentru a începe să le folosești.",
+        "title": "Funcția Module nu este activată pentru departament.",
+        "description": "Modulele sunt componentele de bază ale departamentului tău. Activează modulele din setările departamentului pentru a începe să le folosești.",
         "primary_button": {
           "text": "Gestionează funcțiile"
         }
       },
       "page": {
-        "title": "Funcția Documentație nu este activată pentru proiect.",
-        "description": "Paginile sunt componentele de bază ale proiectului tău. Activează paginile din setările proiectului pentru a începe să le folosești.",
+        "title": "Funcția Documentație nu este activată pentru departament.",
+        "description": "Paginile sunt componentele de bază ale departamentului tău. Activează paginile din setările departamentului pentru a începe să le folosești.",
         "primary_button": {
           "text": "Gestionează funcțiile"
         }
       },
       "view": {
-        "title": "Funcția Perspective nu este activată pentru proiect.",
-        "description": "Perspectivele sunt componentele de bază ale proiectului tău. Activează perspectivele din setările proiectului pentru a începe să le folosești.",
+        "title": "Funcția Perspective nu este activată pentru departament.",
+        "description": "Perspectivele sunt componentele de bază ale departamentului tău. Activează perspectivele din setările departamentului pentru a începe să le folosești.",
         "primary_button": {
           "text": "Gestionează funcțiile"
         }
@@ -392,7 +392,7 @@
           "complete": "Import finalizat"
         },
         "message": {
-          "success": "{count} membr{plural} importat{plural} cu succes în proiect.",
+          "success": "{count} membr{plural} importat{plural} cu succes în departament.",
           "no_imports": "Nu au fost importați membri noi din fișierul CSV."
         },
         "stats": {

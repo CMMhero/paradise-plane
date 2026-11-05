@@ -168,7 +168,7 @@
       "confirm_message": "您確定要封存工作事項嗎？所有已封存的工作事項稍後都可以還原。",
       "success": {
         "label": "封存成功",
-        "message": "您的封存可以在專案封存中找到。"
+        "message": "您的封存可以在部門封存中找到。"
       },
       "failed": {
         "message": "無法封存工作事項。請再試一次。"
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "還原成功",
-        "message": "您的工作事項可以在專案工作事項中找到。"
+        "message": "您的工作事項可以在部門工作事項中找到。"
       },
       "failed": {
         "message": "無法還原工作事項。請再試一次。"
@@ -297,10 +297,10 @@
     "open_in_full_screen": "以全螢幕開啟工作事項",
     "duplicate": {
       "modal": {
-        "title": "複製到另一個專案",
+        "title": "複製到另一個部門",
         "description1": "此操作將建立此工作事項的副本。",
         "description2": "複製時所有屬性資料都將被移除。",
-        "placeholder": "選擇專案"
+        "placeholder": "選擇部門"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "建立重複工作項目",
-        "no_permission": "請聯繫您的專案管理員以建立重複工作項目"
+        "no_permission": "請聯繫您的部門管理員以建立重複工作項目"
       }
     },
     "empty_state": {

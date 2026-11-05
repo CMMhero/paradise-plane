@@ -42,11 +42,11 @@
     "confirmation_modals": {
       "reset_workflow": {
         "title": "Bạn có chắc muốn đặt lại quy trình làm việc này không?",
-        "description": "Nếu bạn đặt lại quy trình làm việc này, tất cả các quy tắc thay đổi trạng thái của bạn sẽ bị xóa và bạn sẽ phải tạo lại chúng để chạy chúng trong dự án này."
+        "description": "Nếu bạn đặt lại quy trình làm việc này, tất cả các quy tắc thay đổi trạng thái của bạn sẽ bị xóa và bạn sẽ phải tạo lại chúng để chạy chúng trong phòng ban này."
       },
       "delete_state_change": {
         "title": "Bạn có chắc muốn xóa quy tắc thay đổi trạng thái này không?",
-        "description": "Sau khi xóa, bạn không thể hoàn tác thay đổi này và bạn sẽ phải đặt lại quy tắc nếu bạn muốn nó chạy cho dự án này."
+        "description": "Sau khi xóa, bạn không thể hoàn tác thay đổi này và bạn sẽ phải đặt lại quy tắc nếu bạn muốn nó chạy cho phòng ban này."
       }
     },
     "toasts": {

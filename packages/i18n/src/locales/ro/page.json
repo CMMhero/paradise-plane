@@ -84,12 +84,12 @@
       },
       "cannot_move_to_teamspace": "Paginile private și partajate nu pot fi mutate într-un spațiu de echipă.",
       "placeholders": {
-        "workspace_to_all": "Caută proiecte și spații de echipă",
-        "workspace_to_project": "Caută proiecte",
-        "project_to_all": "Caută proiecte și spații de echipă",
-        "project_to_project": "Caută proiecte",
-        "project_to_all_with_wiki": "Caută colecții wiki, proiecte și spații de echipă",
-        "project_to_project_with_wiki": "Caută colecții wiki și proiecte"
+        "workspace_to_all": "Caută departamente și spații de echipă",
+        "workspace_to_project": "Caută departamente",
+        "project_to_all": "Caută departamente și spații de echipă",
+        "project_to_project": "Caută departamente",
+        "project_to_all_with_wiki": "Caută colecții wiki, departamente și spații de echipă",
+        "project_to_project_with_wiki": "Caută colecții wiki și departamente"
       },
       "toasts": {
         "success": {

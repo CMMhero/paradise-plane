@@ -4,12 +4,12 @@
     "label_lowercase": "tipi di elementi di lavoro",
     "settings": {
       "description": "Personalizza e aggiungi le tue proprietà per adattarle alle esigenze del tuo team.",
-      "cant_delete_default_message": "Il tipo di elemento di lavoro non può essere eliminato perché è impostato come tipo predefinito per questo progetto.",
+      "cant_delete_default_message": "Il tipo di elemento di lavoro non può essere eliminato perché è impostato come tipo predefinito per questo reparto.",
       "set_as_default": "Imposta come predefinito",
       "cant_set_default_inactive_message": "Attiva questo tipo prima di impostarlo come predefinito",
       "set_default_confirmation": {
         "title": "Imposta come tipo di elemento di lavoro predefinito",
-        "description": "Impostando {name} come predefinito, verrà importato in tutti i progetti di questo spazio di lavoro. Tutti i nuovi elementi di lavoro utilizzeranno questo tipo per impostazione predefinita.",
+        "description": "Impostando {name} come predefinito, verrà importato in tutti i reparti di questo spazio di lavoro. Tutti i nuovi elementi di lavoro utilizzeranno questo tipo per impostazione predefinita.",
         "confirm_button": "Imposta come predefinito"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "La formula è valida! Restituisce {resultType} ({count} campo/i referenziato/i)",
           "error": {
             "empty": "Inserisci una formula",
-            "missing_context": "Contesto dello spazio di lavoro, del progetto o del tipo di elemento di lavoro mancante",
+            "missing_context": "Contesto dello spazio di lavoro, del reparto o del tipo di elemento di lavoro mancante",
             "validation_failed": "Validazione fallita"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Tipi",
         "description": "Crea e personalizza tipi di elementi di lavoro con proprietà.",
         "sort_options": {
-          "project_count": "Numero di progetti di cui fa parte"
+          "project_count": "Numero di reparti di cui fa parte"
         },
         "filter_options": {
           "show_active": "Mostra attivi",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Abilita Tipi di Elementi di Lavoro",
-        "description": "Forma gli elementi di lavoro per il tuo lavoro con i Tipi di Elementi di Lavoro. Personalizza con icone, sfondi e proprietà e configurali per questo progetto.",
+        "description": "Forma gli elementi di lavoro per il tuo lavoro con i Tipi di Elementi di Lavoro. Personalizza con icone, sfondi e proprietà e configurali per questo reparto.",
         "primary_button": {
           "text": "Abilita"
         },
         "confirmation": {
           "title": "Una volta abilitato, i Tipi di Elementi di Lavoro non possono essere disattivati.",
-          "description": "Paradise Task Tracker's Elemento di Lavoro diventerà il tipo di elemento di lavoro predefinito per questo progetto e apparirà con la sua icona e sfondo in questo progetto.",
+          "description": "Paradise Task Tracker's Elemento di Lavoro diventerà il tipo di elemento di lavoro predefinito per questo reparto e apparirà con la sua icona e sfondo in questo reparto.",
           "button": {
             "default": "Abilita",
             "loading": "Configurazione"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Ottieni Pro per abilitare i Tipi di Elementi di Lavoro.",
-        "description": "Forma gli elementi di lavoro per il tuo lavoro con i Tipi di Elementi di Lavoro. Personalizza con icone, sfondi e proprietà e configurali per questo progetto.",
+        "description": "Forma gli elementi di lavoro per il tuo lavoro con i Tipi di Elementi di Lavoro. Personalizza con icone, sfondi e proprietà e configurali per questo reparto.",
         "primary_button": {
           "text": "Ottieni Pro"
         }
       },
       "upgrade": {
         "title": "Aggiorna per abilitare i Tipi di Elementi di Lavoro.",
-        "description": "Forma gli elementi di lavoro per il tuo lavoro con i Tipi di Elementi di Lavoro. Personalizza con icone, sfondi e proprietà e configurali per questo progetto.",
+        "description": "Forma gli elementi di lavoro per il tuo lavoro con i Tipi di Elementi di Lavoro. Personalizza con icone, sfondi e proprietà e configurali per questo reparto.",
         "primary_button": {
           "text": "Aggiorna"
         }

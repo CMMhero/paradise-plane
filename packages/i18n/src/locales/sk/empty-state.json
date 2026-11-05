@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "Zatiaľ žiadne aktualizácie.",
-      "description": "Akonáhle členovia projektu pridajú aktualizácie, zobrazia sa tu"
+      "description": "Akonáhle členovia oddelenia pridajú aktualizácie, zobrazia sa tu"
     },
     "search": {
       "title": "Žiadne zodpovedajúce výsledky.",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "Zdá sa, že nemáte prístup k tomuto projektu",
+      "title": "Zdá sa, že nemáte prístup k tomuto oddeleniu",
       "restricted_description": "Kontaktujte administrátora, aby ste požiadali o prístup, a potom tu môžete pokračovať.",
       "join_description": "Kliknite na tlačidlo nižšie, aby ste sa pripojili.",
-      "cta_primary": "Pripojiť sa k projektu",
-      "cta_loading": "Pripájanie k projektu"
+      "cta_primary": "Pripojiť sa k oddeleniu",
+      "cta_loading": "Pripájanie k oddeleniu"
     },
     "invalid_project": {
-      "title": "Projekt nebol nájdený",
-      "description": "Projekt, ktorý hľadáte, neexistuje."
+      "title": "Oddelenie nebolo nájdené",
+      "description": "Oddelenie, ktoré hľadáte, neexistuje."
     },
     "work_items": {
       "title": "Začnite s vašou prvou pracovnou položkou.",
-      "description": "Pracovné položky sú stavebnými kameňmi vášho projektu — priraďujte vlastníkov, nastavujte priority a jednoducho sledujte pokrok.",
+      "description": "Pracovné položky sú stavebnými kameňmi vášho oddelenia — priraďujte vlastníkov, nastavujte priority a jednoducho sledujte pokrok.",
       "cta_primary": "Vytvorte svoju prvú pracovnú položku"
     },
     "cycles": {
       "title": "Zoskupujte a časovo obmedzte svoju prácu v cykloch.",
-      "description": "Rozdeľte prácu do časovo obmedzených blokov, pracujte spätne od termínu projektu na nastavenie dátumov a dosahujte hmatateľný pokrok ako tým.",
+      "description": "Rozdeľte prácu do časovo obmedzených blokov, pracujte spätne od termínu oddelenia na nastavenie dátumov a dosahujte hmatateľný pokrok ako tým.",
       "cta_primary": "Nastavte svoj prvý cyklus"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "Pridať existujúcu pracovnú položku"
     },
     "modules": {
-      "title": "Namapujte ciele vášho projektu na moduly a jednoducho sledujte.",
-      "description": "Moduly sa skladajú z prepojených pracovných položiek. Pomáhajú sledovať pokrok prostredníctvom fáz projektu, z ktorých každá má špecifické termíny a analytiku, ktorá ukazuje, ako blízko ste dosiahnutiu týchto fáz.",
+      "title": "Namapujte ciele vášho oddelenia na moduly a jednoducho sledujte.",
+      "description": "Moduly sa skladajú z prepojených pracovných položiek. Pomáhajú sledovať pokrok prostredníctvom fáz oddelenia, z ktorých každá má špecifické termíny a analytiku, ktorá ukazuje, ako blízko ste dosiahnutiu týchto fáz.",
       "cta_primary": "Nastavte svoj prvý modul"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "Pridať existujúcu pracovnú položku"
     },
     "views": {
-      "title": "Uložte vlastné pohľady pre váš projekt",
+      "title": "Uložte vlastné pohľady pre vaše oddelenie",
       "description": "Pohľady sú uložené filtre, ktoré vám pomáhajú rýchlo pristupovať k informáciám, ktoré používate najčastejšie. Spolupracujte bez námahy, zatiaľ čo spolupracovníci zdieľajú a prispôsobujú pohľady svojim špecifickým potrebám.",
       "cta_primary": "Vytvoriť pohľad"
     },
     "no_work_items_in_project": {
-      "title": "V projekte zatiaľ nie sú žiadne pracovné položky",
-      "description": "Pridajte pracovné položky do svojho projektu a rozdeľte svoju prácu na sledovateľné časti pomocou pohľadov.",
+      "title": "V oddelení zatiaľ nie sú žiadne pracovné položky",
+      "description": "Pridajte pracovné položky do svojho oddelenia a rozdeľte svoju prácu na sledovateľné časti pomocou pohľadov.",
       "cta_primary": "Pridať pracovnú položku"
     },
     "work_item_filter": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "Zaznamenajte príchodzí požiadavky",
-      "description": "Odosielajte nové požiadavky na preskúmanie, stanovenie priorít a sledovanie v rámci pracovného postupu vášho projektu.",
+      "description": "Odosielajte nové požiadavky na preskúmanie, stanovenie priorít a sledovanie v rámci pracovného postupu vášho oddelenia.",
       "cta_primary": "Vytvoriť príchodzí požiadavku"
     },
     "intake_main": {
       "title": "Vyberte príchodzí pracovnú položku na zobrazenie jej podrobností"
     },
     "epics": {
-      "title": "Premeňte zložité projekty na štruktúrované epiky.",
+      "title": "Premeňte zložité oddelenia na štruktúrované epiky.",
       "description": "Epik vám pomôže organizovať veľké ciele do menších, sledovateľných úloh.",
       "cta_primary": "Vytvoriť epik",
       "cta_secondary": "Dokumentácia"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "Zatiaľ žiadne archivované cykly",
-      "description": "Pre upratanie vášho projektu archivujte dokončené cykly. Nájdete ich tu, akonáhle budú archivované."
+      "description": "Pre upratanie vášho oddelenia archivujte dokončené cykly. Nájdete ich tu, akonáhle budú archivované."
     },
     "archive_modules": {
       "title": "Zatiaľ žiadne archivované moduly",
-      "description": "Pre upratanie vášho projektu archivujte dokončené alebo zrušené moduly. Nájdete ich tu, akonáhle budú archivované."
+      "description": "Pre upratanie vášho oddelenia archivujte dokončené alebo zrušené moduly. Nájdete ich tu, akonáhle budú archivované."
     },
     "home_widget_quick_links": {
       "title": "Majte po ruke dôležité odkazy, zdroje alebo dokumenty pre vašu prácu"
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "Zatiaľ žiadne pohľady",
-      "description": "Pridajte pracovné položky do svojho projektu a používajte pohľady na jednoduché filtrovanie, triedenie a sledovanie pokroku.",
+      "description": "Pridajte pracovné položky do svojho oddelenia a používajte pohľady na jednoduché filtrovanie, triedenie a sledovanie pokroku.",
       "cta_primary": "Pridať pracovnú položku"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "Vytvoriť koncept pracovnej položky"
     },
     "projects_archived": {
-      "title": "Žiadne archivované projekty",
-      "description": "Vyzerá to, že všetky vaše projekty sú stále aktívne—skvelá práca!"
+      "title": "Žiadne archivované oddelenia",
+      "description": "Vyzerá to, že všetky vaše oddelenia sú stále aktívne—skvelá práca!"
     },
     "analytics_projects": {
-      "title": "Vytvorte projekty na vizualizáciu metrík projektu tu."
+      "title": "Vytvorte oddelenia na vizualizáciu metrík oddelenia tu."
     },
     "analytics_work_items": {
-      "title": "Vytvorte projekty s pracovnými položkami a priradenými osobami na začatie sledovania výkonu, pokroku a dopadu tímu tu."
+      "title": "Vytvorte oddelenia s pracovnými položkami a priradenými osobami na začatie sledovania výkonu, pokroku a dopadu tímu tu."
     },
     "analytics_no_cycle": {
       "title": "Vytvorte cykly na organizáciu práce do časovo obmedzených fáz a sledovanie pokroku naprieč šprintmi."
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "Napíšte poznámku, dokument alebo celú vedomostnú bázu.",
-      "description": "Stránky sú priestorom pre zachytenie myšlienok v Paradise Task Tracker. Robte poznámky zo stretnutí, jednoducho ich formátujte, vkladajte pracovné položky, usporiadajte ich pomocou knižnice komponentov a udržujte všetko v kontexte vášho projektu.",
+      "description": "Stránky sú priestorom pre zachytenie myšlienok v Paradise Task Tracker. Robte poznámky zo stretnutí, jednoducho ich formátujte, vkladajte pracovné položky, usporiadajte ich pomocou knižnice komponentov a udržujte všetko v kontexte vášho oddelenia.",
       "cta_primary": "Vytvorte svoju stránku"
     },
     "project_overview_state_sidebar": {
-      "title": "Povoliť stavy projektu",
-      "description": "Povoľte stavy projektu na zobrazenie a správu vlastností ako stav, priorita, termíny a ďalšie."
+      "title": "Povoliť stavy oddelenia",
+      "description": "Povoľte stavy oddelenia na zobrazenie a správu vlastností ako stav, priorita, termíny a ďalšie."
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "Zatiaľ nebol pridaný žiadny Webhook",
-      "description": "Automatizujte oznámenia externým službám pri výskyte udalostí projektu.",
+      "description": "Automatizujte oznámenia externým službám pri výskyte udalostí oddelenia.",
       "cta_primary": "Pridať webhook"
     },
     "work_item_types": {
       "title": "Vytvárajte a prispôsobujte typy pracovných položiek",
-      "description": "Definujte jedinečné typy pracovných položiek pre váš projekt. Každý typ môže mať svoje vlastné vlastnosti, pracovné postupy a polia - prispôsobené potrebám vášho projektu a tímu.",
+      "description": "Definujte jedinečné typy pracovných položiek pre vaše oddelenie. Každý typ môže mať svoje vlastné vlastnosti, pracovné postupy a polia - prispôsobené potrebám vášho oddelenia a tímu.",
       "cta_primary": "Povoliť"
     },
     "work_item_type_properties": {
-      "title": "Definujte vlastnosť a podrobnosti, ktoré chcete zachytiť pre tento typ pracovnej položky. Prispôsobte ho pracovnému postupu vášho projektu.",
+      "title": "Definujte vlastnosť a podrobnosti, ktoré chcete zachytiť pre tento typ pracovnej položky. Prispôsobte ho pracovnému postupu vášho oddelenia.",
       "cta_secondary": "Pridať vlastnosť"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "Sledujte časové výkazy pre všetkých členov",
-      "description": "Zaznamenávajte čas na pracovných položkách na zobrazenie podrobných časových výkazov pre akéhokoľvek člena tímu naprieč projektmi."
+      "description": "Zaznamenávajte čas na pracovných položkách na zobrazenie podrobných časových výkazov pre akéhokoľvek člena tímu naprieč oddeleniami."
     },
     "group_syncing": {
       "title": "Zatiaľ žiadne mapovania skupín"
     },
     "template_setting": {
       "title": "Zatiaľ žiadne šablóny",
-      "description": "Skráťte dobu nastavenia vytváraním šablón pre projekty, pracovné položky a stránky — a začnite novú prácu počas niekoľkých sekúnd.",
+      "description": "Skráťte dobu nastavenia vytváraním šablón pre oddelenia, pracovné položky a stránky — a začnite novú prácu počas niekoľkých sekúnd.",
       "cta_primary": "Vytvoriť šablónu"
     },
     "workflows": {

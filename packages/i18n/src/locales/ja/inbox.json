@@ -34,9 +34,9 @@
       }
     },
     "errors": {
-      "snooze_permission": "プロジェクト管理者のみが作業項目をスヌーズ/スヌーズ解除できます",
-      "accept_permission": "プロジェクト管理者のみが作業項目を承認できます",
-      "decline_permission": "プロジェクト管理者のみが作業項目を却下できます"
+      "snooze_permission": "部署管理者のみが作業項目をスヌーズ/スヌーズ解除できます",
+      "accept_permission": "部署管理者のみが作業項目を承認できます",
+      "decline_permission": "部署管理者のみが作業項目を却下できます"
     },
     "actions": {
       "accept": "承認",
@@ -47,7 +47,7 @@
       "delete": "削除",
       "open": "作業項目を開く",
       "mark_as_duplicate": "重複としてマーク",
-      "move": "{value}をプロジェクトの作業項目に移動"
+      "move": "{value}を部署の作業項目に移動"
     },
     "source": {
       "in-app": "アプリ内"

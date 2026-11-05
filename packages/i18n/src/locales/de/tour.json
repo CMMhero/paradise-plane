@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Willkommen in Ihrem Arbeitsbereich",
-        "description": "Um Ihnen den Einstieg zu erleichtern, haben wir ein Demo-Projekt für Sie erstellt. Fügen wir Ihr erstes Arbeitselement hinzu."
+        "description": "Um Ihnen den Einstieg zu erleichtern, haben wir eine Demo-Abteilung für Sie erstellt. Fügen wir Ihr erstes Arbeitselement hinzu."
       },
       "step_one": {
         "title": "Klicken Sie auf \"+ Arbeitselement hinzufügen\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Fortschritt mit Zyklen machen",
-        "description": "Drücken Sie Q, um einen Zyklus zu erstellen. Benennen Sie ihn und legen Sie Daten fest—nur ein Zyklus pro Projekt."
+        "description": "Drücken Sie Q, um einen Zyklus zu erstellen. Benennen Sie ihn und legen Sie Daten fest—nur ein Zyklus pro Abteilung."
       },
       "step_one": {
         "title": "Neuen Zyklus erstellen",
-        "description": "Drücken Sie Q, um einen Zyklus zu erstellen. Benennen Sie ihn und legen Sie Daten fest—nur ein Zyklus pro Projekt."
+        "description": "Drücken Sie Q, um einen Zyklus zu erstellen. Benennen Sie ihn und legen Sie Daten fest—nur ein Zyklus pro Abteilung."
       },
       "step_two": {
         "title": "Klicken Sie auf \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Teilen Sie Ihr Projekt in Module auf",
-        "description": "Module sind kleinere, fokussierte Projekte, die Benutzern helfen, Arbeitselemente innerhalb bestimmter Zeitrahmen zu gruppieren und zu organisieren."
+        "title": "Teilen Sie Ihre Abteilung in Module auf",
+        "description": "Module sind kleinere, fokussierte Bereiche, die Benutzern helfen, Arbeitselemente innerhalb bestimmter Zeitrahmen zu gruppieren und zu organisieren."
       },
       "step_one": {
         "title": "Modul erstellen",
-        "description": "Module sind kleinere, fokussierte Projekte, die Benutzern helfen, Arbeitselemente innerhalb bestimmter Zeitrahmen zu gruppieren und zu organisieren."
+        "description": "Module sind kleinere, fokussierte Bereiche, die Benutzern helfen, Arbeitselemente innerhalb bestimmter Zeitrahmen zu gruppieren und zu organisieren."
       },
       "step_two": {
         "title": "Klicken Sie auf \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Dokumentieren mit KI-gestützten Seiten",
-        "description": "Seiten in Paradise Task Tracker ermöglichen es Ihnen, Projektinformationen zu erfassen, zu organisieren und daran zusammenzuarbeiten—ohne externe Tools."
+        "description": "Seiten in Paradise Task Tracker ermöglichen es Ihnen, Abteilungsinformationen zu erfassen, zu organisieren und daran zusammenzuarbeiten—ohne externe Tools."
       },
       "step_one": {
         "title": "Seite als Öffentlich oder Privat festlegen",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Ausstehende Anfrage annehmen/ablehnen",
-        "description": "Annehmen, um das Arbeitselement zu bearbeiten und in Ihr Projekt zu verschieben, oder ablehnen, um es als Abgebrochen zu markieren."
+        "description": "Annehmen, um das Arbeitselement zu bearbeiten und in Ihre Abteilung zu verschieben, oder ablehnen, um es als Abgebrochen zu markieren."
       },
       "step_three": {
         "title": "Vorerst zurückstellen",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Finden Sie sofort alles",
-        "description": "Verwenden Sie die universelle Suche, um zu Aufgaben, Projekten, Seiten und Personen zu springen—ohne Ihren Arbeitsfluss zu verlassen."
+        "description": "Verwenden Sie die universelle Suche, um zu Aufgaben, Abteilungen, Seiten und Personen zu springen—ohne Ihren Arbeitsfluss zu verlassen."
       },
       "step_one": {
         "title": "Behalten Sie die Kontrolle über Updates",
@@ -148,8 +148,8 @@
       "got_it": "Verstanden"
     },
     "seed_data": {
-      "title": "Hier ist Ihr Demo-Projekt",
-      "description": "Projekte ermöglichen es Ihnen, Ihre Teams, Aufgaben und alles zu verwalten, was Sie brauchen, um Dinge in Ihrem Arbeitsbereich zu erledigen."
+      "title": "Hier ist Ihre Demo-Abteilung",
+      "description": "Abteilungen ermöglichen es Ihnen, Ihre Teams, Aufgaben und alles zu verwalten, was Sie brauchen, um Dinge in Ihrem Arbeitsbereich zu erledigen."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Beginnen Sie mit der Einrichtung und sehen Sie, wie Ihre Ideen schneller zum Leben erwachen.",
       "checklist_items": {
         "item_1": {
-          "title": "Projekt erstellen"
+          "title": "Abteilung erstellen"
         },
         "item_2": {
           "title": "Arbeitselement erstellen"

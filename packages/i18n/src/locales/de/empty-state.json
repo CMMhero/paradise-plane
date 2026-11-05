@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "Noch keine Updates.",
-      "description": "Sobald Projektmitglieder Updates hinzufügen, werden sie hier angezeigt"
+      "description": "Sobald Abteilungsmitglieder Updates hinzufügen, werden sie hier angezeigt"
     },
     "search": {
       "title": "Keine passenden Ergebnisse.",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "Es scheint, als hätten Sie keinen Zugriff auf dieses Projekt",
+      "title": "Es scheint, als hätten Sie keinen Zugriff auf diese Abteilung",
       "restricted_description": "Kontaktieren Sie den Administrator, um Zugriff anzufordern, damit Sie hier fortfahren können.",
       "join_description": "Klicken Sie unten auf die Schaltfläche, um beizutreten.",
-      "cta_primary": "Projekt beitreten",
-      "cta_loading": "Beitritt zum Projekt wird durchgeführt"
+      "cta_primary": "Abteilung beitreten",
+      "cta_loading": "Beitritt zur Abteilung wird durchgeführt"
     },
     "invalid_project": {
-      "title": "Projekt nicht gefunden",
-      "description": "Das gesuchte Projekt existiert nicht."
+      "title": "Abteilung nicht gefunden",
+      "description": "Die gesuchte Abteilung existiert nicht."
     },
     "work_items": {
       "title": "Beginnen Sie mit Ihrem ersten Arbeitselement.",
-      "description": "Arbeitselemente sind die Bausteine Ihres Projekts — weisen Sie Eigentümer zu, setzen Sie Prioritäten und verfolgen Sie den Fortschritt einfach.",
+      "description": "Arbeitselemente sind die Bausteine Ihrer Abteilung — weisen Sie Eigentümer zu, setzen Sie Prioritäten und verfolgen Sie den Fortschritt einfach.",
       "cta_primary": "Erstellen Sie Ihr erstes Arbeitselement"
     },
     "cycles": {
       "title": "Gruppieren und zeitlich begrenzen Sie Ihre Arbeit in Zyklen.",
-      "description": "Teilen Sie die Arbeit in zeitlich begrenzte Blöcke auf, arbeiten Sie rückwärts von Ihrer Projektfrist, um Termine festzulegen, und machen Sie greifbare Fortschritte als Team.",
+      "description": "Teilen Sie die Arbeit in zeitlich begrenzte Blöcke auf, arbeiten Sie rückwärts von Ihrer Abteilungsfrist, um Termine festzulegen, und machen Sie greifbare Fortschritte als Team.",
       "cta_primary": "Legen Sie Ihren ersten Zyklus fest"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "Bestehendes Arbeitselement hinzufügen"
     },
     "modules": {
-      "title": "Ordnen Sie Ihre Projektziele Modulen zu und verfolgen Sie sie einfach.",
-      "description": "Module bestehen aus miteinander verbundenen Arbeitselementen. Sie helfen bei der Überwachung des Fortschritts durch Projektphasen, jede mit spezifischen Fristen und Analysen, um anzuzeigen, wie nahe Sie dem Erreichen dieser Phasen sind.",
+      "title": "Ordnen Sie Ihre Abteilungsziele Modulen zu und verfolgen Sie sie einfach.",
+      "description": "Module bestehen aus miteinander verbundenen Arbeitselementen. Sie helfen bei der Überwachung des Fortschritts durch Phasen, jede mit spezifischen Fristen und Analysen, um anzuzeigen, wie nahe Sie dem Erreichen dieser Phasen sind.",
       "cta_primary": "Legen Sie Ihr erstes Modul fest"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "Bestehendes Arbeitselement hinzufügen"
     },
     "views": {
-      "title": "Speichern Sie benutzerdefinierte Ansichten für Ihr Projekt",
+      "title": "Speichern Sie benutzerdefinierte Ansichten für Ihre Abteilung",
       "description": "Ansichten sind gespeicherte Filter, die Ihnen helfen, schnell auf die Informationen zuzugreifen, die Sie am häufigsten verwenden. Arbeiten Sie mühelos zusammen, während Teammitglieder Ansichten teilen und an ihre spezifischen Bedürfnisse anpassen.",
       "cta_primary": "Ansicht erstellen"
     },
     "no_work_items_in_project": {
-      "title": "Noch keine Arbeitselemente im Projekt",
-      "description": "Fügen Sie Arbeitselemente zu Ihrem Projekt hinzu und unterteilen Sie Ihre Arbeit in nachverfolgbare Teile mit Ansichten.",
+      "title": "Noch keine Arbeitselemente in der Abteilung",
+      "description": "Fügen Sie Arbeitselemente zu Ihrer Abteilung hinzu und unterteilen Sie Ihre Arbeit in nachverfolgbare Teile mit Ansichten.",
       "cta_primary": "Arbeitselement hinzufügen"
     },
     "work_item_filter": {
@@ -79,7 +79,7 @@
     },
     "pages": {
       "title": "Dokumentieren Sie alles — von Notizen bis PRDs",
-      "description": "Seiten ermöglichen es Ihnen, Informationen an einem Ort zu erfassen und zu organisieren. Schreiben Sie Besprechungsnotizen, Projektdokumentationen und PRDs, betten Sie Arbeitselemente ein und strukturieren Sie sie mit gebrauchsfertigen Komponenten.",
+      "description": "Seiten ermöglichen es Ihnen, Informationen an einem Ort zu erfassen und zu organisieren. Schreiben Sie Besprechungsnotizen, Abteilungsdokumentationen und PRDs, betten Sie Arbeitselemente ein und strukturieren Sie sie mit gebrauchsfertigen Komponenten.",
       "cta_primary": "Erstellen Sie Ihre erste Seite"
     },
     "archive_pages": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "Intake-Anfragen protokollieren",
-      "description": "Senden Sie neue Anfragen zur Überprüfung, Priorisierung und Verfolgung innerhalb Ihres Projekt-Workflows.",
+      "description": "Senden Sie neue Anfragen zur Überprüfung, Priorisierung und Verfolgung innerhalb Ihres Abteilungs-Workflows.",
       "cta_primary": "Intake-Anfrage erstellen"
     },
     "intake_main": {
       "title": "Wählen Sie ein Intake-Arbeitselement aus, um seine Details anzuzeigen"
     },
     "epics": {
-      "title": "Verwandeln Sie komplexe Projekte in strukturierte Epics.",
+      "title": "Verwandeln Sie komplexe Vorhaben in strukturierte Epics.",
       "description": "Ein Epic hilft Ihnen, große Ziele in kleinere, nachverfolgbare Aufgaben zu organisieren.",
       "cta_primary": "Epic erstellen",
       "cta_secondary": "Dokumentation"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "Noch keine archivierten Zyklen",
-      "description": "Um Ihr Projekt aufzuräumen, archivieren Sie abgeschlossene Zyklen. Finden Sie sie hier, sobald sie archiviert sind."
+      "description": "Um Ihre Abteilung aufzuräumen, archivieren Sie abgeschlossene Zyklen. Finden Sie sie hier, sobald sie archiviert sind."
     },
     "archive_modules": {
       "title": "Noch keine archivierten Module",
-      "description": "Um Ihr Projekt aufzuräumen, archivieren Sie abgeschlossene oder stornierte Module. Finden Sie sie hier, sobald sie archiviert sind."
+      "description": "Um Ihre Abteilung aufzuräumen, archivieren Sie abgeschlossene oder stornierte Module. Finden Sie sie hier, sobald sie archiviert sind."
     },
     "home_widget_quick_links": {
       "title": "Halten Sie wichtige Referenzen, Ressourcen oder Dokumente für Ihre Arbeit griffbereit"
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "Noch keine Ansichten",
-      "description": "Fügen Sie Arbeitselemente zu Ihrem Projekt hinzu und verwenden Sie Ansichten, um mühelos zu filtern, zu sortieren und den Fortschritt zu überwachen.",
+      "description": "Fügen Sie Arbeitselemente zu Ihrer Abteilung hinzu und verwenden Sie Ansichten, um mühelos zu filtern, zu sortieren und den Fortschritt zu überwachen.",
       "cta_primary": "Arbeitselement hinzufügen"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "Entwurf-Arbeitselement erstellen"
     },
     "projects_archived": {
-      "title": "Keine Projekte archiviert",
-      "description": "Es sieht so aus, als wären alle Ihre Projekte noch aktiv—gute Arbeit!"
+      "title": "Keine Abteilungen archiviert",
+      "description": "Es sieht so aus, als wären alle Ihre Abteilungen noch aktiv—gute Arbeit!"
     },
     "analytics_projects": {
-      "title": "Erstellen Sie Projekte, um hier Projektmetriken zu visualisieren."
+      "title": "Erstellen Sie Abteilungen, um hier Abteilungsmetriken zu visualisieren."
     },
     "analytics_work_items": {
-      "title": "Erstellen Sie Projekte mit Arbeitselementen und Zugewiesenen, um hier Leistung, Fortschritt und Teameinfluss zu verfolgen."
+      "title": "Erstellen Sie Abteilungen mit Arbeitselementen und Zugewiesenen, um hier Leistung, Fortschritt und Teameinfluss zu verfolgen."
     },
     "analytics_no_cycle": {
       "title": "Erstellen Sie Zyklen, um Arbeit in zeitlich begrenzte Phasen zu organisieren und Fortschritte über Sprints hinweg zu verfolgen."
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "Schreiben Sie eine Notiz, ein Dokument oder eine vollständige Wissensdatenbank.",
-      "description": "Seiten sind Gedankenraum in Paradise Task Tracker. Notieren Sie Besprechungsnotizen, formatieren Sie sie einfach, betten Sie Arbeitselemente ein, ordnen Sie sie mit einer Bibliothek von Komponenten an und behalten Sie alles im Kontext Ihres Projekts.",
+      "description": "Seiten sind Gedankenraum in Paradise Task Tracker. Notieren Sie Besprechungsnotizen, formatieren Sie sie einfach, betten Sie Arbeitselemente ein, ordnen Sie sie mit einer Bibliothek von Komponenten an und behalten Sie alles im Kontext Ihrer Abteilung.",
       "cta_primary": "Erstellen Sie Ihre Seite"
     },
     "project_overview_state_sidebar": {
-      "title": "Projektzustände aktivieren",
-      "description": "Aktivieren Sie Projektzustände, um Eigenschaften wie Status, Priorität, Fälligkeitsdaten und mehr anzuzeigen und zu verwalten."
+      "title": "Abteilungszustände aktivieren",
+      "description": "Aktivieren Sie Abteilungszustände, um Eigenschaften wie Status, Priorität, Fälligkeitsdaten und mehr anzuzeigen und zu verwalten."
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "Noch kein Webhook hinzugefügt",
-      "description": "Automatisieren Sie Benachrichtigungen an externe Dienste, wenn Projektereignisse auftreten.",
+      "description": "Automatisieren Sie Benachrichtigungen an externe Dienste, wenn Abteilungsereignisse auftreten.",
       "cta_primary": "Webhook hinzufügen"
     },
     "work_item_types": {
       "title": "Arbeitselementtypen erstellen und anpassen",
-      "description": "Definieren Sie einzigartige Arbeitselementtypen für Ihr Projekt. Jeder Typ kann seine eigenen Eigenschaften, Workflows und Felder haben - zugeschnitten auf die Bedürfnisse Ihres Projekts und Teams.",
+      "description": "Definieren Sie einzigartige Arbeitselementtypen für Ihre Abteilung. Jeder Typ kann seine eigenen Eigenschaften, Workflows und Felder haben - zugeschnitten auf die Bedürfnisse Ihrer Abteilung und Teams.",
       "cta_primary": "Aktivieren"
     },
     "work_item_type_properties": {
-      "title": "Definieren Sie die Eigenschaft und Details, die Sie für diesen Arbeitselementtyp erfassen möchten. Passen Sie ihn an den Workflow Ihres Projekts an.",
+      "title": "Definieren Sie die Eigenschaft und Details, die Sie für diesen Arbeitselementtyp erfassen möchten. Passen Sie ihn an den Workflow Ihrer Abteilung an.",
       "cta_secondary": "Eigenschaft hinzufügen"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "Zeiterfassungen für alle Mitglieder verfolgen",
-      "description": "Erfassen Sie Zeit für Arbeitselemente, um detaillierte Zeiterfassungen für jedes Teammitglied über Projekte hinweg anzuzeigen."
+      "description": "Erfassen Sie Zeit für Arbeitselemente, um detaillierte Zeiterfassungen für jedes Teammitglied über Abteilungen hinweg anzuzeigen."
     },
     "group_syncing": {
       "title": "Noch keine Gruppenzuordnungen"
     },
     "template_setting": {
       "title": "Noch keine Vorlagen",
-      "description": "Reduzieren Sie die Einrichtungszeit, indem Sie Vorlagen für Projekte, Arbeitselemente und Seiten erstellen — und starten Sie neue Arbeit in Sekunden.",
+      "description": "Reduzieren Sie die Einrichtungszeit, indem Sie Vorlagen für Abteilungen, Arbeitselemente und Seiten erstellen — und starten Sie neue Arbeit in Sekunden.",
       "cta_primary": "Vorlage erstellen"
     },
     "workflows": {

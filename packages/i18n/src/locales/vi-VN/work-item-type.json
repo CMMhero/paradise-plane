@@ -9,7 +9,7 @@
       "cant_set_default_inactive_message": "Kích hoạt loại này trước khi đặt làm mặc định",
       "set_default_confirmation": {
         "title": "Đặt làm loại hạng mục công việc mặc định",
-        "description": "Đặt {name} làm mặc định sẽ nhập nó vào tất cả các dự án trong không gian làm việc này. Tất cả hạng mục công việc mới sẽ sử dụng loại này theo mặc định.",
+        "description": "Đặt {name} làm mặc định sẽ nhập nó vào tất cả các phòng ban trong không gian làm việc này. Tất cả hạng mục công việc mới sẽ sử dụng loại này theo mặc định.",
         "confirm_button": "Đặt làm mặc định"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "Công thức hợp lệ! Trả về {resultType} ({count} trường được tham chiếu)",
           "error": {
             "empty": "Vui lòng nhập công thức",
-            "missing_context": "Thiếu ngữ cảnh không gian làm việc, dự án hoặc loại mục công việc",
+            "missing_context": "Thiếu ngữ cảnh không gian làm việc, phòng ban hoặc loại mục công việc",
             "validation_failed": "Xác thực thất bại"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Loại",
         "description": "Tạo và tùy chỉnh loại mục công việc với các thuộc tính.",
         "sort_options": {
-          "project_count": "Số lượng dự án sử dụng"
+          "project_count": "Số lượng phòng ban sử dụng"
         },
         "filter_options": {
           "show_active": "Hiển thị đang hoạt động",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Kích hoạt Loại mục công việc",
-        "description": "Định hình mục công việc theo công việc của bạn với Loại mục công việc. Tùy chỉnh với biểu tượng, nền và thuộc tính và cấu hình chúng cho dự án này.",
+        "description": "Định hình mục công việc theo công việc của bạn với Loại mục công việc. Tùy chỉnh với biểu tượng, nền và thuộc tính và cấu hình chúng cho phòng ban này.",
         "primary_button": {
           "text": "Kích hoạt"
         },
         "confirmation": {
           "title": "Khi đã kích hoạt, Loại mục công việc không thể bị vô hiệu hóa.",
-          "description": "Mục công việc của Paradise Task Tracker sẽ trở thành loại mục công việc mặc định cho dự án này và sẽ hiển thị với biểu tượng và nền của nó trong dự án này.",
+          "description": "Mục công việc của Paradise Task Tracker sẽ trở thành loại mục công việc mặc định cho phòng ban này và sẽ hiển thị với biểu tượng và nền của nó trong phòng ban này.",
           "button": {
             "default": "Kích hoạt",
             "loading": "Đang thiết lập"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Nâng cấp lên Pro để kích hoạt Loại mục công việc.",
-        "description": "Định hình mục công việc theo công việc của bạn với Loại mục công việc. Tùy chỉnh với biểu tượng, nền và thuộc tính và cấu hình chúng cho dự án này.",
+        "description": "Định hình mục công việc theo công việc của bạn với Loại mục công việc. Tùy chỉnh với biểu tượng, nền và thuộc tính và cấu hình chúng cho phòng ban này.",
         "primary_button": {
           "text": "Nâng cấp lên Pro"
         }
       },
       "upgrade": {
         "title": "Nâng cấp để kích hoạt Loại mục công việc.",
-        "description": "Định hình mục công việc theo công việc của bạn với Loại mục công việc. Tùy chỉnh với biểu tượng, nền và thuộc tính và cấu hình chúng cho dự án này.",
+        "description": "Định hình mục công việc theo công việc của bạn với Loại mục công việc. Tùy chỉnh với biểu tượng, nền và thuộc tính và cấu hình chúng cho phòng ban này.",
         "primary_button": {
           "text": "Nâng cấp"
         }

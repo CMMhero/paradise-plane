@@ -4,8 +4,8 @@
       "quickstart_guide": "Guide de démarrage rapide",
       "not_right_now": "Pas maintenant",
       "create_project": {
-        "title": "Créer un projet",
-        "description": "La plupart des choses commencent par un projet dans Paradise Task Tracker.",
+        "title": "Créer un département",
+        "description": "La plupart des choses commencent par un département dans Paradise Task Tracker.",
         "cta": "Commencer"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "Récents",
       "empty": {
-        "project": "Vos projets récents apparaîtront ici une fois que vous en aurez visité un.",
+        "project": "Vos départements récents apparaîtront ici une fois que vous en aurez visité un.",
         "page": "Vos pages récentes apparaîtront ici une fois que vous en aurez visité une.",
         "issue": "Vos éléments de travail récents apparaîtront ici une fois que vous en aurez visité un.",
         "default": "Vous n’avez pas encore d’éléments récents."
       },
       "filters": {
         "all": "Tous",
-        "projects": "Projets",
+        "projects": "Départements",
         "pages": "Pages",
         "issues": "Éléments de travail"
       }

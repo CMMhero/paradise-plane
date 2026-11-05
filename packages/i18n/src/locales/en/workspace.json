@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Overview of your projects, activity, and metrics",
-        "description": "Welcome to Paradise Task Tracker, we are excited to have you here. Create your first project and track your work items, and this page will transform into a space that helps you progress. Admins will also see items which help their team progress.",
+        "title": "Overview of your departments, activity, and metrics",
+        "description": "Welcome to Paradise Task Tracker, we are excited to have you here. Create your first department and track your work items, and this page will transform into a space that helps you progress. Admins will also see items which help their team progress.",
         "primary_button": {
-          "text": "Build your first project",
+          "text": "Build your first department",
           "comic": {
-            "title": "Everything starts with a project in Paradise Task Tracker",
-            "description": "A project could be a product's roadmap, a marketing campaign, or launching a new car."
+            "title": "Everything starts with a department in Paradise Task Tracker",
+            "description": "A department could be a product's roadmap, a marketing campaign, or launching a new car."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Total open tasks",
     "error": "There was some error in fetching the data.",
     "work_items_closed_in": "Work items closed in",
-    "selected_projects": "Selected projects",
+    "selected_projects": "Selected departments",
     "total_members": "Total members",
     "total_cycles": "Total cycles",
     "total_modules": "Total modules",
@@ -100,11 +100,11 @@
     "backlog_work_items": "Backlog {entity}",
     "un_started_work_items": "Unstarted {entity}",
     "completed_work_items": "Completed {entity}",
-    "project_insights": "Project Insights",
-    "summary_of_projects": "Summary of Projects",
-    "all_projects": "All Projects",
+    "project_insights": "Department Insights",
+    "summary_of_projects": "Summary of Departments",
+    "all_projects": "All Departments",
     "trend_on_charts": "Trend on charts",
-    "active_projects": "Active Projects",
+    "active_projects": "Active Departments",
     "customized_insights": "Customized Insights",
     "created_vs_resolved": "Created vs Resolved",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Track progress, workloads, and allocations. Spot trends, remove blockers, and move work faster",
-        "description": "See scope versus demand, estimates, and scope creep. Get performance by team members and teams, and make sure your project runs on time.",
+        "description": "See scope versus demand, estimates, and scope creep. Get performance by team members and teams, and make sure your department runs on time.",
         "primary_button": {
-          "text": "Start your first project",
+          "text": "Start your first department",
           "comic": {
             "title": "Analytics works best with Cycles + Modules",
             "description": "First, timebox your issues into Cycles and, if you can, group issues that span more than a cycle into Modules. Check out both on the left nav."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Upgrade to {plan} to unlock {tab}",
     "workitem_resolved_vs_pending": "Work items resolved vs pending",
-    "projects_by_status": "Projects by status",
+    "projects_by_status": "Departments by status",
     "active_users": "Active users",
     "intake_trends": "Intake Trends"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Project} other {Projects}}",
+    "label": "{count, plural, one {Department} other {Departments}}",
     "create": {
-      "label": "Add Project"
+      "label": "Add Department"
     },
     "network": {
       "label": "Network",
@@ -186,7 +186,7 @@
       "members_length": "Number of members"
     },
     "scope": {
-      "my_projects": "My projects",
+      "my_projects": "My departments",
       "archived_projects": "Archived"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "No active projects",
-        "description": "Think of each project as the parent for goal-oriented work. Projects are where Jobs, Cycles, and Modules live and, along with your colleagues, help you achieve that goal. Create a new project or filter for archived projects.",
+        "title": "No active departments",
+        "description": "Think of each department as the parent for goal-oriented work. Departments are where Jobs, Cycles, and Modules live and, along with your colleagues, help you achieve that goal. Create a new department or filter for archived departments.",
         "primary_button": {
-          "text": "Start your first project",
+          "text": "Start your first department",
           "comic": {
-            "title": "Everything starts with a project in Paradise Task Tracker",
-            "description": "A project could be a product's roadmap, a marketing campaign, or launching a new car."
+            "title": "Everything starts with a department in Paradise Task Tracker",
+            "description": "A department could be a product's roadmap, a marketing campaign, or launching a new car."
           }
         }
       },
       "no_projects": {
-        "title": "No project",
-        "description": "To create work items or manage your work, you need to create a project or be a part of one.",
+        "title": "No department",
+        "description": "To create work items or manage your work, you need to create a department or be a part of one.",
         "primary_button": {
-          "text": "Start your first project",
+          "text": "Start your first department",
           "comic": {
-            "title": "Everything starts with a project in Paradise Task Tracker",
-            "description": "A project could be a product's roadmap, a marketing campaign, or launching a new car."
+            "title": "Everything starts with a department in Paradise Task Tracker",
+            "description": "A department could be a product's roadmap, a marketing campaign, or launching a new car."
           }
         }
       },
       "filter": {
-        "title": "No matching projects",
-        "description": "No projects detected with the matching criteria.\n Create a new project instead."
+        "title": "No matching departments",
+        "description": "No departments detected with the matching criteria.\n Create a new department instead."
       },
       "search": {
-        "description": "No projects detected with the matching criteria.\nCreate a new project instead"
+        "description": "No departments detected with the matching criteria.\nCreate a new department instead"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "Add view",
     "empty_state": {
       "all-issues": {
-        "title": "No work items in the project",
-        "description": "First project done! Now, slice your work into trackable pieces with work items. Let's go!",
+        "title": "No work items in the department",
+        "description": "First department done! Now, slice your work into trackable pieces with work items. Let's go!",
         "primary_button": {
           "text": "Create new work item"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Write a note, a doc, or a full knowledge base. Get Galileo, Paradise Task Tracker's AI assistant, to help you get started",
-        "description": "Pages are thoughts potting space in Paradise Task Tracker. Take down meeting notes, format them easily, embed work items, lay them out using a library of components, and keep them all in your project's context. To make short work of any doc, invoke Galileo, Paradise Task Tracker's AI, with a shortcut or the click of a button.",
+        "description": "Pages are thoughts potting space in Paradise Task Tracker. Take down meeting notes, format them easily, embed work items, lay them out using a library of components, and keep them all in your department's context. To make short work of any doc, invoke Galileo, Paradise Task Tracker's AI, with a shortcut or the click of a button.",
         "primary_button": {
           "text": "Create your first page"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "No active cycles",
-        "description": "Cycles of your projects that includes any period that encompasses today's date within its range. Find the progress and details of all your active cycle here."
+        "description": "Cycles of your departments that includes any period that encompasses today's date within its range. Find the progress and details of all your active cycle here."
       }
     }
   },

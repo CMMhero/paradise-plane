@@ -53,13 +53,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "Ikhtisar proyek, aktivitas, dan metrik Anda",
-        "description": "Selamat datang di Paradise Task Tracker, kami sangat senang memiliki Anda di sini. Buat proyek pertama Anda dan lacak item kerja Anda, dan halaman ini akan berubah menjadi ruang yang membantu Anda berkembang. Admin juga akan melihat item yang membantu tim mereka berkembang.",
+        "title": "Ikhtisar departemen, aktivitas, dan metrik Anda",
+        "description": "Selamat datang di Paradise Task Tracker, kami sangat senang memiliki Anda di sini. Buat departemen pertama Anda dan lacak item kerja Anda, dan halaman ini akan berubah menjadi ruang yang membantu Anda berkembang. Admin juga akan melihat item yang membantu tim mereka berkembang.",
         "primary_button": {
-          "text": "Bangun proyek pertama Anda",
+          "text": "Bangun departemen pertama Anda",
           "comic": {
-            "title": "Segalanya dimulai dengan proyek di Paradise Task Tracker",
-            "description": "Sebuah proyek bisa menjadi roadmap produk, kampanye pemasaran, atau meluncurkan mobil baru."
+            "title": "Segalanya dimulai dengan departemen di Paradise Task Tracker",
+            "description": "Sebuah departemen bisa menjadi roadmap produk, kampanye pemasaran, atau meluncurkan mobil baru."
           }
         }
       }
@@ -71,7 +71,7 @@
     "open_tasks": "Jumlah tugas terbuka",
     "error": "Terjadi kesalahan dalam mengambil data.",
     "work_items_closed_in": "Item kerja yang ditutup dalam",
-    "selected_projects": "Proyek yang dipilih",
+    "selected_projects": "Departemen yang dipilih",
     "total_members": "Jumlah anggota total",
     "total_cycles": "Jumlah siklus total",
     "total_modules": "Jumlah modul total",
@@ -100,11 +100,11 @@
     "backlog_work_items": "{entity} backlog",
     "un_started_work_items": "{entity} yang belum dimulai",
     "completed_work_items": "{entity} yang telah selesai",
-    "project_insights": "Wawasan Proyek",
-    "summary_of_projects": "Ringkasan Proyek",
-    "all_projects": "Semua Proyek",
+    "project_insights": "Wawasan Departemen",
+    "summary_of_projects": "Ringkasan Departemen",
+    "all_projects": "Semua Departemen",
     "trend_on_charts": "Tren pada grafik",
-    "active_projects": "Proyek Aktif",
+    "active_projects": "Departemen Aktif",
     "customized_insights": "Wawasan yang Disesuaikan",
     "created_vs_resolved": "Dibuat vs Diselesaikan",
     "empty_state": {
@@ -122,9 +122,9 @@
       },
       "general": {
         "title": "Lacak kemajuan, beban kerja, dan alokasi. Temukan tren, hapus hambatan, dan percepat pekerjaan",
-        "description": "Lihat lingkup versus permintaan, perkiraan, dan perluasan lingkup. Dapatkan kinerja berdasarkan anggota tim dan tim, dan pastikan proyek Anda berjalan tepat waktu.",
+        "description": "Lihat lingkup versus permintaan, perkiraan, dan perluasan lingkup. Dapatkan kinerja berdasarkan anggota tim dan tim, dan pastikan departemen Anda berjalan tepat waktu.",
         "primary_button": {
-          "text": "Mulai proyek pertama Anda",
+          "text": "Mulai departemen pertama Anda",
           "comic": {
             "title": "Analitik bekerja paling baik dengan Siklus + Modul",
             "description": "Pertama, batasi waktu masalah Anda ke dalam Siklus dan, jika Anda bisa, kelompokkan masalah yang lebih dari satu siklus ke dalam Modul. Lihat keduanya di navigasi kiri."
@@ -146,14 +146,14 @@
     },
     "upgrade_to_plan": "Tingkatkan ke {plan} untuk membuka {tab}",
     "workitem_resolved_vs_pending": "Item kerja yang diselesaikan vs tertunda",
-    "projects_by_status": "Proyek berdasarkan status",
+    "projects_by_status": "Departemen berdasarkan status",
     "active_users": "Pengguna aktif",
     "intake_trends": "Tren Penerimaan"
   },
   "workspace_projects": {
-    "label": "{count, plural, one {Proyek} other {Proyek}}",
+    "label": "{count, plural, one {Departemen} other {Departemen}}",
     "create": {
-      "label": "Tambah Proyek"
+      "label": "Tambah Departemen"
     },
     "network": {
       "label": "Jaringan",
@@ -186,7 +186,7 @@
       "members_length": "Jumlah anggota"
     },
     "scope": {
-      "my_projects": "Proyek saya",
+      "my_projects": "Departemen saya",
       "archived_projects": "Diarsipkan"
     },
     "common": {
@@ -195,33 +195,33 @@
     },
     "empty_state": {
       "general": {
-        "title": "Tidak ada proyek aktif",
-        "description": "Anggap setiap proyek sebagai induk untuk pekerjaan yang terarah pada tujuan. Proyek adalah tempat di mana Pekerjaan, Siklus, dan Modul tinggal dan, bersama rekan-rekan Anda, membantu Anda mencapai tujuan tersebut. Buat proyek baru atau filter untuk proyek yang diarsipkan.",
+        "title": "Tidak ada departemen aktif",
+        "description": "Anggap setiap departemen sebagai induk untuk pekerjaan yang terarah pada tujuan. Departemen adalah tempat di mana Pekerjaan, Siklus, dan Modul tinggal dan, bersama rekan-rekan Anda, membantu Anda mencapai tujuan tersebut. Buat departemen baru atau filter untuk departemen yang diarsipkan.",
         "primary_button": {
-          "text": "Mulai proyek pertama Anda",
+          "text": "Mulai departemen pertama Anda",
           "comic": {
-            "title": "Segalanya dimulai dengan proyek di Paradise Task Tracker",
-            "description": "Sebuah proyek bisa menjadi roadmap produk, kampanye pemasaran, atau meluncurkan mobil baru."
+            "title": "Segalanya dimulai dengan departemen di Paradise Task Tracker",
+            "description": "Sebuah departemen bisa menjadi roadmap produk, kampanye pemasaran, atau meluncurkan mobil baru."
           }
         }
       },
       "no_projects": {
-        "title": "Tidak ada proyek",
-        "description": "Untuk membuat item kerja atau mengelola pekerjaan Anda, Anda perlu membuat proyek atau menjadi bagian dari salah satunya.",
+        "title": "Tidak ada departemen",
+        "description": "Untuk membuat item kerja atau mengelola pekerjaan Anda, Anda perlu membuat departemen atau menjadi bagian dari salah satunya.",
         "primary_button": {
-          "text": "Mulai proyek pertama Anda",
+          "text": "Mulai departemen pertama Anda",
           "comic": {
-            "title": "Segalanya dimulai dengan proyek di Paradise Task Tracker",
-            "description": "Sebuah proyek bisa menjadi roadmap produk, kampanye pemasaran, atau meluncurkan mobil baru."
+            "title": "Segalanya dimulai dengan departemen di Paradise Task Tracker",
+            "description": "Sebuah departemen bisa menjadi roadmap produk, kampanye pemasaran, atau meluncurkan mobil baru."
           }
         }
       },
       "filter": {
-        "title": "Tidak ada proyek yang cocok",
-        "description": "Tidak ada proyek yang terdeteksi dengan kriteria yang cocok.\n Buat proyek baru sebagai gantinya."
+        "title": "Tidak ada departemen yang cocok",
+        "description": "Tidak ada departemen yang terdeteksi dengan kriteria yang cocok.\n Buat departemen baru sebagai gantinya."
       },
       "search": {
-        "description": "Tidak ada proyek yang terdeteksi dengan kriteria yang cocok.\nBuat proyek baru sebagai gantinya"
+        "description": "Tidak ada departemen yang terdeteksi dengan kriteria yang cocok.\nBuat departemen baru sebagai gantinya"
       }
     }
   },
@@ -229,8 +229,8 @@
     "add_view": "Tambah tampilan",
     "empty_state": {
       "all-issues": {
-        "title": "Tidak ada item kerja dalam proyek",
-        "description": "Proyek pertama sudah selesai! Sekarang, bagi pekerjaan Anda menjadi bagian yang dapat dilacak dengan item kerja. Mari kita mulai!",
+        "title": "Tidak ada item kerja dalam departemen",
+        "description": "Departemen pertama sudah selesai! Sekarang, bagi pekerjaan Anda menjadi bagian yang dapat dilacak dengan item kerja. Mari kita mulai!",
         "primary_button": {
           "text": "Buat item kerja baru"
         }
@@ -290,7 +290,7 @@
     "empty_state": {
       "general": {
         "title": "Tulis catatan, dokumen, atau basis pengetahuan lengkap. Dapatkan Galileo, asisten AI Paradise Task Tracker, untuk membantu Anda memulai",
-        "description": "Halaman adalah ruang pemikiran di Paradise Task Tracker. Catat catatan rapat, format dengan mudah, sematkan item kerja, tata menggunakan perpustakaan komponen, dan simpan semuanya dalam konteks proyek Anda. Untuk mempersingkat pekerjaan dokumen apa pun, panggil Galileo, AI Paradise Task Tracker, dengan pintasan atau klik tombol.",
+        "description": "Halaman adalah ruang pemikiran di Paradise Task Tracker. Catat catatan rapat, format dengan mudah, sematkan item kerja, tata menggunakan perpustakaan komponen, dan simpan semuanya dalam konteks departemen Anda. Untuk mempersingkat pekerjaan dokumen apa pun, panggil Galileo, AI Paradise Task Tracker, dengan pintasan atau klik tombol.",
         "primary_button": {
           "text": "Buat halaman pertama Anda"
         }
@@ -323,7 +323,7 @@
     "empty_state": {
       "active": {
         "title": "Tidak ada siklus aktif",
-        "description": "Siklus proyek Anda yang mencakup periode apa pun yang mencakup tanggal hari ini dalam rentangnya. Temukan kemajuan dan detail semua siklus aktif Anda di sini."
+        "description": "Siklus departemen Anda yang mencakup periode apa pun yang mencakup tanggal hari ini dalam rentangnya. Temukan kemajuan dan detail semua siklus aktif Anda di sini."
       }
     }
   },

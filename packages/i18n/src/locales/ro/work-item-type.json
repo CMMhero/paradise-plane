@@ -4,12 +4,12 @@
     "label_lowercase": "tipuri de elemente de lucru",
     "settings": {
       "description": "Personalizează și adaugă propriile proprietăți pentru a le adapta nevoilor echipei tale.",
-      "cant_delete_default_message": "Nu se poate șterge acest tip de element de lucru deoarece este setat ca tip implicit pentru acest proiect.",
+      "cant_delete_default_message": "Nu se poate șterge acest tip de element de lucru deoarece este setat ca tip implicit pentru acest departament.",
       "set_as_default": "Setează ca implicit",
       "cant_set_default_inactive_message": "Activează acest tip înainte de a-l seta ca implicit",
       "set_default_confirmation": {
         "title": "Setează ca tip implicit de element de lucru",
-        "description": "Setarea {name} ca implicit îl va importa în toate proiectele din acest spațiu de lucru. Toate elementele de lucru noi vor folosi acest tip în mod implicit.",
+        "description": "Setarea {name} ca implicit îl va importa în toate departamentele din acest spațiu de lucru. Toate elementele de lucru noi vor folosi acest tip în mod implicit.",
         "confirm_button": "Setează ca implicit"
       },
       "properties": {
@@ -195,7 +195,7 @@
           "validation_success_with_refs": "Formula este validă! Returnează {resultType} ({count} câmp(uri) referențiat(e))",
           "error": {
             "empty": "Vă rugăm introduceți o formulă",
-            "missing_context": "Lipsește contextul spațiului de lucru, proiectului sau tipului de element de lucru",
+            "missing_context": "Lipsește contextul spațiului de lucru, departamentului sau tipului de element de lucru",
             "validation_failed": "Validarea a eșuat"
           },
           "picker": {
@@ -235,7 +235,7 @@
         "title": "Tipuri",
         "description": "Creează și personalizează tipuri de activități cu proprietăți.",
         "sort_options": {
-          "project_count": "Numărul de proiecte din care face parte"
+          "project_count": "Numărul de departamente din care face parte"
         },
         "filter_options": {
           "show_active": "Afișează active",
@@ -361,13 +361,13 @@
     "empty_state": {
       "enable": {
         "title": "Activează Tipurile de Elemente de Lucru",
-        "description": "Modelează elementele de lucru pentru munca ta cu Tipuri de elemente de lucru. Personalizează cu pictograme, fundaluri și proprietăți și configurează-le pentru acest proiect.",
+        "description": "Modelează elementele de lucru pentru munca ta cu Tipuri de elemente de lucru. Personalizează cu pictograme, fundaluri și proprietăți și configurează-le pentru acest departament.",
         "primary_button": {
           "text": "Activează"
         },
         "confirmation": {
           "title": "Odată activate, Tipurile de Elemente de Lucru nu pot fi dezactivate.",
-          "description": "Elementul de Lucru al Paradise Task Tracker va deveni tipul implicit de element de lucru pentru acest proiect și va apărea cu pictograma și fundalul său în acest proiect.",
+          "description": "Elementul de Lucru al Paradise Task Tracker va deveni tipul implicit de element de lucru pentru acest departament și va apărea cu pictograma și fundalul său în acest departament.",
           "button": {
             "default": "Activează",
             "loading": "Se configurează"
@@ -376,14 +376,14 @@
       },
       "get_pro": {
         "title": "Obține Pro pentru a activa Tipurile de Elemente de Lucru.",
-        "description": "Modelează elementele de lucru pentru munca ta cu Tipuri de elemente de lucru. Personalizează cu pictograme, fundaluri și proprietăți și configurează-le pentru acest proiect.",
+        "description": "Modelează elementele de lucru pentru munca ta cu Tipuri de elemente de lucru. Personalizează cu pictograme, fundaluri și proprietăți și configurează-le pentru acest departament.",
         "primary_button": {
           "text": "Obține Pro"
         }
       },
       "upgrade": {
         "title": "Actualizează pentru a activa Tipurile de Elemente de Lucru.",
-        "description": "Modelează elementele de lucru pentru munca ta cu Tipuri de elemente de lucru. Personalizează cu pictograme, fundaluri și proprietăți și configurează-le pentru acest proiect.",
+        "description": "Modelează elementele de lucru pentru munca ta cu Tipuri de elemente de lucru. Personalizează cu pictograme, fundaluri și proprietăți și configurează-le pentru acest departament.",
         "primary_button": {
           "text": "Actualizează"
         }

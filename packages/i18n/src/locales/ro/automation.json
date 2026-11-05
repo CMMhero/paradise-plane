@@ -123,7 +123,7 @@
     "table": {
       "title": "Titlul automatizării",
       "scope": "Domeniu",
-      "projects": "Proiecte",
+      "projects": "Departamente",
       "last_run_on": "Ultima rulare pe",
       "created_on": "Creată pe",
       "last_updated_on": "Ultima actualizare pe",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Automatizare ștearsă",
-          "message": "{name}, automatizarea, a fost ștearsă din proiectul tău."
+          "message": "{name}, automatizarea, a fost ștearsă din departamentul tău."
         },
         "error": {
           "title": "Nu am putut șterge această automatizare de data aceasta.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Automatizări",
-        "description": "Automatizările sunt o modalitate de a automatiza sarcinile din proiectul tău.",
+        "description": "Automatizările sunt o modalitate de a automatiza sarcinile din departamentul tău.",
         "sub_description": "Recuperează 80% din timpul tău administrativ când folosești Automatizările."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Selectează proiectele pe care să ruleze această automatizare",
+        "label": "Selectează departamentele pe care să ruleze această automatizare",
         "all_projects": {
-          "label": "Toate proiectele",
-          "description": "Automatizarea va rula pentru toate proiectele din spațiul de lucru."
+          "label": "Toate departamentele",
+          "description": "Automatizarea va rula pentru toate departamentele din spațiul de lucru."
         },
         "select_projects": {
-          "label": "Selectează proiectele",
-          "description": "Automatizarea va rula pentru proiectele selectate din spațiul de lucru.",
-          "placeholder": "Selectează proiectele"
+          "label": "Selectează departamentele",
+          "description": "Automatizarea va rula pentru departamentele selectate din spațiul de lucru.",
+          "placeholder": "Selectează departamentele"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Global",
           "project": {
-            "label": "Proiect",
+            "label": "Departament",
             "multiple": "Multiple",
             "all": "Toate"
           }

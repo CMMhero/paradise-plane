@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Eksporty",
-        "description": "Eksportuj dane projektu w różnych formatach i uzyskaj dostęp do historii eksportów z linkami do pobrania.",
+        "description": "Eksportuj dane działu w różnych formatach i uzyskaj dostęp do historii eksportów z linkami do pobrania.",
         "title": "Eksporty",
         "exporting": "Eksportowanie",
         "previous_exports": "Poprzednie eksporty",
         "export_separate_files": "Eksportuj dane do oddzielnych plików",
-        "exporting_projects": "Eksportowanie projektu",
+        "exporting_projects": "Eksportowanie działu",
         "format": "Format",
         "filters_info": "Zastosuj filtry, aby wyeksportować określone elementy robocze według Twoich kryteriów.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhooki",
-        "description": "Automatyzuj powiadomienia do usług zewnętrznych, gdy wystąpią zdarzenia projektowe.",
+        "description": "Automatyzuj powiadomienia do usług zewnętrznych, gdy wystąpią zdarzenia działowe.",
         "title": "Webhooki",
         "add_webhook": "Dodaj webhook",
         "modal": {
@@ -182,27 +182,27 @@
       "imports": {
         "title": "Importy",
         "heading": "Importy",
-        "description": "Łącz i importuj dane z istniejących narzędzi do zarządzania projektami, aby usprawnić integrację przepływu pracy."
+        "description": "Łącz i importuj dane z istniejących narzędzi do zarządzania działami, aby usprawnić integrację przepływu pracy."
       },
       "worklogs": {
         "title": "Logi pracy",
         "heading": "Logi pracy",
-        "description": "Pobierz logi pracy (karty czasu pracy) dla każdej osoby w dowolnym projekcie."
+        "description": "Pobierz logi pracy (karty czasu pracy) dla każdej osoby w dowolnym dziale."
       },
       "group_syncing": {
         "title": "Synchronizacja grup",
         "heading": "Synchronizacja grup",
-        "description": "Połącz grupy dostawcy tożsamości z projektami i rolami. Dostęp użytkowników jest automatycznie aktualizowany przy zmianach członkostwa w grupie w Twoim IdP, upraszczając onboardingu i offboarding.",
+        "description": "Połącz grupy dostawcy tożsamości z działami i rolami. Dostęp użytkowników jest automatycznie aktualizowany przy zmianach członkostwa w grupie w Twoim IdP, upraszczając onboardingu i offboarding.",
         "enable": {
           "title": "Włącz synchronizację grup",
-          "description": "Automatycznie dodawaj użytkowników do projektów na podstawie grup dostawcy tożsamości."
+          "description": "Automatycznie dodawaj użytkowników do działów na podstawie grup dostawcy tożsamości."
         },
         "config": {
           "title": "Skonfiguruj synchronizację grup",
-          "description": "Ustaw, jak grupy dostawcy tożsamości są mapowane na projekty i role.",
+          "description": "Ustaw, jak grupy dostawcy tożsamości są mapowane na działy i role.",
           "sync_on_login": {
             "title": "Synchronizacja przy logowaniu",
-            "description": "Aktualizuj członkostwo w grupie i dostęp do projektu przy logowaniu użytkownika."
+            "description": "Aktualizuj członkostwo w grupie i dostęp do działu przy logowaniu użytkownika."
           },
           "sync_offline": {
             "title": "Synchronizacja offline",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Automatyczne usuwanie",
-            "description": "Automatycznie usuwaj użytkowników z projektów, gdy nie pasują już do grupy."
+            "description": "Automatycznie usuwaj użytkowników z działów, gdy nie pasują już do grupy."
           },
           "group_attribute_key": {
             "title": "Klucz atrybutu grupy",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Mapowanie grup",
-          "description": "Połącz grupy dostawcy tożsamości z projektami i rolami.",
+          "description": "Połącz grupy dostawcy tożsamości z działami i rolami.",
           "button_text": "Dodaj nową synchronizację grupy"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Usuń synchronizację grupy",
-          "content": "Nowi użytkownicy z tej grupy tożsamości nie będą już dodawani do projektu. Już dodani użytkownicy zachowają swoją obecną rolę."
+          "content": "Nowi użytkownicy z tej grupy tożsamości nie będą już dodawani do działu. Już dodani użytkownicy zachowają swoją obecną rolę."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Wprowadź nazwy grup IdP"
           },
           "project": {
-            "text": "Projekt",
-            "required": "Projekt jest wymagany",
-            "placeholder": "Wybierz projekt"
+            "text": "Dział",
+            "required": "Dział jest wymagany",
+            "placeholder": "Wybierz dział"
           },
           "default_role": {
-            "text": "Rola projektu",
-            "required": "Rola projektu jest wymagana",
-            "placeholder": "Wybierz rolę projektu"
+            "text": "Rola działu",
+            "required": "Rola działu jest wymagana",
+            "placeholder": "Wybierz rolę działu"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Skonfiguruj swoją domenę i włącz logowanie jednokrotne"
       },
       "project_states": {
-        "title": "Stany projektu",
-        "heading": "Zobacz przegląd postępu dla wszystkich projektów.",
-        "description": "Stany projektów to funkcja Paradise Task Tracker służąca do śledzenia postępu wszystkich projektów według dowolnej właściwości projektu.",
+        "title": "Stany działu",
+        "heading": "Zobacz przegląd postępu dla wszystkich działów.",
+        "description": "Stany działów to funkcja Paradise Task Tracker służąca do śledzenia postępu wszystkich działów według dowolnej właściwości działu.",
         "go_to_settings": "Przejdź do ustawień"
       },
       "projects": {
-        "title": "Projekty",
-        "description": "Zarządzaj stanami projektów, włączaj etykiety projektów i inne konfiguracje.",
+        "title": "Działy",
+        "description": "Zarządzaj stanami działów, włączaj etykiety działów i inne konfiguracje.",
         "tabs": {
-          "states": "Stany projektu",
-          "labels": "Etykiety projektu"
+          "states": "Stany działu",
+          "labels": "Etykiety działu"
         }
       },
       "templates": {
         "title": "Szablony",
         "heading": "Szablony",
-        "description": "Zaoszczędź 80% czasu poświęcanego na tworzenie projektów, elementów pracy i stron, gdy używasz szablonów."
+        "description": "Zaoszczędź 80% czasu poświęcanego na tworzenie działów, elementów pracy i stron, gdy używasz szablonów."
       },
       "relations": {
         "title": "Relacje",
@@ -465,7 +465,7 @@
         "read": "Odczyt",
         "write": "Zapis",
         "scope_description": {
-          "projects": "Dostęp do projektów i wszystkich powiązanych encji",
+          "projects": "Dostęp do działów i wszystkich powiązanych encji",
           "wiki": "Dostęp do wiki i wszystkich powiązanych encji",
           "workspaces": "Dostęp do obszarów roboczych i wszystkich powiązanych encji",
           "stickies": "Dostęp do notatek i wszystkich powiązanych encji",

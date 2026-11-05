@@ -168,7 +168,7 @@
       "confirm_message": "Sei sicuro di voler archiviare l'elemento di lavoro? Tutti gli elementi di lavoro archiviati possono essere ripristinati in seguito.",
       "success": {
         "label": "Archiviazione riuscita",
-        "message": "I tuoi archivi sono disponibili negli archivi del progetto."
+        "message": "I tuoi archivi sono disponibili negli archivi del reparto."
       },
       "failed": {
         "message": "Impossibile archiviare l'elemento di lavoro. Per favore, riprova."
@@ -258,7 +258,7 @@
     "restore": {
       "success": {
         "title": "Ripristino riuscito",
-        "message": "Il tuo elemento di lavoro è disponibile negli elementi del progetto."
+        "message": "Il tuo elemento di lavoro è disponibile negli elementi del reparto."
       },
       "failed": {
         "message": "Impossibile ripristinare l'elemento di lavoro. Per favore, riprova."
@@ -297,10 +297,10 @@
     "open_in_full_screen": "Apri l'elemento di lavoro a schermo intero",
     "duplicate": {
       "modal": {
-        "title": "Crea una copia in un altro progetto",
+        "title": "Crea una copia in un altro reparto",
         "description1": "Questo crea una copia dell'elemento di lavoro.",
         "description2": "Tutti i dati delle proprietà verranno rimossi durante la duplicazione.",
-        "placeholder": "Seleziona un progetto"
+        "placeholder": "Seleziona un reparto"
       }
     },
     "toast": {
@@ -436,7 +436,7 @@
       },
       "create_button": {
         "label": "Crea elemento di lavoro ricorrente",
-        "no_permission": "Contatta l'amministratore del progetto per creare elementi di lavoro ricorrenti"
+        "no_permission": "Contatta l'amministratore del reparto per creare elementi di lavoro ricorrenti"
       }
     },
     "empty_state": {

@@ -6,7 +6,7 @@
     },
     "updates": {
       "title": "暂无更新。",
-      "description": "项目成员添加更新后将显示在此处"
+      "description": "部门成员添加更新后将显示在此处"
     },
     "search": {
       "title": "未找到匹配结果。",
@@ -25,24 +25,24 @@
   },
   "project_empty_state": {
     "no_access": {
-      "title": "您似乎无权访问该项目",
+      "title": "您似乎无权访问该部门",
       "restricted_description": "请联系管理员申请访问权限，通过后您可以在此继续。",
       "join_description": "点击下方按钮加入该项目。",
-      "cta_primary": "加入项目",
-      "cta_loading": "正在加入项目"
+      "cta_primary": "加入部门",
+      "cta_loading": "正在加入部门"
     },
     "invalid_project": {
-      "title": "未找到项目",
-      "description": "您查找的项目不存在。"
+      "title": "未找到部门",
+      "description": "您查找的部门不存在。"
     },
     "work_items": {
       "title": "从您的第一个工作项开始。",
-      "description": "工作项是项目的构建块 — 分配负责人、设置优先级并轻松跟踪进度。",
+      "description": "工作项是部门的构建块 — 分配负责人、设置优先级并轻松跟踪进度。",
       "cta_primary": "创建您的第一个工作项"
     },
     "cycles": {
       "title": "在周期中分组和限时您的工作。",
-      "description": "将工作分解为限时块,从项目截止日期倒推设置日期,并作为团队取得实质性进展。",
+      "description": "将工作分解为限时块,从部门截止日期倒推设置日期,并作为团队取得实质性进展。",
       "cta_primary": "设置您的第一个周期"
     },
     "cycle_work_items": {
@@ -52,8 +52,8 @@
       "cta_secondary": "添加现有工作项"
     },
     "modules": {
-      "title": "将项目目标映射到模块并轻松跟踪。",
-      "description": "模块由相互关联的工作项组成。它们有助于监控项目阶段的进度,每个阶段都有特定的截止日期和分析,以指示您离实现这些阶段有多近。",
+      "title": "将部门目标映射到模块并轻松跟踪。",
+      "description": "模块由相互关联的工作项组成。它们有助于监控部门阶段的进度,每个阶段都有特定的截止日期和分析,以指示您离实现这些阶段有多近。",
       "cta_primary": "设置您的第一个模块"
     },
     "module_work_items": {
@@ -63,13 +63,13 @@
       "cta_secondary": "添加现有工作项"
     },
     "views": {
-      "title": "为项目保存自定义视图",
+      "title": "为部门保存自定义视图",
       "description": "视图是保存的过滤器,可帮助您快速访问最常用的信息。团队成员可以轻松协作,共享视图并根据特定需求进行调整。",
       "cta_primary": "创建视图"
     },
     "no_work_items_in_project": {
-      "title": "项目中暂无工作项",
-      "description": "将工作项添加到项目中,并使用视图将工作切分为可跟踪的部分。",
+      "title": "部门中暂无工作项",
+      "description": "将工作项添加到部门中,并使用视图将工作切分为可跟踪的部分。",
       "cta_primary": "添加工作项"
     },
     "work_item_filter": {
@@ -79,7 +79,7 @@
     },
     "pages": {
       "title": "记录一切 — 从笔记到 PRD",
-      "description": "页面让您在一个地方捕获和组织信息。编写会议笔记、项目文档和 PRD,嵌入工作项,并使用现成的组件进行结构化。",
+      "description": "页面让您在一个地方捕获和组织信息。编写会议笔记、部门文档和 PRD,嵌入工作项,并使用现成的组件进行结构化。",
       "cta_primary": "创建您的第一个页面"
     },
     "archive_pages": {
@@ -88,14 +88,14 @@
     },
     "intake_sidebar": {
       "title": "记录接收请求",
-      "description": "提交新请求以在项目工作流程中进行审查、优先排序和跟踪。",
+      "description": "提交新请求以在部门工作流程中进行审查、优先排序和跟踪。",
       "cta_primary": "创建接收请求"
     },
     "intake_main": {
       "title": "选择一个接收工作项以查看其详细信息"
     },
     "epics": {
-      "title": "将复杂项目转化为结构化史诗。",
+      "title": "将复杂部门转化为结构化史诗。",
       "description": "史诗帮助您将大目标组织成更小的可跟踪任务。",
       "cta_primary": "创建史诗",
       "cta_secondary": "文档"
@@ -118,11 +118,11 @@
     },
     "archive_cycles": {
       "title": "暂无已归档周期",
-      "description": "为了整理项目,请归档已完成的周期。归档后在此处查找它们。"
+      "description": "为了整理部门,请归档已完成的周期。归档后在此处查找它们。"
     },
     "archive_modules": {
       "title": "暂无已归档模块",
-      "description": "为了整理项目,请归档已完成或已取消的模块。归档后在此处查找它们。"
+      "description": "为了整理部门,请归档已完成或已取消的模块。归档后在此处查找它们。"
     },
     "home_widget_quick_links": {
       "title": "为您的工作保留重要的参考、资源或文档"
@@ -141,7 +141,7 @@
     },
     "views": {
       "title": "暂无视图",
-      "description": "将工作项添加到项目中并使用视图轻松过滤、排序和监控进度。",
+      "description": "将工作项添加到部门中并使用视图轻松过滤、排序和监控进度。",
       "cta_primary": "添加工作项"
     },
     "drafts": {
@@ -150,14 +150,14 @@
       "cta_primary": "创建草稿工作项"
     },
     "projects_archived": {
-      "title": "没有已归档项目",
-      "description": "看起来您的所有项目仍然活跃 — 做得好!"
+      "title": "没有已归档部门",
+      "description": "看起来您的所有部门仍然活跃 — 做得好!"
     },
     "analytics_projects": {
-      "title": "创建项目以在此处可视化项目指标。"
+      "title": "创建部门以在此处可视化部门指标。"
     },
     "analytics_work_items": {
-      "title": "创建包含工作项和受理人的项目,以开始在此处跟踪绩效、进度和团队影响。"
+      "title": "创建包含工作项和受理人的部门,以开始在此处跟踪绩效、进度和团队影响。"
     },
     "analytics_no_cycle": {
       "title": "创建周期以将工作组织成有时限的阶段并跟踪冲刺进度。"
@@ -188,12 +188,12 @@
     },
     "wiki": {
       "title": "编写笔记、文档或完整的知识库。",
-      "description": "页面是 Paradise Task Tracker 中的思想捕捉空间。记录会议笔记,轻松格式化,嵌入工作项,使用组件库进行布局,并将它们全部保留在项目上下文中。",
+      "description": "页面是 Paradise Task Tracker 中的思想捕捉空间。记录会议笔记,轻松格式化,嵌入工作项,使用组件库进行布局,并将它们全部保留在部门上下文中。",
       "cta_primary": "创建您的页面"
     },
     "project_overview_state_sidebar": {
-      "title": "启用项目状态",
-      "description": "启用项目状态以查看和管理状态、优先级、截止日期等属性。"
+      "title": "启用部门状态",
+      "description": "启用部门状态以查看和管理状态、优先级、截止日期等属性。"
     }
   },
   "settings_empty_state": {
@@ -223,16 +223,16 @@
     },
     "webhooks": {
       "title": "尚未添加 Webhook",
-      "description": "在项目事件发生时自动向外部服务发送通知。",
+      "description": "在部门事件发生时自动向外部服务发送通知。",
       "cta_primary": "添加 webhook"
     },
     "work_item_types": {
       "title": "创建和自定义工作项类型",
-      "description": "为项目定义独特的工作项类型。每种类型都可以有自己的属性、工作流程和字段 — 根据项目和团队需求量身定制。",
+      "description": "为部门定义独特的工作项类型。每种类型都可以有自己的属性、工作流程和字段 — 根据部门和团队需求量身定制。",
       "cta_primary": "启用"
     },
     "work_item_type_properties": {
-      "title": "定义要为此工作项类型捕获的属性和详细信息。自定义它以匹配项目的工作流程。",
+      "title": "定义要为此工作项类型捕获的属性和详细信息。自定义它以匹配部门的工作流程。",
       "cta_secondary": "添加属性"
     },
     "templates": {
@@ -247,14 +247,14 @@
     },
     "worklogs": {
       "title": "跟踪所有成员的工时表",
-      "description": "在工作项上记录时间以查看跨项目任何团队成员的详细工时表。"
+      "description": "在工作项上记录时间以查看跨部门任何团队成员的详细工时表。"
     },
     "group_syncing": {
       "title": "暂无组映射"
     },
     "template_setting": {
       "title": "暂无模板",
-      "description": "通过为项目、工作项和页面创建模板来减少设置时间 — 并在几秒钟内开始新工作。",
+      "description": "通过为部门、工作项和页面创建模板来减少设置时间 — 并在几秒钟内开始新工作。",
       "cta_primary": "创建模板"
     },
     "workflows": {

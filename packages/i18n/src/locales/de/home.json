@@ -4,8 +4,8 @@
       "quickstart_guide": "Ihr Schnellstartleitfaden",
       "not_right_now": "Jetzt nicht",
       "create_project": {
-        "title": "Projekt erstellen",
-        "description": "Die meisten Dinge beginnen mit einem Projekt in Paradise Task Tracker.",
+        "title": "Abteilung erstellen",
+        "description": "Die meisten Dinge beginnen mit einer Abteilung in Paradise Task Tracker.",
         "cta": "Los geht's"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "Zuletzt verwendet",
       "empty": {
-        "project": "Ihre kürzlich aufgerufenen Projekte erscheinen hier, nachdem Sie sie geöffnet haben.",
+        "project": "Ihre kürzlich aufgerufenen Abteilungen erscheinen hier, nachdem Sie sie geöffnet haben.",
         "page": "Ihre kürzlich aufgerufenen Seiten erscheinen hier, nachdem Sie sie geöffnet haben.",
         "issue": "Ihre kürzlich aufgerufenen Arbeitselemente erscheinen hier, nachdem Sie sie geöffnet haben.",
         "default": "Sie haben noch keine kürzlichen Elemente."
       },
       "filters": {
         "all": "Alle",
-        "projects": "Projekte",
+        "projects": "Abteilungen",
         "pages": "Seiten",
         "issues": "Arbeitselemente"
       }

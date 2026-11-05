@@ -3,7 +3,7 @@
     "workitems": {
       "step_zero": {
         "title": "Bienvenue dans votre espace de travail",
-        "description": "Pour vous aider à démarrer, nous avons créé un Projet Démo pour vous. Ajoutons votre premier élément de travail."
+        "description": "Pour vous aider à démarrer, nous avons créé un département démo pour vous. Ajoutons votre premier élément de travail."
       },
       "step_one": {
         "title": "Cliquez sur \"+ Ajouter un élément de travail\"",
@@ -25,11 +25,11 @@
     "cycle": {
       "step_zero": {
         "title": "Progressez avec les Cycles",
-        "description": "Appuyez sur Q pour créer un Cycle. Nommez-le et définissez les dates—un seul cycle par projet."
+        "description": "Appuyez sur Q pour créer un Cycle. Nommez-le et définissez les dates—un seul cycle par département."
       },
       "step_one": {
         "title": "Créer un nouveau cycle",
-        "description": "Appuyez sur Q pour créer un Cycle. Nommez-le et définissez les dates—un seul cycle par projet."
+        "description": "Appuyez sur Q pour créer un Cycle. Nommez-le et définissez les dates—un seul cycle par département."
       },
       "step_two": {
         "title": "Cliquez sur \"+\"",
@@ -46,12 +46,12 @@
     },
     "module": {
       "step_zero": {
-        "title": "Divisez votre projet en Modules",
-        "description": "Les modules sont des projets plus petits et ciblés qui aident les utilisateurs à regrouper et organiser les éléments de travail dans des délais spécifiques."
+        "title": "Divisez votre département en Modules",
+        "description": "Les modules sont des sous-ensembles plus petits et ciblés qui aident les utilisateurs à regrouper et organiser les éléments de travail dans des délais spécifiques."
       },
       "step_one": {
         "title": "Créer un Module",
-        "description": "Les modules sont des projets plus petits et ciblés qui aident les utilisateurs à regrouper et organiser les éléments de travail dans des délais spécifiques."
+        "description": "Les modules sont des sous-ensembles plus petits et ciblés qui aident les utilisateurs à regrouper et organiser les éléments de travail dans des délais spécifiques."
       },
       "step_two": {
         "title": "Cliquez sur \"+\"",
@@ -69,7 +69,7 @@
     "page": {
       "step_zero": {
         "title": "Documentez avec des Pages alimentées par l IA",
-        "description": "Les Pages dans Paradise Task Tracker vous permettent de capturer, organiser et collaborer sur les informations du projet—sans outils externes."
+        "description": "Les Pages dans Paradise Task Tracker vous permettent de capturer, organiser et collaborer sur les informations du département—sans outils externes."
       },
       "step_one": {
         "title": "Rendre la page Publique ou Privée",
@@ -103,7 +103,7 @@
       },
       "step_two": {
         "title": "Accepter/refuser une demande en attente",
-        "description": "Acceptez pour modifier et déplacer l élément de travail vers votre projet, ou refusez-le pour le marquer comme Annulé."
+        "description": "Acceptez pour modifier et déplacer l élément de travail vers votre département, ou refusez-le pour le marquer comme Annulé."
       },
       "step_three": {
         "title": "Reporter pour l instant",
@@ -127,7 +127,7 @@
       },
       "step_zero": {
         "title": "Trouvez n importe quoi instantanément",
-        "description": "Utilisez la recherche universelle pour accéder aux tâches, projets, pages et personnes—sans quitter votre flux de travail."
+        "description": "Utilisez la recherche universelle pour accéder aux tâches, départements, pages et personnes—sans quitter votre flux de travail."
       },
       "step_one": {
         "title": "Gardez le contrôle des mises à jour",
@@ -148,8 +148,8 @@
       "got_it": "Compris"
     },
     "seed_data": {
-      "title": "Voici votre projet démo",
-      "description": "Les projets vous permettent de gérer vos équipes, tâches et tout ce dont vous avez besoin pour accomplir les choses dans votre espace de travail."
+      "title": "Voici votre département démo",
+      "description": "Les départements vous permettent de gérer vos équipes, tâches et tout ce dont vous avez besoin pour accomplir les choses dans votre espace de travail."
     }
   },
   "get_started": {
@@ -160,7 +160,7 @@
       "description": "Commencez votre configuration et voyez vos idées prendre vie plus rapidement.",
       "checklist_items": {
         "item_1": {
-          "title": "Créer un projet"
+          "title": "Créer un département"
         },
         "item_2": {
           "title": "Créer un élément de travail"

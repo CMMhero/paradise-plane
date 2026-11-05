@@ -75,12 +75,12 @@
       },
       "exports": {
         "heading": "Exporturi",
-        "description": "Exportă datele proiectelor tale în diverse formate și accesează istoricul exporturilor cu link-uri de descărcare.",
+        "description": "Exportă datele departamentelor tale în diverse formate și accesează istoricul exporturilor cu link-uri de descărcare.",
         "title": "Exporturi",
         "exporting": "Se exportă",
         "previous_exports": "Exporturi anterioare",
         "export_separate_files": "Exportă datele în fișiere separate",
-        "exporting_projects": "Se exportă proiectul",
+        "exporting_projects": "Se exportă departamentul",
         "format": "Format",
         "filters_info": "Aplică filtre pentru a exporta elemente de lucru specifice în funcție de criteriile tale.",
         "modal": {
@@ -99,7 +99,7 @@
       },
       "webhooks": {
         "heading": "Webhook-uri",
-        "description": "Automatizează notificările către servicii externe când se produc evenimente ale proiectului.",
+        "description": "Automatizează notificările către servicii externe când se produc evenimente ale departamentului.",
         "title": "Puncte de notificare (Webhooks)",
         "add_webhook": "Adaugă punct de notificare (webhook)",
         "modal": {
@@ -187,22 +187,22 @@
       "worklogs": {
         "title": "Jurnale de lucru",
         "heading": "Jurnale de lucru",
-        "description": "Descarcă jurnale de lucru (timesheet-uri) pentru oricine din orice proiect."
+        "description": "Descarcă jurnale de lucru (timesheet-uri) pentru oricine din orice departament."
       },
       "group_syncing": {
         "title": "Sincronizare grupuri",
         "heading": "Sincronizare grupuri",
-        "description": "Asociați grupurile furnizorului de identitate cu proiecte și roluri. Accesul utilizatorilor se actualizează automat când apartenența la grup se schimbă în IdP-ul dvs., simplificând onboarding-ul și offboarding-ul.",
+        "description": "Asociați grupurile furnizorului de identitate cu departamente și roluri. Accesul utilizatorilor se actualizează automat când apartenența la grup se schimbă în IdP-ul dvs., simplificând onboarding-ul și offboarding-ul.",
         "enable": {
           "title": "Activați sincronizarea grupurilor",
-          "description": "Adăugați automat utilizatori la proiecte pe baza grupurilor furnizorului de identitate."
+          "description": "Adăugați automat utilizatori la departamente pe baza grupurilor furnizorului de identitate."
         },
         "config": {
           "title": "Configurați sincronizarea grupurilor",
-          "description": "Setați cum grupurile furnizorului de identitate sunt mapate la proiecte și roluri.",
+          "description": "Setați cum grupurile furnizorului de identitate sunt mapate la departamente și roluri.",
           "sync_on_login": {
             "title": "Sincronizare la autentificare",
-            "description": "Actualizați apartenența la grup și accesul la proiect când un utilizator se autentifică."
+            "description": "Actualizați apartenența la grup și accesul la departament când un utilizator se autentifică."
           },
           "sync_offline": {
             "title": "Sincronizare offline",
@@ -210,7 +210,7 @@
           },
           "auto_remove": {
             "title": "Eliminare automată",
-            "description": "Eliminați automat utilizatorii din proiecte când nu mai corespund grupului."
+            "description": "Eliminați automat utilizatorii din departamente când nu mai corespund grupului."
           },
           "group_attribute_key": {
             "title": "Cheie atribut grup",
@@ -220,7 +220,7 @@
         },
         "group_mapping": {
           "title": "Mapare grupuri",
-          "description": "Asociați grupurile furnizorului de identitate cu proiecte și roluri.",
+          "description": "Asociați grupurile furnizorului de identitate cu departamente și roluri.",
           "button_text": "Adăugați nouă sincronizare grup"
         },
         "toast": {
@@ -230,7 +230,7 @@
         },
         "delete_modal": {
           "title": "Ștergeți sincronizarea grupului",
-          "content": "Utilizatorii noi din acest grup de identitate nu vor mai fi adăugați la proiect. Utilizatorii deja adăugați își vor păstra rolul actual."
+          "content": "Utilizatorii noi din acest grup de identitate nu vor mai fi adăugați la departament. Utilizatorii deja adăugați își vor păstra rolul actual."
         },
         "modal": {
           "idp_group_name": {
@@ -239,14 +239,14 @@
             "placeholder": "Introduceți numele grupurilor IdP"
           },
           "project": {
-            "text": "Proiect",
-            "required": "Proiectul este obligatoriu",
-            "placeholder": "Selectați un proiect"
+            "text": "Departament",
+            "required": "Departamentul este obligatoriu",
+            "placeholder": "Selectați un departament"
           },
           "default_role": {
-            "text": "Rol proiect",
-            "required": "Rolul proiectului este obligatoriu",
-            "placeholder": "Selectați un rol de proiect"
+            "text": "Rol departament",
+            "required": "Rolul departamentului este obligatoriu",
+            "placeholder": "Selectați un rol de departament"
           }
         }
       },
@@ -256,23 +256,23 @@
         "description": "Configurați domeniul dvs. și activați Single sign-on"
       },
       "project_states": {
-        "title": "Stări de proiect",
-        "heading": "Vezi prezentarea progresului pentru toate proiectele.",
-        "description": "Stările proiectelor sunt o funcție exclusivă Paradise Task Tracker pentru urmărirea progresului tuturor proiectelor tale după orice proprietate a proiectului.",
+        "title": "Stări de departament",
+        "heading": "Vezi prezentarea progresului pentru toate departamentele.",
+        "description": "Stările departamentelor sunt o funcție exclusivă Paradise Task Tracker pentru urmărirea progresului tuturor departamentelor tale după orice proprietate a departamentului.",
         "go_to_settings": "Mergi la setări"
       },
       "projects": {
-        "title": "Proiecte",
-        "description": "Gestionează stările proiectelor, activează etichetele proiectelor și alte configurări.",
+        "title": "Departamente",
+        "description": "Gestionează stările departamentelor, activează etichetele departamentelor și alte configurări.",
         "tabs": {
-          "states": "Stări de proiect",
-          "labels": "Etichete de proiect"
+          "states": "Stări de departament",
+          "labels": "Etichete de departament"
         }
       },
       "templates": {
         "title": "Șabloane",
         "heading": "Șabloane",
-        "description": "Economisește 80% din timpul petrecut creând proiecte, activități și pagini atunci când folosești șabloane."
+        "description": "Economisește 80% din timpul petrecut creând departamente, activități și pagini atunci când folosești șabloane."
       },
       "relations": {
         "title": "Relații",
@@ -465,7 +465,7 @@
         "read": "Citire",
         "write": "Scriere",
         "scope_description": {
-          "projects": "Acces la proiecte și toate entitățile legate de proiecte",
+          "projects": "Acces la departamente și toate entitățile legate de departamente",
           "wiki": "Acces la wiki și toate entitățile legate de wiki",
           "workspaces": "Acces la spații de lucru și toate entitățile legate",
           "stickies": "Acces la stickies și toate entitățile legate",

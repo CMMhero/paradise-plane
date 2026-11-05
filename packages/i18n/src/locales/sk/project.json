@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Zatiaľ žiadne verejné stránky",
-        "description": "Stránky zdieľané so všetkými vo vašom projekte uvidíte tu.",
+        "description": "Stránky zdieľané so všetkými vo vašom oddelení uvidíte tu.",
         "primary_button": {
           "text": "Vytvorte svoju prvú stránku"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Žiadne verejné stránky",
-        "description": "Tu uvidíte stránky zdieľané v projekte.",
+        "description": "Tu uvidíte stránky zdieľané v oddelení.",
         "primary_button": {
           "text": "Vytvoriť stránku"
         }
@@ -301,7 +301,7 @@
     "empty_state": {
       "inbox": {
         "title": "Príjem nie je povolený",
-        "description": "Aktivujte príjem v nastaveniach projektu pre správu požiadaviek.",
+        "description": "Aktivujte príjem v nastaveniach oddelenia pre správu požiadaviek.",
         "primary_button": {
           "text": "Spravovať funkcie"
         }
@@ -315,21 +315,21 @@
       },
       "module": {
         "title": "Moduly nie sú povolené",
-        "description": "Aktivujte moduly v nastaveniach projektu.",
+        "description": "Aktivujte moduly v nastaveniach oddelenia.",
         "primary_button": {
           "text": "Spravovať funkcie"
         }
       },
       "page": {
         "title": "Stránky nie sú povolené",
-        "description": "Aktivujte stránky v nastaveniach projektu.",
+        "description": "Aktivujte stránky v nastaveniach oddelenia.",
         "primary_button": {
           "text": "Spravovať funkcie"
         }
       },
       "view": {
         "title": "Pohľady nie sú povolené",
-        "description": "Aktivujte pohľady v nastaveniach projektu.",
+        "description": "Aktivujte pohľady v nastaveniach oddelenia.",
         "primary_button": {
           "text": "Spravovať funkcie"
         }
@@ -392,7 +392,7 @@
           "complete": "Import dokončený"
         },
         "message": {
-          "success": "Úspešne importovaných {count} člen{plural} do projektu.",
+          "success": "Úspešne importovaných {count} člen{plural} do oddelenia.",
           "no_imports": "Zo súboru CSV neboli importovaní žiadni noví členovia."
         },
         "stats": {

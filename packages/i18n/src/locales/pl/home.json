@@ -4,8 +4,8 @@
       "quickstart_guide": "Twój przewodnik szybkiego startu",
       "not_right_now": "Nie teraz",
       "create_project": {
-        "title": "Utwórz projekt",
-        "description": "Większość rzeczy zaczyna się od projektu w Paradise Task Tracker.",
+        "title": "Utwórz dział",
+        "description": "Większość rzeczy zaczyna się od działu w Paradise Task Tracker.",
         "cta": "Zacznij"
       },
       "invite_team": {
@@ -40,14 +40,14 @@
     "recents": {
       "title": "Ostatnie",
       "empty": {
-        "project": "Twoje ostatnio odwiedzone projekty pojawią się tutaj.",
+        "project": "Twoje ostatnio odwiedzone działy pojawią się tutaj.",
         "page": "Twoje ostatnio odwiedzone strony pojawią się tutaj.",
         "issue": "Twoje ostatnio odwiedzone elementy pracy pojawią się tutaj.",
         "default": "Nie masz jeszcze żadnych ostatnich pozycji."
       },
       "filters": {
         "all": "Wszystkie",
-        "projects": "Projekty",
+        "projects": "Działy",
         "pages": "Strony",
         "issues": "Elementy pracy"
       }

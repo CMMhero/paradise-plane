@@ -123,7 +123,7 @@
     "table": {
       "title": "Názov automatizácie",
       "scope": "Rozsah",
-      "projects": "Projekty",
+      "projects": "Oddelenia",
       "last_run_on": "Posledné spustenie",
       "created_on": "Vytvorené",
       "last_updated_on": "Posledná aktualizácia",
@@ -207,7 +207,7 @@
       "delete": {
         "success": {
           "title": "Automatizácia odstránená",
-          "message": "{name}, automatizácia, bola odstránená z vášho projektu."
+          "message": "{name}, automatizácia, bola odstránená z vášho oddelenia."
         },
         "error": {
           "title": "Túto automatizáciu sa tentokrát nepodarilo odstrániť.",
@@ -236,21 +236,21 @@
       },
       "upgrade": {
         "title": "Automatizácie",
-        "description": "Automatizácie sú spôsob automatizácie úloh vo vašom projekte.",
+        "description": "Automatizácie sú spôsob automatizácie úloh vo vašom oddelení.",
         "sub_description": "Získajte späť 80% svojho administratívneho času, keď používate automatizácie."
       }
     },
     "global_automations": {
       "project_select": {
-        "label": "Vyberte projekty, v ktorých sa má táto automatizácia spúšťať",
+        "label": "Vyberte oddelenia, v ktorých sa má táto automatizácia spúšťať",
         "all_projects": {
-          "label": "Všetky projekty",
-          "description": "Automatizácia sa bude spúšťať pre všetky projekty v pracovnom priestore."
+          "label": "Všetky oddelenia",
+          "description": "Automatizácia sa bude spúšťať pre všetky oddelenia v pracovnom priestore."
         },
         "select_projects": {
-          "label": "Vybrať projekty",
-          "description": "Automatizácia sa bude spúšťať pre vybrané projekty v pracovnom priestore.",
-          "placeholder": "Vybrať projekty"
+          "label": "Vybrať oddelenia",
+          "description": "Automatizácia sa bude spúšťať pre vybrané oddelenia v pracovnom priestore.",
+          "placeholder": "Vybrať oddelenia"
         }
       },
       "settings": {
@@ -262,7 +262,7 @@
         "scope": {
           "global": "Globálny",
           "project": {
-            "label": "Projekt",
+            "label": "Oddelenie",
             "multiple": "Viacero",
             "all": "Všetky"
           }

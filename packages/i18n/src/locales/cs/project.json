@@ -168,7 +168,7 @@
       },
       "public": {
         "title": "Zatím žádné veřejné stránky",
-        "description": "Zde uvidíte stránky sdílené se všemi ve vašem projektu.",
+        "description": "Zde uvidíte stránky sdílené se všemi ve vašem oddělení.",
         "primary_button": {
           "text": "Vytvořte svou první stránku"
         }
@@ -286,7 +286,7 @@
       },
       "public": {
         "title": "Žádné veřejné stránky",
-        "description": "Zde uvidíte stránky sdílené v projektu.",
+        "description": "Zde uvidíte stránky sdílené v oddělení.",
         "primary_button": {
           "text": "Vytvořit stránku"
         }
@@ -301,7 +301,7 @@
     "empty_state": {
       "inbox": {
         "title": "Příjem není povolen",
-        "description": "Aktivujte příjem v nastavení projektu pro správu požadavků.",
+        "description": "Aktivujte příjem v nastavení oddělení pro správu požadavků.",
         "primary_button": {
           "text": "Spravovat funkce"
         }
@@ -315,21 +315,21 @@
       },
       "module": {
         "title": "Moduly nejsou povoleny",
-        "description": "Aktivujte moduly v nastavení projektu.",
+        "description": "Aktivujte moduly v nastavení oddělení.",
         "primary_button": {
           "text": "Spravovat funkce"
         }
       },
       "page": {
         "title": "Stránky nejsou povoleny",
-        "description": "Aktivujte stránky v nastavení projektu.",
+        "description": "Aktivujte stránky v nastavení oddělení.",
         "primary_button": {
           "text": "Spravovat funkce"
         }
       },
       "view": {
         "title": "Pohledy nejsou povoleny",
-        "description": "Aktivujte pohledy v nastavení projektu.",
+        "description": "Aktivujte pohledy v nastavení oddělení.",
         "primary_button": {
           "text": "Spravovat funkce"
         }
@@ -392,7 +392,7 @@
           "complete": "Import dokončen"
         },
         "message": {
-          "success": "Úspěšně importováno {count} člen{plural} do projektu.",
+          "success": "Úspěšně importováno {count} člen{plural} do oddělení.",
           "no_imports": "Ze souboru CSV nebyli importováni žádní noví členové."
         },
         "stats": {

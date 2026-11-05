@@ -2,13 +2,13 @@
   "templates": {
     "settings": {
       "title": "Szablony",
-      "description": "Zaoszczędź 80% czasu spędzonego na tworzeniu projektów, elementów pracy i stron, korzystając z szablonów.",
-      "new_project_template": "Nowy szablon projektu",
+      "description": "Zaoszczędź 80% czasu spędzonego na tworzeniu działów, elementów pracy i stron, korzystając z szablonów.",
+      "new_project_template": "Nowy szablon działu",
       "new_work_item_template": "Nowy szablon elementu pracy",
       "new_page_template": "Nowy szablon strony",
       "options": {
         "project": {
-          "label": "Szablony projektów"
+          "label": "Szablony działów"
         },
         "work_item": {
           "label": "Szablony elementów pracy"
@@ -20,7 +20,7 @@
       "create_template": {
         "label": "Utwórz szablon",
         "no_permission": {
-          "project": "Skontaktuj się z administratorem projektu, aby utworzyć szablony",
+          "project": "Skontaktuj się z administratorem działu, aby utworzyć szablony",
           "workspace": "Skontaktuj się z administratorem workspejsu, aby utworzyć szablony"
         }
       },
@@ -35,14 +35,14 @@
           "info": "Utworzony z workspejsu"
         },
         "project": {
-          "info": "Utworzony z projektu"
+          "info": "Utworzony z działu"
         }
       },
       "form": {
         "project": {
           "template": {
             "name": {
-              "placeholder": "Nazwij swój szablon projektu.",
+              "placeholder": "Nazwij swój szablon działu.",
               "validation": {
                 "required": "Nazwa szablonu jest wymagana",
                 "maxLength": "Nazwa szablonu powinna mieć mniej niż 255 znaków"
@@ -53,18 +53,18 @@
             }
           },
           "name": {
-            "placeholder": "Nazwij swój projekt.",
+            "placeholder": "Nazwij swój dział.",
             "validation": {
-              "required": "Tytuł projektu jest wymagany",
-              "maxLength": "Tytuł projektu powinien mieć mniej niż 255 znaków"
+              "required": "Tytuł działu jest wymagany",
+              "maxLength": "Tytuł działu powinien mieć mniej niż 255 znaków"
             }
           },
           "description": {
-            "placeholder": "Opisz cel i założenia tego projektu."
+            "placeholder": "Opisz cel i założenia tego działu."
           },
           "button": {
-            "create": "Utwórz szablon projektu",
-            "update": "Aktualizuj szablon projektu"
+            "create": "Utwórz szablon działu",
+            "update": "Aktualizuj szablon działu"
           }
         },
         "work_item": {
@@ -133,7 +133,7 @@
           },
           "short_description": {
             "label": "Krótki opis",
-            "placeholder": "Ten szablon jest idealny dla menedżerów projektów, którzy zarządzają wieloma projektami jednocześnie.",
+            "placeholder": "Ten szablon jest idealny dla menedżerów działów, którzy zarządzają wieloma działami jednocześnie.",
             "validation": {
               "required": "Krótki opis jest wymagany"
             }
@@ -227,17 +227,17 @@
     "empty_state": {
       "upgrade": {
         "title": "Szablony",
-        "description": "Dzięki szablonom projektów, elementów pracy i stron w Paradise Task Tracker nie musisz tworzyć projektu od podstaw ani ręcznie ustawiać właściwości elementów pracy.",
+        "description": "Dzięki szablonom działów, elementów pracy i stron w Paradise Task Tracker nie musisz tworzyć działu od podstaw ani ręcznie ustawiać właściwości elementów pracy.",
         "sub_description": "Odzyskaj 80% czasu administracyjnego, korzystając z Szablonów."
       },
       "no_templates": {
         "button": "Utwórz swój pierwszy szablon"
       },
       "no_labels": {
-        "description": " Brak etykiet. Utwórz etykiety, aby pomóc zorganizować i filtrować elementy pracy w Twoim projekcie."
+        "description": " Brak etykiet. Utwórz etykiety, aby pomóc zorganizować i filtrować elementy pracy w Twoim dziale."
       },
       "no_modules": {
-        "description": "Brak modułów. Organizuj pracę w podprojekty z dedykowanymi liderami i przypisanymi osobami."
+        "description": "Brak modułów. Organizuj pracę w poddziały z dedykowanymi liderami i przypisanymi osobami."
       },
       "no_work_items": {
         "description": "Brak elementów pracy. Dodaj jeden, aby lepiej zorganizować swoją pracę."
@@ -318,7 +318,7 @@
         "project": "Dodaj nowy szablon"
       },
       "label": {
-        "project": "Wybierz szablon projektu",
+        "project": "Wybierz szablon działu",
         "page": "Wybierz szablon"
       },
       "tooltip": {
