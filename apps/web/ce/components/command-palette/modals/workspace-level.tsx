@@ -4,32 +4,12 @@
  * See the LICENSE file for details.
  */
 
-import { observer } from "mobx-react";
-// components
-import { CreateProjectModal } from "@/components/project/create-project-modal";
-// hooks
-import { useCommandPalette } from "@/hooks/store/use-command-palette";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
-
 export type TWorkspaceLevelModalsProps = {
   workspaceSlug: string;
 };
 
-export const WorkspaceLevelModals = observer(function WorkspaceLevelModals(props: TWorkspaceLevelModalsProps) {
-  const { workspaceSlug } = props;
-  // store hooks
-  const { isCreateProjectModalOpen, toggleCreateProjectModal } = useCommandPalette();
-  // Paradise: jaring terakhir. Pintu mana pun yang lupa dijaga tetap tidak membuka
-  // formulir yang pasti ditolak server untuk staf / member biasa.
-  const bolehBuatProject = useBolehBuatProject(workspaceSlug);
-
-  return (
-    <>
-      <CreateProjectModal
-        isOpen={isCreateProjectModalOpen && bolehBuatProject}
-        onClose={() => toggleCreateProjectModal(false)}
-        workspaceSlug={workspaceSlug.toString()}
-      />
-    </>
-  );
-});
+// Paradise: departemen hanya dibuat di God Mode, jadi tidak ada lagi modal buat
+// project di level workspace. Komponen dipertahankan sebagai titik pasang CE.
+export function WorkspaceLevelModals(_props: TWorkspaceLevelModalsProps) {
+  return null;
+}

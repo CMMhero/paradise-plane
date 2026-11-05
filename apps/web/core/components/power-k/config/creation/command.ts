@@ -4,9 +4,9 @@
  * See the LICENSE file for details.
  */
 
-import { FileText, FolderPlus, Layers, SquarePlus } from "lucide-react";
+import { FileText, Layers, SquarePlus } from "lucide-react";
 // plane imports
-import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { EUserPermissionsLevel } from "@plane/constants";
 import { DiceIcon, LayersIcon } from "@plane/propel/icons";
 // components
 import { EUserProjectRoles } from "@plane/types";
@@ -16,14 +16,12 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser } from "@/hooks/store/user";
 import { useInstance } from "@/hooks/store/use-instance";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 
 export type TPowerKCreationCommandKeys =
   | "create_work_item"
   | "create_page"
   | "create_view"
   | "create_module"
-  | "create_project"
   | "create_workspace";
 
 /**
@@ -37,20 +35,10 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
     permission: { allowPermissions },
   } = useUser();
   const { workspaceProjectIds, getPartialProjectById } = useProject();
-  const {
-    toggleCreateIssueModal,
-    toggleCreateProjectModal,
-    toggleCreateModuleModal,
-    toggleCreateViewModal,
-    toggleCreatePageModal,
-  } = useCommandPalette();
+  const { toggleCreateIssueModal, toggleCreateModuleModal, toggleCreateViewModal, toggleCreatePageModal } =
+    useCommandPalette();
   // derived values
   const canCreateWorkItem = canPerformAnyCreateAction && workspaceProjectIds && workspaceProjectIds.length > 0;
-  // Paradise: staf / member biasa tidak boleh membuat project.
-  const bolehBuatProject = useBolehBuatProject();
-  const canCreateProject =
-    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
-    bolehBuatProject;
   const hasProjectMemberLevelPermissions = (ctx: TPowerKContext) =>
     allowPermissions(
       [EUserProjectRoles.ADMIN, EUserProjectRoles.MEMBER],
@@ -115,18 +103,6 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
       isEnabled: (ctx) => Boolean(getProjectDetails(ctx)?.module_view && hasProjectMemberLevelPermissions(ctx)),
       isVisible: (ctx) =>
         Boolean(ctx.params.projectId && getProjectDetails(ctx)?.module_view && hasProjectMemberLevelPermissions(ctx)),
-      closeOnSelect: true,
-    },
-    create_project: {
-      id: "create_project",
-      type: "action",
-      group: "create",
-      i18n_title: "power_k.creation_actions.create_project",
-      icon: FolderPlus,
-      keySequence: "np",
-      action: () => toggleCreateProjectModal(true),
-      isEnabled: () => Boolean(canCreateProject),
-      isVisible: () => Boolean(canCreateProject),
       closeOnSelect: true,
     },
     create_workspace: {

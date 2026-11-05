@@ -17,7 +17,6 @@ export const usePowerKCreationCommands = (): TPowerKCommandConfig[] => {
     optionsList["create_page"],
     optionsList["create_view"],
     optionsList["create_module"],
-    optionsList["create_project"],
     optionsList["create_workspace"],
   ];
 };

@@ -56,6 +56,17 @@ type TInboxIssueActionsHeader = {
   embedRemoveCurrentNotification?: () => void;
 };
 
+const handleActionWithPermission = (isAdmin: boolean, action: () => void, errorMessage: string) => {
+  if (isAdmin) action();
+  else {
+    setToast({
+      type: TOAST_TYPE.ERROR,
+      title: "Permission denied",
+      message: errorMessage,
+    });
+  }
+};
+
 export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader(props: TInboxIssueActionsHeader) {
   const {
     workspaceSlug,
@@ -161,6 +172,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
     if (!inboxIssue || !currentInboxIssueId) return;
     await deleteInboxIssue(workspaceSlug, projectId, currentInboxIssueId).then(() => {
       if (!isNotificationEmbed) router.push(`/${workspaceSlug}/projects/${projectId}/intake`);
+      return;
     });
   };
 
@@ -211,17 +223,6 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
     },
     [handleInboxIssueNavigation]
   );
-
-  const handleActionWithPermission = (isAdmin: boolean, action: () => void, errorMessage: string) => {
-    if (isAdmin) action();
-    else {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "Permission denied",
-        message: errorMessage,
-      });
-    }
-  };
 
   useEffect(() => {
     if (isSubmitting === "submitting") return;
@@ -407,7 +408,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
                           handleActionWithPermission(
                             isProjectAdmin,
                             () => setSelectDuplicateIssue(true),
-                            "Only project admins can mark work item as duplicate"
+                            "Only department admins can mark work item as duplicate"
                           )
                         }
                       >

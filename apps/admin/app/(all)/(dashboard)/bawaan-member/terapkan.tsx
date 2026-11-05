@@ -55,7 +55,7 @@ export function TerapkanKeSemua({ isDirty }: Props) {
   return (
     <section className="space-y-2">
       <div className="space-y-0.5">
-        <h3 className="text-11 font-medium tracking-wide text-secondary uppercase">{t.apply_title}</h3>
+        <h3 className="text-11 font-medium text-secondary">{t.apply_title}</h3>
         <p className="text-12 text-tertiary">{isDirty ? t.apply_unsaved : t.apply_note}</p>
       </div>
       <div className="flex flex-wrap gap-2">

@@ -8,7 +8,6 @@ import { useState } from "react";
 import { observer } from "mobx-react";
 import { useRouter } from "next/navigation";
 // plane package imports
-import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EmptyStateDetailed } from "@plane/propel/empty-state";
 import { Tabs } from "@plane/propel/tabs";
@@ -17,11 +16,8 @@ import { cn } from "@plane/utils";
 import AnalyticsFilterActions from "@/components/analytics/analytics-filter-actions";
 import { PageHead } from "@/components/core/page-title";
 // hooks
-import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useWorkspace } from "@/hooks/store/use-workspace";
-import { useUserPermissions } from "@/hooks/store/user";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 import { useAnalyticsTabs } from "@/plane-web/components/analytics/use-analytics-tabs";
 import type { Route } from "./+types/page";
 
@@ -35,21 +31,12 @@ function AnalyticsPage({ params }: Route.ComponentProps) {
   const { t } = useTranslation();
 
   // store hooks
-  const { toggleCreateProjectModal } = useCommandPalette();
   const { workspaceProjectIds, loader } = useProject();
   const { currentWorkspace } = useWorkspace();
-  const { allowPermissions } = useUserPermissions();
 
   const pageTitle = currentWorkspace?.name
     ? t(`workspace_analytics.page_label`, { workspace: currentWorkspace?.name })
     : undefined;
-
-  // permissions
-  // Paradise: tombol kosong di sini membuat project, jadi staf / member biasa tidak boleh.
-  const bolehBuatProject = useBolehBuatProject();
-  const canPerformEmptyStateActions =
-    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
-    bolehBuatProject;
 
   const workspaceSlug = params.workspaceSlug;
   const ANALYTICS_TABS = useAnalyticsTabs(workspaceSlug.toString());
@@ -123,15 +110,6 @@ function AnalyticsPage({ params }: Route.ComponentProps) {
               assetKey="project"
               title={t("workspace_projects.empty_state.no_projects.title")}
               description={t("workspace_projects.empty_state.no_projects.description")}
-              actions={[
-                {
-                  label: "Create a project",
-                  onClick: () => {
-                    toggleCreateProjectModal(true);
-                  },
-                  disabled: !canPerformEmptyStateActions,
-                },
-              ]}
             />
           )}
         </>

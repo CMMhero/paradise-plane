@@ -97,6 +97,7 @@ export function ProjectDetailsForm(props: IProjectDetailsForm) {
           title: t("toast.success"),
           message: t("project_settings.general.toast.success"),
         });
+        return;
       })
       .catch((err) => {
         try {
@@ -192,6 +193,7 @@ export function ProjectDetailsForm(props: IProjectDetailsForm) {
         .then(async (res) => {
           if (res.exists) setError("identifier", { message: t("common.identifier_already_exists") });
           else await handleUpdateChange(payload);
+          return;
         });
     else await handleUpdateChange(payload);
     setTimeout(() => {
@@ -283,7 +285,7 @@ export function ProjectDetailsForm(props: IProjectDetailsForm) {
               required: t("name_is_required"),
               maxLength: {
                 value: 255,
-                message: "Project name should be less than 255 characters",
+                message: "Department name should be less than 255 characters",
               },
             }}
             render={({ field: { value, onChange, ref } }) => (
@@ -423,8 +425,8 @@ export function ProjectDetailsForm(props: IProjectDetailsForm) {
                 <>
                   <TimezoneSelect
                     value={value}
-                    onChange={(value: string) => {
-                      onChange(value);
+                    onChange={(timezone: string) => {
+                      onChange(timezone);
                     }}
                     error={Boolean(errors.timezone)}
                     buttonClassName="!border-subtle font-medium"

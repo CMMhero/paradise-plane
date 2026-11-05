@@ -13,24 +13,18 @@ import { useParams, usePathname } from "next/navigation";
 import { Ellipsis } from "lucide-react";
 import { Disclosure, Transition } from "@headlessui/react";
 // plane imports
-import { EUserPermissions, EUserPermissionsLevel, PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { PlusIcon, ChevronRightIcon } from "@plane/propel/icons";
+import { ChevronRightIcon } from "@plane/propel/icons";
 import { IconButton } from "@plane/propel/icon-button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { Tooltip } from "@plane/propel/tooltip";
 import { Loader } from "@plane/ui";
 import { copyUrlToClipboard, cn, orderJoinedProjects } from "@plane/utils";
 // components
-import { CreateProjectModal } from "@/components/project/create-project-modal";
 import { SidebarNavItem } from "@/components/sidebar/sidebar-navigation";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
-import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
-import { useUserPermissions } from "@/hooks/store/user";
 import { useProjectNavigationPreferences } from "@/hooks/use-navigation-preferences";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 // plane web imports
 import type { TProject } from "@plane/types";
 // services
@@ -44,14 +38,11 @@ const organisasiService = new OrganisasiService();
 export const SidebarProjectsList = observer(function SidebarProjectsList() {
   // states
   const [isAllProjectsListOpen, setIsAllProjectsListOpen] = useState(true);
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false); // scroll animation state
   // refs
   const containerRef = useRef<HTMLDivElement | null>(null);
   // store hooks
   const { t } = useTranslation();
-  const { toggleCreateProjectModal } = useCommandPalette();
-  const { allowPermissions } = useUserPermissions();
   const { preferences: projectPreferences } = useProjectNavigationPreferences();
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar } = useAppTheme();
 
@@ -66,12 +57,6 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
     workspaceSlug ? () => organisasiService.getStruktur(workspaceSlug.toString()) : null,
     { revalidateOnFocus: false }
   );
-
-  // auth. Paradise: dipakai hanya untuk tombol buat project; staf / member biasa tidak boleh.
-  const bolehBuatProject = useBolehBuatProject(workspaceSlug?.toString());
-  const isAuthorizedUser =
-    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
-    bolehBuatProject;
 
   // Compute limited projects for main sidebar
   const displayedProjects = projectPreferences.showLimitedProjects
@@ -172,14 +157,6 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
   }, [pathname]);
   return (
     <>
-      {workspaceSlug && (
-        <CreateProjectModal
-          isOpen={isProjectModalOpen}
-          onClose={() => setIsProjectModalOpen(false)}
-          setToFavorite={false}
-          workspaceSlug={workspaceSlug.toString()}
-        />
-      )}
       <div
         ref={containerRef}
         className={cn({
@@ -203,21 +180,6 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
                 <span className="text-13 font-semibold">{t("projects")}</span>
               </Disclosure.Button>
               <div className="flex items-center gap-1">
-                {isAuthorizedUser && (
-                  <Tooltip tooltipHeading={t("create_project")} tooltipContent="">
-                    <IconButton
-                      variant="ghost"
-                      size="sm"
-                      icon={PlusIcon}
-                      onClick={() => {
-                        setIsProjectModalOpen(true);
-                      }}
-                      data-ph-element={PROJECT_TRACKER_ELEMENTS.SIDEBAR_CREATE_PROJECT_TOOLTIP}
-                      className="hidden text-placeholder group-hover:inline-flex"
-                      aria-label={t("aria_labels.projects_sidebar.create_new_project")}
-                    />
-                  </Tooltip>
-                )}
                 <IconButton
                   variant="ghost"
                   size="sm"
@@ -301,19 +263,6 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
             </Transition>
           </Disclosure>
         </>
-
-        {isAuthorizedUser && joinedProjects?.length === 0 && (
-          <button
-            type="button"
-            data-ph-element={PROJECT_TRACKER_ELEMENTS.SIDEBAR_CREATE_PROJECT_BUTTON}
-            className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-13 leading-5 font-medium text-secondary hover:bg-surface-2"
-            onClick={() => {
-              toggleCreateProjectModal(true);
-            }}
-          >
-            {t("add_project")}
-          </button>
-        )}
       </div>
     </>
   );

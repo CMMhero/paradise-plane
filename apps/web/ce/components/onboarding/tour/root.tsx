@@ -16,9 +16,7 @@ import ModulesTour from "@/app/assets/onboarding/modules.webp?url";
 import PagesTour from "@/app/assets/onboarding/pages.webp?url";
 import ViewsTour from "@/app/assets/onboarding/views.webp?url";
 // hooks
-import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useUser } from "@/hooks/store/user";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 // local imports
 import { TourSidebar } from "./sidebar";
 
@@ -84,10 +82,7 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
   // states
   const [step, setStep] = useState<TTourSteps>("welcome");
   // store hooks
-  const { toggleCreateProjectModal } = useCommandPalette();
   const { data: currentUser } = useUser();
-  // Paradise: staf / member biasa tidak boleh membuat project.
-  const bolehBuatProject = useBolehBuatProject();
 
   const currentStepIndex = TOUR_STEPS.findIndex((tourStep) => tourStep.key === step);
   const currentStep = TOUR_STEPS[currentStepIndex];
@@ -105,8 +100,8 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
                 Selamat datang di Paradise Task Tracker, {currentUser?.first_name} {currentUser?.last_name}
               </h3>
               <p className="mt-3 text-13 text-secondary">
-                We{"'"}re senang Anda bergabung. You can now manage your projects with ease. Get started by creating a
-                project.
+                We{"'"}re senang Anda bergabung. You can now manage your departments with ease. Take a quick tour to see
+                how it works.
               </p>
               <div className="flex h-full items-end">
                 <div className="mt-12 flex items-center gap-6">
@@ -166,17 +161,6 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
                     </Button>
                   )}
                 </div>
-                {currentStepIndex === TOUR_STEPS.length - 1 && bolehBuatProject && (
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      onComplete();
-                      toggleCreateProjectModal(true);
-                    }}
-                  >
-                    Create your first project
-                  </Button>
-                )}
               </div>
             </div>
           </div>

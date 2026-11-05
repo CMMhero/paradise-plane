@@ -60,7 +60,7 @@ const PROJECT_FEATURES_LIST = {
     key: "intake",
     property: "inbox_view",
     title: "Intake",
-    description: "Consider and discuss work items before you add them to your project.",
+    description: "Consider and discuss work items before you add them to your department.",
     icon: <IntakeIcon className="h-5 w-5 flex-shrink-0 text-tertiary" />,
     isPro: false,
     isEnabled: true,
@@ -93,14 +93,14 @@ export const ProjectFeaturesList = observer(function ProjectFeaturesList(props: 
     const updateProjectPromise = updateProject(workspaceSlug, projectId, settingsPayload);
 
     setPromiseToast(updateProjectPromise, {
-      loading: "Updating project feature...",
+      loading: "Updating department feature...",
       success: {
         title: "Success!",
-        message: () => "Project feature updated successfully.",
+        message: () => "Department feature updated successfully.",
       },
       error: {
         title: "Error!",
-        message: () => "Something went wrong while updating project feature. Please try again.",
+        message: () => "Something went wrong while updating department feature. Please try again.",
       },
     });
     void updateProjectPromise.then(() => {

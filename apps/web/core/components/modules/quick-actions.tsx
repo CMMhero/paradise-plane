@@ -78,7 +78,7 @@ export const ModuleQuickActions = observer(function ModuleQuickActions(props: Pr
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Restore success",
-        message: "Your module can be found in project modules.",
+        message: "Your module can be found in department modules.",
       });
       router.push(`/${workspaceSlug}/projects/${projectId}/archives/modules`);
     } catch (_error) {

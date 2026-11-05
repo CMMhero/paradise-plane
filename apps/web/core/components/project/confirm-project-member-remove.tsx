@@ -61,7 +61,7 @@ export const ConfirmProjectMemberRemove = observer(function ConfirmProjectMember
           </div>
           <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
             <h3 className="text-16 leading-6 font-medium text-primary">
-              {isCurrentUser ? "Leave project?" : `Remove ${data?.display_name}?`}
+              {isCurrentUser ? "Leave department?" : `Remove ${data?.display_name}?`}
             </h3>
             <div className="mt-2">
               <p className="text-13 text-secondary">
@@ -73,7 +73,7 @@ export const ConfirmProjectMemberRemove = observer(function ConfirmProjectMember
                 ) : (
                   <>
                     Are you sure you want to remove member- <span className="font-bold">{data?.display_name}</span>?
-                    They will no longer have access to this project. This action cannot be undone.
+                    They will no longer have access to this department. This action cannot be undone.
                   </>
                 )}
               </p>
@@ -85,7 +85,7 @@ export const ConfirmProjectMemberRemove = observer(function ConfirmProjectMember
         <Button variant="secondary" size="lg" onClick={handleClose}>
           Cancel
         </Button>
-        <Button variant="error-fill" size="lg" tabIndex={1} onClick={handleDeletion} loading={isDeleteLoading}>
+        <Button variant="error-fill" size="lg" onClick={handleDeletion} loading={isDeleteLoading}>
           {isCurrentUser ? (isDeleteLoading ? "Leaving..." : "Leave") : isDeleteLoading ? "Removing..." : "Remove"}
         </Button>
       </div>

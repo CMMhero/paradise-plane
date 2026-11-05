@@ -12,6 +12,14 @@ import type { TPartialProject } from "@plane/types";
 // local imports
 import { PowerKMenuBuilder } from "./builder";
 
+function getProjectIconNode(project: TPartialProject) {
+  return (
+    <span className="shrink-0">
+      <Logo logo={project.logo_props} size={14} />
+    </span>
+  );
+}
+
 type Props = {
   projects: TPartialProject[];
   onSelect: (project: TPartialProject) => void;
@@ -22,15 +30,11 @@ export function PowerKProjectsMenu({ projects, onSelect }: Props) {
     <PowerKMenuBuilder
       items={projects}
       getKey={(project) => project.id}
-      getIconNode={(project) => (
-        <span className="shrink-0">
-          <Logo logo={project.logo_props} size={14} />
-        </span>
-      )}
+      getIconNode={getProjectIconNode}
       getValue={(project) => project.name}
       getLabel={(project) => project.name}
       onSelect={onSelect}
-      emptyText="No projects found"
+      emptyText="No departments found"
     />
   );
 }

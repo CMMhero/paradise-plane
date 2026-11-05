@@ -106,12 +106,12 @@ function WorkspaceInvitationPage() {
         ) : invitationDetail && !invitationDetail.responded_at ? (
           error ? (
             <div className="shadow-2xl flex w-full flex-col space-y-4 rounded-sm border border-subtle bg-surface-1 px-4 py-8 text-center md:w-1/3">
-              <h2 className="text-18 uppercase">INVITATION NOT FOUND</h2>
+              <h2 className="text-18">Invitation not found</h2>
             </div>
           ) : (
             <EmptySpace
               title={`You have been invited to ${invitationDetail.workspace.name}`}
-              description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Paradise Task Tracker account."
+              description="Your workspace is where you'll collaborate on your work items and organize different streams of work in your Paradise Task Tracker account."
             >
               <EmptySpaceItem Icon={CheckIcon} title="Accept" action={handleAccept} />
               <EmptySpaceItem Icon={CloseIcon} title="Ignore" action={handleReject} />
@@ -121,7 +121,7 @@ function WorkspaceInvitationPage() {
           invitationDetail?.accepted ? (
             <EmptySpace
               title={`You are already a member of ${invitationDetail.workspace.name}`}
-              description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Paradise Task Tracker account."
+              description="Your workspace is where you'll collaborate on your work items and organize different streams of work in your Paradise Task Tracker account."
             >
               <EmptySpaceItem Icon={Boxes} title="Continue to home" href="/" />
             </EmptySpace>

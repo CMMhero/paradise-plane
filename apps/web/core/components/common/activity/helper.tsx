@@ -103,7 +103,7 @@ export const messages = (activity: TProjectActivity): { message: string | ReactN
       };
     case "archived_at":
       return {
-        message: newValue === "restore" ? "restored the project" : "archived the project",
+        message: newValue === "restore" ? "restored the department" : "archived the department",
         customUserName: newValue === "archive" ? "Sistem" : undefined,
       };
     case "name":
@@ -116,7 +116,7 @@ export const messages = (activity: TProjectActivity): { message: string | ReactN
       };
     case "description":
       return {
-        message: newValue ? "updated the project description" : "removed the project description",
+        message: newValue ? "updated the department description" : "removed the department description",
       };
     case "start_date":
       return {

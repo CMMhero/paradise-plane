@@ -43,7 +43,8 @@ export function DeleteProjectModal(props: DeleteProjectModal) {
     watch,
   } = useForm({ defaultValues });
 
-  const canDelete = watch("projectName") === project?.name && watch("confirmDelete") === "delete my project";
+  // oxlint-disable-next-line react/incompatible-library -- react-hook-form watch() is used for derived confirmation state
+  const canDelete = watch("projectName") === project?.name && watch("confirmDelete") === "delete my department";
 
   const handleClose = () => {
     const timer = setTimeout(() => {
@@ -64,7 +65,7 @@ export function DeleteProjectModal(props: DeleteProjectModal) {
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Success!",
-        message: "Project deleted successfully.",
+        message: "Department deleted successfully.",
       });
     } catch (_error) {
       setToast({
@@ -89,7 +90,7 @@ export function DeleteProjectModal(props: DeleteProjectModal) {
         <span>
           <p className="text-13 leading-7 text-secondary">
             Are you sure you want to delete project <span className="font-semibold break-words">{project?.name}</span>?
-            All of the data related to the project will be permanently removed. This action cannot be undone
+            All of the data related to the department will be permanently removed. This action cannot be undone
           </p>
         </span>
         <div className="text-secondary">
@@ -108,7 +109,7 @@ export function DeleteProjectModal(props: DeleteProjectModal) {
                 onChange={onChange}
                 ref={ref}
                 hasError={Boolean(errors.projectName)}
-                placeholder="Project name"
+                placeholder="Department name"
                 className="mt-2 w-full"
                 autoComplete="off"
               />
@@ -117,7 +118,7 @@ export function DeleteProjectModal(props: DeleteProjectModal) {
         </div>
         <div className="text-secondary">
           <p className="text-13">
-            To confirm, type <span className="font-medium text-primary">delete my project</span> below:
+            To confirm, type <span className="font-medium text-primary">delete my department</span> below:
           </p>
           <Controller
             control={control}
@@ -131,7 +132,7 @@ export function DeleteProjectModal(props: DeleteProjectModal) {
                 onChange={onChange}
                 ref={ref}
                 hasError={Boolean(errors.confirmDelete)}
-                placeholder="Enter 'delete my project'"
+                placeholder="Enter 'delete my department'"
                 className="mt-2 w-full"
                 autoComplete="off"
               />
@@ -143,7 +144,7 @@ export function DeleteProjectModal(props: DeleteProjectModal) {
             Cancel
           </Button>
           <Button variant="error-fill" size="lg" type="submit" disabled={!canDelete} loading={isSubmitting}>
-            {isSubmitting ? "Deleting" : "Delete project"}
+            {isSubmitting ? "Deleting" : "Delete department"}
           </Button>
         </div>
       </form>

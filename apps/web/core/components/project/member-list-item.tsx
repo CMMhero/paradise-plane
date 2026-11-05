@@ -48,11 +48,12 @@ export const ProjectMemberListItem = observer(function ProjectMemberListItem(pro
       await leaveProject(workspaceSlug.toString(), projectId.toString())
         .then(async () => {
           router.push(`/${workspaceSlug}/projects`);
+          return;
         })
         .catch((err) => {
           setToast({
             type: TOAST_TYPE.ERROR,
-            title: "You can’t leave this project yet.",
+            title: "You can’t leave this department yet.",
             message: err?.error || "Something went wrong. Please try again.",
           });
         });
@@ -60,7 +61,7 @@ export const ProjectMemberListItem = observer(function ProjectMemberListItem(pro
       await removeMemberFromProject(workspaceSlug.toString(), projectId.toString(), memberId).catch((err) =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "You can't remove the member from this project yet.",
+          title: "You can't remove the member from this department yet.",
           message: err?.error || "Something went wrong. Please try again.",
         })
       );

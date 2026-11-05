@@ -55,9 +55,7 @@ export const Default: Story = {
       <div className="space-y-8">
         {/* Example 1: Navigation with anchor tags (simulating React Router Link) */}
         <div className="space-y-3">
-          <div className="text-11 font-medium tracking-wide text-tertiary uppercase">
-            With Navigation Links (e.g., React Router)
-          </div>
+          <div className="text-11 font-medium text-tertiary">With Navigation Links (e.g., React Router)</div>
           <TabNavigationList>
             {navItems.map((item) => (
               <a

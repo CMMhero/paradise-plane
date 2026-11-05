@@ -45,7 +45,7 @@ export function ArchiveModuleModal(props: Props) {
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "Archive success",
-          message: "Your archives can be found in project archives.",
+          message: "Your archives can be found in department archives.",
         });
         onClose();
         router.push(`/${workspaceSlug}/projects/${projectId}/modules`);
@@ -72,7 +72,7 @@ export function ArchiveModuleModal(props: Props) {
           <Button variant="secondary" size="lg" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" size="lg" tabIndex={1} onClick={handleArchiveModule} loading={isArchiving}>
+          <Button variant="primary" size="lg" onClick={handleArchiveModule} loading={isArchiving}>
             {isArchiving ? "Archiving" : "Archive"}
           </Button>
         </div>

@@ -38,7 +38,7 @@ const PERM_STRUCTURE_KEYS = [
 const PERM_CONTENT_CHOICES: Record<number, string> = {
   0: "Owner and their superiors",
   1: "Owner only",
-  2: "Any project member",
+  2: "Any department member",
 };
 const PERM_STRUCTURE_CHOICES: Record<number, string> = {
   20: "Supervisor and above, in their departments",
@@ -92,12 +92,15 @@ export const settingsStrings = {
     ),
     rules_permissions: tab(
       "Permissions",
-      "Who else may change, archive, or delete modules, pages, views, comments, Wiki files, projects, and trash."
+      "Who else may change, archive, or delete modules, pages, views, comments, Wiki files, departments, and trash."
     ),
-    rules_archiving: tab("Archiving", "When finished work items move to the archive, and how projects can go sooner."),
+    rules_archiving: tab(
+      "Archiving",
+      "When finished work items move to the archive, and how departments can go sooner."
+    ),
     rules_projects: tab(
-      "New project defaults",
-      "Settings every new project starts with. The create form is pre-filled, so the creator can still change them."
+      "New department defaults",
+      "Settings every new department starts with. They are applied when a department is created in Organization."
     ),
     notifications_email: tab("Email server", "Configure your SMTP controls."),
     notifications_sending: tab("Sending rules", "Which emails go out, how they are grouped, and who receives them."),
@@ -139,7 +142,7 @@ export const settingsStrings = {
     approvals: { title: "Approvals", hint: "Applies to work items finished by staff." },
     ownership: {
       title: "Ownership",
-      hint: "Who may act on a work item that belongs to someone else. Modules, pages, comments, and projects are on the Permissions tab.",
+      hint: "Who may act on a work item that belongs to someone else. Modules, pages, comments, and departments are on the Permissions tab.",
     },
     hierarchy: { title: "Hierarchy" },
     dates_fill: { title: "Filling dates" },
@@ -150,15 +153,15 @@ export const settingsStrings = {
     perm_comments: { title: "Comments", hint: "Comments on work items. The owner is the author." },
     perm_wiki: { title: "Wiki files", hint: "Files in the company library. The owner is the uploader." },
     perm_projects: {
-      title: "Projects",
-      hint: "Projects have no single owner. Supervisors act on projects in their departments, managers in their divisions, directors on everything they oversee.",
+      title: "Departments",
+      hint: "Departments have no single owner. Supervisors act on their own department, managers in their divisions, directors on everything they oversee.",
     },
     perm_trash: {
       title: "Trash",
-      hint: "Work items, pages, and modules waiting in a project's trash after someone deleted them.",
+      hint: "Work items, pages, and modules waiting in a department's trash after someone deleted them.",
     },
     archive_instance: { title: "Instance ceiling" },
-    archive_projects: { title: "New projects" },
+    archive_projects: { title: "New departments" },
     sending_reminders: { title: "Reminders" },
     sending_chat: { title: "Chat" },
     sending_work: { title: "Work item email" },
@@ -169,8 +172,8 @@ export const settingsStrings = {
     modules_sidebar: { title: "Main sidebar" },
     modules_workspace: { title: "Workspace menu" },
     modules_project: {
-      title: "Project menu",
-      hint: "Project admins can still turn these on or off per project. A module that is off here is hidden in every project.",
+      title: "Department menu",
+      hint: "Department admins can still turn these on or off per department. A module that is off here is hidden in every department.",
     },
     modules_work_item: { title: "Work item features" },
     chat_limits: { title: "Messages" },
@@ -216,7 +219,7 @@ export const settingsStrings = {
     },
     TASK_DELETE_RULE: {
       name: "Who can delete or archive a work item",
-      help: "Applies to every work item in every project.",
+      help: "Applies to every work item in every department.",
     },
     DUE_DATE_CHANGE_RULE: {
       name: "Who can change a due date",
@@ -232,7 +235,7 @@ export const settingsStrings = {
     },
     PERM_MODULE_DELETE: {
       name: "Delete a module",
-      help: "Who can delete another person's module. Its work items stay in the project. Its creator, lead, and members can always delete it.",
+      help: "Who can delete another person's module. Its work items stay in the department. Its creator, lead, and members can always delete it.",
     },
     PERM_PAGE_EDIT: {
       name: "Edit a page",
@@ -271,28 +274,28 @@ export const settingsStrings = {
       help: "Who can delete a file someone else uploaded. Uploaders can always delete their own.",
     },
     PERM_PROJECT_EDIT: {
-      name: "Project details and settings",
-      help: "Who can change a project's name, identifier, cover, features, and automation.",
+      name: "Department details and settings",
+      help: "Who can change a department's name, identifier, cover, features, and automation.",
     },
     PERM_PROJECT_WORKFLOW: {
-      name: "Project workflow",
-      help: "Who can add, change, or remove a project's states, labels, estimates, and intake.",
+      name: "Department workflow",
+      help: "Who can add, change, or remove a department's states, labels, estimates, and intake.",
     },
     PERM_PROJECT_ARCHIVE: {
-      name: "Archive a project",
-      help: "Who can archive a project or bring it back.",
+      name: "Archive a department",
+      help: "Who can archive a department or bring it back.",
     },
     PERM_PROJECT_DELETE: {
-      name: "Delete a project",
-      help: "Who can delete a whole project, with all its work items, modules, and pages.",
+      name: "Delete a department",
+      help: "Who can delete a whole department, with all its work items, modules, and pages.",
     },
     PERM_TRASH_RESTORE: {
       name: "Restore from trash",
-      help: "Who can bring back something another person deleted in a project.",
+      help: "Who can bring back something another person deleted in a department.",
     },
     PERM_TRASH_PURGE: {
       name: "Delete for good",
-      help: "Who can remove something from a project's trash before the retention period ends. This cannot be undone.",
+      help: "Who can remove something from a department's trash before the retention period ends. This cannot be undone.",
     },
     ASSIGN_DOWN_ONLY: {
       name: "Assign to lower levels only",
@@ -320,7 +323,7 @@ export const settingsStrings = {
     },
     AUTO_ARCHIVE_DONE_DAYS: {
       name: "Archive done work items after",
-      help: "The ceiling for every project: done work items are archived once they have been done this long. A project can archive sooner, never later than this. Checked once a day.",
+      help: "The ceiling for every department: done work items are archived once they have been done this long. A department can archive sooner, never later than this. Checked once a day.",
     },
     ENABLE_DEADLINE_REMINDER: {
       name: "Due date reminders",
@@ -463,24 +466,24 @@ export const settingsStrings = {
     quick_links: { name: "Quick links", desc: "Personal bookmarks to pages inside and outside the app." },
     dashboards: { name: "Dashboards", desc: "Division dashboards with progress and workload per department." },
     initiatives: { name: "Initiatives", desc: "Cross-project goals that group related work." },
-    views: { name: "Views", desc: "Saved work item views, at workspace and project level." },
+    views: { name: "Views", desc: "Saved work item views, at workspace and department level." },
     analytics: { name: "Analytics", desc: "Workspace analytics and insight charts." },
     chat: { name: "Chat", desc: "Direct messages, group channels, and voice or video calls." },
-    wiki: { name: "Wiki", desc: "Company file library, plus the per-folder access setting in projects." },
-    archives: { name: "Archives", desc: "Archived projects, work items, and modules." },
+    wiki: { name: "Wiki", desc: "Company file library, plus the per-folder access setting in departments." },
+    archives: { name: "Archives", desc: "Archived departments, work items, and modules." },
     work_items: {
       name: "Work items",
-      desc: "Project work item lists and detail pages. Turning this off leaves projects with almost nothing to show.",
+      desc: "Department work item lists and detail pages. Turning this off leaves departments with almost nothing to show.",
     },
-    modules: { name: "Modules", desc: "Groups of related work items inside a project." },
-    pages: { name: "Pages", desc: "Project documents written in the editor." },
-    intake: { name: "Intake", desc: "Requests from outside the project that wait for triage." },
+    modules: { name: "Modules", desc: "Groups of related work items inside a department." },
+    pages: { name: "Pages", desc: "Department documents written in the editor." },
+    intake: { name: "Intake", desc: "Requests from outside the department that wait for triage." },
     approvals: {
       name: "Approvals",
       desc: "Approval queue per division. With the hierarchy gate on, keep this on so superiors can approve staff work.",
     },
     time_tracking: { name: "Time tracking", desc: "Worklogs on work items and logged hours on division dashboards." },
-    estimates: { name: "Estimates", desc: "Story points or time estimates on work items, per project." },
+    estimates: { name: "Estimates", desc: "Story points or time estimates on work items, per department." },
   },
 
   /** Labels for choice values. A value the server adds later falls back to "Option N". */
@@ -492,13 +495,13 @@ export const settingsStrings = {
       40: "Everyone below director",
     },
     TASK_DELETE_RULE: {
-      0: "Creator, project admins and Super Admin",
+      0: "Creator, department admins and Super Admin",
       1: "Creator and Super Admin only",
       2: "Anyone who may edit the work item",
     },
     DUE_DATE_CHANGE_RULE: {
       0: "Creator and Super Admin",
-      1: "Creator, project admins and Super Admin",
+      1: "Creator, department admins and Super Admin",
       2: "Anyone who may edit the work item",
     },
     DUE_DATE_ON_EARLY_DONE: {
@@ -609,20 +612,21 @@ export const settingsStrings = {
   },
 
   archiving: {
-    ceiling_hint: "The instance ceiling applies to every project. A project can archive sooner, never later than this.",
-    projects_title: "New project archive and close timing",
+    ceiling_hint:
+      "The instance ceiling applies to every department. A department can archive sooner, never later than this.",
+    projects_title: "New department archive and close timing",
     projects_hint:
-      "What a new project starts with. A project can archive sooner, never later than the instance ceiling above: a longer value here is capped to the ceiling when the check runs.",
+      "What a new department starts with. A department can archive sooner, never later than the instance ceiling above: a longer value here is capped to the ceiling when the check runs.",
     archive_in: "Archive completed work items after",
     close_in: "Close stale work items after",
     months: "{count} months",
     off: "Off",
-    projects_help: "Months. 0 turns it off for new projects. Existing projects are not changed.",
-    load_failed: "Could not load the project defaults.",
+    projects_help: "Months. 0 turns it off for new departments. Existing departments are not changed.",
+    load_failed: "Could not load the department defaults.",
     reset: "Reset to defaults",
     saved: "Archiving saved",
     save_failed: "Could not save",
-    label: "New project archiving",
+    label: "New department archiving",
   },
 
   google: {

@@ -17,7 +17,7 @@ import { useUser } from "@/hooks/store/use-user";
 // God Mode is English-only (no i18n provider), so the captions live here.
 // Keep them in step with `login_ui.slide_*` in the web app's paradise.json.
 const CAPTIONS: AuthShowcaseProps["captions"] = [
-  { title: "Every project, one board", description: "Work grouped by department and division." },
+  { title: "Every department, one board", description: "Work grouped by department and division." },
   { title: "See where each division stands", description: "What's done and what's overdue." },
   { title: "Everything about a task in one place", description: "Sub-tasks, files and due dates." },
   { title: "Talk next to the work", description: "Channels and direct messages." },

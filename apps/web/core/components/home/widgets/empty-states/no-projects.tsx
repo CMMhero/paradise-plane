@@ -4,7 +4,6 @@
  * See the LICENSE file for details.
  */
 
-import React from "react";
 // mobx
 import { observer } from "mobx-react";
 import Link from "next/link";
@@ -14,11 +13,9 @@ import { Hotel } from "lucide-react";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useLocalStorage } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
-import { MembersPropertyIcon, CheckIcon, ProjectIcon, CloseIcon } from "@plane/propel/icons";
+import { MembersPropertyIcon, CheckIcon, CloseIcon } from "@plane/propel/icons";
 import { cn, getFileURL } from "@plane/utils";
 // hooks
-import { useCommandPalette } from "@/hooks/store/use-command-palette";
-import { useBolehBuatProject } from "@/hooks/use-boleh-buat-project";
 import { useProject } from "@/hooks/store/use-project";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
@@ -29,7 +26,6 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
   const { workspaceSlug } = useParams();
   // store hooks
   const { allowPermissions } = useUserPermissions();
-  const { toggleCreateProjectModal } = useCommandPalette();
   const { data: currentUser } = useUser();
   const { joinedProjectIds } = useProject();
   const { currentWorkspace: activeWorkspace } = useWorkspace();
@@ -42,31 +38,9 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
   });
   const { t } = useTranslation();
   // derived values
-  // Paradise: staf / member biasa tidak boleh membuat project (server menolak 403).
-  const bolehBuatProject = useBolehBuatProject(workspaceSlug?.toString());
-  const canCreateProject =
-    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.WORKSPACE) &&
-    bolehBuatProject;
   const isWorkspaceAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
 
   const EMPTY_STATE_DATA = [
-    {
-      id: "create-project",
-      title: "home.empty.create_project.title",
-      description: "home.empty.create_project.description",
-      icon: <ProjectIcon className="size-4" />,
-      flag: "projects",
-      cta: {
-        text: "home.empty.create_project.cta",
-        onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-          if (!canCreateProject) return;
-          e.preventDefault();
-          e.stopPropagation();
-          toggleCreateProjectModal(true);
-        },
-        disabled: !canCreateProject,
-      },
-    },
     {
       id: "invite-team",
       title: "home.empty.invite_team.title",
@@ -123,8 +97,6 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
   ];
   const isComplete = (type: string) => {
     switch (type) {
-      case "projects":
-        return joinedProjectIds?.length > 0;
       case "visited_members":
         return (activeWorkspace?.total_members || 0) >= 2;
       case "visited_workspace":
@@ -170,8 +142,7 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
                   <CheckIcon className="size-3 text-accent-primary text-on-color" />
                 </div>
               ) : (
-                !item.cta.disabled &&
-                (item.cta.link ? (
+                !item.cta.disabled && (
                   <Link
                     href={item.cta.link}
                     onClick={(e) => {
@@ -189,15 +160,7 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
                   >
                     {t(item.cta.text)}
                   </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="text-left text-13 font-medium text-accent-primary hover:text-accent-secondary"
-                    onClick={item.cta.onClick}
-                  >
-                    {t(item.cta.text)}
-                  </button>
-                ))
+                )
               )}
             </div>
           );

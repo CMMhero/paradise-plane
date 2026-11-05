@@ -111,7 +111,7 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
         </div>
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-subtle text-11 text-tertiary uppercase">
+            <tr className="border-b border-subtle text-11 text-tertiary">
               <th className="py-2 text-left font-medium">{t("notif_prefs_ui.col_event")}</th>
               <th className="w-20 py-2 text-center font-medium">{t("notif_prefs_ui.col_inbox")}</th>
               <th className="w-20 py-2 text-center font-medium">{t("notif_prefs_ui.col_email")}</th>
