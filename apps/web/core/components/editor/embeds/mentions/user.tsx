@@ -44,7 +44,7 @@ export const EditorUserMention = observer(function EditorUserMention(props: Prop
         }
       )}
     >
-      <MemberProfileTrigger userId={id}>
+      <MemberProfileTrigger userId={id} openOnHover>
         <span className="hover:underline">@{userDetails?.display_name}</span>
       </MemberProfileTrigger>
     </div>

@@ -12,7 +12,17 @@ import type { IProject } from "./project";
 import type { IUser } from "./users";
 import type { IWorkspace } from "./workspace";
 
-export type TSearchEntities = "user_mention" | "issue" | "project" | "cycle" | "module" | "page";
+// Paradise (KEP-91): everyone_mention (@all), channel_mention (kanal chat), issue_mention (work item lewat #).
+export type TSearchEntities =
+  | "user_mention"
+  | "issue"
+  | "project"
+  | "cycle"
+  | "module"
+  | "page"
+  | "everyone_mention"
+  | "channel_mention"
+  | "issue_mention";
 
 export type TUserSearchResponse = {
   member__avatar_url: IUser["avatar_url"];

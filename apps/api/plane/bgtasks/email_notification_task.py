@@ -154,15 +154,40 @@ def create_payload(notification_data):
     return data
 
 
+def _teks_sebutan(mention) -> str:
+    """Teks pengganti satu mention-component di email.
+
+    Kustomisasi Paradise (KEP-91): selain orang, editor kini bisa menyebut @all,
+    #kanal, dan #work item. Versi lama memanggil `User.objects.get` untuk SEMUA
+    mention, jadi satu sebutan non-orang menggagalkan seluruh email. Nama kanal
+    privat tidak pernah ditulis: email bisa diteruskan ke siapa saja.
+    """
+    from plane.db.models import Ruang  # noqa: PLC0415
+    from plane.utils.rujukan_obrolan import NAMA_PRIVAT, urai_uuid  # noqa: PLC0415
+
+    jenis = mention.get("entity_name") or "user_mention"
+    sah = urai_uuid([mention.get("entity_identifier")], 1)
+    ident = sah[0] if sah else None
+
+    if jenis == "everyone_mention":
+        return "@all"
+    if jenis == "channel_mention":
+        ruang = Ruang.objects.filter(pk=ident).only("nama", "tipe").first() if ident else None
+        if ruang is not None and ruang.tipe == Ruang.Tipe.KANAL and ruang.nama:
+            return f"#{ruang.nama}"
+        return f"#{NAMA_PRIVAT}"
+    if jenis == "issue_mention":
+        issue = Issue.objects.filter(pk=ident).select_related("project").first() if ident else None
+        return f"{issue.project.identifier}-{issue.sequence_id}" if issue is not None else "#work-item"
+    user = User.objects.filter(pk=ident).only("display_name").first() if ident else None
+    return f"@{user.display_name}" if user is not None else "@unknown"
+
+
 def process_mention(mention_component):
     soup = BeautifulSoup(mention_component, "html.parser")
     mentions = soup.find_all("mention-component")
     for mention in mentions:
-        user_id = mention["entity_identifier"]
-        user = User.objects.get(pk=user_id)
-        user_name = user.display_name
-        highlighted_name = f"@{user_name}"
-        mention.replace_with(highlighted_name)
+        mention.replace_with(_teks_sebutan(mention))
     return str(soup)
 
 

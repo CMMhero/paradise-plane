@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { forwardRef } from "react";
 // plane imports
 import { RichTextEditorWithRef } from "@plane/editor";
@@ -14,6 +15,7 @@ import { cn } from "@plane/utils";
 import { EditorMentionsRoot } from "@/components/editor/embeds/mentions";
 // hooks
 import { useEditorConfig, useEditorMention } from "@/hooks/editor";
+import { placeholderDenganTip } from "@/hooks/editor/placeholder-rujukan";
 import { useMember } from "@/hooks/store/use-member";
 import { useParseEditorContent } from "@/hooks/use-parse-editor-content";
 // plane web hooks
@@ -52,8 +54,10 @@ export const RichTextEditor = forwardRef(function RichTextEditor(
     workspaceId,
     projectId,
     disabledExtensions: additionalDisabledExtensions = [],
+    placeholder,
     ...rest
   } = props;
+  const { t } = useTranslation();
   // store hooks
   const { getUserDetails } = useMember();
   // editor flaggings
@@ -62,7 +66,8 @@ export const RichTextEditor = forwardRef(function RichTextEditor(
     projectId,
   });
   // use editor mention
-  const { fetchMentions } = useEditorMention({
+  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip } = useEditorMention({
+    workspaceSlug,
     searchEntity: editable ? async (payload) => await props.searchMentionCallback(payload) : async () => ({}),
   });
   // editor config
@@ -94,12 +99,17 @@ export const RichTextEditor = forwardRef(function RichTextEditor(
           if (!res) throw new Error("Failed in fetching mentions");
           return res;
         },
+        searchHashCallback: fetchHashMentions,
+        tip,
+        getMentionedEntityLabel,
         renderComponent: EditorMentionsRoot,
         getMentionedEntityDetails: (id) => ({
           display_name: getUserDetails(id)?.display_name ?? "",
         }),
       }}
       extendedEditorProps={{}}
+      // KEP-91: petunjuk @/# di placeholder selama dokumen kosong.
+      placeholder={editable ? placeholderDenganTip(placeholder, t("rujukan_ui.tip_inline")) : placeholder}
       {...rest}
       containerClassName={cn("relative pb-3 pl-3", containerClassName)}
     />

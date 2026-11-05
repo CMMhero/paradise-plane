@@ -33,6 +33,7 @@ from plane.db.models import PesanLangsung
 from plane.utils.exception_logger import log_exception
 from plane.utils.penerima_aktif import aktif_sejak, batas_aktif
 from plane.utils.preferensi_email import penyaring
+from plane.utils.rujukan_obrolan import kanal_privat_milik, samarkan
 from plane.utils.saklar_instance import (
     CHAT_EMAIL_INTERVAL_MINUTES,
     CHAT_EMAIL_QUIET_MINUTES,
@@ -134,12 +135,15 @@ def kirim_pemberitahuan_pesan():
             continue
 
         # Rangkum per lawan bicara: berapa pesan dan apa yang terakhir ditulis.
+        # KEP-91: #kanal-privat yang tidak diikuti penerima disamarkan. Satu
+        # kueri keanggotaan untuk seluruh pesan orang ini.
+        privat = kanal_privat_milik([user_id], [p.muatan for p in pesan_masuk]).get(str(user_id), set())
         per_pengirim = {}
         for pesan in sorted(pesan_masuk, key=lambda p: p.created_at):
             per_pengirim[pesan.pengirim_id] = (
                 pesan.pengirim,
                 per_pengirim.get(pesan.pengirim_id, (None, 0, ""))[1] + 1,
-                pesan.isi,
+                samarkan(pesan.isi, pesan.muatan, user_id, boleh=privat)[0],
             )
         ringkasan = sorted(per_pengirim.values(), key=lambda baris: baris[1], reverse=True)
 

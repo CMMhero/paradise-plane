@@ -6,7 +6,16 @@
 
 import { FloatingOverlay } from "@floating-ui/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { v4 as uuidv4 } from "uuid";
 import { debounce } from "lodash-es";
 // plane utils
@@ -18,12 +27,12 @@ import { DROPDOWN_NAVIGATION_KEYS, getNextValidIndex } from "@/helpers/tippy";
 import type { TMentionHandler, TMentionSection, TMentionSuggestion } from "@/types";
 
 export type MentionsListDropdownProps = SuggestionProps<TMentionSection, TMentionSuggestion> &
-  Pick<TMentionHandler, "searchCallback"> & {
+  Pick<TMentionHandler, "searchCallback" | "tip"> & {
     onClose: () => void;
   };
 
 export const MentionsListDropdown = forwardRef(function MentionsListDropdown(props: MentionsListDropdownProps, ref) {
-  const { command, query, searchCallback, onClose } = props;
+  const { command, query, searchCallback, tip, onClose } = props;
   // states
   const [sections, setSections] = useState<TMentionSection[]>([]);
   const [selectedIndex, setSelectedIndex] = useState({
@@ -74,34 +83,30 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
     },
   }));
 
-  // initialize the select index to 0 by default
-  useEffect(() => {
-    setSelectedIndex({
-      section: 0,
-      item: 0,
-    });
-  }, [sections]);
-
   // debounced search callback
-  const debouncedSearchCallback = useCallback(
-    debounce(async (searchQuery: string) => {
-      try {
-        const sectionsResponse = await searchCallback?.(searchQuery);
-        if (sectionsResponse) {
-          setSections(sectionsResponse);
+  const debouncedSearchCallback = useMemo(
+    () =>
+      debounce(async (searchQuery: string) => {
+        try {
+          const sectionsResponse = await searchCallback?.(searchQuery);
+          if (sectionsResponse) {
+            setSections(sectionsResponse);
+            // reset the selected index to 0 whenever new sections arrive
+            setSelectedIndex({ section: 0, item: 0 });
+          }
+        } catch (error) {
+          console.error("Failed to fetch suggestions:", error);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to fetch suggestions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 300),
+      }, 300),
     [searchCallback]
   );
 
   // trigger debounced search when query changes
   useEffect(() => {
     if (query !== undefined && query !== null) {
+      // oxlint-disable-next-line react/set-state-in-effect -- loading flag must follow the query prop, which has no event handler to hook
       setIsLoading(true);
       void debouncedSearchCallback(query);
     }
@@ -145,6 +150,7 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
         lockScroll
       />
       <div
+        role="presentation"
         ref={dropdownContainer}
         className="relative max-h-80 w-[14rem] space-y-2 overflow-y-auto rounded-md border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 shadow-raised-200"
         style={{
@@ -202,6 +208,7 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
         ) : (
           <div className="text-center text-13 text-placeholder">No results</div>
         )}
+        {tip && <p className="border-t-[0.5px] border-subtle pt-2 text-11 text-placeholder">{tip}</p>}
       </div>
     </>
   );

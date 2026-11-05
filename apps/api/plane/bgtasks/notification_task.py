@@ -143,6 +143,48 @@ def extract_comment_mentions(comment_value):
         return []
 
 
+# Kustomisasi Paradise (KEP-91): @all di deskripsi dan komentar. Sebutan ini
+# BUKAN orang: entity_identifier-nya "all", jadi tidak boleh lewat UUID() atau
+# jadi IssueMention/IssueSubscriber. Yang dikirimi hanya notifikasi sebutan.
+SEBUT_SEMUA = "everyone_mention"
+
+
+def ada_sebut_semua(html) -> bool:
+    """True kalau HTML memuat mention-component @all."""
+    if not html:
+        return False
+    try:
+        return bool(BeautifulSoup(html, "html.parser").find("mention-component", attrs={"entity_name": SEBUT_SEMUA}))
+    except Exception:
+        return False
+
+
+def _deskripsi_html(issue_instance):
+    try:
+        return (json.loads(issue_instance) or {}).get("description_html")
+    except Exception:
+        return None
+
+
+def sebut_semua_baru_di_deskripsi(requested_instance, current_instance) -> bool:
+    """@all muncul di deskripsi BARU dan belum ada di deskripsi lama."""
+    return ada_sebut_semua(_deskripsi_html(requested_instance)) and not ada_sebut_semua(
+        _deskripsi_html(current_instance)
+    )
+
+
+def sebut_semua_baru_di_komentar(new_value, old_value) -> bool:
+    """@all muncul di komentar baru/hasil sunting dan belum ada di versi lamanya."""
+    return ada_sebut_semua(new_value) and not ada_sebut_semua(old_value)
+
+
+def _uuid_aman(nilai):
+    try:
+        return UUID(str(nilai))
+    except (TypeError, ValueError, AttributeError):
+        return None
+
+
 def get_new_comment_mentions(new_value, old_value):
     mentions_newer = extract_comment_mentions(new_value)
     if old_value is None:
@@ -258,6 +300,14 @@ def notifications(
             new_mentions = list(set(new_mentions) & {str(member) for member in project_members})
             removed_mention = get_removed_mentions(requested_instance=requested_data, current_instance=current_instance)
 
+            # KEP-91: @all di deskripsi = seluruh anggota aktif project, sebagai
+            # penerima notifikasi sebutan SAJA (bukan IssueMention/subscriber).
+            semua_anggota = [str(member) for member in project_members]
+            # Hanya yang disebut BERNAMA yang dicatat sebagai IssueMention.
+            sebut_tersurat = list(new_mentions)
+            if sebut_semua_baru_di_deskripsi(requested_data, current_instance):
+                new_mentions = list(dict.fromkeys(new_mentions + semua_anggota))
+
             comment_mentions = []
             all_comment_mentions = []
 
@@ -281,9 +331,14 @@ def notifications(
                         new_value=issue_comment_new_value,
                     )
                     comment_mentions = comment_mentions + new_comment_mentions
-                    comment_mentions = [
-                        mention for mention in comment_mentions if UUID(mention) in set(project_members)
-                    ]
+                    if sebut_semua_baru_di_komentar(issue_comment_new_value, issue_comment_old_value):
+                        comment_mentions = comment_mentions + semua_anggota
+                    anggota_project = set(project_members)
+                    comment_mentions = list(
+                        dict.fromkeys(
+                            mention for mention in comment_mentions if _uuid_aman(mention) in anggota_project
+                        )
+                    )
 
             comment_mention_subscribers = extract_mentions_as_subscribers(
                 project_id=project_id, issue_id=issue_id, mentions=all_comment_mentions
@@ -605,7 +660,7 @@ def notifications(
                             bulk_email_logs.append(
                                 EmailNotificationLog(
                                     triggered_by_id=actor_id,
-                                    receiver_id=subscriber,
+                                    receiver_id=mention_id,
                                     entity_identifier=issue_id,
                                     entity_name="issue",
                                     data={
@@ -654,7 +709,7 @@ def notifications(
                                 bulk_email_logs.append(
                                     EmailNotificationLog(
                                         triggered_by_id=actor_id,
-                                        receiver_id=subscriber,
+                                        receiver_id=mention_id,
                                         entity_identifier=issue_id,
                                         entity_name="issue",
                                         data={
@@ -695,7 +750,7 @@ def notifications(
             update_mentions_for_issue(
                 issue=issue,
                 project=project,
-                new_mentions=new_mentions,
+                new_mentions=sebut_tersurat,
                 removed_mention=removed_mention,
             )
             # Bulk create notifications

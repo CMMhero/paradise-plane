@@ -23,6 +23,7 @@ import uuid
 from datetime import timedelta
 
 # Django imports
+from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -40,6 +41,7 @@ from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, ur
 from plane.utils.obrolan_siaran import siarkan
 from plane.utils.kanal_sistem import adalah_admin_workspace, boleh_kirim, ikutkan_jika_belum
 from plane.utils.kartu_obrolan import kartu_disebut_di_obrolan
+from plane.utils.rujukan_obrolan import kanal_privat_milik, samarkan, saring_kanal, saring_tugas
 from plane.utils.saklar_instance import (
     CHAT_ATTACHMENTS_MAX,
     CHAT_DELETE_WINDOW_HOURS,
@@ -118,27 +120,38 @@ def _peta_reaksi(pesan_ids):
     peta = {}
     for r in ReaksiPesan.objects.filter(pesan_id__in=pesan_ids).values("pesan_id", "emoji", "user_id"):
         baris = peta.setdefault(str(r["pesan_id"]), {})
-        baris.setdefault(r["emoji"], []).append(str(r["user_id"]))
+        orang = baris.setdefault(r["emoji"], [])
+        # Baris kembar sisa balapan lama (lihat ChatReaksiEndpoint) tidak boleh
+        # menghitung satu orang dua kali.
+        if str(r["user_id"]) not in orang:
+            orang.append(str(r["user_id"]))
     return {
         pid: [{"emoji": e, "orang": orang} for e, orang in emoji.items()]
         for pid, emoji in peta.items()
     }
 
 
-def _peta_kutipan(pesan_list):
-    """Cuplikan pesan yang dibalas, satu kueri untuk semuanya."""
+def _peta_kutipan(pesan_list, saya_id=None):
+    """Cuplikan pesan yang dibalas, satu kueri untuk semuanya.
+
+    KEP-91: cuplikan disamarkan untuk `saya_id` SEBELUM dipotong, supaya nama
+    kanal privat tidak lolos lewat kutipan maupun terpotong setengah.
+    """
     induk_ids = {p.balasan_ke_id for p in pesan_list if p.balasan_ke_id}
     if not induk_ids:
         return {}
     # all_objects: kutipan ke pesan yang sudah dihapus tetap ada, isinya dikosongkan.
-    induk = PesanLangsung.all_objects.filter(id__in=induk_ids).values("id", "isi", "pengirim_id", "deleted_at")
+    induk = list(
+        PesanLangsung.all_objects.filter(id__in=induk_ids).values("id", "isi", "muatan", "pengirim_id", "deleted_at")
+    )
+    privat = kanal_privat_milik([saya_id], [i["muatan"] for i in induk]).get(str(saya_id), set())
     return {
         str(i["id"]): {
             "id": str(i["id"]),
             "pengirim": str(i["pengirim_id"]) if i["pengirim_id"] else "",
             # Dipotong di server: yang dibutuhkan UI cuma cuplikan, dan
             # mengirim pesan panjang dua kali membengkakkan tiap muatan.
-            "isi": "" if i["deleted_at"] else (i["isi"] or "")[:120],
+            "isi": "" if i["deleted_at"] else (samarkan(i["isi"], i["muatan"], saya_id, boleh=privat)[0] or "")[:120],
             "dihapus": i["deleted_at"] is not None,
         }
         for i in induk
@@ -196,7 +209,7 @@ def _jumlah_belum_dibaca(langganan):
     return kueri.count()
 
 
-def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None):
+def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None, privat=None):
     if pesan.deleted_at is not None:
         # Batu nisan: pesan dihapus tetap menempati tempatnya di percakapan,
         # tapi tanpa isi, lampiran, reaksi, kutipan, atau data kartu. Penyaringan
@@ -216,16 +229,22 @@ def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None)
             "reaksi": [],
             "baru": False,
             "dihapus": True,
+            "disematkan": False,
+            "disematkan_pada": None,
+            "disematkan_oleh": None,
         }
+    # KEP-91: rujukan #kanal-privat disamarkan bagi yang bukan anggotanya.
+    # `privat` = keanggotaan yang sudah dihitung pemanggil massal, kalau ada.
+    isi, muatan = samarkan(pesan.isi, pesan.muatan or {}, saya_id, boleh=privat)
     return {
         "dihapus": False,
         "id": str(pesan.id),
         # Kosong = pesan sistem ("Paradise"): catatan rilis dan kartu kabar.
         "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
-        "isi": pesan.isi,
+        "isi": isi,
         # Kartu: `jenis` selain "teks" dirender peramban dari `muatan`.
         "jenis": pesan.jenis,
-        "muatan": pesan.muatan or {},
+        "muatan": muatan or {},
         "created_at": pesan.created_at,
         "lampiran": lampiran or [],
         "disunting": pesan.disunting_pada is not None,
@@ -239,6 +258,10 @@ def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None)
         # UPDATE jalan, semuanya sudah terbaca dan garisnya tidak akan pernah
         # muncul untuk siapa pun.
         "baru": pesan.dibaca_pada is None and pesan.pengirim_id != saya_id,
+        # Sematan berlaku untuk seluruh ruang (lihat ChatSematanEndpoint).
+        "disematkan": pesan.disematkan_pada is not None,
+        "disematkan_pada": pesan.disematkan_pada,
+        "disematkan_oleh": str(pesan.disematkan_oleh_id) if pesan.disematkan_oleh_id else None,
     }
 
 
@@ -346,11 +369,14 @@ class ChatConversationsEndpoint(BaseAPIView):
         # Pesan terakhir tiap ruang, satu kueri untuk semuanya.
         terakhir = {}
         for pesan in (
-            PesanLangsung.objects.filter(ruang_id__in=[l.ruang_id for l in daftar])
+            PesanLangsung.objects.filter(ruang_id__in=[langganan.ruang_id for langganan in daftar])
             .order_by("ruang_id", "-created_at")
             .distinct("ruang_id")
         ):
             terakhir[pesan.ruang_id] = pesan
+        privat = kanal_privat_milik([request.user.id], [p.muatan for p in terakhir.values()]).get(
+            str(request.user.id), set()
+        )
 
         hasil = []
         for langganan in daftar:
@@ -364,7 +390,7 @@ class ChatConversationsEndpoint(BaseAPIView):
                 continue
 
             baris = _bentuk_ruang(ruang, request.user.id, belum.get(ruang.id, 0), boleh_tulis=hak_tulis(ruang))
-            baris["isi"] = pesan.isi if pesan else ""
+            baris["isi"] = samarkan(pesan.isi, pesan.muatan, request.user.id, boleh=privat)[0] if pesan else ""
             baris["dari_saya"] = bool(pesan and pesan.pengirim_id == request.user.id)
             baris["created_at"] = pesan.created_at if pesan else ruang.created_at
             hasil.append(baris)
@@ -402,16 +428,25 @@ class ChatCariEndpoint(BaseAPIView):
             ruang__workspace__slug=slug, user=request.user
         ).values_list("ruang_id", flat=True)
 
-        hasil = (
+        hasil = list(
             PesanLangsung.objects.filter(ruang_id__in=ruang_saya)
             .filter(isi__icontains=kunci)
             .order_by("-created_at")[:JUMLAH_HASIL_CARI]
         )
+        # KEP-91: isi disamarkan untuk yang mencari, lalu hasil yang cocoknya
+        # HANYA di nama kanal privat yang tersamar dibuang. Tanpa saringan kedua,
+        # mencari nama kanal privat jadi cara menebak bahwa kanal itu ada.
+        privat = kanal_privat_milik([request.user.id], [p.muatan for p in hasil]).get(str(request.user.id), set())
+        tersaring = []
+        for p in hasil:
+            isi = samarkan(p.isi, p.muatan, request.user.id, boleh=privat)[0]
+            if kunci.lower() in (isi or "").lower():
+                tersaring.append((p, isi))
         return Response(
             [
                 {
                     "id": str(p.id),
-                    "isi": p.isi,
+                    "isi": isi,
                     "created_at": p.created_at,
                     "dari_saya": p.pengirim_id == request.user.id,
                     # Ruang tempat pesan ini berada, supaya UI bisa langsung
@@ -425,7 +460,7 @@ class ChatCariEndpoint(BaseAPIView):
                         else None
                     ),
                 }
-                for p in hasil
+                for p, isi in tersaring
             ],
             status=status.HTTP_200_OK,
         )
@@ -550,17 +585,143 @@ class ChatReaksiEndpoint(BaseAPIView):
         if pesan is None:
             return Response({"error": "Pesan tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
-        ada = ReaksiPesan.objects.filter(pesan=pesan, user=request.user, emoji=emoji).first()
-        if ada:
-            # Klik kedua pada emoji yang sama = membatalkan. Satu endpoint untuk
-            # dua arah, karena dari sisi UI ini memang satu tombol.
-            ada.delete(soft=False)
-            siarkan(pesan.ruang_id, "reaksi", request.user.id)
-            return Response({"aktif": False}, status=status.HTTP_200_OK)
+        # Periksa-lalu-tulis harus satu langkah. unique_together di model memuat
+        # deleted_at, dan NULL tidak pernah sama dengan NULL di Postgres, jadi
+        # basis data TIDAK menolak dua baris aktif yang kembar. Dua permintaan
+        # serentak (klik ganda, atau satu klik yang terpicu dua kali) dulu
+        # sama-sama melihat "belum ada" lalu sama-sama membuat baris: reaksi
+        # ganda. Mengunci baris pesannya membuat toggle per pesan berurutan.
+        # Tidak bisa di kueri di atas: Postgres menolak FOR UPDATE bersama DISTINCT.
+        with transaction.atomic():
+            PesanLangsung.objects.select_for_update().filter(pk=pesan.pk).first()
+            milik_saya = ReaksiPesan.objects.filter(pesan=pesan, user=request.user, emoji=emoji)
+            if milik_saya.exists():
+                # Klik kedua pada emoji yang sama = membatalkan. Satu endpoint untuk
+                # dua arah, karena dari sisi UI ini memang satu tombol. Semua baris
+                # sekaligus, supaya kembaran sisa balapan lama ikut bersih.
+                milik_saya.delete(soft=False)
+                aktif = False
+            else:
+                ReaksiPesan.objects.create(pesan=pesan, user=request.user, emoji=emoji)
+                aktif = True
 
-        ReaksiPesan.objects.create(pesan=pesan, user=request.user, emoji=emoji)
         siarkan(pesan.ruang_id, "reaksi", request.user.id)
-        return Response({"aktif": True}, status=status.HTTP_201_CREATED)
+        return Response({"aktif": aktif}, status=status.HTTP_201_CREATED if aktif else status.HTTP_200_OK)
+
+
+# Batas sematan per ruang. Bilah sematan di atas percakapan berguna selama
+# isinya bisa dipindai sekilas; lewat dari ini ia jadi daftar kedua yang tidak
+# dibaca siapa pun.
+BATAS_SEMATAN = 20
+
+
+def _bentuk_sematan(pesan, saya_id=None):
+    """Satu baris bilah sematan: cukup untuk dipindai dan dilompati."""
+    return {
+        "id": str(pesan.id),
+        "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
+        # Dipotong seperti kutipan balasan: bilah cuma menampilkan cuplikan.
+        # KEP-91: disamarkan dulu, baru dipotong.
+        "isi": (samarkan(pesan.isi, pesan.muatan, saya_id)[0] or "")[:200],
+        "jenis": pesan.jenis,
+        "created_at": pesan.created_at,
+        "disematkan_pada": pesan.disematkan_pada,
+        "disematkan_oleh": str(pesan.disematkan_oleh_id) if pesan.disematkan_oleh_id else None,
+    }
+
+
+def _boleh_sematkan(user, ruang) -> bool:
+    """Siapa boleh menyematkan dan melepas sematan di sebuah ruang.
+
+    Anggota ruang (berlangganan), sama dengan hak baca dan hak reaksi, DAN orang
+    yang boleh menulis di ruang itu (`boleh_kirim`). Syarat kedua yang membuat
+    kanal sistem tetap terkunci: Announcements hanya disematkan admin, dan
+    Changelog serta ruang kabar tidak bisa diubah siapa pun, sama seperti tidak
+    bisa ditulisi. Kanal biasa dan DM: semua anggotanya, seperti WhatsApp grup
+    yang tidak dikunci admin.
+    """
+    return _langganan(user.id, ruang) is not None and boleh_kirim(ruang, user)
+
+
+class ChatSematanEndpoint(BaseAPIView):
+    """Sematkan (POST) atau lepas sematan (DELETE) satu pesan.
+
+    Dua kata kerja, bukan satu tombol bolak-balik seperti reaksi: sematan milik
+    seluruh ruang, jadi dua orang yang menekan "Sematkan" bersamaan harus sama-sama
+    berakhir dengan pesan tersemat, bukan saling membatalkan.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def _pesan(self, request, slug, pesan_id):
+        """Pesan hidup beserta izinnya. Kembalikan (pesan, respons_galat)."""
+        pesan = (
+            PesanLangsung.objects.filter(id=pesan_id, workspace__slug=slug, ruang__isnull=False)
+            .select_related("ruang")
+            .first()
+        )
+        # Bukan anggota = 404, bukan 403: id pesan di ruang orang lain tidak
+        # boleh membocorkan bahwa pesan itu ada.
+        if pesan is None or _langganan(request.user.id, pesan.ruang) is None:
+            return None, Response({"error": "Pesan tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        if not _boleh_sematkan(request.user, pesan.ruang):
+            return None, Response(
+                {"error": "Anda tidak bisa menyematkan pesan di ruang ini."}, status=status.HTTP_403_FORBIDDEN
+            )
+        return pesan, None
+
+    def post(self, request, slug, pesan_id):
+        pesan, galat = self._pesan(request, slug, pesan_id)
+        if galat:
+            return galat
+        if pesan.disematkan_pada is None:
+            jumlah = PesanLangsung.objects.filter(ruang_id=pesan.ruang_id, disematkan_pada__isnull=False).count()
+            if jumlah >= BATAS_SEMATAN:
+                return Response(
+                    {"error": f"Maksimum {BATAS_SEMATAN} pesan tersemat. Lepas salah satu dulu."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            pesan.disematkan_pada = timezone.now()
+            pesan.disematkan_oleh = request.user
+            pesan.save(update_fields=["disematkan_pada", "disematkan_oleh", "updated_at"])
+            siarkan(pesan.ruang_id, "sematan", request.user.id)
+        return Response(_bentuk_sematan(pesan, request.user.id), status=status.HTTP_200_OK)
+
+    def delete(self, request, slug, pesan_id):
+        pesan, galat = self._pesan(request, slug, pesan_id)
+        if galat:
+            return galat
+        if pesan.disematkan_pada is not None:
+            pesan.disematkan_pada = None
+            pesan.disematkan_oleh = None
+            pesan.save(update_fields=["disematkan_pada", "disematkan_oleh", "updated_at"])
+            siarkan(pesan.ruang_id, "sematan", request.user.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ChatRuangSematanEndpoint(BaseAPIView):
+    """Pesan tersemat satu ruang, terbaru disematkan lebih dulu.
+
+    Endpoint sendiri, bukan medan di respons isi ruang: isi ruang adalah daftar
+    100 pesan terakhir, sedangkan sematan bisa jauh lebih tua dari itu. Pesan yang
+    dihapus otomatis hilang dari sini lewat manager bawaan.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug, ruang_id):
+        ruang = Ruang.objects.filter(id=ruang_id, workspace__slug=slug).first()
+        if ruang is None or _langganan(request.user.id, ruang) is None:
+            return Response({"error": "Ruang tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        tersemat = PesanLangsung.objects.filter(ruang=ruang, disematkan_pada__isnull=False)
+        daftar = tersemat.order_by("-disematkan_pada")[:BATAS_SEMATAN]
+        return Response(
+            {
+                "boleh_sematkan": _boleh_sematkan(request.user, ruang),
+                "pesan": [_bentuk_sematan(p, request.user.id) for p in daftar],
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 def boleh_lihat_lampiran(user, aset, slug) -> bool:
@@ -663,7 +824,11 @@ def _muat_isi_ruang(request, slug, ruang, batas=None):
     hidup = [p.id for p in urut if p.deleted_at is None]
     peta = _peta_lampiran(hidup, slug)
     reaksi = _peta_reaksi(hidup)
-    kutipan = _peta_kutipan([p for p in urut if p.deleted_at is None])
+    kutipan = _peta_kutipan([p for p in urut if p.deleted_at is None], request.user.id)
+    # KEP-91: keanggotaan kanal privat yang dirujuk, satu kueri untuk semua pesan.
+    privat = kanal_privat_milik([request.user.id], [p.muatan for p in urut if p.deleted_at is None]).get(
+        str(request.user.id), set()
+    )
     return [
         _bentuk(
             p,
@@ -672,30 +837,58 @@ def _muat_isi_ruang(request, slug, ruang, batas=None):
             peta.get(str(p.id)),
             reaksi.get(str(p.id)),
             kutipan.get(str(p.balasan_ke_id)) if p.balasan_ke_id else None,
+            privat,
         )
         for p in urut
     ]
 
 
-def _saring_sebutan(mentah, ruang, saya_id) -> list:
-    """Id yang disebut, disaring ke anggota ruang ini, tanpa diri sendiri.
+def _saring_sebutan(mentah, ruang) -> list:
+    """Id yang disebut, disaring ke anggota ruang ini, urut seperti permintaan.
 
     Peramban mengirim id, bukan nama: nama tampilan bisa kembar dan bisa
     berganti. Disaring di server karena hanya anggota ruang yang boleh disebut;
     tanpa itu, sebutan jadi jalan mengirim kartu ke siapa pun di workspace.
+
+    KEP-91: diri sendiri (`@yourself`) kini IKUT, supaya sebutannya tetap
+    disorot di gelembung. Yang membuang pengirim adalah pengiriman kartu, bukan
+    saringan ini.
     """
     if not isinstance(mentah, list):
         return []
-    calon = set()
+    calon = []
     for nilai in mentah[:BATAS_SEBUT]:
         try:
-            calon.add(uuid.UUID(str(nilai)))
+            u = uuid.UUID(str(nilai))
         except (TypeError, ValueError):
             continue
-    calon.discard(saya_id)
+        if u not in calon:
+            calon.append(u)
     if not calon:
         return []
-    return list(Langganan.objects.filter(ruang=ruang, user_id__in=calon).values_list("user_id", flat=True))
+    anggota = set(Langganan.objects.filter(ruang=ruang, user_id__in=calon).values_list("user_id", flat=True))
+    return [u for u in calon if u in anggota]
+
+
+def _rujukan(request, ruang, sebut) -> dict:
+    """`muatan` pesan teks baru: sebutan orang, #kanal, #work item, dan @all.
+
+    Kunci yang kosong tidak ditulis, supaya pesan tanpa rujukan tetap `{}` dan
+    peramban lama yang membaca `muatan.sebut` tidak berubah perilakunya.
+    """
+    muatan = {}
+    if sebut:
+        muatan["sebut"] = [str(u) for u in sebut]
+    kanal = saring_kanal(request.user, ruang.workspace_id, request.data.get("kanal"))
+    if kanal:
+        muatan["kanal"] = kanal
+    tugas = saring_tugas(request.user, ruang.workspace_id, request.data.get("tugas"))
+    if tugas:
+        muatan["tugas"] = tugas
+    # @all hanya bermakna di kanal: di DM lawan bicaranya sudah pasti membaca.
+    if request.data.get("semua") is True and ruang.tipe != Ruang.Tipe.DM:
+        muatan["semua"] = True
+    return muatan
 
 
 def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
@@ -735,7 +928,8 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     # Catatan untuk diri sendiri lahir sudah terbaca. Tanpa ini ia jadi kandidat
     # email pemberitahuan, dan orang dikirimi email berisi tulisannya sendiri.
     ke_diri_sendiri = penerima_id is not None and str(penerima_id) == str(request.user.id)
-    sebut = _saring_sebutan(request.data.get("sebut"), ruang, request.user.id)
+    sebut = _saring_sebutan(request.data.get("sebut"), ruang)
+    muatan = _rujukan(request, ruang, sebut)
     pesan = PesanLangsung.objects.create(
         workspace_id=ruang.workspace_id,
         ruang=ruang,
@@ -744,7 +938,7 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
         isi=isi,
         balasan_ke_id=balasan_ke_id,
         dibaca_pada=timezone.now() if ke_diri_sendiri else None,
-        muatan={"sebut": [str(u) for u in sebut]} if sebut else {},
+        muatan=muatan,
     )
 
     # Denormalisasi yang membuat daftar percakapan bisa diurutkan tanpa subquery.
@@ -761,8 +955,15 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
 
     # Yang disebut di kanal mendapat kartu di ruang "Paradise"-nya, supaya
     # sebutan tetap sampai walau kanalnya dibisukan atau jarang dibuka.
-    if sebut and ruang.tipe != Ruang.Tipe.DM:
-        kartu_disebut_di_obrolan(pesan, ruang, sebut)
+    # KEP-91: @all = seluruh anggota ruang, digabung dengan sebutan bernama
+    # tanpa kembar. Pengirim tidak pernah dikirimi kartu, termasuk @yourself.
+    if ruang.tipe != Ruang.Tipe.DM:
+        tujuan = set(sebut)
+        if muatan.get("semua"):
+            tujuan |= set(Langganan.objects.filter(ruang=ruang).values_list("user_id", flat=True))
+        tujuan.discard(request.user.id)
+        if tujuan:
+            kartu_disebut_di_obrolan(pesan, ruang, tujuan)
 
     if lampiran_ids:
         # Yang boleh ditempel HANYA berkas yang diunggah orang ini sendiri, di

@@ -4,6 +4,7 @@
 
 # Python imports
 import logging
+import uuid
 
 # Django imports
 from django.utils import timezone
@@ -71,6 +72,13 @@ def extract_all_components(description_html):
         return {component: [] for component in component_map.keys()}
 
 
+def _uuid_atau_none(nilai):
+    try:
+        return uuid.UUID(str(nilai)) if nilai else None
+    except (TypeError, ValueError, AttributeError):
+        return None
+
+
 def get_entity_details(component: str, mention: dict):
     """
     Normalizes mention attributes into entity_name, entity_type, entity_identifier.
@@ -119,7 +127,10 @@ def page_transaction(new_description_html, old_description_html, page_id):
                     PageLog(
                         transaction=mention_id,
                         page_id=page_id,
-                        entity_identifier=details["entity_identifier"],
+                        # Kustomisasi Paradise (KEP-91): @all membawa
+                        # entity_identifier "all", bukan UUID. Kolomnya UUIDField,
+                        # dan satu nilai rusak menggagalkan seluruh bulk_create.
+                        entity_identifier=_uuid_atau_none(details["entity_identifier"]),
                         entity_name=details["entity_name"],
                         entity_type=details["entity_type"],
                         workspace_id=page.workspace_id,

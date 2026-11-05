@@ -9,7 +9,19 @@
  */
 
 import assert from "node:assert/strict";
-import { cariKueriSebut, potongSebutan, saringCalon, sebutanTersisa, sisipkanSebut } from "./sebut";
+import {
+  cariKueri,
+  cariKueriSebut,
+  cocokSemua,
+  potongRujukan,
+  potongSebutan,
+  rujukanTersisa,
+  saringCalon,
+  sebutanTersisa,
+  semuaTersisa,
+  sisipkanRujukan,
+  sisipkanSebut,
+} from "./sebut";
 
 // Kueri yang sedang diketik
 assert.deepEqual(cariKueriSebut("halo @an", 8), { awal: 5, kueri: "an" });
@@ -59,5 +71,65 @@ assert.deepEqual(potongSebutan("nama [x]+ aneh @a.b", [{ id: "9", nama: "a.b" }]
   isi: "@a.b",
   id: "9",
 });
+
+// Kueri # (kanal dan work item)
+assert.deepEqual(cariKueri("lihat #PRJ-1", 12, "#"), { awal: 6, kueri: "PRJ-1" });
+assert.deepEqual(cariKueri("#", 1, "#"), { awal: 0, kueri: "" });
+assert.equal(cariKueri("halaman#bagian", 14, "#"), null, "fragmen URL bukan rujukan");
+assert.equal(cariKueri("#a sudah", 8, "#"), null);
+assert.equal(cariKueri("@ani", 4, "#"), null, "pemicu @ tidak membuka #");
+assert.equal(cariKueri("#ab@cd", 6, "#"), null, "@ memutus kueri #");
+assert.deepEqual(sisipkanRujukan("cek #pr", 4, 7, "PRJ-12", "#"), { teks: "cek #PRJ-12 ", kursor: 12 });
+
+// @all hanya muncul untuk kueri yang mengawali all/everyone/semua
+assert.equal(cocokSemua(""), true);
+assert.equal(cocokSemua("al"), true);
+assert.equal(cocokSemua("Every"), true);
+assert.equal(cocokSemua("sem"), true);
+assert.equal(cocokSemua("ani"), false);
+
+// Rujukan # yang dihapus dari draf tidak terkirim
+const kanalDipilih = new Map([
+  ["k1", "umum"],
+  ["k2", "tim-it"],
+]);
+assert.deepEqual(rujukanTersisa("lihat #umum ya", kanalDipilih, "#"), ["k1"]);
+assert.deepEqual(rujukanTersisa("#umumnya bukan", kanalDipilih, "#"), []);
+assert.deepEqual(rujukanTersisa("umum tanpa pagar", kanalDipilih, "#"), []);
+
+// @all: hanya yang dipilih dari daftar dan masih ada di teks
+assert.equal(semuaTersisa("halo @all semua", true), true);
+assert.equal(semuaTersisa("halo @all semua", false), false, "diketik sendiri bukan pemberitahuan");
+assert.equal(semuaTersisa("halo @allan", true), false);
+assert.equal(semuaTersisa("sudah dihapus", true), false);
+
+// Potongan render dengan semua jenis
+const sumber = {
+  orang: [{ id: "1", nama: "Ani" }],
+  kanal: [
+    { id: "k1", nama: "umum" },
+    { id: "k2", nama: "umum-it" },
+  ],
+  tugas: [{ id: "w1", nomor: "PRJ-12" }],
+  semua: true,
+};
+assert.deepEqual(potongRujukan("@all cek #PRJ-12 di #umum-it, @Ani", sumber), [
+  { jenis: "semua", isi: "@all" },
+  { jenis: "teks", isi: " cek " },
+  { jenis: "tugas", isi: "#PRJ-12", id: "w1" },
+  { jenis: "teks", isi: " di " },
+  { jenis: "kanal", isi: "#umum-it", id: "k2" },
+  { jenis: "teks", isi: ", " },
+  { jenis: "sebut", isi: "@Ani", id: "1" },
+]);
+assert.deepEqual(
+  potongRujukan("@all", { ...sumber, semua: false }),
+  [{ jenis: "teks", isi: "@all" }],
+  "@all polos tanpa muatan semua"
+);
+assert.deepEqual(potongRujukan("#PRJ-123 dan x#umum", sumber), [{ jenis: "teks", isi: "#PRJ-123 dan x#umum" }]);
+assert.deepEqual(potongRujukan("#private-channel", { kanal: [{ id: "k9", nama: "private-channel" }] }), [
+  { jenis: "kanal", isi: "#private-channel", id: "k9" },
+]);
 
 console.log("sebut.check: semua lolos");
