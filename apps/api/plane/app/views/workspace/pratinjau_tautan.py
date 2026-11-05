@@ -31,6 +31,9 @@ class PratinjauTautanEndpoint(BaseAPIView):
     def get(self, request, slug):
         try:
             url = rapikan_url(request.query_params.get("url"))
-        except UrlTidakValid as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except UrlTidakValid:
+            # Pesan tetap, bukan str(e): isi pengecualian tidak dikirim ke klien.
+            return Response(
+                {"error": "Only valid http and https links can be previewed."}, status=status.HTTP_400_BAD_REQUEST
+            )
         return Response(pratinjau(url), status=status.HTTP_200_OK)
