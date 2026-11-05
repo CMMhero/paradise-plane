@@ -41,7 +41,7 @@ from plane.tests.contract.app.test_organisasi_app import (  # noqa: F401 (fixtur
 )
 from plane.db.penempatan import tingkat_sesudah_cabut
 from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
-from plane.utils.izin_buat_project import boleh_buat_project
+from plane.utils.izin_buat_project import PESAN_DEPARTEMEN_DI_GODMODE, boleh_buat_project
 
 
 def _tingkat(user, workspace):
@@ -108,7 +108,9 @@ class TestCabutTempatTerakhir:
         r = _setel_hierarki(super_admin, {"member_id": str(org.manager.id), "divisi_id": None})
         assert r.status_code == status.HTTP_200_OK, r.data
         assert r.data["member"]["tingkat"] == TINGKAT_MANAGER
-        assert _tempat(org.manager, org.ws) == {(org.hr.id, None)}
+        # KEP-93: jenjang Manager tanpa divisi tinggal di baris tanpa tempat; di HR
+        # ia Supervisor (tidak ada manager departemen).
+        assert _tempat(org.manager, org.ws) == {(None, None), (org.hr.id, None)}
         assert _aktif(org.manager, org.p3)
 
     @pytest.mark.django_db
@@ -182,26 +184,21 @@ def _buat(user, workspace):
 @pytest.mark.contract
 class TestIzinBuatProject:
     @pytest.mark.django_db
-    def test_staf_member_ditolak(self, org):
-        r = _buat(org.staf1, org.ws)
-        assert r.status_code == status.HTTP_403_FORBIDDEN, r.data
-        assert not Project.objects.filter(name__startswith="Project ", workspace=org.ws).exists()
+    def test_pembuatan_lewat_web_ditutup_untuk_semua_jenjang(self, org, super_admin):
+        """Departemen dibuat di God Mode saja: staf, supervisor, manager, admin, dan Super Admin sama-sama 403."""
+        WorkspaceMember.objects.filter(workspace=org.ws, member=org.staf2).update(role=20)
+        sebelum = Project.objects.count()
+        for pembuat in (org.staf1, org.sup1, org.manager, org.staf2, super_admin):
+            r = _buat(pembuat, org.ws)
+            assert r.status_code == status.HTTP_403_FORBIDDEN, r.data
+            assert r.data == {"error": PESAN_DEPARTEMEN_DI_GODMODE}
+        assert Project.objects.count() == sebelum
 
     @pytest.mark.django_db
     def test_member_tanpa_jabatan_dihitung_staf_dan_ditolak(self, org):
         baru = _user("baru", org.ws)
         assert _buat(baru, org.ws).status_code == status.HTTP_403_FORBIDDEN
         assert boleh_buat_project(baru, org.ws.id) is False
-
-    @pytest.mark.django_db
-    def test_supervisor_dan_manager_boleh(self, org):
-        assert _buat(org.sup1, org.ws).status_code == status.HTTP_201_CREATED
-        assert _buat(org.manager, org.ws).status_code == status.HTTP_201_CREATED
-
-    @pytest.mark.django_db
-    def test_admin_workspace_berjenjang_staf_boleh(self, org):
-        WorkspaceMember.objects.filter(workspace=org.ws, member=org.staf2).update(role=20)
-        assert _buat(org.staf2, org.ws).status_code == status.HTTP_201_CREATED
 
     @pytest.mark.django_db
     def test_super_admin_boleh(self, org, super_admin):

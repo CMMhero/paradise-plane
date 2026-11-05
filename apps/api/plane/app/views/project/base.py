@@ -8,7 +8,6 @@ import json
 
 # Django imports
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Prefetch, Q, Subquery, Count
 from django.utils import timezone
 
@@ -26,7 +25,6 @@ from plane.app.serializers import (
 from plane.app.views.base import BaseAPIView, BaseViewSet
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity, webhook_activity
-from plane.db.membership import jadikan_anggota_project
 from plane.db.models import (
     UserFavorite,
     DeployBoard,
@@ -36,8 +34,6 @@ from plane.db.models import (
     ProjectMember,
     ProjectNetwork,
     ProjectUserProperty,
-    State,
-    DEFAULT_STATES,
     Workspace,
     WorkspaceMember,
 )
@@ -260,82 +256,13 @@ class ProjectViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
     def create(self, request, slug):
-        workspace = Workspace.objects.get(slug=slug)
+        # Kustomisasi Paradise (5 Nov 2026): departemen satu-satu dengan project
+        # dan hanya dibuat di God Mode (organisasi.py::_adopsi_atau_buat_project,
+        # yang memakai ProjectSerializer langsung, bukan view ini). Jalur web
+        # ditutup untuk semua orang.
+        from plane.utils.izin_buat_project import PESAN_DEPARTEMEN_DI_GODMODE
 
-        # Kustomisasi Paradise: staf / member biasa tidak boleh membuat project
-        # (plane/utils/izin_buat_project.py, satu sumber untuk web + API v1).
-        from plane.utils.izin_buat_project import PESAN_TOLAK_BUAT_PROJECT, boleh_buat_project
-
-        if not boleh_buat_project(request.user, workspace.id):
-            return Response({"error": PESAN_TOLAK_BUAT_PROJECT}, status=status.HTTP_403_FORBIDDEN)
-
-        # Kustomisasi Paradise: kolom yang tidak dikirim diisi bawaan project dari
-        # God Mode (plane/utils/bawaan_project.py). Formulir web sudah mengisi
-        # dirinya dengan nilai yang sama; ini untuk pemanggil lain.
-        from plane.utils.bawaan_project import lengkapi_data_project
-
-        serializer = ProjectSerializer(
-            data=lengkapi_data_project({**request.data}), context={"workspace_id": workspace.id}
-        )
-        if serializer.is_valid():
-            # Tanpa satu transaksi, project sempat tersimpan lebih dulu lalu
-            # anggota atau state gagal, dan yang tertinggal adalah project tanpa
-            # satu state pun. Project seperti itu membuat intake-state menjawab
-            # 404 dan papan kerjanya tidak bisa dipakai. Jalur API v1 sudah
-            # diperbaiki begini, jalur aplikasi web belum ikut.
-            with transaction.atomic():
-                serializer.save()
-
-                # Add the user as Administrator to the project. Lewat
-                # `jadikan_anggota_project`, bukan `create()` telanjang: kalau
-                # pembuatnya Super Admin, signal `plane.db.superadmin` sudah
-                # membuat barisnya lebih dulu dan `create()` kedua menabrak
-                # constraint `ProjectUserProperty` → 400 untuk SETIAP project.
-                _ = jadikan_anggota_project(serializer.data["id"], request.user.id, ROLE.ADMIN.value)
-
-                if serializer.data["project_lead"] is not None and str(serializer.data["project_lead"]) != str(
-                    request.user.id
-                ):
-                    jadikan_anggota_project(serializer.data["id"], serializer.data["project_lead"], ROLE.ADMIN.value)
-
-                State.objects.bulk_create(
-                    [
-                        State(
-                            name=state["name"],
-                            color=state["color"],
-                            project=serializer.instance,
-                            sequence=state["sequence"],
-                            workspace=serializer.instance.workspace,
-                            group=state["group"],
-                            default=state.get("default", False),
-                            created_by=request.user,
-                        )
-                        for state in DEFAULT_STATES
-                    ]
-                )
-
-                project = self.get_queryset().filter(pk=serializer.data["id"]).first()
-
-                # Catatan aktivitas baru dikirim sesudah transaksi commit, supaya
-                # tidak pernah menyala untuk project yang batal. robust=True agar
-                # antrean yang bermasalah tidak menggagalkan pembuatan yang sudah
-                # berhasil commit.
-                def _kirim_aktivitas():
-                    model_activity.delay(
-                        model_name="project",
-                        model_id=str(project.id),
-                        requested_data=request.data,
-                        current_instance=None,
-                        actor_id=request.user.id,
-                        slug=slug,
-                        origin=base_host(request=request, is_app=True),
-                    )
-
-                transaction.on_commit(_kirim_aktivitas, robust=True)
-
-            serializer = ProjectListSerializer(project)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": PESAN_DEPARTEMEN_DI_GODMODE}, status=status.HTTP_403_FORBIDDEN)
 
     def partial_update(self, request, slug, pk=None):
         # KEP-85: dulu admin workspace ATAU admin project. Admin project tidak lagi

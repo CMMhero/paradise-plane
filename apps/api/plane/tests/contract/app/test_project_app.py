@@ -7,11 +7,10 @@ from rest_framework import status
 import uuid
 from django.utils import timezone
 
+from plane.utils.izin_buat_project import PESAN_DEPARTEMEN_DI_GODMODE
 from plane.db.models import (
     Project,
     ProjectMember,
-    ProjectUserProperty,
-    State,
     WorkspaceMember,
     User,
 )
@@ -49,79 +48,24 @@ class TestProjectAPIPost(TestProjectBase):
     """Test project POST operations"""
 
     @pytest.mark.django_db
-    def test_create_project_empty_data(self, session_client, workspace):
-        """Test creating a project with empty data"""
-
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {},
+            {"name": "New Project Test", "identifier": "NPT"},
+            {"name": "Full Project", "identifier": "FP", "network": 2, "cycle_view": True},
+            {"identifier": "MN"},
+        ],
+    )
+    def test_create_project_closed_on_web(self, session_client, workspace, payload):
+        """Departments (and their projects) are created only in God Mode."""
         url = self.get_project_url(workspace.slug)
 
-        # Test with empty data
-        response = session_client.post(url, {}, format="json")
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response = session_client.post(url, payload, format="json")
 
-    @pytest.mark.django_db
-    def test_create_project_valid_data(self, session_client, workspace, create_user):
-        url = self.get_project_url(workspace.slug)
-
-        project_data = {
-            "name": "New Project Test",
-            "identifier": "NPT",
-        }
-
-        user = create_user
-
-        # Make the request
-        response = session_client.post(url, project_data, format="json")
-
-        # Check response status
-        assert response.status_code == status.HTTP_201_CREATED
-
-        # Verify project was created
-        assert Project.objects.count() == 1
-        project = Project.objects.get(name=project_data["name"])
-        assert project.workspace == workspace
-
-        # Check if the member is created with the correct role
-        assert ProjectMember.objects.count() == 1
-        project_member = ProjectMember.objects.filter(project=project, member=user).first()
-        assert project_member.role == 20  # Administrator
-        assert project_member.is_active is True
-
-        # Verify ProjectUserProperty was created
-        assert ProjectUserProperty.objects.filter(project=project, user=user).exists()
-
-        # Verify default states were created
-        states = State.objects.filter(project=project)
-        assert states.count() == 5
-        expected_states = ["Backlog", "Todo", "In Progress", "Done", "Cancelled"]
-        state_names = list(states.values_list("name", flat=True))
-        assert set(state_names) == set(expected_states)
-
-    @pytest.mark.django_db
-    def test_create_project_with_project_lead(self, session_client, workspace, create_user):
-        """Test creating project with a different project lead"""
-        # Create another user to be project lead
-        project_lead = User.objects.create_user(email="lead@example.com", username="projectlead")
-
-        # Add project lead to workspace
-        WorkspaceMember.objects.create(workspace=workspace, member=project_lead, role=15)
-
-        url = self.get_project_url(workspace.slug)
-        project_data = {
-            "name": "Project with Lead",
-            "identifier": "PWL",
-            "project_lead": project_lead.id,
-        }
-
-        response = session_client.post(url, project_data, format="json")
-
-        assert response.status_code == status.HTTP_201_CREATED
-
-        # Verify both creator and project lead are administrators
-        project = Project.objects.get(name=project_data["name"])
-        assert ProjectMember.objects.filter(project=project, role=20).count() == 2
-
-        # Verify both have ProjectUserProperty
-        assert ProjectUserProperty.objects.filter(project=project).count() == 2
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {"error": PESAN_DEPARTEMEN_DI_GODMODE}
+        assert Project.objects.count() == 0
 
     @pytest.mark.django_db
     def test_create_project_guest_forbidden(self, session_client, workspace):
@@ -154,79 +98,6 @@ class TestProjectAPIPost(TestProjectBase):
         response = client.post(url, project_data, format="json")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-    @pytest.mark.django_db
-    def test_create_project_duplicate_name(self, session_client, workspace, create_user):
-        """Test creating project with duplicate name"""
-        # Create first project
-        Project.objects.create(name="Duplicate Name", identifier="DN1", workspace=workspace)
-
-        url = self.get_project_url(workspace.slug)
-        project_data = {
-            "name": "Duplicate Name",
-            "identifier": "DN2",
-        }
-
-        response = session_client.post(url, project_data, format="json")
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    @pytest.mark.django_db
-    def test_create_project_duplicate_identifier(self, session_client, workspace, create_user):
-        """Test creating project with duplicate identifier"""
-        Project.objects.create(name="First Project", identifier="DUP", workspace=workspace)
-
-        url = self.get_project_url(workspace.slug)
-        project_data = {
-            "name": "Second Project",
-            "identifier": "DUP",
-        }
-
-        response = session_client.post(url, project_data, format="json")
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    @pytest.mark.django_db
-    def test_create_project_missing_required_fields(self, session_client, workspace, create_user):
-        """Test validation with missing required fields"""
-        url = self.get_project_url(workspace.slug)
-
-        # Test missing name
-        response = session_client.post(url, {"identifier": "MN"}, format="json")
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-        # Test missing identifier
-        response = session_client.post(url, {"name": "Missing Identifier"}, format="json")
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    @pytest.mark.django_db
-    def test_create_project_with_all_optional_fields(self, session_client, workspace, create_user):
-        """Test creating project with all optional fields"""
-        url = self.get_project_url(workspace.slug)
-        project_data = {
-            "name": "Full Project",
-            "identifier": "FP",
-            "description": "A comprehensive test project",
-            "network": 2,
-            "cycle_view": True,
-            "issue_views_view": False,
-            "module_view": True,
-            "page_view": False,
-            "inbox_view": True,
-            "guest_view_all_features": True,
-            "logo_props": {
-                "in_use": "emoji",
-                "emoji": {"value": "🚀", "unicode": "1f680"},
-            },
-        }
-
-        response = session_client.post(url, project_data, format="json")
-
-        assert response.status_code == status.HTTP_201_CREATED
-
-        response_data = response.json()
-        assert response_data["description"] == project_data["description"]
-        assert response_data["network"] == project_data["network"]
 
 
 @pytest.mark.contract
