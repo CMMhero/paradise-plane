@@ -32,7 +32,8 @@ import { avatarTone } from "./paradise-styles";
 const memberService = new InstanceMemberService();
 
 const LABELS = {
-  placement: "Department",
+  placement: "Placement",
+  morePlacements: (count: number) => `+${count} more`,
   email: "Email",
   phoneExtension: "Phone extension",
   notSet: "Not set",
@@ -44,8 +45,8 @@ const toPlacements = (profile: TInstanceMemberProfile): TMemberProfilePlacement[
     .filter((p) => p.departemen || p.divisi)
     .map((p) => ({
       key: `${p.departemen?.id ?? ""}-${p.divisi?.id ?? ""}`,
-      unit: p.departemen ?? p.divisi,
-      parent: p.departemen ? p.divisi : null,
+      division: p.divisi,
+      department: p.departemen,
       levelLabel: LEVEL_LABELS[p.tingkat] ?? null,
     }));
 
