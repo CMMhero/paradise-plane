@@ -102,6 +102,9 @@ export class IssueLinkStore implements IIssueLinkStore {
   fetchLinks = async (workspaceSlug: string, projectId: string, issueId: string) => {
     const response = await this.issueService.fetchIssueLinks(workspaceSlug, projectId, issueId);
     this.addLinks(issueId, response);
+    // Paradise KEP-88: the list now carries links taken from the description and
+    // comments, so the count that decides whether the Links panel shows follows it.
+    this.rootIssueDetailStore.rootIssueStore.issues.updateIssue(issueId, { link_count: response.length });
     return response;
   };
 

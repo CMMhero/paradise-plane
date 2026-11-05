@@ -20,7 +20,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 # Module imports
 from .. import BaseAPIView
 from plane.app.serializers import IssueAttachmentSerializer
-from plane.db.models import FileAsset, Workspace
+from plane.db.models import FileAsset, Issue, Workspace
+from plane.utils.turunan_konten import SUMBER_LAMPIRAN, aset_turunan
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.app.permissions import allow_permission, ROLE
 from plane.settings.storage import S3Storage
@@ -152,8 +153,14 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
 
     @allow_permission([ROLE.ADMIN], creator=True, model=FileAsset)
     def delete(self, request, slug, project_id, issue_id, pk):
+        # Paradise KEP-88: gambar deskripsi kini ikut di daftar lampiran, tapi
+        # menghapusnya dari sini akan merusak deskripsinya. Hanya lampiran asli.
         issue_attachment = FileAsset.objects.get(
-            pk=pk, workspace__slug=slug, project_id=project_id, issue_id=issue_id
+            pk=pk,
+            workspace__slug=slug,
+            project_id=project_id,
+            issue_id=issue_id,
+            entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
         )
         issue_attachment.is_deleted = True
         issue_attachment.deleted_at = timezone.now()
@@ -204,7 +211,15 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         )
         # Serialize the attachments
         serializer = IssueAttachmentSerializer(issue_attachments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = [{**row, "sumber": SUMBER_LAMPIRAN} for row in serializer.data]
+        # Paradise KEP-88: gambar di deskripsi & komentar ikut tampil (hanya-baca).
+        issue = Issue.objects.filter(
+            pk=issue_id, project_id=project_id, workspace__slug=slug
+        ).only("id", "workspace_id", "description_html").first()
+        if issue is not None:
+            for aset, sumber in aset_turunan(issue):
+                data.append({**IssueAttachmentSerializer(aset).data, "sumber": sumber})
+        return Response(data, status=status.HTTP_200_OK)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def patch(self, request, slug, project_id, issue_id, pk):

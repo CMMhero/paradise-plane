@@ -15,6 +15,7 @@ import { getTextContent } from "@plane/utils";
 import { DescriptionVersionsRoot } from "@/components/core/description-versions";
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
 import { StatusLampiranTempel, useLampiranTempel } from "@/components/issues/attachment/lampiran-tempel";
+import { PratinjauTautanHtml } from "@/components/pratinjau-tautan/kartu";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -159,6 +160,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           attachFiles={lampiran.attachFiles}
         />
         <StatusLampiranTempel {...lampiran.status} />
+        <PratinjauTautanHtml html={issue.description_html} />
 
         <div className="flex items-center justify-between gap-2">
           {currentUser && (
@@ -181,10 +183,15 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
                 isRestoreDisabled: !isEditable || isArchived,
               }}
               fetchHandlers={{
-                listDescriptionVersions: (issueId) =>
-                  workItemVersionService.listDescriptionVersions(workspaceSlug, projectId, issueId),
-                retrieveDescriptionVersion: (issueId, versionId) =>
-                  workItemVersionService.retrieveDescriptionVersion(workspaceSlug, projectId, issueId, versionId),
+                listDescriptionVersions: (versionedIssueId) =>
+                  workItemVersionService.listDescriptionVersions(workspaceSlug, projectId, versionedIssueId),
+                retrieveDescriptionVersion: (versionedIssueId, versionId) =>
+                  workItemVersionService.retrieveDescriptionVersion(
+                    workspaceSlug,
+                    projectId,
+                    versionedIssueId,
+                    versionId
+                  ),
               }}
               handleRestore={(descriptionHTML) => editorRef.current?.setEditorValue(descriptionHTML, true)}
               projectId={projectId}

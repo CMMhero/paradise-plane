@@ -259,8 +259,8 @@ export abstract class IssueDetail implements IIssueDetail {
     this.openWidgets = state;
     if (this.lastWidgetAction) this.lastWidgetAction = null;
   };
-  setLastWidgetAction = (action: TWorkItemWidgets) => {
-    this.openWidgets = [action];
+  setLastWidgetAction = (widget: TWorkItemWidgets) => {
+    this.openWidgets = [widget];
   };
   toggleOpenWidget = (state: TWorkItemWidgets) => {
     if (this.openWidgets && this.openWidgets.includes(state))
@@ -269,13 +269,38 @@ export abstract class IssueDetail implements IIssueDetail {
   };
   setIssueLinkData = (issueLinkData: TIssueLink | null) => (this.issueLinkData = issueLinkData);
 
+  /**
+   * Paradise KEP-88: Links and Attachments also list what is written in the
+   * description and comments, so they are re-read after any of those change.
+   * Debounced per work item: the description autosaves while typing.
+   */
+  private jedaTurunan = new Map<string, ReturnType<typeof setTimeout>>();
+  private segarkanTurunan = (workspaceSlug: string, projectId: string, issueId: string, jedaMs = 1500) => {
+    clearTimeout(this.jedaTurunan.get(issueId));
+    this.jedaTurunan.set(
+      issueId,
+      setTimeout(() => {
+        this.jedaTurunan.delete(issueId);
+        void Promise.allSettled([
+          this.link.fetchLinks(workspaceSlug, projectId, issueId),
+          this.attachment.fetchAttachments(workspaceSlug, projectId, issueId),
+        ]);
+      }, jedaMs)
+    );
+  };
+
   // issue
-  fetchIssue = async (workspaceSlug: string, projectId: string, issueId: string) =>
-    this.issue.fetchIssue(workspaceSlug, projectId, issueId);
+  fetchIssue = async (workspaceSlug: string, projectId: string, issueId: string) => {
+    const issue = await this.issue.fetchIssue(workspaceSlug, projectId, issueId);
+    this.segarkanTurunan(workspaceSlug, projectId, issueId, 0);
+    return issue;
+  };
   fetchIssueWithIdentifier = async (workspaceSlug: string, projectIdentifier: string, sequenceId: string) =>
     this.issue.fetchIssueWithIdentifier(workspaceSlug, projectIdentifier, sequenceId);
-  updateIssue = async (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) =>
-    this.issue.updateIssue(workspaceSlug, projectId, issueId, data);
+  updateIssue = async (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => {
+    await this.issue.updateIssue(workspaceSlug, projectId, issueId, data);
+    if (data.description_html !== undefined) this.segarkanTurunan(workspaceSlug, projectId, issueId);
+  };
   removeIssue = async (workspaceSlug: string, projectId: string, issueId: string) =>
     this.issue.removeIssue(workspaceSlug, projectId, issueId);
   archiveIssue = async (workspaceSlug: string, projectId: string, issueId: string) =>
@@ -391,17 +416,27 @@ export abstract class IssueDetail implements IIssueDetail {
   // comment
   fetchComments = async (workspaceSlug: string, projectId: string, issueId: string, loaderType?: TCommentLoader) =>
     this.comment.fetchComments(workspaceSlug, projectId, issueId, loaderType);
-  createComment = async (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssueComment>) =>
-    this.comment.createComment(workspaceSlug, projectId, issueId, data);
+  createComment = async (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssueComment>) => {
+    const comment = await this.comment.createComment(workspaceSlug, projectId, issueId, data);
+    this.segarkanTurunan(workspaceSlug, projectId, issueId);
+    return comment;
+  };
   updateComment = async (
     workspaceSlug: string,
     projectId: string,
     issueId: string,
     commentId: string,
     data: Partial<TIssueComment>
-  ) => this.comment.updateComment(workspaceSlug, projectId, issueId, commentId, data);
-  removeComment = async (workspaceSlug: string, projectId: string, issueId: string, commentId: string) =>
-    this.comment.removeComment(workspaceSlug, projectId, issueId, commentId);
+  ) => {
+    const comment = await this.comment.updateComment(workspaceSlug, projectId, issueId, commentId, data);
+    this.segarkanTurunan(workspaceSlug, projectId, issueId);
+    return comment;
+  };
+  removeComment = async (workspaceSlug: string, projectId: string, issueId: string, commentId: string) => {
+    const hasil = await this.comment.removeComment(workspaceSlug, projectId, issueId, commentId);
+    this.segarkanTurunan(workspaceSlug, projectId, issueId);
+    return hasil;
+  };
 
   // comment reaction
   fetchCommentReactions = async (workspaceSlug: string, projectId: string, commentId: string) =>

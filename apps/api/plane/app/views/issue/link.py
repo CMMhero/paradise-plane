@@ -17,7 +17,8 @@ from rest_framework import status
 from .. import BaseViewSet
 from plane.app.serializers import IssueLinkSerializer
 from plane.app.permissions import ProjectEntityPermission
-from plane.db.models import IssueLink
+from plane.db.models import Issue, IssueLink
+from plane.utils.turunan_konten import SUMBER_MANUAL, tautan_turunan, url_link_manual
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.bgtasks.work_item_link_task import crawl_work_item_link_title
 from plane.utils.host import base_host
@@ -44,6 +45,17 @@ class IssueLinkViewSet(BaseViewSet):
             .order_by("-created_at")
             .distinct()
         )
+
+    def list(self, request, slug, project_id, issue_id):
+        """Link manual + tautan yang ditulis di deskripsi/komentar (Paradise KEP-88, `turunan_konten`)."""
+        links = list(self.get_queryset())
+        data = [{**row, "sumber": SUMBER_MANUAL} for row in IssueLinkSerializer(links, many=True).data]
+        issue = Issue.objects.filter(
+            pk=issue_id, project_id=project_id, workspace__slug=slug
+        ).only("id", "project_id", "workspace_id", "description_html", "updated_at").first()
+        if issue is not None:
+            data.extend(tautan_turunan(issue, url_link_manual(links)))
+        return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, slug, project_id, issue_id):
         serializer = IssueLinkSerializer(data=request.data)

@@ -100,7 +100,7 @@ export const IssueAttachmentsDetail = observer(function IssueAttachmentsDetail(p
           </div>
         </Link>
 
-        {!disabled && (
+        {!disabled && attachment.sumber !== "description" && attachment.sumber !== "comment" && (
           <button type="button" onClick={() => setIsDeleteIssueAttachmentModalOpen(true)}>
             <CloseIcon className="h-4 w-4 text-secondary hover:text-primary" />
           </button>

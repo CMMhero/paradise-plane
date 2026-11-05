@@ -129,7 +129,17 @@ export class IssueAttachmentStore implements IIssueAttachmentStore {
 
   fetchAttachments = async (workspaceSlug: string, projectId: string, issueId: string) => {
     const response = await this.issueAttachmentService.getIssueAttachments(workspaceSlug, projectId, issueId);
-    this.addAttachments(issueId, response);
+    // Paradise KEP-88: replace instead of merge. Images taken from the description
+    // or comments leave the list when they leave the text; merging would keep them.
+    runInAction(() => {
+      set(
+        this.attachments,
+        [issueId],
+        response.map((attachment) => attachment.id)
+      );
+      response.forEach((attachment) => set(this.attachmentMap, attachment.id, attachment));
+      this.rootIssueStore.issues.updateIssue(issueId, { attachment_count: response.length });
+    });
     return response;
   };
 

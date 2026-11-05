@@ -16,6 +16,7 @@ import { getTextContent } from "@plane/utils";
 import { DescriptionVersionsRoot } from "@/components/core/description-versions";
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
 import { StatusLampiranTempel, useLampiranTempel } from "@/components/issues/attachment/lampiran-tempel";
+import { PratinjauTautanHtml } from "@/components/pratinjau-tautan/kartu";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -156,6 +157,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         attachFiles={lampiran.attachFiles}
       />
       <StatusLampiranTempel {...lampiran.status} />
+      <PratinjauTautanHtml html={issue.description_html} />
 
       <div className="flex items-center justify-between gap-2">
         {currentUser && (
@@ -177,17 +179,17 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
               isRestoreDisabled: disabled || isArchived,
             }}
             fetchHandlers={{
-              listDescriptionVersions: (issueId) =>
+              listDescriptionVersions: (versionedIssueId) =>
                 workItemVersionService.listDescriptionVersions(
                   workspaceSlug,
                   issue.project_id?.toString() ?? "",
-                  issueId
+                  versionedIssueId
                 ),
-              retrieveDescriptionVersion: (issueId, versionId) =>
+              retrieveDescriptionVersion: (versionedIssueId, versionId) =>
                 workItemVersionService.retrieveDescriptionVersion(
                   workspaceSlug,
                   issue.project_id?.toString() ?? "",
-                  issueId,
+                  versionedIssueId,
                   versionId
                 ),
             }}
