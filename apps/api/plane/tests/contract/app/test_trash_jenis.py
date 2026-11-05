@@ -78,31 +78,6 @@ def test_pulihkan_project_bentrok_identifier_ditolak_tanpa_menyentuh_anak(projec
 
 
 @pytest.mark.django_db
-def test_materi_wiki_muncul_di_trashbin_project_dan_pulih_utuh(project):
-    materi = FileAsset.objects.create(
-        workspace=project.workspace,
-        project=project,
-        entity_type=FileAsset.EntityTypeContext.WIKI_MATERIAL,
-        attributes={"name": "SOP.pdf", "title": "SOP Gudang"},
-        asset="sop.pdf",
-        is_uploaded=True,
-    )
-    materi.is_deleted = True
-    materi.deleted_at = timezone.now()
-    materi.save(update_fields=["is_deleted", "deleted_at"])
-
-    isi = kumpulkan(project_id=project.pk)
-    assert [(i["type"], i["name"]) for i in isi] == [("wiki_material", "SOP Gudang")]
-
-    obj, spec = ambil("wiki_material", materi.pk, project_id=project.pk)
-    pulihkan(obj, spec)
-
-    materi.refresh_from_db()
-    assert materi.deleted_at is None
-    assert materi.is_deleted is False
-
-
-@pytest.mark.django_db
 def test_lampiran_biasa_bukan_materi_wiki(project):
     lampiran = FileAsset.objects.create(
         workspace=project.workspace,

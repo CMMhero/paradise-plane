@@ -69,16 +69,16 @@ def _workspace_utama():
 
 
 def _sinkron_wiki(workspace, actor):
-    """Folder Wiki mengikuti Divisi (keputusan user 2026-10-24).
+    """Folder Wiki mengikuti Divisi dan Departemen (2026-10-24, KEP-94).
 
     Gagalnya sinkron Wiki tidak boleh menggagalkan tulis organisasi yang
     sudah committed: struktur orang lebih penting daripada folder. Galatnya
     dicatat lewat log, dan foldernya bisa dikejar manual/sync berikutnya.
     """
     try:
-        from plane.utils.wiki_access import pastikan_folder_divisi  # noqa: PLC0415
+        from plane.utils.wiki_mandiri import pastikan_folder_unit  # noqa: PLC0415
 
-        pastikan_folder_divisi(workspace, actor=actor)
+        pastikan_folder_unit(workspace.id)
     except Exception as exc:  # noqa: BLE001 -- lihat docstring kenapa ditelan
         from plane.utils.exception_logger import log_exception  # noqa: PLC0415
 
@@ -313,14 +313,9 @@ class InstanceDivisiEndpoint(BaseAPIView):
             return Response({"error": galat}, status=400)
         if kode and Divisi.objects.filter(workspace_id=divisi.workspace_id, kode=kode).exclude(pk=pk).exists():
             return Response({"error": f"Division code {kode} is already in use."}, status=400)
-        nama_lama = divisi.nama
         divisi.kode = kode or divisi.kode
         divisi.nama = nama or divisi.nama
         divisi.save(update_fields=["kode", "nama", "updated_at"])
-        if nama_lama != divisi.nama:
-            from plane.utils.wiki_access import selaraskan_nama_folder_divisi  # noqa: PLC0415
-
-            selaraskan_nama_folder_divisi(divisi.workspace, nama_lama, divisi.nama)
         _sinkron_wiki(divisi.workspace, request.user)
         return Response(pohon_organisasi(divisi.workspace))
 

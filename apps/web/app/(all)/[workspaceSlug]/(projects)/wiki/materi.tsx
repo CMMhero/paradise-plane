@@ -15,28 +15,34 @@ import { getButtonStyling } from "@plane/propel/button";
 import { cn, renderFormattedDate } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
-// services
-import { WikiMaterialService } from "@/services/wiki_material.service";
 // local imports
-import { labelTipe, ukuranTerbaca, useProjectWiki } from "./data";
+import { labelTipe, layananWiki, ukuranTerbaca } from "./data";
 import { GantiNamaMateri } from "./ganti-nama";
 import { PenampilMateri } from "./penampil";
-
-const layanan = new WikiMaterialService();
 
 function WikiMateriPage() {
   const { t } = useTranslation();
   const { workspaceSlug, assetId } = useParams();
   const slug = workspaceSlug?.toString() ?? "";
   const idMateri = assetId?.toString() ?? "";
-  const { projectId } = useProjectWiki();
   const [gantiNama, setGantiNama] = useState(false);
 
-  const { data, isLoading, error, mutate } = useSWR(
-    projectId && idMateri ? `WIKI_MATERIAL_PREVIEW_${idMateri}` : null,
-    projectId ? () => layanan.preview(slug, projectId, idMateri) : null,
+  // Dua permintaan: detail (judul, izin, jejak) cepat, pratinjau bisa menunggu konversi.
+  const {
+    data: materi,
+    error: galatMateri,
+    mutate,
+  } = useSWR(
+    idMateri ? `WIKI_MATERIAL_${idMateri}` : null,
+    idMateri ? () => layananWiki.fetchMaterial(slug, idMateri) : null
+  );
+  const { data: pratinjau, error: galatPratinjau } = useSWR(
+    idMateri ? `WIKI_MATERIAL_PREVIEW_${idMateri}` : null,
+    idMateri ? () => layananWiki.fetchPreview(slug, idMateri) : null,
     { revalidateOnFocus: false }
   );
+  const error = galatMateri ?? galatPratinjau;
+  const folderAsal = materi?.jejak[materi.jejak.length - 1];
 
   if (error)
     return (
@@ -53,7 +59,7 @@ function WikiMateriPage() {
       </div>
     );
 
-  if (isLoading || !data)
+  if (!materi || !pratinjau)
     return (
       <div className="flex h-full w-full flex-col gap-4 px-page-x py-8">
         <div className="h-6 w-1/3 animate-pulse rounded-item bg-layer-3" />
@@ -64,39 +70,36 @@ function WikiMateriPage() {
 
   return (
     <>
-      <PageHead title={t("wiki_ui.folder.page_title", { name: data.title })} />
+      <PageHead title={t("wiki_ui.folder.page_title", { name: materi.judul })} />
       <div className="flex h-full w-full flex-col overflow-y-auto">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-subtle bg-surface-1 px-page-x py-6">
           <div className="min-w-0">
             <Link
-              to={data.topic_id ? `/${slug}/wiki/${data.topic_id}` : `/${slug}/wiki`}
+              to={folderAsal ? `/${slug}/wiki/${folderAsal.id}` : `/${slug}/wiki`}
               className="inline-flex items-center gap-1.5 text-12 text-tertiary transition-colors hover:text-secondary"
             >
               <ArrowLeft className="size-3.5" />
-              {t("wiki_ui.material.back_to_division")}
+              {folderAsal
+                ? t("wiki_ui.folder.back_to_parent", { name: folderAsal.nama })
+                : t("wiki_ui.common.back_to_home")}
             </Link>
-            <h1 className="mt-2 truncate text-20 font-semibold tracking-tight text-primary">{data.title}</h1>
+            <h1 className="mt-2 truncate text-20 font-semibold tracking-tight text-primary">{materi.judul}</h1>
             <p className="mt-1 text-12 text-tertiary">
-              {[
-                labelTipe(data.type, t),
-                ukuranTerbaca(data.size),
-                data.uploaded_by?.display_name,
-                renderFormattedDate(data.created_at),
-              ]
+              {[labelTipe(materi.type, t), ukuranTerbaca(materi.size), renderFormattedDate(materi.created_at)]
                 .filter(Boolean)
                 .join(" · ")}
-              {data.converted && ` · ${t("wiki_ui.material.shown_as_pdf")}`}
+              {pratinjau.converted && ` · ${t("wiki_ui.material.shown_as_pdf")}`}
             </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {data.can_manage && (
+            {materi.can_manage && (
               <button type="button" onClick={() => setGantiNama(true)} className={getButtonStyling("secondary", "lg")}>
                 <Pencil className="size-3.5" />
                 {t("wiki_ui.folder.rename")}
               </button>
             )}
-            <a href={data.download_url} className={getButtonStyling("secondary", "lg")}>
+            <a href={pratinjau.download_url ?? materi.url} className={getButtonStyling("secondary", "lg")}>
               <Download className="size-3.5" />
               {t("wiki_ui.material.download_original")}
             </a>
@@ -104,14 +107,14 @@ function WikiMateriPage() {
         </div>
 
         <div className="flex-1 px-page-x py-6">
-          {data.url ? (
-            <PenampilMateri pratinjau={data} />
+          {pratinjau.url ? (
+            <PenampilMateri pratinjau={pratinjau} title={materi.judul} />
           ) : (
             <div className="rounded-card border border-dashed border-subtle px-6 py-16 text-center">
               <p className="text-14 font-medium text-secondary">{t("wiki_ui.material.cannot_display_title")}</p>
               <p className="mx-auto mt-1 max-w-md text-12 text-tertiary">
-                {data.reason
-                  ? t("wiki_ui.material.cannot_display_with_reason", { reason: data.reason })
+                {pratinjau.reason
+                  ? t("wiki_ui.material.cannot_display_with_reason", { reason: pratinjau.reason })
                   : t("wiki_ui.material.cannot_display_no_viewer")}
               </p>
             </div>
@@ -119,13 +122,12 @@ function WikiMateriPage() {
         </div>
       </div>
 
-      {gantiNama && projectId && (
+      {gantiNama && (
         <GantiNamaMateri
           workspaceSlug={slug}
-          projectId={projectId}
-          materiId={data.id}
-          judulSekarang={data.title}
-          namaBerkas={data.name}
+          materiId={materi.id}
+          judulSekarang={materi.judul}
+          namaBerkas={materi.name}
           isOpen={gantiNama}
           onClose={() => setGantiNama(false)}
           onSelesai={() => mutate()}

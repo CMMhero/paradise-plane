@@ -68,7 +68,6 @@ const KUNCI_JENIS: Partial<Record<TTrashType, string>> = {
   module: "trash_ui.type_module",
   view: "trash_ui.type_view",
   label: "trash_ui.type_label",
-  wiki_material: "trash_ui.type_wiki_material",
 };
 
 /** Tombol ikon + tooltip, cermin `IconAction` God Mode. Label sekaligus nama aksesibelnya. */

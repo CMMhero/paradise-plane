@@ -122,9 +122,14 @@ class FileAsset(BaseModel):
             self.EntityTypeContext.COMMENT_DESCRIPTION,
             self.EntityTypeContext.PAGE_DESCRIPTION,
             self.EntityTypeContext.DRAFT_ISSUE_DESCRIPTION,
+        ]:
+            return f"/api/assets/v2/workspaces/{self.workspace.slug}/projects/{self.project_id}/{self.id}/"
+
+        # KEP-94: berkas Wiki tidak lagi milik project.
+        if self.entity_type in [
             self.EntityTypeContext.WIKI_MATERIAL,
             self.EntityTypeContext.WIKI_MATERIAL_PREVIEW,
         ]:
-            return f"/api/assets/v2/workspaces/{self.workspace.slug}/projects/{self.project_id}/{self.id}/"
+            return f"/api/workspaces/{self.workspace.slug}/wiki/files/{self.id}/"
 
         return None

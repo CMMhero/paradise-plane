@@ -22,12 +22,7 @@ from ..base import BaseAPIView
 from plane.db.models import FileAsset, Workspace, Project, User, WorkspaceMember, ProjectMember, Page
 from plane.settings.storage import S3Storage
 from plane.app.permissions import allow_permission, ROLE
-from plane.utils.wiki_access import (
-    can_edit_wiki_page,
-    can_manage_wiki_material,
-    is_wiki_governed,
-)
-from plane.utils.saklar_instance import PERM_WIKI_DELETE, PERM_WIKI_EDIT
+from plane.utils.wiki_access import can_edit_wiki_page, is_wiki_governed
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
@@ -592,11 +587,6 @@ class ProjectAssetEndpoint(BaseAPIView):
 
         if entity_type in (
             FileAsset.EntityTypeContext.PAGE_DESCRIPTION,
-            # Materi Wiki menempel ke halaman TOPIK tempat ia berada. Dari situ
-            # resolver ACL menelusuri naik ke folder Divisi, jadi izinnya ikut
-            # aturan yang sudah ada tanpa satu pun cabang baru.
-            FileAsset.EntityTypeContext.WIKI_MATERIAL,
-            FileAsset.EntityTypeContext.WIKI_MATERIAL_PREVIEW,
         ):
             return {"page_id": entity_id}
 
@@ -622,17 +612,20 @@ class ProjectAssetEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # KEP-94: Wiki bukan project lagi, berkasnya diunggah lewat endpoint Wiki.
+        if entity_type in (
+            FileAsset.EntityTypeContext.WIKI_MATERIAL,
+            FileAsset.EntityTypeContext.WIKI_MATERIAL_PREVIEW,
+        ):
+            return Response(
+                {"error": "Wiki files are uploaded through the Wiki.", "status": False},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # ACL Wiki: unggah ke halaman di Wiki ber-governance hanya boleh oleh
         # admin atau anggota departemen pemilik folder (KEP-51), biar gate ini
         # tidak jadi celah samping dari izin halaman.
-        if (
-            entity_type
-            in (
-                FileAsset.EntityTypeContext.PAGE_DESCRIPTION,
-                FileAsset.EntityTypeContext.WIKI_MATERIAL,
-            )
-            and is_wiki_governed(project_id)
-        ):
+        if entity_type == FileAsset.EntityTypeContext.PAGE_DESCRIPTION and is_wiki_governed(project_id):
             page = Page.objects.filter(id=entity_identifier, workspace__slug=slug).first()
             if not (page and can_edit_wiki_page(request.user, page)):
                 return Response(
@@ -692,19 +685,6 @@ class ProjectAssetEndpoint(BaseAPIView):
     def patch(self, request, slug, project_id, pk):
         # get the asset id
         asset = FileAsset.objects.get(id=pk, workspace__slug=slug, project_id=project_id)
-        # KEP-85: `attributes` materi Wiki memuat judulnya. Tanpa penjaga ini, PATCH
-        # di sini jadi pintu belakang untuk mengganti judul materi orang lain yang
-        # di WikiMaterialEndpoint dijaga.
-        if asset.entity_type == FileAsset.EntityTypeContext.WIKI_MATERIAL and not can_manage_wiki_material(
-            request.user, asset, PERM_WIKI_EDIT
-        ):
-            return Response(
-                {
-                    "error": "Hanya pengunggahnya, atasannya, admin workspace, atau Super Admin "
-                    "yang boleh mengubah materi ini."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         # get the storage metadata
         asset.is_uploaded = True
         # get the storage metadata
@@ -721,21 +701,6 @@ class ProjectAssetEndpoint(BaseAPIView):
     def delete(self, request, slug, project_id, pk):
         # Get the asset
         asset = FileAsset.objects.get(id=pk, workspace__slug=slug, project_id=project_id)
-
-        # ACL Wiki: materi adalah berkas milik
-        # pengunggahnya. Tanpa penjaga ini, endpoint ini jadi pintu belakang
-        # yang meloloskan siapa pun anggota project untuk membuang kerja orang
-        # lain, dan aturan hapus di lapisan halaman jadi tidak ada artinya.
-        if asset.entity_type == FileAsset.EntityTypeContext.WIKI_MATERIAL and not can_manage_wiki_material(
-            request.user, asset, PERM_WIKI_DELETE
-        ):
-            return Response(
-                {
-                    "error": "Hanya pengunggahnya, atasannya, admin workspace, atau Super Admin "
-                    "yang boleh menghapus materi ini."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
 
         # Check deleted assets
         asset.is_deleted = True

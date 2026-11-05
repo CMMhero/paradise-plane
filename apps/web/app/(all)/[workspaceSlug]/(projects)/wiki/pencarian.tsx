@@ -13,13 +13,8 @@ import { Input } from "@plane/ui";
 // components
 import { GridKartu, KartuKerangka, KartuMateri } from "@/components/wiki/kartu";
 // services
-import { WikiMaterialService, type TMateriWiki } from "@/services/wiki_material.service";
 // local imports
-import { labelTipe, ukuranTerbaca } from "./data";
-
-const layanan = new WikiMaterialService();
-
-type THasil = TMateriWiki & { topic_id: string | null; breadcrumb: string[] };
+import { labelTipe, layananWiki, ukuranTerbaca } from "./data";
 
 /**
  * Kotak "Cari materi..." yang benar-benar mencari materi.
@@ -32,11 +27,9 @@ type THasil = TMateriWiki & { topic_id: string | null; breadcrumb: string[] };
  */
 export function PencarianWiki({
   workspaceSlug,
-  projectId,
   onAktif,
 }: {
   workspaceSlug: string;
-  projectId: string;
   onAktif: (aktif: boolean) => void;
 }) {
   const { t } = useTranslation();
@@ -53,11 +46,11 @@ export function PencarianWiki({
   useEffect(() => onAktif(kueri.trim().length >= 2), [kueri, onAktif]);
 
   const { data, isLoading } = useSWR(
-    aktif ? `WIKI_SEARCH_${projectId}_${tertunda}` : null,
-    aktif ? () => layanan.search(workspaceSlug, projectId, tertunda) : null,
+    aktif ? `WIKI_SEARCH_${workspaceSlug}_${tertunda}` : null,
+    aktif ? () => layananWiki.search(workspaceSlug, tertunda) : null,
     { revalidateOnFocus: false, keepPreviousData: true }
   );
-  const hasil = (data?.materials ?? []) as THasil[];
+  const hasil = data ?? [];
 
   return (
     <>
@@ -100,8 +93,8 @@ export function PencarianWiki({
                 <KartuMateri
                   key={m.id}
                   to={`/${workspaceSlug}/wiki/materi/${m.id}`}
-                  judul={m.title}
-                  keterangan={m.breadcrumb.filter(Boolean).join(" › ") || "Wiki"}
+                  judul={m.judul}
+                  keterangan={m.jejak.map((j) => j.nama).join(" › ") || "Wiki"}
                   tipe={m.type}
                   label={labelTipe(m.type, t)}
                   ukuran={ukuranTerbaca(m.size)}

@@ -11,22 +11,16 @@ import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { EmojiIconPickerTypes, EmojiPicker, Logo } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { TLogoProps, TPage } from "@plane/types";
-import { EModalPosition, EModalWidth, Input, ModalCore } from "@plane/ui";
-import { getPageName } from "@plane/utils";
+import type { TLogoProps } from "@plane/types";
+import { EModalPosition, EModalWidth, Input, ModalCore, TextArea } from "@plane/ui";
 // services
-import { ProjectPageService } from "@/services/page";
-import type { TWikiPermissions } from "@/services/wiki_access.service";
-import { WikiFolderService } from "@/services/wiki_material.service";
-
-const layananFolder = new WikiFolderService();
-const layananHalaman = new ProjectPageService();
+import type { TWikiFolder } from "@/services/wiki.service";
+// local imports
+import { adalahUnit, layananWiki } from "./data";
 
 type TProps = {
   workspaceSlug: string;
-  projectId: string;
-  folder: TPage;
-  izin: TWikiPermissions | undefined;
+  folder: TWikiFolder;
   isOpen: boolean;
   onClose: () => void;
   /** Dipanggil sesudah ada yang berubah, supaya pemanggilnya memuat ulang. */
@@ -36,31 +30,26 @@ type TProps = {
 };
 
 /**
- * Satu tempat untuk mengurus sebuah folder Wiki: nama, ikon, dan menghapusnya.
+ * Satu tempat untuk mengurus sebuah folder Wiki: nama, ikon, keterangan, dan menghapusnya.
  *
- * Siapa yang boleh mengisi folder TIDAK diatur di sini (KEP-51). Ia diturunkan
- * dari struktur organisasi God Mode: folder divisi diisi anggota departemennya,
- * folder lain terbuka untuk semua anggota Wiki. Panel ini hanya menampilkannya.
+ * Folder unit (divisi atau departemen) mengikuti struktur organisasi God Mode:
+ * namanya tidak bisa diganti dan folder itu tidak bisa diarsipkan atau dihapus
+ * dari sini. Yang tetap bisa diubah admin hanya ikon dan keterangannya. Siapa
+ * yang boleh mengunggah diturunkan server dari penempatan di God Mode.
  */
-export function KelolaFolder({
-  workspaceSlug,
-  projectId,
-  folder,
-  izin,
-  isOpen,
-  onClose,
-  onBerubah,
-  onTerhapus,
-}: TProps) {
+export function KelolaFolder({ workspaceSlug, folder, isOpen, onClose, onBerubah, onTerhapus }: TProps) {
   const { t } = useTranslation();
-  const [nama, setNama] = useState(getPageName(folder.name));
+  const [nama, setNama] = useState(folder.nama);
+  const [keterangan, setKeterangan] = useState(folder.keterangan ?? "");
   const [sedangSimpan, setSedangSimpan] = useState(false);
+  const [sedangSimpanKeterangan, setSedangSimpanKeterangan] = useState(false);
   const [sedangHapus, setSedangHapus] = useState(false);
   const [konfirmasiHapus, setKonfirmasiHapus] = useState(false);
   const [ikonTerbuka, setIkonTerbuka] = useState(false);
 
-  const adalahDivisi = !folder.parent;
-  const izinFolder = izin?.folders.find((f) => f.id === folder.id);
+  const unit = adalahUnit(folder);
+  // `umum` hanya berlaku untuk folder tingkat atas yang bukan unit.
+  const bisaUmum = !unit && !folder.parent_id;
 
   const galat = (error: unknown, cadangan: string) =>
     setToast({
@@ -71,10 +60,10 @@ export function KelolaFolder({
 
   const simpanNama = async () => {
     const bersih = nama.trim();
-    if (!bersih || bersih === getPageName(folder.name) || !folder.id) return;
+    if (!bersih || bersih === folder.nama) return;
     setSedangSimpan(true);
     try {
-      await layananFolder.rename(workspaceSlug, projectId, folder.id, bersih);
+      await layananWiki.updateFolder(workspaceSlug, folder.id, { nama: bersih });
       await onBerubah();
       setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.manage.renamed_title"), message: bersih });
     } catch (error) {
@@ -84,15 +73,37 @@ export function KelolaFolder({
     }
   };
 
+  const simpanKeterangan = async () => {
+    if (keterangan.trim() === (folder.keterangan ?? "").trim()) return;
+    setSedangSimpanKeterangan(true);
+    try {
+      await layananWiki.updateFolder(workspaceSlug, folder.id, { keterangan: keterangan.trim() });
+      await onBerubah();
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.manage.saved_title") });
+    } catch (error) {
+      galat(error, t("wiki_ui.common.try_again"));
+    } finally {
+      setSedangSimpanKeterangan(false);
+    }
+  };
+
+  const gantiUmum = async (nilai: boolean) => {
+    try {
+      await layananWiki.updateFolder(workspaceSlug, folder.id, { umum: nilai });
+      await onBerubah();
+    } catch (error) {
+      galat(error, t("wiki_ui.common.try_again"));
+    }
+  };
+
   const gantiIkon = async (nilai: {
     type: (typeof EmojiIconPickerTypes)[keyof typeof EmojiIconPickerTypes];
     value: unknown;
   }) => {
-    if (!folder.id) return;
     const isi = nilai.type === EmojiIconPickerTypes.EMOJI ? { value: nilai.value, url: undefined } : nilai.value;
     const logoProps = { in_use: nilai.type, [nilai.type]: isi } as TLogoProps;
     try {
-      await layananFolder.setLogo(workspaceSlug, projectId, folder.id, logoProps);
+      await layananWiki.updateFolder(workspaceSlug, folder.id, { logo_props: logoProps });
       await onBerubah();
     } catch (error) {
       galat(error, t("wiki_ui.manage.icon_failed"));
@@ -100,22 +111,20 @@ export function KelolaFolder({
   };
 
   const hapus = async () => {
-    if (!folder.id || sedangHapus) return;
+    if (sedangHapus) return;
     setSedangHapus(true);
+    let diarsipkan = false;
     try {
-      // Dua langkah lewat endpoint halaman yang sudah ada, BUKAN jalan pintas
-      // sendiri. Di situlah ketiga penjaga struktur hidup: folder berisi materi
-      // orang lain tidak boleh diarsipkan sembarangan, dan folder yang masih
-      // berisi tidak boleh dihapus sama sekali.
-      await layananHalaman.archive(workspaceSlug, projectId, folder.id);
-      await layananHalaman.remove(workspaceSlug, projectId, folder.id);
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: t("wiki_ui.manage.deleted_title"),
-        message: getPageName(folder.name),
-      });
+      // Dua langkah: server mewajibkan folder diarsipkan dulu, dan menolak
+      // menghapus folder yang masih berisi (409). Kalau langkah kedua gagal,
+      // arsipnya dibatalkan supaya folder tidak hilang diam-diam dari daftar.
+      await layananWiki.archiveFolder(workspaceSlug, folder.id);
+      diarsipkan = true;
+      await layananWiki.deleteFolder(workspaceSlug, folder.id);
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.manage.deleted_title"), message: folder.nama });
       onTerhapus();
     } catch (error) {
+      if (diarsipkan) await layananWiki.unarchiveFolder(workspaceSlug, folder.id).catch(() => undefined);
       galat(error, t("wiki_ui.manage.delete_failed"));
     } finally {
       setSedangHapus(false);
@@ -157,55 +166,71 @@ export function KelolaFolder({
               id="wiki-nama-folder"
               type="text"
               value={nama}
+              disabled={unit}
               onChange={(e) => setNama(e.target.value)}
               className="flex-1 border border-subtle text-primary focus:border-accent-strong"
             />
-            <Button variant="primary" size="sm" onClick={simpanNama} loading={sedangSimpan}>
-              {t("save")}
-            </Button>
+            {!unit && (
+              <Button variant="primary" size="sm" onClick={simpanNama} loading={sedangSimpan}>
+                {t("save")}
+              </Button>
+            )}
           </div>
+          {unit && <p className="text-12 text-tertiary">{t("wiki_ui.manage.unit_name_note")}</p>}
         </div>
 
-        {/* Siapa yang boleh mengisi */}
-        {adalahDivisi && (
-          <div className="space-y-2">
-            <p className="text-12 font-medium text-secondary">{t("wiki_ui.manage.who_can_add")}</p>
-            <p className="rounded-card border border-subtle px-3 py-2 text-12 text-tertiary">
-              {izinFolder?.is_general
-                ? t("wiki_ui.manage.status_general")
-                : izinFolder?.divisions.length
-                  ? t("wiki_ui.manage.status_managed_by", {
-                      names: izinFolder.divisions.map((d) => d.name).join(", "),
-                    })
-                  : t("wiki_ui.manage.status_locked")}{" "}
-              {t("wiki_ui.manage.only_admins_can_change")}
-            </p>
-          </div>
+        {/* Keterangan */}
+        <div className="space-y-2">
+          <label htmlFor="wiki-keterangan-folder" className="text-12 font-medium text-secondary">
+            {t("wiki_ui.manage.description")}
+          </label>
+          <TextArea
+            id="wiki-keterangan-folder"
+            value={keterangan}
+            onChange={(e) => setKeterangan(e.target.value)}
+            className="min-h-20 text-primary"
+          />
+          <Button variant="primary" size="sm" onClick={simpanKeterangan} loading={sedangSimpanKeterangan}>
+            {t("save")}
+          </Button>
+        </div>
+
+        {/* Folder umum */}
+        {bisaUmum && (
+          <label className="flex items-center gap-2 text-13 text-secondary">
+            <input
+              type="checkbox"
+              checked={folder.umum}
+              onChange={(e) => void gantiUmum(e.target.checked)}
+              className="size-4"
+            />
+            {t("wiki_ui.manage.open_upload")}
+          </label>
         )}
 
         {/* Hapus */}
-        <div className="space-y-2 border-t border-subtle pt-4">
-          {konfirmasiHapus ? (
-            <div className="rounded-card border border-danger-strong bg-danger-subtle p-3">
-              <p className="text-12 text-primary">
-                {t("wiki_ui.manage.confirm_delete", { name: getPageName(folder.name) })}
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Button variant="error-fill" size="sm" onClick={hapus} loading={sedangHapus}>
-                  {t("wiki_ui.manage.yes_delete")}
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => setKonfirmasiHapus(false)}>
-                  {t("cancel")}
-                </Button>
+        {!unit && (
+          <div className="space-y-2 border-t border-subtle pt-4">
+            {konfirmasiHapus ? (
+              <div className="rounded-card border border-danger-strong bg-danger-subtle p-3">
+                <p className="text-12 text-primary">{t("wiki_ui.manage.confirm_delete", { name: folder.nama })}</p>
+                <div className="mt-3 flex gap-2">
+                  <Button variant="error-fill" size="sm" onClick={hapus} loading={sedangHapus}>
+                    {t("wiki_ui.manage.yes_delete")}
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setKonfirmasiHapus(false)}>
+                    {t("cancel")}
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <Button variant="error-outline" size="sm" onClick={() => setKonfirmasiHapus(true)}>
-              <Trash2 className="size-3.5" />
-              {t("wiki_ui.manage.delete_division")}
-            </Button>
-          )}
-        </div>
+            ) : (
+              <Button variant="error-outline" size="sm" onClick={() => setKonfirmasiHapus(true)}>
+                <Trash2 className="size-3.5" />
+                {t("wiki_ui.manage.delete_folder")}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </ModalCore>
   );

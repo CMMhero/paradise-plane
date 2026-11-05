@@ -10,10 +10,10 @@ Berkas berawalan `_` supaya Django tidak membacanya sebagai command.
 Dipanggil SESUDAH work item demo ada; bahannya dibaca ulang dari database,
 bukan dioper dari command, supaya tiap bagian bisa dipahami sendiri.
 
-Wiki mengikuti KEP-51: folder Divisi sudah dibuat `pastikan_folder_divisi`;
-sub-topik dibuat admin (hanya admin yang boleh), materinya diunggah anggota
-departemen di bawah divisi itu (hak unggah mereka), sehingga kolom "pengunggah"
-di Wiki menunjuk orang yang memang boleh.
+Wiki mengikuti KEP-51/KEP-94: folder Divisi sudah dibuat `pastikan_folder_unit`;
+sub-topik (`WikiFolder`) dibuat admin (hanya admin yang boleh), materinya
+(`WikiMaterial`) diunggah anggota departemen di bawah divisi itu (hak unggah
+mereka), sehingga kolom "pengunggah" di Wiki menunjuk orang yang memang boleh.
 """
 
 # Python imports
@@ -37,11 +37,10 @@ from plane.db.models import (
     IssueWorkLog,
     CommentReaction,
     LoginActivity,
-    Page,
-    Project,
-    ProjectPage,
     State,
     UserRecentVisit,
+    WikiFolder,
+    WikiMaterial,
 )
 
 SUMBER = "seed-demo"
@@ -195,38 +194,24 @@ def _buat_draft(cmd, project, pemilik, judul, hitung):
 
 
 def _wiki(cmd, hitung):
-    wiki = Project.objects.filter(workspace=cmd.ws, identifier="WIKI").first()
-    if wiki is None:
-        return
     for kode, nama, deps in data.ORGANISASI:
-        folder = Page.objects.filter(
-            workspace=cmd.ws, parent__isnull=True, name=nama, project_pages__project=wiki
-        ).first()
+        folder = WikiFolder.objects.filter(workspace=cmd.ws, divisi__nama=nama).first()
         if folder is None:
             continue
         kode_dep = [k for k, _ in deps]
         pengunggah = [cmd.supervisor[d] for d in kode_dep] + [u for d in kode_dep for u in cmd.staf[d][:2]]
         for judul, ket in SUB_TOPIK:
-            with impersonate(cmd.actor):
-                topik = Page.objects.create(
-                    workspace=cmd.ws,
-                    owned_by=cmd.actor,
-                    parent=folder,
-                    name=judul,
-                    description_html=f"<p>{ket}</p>",
-                    access=Page.PUBLIC_ACCESS,
-                    external_source=SUMBER,
-                )
-                ProjectPage.objects.create(workspace=cmd.ws, project=wiki, page=topik)
+            topik = WikiFolder(workspace=cmd.ws, parent=folder, nama=judul, keterangan=ket)
+            topik.save(created_by_id=cmd.actor.id)
             for n in range(cmd.rng.randint(2, 3)):
-                _materi(cmd, wiki, topik, nama, judul, cmd.rng.choice(pengunggah), n)
+                _materi(cmd, topik, nama, judul, cmd.rng.choice(pengunggah), n)
                 hitung["materi_wiki"] += 1
         # Super Admin boleh mengunggah ke divisi mana pun (KEP-51); satu materi per divisi.
-        _materi(cmd, wiki, topik, nama, judul, cmd.actor, 3)
+        _materi(cmd, topik, nama, judul, cmd.actor, 3)
         hitung["materi_wiki"] += 1
 
 
-def _materi(cmd, wiki, topik, nama_divisi, judul, pengunggah, n):
+def _materi(cmd, topik, nama_divisi, judul, pengunggah, n):
     singkat = nama_divisi.split()[0].lower()
     if judul.startswith("SOP"):
         nama = f"sop-{singkat}-{n + 1}.pdf"
@@ -241,16 +226,17 @@ def _materi(cmd, wiki, topik, nama_divisi, judul, pengunggah, n):
     else:
         nama, tipe = f"catatan-{singkat}-{n + 1}.txt", "text/plain"
         isi = berkas.txt(f"Catatan {judul} divisi {nama_divisi}.\nGunakan template terbaru di folder ini.\n")
-    berkas.unggah(
+    aset = berkas.unggah(
         cmd.ws,
         pengunggah,
         nama,
         isi,
         tipe,
         FileAsset.EntityTypeContext.WIKI_MATERIAL,
-        project=wiki,
-        page=topik,
         entity_identifier=str(topik.id),
+    )
+    WikiMaterial(id=aset.id, workspace=cmd.ws, folder=topik, berkas=aset, judul=nama).save(
+        created_by_id=pengunggah.id
     )
 
 

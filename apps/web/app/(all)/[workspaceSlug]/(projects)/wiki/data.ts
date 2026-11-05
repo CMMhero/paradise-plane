@@ -6,108 +6,60 @@
  */
 
 import useSWR from "swr";
-import type { TPage } from "@plane/types";
-// hooks
-import { useProject } from "@/hooks/store/use-project";
-// lib
-import { WIKI_PROJECT_IDENTIFIER } from "@/lib/wiki-project";
 // services
-import { ProjectPageService } from "@/services/page";
-import { WikiAccessService, type TWikiFolderPermission } from "@/services/wiki_access.service";
-import { WikiMaterialService } from "@/services/wiki_material.service";
+import { WikiService, type TWikiFolder } from "@/services/wiki.service";
 
 /**
- * Wiki berdiri sendiri, jadi datanya juga.
- *
- * Store halaman MobX sengaja TIDAK dipakai di sini. Ia membaca
- * `router.projectId`, dan rute `/wiki` tidak punya parameter itu; menumpanginya
- * berarti Wiki harus hidup di dalam rute project, dan itu persis yang membuat
- * tombol "buat halaman" serta chrome work item ikut terbawa. Jadi datanya
- * diambil langsung lewat service, dan project Wiki diresolusi dari
- * identifiernya saat runtime karena UUID-nya berbeda di tiap instance.
+ * Wiki berdiri sendiri (KEP-94): bukan project, jadi tidak ada store halaman
+ * MobX dan tidak ada id project. Satu panggilan `GET wiki/` membawa seluruh
+ * pohon folder berikut `can_upload` dan `can_manage` per folder, lalu klien
+ * menurunkan anak, jejak, dan angka dari situ. Izin tidak pernah dihitung ulang
+ * di sini.
  */
-const layananHalaman = new ProjectPageService();
-const layananAkses = new WikiAccessService();
-const layananMateri = new WikiMaterialService();
+export const layananWiki = new WikiService();
 
-export const useProjectWiki = () => {
-  const { getProjectByIdentifier, loader } = useProject();
-  const project = getProjectByIdentifier(WIKI_PROJECT_IDENTIFIER);
-  return { projectId: project?.id, sedangMemuat: loader === "init-loader", project };
-};
-
-export const usePohonWiki = (workspaceSlug?: string, projectId?: string) => {
-  const { data, isLoading, mutate } = useSWR(
-    workspaceSlug && projectId ? `WIKI_TREE_${projectId}` : null,
-    workspaceSlug && projectId ? () => layananHalaman.fetchAll(workspaceSlug, projectId) : null,
-    { revalidateOnFocus: false }
-  );
-  return { halaman: data, sedangMemuat: isLoading, muatUlang: mutate };
-};
+export const kunciPohonWiki = (workspaceSlug: string) => `WIKI_TREE_${workspaceSlug}`;
 
 /**
- * Izin SENGAJA ikut segar saat tab kembali difokus (bawaan SWR global). Izin
- * bisa berubah dari luar halaman ini: admin mengatur pemilik folder di tab
- * lain, atau penempatan divisi diubah di God Mode. Mematikannya membuat tombol
- * unggah dan kelola baru muncul setelah refresh penuh.
+ * Sengaja ikut segar saat tab kembali difokus (bawaan SWR global): izin bisa
+ * berubah dari luar halaman ini, misalnya penempatan di God Mode.
  */
-export const useIzinWiki = (workspaceSlug?: string, projectId?: string) => {
-  const { data, mutate } = useSWR(
-    workspaceSlug && projectId ? `WIKI_PERMISSIONS_${projectId}` : null,
-    workspaceSlug && projectId ? () => layananAkses.fetchPermissions(workspaceSlug, projectId) : null
+export const usePohonWiki = (workspaceSlug?: string) => {
+  const { data, isLoading, error, mutate } = useSWR(
+    workspaceSlug ? kunciPohonWiki(workspaceSlug) : null,
+    workspaceSlug ? () => layananWiki.fetchTree(workspaceSlug) : null
   );
-  return { izin: data, muatUlangIzin: mutate };
+  return {
+    folder: data?.folders,
+    adalahAdmin: !!data?.is_admin,
+    sedangMemuat: isLoading,
+    galat: error as { error?: string } | undefined,
+    muatUlang: mutate,
+  };
 };
 
-export const useJumlahMateriWiki = (workspaceSlug?: string, projectId?: string) => {
-  const { data, mutate } = useSWR(
-    workspaceSlug && projectId ? `WIKI_MATERIAL_COUNTS_${projectId}` : null,
-    workspaceSlug && projectId ? () => layananMateri.fetchCounts(workspaceSlug, projectId) : null,
-    { revalidateOnFocus: false }
+/** Folder yang tidak diarsipkan, yaitu yang layak ditampilkan. */
+export const folderTerlihat = (folder?: TWikiFolder[]): TWikiFolder[] => (folder ?? []).filter((f) => !f.archived_at);
+
+export const adalahUnit = (folder: TWikiFolder | undefined): boolean => !!(folder?.divisi_id || folder?.departemen_id);
+
+export const anakDari = (folder: TWikiFolder[], indukId: string | null | undefined): TWikiFolder[] =>
+  folder
+    .filter((f) => (f.parent_id ?? null) === (indukId ?? null))
+    // oxlint-disable-next-line unicorn/no-array-sort -- filter already returned a copy
+    .sort((a, b) => a.urutan - b.urutan || a.nama.localeCompare(b.nama));
+
+export const folderDenganId = (folder: TWikiFolder[], id?: string | null): TWikiFolder | undefined =>
+  id ? folder.find((f) => f.id === id) : undefined;
+
+/** Materi di sebuah folder berikut seluruh sub-foldernya. `folder` harus sudah disaring `folderTerlihat`. */
+export const jumlahMateriDalam = (folder: TWikiFolder[], folderId: string | undefined): number => {
+  if (!folderId) return 0;
+  return anakDari(folder, folderId).reduce(
+    (total, anak) => total + jumlahMateriDalam(folder, anak.id),
+    folderDenganId(folder, folderId)?.jumlah_materi ?? 0
   );
-  return { jumlahMateri: data, muatUlangJumlah: mutate };
 };
-
-/**
- * Materi di sebuah folder berikut seluruh sub-topiknya. `halaman` harus sudah
- * disaring `halamanTerlihat`, jadi materi di folder yang diarsipkan tidak ikut.
- */
-export const jumlahMateriDalam = (
-  halaman: TPage[],
-  jumlah: Record<string, number> | undefined,
-  folderId: string | undefined
-): number => {
-  if (!folderId || !jumlah) return 0;
-  return anakDari(halaman, folderId).reduce(
-    (total, anak) => total + jumlahMateriDalam(halaman, jumlah, anak.id),
-    jumlah[folderId] ?? 0
-  );
-};
-
-/** Halaman yang tidak diarsipkan dan tidak dihapus, yaitu yang layak ditampilkan. */
-export const halamanTerlihat = (halaman?: TPage[]): TPage[] =>
-  (halaman ?? []).filter((h) => !h.archived_at && !h.deleted_at);
-
-export const anakDari = (halaman: TPage[], indukId: string | null | undefined): TPage[] =>
-  halaman.filter((h) => (h.parent ?? null) === (indukId ?? null));
-
-export const halamanDenganId = (halaman: TPage[], id?: string | null): TPage | undefined =>
-  id ? halaman.find((h) => h.id === id) : undefined;
-
-/** Naik ke folder Divisi. Di situlah izin dan nama divisinya menempel. */
-export const divisiDari = (halaman: TPage[], id: string | undefined): TPage | undefined => {
-  let kini = halamanDenganId(halaman, id);
-  for (let i = 0; i < 20 && kini; i++) {
-    if (!kini.parent) return kini;
-    kini = halamanDenganId(halaman, kini.parent);
-  }
-  return kini;
-};
-
-export const izinFolderDari = (
-  izin: { folders: TWikiFolderPermission[] } | undefined,
-  folderId?: string
-): TWikiFolderPermission | undefined => (folderId ? izin?.folders.find((f) => f.id === folderId) : undefined);
 
 /** Ukuran berkas dengan basis 1024, supaya cocok dengan angka yang dilihat orang di Windows. */
 export const ukuranTerbaca = (bytes: number): string => {
