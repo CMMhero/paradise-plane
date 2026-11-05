@@ -111,13 +111,14 @@ def terbitkan(versi_kini: str = None, folder: Path = FOLDER_CATATAN) -> int:
             kursor.execute("SELECT pg_advisory_xact_lock(%s)", [KUNCI_ADVISORY])
         for ws_id in Workspace.objects.values_list("id", flat=True):
             kanal = pastikan_kanal_sistem(ws_id)[KUNCI_CHANGELOG]
-            sudah = set(
-                PesanLangsung.objects.filter(ruang=kanal, jenis=JenisPesan.CHANGELOG).values_list(
-                    "muatan__versi", flat=True
-                )
-            )
+            sudah = {
+                p.muatan.get("versi"): p
+                for p in PesanLangsung.objects.filter(ruang=kanal, jenis=JenisPesan.CHANGELOG).only("id", "muatan")
+            }
             for c in catatan:
-                if c["versi"] in sudah:
+                lama = sudah.get(c["versi"])
+                if lama is not None:
+                    selaraskan(lama, c, batas)
                     continue
                 pesan = kirim_pesan_sistem(kanal, JenisPesan.CHANGELOG, c, ringkasan_teks(c))
                 # Rilis lama yang baru diisi belakangan diberi tanggal rilisnya:
@@ -128,6 +129,24 @@ def terbitkan(versi_kini: str = None, folder: Path = FOLDER_CATATAN) -> int:
                     PesanLangsung.objects.filter(pk=pesan.pk).update(created_at=waktu)
                 jumlah += 1
     return jumlah
+
+
+def selaraskan(pesan, catatan: dict, batas: tuple) -> None:
+    """Kartu yang sudah terbit mengikuti berkasnya kalau berkas itu dikoreksi.
+
+    Tanpa ini, idempotensi membekukan salah ketik selamanya: tanggal 3.0.0
+    sempat tertulis 5 Nov padahal rilisnya 4 Nov, dan kartunya tidak pernah
+    ikut berubah. Tidak ada siaran soket dan `pesan_terakhir_pada` tidak
+    disentuh, jadi koreksi tidak menyalakan lencana belum-dibaca. Tanggal
+    pesan hanya digeser untuk versi lama, sama seperti saat terbit pertama.
+    """
+    if pesan.muatan == catatan:
+        return
+    ubah = {"muatan": catatan, "isi": ringkasan_teks(catatan)}
+    waktu = waktu_rilis(catatan["tanggal"])
+    if waktu is not None and urai_versi(catatan["versi"]) < batas:
+        ubah["created_at"] = waktu
+    PesanLangsung.objects.filter(pk=pesan.pk).update(**ubah)
 
 
 def waktu_rilis(tanggal: str):
