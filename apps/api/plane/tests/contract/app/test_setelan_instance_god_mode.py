@@ -88,7 +88,9 @@ def _simpan(kunci, nilai):
 
 
 def _audit(kunci):
-    return LogEntry.objects.filter(content_type__model="instanceconfiguration", object_repr=kunci)
+    return LogEntry.objects.filter(
+        content_type__model="instanceconfiguration", object_repr=f"Instance setting: {kunci}"
+    )
 
 
 @pytest.mark.contract
@@ -175,7 +177,8 @@ class TestSettingsEndpoint:
         assert _baris(si.HIERARKI_GERBANG_TUGAS) == "0"
         entri = _audit(si.HIERARKI_GERBANG_TUGAS).get()
         assert entri.changes == {"value": ["1", "0"]}
-        assert entri.additional_data == {"key": si.HIERARKI_GERBANG_TUGAS, "sensitive": True}
+        assert entri.additional_data["key"] == si.HIERARKI_GERBANG_TUGAS
+        assert entri.additional_data["sensitive"] is True
 
     @pytest.mark.django_db
     def test_sensitif_yang_tidak_berubah_tak_butuh_konfirmasi(self, super_admin):
@@ -190,7 +193,7 @@ class TestSettingsEndpoint:
         force_authenticate(request, user=super_admin)
         res = InstanceAuditLogEndpoint.as_view()(request)
         assert res.status_code == status.HTTP_200_OK
-        assert [r["object_repr"] for r in res.data["results"]] == [si.STUCK_AFTER_DAYS]
+        assert [r["object_repr"] for r in res.data["results"]] == [f"Instance setting: {si.STUCK_AFTER_DAYS}"]
 
 
 def _patch_konfigurasi(aktor, badan):

@@ -20,13 +20,28 @@ from auditlog.models import LogEntry
 
 # Module imports
 from plane.license.api.views.base import BaseAPIView
+from plane.license.audit_godmode import jenis_objek, label_objek
 
 # Model yang dipantau (lihat plane/db/audit.py). Dibatasi ke daftar ini supaya
 # registrasi lain, kalau kelak ditambah, tidak ikut bocor ke endpoint ini.
-_TRACKED_MODELS = ["project", "projectmember", "workspacemember", "issue", "page", "instanceconfiguration"]
+_TRACKED_MODELS = [
+    "project",
+    "projectmember",
+    "workspacemember",
+    "issue",
+    "page",
+    "instanceconfiguration",
+    "divisi",
+    "departemen",
+    "departemenproject",
+    "jabatanorganisasi",
+    "pengawasandivisi",
+]
 # `instanceconfiguration` TIDAK didaftarkan ke auditlog (nilainya bisa rahasia
-# terenkripsi). Entrinya ditulis tangan oleh PATCH /api/instances/settings/
-# (license/api/views/setelan.py), satu per kunci yang berubah, lama -> baru (KEP-83).
+# terenkripsi). Dipakai sebagai content type bersama untuk SEMUA entri tulisan
+# tangan God Mode (setelan, bawaan, akun, sesi, ...) lewat
+# `plane.license.audit_godmode.catat_godmode`, yang mengisi `additional_data.kind`
+# supaya jenis objeknya terbaca (lihat `jenis_objek`).
 
 _ACTION_MAP = {
     "create": LogEntry.Action.CREATE,
@@ -109,7 +124,10 @@ def _serialize(entry):
         "timestamp": entry.timestamp,
         "action": entry.get_action_display(),
         "model": entry.content_type.model if entry.content_type else None,
-        "object_repr": entry.object_repr,
+        # Tidak pernah kosong, juga untuk baris lama yang `object_repr`-nya kosong.
+        "model_label": jenis_objek(entry),
+        "object_label": label_objek(entry),
+        "object_repr": label_objek(entry),
         "object_id": entry.object_pk,
         "changes": entry.changes,
         "remote_addr": entry.remote_addr,

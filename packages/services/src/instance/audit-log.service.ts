@@ -11,7 +11,18 @@ import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "../api.service";
 
 /** Model yang dipantau auditlog, sama dengan daftar di plane/db/audit.py. */
-export type TAuditLogModel = "project" | "projectmember" | "workspacemember" | "issue" | "page";
+export type TAuditLogModel =
+  | "project"
+  | "projectmember"
+  | "workspacemember"
+  | "issue"
+  | "page"
+  | "instanceconfiguration"
+  | "divisi"
+  | "departemen"
+  | "departemenproject"
+  | "jabatanorganisasi"
+  | "pengawasandivisi";
 
 export type TAuditLogAction = "create" | "update" | "delete";
 
@@ -27,6 +38,10 @@ export type TAuditLogEntry = {
   /** Sudah dalam bentuk terbaca dari backend ("Create"/"Update"/"Delete"). */
   action: string;
   model: TAuditLogModel | null;
+  /** Jenis objek terbaca dari backend, tidak pernah kosong (dipakai bila `model` tak dikenal UI). */
+  model_label?: string;
+  /** Nama objek terbaca dari backend, tidak pernah kosong. */
+  object_label?: string;
   object_repr: string;
   object_id: string;
   /** Peta {field: [nilai_lama, nilai_baru]}. Bentuknya ditentukan django-auditlog. */

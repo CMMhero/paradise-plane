@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
+from plane.license.audit_godmode import catat_godmode
 from plane.utils.saklar_instance import TRASH_RETENTION_DAYS, setelan_angka
 from plane.license.api.views.base import BaseAPIView
 from plane.utils.trash import TrashConflict, ambil, buang_permanen, kumpulkan, pulihkan
@@ -48,6 +49,7 @@ class InstanceTrashEndpoint(BaseAPIView):
             jumlah = pulihkan(obj, spec)
         except TrashConflict as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
+        catat_godmode(request, kind="trash", label=f"Trash {trash_type}: restored", object_pk=str(pk), action=1)
         return Response({"message": "Restored.", "restored_count": jumlah}, status=status.HTTP_200_OK)
 
     def delete(self, request, trash_type, pk):
@@ -55,4 +57,7 @@ class InstanceTrashEndpoint(BaseAPIView):
         if not obj:
             return Response({"error": "Item not found in trash."}, status=status.HTTP_404_NOT_FOUND)
         buang_permanen(obj)
+        catat_godmode(
+            request, kind="trash", label=f"Trash {trash_type}: deleted permanently", object_pk=str(pk), action=2
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)

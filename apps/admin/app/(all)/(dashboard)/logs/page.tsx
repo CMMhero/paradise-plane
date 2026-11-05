@@ -82,7 +82,19 @@ const GAYA_AKSI: Record<TAksiAudit, { variant: "success" | "warning" | "danger" 
   other: { variant: "neutral", icon: FilePen },
 };
 
-const MODELS: TAuditLogModel[] = ["project", "projectmember", "workspacemember", "issue", "page"];
+const MODELS: TAuditLogModel[] = [
+  "project",
+  "projectmember",
+  "workspacemember",
+  "issue",
+  "page",
+  "instanceconfiguration",
+  "divisi",
+  "departemen",
+  "departemenproject",
+  "jabatanorganisasi",
+  "pengawasandivisi",
+];
 
 /** Kunci kolom -> kunci urut backend (`?sort=`). Kolom tanpa entri tidak bisa diurutkan. */
 const URUT_SERVER: Record<string, string> = {
@@ -121,6 +133,12 @@ const labelModelDari = (t: TAudit): Record<TAuditLogModel, string> => ({
   workspacemember: t.model_workspacemember,
   issue: t.model_issue,
   page: t.model_page,
+  instanceconfiguration: t.model_instanceconfiguration,
+  divisi: t.model_divisi,
+  departemen: t.model_departemen,
+  departemenproject: t.model_departemenproject,
+  jabatanorganisasi: t.model_jabatanorganisasi,
+  pengawasandivisi: t.model_pengawasandivisi,
 });
 
 const labelAksiDari = (t: TAudit): Record<Exclude<TAksiAudit, "other">, string> => ({
@@ -197,7 +215,10 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
     keepPreviousData: true,
   });
 
-  const namaModel = (m: TAuditLogModel | null) => (m ? labelModel[m] : "—");
+  // Jenis objek tidak boleh kosong: label backend dulu (membedakan akun/bawaan/setelan), lalu peta lokal,
+  // lalu label umum.
+  const namaModel = (e: TAuditLogEntry) =>
+    e.model_label || (e.model ? labelModel[e.model] : undefined) || t.model_fallback;
   const namaAksi = (e: TAuditLogEntry) => {
     const a = aksiAudit(e.action);
     return a === "other" ? e.action : labelAksi[a];
@@ -266,14 +287,14 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
       label: t.filter_object_type,
       sortable: true,
       headClassName: "w-36",
-      render: (e) => <Badge variant="neutral">{namaModel(e.model)}</Badge>,
+      render: (e) => <Badge variant="neutral">{namaModel(e)}</Badge>,
     },
     {
       key: "object",
       label: t.col_object,
       sortable: true,
       render: (e) => {
-        const objek = objekAudit(e.model, e.object_repr);
+        const objek = objekAudit(e.model, e.object_label || e.object_repr || t.model_fallback);
         return (
           <span className="flex min-w-0 items-baseline gap-1.5" title={e.object_repr}>
             <span className="truncate font-medium text-primary">{objek.utama}</span>

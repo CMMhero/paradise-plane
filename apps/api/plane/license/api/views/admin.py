@@ -24,6 +24,7 @@ from rest_framework.permissions import AllowAny
 
 # Module imports
 from .base import BaseAPIView
+from plane.license.audit_godmode import catat_godmode
 from plane.license.api.permissions import InstanceAdminPermission
 from plane.license.api.serializers import (
     InstanceAdminMeSerializer,
@@ -69,6 +70,14 @@ class InstanceAdminEndpoint(BaseAPIView):
         # jangan INSERT ulang yang menabrak unique (instance, user).
         instance_admin = angkat_super_admin(instance, user, role=role)
         serializer = InstanceAdminSerializer(instance_admin)
+        catat_godmode(
+            request,
+            kind="super_admin",
+            label=f"Super Admin: {user.email}",
+            action=1,
+            object_pk=str(instance_admin.pk),
+            changes={"role": ["", str(role)]},
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @cache_response(60 * 60 * 2, user=False)
@@ -135,7 +144,16 @@ class InstanceAdminEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        email_dicabut = admin.user.email
         admin.delete()
+        catat_godmode(
+            request,
+            kind="super_admin",
+            label=f"Super Admin: {email_dicabut}",
+            action=2,
+            object_pk=str(pk),
+            detail="Super Admin status revoked",
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

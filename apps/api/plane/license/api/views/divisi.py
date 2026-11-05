@@ -33,6 +33,7 @@ from rest_framework.response import Response
 from plane.db.models import Project, ProjectMember, ProjectUserProperty, User, Workspace
 from plane.utils.hierarki import TINGKAT_SUPERVISOR, tingkat_anggota
 from .base import BaseAPIView
+from plane.license.audit_godmode import catat_godmode
 
 # Peran project yang sah. 5 (Guest) sengaja TIDAK ada: keanggotaan divisi dari
 # God Mode minimal Member; Guest diatur admin divisi dari aplikasi utama.
@@ -185,6 +186,13 @@ class InstanceDivisiAnggotaEndpoint(BaseAPIView):
 
         sinkronkan_satu(workspace.id, user.id)
 
+        catat_godmode(
+            request,
+            kind="division_members",
+            label=f"Division members: {user.email}",
+            object_pk=str(user.pk),
+            changes={"projects": ["", ", ".join(sorted(ke_identifier[q] for q in ingin))]},
+        )
         return Response(
             {
                 "member_id": str(user.id),
