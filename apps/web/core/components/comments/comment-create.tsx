@@ -59,7 +59,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
   const {
     handleSubmit,
     control,
-    watch,
+    setValue,
     formState: { isSubmitting },
     reset,
   } = useForm<Partial<TIssueComment>>({
@@ -67,6 +67,13 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
       comment_html: "<p></p>",
     },
   });
+  // Paradise: dulu `watch("comment_html")` + Controller, jadi tiap huruf
+  // merender ulang komponen ini, LiteTextEditor, dan editornya (useEditor
+  // membangun ulang extension lalu setOptions menghitung ulang dekorasi
+  // dokumen), plus dua kali sanitize-html atas seluruh komentar. Sekarang
+  // nilainya cuma disimpan ke form; yang memicu render hanya saat status
+  // kosong/berisi berbalik.
+  const [isEmpty, setIsEmpty] = useState(true);
 
   const onSubmit = async (formData: Partial<TIssueComment>) => {
     try {
@@ -90,16 +97,15 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
       reset({
         comment_html: "<p></p>",
       });
+      setIsEmpty(true);
       editorRef.current?.clearEditor();
     }
   };
 
-  const commentHTML = watch("comment_html");
-  const isEmpty = isCommentEmpty(commentHTML ?? undefined);
-
   return (
     <div
       className={cn("sticky bottom-0 z-[4] bg-surface-1 sm:static")}
+      role="presentation"
       onKeyDown={(e) => {
         if (
           e.key === "Enter" &&
@@ -117,47 +123,46 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
         name="access"
         control={control}
         render={({ field: { onChange: onAccessChange, value: accessValue } }) => (
-          <Controller
-            name="comment_html"
-            control={control}
-            render={({ field: { value, onChange } }) => (
-              <LiteTextEditor
-                editable
-                workspaceId={workspaceId}
-                id={"add_comment_" + entityId}
-                value={"<p></p>"}
-                workspaceSlug={workspaceSlug}
-                projectId={projectId}
-                onEnterKeyPress={(e) => {
-                  if (!isEmpty && !isSubmitting) {
-                    handleSubmit(onSubmit)(e);
-                  }
-                }}
-                ref={editorRef}
-                initialValue={value ?? "<p></p>"}
-                containerClassName="min-h-min"
-                onChange={(comment_json, comment_html) => onChange(comment_html)}
-                accessSpecifier={accessValue ?? EIssueCommentAccessSpecifier.INTERNAL}
-                handleAccessChange={onAccessChange}
-                isSubmitting={isSubmitting}
-                uploadFile={async (blockId, file) => {
-                  const { asset_id } = await activityOperations.uploadCommentAsset(blockId, file);
-                  setUploadedAssetIds((prev) => [...prev, asset_id]);
-                  return asset_id;
-                }}
-                duplicateFile={async (assetId: string) => {
-                  const { asset_id } = await activityOperations.duplicateCommentAsset(assetId);
-                  setUploadedAssetIds((prev) => [...prev, asset_id]);
-                  return asset_id;
-                }}
-                attachFiles={attachFiles}
-                showToolbarInitially={showToolbarInitially}
-                parentClassName="p-2"
-                displayConfig={{
-                  fontSize: "small-font",
-                }}
-              />
-            )}
+          <LiteTextEditor
+            editable
+            workspaceId={workspaceId}
+            id={"add_comment_" + entityId}
+            value={"<p></p>"}
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            onEnterKeyPress={(e) => {
+              if (!isEmpty && !isSubmitting) {
+                handleSubmit(onSubmit)(e);
+              }
+            }}
+            ref={editorRef}
+            // Isi awal editor saja; editor hanya membacanya saat dibuat.
+            initialValue="<p></p>"
+            isEmpty={isEmpty}
+            containerClassName="min-h-min"
+            onChange={(_comment_json, comment_html) => {
+              setValue("comment_html", comment_html);
+              setIsEmpty(isCommentEmpty(comment_html));
+            }}
+            accessSpecifier={accessValue ?? EIssueCommentAccessSpecifier.INTERNAL}
+            handleAccessChange={onAccessChange}
+            isSubmitting={isSubmitting}
+            uploadFile={async (blockId, file) => {
+              const { asset_id } = await activityOperations.uploadCommentAsset(blockId, file);
+              setUploadedAssetIds((prev) => [...prev, asset_id]);
+              return asset_id;
+            }}
+            duplicateFile={async (assetId: string) => {
+              const { asset_id } = await activityOperations.duplicateCommentAsset(assetId);
+              setUploadedAssetIds((prev) => [...prev, asset_id]);
+              return asset_id;
+            }}
+            attachFiles={attachFiles}
+            showToolbarInitially={showToolbarInitially}
+            parentClassName="p-2"
+            displayConfig={{
+              fontSize: "small-font",
+            }}
           />
         )}
       />
