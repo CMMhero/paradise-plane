@@ -381,6 +381,27 @@ class TestChat:
         assert client.post(url, {"emoji": "👍"}, format="json").status_code == 404
 
     @pytest.mark.django_db
+    def test_reaksi_kembar_dihitung_sekali_dan_dibersihkan(self, kantor):
+        """Basis data tidak menolak dua baris aktif yang kembar (deleted_at NULL
+        di unique_together), jadi balapan lama bisa meninggalkan kembaran.
+        Kembaran itu tidak boleh tampil sebagai dua orang, dan satu klik batal
+        harus membersihkan semuanya, bukan cuma satu baris."""
+        workspace, aku, budi, _ = kantor
+        pesan = _pesan(workspace, budi, aku, "halo", menit_lalu=1)
+        ReaksiPesan.objects.bulk_create(
+            [ReaksiPesan(pesan=pesan, user=aku, emoji="❤️"), ReaksiPesan(pesan=pesan, user=aku, emoji="❤️")]
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        isi = client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/")
+        assert isi.data[-1]["reaksi"] == [{"emoji": "❤️", "orang": [str(aku.id)]}]
+
+        url = f"/api/workspaces/{workspace.slug}/chat/pesan/{pesan.id}/reaksi/"
+        assert client.post(url, {"emoji": "❤️"}, format="json").data["aktif"] is False
+        assert ReaksiPesan.objects.filter(pesan=pesan).count() == 0
+
+    @pytest.mark.django_db
     def test_penggulungan_riwayat_memakai_sebelum(self, kantor):
         workspace, aku, budi, _ = kantor
         for i in range(5):

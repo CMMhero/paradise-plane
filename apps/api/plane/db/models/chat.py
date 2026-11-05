@@ -220,6 +220,15 @@ class PesanLangsung(BaseModel):
     balasan_ke = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="balasan"
     )
+    # Sematan (migrasi 0167). Dua kolom di pesan, bukan tabel sendiri: sematan
+    # berlaku untuk SELURUH ruang, bukan per orang, jadi satu pesan paling banyak
+    # punya satu sematan. Tabel terpisah cuma menambah join tanpa menyimpan fakta
+    # yang tidak muat di sini. `disematkan_oleh` SET_NULL supaya akun yang dihapus
+    # permanen tidak ikut melepas sematan yang masih dipakai orang lain.
+    disematkan_pada = models.DateTimeField(null=True, blank=True)
+    disematkan_oleh = models.ForeignKey(
+        "db.User", related_name="pesan_disematkan", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
     class Meta:
         verbose_name = "Pesan Langsung"
@@ -235,6 +244,13 @@ class PesanLangsung(BaseModel):
             # Memuat isi satu ruang urut waktu, dan menghitung belum dibaca
             # sesudah `dibaca_sampai`. Keduanya dilayani indeks yang sama.
             models.Index(fields=["ruang", "created_at"], name="dm_ruang_created_idx"),
+            # Daftar sematan satu ruang. Parsial: hampir semua pesan tidak
+            # disematkan, jadi indeks penuh cuma memboroskan tulis tiap pesan.
+            models.Index(
+                fields=["ruang", "disematkan_pada"],
+                name="dm_ruang_disematkan_idx",
+                condition=models.Q(disematkan_pada__isnull=False),
+            ),
         ]
 
     def save(self, *args, **kwargs):

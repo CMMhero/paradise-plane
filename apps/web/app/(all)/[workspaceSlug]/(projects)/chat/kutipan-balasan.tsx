@@ -5,11 +5,14 @@
  * See the LICENSE file for details.
  */
 
+import type { ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "@plane/utils";
 
 type Props = {
   nama: string;
+  /** Ikon kecil di depan nama, misalnya pensil saat menyunting. */
+  ikon?: ReactNode;
   /** Teks kutipan, sudah diterjemahkan ("Lampiran", "Pesan dihapus") bila perlu. */
   isi: string;
   /** Di atas gelembung berwarna aksen (pesan saya): pakai warna terang. */
@@ -33,14 +36,20 @@ type Props = {
  * lurus. Jangan beri garis itu `rounded-*` sendiri.
  */
 export function KutipanBalasan(props: Props) {
-  const { nama, isi, terang = false, miring = false, onBuka, onBatal, labelBatal } = props;
+  const { nama, ikon, isi, terang = false, miring = false, onBuka, onBatal, labelBatal } = props;
   const latar = terang ? "bg-black/15" : "bg-accent-subtle";
   const latarHover = terang ? "hover:bg-black/25" : "hover:bg-accent-subtle-hover";
 
   const isiKutipan = (
     <>
-      <span className={cn("block truncate text-12 font-semibold", terang ? "text-on-color" : "text-accent-primary")}>
-        {nama}
+      <span
+        className={cn(
+          "flex items-center gap-1 truncate text-12 font-semibold",
+          terang ? "text-on-color" : "text-accent-primary"
+        )}
+      >
+        {ikon}
+        <span className="truncate">{nama}</span>
       </span>
       <span className={cn("line-clamp-2 text-12", terang ? "text-on-color/70" : "text-tertiary", miring && "italic")}>
         {isi}
