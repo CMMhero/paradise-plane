@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 python manage.py wait_for_db
-# Wait for migrations
-python manage.py wait_for_migrations
+# Dev lokal: terapkan migrasi sendiri, jangan menunggu container migrator.
+# Menunggu dulu membuat api macet selamanya kalau migrator tidak dijalankan
+# ulang sesudah ada migrasi baru. Sesudah start, plane/db/sinkron_lokal.py
+# menerapkan migrasi + changelog tiap runserver memuat ulang.
+python manage.py migrate --noinput --settings=plane.settings.local
 
 # Create the default bucket
 #!/bin/bash
