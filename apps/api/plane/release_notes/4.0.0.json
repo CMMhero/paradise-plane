@@ -1,0 +1,106 @@
+{
+  "version": "4.0.0",
+  "date": "2026-11-05",
+  "entries": [
+    {
+      "type": "Changed",
+      "text": "Roles now belong to a place. Someone can be Supervisor in one department and Staff in another, and what they may do in a project follows their role in that project's department."
+    },
+    {
+      "type": "Changed",
+      "text": "There is no department manager. A manager leads whole divisions; adding them to a department in their own division is refused, and adding them to a department in another division asks whether they join as Staff or Supervisor there."
+    },
+    {
+      "type": "Changed",
+      "text": "Organization board: the Levels row lists everyone by their highest role in a scrollable box. Drag people from it into a place. Only Director takes drops, since it is the one level without a place."
+    },
+    {
+      "type": "Changed",
+      "text": "Organization board: dragging from People adds someone; dragging inside the structure moves them, also between a department and a division. Dragging a division manager from the structure into one of their own departments steps them down to that role. Drag a director from the Director lane back to People to make them Staff."
+    },
+    {
+      "type": "Changed",
+      "text": "Organization board layout: the People panel stays in view while you scroll, managers are listed like supervisors and staff, department cards are flatter, and there is a New division button at the end of the list."
+    },
+    {
+      "type": "Changed",
+      "text": "The member editor no longer has Other project access or Supervised divisions. Access comes from placements; directors and Super Admins see everything by rule. The editor shows each placement and role read-only; change them on the Organization board."
+    },
+    {
+      "type": "Added",
+      "text": "Chat messages can be pinned. Pinned messages sit in a bar at the top of the conversation; click it to jump to the message."
+    },
+    {
+      "type": "Added",
+      "text": "Copy a chat message's text from its action menu."
+    },
+    {
+      "type": "Added",
+      "text": "Quick reactions on chat messages, plus a + button to pick any other emoji. On touch screens, long-press a message."
+    },
+    {
+      "type": "Added",
+      "text": "Mention more than people. In chat, descriptions and comments, type @ for people, yourself or @all, and # for channels and work items. Empty text fields show the hint @ mention · # channel or work item."
+    },
+    {
+      "type": "Added",
+      "text": "A private channel mentioned in a message shows as \"Private channel\" to anyone who isn't a member, so its name stays private."
+    },
+    {
+      "type": "Added",
+      "text": "Hover a mention of a person, channel or work item to see a quick preview: the profile card, the channel topic and member count, or the work item's status, priority, due date and assignees."
+    },
+    {
+      "type": "Changed",
+      "text": "Images in chat open in the same full-screen viewer as work items, with zoom, instead of a new tab."
+    },
+    {
+      "type": "Added",
+      "text": "Links and images written in a work item's description or comments now also appear under Links and Attachments, marked with where they came from."
+    },
+    {
+      "type": "Added",
+      "text": "Links show a preview card with the page title, summary and image, in descriptions, comments and chat, including while you type a chat message."
+    },
+    {
+      "type": "Fixed",
+      "text": "Some entries in Your Work activity showed only a name and a time. Every entry now says what changed."
+    },
+    {
+      "type": "Fixed",
+      "text": "The God Mode audit log showed a blank object type for settings changes. Every God Mode change is now logged with a type and a name."
+    },
+    {
+      "type": "Fixed",
+      "text": "Mention emails for a work item description could go to the wrong person."
+    },
+    {
+      "type": "Changed",
+      "text": "The profile card no longer prints \"Division\" and \"Department\" labels next to each unit; the building icon already says it."
+    },
+    {
+      "type": "Changed",
+      "text": "Projects are now called departments everywhere. Each department already had exactly one project behind it, so nothing moves; only the word changes."
+    },
+    {
+      "type": "Removed",
+      "text": "You can no longer create a project from the app. Create a department in God Mode and its workspace is made for you."
+    },
+    {
+      "type": "Changed",
+      "text": "The Wiki is its own space now, not a project. Every division and department has its own folder, created and named from the organization structure. All existing folders and materials were moved over and keep their links."
+    },
+    {
+      "type": "Changed",
+      "text": "Who can upload to the Wiki follows your placement: your department, your division if you lead it, everywhere for directors, and General for everyone. Nobody needs to be added to a Wiki project anymore."
+    },
+    {
+      "type": "Added",
+      "text": "Wiki trash: restore deleted folders and materials from the Trash button in the Wiki header."
+    },
+    {
+      "type": "Changed",
+      "text": "Labels no longer use all capital letters, and department cards on the Organization board no longer repeat the department name as a project."
+    }
+  ]
+}
