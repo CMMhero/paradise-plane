@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: keanggotaan divisi dari God Mode 
+ * Kustomisasi Paradise Task Tracker: keanggotaan divisi dari God Mode
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
