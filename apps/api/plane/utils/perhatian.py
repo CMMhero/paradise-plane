@@ -48,6 +48,7 @@ from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.ringkasan_divisi import project_terjangkau
 from plane.utils.tanggal_otomatis import batas_terlambat
 from plane.utils.saklar_instance import DIGEST_LOOKAHEAD_DAYS, setelan_angka
+from plane.utils.setelan_instance import hari_ini_kantor
 # Jendela "rejected" dan "mentioned" dari God Mode (KEP-83); bawaan 14 dan 7 hari.
 from plane.utils.saklar_instance import ATTENTION_MENTION_DAYS, ATTENTION_REJECTED_DAYS
 
@@ -131,7 +132,7 @@ def _persetujuan(project_ids, kecuali_grup, **saring):
 def susun_perhatian(user, slug):
     """Balasan endpoint `paradise/attention/`. Lihat docstring modul."""
     sekarang = timezone.now()
-    hari_ini = timezone.localdate()
+    hari_ini = hari_ini_kantor(sekarang)
     batas = batas_terlambat(hari_ini)
     workspace_id = Workspace.objects.values_list("id", flat=True).get(slug=slug)
     project_ids = list(project_terjangkau(user, slug).values_list("id", flat=True))

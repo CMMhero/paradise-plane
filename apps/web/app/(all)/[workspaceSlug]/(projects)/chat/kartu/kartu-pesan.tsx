@@ -169,11 +169,13 @@ type Props = {
   onTelepon?: (video: boolean) => void;
   /** Kartu yang saya picu: digambar di atas warna gelembung keluar saya. */
   terang?: boolean;
+  /** Pembaca kartu; menentukan kalimat penugasan. */
+  sayaId?: string;
 };
 
 /** Satu kartu, dipilih dari `pesan.jenis`. Jenis yang belum dikenal peramban
  * ini jatuh ke `isi` biasa, jadi server boleh menambah jenis lebih dulu. */
-export function KartuPesan({ pesan, namaOrang, onTelepon, terang = false }: Props) {
+export function KartuPesan({ pesan, namaOrang, onTelepon, terang = false, sayaId }: Props) {
   switch (pesan.jenis) {
     case "changelog":
       return <KartuChangelog pesan={pesan} />;
@@ -182,14 +184,14 @@ export function KartuPesan({ pesan, namaOrang, onTelepon, terang = false }: Prop
     case "mention": {
       const sebut = bacaSebutObrolan(pesan.muatan);
       if (sebut) return <KartuSebutObrolan sebut={sebut} namaOrang={namaOrang} />;
-      return <KartuTugas pesan={pesan} namaOrang={namaOrang} terang={terang} />;
+      return <KartuTugas pesan={pesan} namaOrang={namaOrang} terang={terang} sayaId={sayaId} />;
     }
     case "tugas":
     case "project":
     case "persetujuan":
     case "komentar":
     case "pembaruan":
-      return <KartuTugas pesan={pesan} namaOrang={namaOrang} terang={terang} />;
+      return <KartuTugas pesan={pesan} namaOrang={namaOrang} terang={terang} sayaId={sayaId} />;
     default:
       return <p className={cn("text-13 whitespace-pre-wrap", warnaKartu(terang).utama)}>{pesan.isi}</p>;
   }

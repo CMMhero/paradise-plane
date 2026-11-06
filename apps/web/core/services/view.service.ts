@@ -47,6 +47,15 @@ export class ViewService extends APIService {
       });
   }
 
+  /** Kustomisasi Paradise: view departemen yang boleh dibuka (disaring server), untuk halaman Views workspace. */
+  async getWorkspaceProjectViews(workspaceSlug: string): Promise<IProjectView[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/project-views/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
   async getViewDetails(workspaceSlug: string, projectId: string, viewId: string): Promise<IProjectView> {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/views/${viewId}/`)
       .then((response) => response?.data)

@@ -20,7 +20,7 @@ import uuid
 from typing import Any, Iterable, Optional
 
 # Third party imports
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, CData, Comment, NavigableString
 
 # Module imports
 from plane.db.models import FileAsset, Issue, IssueComment, IssueLink
@@ -40,16 +40,45 @@ def _sup(html: Optional[str]) -> Optional[BeautifulSoup]:
     return BeautifulSoup(html, "html.parser")
 
 
+_URL_POLOS = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
+_TANPA_TAUTAN = {"a", "code", "pre", "script", "style"}
+_PUNCT_AKHIR = ".,;:!?"
+
+
+def _bersihkan_url(alamat: str) -> str:
+    """Buang tanda baca penutup yang ikut tertangkap ("lihat https://x.id/a.", "(https://x.id)")."""
+    alamat = alamat.rstrip(_PUNCT_AKHIR)
+    while alamat.endswith(")") and alamat.count(")") > alamat.count("("):
+        alamat = alamat[:-1].rstrip(_PUNCT_AKHIR)
+    return alamat
+
+
 def tautan_dari_html(html: Optional[str]) -> list[str]:
-    """Alamat http(s) dari `<a href>`, urut kemunculan, tanpa duplikat."""
+    """Alamat http(s) dari `<a href>` DAN URL polos di teks, urut kemunculan, tanpa duplikat.
+
+    URL polos (belum diberi mark tautan oleh editor, mis. diketik di akhir baris tanpa
+    spasi, ditempel sebagai teks, atau ditulis lewat API) ikut dihitung. Teks di dalam
+    `<a>`, `<code>`, `<pre>` dilewati.
+    """
     soup = _sup(html)
     if soup is None:
         return []
     hasil: list[str] = []
-    for a in soup.find_all("a", href=True):
-        alamat = a["href"].strip()
+
+    def tambah(alamat: str) -> None:
         if alamat.lower().startswith(("http://", "https://")) and alamat not in hasil:
             hasil.append(alamat)
+
+    for node in soup.descendants:
+        if isinstance(node, NavigableString):
+            if isinstance(node, (Comment, CData)):
+                continue
+            if any(p.name in _TANPA_TAUTAN for p in node.parents if p.name):
+                continue
+            for cocok in _URL_POLOS.finditer(str(node)):
+                tambah(_bersihkan_url(cocok.group(0)))
+        elif node.name == "a" and node.get("href"):
+            tambah(node["href"].strip())
     return hasil
 
 

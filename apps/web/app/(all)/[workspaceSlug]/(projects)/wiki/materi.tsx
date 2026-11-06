@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
-import { ArrowLeft, Download, Pencil } from "lucide-react";
+import { Download, Pencil } from "lucide-react";
 import { Link, useParams } from "react-router";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
@@ -42,7 +42,6 @@ function WikiMateriPage() {
     { revalidateOnFocus: false }
   );
   const error = galatMateri ?? galatPratinjau;
-  const folderAsal = materi?.jejak[materi.jejak.length - 1];
 
   if (error)
     return (
@@ -74,16 +73,8 @@ function WikiMateriPage() {
       <div className="flex h-full w-full flex-col overflow-y-auto">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-subtle bg-surface-1 px-page-x py-6">
           <div className="min-w-0">
-            <Link
-              to={folderAsal ? `/${slug}/wiki/${folderAsal.id}` : `/${slug}/wiki`}
-              className="inline-flex items-center gap-1.5 text-12 text-tertiary transition-colors hover:text-secondary"
-            >
-              <ArrowLeft className="size-3.5" />
-              {folderAsal
-                ? t("wiki_ui.folder.back_to_parent", { name: folderAsal.nama })
-                : t("wiki_ui.common.back_to_home")}
-            </Link>
-            <h1 className="mt-2 truncate text-20 font-semibold tracking-tight text-primary">{materi.judul}</h1>
+            {/* Jalur ke materi ini ada di breadcrumb kepala Wiki, jadi tidak ada tautan kembali lagi di sini. */}
+            <h1 className="truncate text-20 font-semibold tracking-tight text-primary">{materi.judul}</h1>
             <p className="mt-1 text-12 text-tertiary">
               {[labelTipe(materi.type, t), ukuranTerbaca(materi.size), renderFormattedDate(materi.created_at)]
                 .filter(Boolean)

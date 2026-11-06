@@ -36,7 +36,8 @@ export const SidebarWorkspaceMenu = observer(function SidebarWorkspaceMenu() {
     {
       key: "views",
       labelTranslationKey: "sidebar.views",
-      href: `/${workspaceSlug}/workspace-views/all-issues/`,
+      // Kustomisasi Paradise: menu Views membuka daftar view, sama dengan tab Views departemen.
+      href: `/${workspaceSlug}/workspace-views/`,
       access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
       Icon: ViewsIcon,
     },

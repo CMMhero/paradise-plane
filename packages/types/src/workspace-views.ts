@@ -11,6 +11,7 @@ import type {
   TWorkItemFilterExpression,
 } from "./view-props";
 import type { EViewAccess } from "./views";
+import type { TLogoProps } from "./common";
 
 export interface IWorkspaceView {
   id: string;
@@ -31,6 +32,8 @@ export interface IWorkspaceView {
   workspace: string;
   is_locked: boolean;
   owned_by: string;
+  /** Kustomisasi Paradise: kolom ini sudah ada di IssueView; kini juga diisi formulir view workspace. */
+  logo_props?: TLogoProps;
   workspace_detail?: {
     id: string;
     name: string;

@@ -15,7 +15,7 @@ import { useParams } from "react-router";
 import useSWR from "swr";
 import { isParadiseFeatureEnabled } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { cn } from "@plane/utils";
+import { TabNavigationItem, TabNavigationList } from "@plane/propel/tab-navigation";
 // components
 import { PageHead } from "@/components/core/page-title";
 import { SummaryView } from "@/components/dashboard-divisi/tampilan-ringkas";
@@ -66,26 +66,23 @@ function DivisionDashboardPage() {
             <h1 className="text-20 font-semibold text-primary">{t("division_dashboard_ui.title")}</h1>
             {data && <p className="text-12 text-tertiary">{t("division_dashboard_ui.updated", { time: updatedAt })}</p>}
           </div>
-          <fieldset
-            aria-label={t("division_dashboard_ui.mode_label")}
-            className="m-0 flex overflow-hidden rounded-button border border-subtle p-0 text-12"
-          >
-            {MODES.map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={mode === m}
-                onClick={() => setMode(m)}
-                className={cn(
-                  "px-3 py-1.5 font-medium transition-colors",
-                  mode === m
-                    ? "bg-layer-transparent-active text-primary"
-                    : "text-tertiary hover:bg-layer-transparent-hover hover:text-secondary"
-                )}
-              >
-                {t(MODE_LABEL[m])}
-              </button>
-            ))}
+          <fieldset aria-label={t("division_dashboard_ui.mode_label")} className="m-0 border-0 p-0">
+            <TabNavigationList>
+              {MODES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-label={t(MODE_LABEL[m])}
+                  aria-pressed={mode === m}
+                  onClick={() => setMode(m)}
+                  className="rounded-item outline-none focus-visible:ring-2 focus-visible:ring-accent-strong"
+                >
+                  <TabNavigationItem isActive={mode === m}>
+                    <span>{t(MODE_LABEL[m])}</span>
+                  </TabNavigationItem>
+                </button>
+              ))}
+            </TabNavigationList>
           </fieldset>
         </div>
 

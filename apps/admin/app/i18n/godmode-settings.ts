@@ -166,6 +166,10 @@ export const settingsStrings = {
     sending_chat: { title: "Chat" },
     sending_work: { title: "Work item email" },
     sending_assign: { title: "Assignments" },
+    sending_admin: {
+      title: "Super Admin emails",
+      hint: "Emails that only Super Admins receive, such as warnings about logs. They go to every active Super Admin, whatever their position.",
+    },
     schedule_reminders: { title: "Due date reminders" },
     schedule_summaries: { title: "Daily summaries" },
     schedule_content: { title: "What summaries show" },
@@ -360,6 +364,10 @@ export const settingsStrings = {
     EMAIL_ACTIVE_DAYS: {
       name: "Active within",
       help: "People who last used the app longer ago than this get no work item emails.",
+    },
+    ENABLE_ADMIN_RETENTION_EMAIL: {
+      name: "Warn before login history is deleted",
+      help: "Email every Super Admin a few days before the oldest sign-in history is deleted, so it can be exported first. The warning on the Retention tab always shows, and cleanup keeps running.",
     },
     ENABLE_TUGAS_KE_DM: {
       name: "Assignments to DM",

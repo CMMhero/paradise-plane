@@ -57,6 +57,10 @@ import type { IBaseIssueFilterStore } from "./issue-filter-helper.store";
 
 export type TIssueDisplayFilterOptions = Exclude<TIssueGroupByOptions, null> | "target_date";
 
+/** Urutan menaik status persetujuan; sama dengan `APPROVAL_ORDER` di `order_queryset.py`. */
+const APPROVAL_SORT_ORDER: string[] = ["menunggu", "ditolak", "disetujui"];
+const APPROVAL_SORT_ORDER_DESC: string[] = ["disetujui", "ditolak", "menunggu"];
+
 /** True kalau `issueId` ada di salah satu grup/subgrup `groupedIssueIds`. */
 const adaDiDaftar = (grup: TIssues, issueId: string): boolean =>
   Object.values(grup).some((isi) =>
@@ -187,6 +191,8 @@ const ISSUE_ORDERBY_KEY: Record<TIssueOrderByOptions, keyof TIssue> = {
   "-attachment_count": "attachment_count",
   sub_issues_count: "sub_issues_count",
   "-sub_issues_count": "sub_issues_count",
+  approval_status: "approval_status",
+  "-approval_status": "approval_status",
 };
 
 export abstract class BaseIssuesStore implements IBaseIssuesStore {
@@ -1865,6 +1871,18 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         const sortArray = ISSUE_PRIORITIES.map((i) => i.key);
         return getIssueIds(
           orderBy(array, (currentIssue: TIssue) => indexOf(sortArray, currentIssue?.priority), ["desc"])
+        );
+      }
+
+      // Kustomisasi Paradise: cermin urutan server (`order_issue_queryset`), tanpa persetujuan selalu di akhir.
+      case "approval_status":
+      case "-approval_status": {
+        const urutan = key === "approval_status" ? APPROVAL_SORT_ORDER : APPROVAL_SORT_ORDER_DESC;
+        return getIssueIds(
+          orderBy(array, (issue: TIssue) => {
+            const posisi = issue?.approval_status ? urutan.indexOf(issue.approval_status) : -1;
+            return posisi === -1 ? urutan.length : posisi;
+          })
         );
       }
 

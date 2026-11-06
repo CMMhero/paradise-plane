@@ -433,7 +433,9 @@ const en = {
     new_department_title: "New department in {div}",
     code: "Code",
     code_hint:
-      "Filled in from the name (Finance becomes FIN, Human Resources becomes HR). Edit it if you want something else; clear it to go back to the automatic code. Up to 20 characters.",
+      "Filled in from the name (Finance becomes FIN, Human Resources becomes HR). Edit it if you want something else; clear it to go back to the automatic code. Letters, numbers and - only, up to 12 characters.",
+    code_invalid: "Use only letters, numbers and - in the code.",
+    code_too_long: "The code can be at most 12 characters.",
     name: "Name",
     create: "Create",
     delete_division_title: "Delete division {name}?",
@@ -476,7 +478,7 @@ const en = {
     nothing_changed: "Nothing changed.",
     // Papan seret-lepas (4 Nov 2026)
     board: {
-      hint: "Drag from People or Levels to add someone. A role belongs to a place: drop on a department's Supervisors or Staff lane to set their role there, or on a division's Managers to make them lead it. Dragging a person out of a department or division moves them; hold Ctrl (Alt on Mac) while dropping to add instead. Drag someone back to People to take them out of that place. Every drag is also in the person's ... menu.",
+      hint: "Drag people onto a division or department lane to place them. Drag back to People to remove.",
       people: "People",
       people_search: "Search people…",
       filter_all: "All",

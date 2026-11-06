@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { ListFilterPlus } from "lucide-react";
 import { Transition } from "@headlessui/react";
@@ -47,6 +47,18 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
   const hasAnyConditions = filter.allConditionsForDisplay.length > 0;
   const hasAvailableOperations =
     !disabledAllOperations && (filter.canClearFilters || filter.canSaveView || filter.canUpdateView);
+  const hasPendingViewUpdate = filter.canUpdateView && filter.hasChanges;
+
+  // Paradise: sesudah semua filter dibuang, pita header ikut menutup supaya tidak
+  // tersisa bilah kosong. Tombol filter di header membukanya lagi. Pita yang masih
+  // menunggu "Update view" tetap terbuka agar perubahannya bisa disimpan.
+  const hadConditionsRef = useRef(hasAnyConditions);
+  useEffect(() => {
+    if (variant === "header" && hadConditionsRef.current && !hasAnyConditions && !hasPendingViewUpdate) {
+      filter.toggleVisibility(false);
+    }
+    hadConditionsRef.current = hasAnyConditions;
+  }, [filter, hasAnyConditions, hasPendingViewUpdate, variant]);
 
   const headerButtonConfig: Partial<TAddFilterButtonProps<K, E>["buttonConfig"]> = {
     label: null,
@@ -91,7 +103,8 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
     <>
       <ElementTransition show={filter.canClearFilters}>
         <Button
-          variant="secondary"
+          variant="ghost"
+          size="base"
           className={COMMON_OPERATION_BUTTON_CLASSNAME}
           onClick={filter.clearFilters}
           data-ph-element={trackerElements?.clearFilter}
@@ -102,6 +115,7 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
       <ElementTransition show={filter.canSaveView}>
         <Button
           variant="secondary"
+          size="base"
           className={COMMON_OPERATION_BUTTON_CLASSNAME}
           onClick={filter.saveView}
           data-ph-element={trackerElements?.saveView}
@@ -112,6 +126,7 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
       <ElementTransition show={filter.canUpdateView}>
         <Button
           variant="secondary"
+          size="base"
           className={COMMON_OPERATION_BUTTON_CLASSNAME}
           onClick={handleUpdate}
           loading={isUpdating}
@@ -125,17 +140,14 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
   );
 
   const mainContent = (
-    // Paradise: di layar sempit tombol aksi (Clear all/Save view) pindah ke baris sendiri
-    // di bawah chip, supaya chip tidak terjepit kolom aksi.
-    <div className="flex w-full flex-col items-stretch gap-2 rounded-lg bg-layer-1 px-3 py-2 sm:flex-row sm:items-start sm:px-4">
-      <div className="flex w-full min-w-0 flex-wrap items-center gap-2">{leftContent}</div>
-      <div
-        className={cn("flex flex-wrap items-center gap-2 sm:border-l sm:border-subtle sm:pl-4", {
-          "sm:border-l-transparent sm:pl-0": !hasAvailableOperations,
-        })}
-      >
-        {rightContent}
-      </div>
+    // Paradise: chip, tombol tambah, dan aksi (Clear all / Save view) berbagi SATU baris
+    // yang membungkus. Aksi menempel di ujung kanan dengan garis pemisah tipis dan baru
+    // turun ke baris berikut kalau chip memenuhi lebarnya.
+    <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-2 rounded-lg bg-layer-1 px-3 py-2 sm:px-4">
+      {leftContent}
+      {hasAvailableOperations && (
+        <div className="ml-auto flex items-center gap-1.5 border-l border-subtle pl-3">{rightContent}</div>
+      )}
     </div>
   );
 
@@ -162,7 +174,7 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
   return <RowTransition show={filter.isVisible}>{variant === "modal" ? ModalVariant : HeaderVariant}</RowTransition>;
 });
 
-const COMMON_OPERATION_BUTTON_CLASSNAME = "py-1 sentuh:py-2";
+const COMMON_OPERATION_BUTTON_CLASSNAME = "sentuh:h-9";
 
 type TElementTransitionProps = {
   children: React.ReactNode;

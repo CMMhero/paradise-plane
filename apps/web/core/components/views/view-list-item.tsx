@@ -21,14 +21,18 @@ import { ViewListItemAction } from "./view-list-item-action";
 
 type Props = {
   view: IProjectView;
+  /** Kustomisasi Paradise: tandai departemennya (halaman Views workspace). */
+  showScope?: boolean;
 };
 
 export const ProjectViewListItem = observer(function ProjectViewListItem(props: Props) {
-  const { view } = props;
+  const { view, showScope = false } = props;
   // refs
   const parentRef = useRef(null);
   // router
-  const { workspaceSlug, projectId } = useParams();
+  const { workspaceSlug } = useParams();
+  // Departemen dari view, bukan dari URL: baris ini juga dipakai di halaman Views workspace.
+  const projectId = view.project;
   // store hooks
   const { isMobile } = usePlatformOS();
 
@@ -45,12 +49,12 @@ export const ProjectViewListItem = observer(function ProjectViewListItem(props: 
       }
       title={view.name}
       itemLink={`/${workspaceSlug}/projects/${projectId}/views/${view.id}`}
-      actionableItems={<ViewListItemAction parentRef={parentRef} view={view} />}
+      actionableItems={<ViewListItemAction parentRef={parentRef} view={view} showScope={showScope} />}
       quickActionElement={
         <div className="block md:hidden">
           <ViewQuickActions
             parentRef={parentRef}
-            projectId={projectId.toString()}
+            projectId={projectId}
             view={view}
             workspaceSlug={workspaceSlug.toString()}
           />

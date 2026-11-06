@@ -159,7 +159,11 @@ PABRIK = {
         **SUARA_PABRIK,
     },
     # "pimpinan" = leader (supervisor, manager). Baris direktur juga batas atas.
-    "email": {"staf": dict(BAWAAN_STAF), "pimpinan": dict(BAWAAN_PIMPINAN), "direktur": dict(BAWAAN_DIREKTUR)},
+    "email": {
+        "staf": dict(BAWAAN_STAF),
+        "pimpinan": dict(BAWAAN_PIMPINAN),
+        "direktur": dict(BAWAAN_DIREKTUR),
+    },
     "keanggotaan": {"workspace_role": 15, "tingkat": 10},
     # Semua menu tersemat, project bertab, semua project tampil (permintaan user
     # 2 Nov 2026). Menu khusus admin tetap disaring izin di web.

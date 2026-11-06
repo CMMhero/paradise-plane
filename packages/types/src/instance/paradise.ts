@@ -17,6 +17,7 @@ export type TInstanceParadiseToggleKeys =
   | "ENABLE_EMAIL_BATCH"
   | "ENABLE_EMAIL_THREADING"
   | "ENABLE_EMAIL_ACTIVE_ONLY"
+  | "ENABLE_ADMIN_RETENTION_EMAIL"
   | TInstanceParadiseModuleKeys;
 
 /** Saklar modul selalu `ENABLE_<NAMA MODUL>`, sama seperti `MODUL_APLIKASI` di server. */

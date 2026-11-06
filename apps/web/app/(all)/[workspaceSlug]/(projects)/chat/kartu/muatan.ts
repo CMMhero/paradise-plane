@@ -80,6 +80,8 @@ export type TStatusPersetujuan = "menunggu" | "disetujui" | "ditolak";
 export type TKartuTugas = {
   aksi: string;
   aktor: string;
+  /** Siapa yang diberi kabar; kosong di kartu lama. */
+  penerima: string;
   slug: string;
   project: { id: string; nama: string; identifier: string };
   tugas: {
@@ -105,6 +107,7 @@ export const bacaKartuTugas = (muatan: unknown): TKartuTugas => {
   return {
     aksi: teks(m.aksi),
     aktor: teks(m.aktor),
+    penerima: teks(m.penerima),
     slug: teks(m.workspace_slug),
     project: { id: teks(project.id), nama: teks(project.nama), identifier: teks(project.identifier) },
     tugas: teks(tugas.id)

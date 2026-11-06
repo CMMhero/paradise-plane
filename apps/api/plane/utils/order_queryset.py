@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-from django.db.models import Case, CharField, Min, Value, When
+from django.db.models import Case, CharField, IntegerField, Min, OuterRef, Subquery, Value, When
 
 # Custom ordering for priority and state
 PRIORITY_ORDER = ["urgent", "high", "medium", "low", "none"]
 STATE_ORDER = ["backlog", "unstarted", "started", "completed", "cancelled"]
+# Kustomisasi Paradise (KEP-55): urutan status persetujuan TERBARU per tugas.
+# Menaik = yang perlu ditindaklanjuti dulu; tugas tanpa persetujuan selalu di akhir.
+APPROVAL_ORDER = ["menunggu", "ditolak", "disetujui"]
 
 # ---------------------------------------------------------------------------
 # order_by allowlists, one per model/endpoint family
@@ -31,6 +34,7 @@ ISSUE_ORDER_BY_ALLOWLIST = frozenset({
     "assignees__first_name",
     "labels__name",
     "issue_module__module__name",
+    "approval_status",
 })
 
 # IntakeIssue queryset, fields are prefixed with `issue__` for the join.
@@ -167,6 +171,11 @@ def order_issue_queryset(issue_queryset, order_by_param="-created_at"):
             )
         ).order_by("state_order", "-created_at")
         order_by_param = "-state_order" if order_by_param.startswith("-") else "state_order"
+    # Kustomisasi Paradise: status persetujuan terbaru (sama dengan badge & filter approval_status).
+    elif order_by_param in ["approval_status", "-approval_status"]:
+        issue_queryset = _annotate_approval_order(issue_queryset, descending=order_by_param.startswith("-"))
+        issue_queryset = issue_queryset.order_by("approval_order", "-created_at")
+        order_by_param = "approval_order"
     # assignee and label ordering
     elif order_by_param in [
         "labels__name",
@@ -191,3 +200,25 @@ def order_issue_queryset(issue_queryset, order_by_param="-created_at"):
             issue_queryset = issue_queryset.order_by(order_by_param, "-created_at")
         order_by_param = order_by_param
     return issue_queryset, order_by_param
+
+
+def _annotate_approval_order(issue_queryset, descending=False):
+    """Annotate `approval_order` from the LATEST approval row of each issue.
+
+    Ascending: awaiting, rejected, approved. Descending flips those three, but
+    issues that never needed approval stay last both ways, like empty dates.
+    """
+    # Impor di sini: plane.db.models memuat utils saat diimpor (hindari impor melingkar).
+    from plane.db.models import PersetujuanPenugasan
+
+    urutan = APPROVAL_ORDER[::-1] if descending else APPROVAL_ORDER
+    status_terbaru = (
+        PersetujuanPenugasan.objects.filter(issue_id=OuterRef("pk")).order_by("-created_at").values("status")[:1]
+    )
+    return issue_queryset.annotate(approval_status_terbaru=Subquery(status_terbaru)).annotate(
+        approval_order=Case(
+            *[When(approval_status_terbaru=status, then=Value(i)) for i, status in enumerate(urutan)],
+            default=Value(len(urutan)),
+            output_field=IntegerField(),
+        )
+    )

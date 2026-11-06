@@ -12,6 +12,10 @@ import { useTranslation } from "@plane/i18n";
 import { getButtonStyling } from "@plane/propel/button";
 import { IconButton } from "@plane/propel/icon-button";
 import { cn } from "@plane/utils";
+// components
+import { PratinjauDokumen } from "@/components/wiki/pratinjau/dokumen";
+import { PratinjauTabel } from "@/components/wiki/pratinjau/tabel";
+import { PratinjauMarkdown, PratinjauTeks } from "@/components/wiki/pratinjau/teks";
 // services
 import type { TWikiPreview } from "@/services/wiki.service";
 
@@ -113,13 +117,26 @@ export function PenampilMateri({ pratinjau, title }: { pratinjau: TWikiPreview; 
         </div>
       );
 
+    // Teks, Markdown, tabel, dan dokumen dibaca SERVER dan dirender sebagai
+    // elemen React biasa. Tidak ada iframe untuk isi unggahan orang.
+    if (kind === "text")
+      return <PratinjauTeks text={pratinjau.text ?? ""} truncated={pratinjau.truncated} className={tinggi} />;
+    if (kind === "markdown")
+      return <PratinjauMarkdown text={pratinjau.text ?? ""} truncated={pratinjau.truncated} className={tinggi} />;
+    if (kind === "table")
+      return (
+        <PratinjauTabel sheets={pratinjau.sheets ?? []} truncated={pratinjau.sheets_truncated} className={tinggi} />
+      );
+    if (kind === "document")
+      return <PratinjauDokumen blocks={pratinjau.blocks ?? []} truncated={pratinjau.truncated} className={tinggi} />;
+
     return (
       <iframe
         src={url}
         title={title}
-        // PDF SENGAJA tanpa sandbox: Chrome menolak memuat penampil PDF
-        // bawaannya di dalam iframe ber-sandbox, apa pun kombinasi tokennya.
-        // Berkas teks justru dikunci penuh, karena isinya unggahan orang.
+        // Hanya PDF yang sampai ke sini, dan SENGAJA tanpa sandbox: Chrome
+        // menolak memuat penampil PDF bawaannya di dalam iframe ber-sandbox,
+        // apa pun kombinasi tokennya.
         sandbox={kind === "pdf" ? undefined : ""}
         className={cn("w-full rounded-card border border-subtle bg-layer-1", tinggi)}
       />
@@ -163,7 +180,11 @@ export function PenampilMateri({ pratinjau, title }: { pratinjau: TWikiPreview; 
               ? t("wiki_ui.viewer.pdf_hint")
               : kind === "video" || kind === "audio"
                 ? t("wiki_ui.viewer.player_hint")
-                : ""}
+                : kind === "table"
+                  ? t("wiki_ui.viewer.sheet_hint")
+                  : kind === "text" || kind === "markdown" || kind === "document"
+                    ? t("wiki_ui.viewer.text_hint")
+                    : ""}
           </span>
         )}
       </div>
