@@ -154,10 +154,7 @@ export function useMateriTopik(konteks: TKonteks, topik: TWikiFolder | undefined
     try {
       await layananWiki.moveMaterial(workspaceSlug, materi.id, topikId);
       // Folder asal dan tujuan sama-sama berubah, dan keduanya bisa sedang tampil.
-      await Promise.all([
-        segarkan((k) => typeof k === "string" && k.startsWith("WIKI_MATERIALS_")),
-        onJumlahBerubah(),
-      ]);
+      await Promise.all([segarkan((k) => typeof k === "string" && k.startsWith("WIKI_MATERIALS_")), onJumlahBerubah()]);
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: t("wiki_ui.folder.moved_title"),
@@ -510,7 +507,6 @@ export const GridMateri = observer(function GridMateri({
     </>
   );
 });
-
 
 /**
  * Divisi/departemen atau sub-topik sebagai seksi yang bisa dibuka-tutup, langsung

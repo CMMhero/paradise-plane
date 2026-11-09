@@ -64,9 +64,12 @@ export function useRujukan({ slug, draf, setDraf, tulisRef }: TOpsi) {
 
   const cocok: TCalonRujukan[] = useMemo(
     () => [
-      ...(data?.kanal ?? []).map(
-        (k): TCalonRujukan => ({ jenis: "kanal", id: k.id, teks: k.nama, privat: k.tipe === "privat" })
-      ),
+      ...(data?.kanal ?? []).map((k): TCalonRujukan => ({
+        jenis: "kanal",
+        id: k.id,
+        teks: k.nama,
+        privat: k.tipe === "privat",
+      })),
       ...(data?.tugas ?? []).map((w): TCalonRujukan => ({ jenis: "tugas", id: w.id, teks: w.nomor, judul: w.judul })),
     ],
     [data]

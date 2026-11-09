@@ -24,17 +24,17 @@
     "@shadcn/lint": "catalog:",
     "husky": "catalog:",
     "lint-staged": "catalog:",
-    "oxfmt": "catalog:",
-    "oxlint": "catalog:",
     "react-doctor": "^0.4.2",
-    "turbo": "catalog:"
+    "turbo": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,cjs,mjs,cts,mts,json,css,md}": [
-      "pnpm exec oxfmt --no-error-on-unmatched-pattern"
+      "vp fmt --no-error-on-unmatched-pattern"
     ],
     "*.{js,jsx,ts,tsx,cjs,mjs,cts,mts}": [
-      "pnpm exec oxlint --fix --deny-warnings"
+      "vp lint --fix --deny-warnings"
     ]
   },
   "engines": {

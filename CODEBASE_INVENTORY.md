@@ -104,7 +104,7 @@ Status: ✅ deep-read · 🟡 di-skim (struktur + file kunci) · ⬜ belum dibuk
 | Lint/format   | oxlint + oxfmt          | 1.51.0 / 0.35.0                      |
 | Node          | engines                 | `>=22.18.0`, pnpm 11.3.0             |
 
-**Monorepo tooling:** Turborepo 2.9.18. Task graph di `turbo.json`: `build`, `dev` (concurrency 18), `check` (format+lint+types), `fix`. Catalog dependency terpusat di `pnpm-workspace.yaml` (`catalog:`) + banyak `overrides` (pinning keamanan: `axios`, `ws`, `undici`, `form-data`, dst).
+**Monorepo tooling:** Turborepo 2.11.10. Task graph di `turbo.json`: `build`, `dev` (concurrency 18), `check` (format+lint+types), `fix`. Catalog dependency terpusat di `pnpm-workspace.yaml` (`catalog:`) + banyak `overrides` (pinning keamanan: `axios`, `ws`, `undici`, `form-data`, dst).
 
 ---
 
@@ -599,7 +599,7 @@ ChangeTrackerMixin  -> lacak perubahan field (untuk activity feed)              
 
 `workspace, project, issue, issue_type, cycle, module, state, label, estimate, page, view, intake, draft, notification, webhook, asset, favorite, sticky, recent_visit, deploy_board (public share), api (token), device, session, social_connection, description, exporter, importer, integration/ (dir), analytic, user`.
 
-Domain graph: **Workspace 1─* Project 1─* {Issue, Cycle, Module, State, Label, Page, View, Estimate, Intake}**; Issue _─_ {Label, Assignee(User), Cycle, Module}; scoping ganda project+workspace di tiap entity.
+Domain graph: _*Workspace 1─* Project 1─_ {Issue, Cycle, Module, State, Label, Page, View, Estimate, Intake}**; Issue _─_ {Label, Assignee(User), Cycle, Module}; scoping ganda project+workspace di tiap entity.
 
 **Sumber kebenaran skema:** tunggal (Django ORM). 121 migrasi. Tipe frontend (`packages/types`) terpisah → risiko drift (lihat #4).
 

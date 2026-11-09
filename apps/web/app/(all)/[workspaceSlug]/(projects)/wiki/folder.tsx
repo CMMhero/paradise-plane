@@ -22,14 +22,7 @@ import { GridKartu, KartuKerangka } from "@/components/wiki/kartu";
 // local imports
 import { UbinTambahSubtopik, bolehTambahSubtopik, useBuatSubtopik } from "./buat-subtopik";
 import { GridMateri, KerangkaUnggah, SeksiSubtopik, ZonaKosong, useMateriTopik } from "./daftar-materi";
-import {
-  anakDari,
-  folderDenganId,
-  folderTerlihat,
-  jumlahHalamanDalam,
-  jumlahMateriDalam,
-  usePohonWiki,
-} from "./data";
+import { anakDari, folderDenganId, folderTerlihat, jumlahHalamanDalam, jumlahMateriDalam, usePohonWiki } from "./data";
 import { HalamanDepartemen } from "./halaman-departemen";
 import { KelolaFolder } from "./kelola";
 
@@ -46,9 +39,7 @@ function JudulBagian({ judul, angka }: { judul: string; angka?: number }) {
 }
 
 function Chip({ children }: { children: ReactNode }) {
-  return (
-    <span className="rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">{children}</span>
-  );
+  return <span className="rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">{children}</span>;
 }
 
 /**
@@ -196,9 +187,7 @@ function WikiFolderPage() {
                       {departemen.length} {t("wiki_ui.folder.departments")}
                     </Chip>
                   )}
-                  {subtopik.length > 0 && (
-                    <Chip>{t("wiki_ui.folder.subtopic_count", { count: subtopik.length })}</Chip>
-                  )}
+                  {subtopik.length > 0 && <Chip>{t("wiki_ui.folder.subtopic_count", { count: subtopik.length })}</Chip>}
                   {totalHalaman > 0 && (
                     <Chip>
                       {totalHalaman} {t("wiki_ui.common.page_unit")}

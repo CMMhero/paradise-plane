@@ -329,13 +329,13 @@ export class WikiService extends APIService {
    * ke PDF di server, jadi ia bisa memakan beberapa detik.
    */
   fetchPreview(workspaceSlug: string, materialId: string): Promise<TWikiPreview> {
-    return this.panggil<TWikiPreview>(() => this.get(`${this.base(workspaceSlug)}/materials/${materialId}/preview/`)).then(
-      (pratinjau) => ({
-        ...pratinjau,
-        url: mutlak(pratinjau.url),
-        download_url: mutlak(pratinjau.download_url),
-      })
-    );
+    return this.panggil<TWikiPreview>(() =>
+      this.get(`${this.base(workspaceSlug)}/materials/${materialId}/preview/`)
+    ).then((pratinjau) => ({
+      ...pratinjau,
+      url: mutlak(pratinjau.url),
+      download_url: mutlak(pratinjau.download_url),
+    }));
   }
 
   search(workspaceSlug: string, q: string): Promise<TWikiSearchResult> {

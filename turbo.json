@@ -1,6 +1,6 @@
 {
   "$schema": "https://v2-8-12.turborepo.dev/schema.json",
-  "globalDependencies": [".npmrc", ".oxfmtrc.json", ".oxlintrc.json"],
+  "globalDependencies": [".npmrc", "vite.config.ts"],
   "globalEnv": [
     "APP_VERSION",
     "DEV",

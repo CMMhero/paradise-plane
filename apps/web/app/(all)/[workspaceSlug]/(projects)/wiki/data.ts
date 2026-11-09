@@ -30,7 +30,7 @@ export const TIPE_SERET_MATERI = "application/x-paradise-wiki-materi";
 /** Muatan seretan kartu materi. */
 export type TSeretMateri = { id: string; folderId: string; judul: string };
 
-export const adalahUnit =(folder: TWikiFolder | undefined): boolean => !!(folder?.divisi_id || folder?.departemen_id);
+export const adalahUnit = (folder: TWikiFolder | undefined): boolean => !!(folder?.divisi_id || folder?.departemen_id);
 
 export const anakDari = (folder: TWikiFolder[], indukId: string | null | undefined): TWikiFolder[] =>
   folder
@@ -57,7 +57,7 @@ export const jalurFolder = (folder: TWikiFolder[], id?: string | null): TWikiFol
   return jalur;
 };
 
-export const folderDenganId =(folder: TWikiFolder[], id?: string | null): TWikiFolder | undefined =>
+export const folderDenganId = (folder: TWikiFolder[], id?: string | null): TWikiFolder | undefined =>
   id ? folder.find((f) => f.id === id) : undefined;
 
 /** Angka langsung sebuah folder dijumlahkan dengan seluruh sub-foldernya. `folder` harus sudah disaring `folderTerlihat`. */

@@ -111,7 +111,14 @@ export function PencarianWiki({
   const materi = data?.materials ?? [];
   const halaman = data?.pages ?? [];
   const total = materi.length + halaman.length;
-  const kata = useMemo(() => tertunda.toLowerCase().split(/[^\p{L}\p{N}_]+/u).filter((k) => k.length >= 2), [tertunda]);
+  const kata = useMemo(
+    () =>
+      tertunda
+        .toLowerCase()
+        .split(/[^\p{L}\p{N}_]+/u)
+        .filter((k) => k.length >= 2),
+    [tertunda]
+  );
 
   return (
     <>
@@ -211,7 +218,10 @@ export function PencarianWiki({
                       return (
                         <li key={h.id}>
                           {h.can_open_in_project ? (
-                            <Link to={`/${workspaceSlug}/projects/${h.project_id}/pages/${h.id}`} className={KELAS_BARIS}>
+                            <Link
+                              to={`/${workspaceSlug}/projects/${h.project_id}/pages/${h.id}`}
+                              className={KELAS_BARIS}
+                            >
                               {isi}
                             </Link>
                           ) : (

@@ -76,7 +76,10 @@ export function KelolaFolder({ workspaceSlug, folder, isOpen, onClose, onBerubah
   const adaPerubahan = Object.keys(perubahan).length > 0;
   const namaKosong = !unit && !namaBersih;
 
-  const gantiIkon = (nilai: { type: (typeof EmojiIconPickerTypes)[keyof typeof EmojiIconPickerTypes]; value: unknown }) => {
+  const gantiIkon = (nilai: {
+    type: (typeof EmojiIconPickerTypes)[keyof typeof EmojiIconPickerTypes];
+    value: unknown;
+  }) => {
     const isi = nilai.type === EmojiIconPickerTypes.EMOJI ? { value: nilai.value, url: undefined } : nilai.value;
     setLogo({ in_use: nilai.type, [nilai.type]: isi } as TLogoProps);
   };

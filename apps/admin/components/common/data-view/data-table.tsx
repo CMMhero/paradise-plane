@@ -171,11 +171,7 @@ export function DataTable<Row>({
                         <td
                           key={c.key}
                           style={gayaSticky(c, offset)}
-                          className={cn(
-                            "px-3 py-2 align-middle",
-                            c.sticky && "sticky z-[1] bg-inherit",
-                            c.className
-                          )}
+                          className={cn("px-3 py-2 align-middle", c.sticky && "sticky z-[1] bg-inherit", c.className)}
                         >
                           {c.render(row)}
                         </td>

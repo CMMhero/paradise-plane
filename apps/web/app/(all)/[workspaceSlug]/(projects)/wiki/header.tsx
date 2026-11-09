@@ -60,7 +60,13 @@ export const WikiHeader = observer(function WikiHeader() {
     <Header>
       <Header.LeftItem>
         {/* Layar kecil hanya menampilkan langkah terakhir; tombol "..." naik satu tingkat. */}
-        <Breadcrumbs onBack={langkah.length > 0 ? () => void navigate(langkah.length > 1 ? (langkah.at(-2)?.href ?? `/${slug}/wiki`) : `/${slug}/wiki`) : undefined}>
+        <Breadcrumbs
+          onBack={
+            langkah.length > 0
+              ? () => void navigate(langkah.length > 1 ? (langkah.at(-2)?.href ?? `/${slug}/wiki`) : `/${slug}/wiki`)
+              : undefined
+          }
+        >
           <Breadcrumbs.Item
             component={
               <BreadcrumbLink
@@ -74,7 +80,13 @@ export const WikiHeader = observer(function WikiHeader() {
           {langkah.map((l, i) => (
             <Breadcrumbs.Item
               key={l.href ?? `akhir-${l.label}`}
-              component={<BreadcrumbLink label={l.label} href={i === langkah.length - 1 ? undefined : l.href} isLast={i === langkah.length - 1} />}
+              component={
+                <BreadcrumbLink
+                  label={l.label}
+                  href={i === langkah.length - 1 ? undefined : l.href}
+                  isLast={i === langkah.length - 1}
+                />
+              }
             />
           ))}
         </Breadcrumbs>

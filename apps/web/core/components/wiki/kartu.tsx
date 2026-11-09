@@ -173,7 +173,11 @@ export function KartuFolder({
 export function KartuMateri({ to, judul, keterangan, tipe, label, ukuran, aksi, onSeretMulai }: TKartuMateri) {
   const { t } = useTranslation();
   return (
-    <div className={cn(KARTU, onSeretMulai && "cursor-grab active:cursor-grabbing")} draggable={!!onSeretMulai} onDragStart={onSeretMulai}>
+    <div
+      className={cn(KARTU, onSeretMulai && "cursor-grab active:cursor-grabbing")}
+      draggable={!!onSeretMulai}
+      onDragStart={onSeretMulai}
+    >
       {/* Tautan tidak ikut diseret sendiri: yang berpindah kartunya, bukan alamatnya. */}
       <Link to={to} draggable={onSeretMulai ? false : undefined} className="flex flex-1 flex-col">
         <div className={SAMPUL} style={{ backgroundImage: gradienUntuk(judul) }}>

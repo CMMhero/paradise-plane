@@ -23,13 +23,13 @@
     "./styles": "./dist/styles/index.css"
   },
   "scripts": {
-    "build": "tsc && tsdown",
-    "dev": "tsdown --watch --no-clean",
-    "check:lint": "oxlint --max-warnings=416 .",
+    "build": "tsc && vp pack",
+    "dev": "vp pack --watch --no-clean",
+    "check:lint": "vp lint --max-warnings=121 .",
     "check:types": "tsc --noEmit",
-    "check:format": "oxfmt --check .",
-    "fix:lint": "oxlint --fix .",
-    "fix:format": "oxfmt .",
+    "check:format": "vp fmt --check .",
+    "fix:lint": "vp lint --fix .",
+    "fix:format": "vp fmt .",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf node_modules && rm -rf dist"
   },
   "dependencies": {
@@ -91,8 +91,8 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "postcss": "catalog:",
-    "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "react": "catalog:",
