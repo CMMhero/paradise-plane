@@ -164,6 +164,9 @@ def saklar_aktif(kunci: str) -> bool:
 CHAT_EMAIL_QUIET_MINUTES = "CHAT_EMAIL_QUIET_MINUTES"
 CHAT_EMAIL_INTERVAL_MINUTES = "CHAT_EMAIL_INTERVAL_MINUTES"
 LOGIN_HISTORY_RETENTION_DAYS = "LOGIN_HISTORY_RETENTION_DAYS"
+# Jeda minimal antar email peringatan retensi ke Super Admin, dalam hari.
+# 0 = ikut masa retensi riwayat login (90 hari berarti sekali per 90 hari).
+ADMIN_RETENTION_EMAIL_INTERVAL_DAYS = "ADMIN_RETENTION_EMAIL_INTERVAL_DAYS"
 TRASH_RETENTION_DAYS = "TRASH_RETENTION_DAYS"
 # Ambang kesehatan divisi di Dashboard Divisi: persentase tugas aktif yang lewat
 # tenggat. Di atas "perhatian" = Perlu perhatian, di atas "kritis" = Kritis.
@@ -364,6 +367,7 @@ SETELAN_ANGKA = {
     CHAT_EMAIL_QUIET_MINUTES: (10, 1, 1440),
     CHAT_EMAIL_INTERVAL_MINUTES: (60, 5, 10080),
     LOGIN_HISTORY_RETENTION_DAYS: (90, 7, 730),
+    ADMIN_RETENTION_EMAIL_INTERVAL_DAYS: (7, 0, 365),
     # Benih env lama HARD_DELETE_AFTER_DAYS milik upstream, supaya instance yang
     # sudah mengaturnya tidak tiba-tiba memakai angka lain.
     TRASH_RETENTION_DAYS: (int(os.environ.get("HARD_DELETE_AFTER_DAYS", 30)), 1, 3650),

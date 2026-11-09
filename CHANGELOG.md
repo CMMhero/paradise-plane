@@ -18,6 +18,31 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
   Langkah operator: tidak wajib. Materi Wiki lama baru ikut pencarian isi
   setelah `docker exec api python manage.py wiki_indeks_ulang` dijalankan
   sekali; unggahan baru terindeks sendiri.
+- **Susulan di versi yang sama (9 Nov).** Menyusul rilis awal 4.1.0, perubahan
+  berikut ikut 4.1.0 atas keputusan user (versi tidak dinaikkan). Tanpa
+  migrasi, tanpa variabel env baru, tanpa langkah operator.
+- **Tombol segarkan.** Ada di header semua halaman. Satu klik menjalankan
+  ulang semua data SWR yang sedang dipakai layar (daftar work item, antrean
+  persetujuan, lencana) tanpa memuat ulang halaman. Komponen:
+  `core/components/common/refresh-button.tsx`.
+- **Email peringatan retensi tidak lagi harian, dan jedanya diatur Super
+  Admin.** Sesudah bulan ketiga selalu ada baris di jendela 7 hari, jadi
+  peringatan menyala tiap hari selamanya. Kini jedanya setelan God Mode
+  `ADMIN_RETENTION_EMAIL_INTERVAL_DAYS` (Notifications > Sending, bawaan 7
+  hari, 1 sampai 365; **0 = ikut masa retensi riwayat login**, jadi retensi 90
+  hari berarti satu email per 90 hari). Jumlah yang melonjak dua kali lipat
+  atau lebih (misalnya retensi dipersingkat) dikirim lebih cepat, tapi tidak
+  dua kali sehari. Penanda terakhir kirim ada di cache dan hanya ditulis kalau
+  email benar terkirim, jadi SMTP mati tidak menahan percobaan besok. Retensi
+  Trash tidak punya email peringatan, jadi setelan ini hanya menyangkut riwayat
+  login.
+- **Label ditolak.** "Rejected - needs revision" jadi "Rejected" (Indonesia:
+  "Ditolak") di 19 locale.
+- **Tinggi pilihan Modul di detail work item** sama dengan pilihan State.
+- **Induk work item bisa diklik** dari properti Parent, juga untuk tugas
+  orang lain yang hanya-lihat (tautannya sebelumnya di dalam tombol yang
+  nonaktif, jadi mati). Membuka di tab yang sama.
+
 - **Django 4.2 ke 5.2 dan DRF 3.18.** Dukungan 4.2 sudah habis. Migrasi 0173
   hanya mengubah status (`through_fields` pada tiga M2M), tanpa SQL. Butuh
   PostgreSQL 14 ke atas; server produksi 15.7. Kode ini tidak bisa lagi jalan

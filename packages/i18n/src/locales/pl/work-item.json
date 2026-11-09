@@ -177,7 +177,7 @@
     "approval": {
       "badge": {
         "pending": "Awaiting approval",
-        "rejected": "Rejected — needs revision",
+        "rejected": "Rejected",
         "approved": "Approved"
       },
       "filter": {
