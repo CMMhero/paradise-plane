@@ -369,6 +369,10 @@ export const settingsStrings = {
       name: "Warn before login history is deleted",
       help: "Email every Super Admin a few days before the oldest sign-in history is deleted, so it can be exported first. The warning on the Retention tab always shows, and cleanup keeps running.",
     },
+    ADMIN_RETENTION_EMAIL_INTERVAL_DAYS: {
+      name: "Resend every",
+      help: "While there is still history about to be deleted, Super Admins get this email at most once per this many days. Set 0 to match the sign-in history retention period (90 days of retention means one email per 90 days). A sudden jump in what is about to be deleted is sent sooner.",
+    },
     ENABLE_TUGAS_KE_DM: {
       name: "Assignments to DM",
       help: "New work item details are posted in the direct message between assigner and assignee.",

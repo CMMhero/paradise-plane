@@ -40,6 +40,7 @@ from plane.utils.email_merek import (
     tanggal,
 )
 from plane.utils.saklar_instance import (
+    ADMIN_RETENTION_EMAIL_INTERVAL_DAYS,
     ENABLE_ADMIN_RETENTION_EMAIL,
     LOGIN_HISTORY_RETENTION_DAYS,
     saklar_aktif,
@@ -53,9 +54,9 @@ AMBANG_PERINGATAN_HARI = 7
 
 # Peringatan terus benar selama ada data yang akan dibuang, dan itu keadaan tetap
 # sesudah bulan ketiga: tiap hari ada baris yang masuk jendela 7 hari. Email
-# harian jadi gangguan yang akhirnya diabaikan. Satu email per minggu cukup untuk
-# memberi waktu mengekspor; angka yang melonjak tetap dikirim lebih cepat.
-ULANG_EMAIL_HARI = 7
+# harian jadi gangguan yang akhirnya diabaikan. Jedanya diatur Super Admin di God
+# Mode (ADMIN_RETENTION_EMAIL_INTERVAL_DAYS, bawaan 7, 0 = ikut masa retensi);
+# angka yang melonjak tetap dikirim lebih cepat.
 # Lonjakan yang dianggap kabar baru: jumlah yang terancam sekurangnya segini kali
 # jumlah di email terakhir (misalnya retensi dipersingkat di God Mode).
 LONJAKAN_PELIPATAN = 2
@@ -141,19 +142,28 @@ def susun_peringatan_retensi(keadaan, bahasa="id", email=""):
     return subjek, f"{p1}\n\n{s['p2']}\n\n{s['alasan']}\n", html
 
 
-def perlu_kirim_email(terakhir, keadaan, sekarang=None):
+def jeda_email_hari():
+    """Jeda antar email peringatan. 0 di God Mode = sama dengan masa retensi."""
+    jeda = setelan_angka(ADMIN_RETENTION_EMAIL_INTERVAL_DAYS)
+    return jeda if jeda > 0 else setelan_angka(LOGIN_HISTORY_RETENTION_DAYS)
+
+
+def perlu_kirim_email(terakhir, keadaan, sekarang=None, jeda_hari=None):
     """Murni: apakah email peringatan hari ini layak dikirim.
 
     `terakhir` = {"pada": datetime, "jumlah": int} dari email sebelumnya, atau None.
-    Kirim kalau belum pernah, sudah ULANG_EMAIL_HARI hari, atau jumlah yang
+    `jeda_hari` = pengaturan God Mode (bawaan dari setelan). Kirim kalau belum
+    pernah, sudah `jeda_hari` hari, atau jumlah yang
     terancam melonjak (dan sudah lewat sehari, supaya tidak berulang pada hari
     yang sama).
     """
     if not terakhir:
         return True
     sekarang = sekarang or timezone.now()
+    if jeda_hari is None:
+        jeda_hari = jeda_email_hari()
     lewat = sekarang - terakhir["pada"]
-    if lewat >= timedelta(days=ULANG_EMAIL_HARI):
+    if lewat >= timedelta(days=jeda_hari):
         return True
     sebelumnya = max(terakhir.get("jumlah", 0), 1)
     return lewat >= timedelta(days=1) and keadaan["akan_dibuang"] >= sebelumnya * LONJAKAN_PELIPATAN
@@ -211,7 +221,11 @@ def bersihkan_login_activity():
                         TTL_PENANDA_DETIK,
                     )
             else:
-                logger.info("Retensi: email peringatan dikirim %s, ditahan sampai minggu depan", terakhir["pada"])
+                logger.info(
+                    "Retensi: email peringatan dikirim %s, ditahan sampai jeda %s hari lewat",
+                    terakhir["pada"],
+                    jeda_email_hari(),
+                )
         except Exception:
             # SMTP patah tidak boleh menghentikan pembersihan, kalau tidak,
             # tabel tumbuh selamanya karena email tidak bisa dikirim.

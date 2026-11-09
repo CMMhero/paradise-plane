@@ -7,9 +7,9 @@
 
 Sesudah bulan ketiga selalu ada baris yang masuk jendela peringatan, jadi
 `perlu_peringatan` benar setiap hari. Tanpa jeda, admin menerima email yang
-sama selamanya. Yang dijaga di sini: kirim pertama, tahan sampai seminggu,
-kirim lagi kalau seminggu lewat, dan kirim lebih cepat hanya kalau jumlahnya
-melonjak.
+sama selamanya. Yang dijaga di sini: kirim pertama, tahan sampai jeda yang
+diatur Super Admin, kirim lagi kalau jeda lewat, dan kirim lebih cepat hanya
+kalau jumlahnya melonjak.
 """
 
 from datetime import timedelta
@@ -20,8 +20,16 @@ from django.core.cache.backends.locmem import LocMemCache
 from django.utils import timezone
 
 from plane.bgtasks import login_activity_retention as r
+from plane.license.models import InstanceConfiguration
+from plane.utils.saklar_instance import (
+    ADMIN_RETENTION_EMAIL_INTERVAL_DAYS,
+    LOGIN_HISTORY_RETENTION_DAYS,
+    SETELAN_ANGKA,
+)
 
 pytestmark = pytest.mark.unit
+
+JEDA = 7
 
 
 def _keadaan(n):
@@ -34,25 +42,33 @@ def _terakhir(hari_lalu, jumlah):
 
 class TestPerluKirimEmail:
     def test_belum_pernah_kirim(self):
-        assert r.perlu_kirim_email(None, _keadaan(5)) is True
+        assert r.perlu_kirim_email(None, _keadaan(5), jeda_hari=JEDA) is True
 
     def test_besoknya_ditahan(self):
-        assert r.perlu_kirim_email(_terakhir(1, 5), _keadaan(5)) is False
+        assert r.perlu_kirim_email(_terakhir(1, 5), _keadaan(5), jeda_hari=JEDA) is False
 
     def test_sehari_sebelum_batas_masih_ditahan(self):
-        assert r.perlu_kirim_email(_terakhir(r.ULANG_EMAIL_HARI - 1, 5), _keadaan(6)) is False
+        assert r.perlu_kirim_email(_terakhir(JEDA - 1, 5), _keadaan(6), jeda_hari=JEDA) is False
 
     def test_seminggu_lewat_kirim_lagi(self):
-        assert r.perlu_kirim_email(_terakhir(r.ULANG_EMAIL_HARI, 5), _keadaan(5)) is True
+        assert r.perlu_kirim_email(_terakhir(JEDA, 5), _keadaan(5), jeda_hari=JEDA) is True
 
     def test_lonjakan_dikirim_lebih_cepat(self):
-        assert r.perlu_kirim_email(_terakhir(2, 5), _keadaan(5 * r.LONJAKAN_PELIPATAN)) is True
+        assert r.perlu_kirim_email(_terakhir(2, 5), _keadaan(5 * r.LONJAKAN_PELIPATAN), jeda_hari=JEDA) is True
 
     def test_lonjakan_di_hari_yang_sama_tidak_diulang(self):
-        assert r.perlu_kirim_email(_terakhir(0, 5), _keadaan(500)) is False
+        assert r.perlu_kirim_email(_terakhir(0, 5), _keadaan(500), jeda_hari=JEDA) is False
+
+    def test_jeda_30_hari_menahan_sampai_hari_ke_30(self):
+        assert r.perlu_kirim_email(_terakhir(29, 5), _keadaan(5), jeda_hari=30) is False
+        assert r.perlu_kirim_email(_terakhir(30, 5), _keadaan(5), jeda_hari=30) is True
+
+    def test_bawaan_jeda_dari_setelan_instance(self):
+        assert SETELAN_ANGKA[ADMIN_RETENTION_EMAIL_INTERVAL_DAYS][0] == 7
+        assert SETELAN_ANGKA[ADMIN_RETENTION_EMAIL_INTERVAL_DAYS][1] == 0  # 0 = ikut masa retensi
 
     def test_jumlah_terakhir_nol_tidak_membagi_nol(self):
-        assert r.perlu_kirim_email(_terakhir(2, 0), _keadaan(2)) is True
+        assert r.perlu_kirim_email(_terakhir(2, 0), _keadaan(2), jeda_hari=JEDA) is True
 
 
 @pytest.mark.django_db
@@ -93,9 +109,44 @@ class TestTaskMemakaiJeda:
 
     def test_seminggu_kemudian_kirim_lagi(self, cache_lokal):
         kirim = mock.Mock(return_value=1)
-        cache_lokal.set(r.KUNCI_EMAIL_TERAKHIR, _terakhir(r.ULANG_EMAIL_HARI + 1, 5))
+        cache_lokal.set(r.KUNCI_EMAIL_TERAKHIR, _terakhir(JEDA + 1, 5))
 
         hasil = self._jalankan(kirim, _keadaan(5))
 
         assert hasil["email_terkirim"] == 1
         assert cache_lokal.get(r.KUNCI_EMAIL_TERAKHIR)["jumlah"] == 5
+
+    def test_super_admin_memperpanjang_jeda_jadi_30_hari(self, cache_lokal, settings):
+        settings.SKIP_ENV_VAR = True
+        InstanceConfiguration.objects.update_or_create(
+            key=ADMIN_RETENTION_EMAIL_INTERVAL_DAYS, defaults={"value": "30"}
+        )
+        kirim = mock.Mock(return_value=1)
+        cache_lokal.set(r.KUNCI_EMAIL_TERAKHIR, _terakhir(10, 5))
+
+        ditahan = self._jalankan(kirim, _keadaan(5))
+        assert ditahan["email_terkirim"] == 0
+
+        cache_lokal.set(r.KUNCI_EMAIL_TERAKHIR, _terakhir(31, 5))
+        terkirim = self._jalankan(kirim, _keadaan(5))
+        assert terkirim["email_terkirim"] == 1
+
+    def test_nol_berarti_ikut_masa_retensi(self, cache_lokal, settings):
+        """Retensi 90 hari + jeda 0 = satu email per 90 hari."""
+        settings.SKIP_ENV_VAR = True
+        InstanceConfiguration.objects.update_or_create(key=ADMIN_RETENTION_EMAIL_INTERVAL_DAYS, defaults={"value": "0"})
+        InstanceConfiguration.objects.update_or_create(key=LOGIN_HISTORY_RETENTION_DAYS, defaults={"value": "90"})
+        assert r.jeda_email_hari() == 90
+        kirim = mock.Mock(return_value=1)
+
+        cache_lokal.set(r.KUNCI_EMAIL_TERAKHIR, _terakhir(89, 5))
+        assert self._jalankan(kirim, _keadaan(5))["email_terkirim"] == 0
+
+        cache_lokal.set(r.KUNCI_EMAIL_TERAKHIR, _terakhir(90, 5))
+        assert self._jalankan(kirim, _keadaan(5))["email_terkirim"] == 1
+
+    def test_jeda_mengikuti_retensi_yang_diubah(self, settings):
+        settings.SKIP_ENV_VAR = True
+        InstanceConfiguration.objects.update_or_create(key=ADMIN_RETENTION_EMAIL_INTERVAL_DAYS, defaults={"value": "0"})
+        InstanceConfiguration.objects.update_or_create(key=LOGIN_HISTORY_RETENTION_DAYS, defaults={"value": "30"})
+        assert r.jeda_email_hari() == 30
