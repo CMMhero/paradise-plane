@@ -18,6 +18,7 @@ import logging
 from datetime import timedelta
 
 # Django imports
+from django.core.cache import cache
 from django.utils import timezone
 
 # Third party imports
@@ -49,6 +50,18 @@ logger = logging.getLogger("plane.worker")
 
 # Berapa hari sebelum penghapusan peringatan mulai muncul.
 AMBANG_PERINGATAN_HARI = 7
+
+# Peringatan terus benar selama ada data yang akan dibuang, dan itu keadaan tetap
+# sesudah bulan ketiga: tiap hari ada baris yang masuk jendela 7 hari. Email
+# harian jadi gangguan yang akhirnya diabaikan. Satu email per minggu cukup untuk
+# memberi waktu mengekspor; angka yang melonjak tetap dikirim lebih cepat.
+ULANG_EMAIL_HARI = 7
+# Lonjakan yang dianggap kabar baru: jumlah yang terancam sekurangnya segini kali
+# jumlah di email terakhir (misalnya retensi dipersingkat di God Mode).
+LONJAKAN_PELIPATAN = 2
+KUNCI_EMAIL_TERAKHIR = "retensi:email-peringatan-terakhir"
+# Penanda dibuang sendiri kalau task berhenti jalan; email berikutnya tetap sah.
+TTL_PENANDA_DETIK = 60 * 60 * 24 * 60
 
 # Sekali hapus berapa baris. Menghapus puluhan ribu baris dalam satu perintah
 # mengunci tabel cukup lama untuk terasa di aplikasi.
@@ -128,6 +141,24 @@ def susun_peringatan_retensi(keadaan, bahasa="id", email=""):
     return subjek, f"{p1}\n\n{s['p2']}\n\n{s['alasan']}\n", html
 
 
+def perlu_kirim_email(terakhir, keadaan, sekarang=None):
+    """Murni: apakah email peringatan hari ini layak dikirim.
+
+    `terakhir` = {"pada": datetime, "jumlah": int} dari email sebelumnya, atau None.
+    Kirim kalau belum pernah, sudah ULANG_EMAIL_HARI hari, atau jumlah yang
+    terancam melonjak (dan sudah lewat sehari, supaya tidak berulang pada hari
+    yang sama).
+    """
+    if not terakhir:
+        return True
+    sekarang = sekarang or timezone.now()
+    lewat = sekarang - terakhir["pada"]
+    if lewat >= timedelta(days=ULANG_EMAIL_HARI):
+        return True
+    sebelumnya = max(terakhir.get("jumlah", 0), 1)
+    return lewat >= timedelta(days=1) and keadaan["akan_dibuang"] >= sebelumnya * LONJAKAN_PELIPATAN
+
+
 def _kirim_email_peringatan(keadaan):
     """Email ke semua instance admin, masing-masing dalam bahasanya. Diam kalau SMTP belum jalan.
 
@@ -170,7 +201,17 @@ def bersihkan_login_activity():
     terkirim = 0
     if keadaan["perlu_peringatan"]:
         try:
-            terkirim = _kirim_email_peringatan(keadaan)
+            terakhir = cache.get(KUNCI_EMAIL_TERAKHIR)
+            if perlu_kirim_email(terakhir, keadaan):
+                terkirim = _kirim_email_peringatan(keadaan)
+                if terkirim:
+                    cache.set(
+                        KUNCI_EMAIL_TERAKHIR,
+                        {"pada": timezone.now(), "jumlah": keadaan["akan_dibuang"]},
+                        TTL_PENANDA_DETIK,
+                    )
+            else:
+                logger.info("Retensi: email peringatan dikirim %s, ditahan sampai minggu depan", terakhir["pada"])
         except Exception:
             # SMTP patah tidak boleh menghentikan pembersihan, kalau tidak,
             # tabel tumbuh selamanya karena email tidak bisa dikirim.
