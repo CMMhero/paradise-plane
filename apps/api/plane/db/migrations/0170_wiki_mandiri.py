@@ -198,7 +198,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="wikifolder",
             constraint=models.CheckConstraint(
-                check=models.Q(("departemen__isnull", False), ("divisi__isnull", False), _negated=True),
+                condition=models.Q(("departemen__isnull", False), ("divisi__isnull", False), _negated=True),
                 name="wiki_folder_satu_jenis_unit",
             ),
         ),

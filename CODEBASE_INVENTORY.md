@@ -11,7 +11,7 @@
 ## EXECUTIVE SUMMARY
 
 - **Apa ini:** Plane, tool project management open-source (alternatif Jira/Linear). Kelola issue, cycle (sprint), module, page (docs), roadmap.
-- **Stack:** Monorepo **pnpm + Turborepo**. Frontend TS/React (React Router 7 SPA + Vite), backend **Django 4.2 + DRF** (Python 3), realtime collab **Node/TypeScript (Hocuspocus + Yjs)**, proxy **Caddy**.
+- **Stack:** Monorepo **pnpm + Turborepo**. Frontend TS/React (React Router 7 SPA + Vite), backend **Django 5.2 + DRF** (Python 3.12), realtime collab **Node/TypeScript (Hocuspocus + Yjs)**, proxy **Caddy**.
 - **Skala:** ~2.129 `.tsx` + ~1.355 `.ts` + **629 `.py`**. 6 aplikasi (`apps/*`) + 15 package internal (`packages/*`).
 - **Data plane:** PostgreSQL (utama + read-replica opsional), Redis (cache/celery result/ws), RabbitMQ (celery broker), S3/MinIO (asset), Celery (worker + beat).
 - **Lisensi:** AGPL-3.0. Versi node `1.3.1`, versi API `0.24.0`.
@@ -88,10 +88,10 @@ Status: ✅ deep-read · 🟡 di-skim (struktur + file kunci) · ⬜ belum dibuk
 
 | Area          | Framework               | Versi                                |
 | ------------- | ----------------------- | ------------------------------------ |
-| Backend       | Django                  | 4.2.30                               |
-| Backend API   | Django REST Framework   | 3.15.2                               |
-| Task queue    | Celery                  | 5.4.0 (+ django-celery-beat/results) |
-| DB driver     | psycopg (3)             | 3.3.0                                |
+| Backend       | Django                  | 5.2.17                               |
+| Backend API   | Django REST Framework   | 3.18.3                               |
+| Task queue    | Celery                  | 5.5.3 (+ django-celery-beat/results) |
+| DB driver     | psycopg (3)             | 3.3.4                                |
 | Frontend      | React                   | 18.3.1                               |
 | Routing/SSR   | React Router            | 7.15.x (mode framework)              |
 | Bundler       | Vite                    | 8.0.16                               |
@@ -144,25 +144,25 @@ Pradise_Plane/
 
 | Paket                                 | Versi                   | Untuk apa                                             |
 | ------------------------------------- | ----------------------- | ----------------------------------------------------- |
-| Django                                | 4.2.30                  | Web framework                                         |
-| djangorestframework                   | 3.15.2                  | REST API                                              |
-| psycopg / psycopg-binary              | 3.3.0                   | Driver PostgreSQL                                     |
-| dj-database-url                       | 2.1.0                   | Parse `DATABASE_URL`                                  |
-| redis / django-redis                  | 5.0.4 / 5.4.0           | Cache, session, celery result                         |
-| celery / django_celery_beat / results | 5.4.0 / 2.6.0 / 2.5.1   | Task queue + scheduler                                |
-| django-cors-headers                   | 4.3.1                   | CORS                                                  |
-| whitenoise                            | 6.11.0                  | Static serve                                          |
-| django-storages / boto3               | 1.14.2 / 1.34.96        | S3/MinIO asset                                        |
-| channels                              | 4.1.0                   | WebSocket/ASGI                                        |
+| Django                                | 5.2.17                  | Web framework                                         |
+| djangorestframework                   | 3.18.3                  | REST API                                              |
+| psycopg / psycopg-binary              | 3.3.4                   | Driver PostgreSQL                                     |
+| dj-database-url                       | 3.0.1                   | Parse `DATABASE_URL`                                  |
+| redis / django-redis                  | 5.0.4 / 7.0.0           | Cache, session, celery result                         |
+| celery / django_celery_beat / results | 5.5.3 / 2.9.0 / 2.6.0   | Task queue + scheduler                                |
+| django-cors-headers                   | 4.9.0                   | CORS                                                  |
+| whitenoise                            | 6.12.0                  | Static serve                                          |
+| django-storages / boto3               | 1.14.6 / 1.34.96        | S3/MinIO asset                                        |
+| channels                              | 4.3.2                   | WebSocket/ASGI                                        |
 | uvicorn                               | 0.29.0                  | ASGI server                                           |
 | openai                                | 1.63.2                  | Fitur AI                                              |
 | slack-sdk                             | 3.27.1                  | Integrasi Slack                                       |
-| scout-apm                             | 3.1.0                   | APM monitoring                                        |
+| scout-apm                             | 3.5.3                   | APM monitoring                                        |
 | posthog                               | 3.5.0                   | Analytics/telemetry                                   |
 | cryptography / PyJWT                  | 48.0.1 / 2.13.0         | Crypto, JWT                                           |
 | nh3 / lxml / beautifulsoup4           | 0.2.18 / 6.1.0 / 4.12.3 | Sanitasi & parse HTML                                 |
 | zxcvbn                                | 4.4.28                  | Validator kekuatan password                           |
-| drf-spectacular                       | 0.28.0                  | OpenAPI schema                                        |
+| drf-spectacular                       | 0.29.0                  | OpenAPI schema                                        |
 | openpyxl                              | 3.1.2                   | Export XLSX                                           |
 | opentelemetry-\*                      | 1.28.1                  | Tracing                                               |
 | requests                              | 2.33.0                  | Webhook delivery (pinned utk SSRF IP-pinning adapter) |
@@ -298,7 +298,7 @@ Task lain (dipicu event, bukan cron) di `plane/bgtasks/`: webhook delivery, issu
 
 ## FASE 2, Infrastruktur & Environment
 
-**Runtime:** Python 3 (Django 4.2, uvicorn ASGI), Node >=22.18, pnpm 11.3.
+**Runtime:** Python 3.12 (Django 5.2, uvicorn ASGI), Node >=22.18, pnpm 11.3.
 
 **Containerization:** tiap app punya Dockerfile ganda (`Dockerfile.<app>` prod + `Dockerfile.dev`). Orkestrasi via `docker-compose.yml` (community edition). Services:
 

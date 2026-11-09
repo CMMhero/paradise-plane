@@ -85,7 +85,7 @@ class WikiFolder(BaseModel):
                 name="wiki_folder_satu_per_departemen",
             ),
             models.CheckConstraint(
-                check=~Q(divisi__isnull=False, departemen__isnull=False),
+                condition=~Q(divisi__isnull=False, departemen__isnull=False),
                 name="wiki_folder_satu_jenis_unit",
             ),
         ]
