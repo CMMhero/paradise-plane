@@ -54,7 +54,10 @@ export type TIssueOrderByOptions =
   | "attachment_count"
   | "-attachment_count"
   | "sub_issues_count"
-  | "-sub_issues_count";
+  | "-sub_issues_count"
+  // Kustomisasi Paradise: status persetujuan terbaru (KEP-55), diurutkan di server.
+  | "approval_status"
+  | "-approval_status";
 
 export type TIssueGroupingFilters = "active" | "backlog";
 

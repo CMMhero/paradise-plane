@@ -80,6 +80,18 @@ function KotakBagan({
   );
 }
 
+/**
+ * Tinggi garis tegak per departemen, kunci `pertama-terakhir`. Garis mulai 0,5rem
+ * (jarak antar-baris) di atas baris, atau 1rem untuk baris pertama (sampai ke kotak
+ * divisi); baris terakhir berhenti tepat di tengah (50%).
+ */
+const GARIS_TEGAK: Record<string, string> = {
+  "true-true": "after:h-[calc(50%+1rem)]",
+  "true-false": "after:h-[calc(100%+1.5rem)]",
+  "false-true": "after:h-[calc(50%+0.5rem)]",
+  "false-false": "after:h-[calc(100%+1rem)]",
+};
+
 /** Garis tegak penghubung antar-tingkat. */
 const GarisTegak = () => <div className="mx-auto h-6 w-0 border-l border-strong" aria-hidden />;
 
@@ -145,16 +157,24 @@ function KolomDivisi({ v, onBuka, onKelola }: { v: TDivisiOrganisasi; onBuka: TB
         </div>
       </KotakBagan>
 
-      <ul className="mt-2 ml-4 space-y-2 border-l border-strong pt-2 pl-3">
-        {v.departemen.map((d) => (
-          <li
-            key={d.id}
-            className="relative before:absolute before:top-1/2 before:-left-3 before:w-3 before:border-t before:border-strong"
-          >
-            <KotakDepartemen d={d} divisiId={v.id} onBuka={onBuka} onKelola={onKelola} />
-          </li>
-        ))}
-        <li className="relative before:absolute before:top-1/2 before:-left-3 before:w-3 before:border-t before:border-dashed before:border-subtle">
+      {/* Garis tegak digambar per departemen (bukan border-l pada ul) supaya berhenti
+          di tengah departemen terakhir dan tidak menggantung sampai tombol tambah. */}
+      <ul className="mt-2 ml-4 space-y-2 pt-2 pl-3">
+        {v.departemen.map((d, i) => {
+          const pertama = i === 0;
+          const terakhir = i === v.departemen.length - 1;
+          return (
+            <li
+              key={d.id}
+              className={`relative before:absolute before:top-1/2 before:-left-3 before:w-3 before:border-t before:border-strong after:absolute after:-left-3 after:border-l after:border-strong ${
+                pertama ? "after:-top-4" : "after:-top-2"
+              } ${GARIS_TEGAK[`${pertama}-${terakhir}`]}`}
+            >
+              <KotakDepartemen d={d} divisiId={v.id} onBuka={onBuka} onKelola={onKelola} />
+            </li>
+          );
+        })}
+        <li className="relative">
           <button
             type="button"
             onClick={() => onKelola({ jenis: "buat-departemen", divisiId: v.id })}

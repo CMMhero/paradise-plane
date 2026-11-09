@@ -8,7 +8,7 @@ import React, { useState, useRef, useCallback, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { useDropzone } from "react-dropzone";
-import type { Control } from "react-hook-form";
+import type { Control, FieldValues } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import useSWR from "swr";
 import { Popover } from "@headlessui/react";
@@ -48,7 +48,7 @@ type Props = {
 // services
 const fileService = new FileService();
 
-export const ImagePickerPopover = observer(function ImagePickerPopover(props: Props) {
+const ImagePickerPopoverBase = observer(function ImagePickerPopover(props: Props) {
   const { label, value, control, onChange, disabled = false, tabIndex, isProfileCover = false, projectId } = props;
   // states
   const [image, setImage] = useState<File | null>(null);
@@ -377,3 +377,8 @@ export const ImagePickerPopover = observer(function ImagePickerPopover(props: Pr
     </Popover>
   );
 });
+
+// Keep the form type generic for callers: Control<any> alone no longer accepts typed controls (react-hook-form 7.7x+).
+export const ImagePickerPopover = ImagePickerPopoverBase as unknown as <T extends FieldValues>(
+  props: Omit<Props, "control"> & { control: Control<T, any, any> }
+) => React.ReactElement;

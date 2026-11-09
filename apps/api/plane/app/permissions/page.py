@@ -19,6 +19,7 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from plane.utils.izin_sumber import tolak_izin
 from plane.utils.saklar_instance import PERM_PAGE_ARCHIVE, PERM_PAGE_DELETE, PERM_PAGE_EDIT
+from plane.utils.wiki_mandiri import pengawas_halaman_privat
 
 
 # Permission Mappings for workspace members
@@ -84,7 +85,7 @@ class ProjectPagePermission(BasePermission):
 
             # Handle private page access
             if page.access == Page.PRIVATE_ACCESS:
-                return self._has_private_page_action_access(request, slug, page, project_id)
+                return self._has_private_page_action_access(request, slug, page, project_id, role, view)
 
             # KEP-85: halaman publik milik orang lain diputuskan aturan izin per sumber.
             return self._has_page_action_access(request, role, view, page, project_id)
@@ -209,12 +210,18 @@ class ProjectPagePermission(BasePermission):
             return False, None
         return True, role
 
-    def _has_private_page_action_access(self, request, slug, page, project_id):
+    def _has_private_page_action_access(self, request, slug, page, project_id, role=None, view=None):
+        """Halaman privat milik ORANG LAIN (pemiliknya sudah lolos di atas).
+
+        Plane: tertutup untuk semua selain pemilik. Paradise (KEP-95, 6 Nov 2026):
+        admin Wiki, direktur, dan manager divisi departemen project ini boleh
+        membukanya, lalu diperlakukan seperti halaman publik orang lain: baca
+        untuk anggota project, ubah/arsip/hapus menurut aturan PERM_PAGE_*
+        (KEP-85), ganti akses tetap pemilik saja.
         """
-        Check access to private pages. Override for feature flag logic.
-        """
-        # Base implementation: only owner can access private pages
-        return False
+        if not pengawas_halaman_privat(request.user, project_id):
+            return False
+        return self._has_page_action_access(request, role, view, page, project_id)
 
     def _check_project_action_access(self, request, role, view):
         """Izin aksi Wiki jalur DEFAULT (project tanpa governance folder).

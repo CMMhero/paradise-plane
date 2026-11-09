@@ -24,10 +24,11 @@ lebih kecil dipakai sebagai "perhatian": tertukar adalah salah ketik, bukan niat
 """
 
 # Python imports
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 # Django imports
 from django.db.models import Count, F, Min, Q, Sum
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 # Module imports
@@ -48,6 +49,7 @@ from plane.utils.saklar_instance import (
     DASHBOARD_PERHATIAN_PERSEN,
     setelan_angka,
 )
+from plane.utils.setelan_instance import hari_ini_kantor, zona_kantor
 from plane.utils.tanggal_otomatis import batas_terlambat
 from plane.utils.wiki_access import WIKI_IDENTIFIER
 
@@ -120,9 +122,14 @@ def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu):
     terlambat = Q(target_date__lt=batas_terlambat(hari_ini)) & belum_tuntas & bisa_terlambat
     selesai = Q(state__group=_SELESAI)
     selesai_bertenggat = selesai & Q(completed_at__gte=awal_jendela, target_date__isnull=False)
+    # Tepat waktu = tanggal selesai (hari kantor, BUKAN hari UTC) <= tenggat, aturan
+    # yang sama dengan laporan selesai (`utils/laporan_selesai.py`).
+    tepat_waktu = selesai_bertenggat & Q(tanggal_selesai__lte=F("target_date"))
+    awal_sepekan_lalu = datetime.combine(sepekan_lalu, time.min, tzinfo=zona_kantor())
 
     baris = (
         Issue.issue_objects.filter(project_id__in=project_ids)
+        .annotate(tanggal_selesai=TruncDate("completed_at", tzinfo=zona_kantor()))
         .values("project_id")
         .annotate(
             total=Count("id"),
@@ -142,11 +149,11 @@ def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu):
                 "id",
                 filter=Q(target_date__lt=batas_terlambat(sepekan_lalu))
                 & ~Q(state__group=_BATAL)
-                & (Q(completed_at__isnull=True) | Q(completed_at__date__gte=sepekan_lalu))
+                & (Q(completed_at__isnull=True) | Q(completed_at__gte=awal_sepekan_lalu))
                 & bisa_terlambat,
             ),
             bertenggat_30=Count("id", filter=selesai_bertenggat),
-            tepat_waktu_30=Count("id", filter=selesai_bertenggat & Q(completed_at__date__lte=F("target_date"))),
+            tepat_waktu_30=Count("id", filter=tepat_waktu),
         )
     )
     return {r["project_id"]: r for r in baris}
@@ -310,7 +317,7 @@ def _kelompokkan_divisi(rows, ambang):
 def hitung_ringkasan(user, slug, sekarang=None):
     """Seluruh isi Dashboard Divisi untuk `user`."""
     sekarang = sekarang or timezone.now()
-    hari_ini = timezone.localdate(sekarang)
+    hari_ini = hari_ini_kantor(sekarang)
     awal_bulan = sekarang.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     ambang = ambang_kesehatan()
 

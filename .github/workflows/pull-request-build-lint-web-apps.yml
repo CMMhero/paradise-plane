@@ -37,6 +37,8 @@ jobs:
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
 
       - name: Enable Corepack and pnpm
         run: corepack enable pnpm
@@ -82,6 +84,8 @@ jobs:
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
 
       - name: Enable Corepack and pnpm
         run: corepack enable pnpm
@@ -141,6 +145,8 @@ jobs:
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
 
       - name: Enable Corepack and pnpm
         run: corepack enable pnpm
@@ -182,6 +188,8 @@ jobs:
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
 
       - name: Enable Corepack and pnpm
         run: corepack enable pnpm

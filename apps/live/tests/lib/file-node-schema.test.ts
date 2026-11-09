@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 // plane imports
 import { convertHTMLDocumentToAllFormats } from "@plane/editor";
 

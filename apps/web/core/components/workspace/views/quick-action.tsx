@@ -6,11 +6,13 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
+import { MoreHorizontal } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { IconButton } from "@plane/propel/icon-button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IWorkspaceView } from "@plane/types";
-import { CustomMenu } from "@plane/ui";
+import { ContextMenu, CustomMenu } from "@plane/ui";
 import { copyUrlToClipboard, cn } from "@plane/utils";
 // helpers
 import { useViewMenuItems } from "@/components/common/quick-actions-helper";
@@ -24,10 +26,13 @@ import { CreateUpdateWorkspaceViewModal } from "./modal";
 type Props = {
   workspaceSlug: string;
   view: IWorkspaceView;
+  /** Kustomisasi Paradise: ada = klik kanan pada baris membuka menu yang sama (seperti view departemen). */
+  parentRef?: React.RefObject<HTMLElement>;
+  customClassName?: string;
 };
 
 export const WorkspaceViewQuickActions = observer(function WorkspaceViewQuickActions(props: Props) {
-  const { workspaceSlug, view } = props;
+  const { workspaceSlug, view, parentRef, customClassName } = props;
   // states
   const [updateViewModal, setUpdateViewModal] = useState(false);
   const [deleteViewModal, setDeleteViewModal] = useState(false);
@@ -69,11 +74,12 @@ export const WorkspaceViewQuickActions = observer(function WorkspaceViewQuickAct
     <>
       <CreateUpdateWorkspaceViewModal data={view} isOpen={updateViewModal} onClose={() => setUpdateViewModal(false)} />
       <DeleteGlobalViewModal data={view} isOpen={deleteViewModal} onClose={() => setDeleteViewModal(false)} />
+      {parentRef && <ContextMenu parentRef={parentRef} items={MENU_ITEMS.items} />}
       <CustomMenu
-        ellipsis
+        customButton={<IconButton variant="tertiary" size="lg" icon={MoreHorizontal} />}
         placement="bottom-end"
         closeOnSelect
-        buttonClassName="flex-shrink-0 flex items-center justify-center size-[26px] bg-layer-1/70 rounded-sm"
+        buttonClassName={customClassName}
       >
         {MENU_ITEMS.items.map((item) => {
           if (item.shouldRender === false) return null;

@@ -29,7 +29,7 @@ Pesan galat validasi berbahasa Inggris: God Mode English only (KEP-46).
 """
 
 import re
-from datetime import time
+from datetime import datetime, time
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pytz
@@ -363,6 +363,17 @@ def zona_kantor() -> ZoneInfo:
         return ZoneInfo(efektif(OFFICE_TIMEZONE))
     except (ZoneInfoNotFoundError, ValueError):
         return ZoneInfo(ZONA_KANTOR_BAWAAN)
+
+
+def hari_ini_kantor(saat=None):
+    """Tanggal kalender `saat` (default: sekarang) di zona kantor.
+
+    Server berjalan di UTC, jadi `timezone.localdate()` ketinggalan satu hari
+    antara 00.00 dan 07.00 WIB. Semua hitungan terlambat/tepat waktu memakai
+    ini, bukan tanggal UTC.
+    """
+    saat = saat or datetime.now(tz=ZoneInfo("UTC"))
+    return saat.astimezone(zona_kantor()).date()
 
 
 # --------------------------------------------------------------------------

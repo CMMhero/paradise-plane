@@ -11,7 +11,7 @@ import { useParams, usePathname } from "next/navigation";
 import { EUserPermissionsLevel, EUserPermissions } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
-import { Stamp } from "lucide-react";
+import { BookOpen, Stamp } from "lucide-react";
 import type { EUserProjectRoles } from "@plane/types";
 // plane ui
 // components
@@ -22,6 +22,8 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useParadiseModules } from "@/hooks/use-paradise-module";
+import { useFolderWikiProject } from "@/hooks/use-pohon-wiki";
+import { WIKI_MATERIALS_NAV_KEY } from "@/lib/paradise-modules";
 
 export type TNavigationItem = {
   name: string;
@@ -60,6 +62,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
     : undefined;
   const workItem = workItemId ? getIssueById(workItemId) : undefined;
   const project = getPartialProjectById(projectId);
+  const folderWiki = useFolderWikiProject(workspaceSlug, projectId, isNavKeyEnabled(WIKI_MATERIALS_NAV_KEY));
   // handlers
   const handleProjectClick = () => {
     if (window.innerWidth < 768) {
@@ -143,8 +146,19 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         shouldRender: true,
         sortOrder: 7,
       },
+      // Paradise KEP-97: cermin tab Materials di header (`use-navigation-items.ts`).
+      {
+        i18n_key: "wiki_ui.tab.title",
+        key: WIKI_MATERIALS_NAV_KEY,
+        name: "Materials",
+        href: `/${navWorkspaceSlug}/projects/${navProjectId}/materials`,
+        icon: BookOpen,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+        shouldRender: !!folderWiki,
+        sortOrder: 8,
+      },
     ],
-    [project]
+    [project, folderWiki]
   );
 
   // memoized navigation items and adding additional navigation items

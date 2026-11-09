@@ -12,7 +12,7 @@
  */
 
 import { Fragment } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { cn } from "@plane/utils";
 import type { TSort, TSortValue } from "./model";
@@ -30,6 +30,11 @@ export type TColumn<Row> = {
   srOnlyLabel?: boolean;
   /** Menempel di tepi kiri saat tabel digulir ke samping (kolom aksi pertama). */
   sticky?: boolean;
+  /**
+   * Lebar tetap (px) kolom sticky. Wajib untuk kolom sticky yang diikuti kolom sticky
+   * lain: offset kiri kolom berikutnya = jumlah lebar kolom sticky sebelumnya.
+   */
+  stickyWidth?: number;
   className?: string;
   headClassName?: string;
 };
@@ -58,6 +63,26 @@ const dariKontrol = (target: EventTarget, baris: HTMLElement): boolean => {
   return Boolean(el) && baris.contains(el);
 };
 
+/** Offset kiri tiap kolom sticky = jumlah lebar kolom sticky di kirinya. */
+const offsetSticky = <Row,>(kolom: TColumn<Row>[]): Map<string, number> => {
+  const peta = new Map<string, number>();
+  let kiri = 0;
+  for (const c of kolom) {
+    if (!c.sticky) continue;
+    peta.set(c.key, kiri);
+    kiri += c.stickyWidth ?? 0;
+  }
+  return peta;
+};
+
+const gayaSticky = <Row,>(c: TColumn<Row>, offset: Map<string, number>) =>
+  c.sticky
+    ? {
+        left: offset.get(c.key) ?? 0,
+        ...(c.stickyWidth ? { width: c.stickyWidth, minWidth: c.stickyWidth, maxWidth: c.stickyWidth } : {}),
+      }
+    : undefined;
+
 const visibleColumns = <Row,>(columns: TColumn<Row>[], hidden: string[]): TColumn<Row>[] =>
   columns.filter((c) => c.locked || !hidden.includes(c.key));
 
@@ -76,6 +101,7 @@ export function DataTable<Row>({
 }: TProps<Row>) {
   const kolom = visibleColumns(columns, hidden);
   const adaSticky = kolom.some((c) => c.sticky);
+  const offset = offsetSticky(kolom);
 
   const kelompok: { key: string; label: ReactNode; rows: Row[] }[] = [];
   for (const row of rows) {
@@ -88,10 +114,10 @@ export function DataTable<Row>({
   return (
     <div className="max-h-[calc(100vh-17rem)] overflow-auto rounded-card border border-subtle">
       <table className="w-full text-13" style={{ minWidth }}>
-        <thead className="sticky top-0 z-[1] bg-layer-1 text-tertiary">
+        <thead className="sticky top-0 z-[3] bg-layer-1 text-tertiary">
           <tr>
             {kolom.map((c) => (
-              <KepalaKolom key={c.key} column={c} sort={sort} onSort={onSort} />
+              <KepalaKolom key={c.key} column={c} sort={sort} onSort={onSort} gaya={gayaSticky(c, offset)} />
             ))}
           </tr>
         </thead>
@@ -144,11 +170,8 @@ export function DataTable<Row>({
                       {kolom.map((c) => (
                         <td
                           key={c.key}
-                          className={cn(
-                            "px-3 py-2 align-middle",
-                            c.sticky && "sticky left-0 z-[1] bg-inherit",
-                            c.className
-                          )}
+                          style={gayaSticky(c, offset)}
+                          className={cn("px-3 py-2 align-middle", c.sticky && "sticky z-[1] bg-inherit", c.className)}
                         >
                           {c.render(row)}
                         </td>
@@ -176,7 +199,9 @@ function KepalaKolom<Row>({
   column: c,
   sort,
   onSort,
+  gaya,
 }: {
+  gaya?: CSSProperties;
   column: TColumn<Row>;
   sort: TSort;
   onSort: (s: TSort) => void;
@@ -187,9 +212,10 @@ function KepalaKolom<Row>({
 
   return (
     <th
+      style={gaya}
       className={cn(
         "px-3 py-2 text-left font-medium whitespace-nowrap",
-        c.sticky && "sticky left-0 z-[2] bg-layer-1",
+        c.sticky && "sticky z-[2] bg-layer-1",
         c.headClassName
       )}
       aria-sort={aktif ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}

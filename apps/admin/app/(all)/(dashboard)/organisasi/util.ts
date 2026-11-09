@@ -142,7 +142,17 @@ export const cariDepartemen = (
   return undefined;
 };
 
-const KODE_MAKS = 20;
+/** Sama dengan BATAS_KODE di backend (organisasi.py) dan batas Project.identifier. */
+export const KODE_MAKS = 12;
+const POLA_KODE = /^[A-Z0-9-]+$/;
+
+/** Galat kode divisi/departemen: null = valid, selain itu kunci pesan. */
+export const galatKode = (kode: string): "code_invalid" | "code_too_long" | null => {
+  const k = kode.trim().toUpperCase();
+  if (k.length > KODE_MAKS) return "code_too_long";
+  if (k && !POLA_KODE.test(k)) return "code_invalid";
+  return null;
+};
 /** Kata sambung yang tak ikut jadi huruf kode ("Research and Development" -> RD). */
 const KATA_SAMBUNG = new Set(["and", "of", "the", "dan", "&", "untuk", "for"]);
 

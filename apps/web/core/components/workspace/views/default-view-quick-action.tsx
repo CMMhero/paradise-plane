@@ -22,6 +22,8 @@ type Props = {
     key: TStaticViewTypes;
     i18n_label: string;
   };
+  /** Kustomisasi Paradise: departemen memberi tautannya sendiri (tanpa "/" di depan). */
+  viewLink?: string;
 };
 
 export const DefaultWorkspaceViewQuickActions = observer(function DefaultWorkspaceViewQuickActions(props: Props) {
@@ -29,7 +31,7 @@ export const DefaultWorkspaceViewQuickActions = observer(function DefaultWorkspa
 
   const { t } = useTranslation();
 
-  const viewLink = `${workspaceSlug}/workspace-views/${view.key}`;
+  const viewLink = props.viewLink ?? `${workspaceSlug}/workspace-views/${view.key}`;
   const handleCopyText = () =>
     copyUrlToClipboard(viewLink).then(() => {
       setToast({
@@ -37,6 +39,7 @@ export const DefaultWorkspaceViewQuickActions = observer(function DefaultWorkspa
         title: "Link Copied!",
         message: "View link copied to clipboard.",
       });
+      return undefined;
     });
   const handleOpenInNewTab = () => window.open(`/${viewLink}`, "_blank");
 

@@ -124,6 +124,8 @@ export const SETTINGS_LAYOUT: Record<TSettingsTabId, TSettingSection[]> = {
       ],
     },
     { id: "sending_assign", rows: [{ key: "ENABLE_TUGAS_KE_DM" }] },
+    // Emails only Super Admins receive (logs and the like). One row per kind.
+    { id: "sending_admin", rows: [{ key: "ENABLE_ADMIN_RETENTION_EMAIL" }] },
   ],
 
   notifications_schedule: [

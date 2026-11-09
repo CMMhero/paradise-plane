@@ -123,6 +123,19 @@ class TestTurunanKonten:
         )
         assert tautan_dari_html(html) == ["https://b.com", "https://a.com/x"]
 
+    def test_plain_urls_in_text_are_detected(self):
+        html = (
+            "<p>lihat https://a.com/x. Lalu (https://b.com/p_(1)) dan https://a.com/x lagi,"
+            ' <a href="https://c.com">https://c.com</a> <code>https://skip.me</code></p>'
+            "<p>ftp://nope.com dan https://d.com/q?x=1&amp;y=2!</p>"
+        )
+        assert tautan_dari_html(html) == [
+            "https://a.com/x",
+            "https://b.com/p_(1)",
+            "https://c.com",
+            "https://d.com/q?x=1&y=2",
+        ]
+
     @pytest.mark.parametrize("html", [None, "", "<p></p>"])
     def test_empty_html(self, html):
         assert tautan_dari_html(html) == []

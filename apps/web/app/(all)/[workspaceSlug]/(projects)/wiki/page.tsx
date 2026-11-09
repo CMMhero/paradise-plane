@@ -18,7 +18,8 @@ import { GridKartu, KartuFolder, KartuKerangka } from "@/components/wiki/kartu";
 // services
 import type { TWikiFolder } from "@/services/wiki.service";
 // local imports
-import { anakDari, folderTerlihat, jumlahMateriDalam, layananWiki, usePohonWiki } from "./data";
+import { AksiFolder } from "./aksi-folder";
+import { anakDari, folderTerlihat, jumlahHalamanDalam, jumlahMateriDalam, layananWiki, usePohonWiki } from "./data";
 import { PencarianWiki } from "./pencarian";
 
 /**
@@ -66,9 +67,16 @@ function WikiBerandaPage() {
       judul={f.nama}
       logoProps={f.logo_props ?? undefined}
       terbuka={f.umum}
+      aksi={<AksiFolder workspaceSlug={slug} folder={f} onBerubah={muatUlang} />}
       keterangan={f.keterangan || (f.umum ? t("wiki_ui.home.open_to_all") : undefined)}
       jumlahAnak={jumlahMateriDalam(terlihat, f.id)}
       satuanAnak={t("wiki_ui.common.material_unit")}
+      // Divisi: halaman semua departemennya, aturan yang sama dengan angka materi (KEP-97).
+      halaman={
+        f.divisi_id || f.departemen_id
+          ? { jumlah: jumlahHalamanDalam(terlihat, f.id), satuan: t("wiki_ui.common.page_unit") }
+          : undefined
+      }
     />
   );
 

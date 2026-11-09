@@ -1,7 +1,7 @@
 import path from "node:path";
 import * as dotenv from "dotenv";
 import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { joinUrlPath } from "@plane/utils";
 
@@ -25,7 +25,7 @@ export default defineConfig(() => ({
   build: {
     assetsInlineLimit: 0,
   },
-  plugins: [reactRouter(), tsconfigPaths({ projects: [path.resolve(__dirname, "tsconfig.json")] })],
+  plugins: lazyPlugins(() => [reactRouter(), tsconfigPaths({ projects: [path.resolve(__dirname, "tsconfig.json")] })]),
   resolve: {
     alias: {
       // Next.js compatibility shims used within space

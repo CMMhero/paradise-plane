@@ -20,6 +20,7 @@ from rest_framework import status
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from plane.db.models import (
+    TINGKAT_DIREKTUR,
     TINGKAT_SUPERVISOR,
     JabatanOrganisasi,
     Profile,
@@ -33,7 +34,7 @@ from plane.license.api.views.configuration import InstanceConfigurationEndpoint
 from plane.license.api.views.member import InstanceMemberEndpoint
 from plane.license.models import Instance, InstanceAdmin, InstanceConfiguration
 from plane.utils.bawaan_member import KUNCI, PABRIK
-from plane.utils.preferensi_email import saklar_untuk, terapkan_perubahan
+from plane.utils.preferensi_email import kelompok_jabatan, saklar_untuk, terapkan_perubahan
 
 URL = "/api/instances/members/defaults/"
 
@@ -234,6 +235,24 @@ class TestBawaanDiterapkan:
         JabatanOrganisasi.objects.create(workspace=ws, member=lama, tingkat=TINGKAT_SUPERVISOR)
 
         assert saklar_untuk(lama.id) == PABRIK["email"]["pimpinan"]
+
+    @pytest.mark.django_db
+    def test_super_admin_tidak_punya_baris_sendiri_dan_mengikuti_jabatan(self, super_admin):
+        ws = Workspace.objects.create(name="WS", slug=f"ws-{uuid4().hex[:6]}", owner=super_admin)
+        assert set(PABRIK["email"]) == {"staf", "pimpinan", "direktur"}
+
+        # Direktur yang juga Super Admin tetap dikunci baris direktur (batas atas).
+        baru = _buat_user("sadir")
+        JabatanOrganisasi.objects.create(workspace=ws, member=baru, tingkat=TINGKAT_DIREKTUR)
+        InstanceAdmin.objects.create(instance=Instance.objects.get(), user=baru, role=20)
+
+        assert kelompok_jabatan(baru.id) == "direktur"
+        assert saklar_untuk(baru.id)["comment"] is False
+
+    @pytest.mark.django_db
+    def test_baris_super_admin_ditolak(self, super_admin):
+        ditolak = _ubah(super_admin, {"email": {"superadmin": {"comment": True}}})
+        assert ditolak.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.django_db
     def test_kembali_ke_bawaan_memotret_tabel_god_mode_hari_ini(self, super_admin):

@@ -61,7 +61,9 @@ from plane.db.penempatan import penempatan_sekarang, setel_penempatan
 from plane.license.api.views.base import BaseAPIView
 from plane.utils.wiki_access import WIKI_IDENTIFIER
 
-BATAS_KODE = 20
+# Sama dengan batas Project.identifier (12): kode departemen jadi identifier project-nya.
+BATAS_KODE = 12
+POLA_KODE = re.compile(r"^[A-Z0-9-]+$")
 
 
 def _workspace_utama():
@@ -90,11 +92,13 @@ def _kode_nama(data, wajib):
     kode = (data.get("kode") or "").strip().upper() if "kode" in data or wajib else None
     nama = (data.get("nama") or "").strip() if "nama" in data or wajib else None
     if kode is not None and not kode:
-        return None, None, "kode is required."
+        return None, None, "Code is required."
     if kode is not None and len(kode) > BATAS_KODE:
-        return None, None, f"kode can be at most {BATAS_KODE} characters."
+        return None, None, f"Code can be at most {BATAS_KODE} characters."
+    if kode is not None and not POLA_KODE.match(kode):
+        return None, None, "Code may only contain letters, numbers and the - character."
     if nama is not None and not nama:
-        return None, None, "nama is required."
+        return None, None, "Name is required."
     return kode, nama, None
 
 
@@ -108,11 +112,11 @@ def _identifier_dari_kode(kode):
     """
     ident = (kode or "").replace("-", "").replace(" ", "").upper()
     if not ident:
-        return None, "kode does not leave a valid project identifier."
-    if len(ident) > 12:
-        return None, f"kode {kode} is too long for a project identifier (max 12 characters without dashes)."
+        return None, f"Department code {kode} must contain at least one letter or number."
+    if len(ident) > BATAS_IDENTIFIER:
+        return None, f"Department code {kode} is too long (max {BATAS_IDENTIFIER} characters without dashes)."
     if re.match(Project.FORBIDDEN_IDENTIFIER_CHARS_PATTERN, ident):
-        return None, f"kode {kode} contains characters not allowed in a project identifier."
+        return None, f"Department code {kode} contains characters that are not allowed."
     return ident, None
 
 

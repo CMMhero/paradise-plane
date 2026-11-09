@@ -1,6 +1,6 @@
 {
   "name": "@plane/services",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "license": "AGPL-3.0",
   "type": "module",
@@ -12,13 +12,14 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch --no-clean",
-    "check:lint": "oxlint --max-warnings=6 .",
+    "build": "vp pack",
+    "dev": "vp pack --watch --no-clean",
+    "check:lint": "vp lint --max-warnings=6 .",
     "check:types": "tsc --noEmit",
-    "check:format": "oxfmt --check .",
-    "fix:lint": "oxlint --fix .",
-    "fix:format": "oxfmt .",
+    "check:format": "vp fmt --check .",
+    "fix:lint": "vp lint --fix .",
+    "fix:format": "vp fmt .",
+    "test": "vp test run",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf node_modules && rm -rf dist"
   },
   "dependencies": {
@@ -29,7 +30,7 @@
   },
   "devDependencies": {
     "@plane/typescript-config": "workspace:*",
-    "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

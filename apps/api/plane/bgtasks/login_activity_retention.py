@@ -38,7 +38,12 @@ from plane.utils.email_merek import (
     paragraf,
     tanggal,
 )
-from plane.utils.saklar_instance import LOGIN_HISTORY_RETENTION_DAYS, setelan_angka
+from plane.utils.saklar_instance import (
+    ENABLE_ADMIN_RETENTION_EMAIL,
+    LOGIN_HISTORY_RETENTION_DAYS,
+    saklar_aktif,
+    setelan_angka,
+)
 
 logger = logging.getLogger("plane.worker")
 
@@ -124,7 +129,14 @@ def susun_peringatan_retensi(keadaan, bahasa="id", email=""):
 
 
 def _kirim_email_peringatan(keadaan):
-    """Email ke semua instance admin, masing-masing dalam bahasanya. Diam kalau SMTP belum jalan."""
+    """Email ke semua instance admin, masing-masing dalam bahasanya. Diam kalau SMTP belum jalan.
+
+    Saklar God Mode `ENABLE_ADMIN_RETENTION_EMAIL` mematikan emailnya saja; banner
+    di God Mode dan pembersihan tidak ikut berhenti.
+    """
+    if not saklar_aktif(ENABLE_ADMIN_RETENTION_EMAIL):
+        logger.info("Retensi: email peringatan dimatikan di God Mode, dilewati")
+        return 0
     admin = [
         a.user
         for a in InstanceAdmin.objects.filter(user__is_active=True)

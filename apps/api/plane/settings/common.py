@@ -375,6 +375,7 @@ CELERY_IMPORTS = (
     "plane.bgtasks.tugas_ke_dm_task",
     "plane.bgtasks.penugasan_email",
     "plane.bgtasks.quick_link_task",
+    "plane.bgtasks.wiki_indeks_task",
     "plane.bgtasks.dormancy_task",
     "plane.bgtasks.control_plane_heartbeat",
     "plane.bgtasks.billing_task",

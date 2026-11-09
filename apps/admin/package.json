@@ -1,6 +1,6 @@
 {
   "name": "admin",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "description": "Admin UI for Plane",
   "license": "AGPL-3.0",
@@ -11,12 +11,12 @@
     "preview": "react-router build && serve -s build/client -l 3001",
     "start": "serve -s build/client -l 3001",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf node_modules && rm -rf dist && rm -rf build",
-    "test": "vitest run",
-    "check:lint": "oxlint --max-warnings=759 .",
+    "test": "vp test run",
+    "check:lint": "vp lint --max-warnings=21 .",
     "check:types": "react-router typegen && tsc --noEmit",
-    "check:format": "oxfmt --check .",
-    "fix:lint": "oxlint --fix .",
-    "fix:format": "oxfmt ."
+    "check:format": "vp fmt --check .",
+    "fix:lint": "vp lint --fix .",
+    "fix:format": "vp fmt ."
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "catalog:",
@@ -63,7 +63,7 @@
     "dotenv": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-tsconfig-paths": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:",
+    "vite-tsconfig-paths": "catalog:"
   }
 }

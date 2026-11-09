@@ -22,7 +22,12 @@ import { ViewFiltersSelection } from "./filters/filter-selection";
 import { ViewOrderByDropdown } from "./filters/order-by";
 import { IconButton } from "@plane/propel/icon-button";
 
-export const ViewListHeader = observer(function ViewListHeader() {
+type TViewListHeaderProps = {
+  /** Kustomisasi Paradise: halaman Views workspace memberi anggota workspace; bawaan = anggota departemen. */
+  memberIds?: string[];
+};
+
+export const ViewListHeader = observer(function ViewListHeader(props: TViewListHeaderProps) {
   // states
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   // refs
@@ -119,7 +124,7 @@ export const ViewListHeader = observer(function ViewListHeader() {
           <ViewFiltersSelection
             filters={filters}
             handleFiltersUpdate={updateFilters}
-            memberIds={projectMemberIds ?? undefined}
+            memberIds={props.memberIds ?? projectMemberIds ?? undefined}
           />
         </FiltersDropdown>
       </div>

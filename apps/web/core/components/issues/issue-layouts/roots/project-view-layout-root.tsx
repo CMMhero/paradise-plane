@@ -17,6 +17,7 @@ import { WorkItemFiltersRow } from "@/components/work-item-filters/filters-row";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProjectView } from "@/hooks/store/use-project-view";
 import { IssuesStoreContext } from "@/hooks/use-issue-layout-store";
+import { isViewBawaan } from "@/lib/view-bawaan";
 // local imports
 import { IssuePeekOverview } from "../../peek-overview";
 import { ProjectViewCalendarLayout } from "../calendar/roots/project-view-root";
@@ -90,7 +91,8 @@ export const ProjectViewLayoutRoot = observer(function ProjectViewLayoutRoot() {
         saveViewOptions={{
           label: "Save as",
         }}
-        enableUpdateView
+        // View bawaan departemen tidak punya baris di server untuk diperbarui; "Save as" tetap ada.
+        enableUpdateView={!isViewBawaan(viewId)}
         entityId={viewId}
         entityType={EIssuesStoreType.PROJECT_VIEW}
         filtersToShowByLayout={ISSUE_DISPLAY_FILTERS_BY_PAGE.issues.filters}

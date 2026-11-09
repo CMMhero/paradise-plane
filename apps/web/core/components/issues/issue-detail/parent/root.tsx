@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useRouter } from "next/navigation";
 import { MinusCircle } from "lucide-react";
@@ -32,10 +33,12 @@ export type TIssueParentDetail = {
   issueId: string;
   issue: TIssue;
   issueOperations: TIssueOperations;
+  /** Rendered inside the peek overview (clicking swaps the peek instead of navigating). */
+  isPeek?: boolean;
 };
 
 export const IssueParentDetail = observer(function IssueParentDetail(props: TIssueParentDetail) {
-  const { workspaceSlug, projectId, issueId, issue, issueOperations } = props;
+  const { workspaceSlug, projectId, issueId, issue, issueOperations, isPeek = false } = props;
   // router
   const router = useRouter();
   const { t } = useTranslation();
@@ -50,6 +53,14 @@ export const IssueParentDetail = observer(function IssueParentDetail(props: TIss
   const parentIssue = issueMap?.[issue.parent_id || ""] || undefined;
   const isParentEpic = parentIssue?.is_epic;
   const projectIdentifier = getProjectIdentifierById(parentIssue?.project_id);
+
+  // the parent may not be in the store yet (deep link to a sub-work-item), so the label would never show
+  const parentId = issue.parent_id;
+  useEffect(() => {
+    if (!parentId || issueMap?.[parentId]) return;
+    void issueOperations.fetch(workspaceSlug, issue.project_id ?? projectId, parentId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parentId, workspaceSlug, projectId]);
 
   const issueParentState = getProjectStates(parentIssue?.project_id)?.find(
     (state) => state?.id === parentIssue?.state_id
@@ -68,7 +79,8 @@ export const IssueParentDetail = observer(function IssueParentDetail(props: TIss
   });
 
   const handleParentIssueClick = () => {
-    if (isParentEpic) router.push(workItemLink);
+    // full page: really navigate to the parent. Peek: swap the peeked item.
+    if (isParentEpic || !isPeek) router.push(workItemLink);
     else handleRedirection(workspaceSlug, parentIssue, isMobile);
   };
 

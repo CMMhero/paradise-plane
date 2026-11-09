@@ -23,16 +23,16 @@ import type { TIssueLayout } from "./layout";
 export type TIssueFilterKeys = "priority" | "state" | "labels";
 
 export enum EServerGroupByToFilterOptions {
-  "state_id" = "state",
-  "priority" = "priority",
-  "labels__id" = "labels",
-  "state__group" = "state_group",
-  "assignees__id" = "assignees",
-  "cycle_id" = "cycle",
-  "issue_module__module_id" = "module",
-  "target_date" = "target_date",
-  "project_id" = "project",
-  "created_by" = "created_by",
+  state_id = "state",
+  priority = "priority",
+  labels__id = "labels",
+  state__group = "state_group",
+  assignees__id = "assignees",
+  cycle_id = "cycle",
+  issue_module__module_id = "module",
+  target_date = "target_date",
+  project_id = "project",
+  created_by = "created_by",
 }
 
 export enum EIssueFilterType {
@@ -182,6 +182,8 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       "project_id",
       "start_date",
       "target_date",
+      // Kustomisasi Paradise: halaman Views workspace ikut punya filter Approval (KEP-55).
+      "approval_status",
     ],
     layoutOptions: {
       spreadsheet: {
@@ -228,7 +230,15 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
         display_filters: {
           group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", null],
-          order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority", "target_date"],
+          order_by: [
+            "sort_order",
+            "-created_at",
+            "-updated_at",
+            "start_date",
+            "-priority",
+            "target_date",
+            "approval_status",
+          ],
           type: ["active", "backlog"],
         },
         extra_options: {
@@ -241,7 +251,15 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         display_filters: {
           group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by"],
           sub_group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", null],
-          order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority", "target_date"],
+          order_by: [
+            "sort_order",
+            "-created_at",
+            "-updated_at",
+            "start_date",
+            "-priority",
+            "target_date",
+            "approval_status",
+          ],
           type: ["active", "backlog"],
         },
         extra_options: {

@@ -1,6 +1,6 @@
 {
   "name": "space",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "license": "AGPL-3.0",
   "type": "module",
@@ -10,11 +10,11 @@
     "preview": "react-router build && PORT=3002 react-router-serve ./build/server/index.js",
     "start": "PORT=3002 react-router-serve ./build/server/index.js",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf .react-router && rm -rf node_modules && rm -rf dist && rm -rf build",
-    "check:lint": "oxlint --max-warnings=676 .",
+    "check:lint": "vp lint --max-warnings=60 .",
     "check:types": "react-router typegen && tsc --noEmit",
-    "check:format": "oxfmt --check .",
-    "fix:lint": "oxlint --fix .",
-    "fix:format": "oxfmt ."
+    "check:format": "vp fmt --check .",
+    "fix:lint": "vp lint --fix .",
+    "fix:format": "vp fmt ."
   },
   "dependencies": {
     "@bprogress/core": "catalog:",
@@ -65,6 +65,7 @@
     "dotenv": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vite-plus": "catalog:",
     "vite-tsconfig-paths": "catalog:"
   }
 }

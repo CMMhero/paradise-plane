@@ -218,6 +218,9 @@ def _kirim(notifs, persetujuan) -> int:
         muatan = {
             "aksi": jenis,
             "aktor": str(n.triggered_by_id) if n.triggered_by_id else None,
+            # Siapa yang diberi kabar. Pembaca kartu perlu tahu ini untuk
+            # kalimat penugasan ("Anda menugaskan X" vs "X menugaskan Anda").
+            "penerima": str(n.receiver_id),
             "workspace_slug": issue.project.workspace.slug,
             **data_tugas(issue, assignees.get(str(issue.id))),
             "detail": _detail(jenis, n),

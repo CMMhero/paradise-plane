@@ -10,7 +10,7 @@
  * - Seret di mana saja (termasuk di atas kotak) untuk menggeser. Seretan baru
  *   dianggap seretan sesudah lewat AMBANG_SERET piksel, jadi klik biasa pada
  *   kotak tetap membuka detail; klik yang mengakhiri seretan ditelan.
- * - Scroll = geser, Ctrl/Cmd + scroll (dan pinch trackpad) = zoom ke kursor.
+ * - Scroll biasa menggulir halaman; Ctrl/Cmd + scroll (dan pinch trackpad) = zoom ke kursor.
  * - Selama admin belum menyentuh kanvas, isi selalu dipaskan ulang saat ukuran
  *   berubah (data dimuat, panel kiri dilipat, layar penuh).
  *
@@ -108,20 +108,15 @@ export function useKanvasGeser() {
     const vp = viewportRef.current;
     if (!vp) return;
     const onWheel = (e: WheelEvent) => {
+      // Roda biasa dibiarkan menggulir halaman; hanya Ctrl/Cmd + roda (dan pinch) yang zoom.
+      if (!(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
-      if (e.ctrlKey || e.metaKey) {
-        const rect = vp.getBoundingClientRect();
-        zoomDi(Math.exp(-e.deltaY * KEPEKAAN_RODA), e.clientX - rect.left, e.clientY - rect.top);
-        return;
-      }
-      // Shift + roda biasa = geser mendatar (sebagian peramban tidak mengubahnya jadi deltaX).
-      const dx = e.shiftKey && e.deltaX === 0 ? e.deltaY : e.deltaX;
-      const dy = e.shiftKey && e.deltaX === 0 ? 0 : e.deltaY;
-      geserOleh(-dx, -dy);
+      const rect = vp.getBoundingClientRect();
+      zoomDi(Math.exp(-e.deltaY * KEPEKAAN_RODA), e.clientX - rect.left, e.clientY - rect.top);
     };
     vp.addEventListener("wheel", onWheel, { passive: false });
     return () => vp.removeEventListener("wheel", onWheel);
-  }, [zoomDi, geserOleh]);
+  }, [zoomDi]);
 
   // Paskan otomatis saat ukuran viewport/isi berubah, selama admin belum menggeser.
   useEffect(() => {

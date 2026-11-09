@@ -3,11 +3,23 @@
 # See the LICENSE file for details.
 
 import pytest
+from django.db.models.signals import pre_migrate
 from rest_framework.test import APIClient
 from pytest_django.fixtures import django_db_setup
 
 from plane.db.models import User, Workspace, WorkspaceMember
 from plane.db.models.api import APIToken
+
+
+@pre_migrate.connect
+def _pasang_pg_trgm(sender, using=None, **kwargs):
+    """Tes jalan dengan `--nomigrations`, jadi `TrigramExtension` di migrasi 0172
+    tidak pernah dieksekusi, sementara indeks GIN `gin_trgm_ops` di model
+    butuh ekstensinya sebelum tabel dibuat."""
+    from django.db import connections
+
+    with connections[using or "default"].cursor() as kursor:
+        kursor.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
 
 
 @pytest.fixture(scope="session")

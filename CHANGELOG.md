@@ -6,6 +6,40 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-09
+
+### Versi 4.1.0
+
+- **Naik 4.0.0 ke 4.1.0, minor.** Ada fitur baru yang kelihatan pengguna
+  (halaman departemen dan pencarian isi di Wiki, pratinjau berkas, halaman
+  Views workspace, kolom persetujuan) dan satu migrasi tambahan (0172, dua
+  kolom berisi nilai bawaan, ekstensi `pg_trgm`, dua indeks). Tidak ada data
+  yang dibentuk ulang dan tidak ada variabel env baru, jadi bukan major.
+  Langkah operator: tidak wajib. Materi Wiki lama baru ikut pencarian isi
+  setelah `docker exec api python manage.py wiki_indeks_ulang` dijalankan
+  sekali; unggahan baru terindeks sendiri.
+- **Django 4.2 ke 5.2 dan DRF 3.18.** Dukungan 4.2 sudah habis. Migrasi 0173
+  hanya mengubah status (`through_fields` pada tiga M2M), tanpa SQL. Butuh
+  PostgreSQL 14 ke atas; server produksi 15.7. Kode ini tidak bisa lagi jalan
+  di Django 4.2, jadi mundur berarti memasang ulang image lama.
+- **Pindah ke Vite+.** Skrip paket kini memanggil `vp lint`, `vp fmt`,
+  `vp pack`, `vp test`; Turbo, Dockerfile, dan CI tetap.
+- **Tujuh perbaikan dari Plane hulu.** Saringan rentang tanggal created_at
+  dan updated_at, pemulihan galat aset basi, zona jatuh hapus di Kanban,
+  batas galat per layout, perbaikan layanan notifikasi, dan hook klik-luar
+  serta dropdown.
+- **Wiki.** Folder departemen menampilkan halaman project departemen
+  (baca saja, izin dijaga di server). Pencarian memaafkan salah ketik dan
+  mencari isi berkas serta halaman. Berkas teks, Markdown, CSV, Excel, dan
+  Word dipratinjau di aplikasi tanpa konversi PDF, sebagai blok JSON
+  terstruktur (tidak pernah HTML).
+- **Views.** Halaman Views workspace memuat view departemen yang boleh dibuka
+  orang itu; penyaringan di server. Formulir view dan daftar view dirombak.
+- **Obrolan.** Daftar percakapan diurut: belum dibaca, lalu sedang online,
+  lalu sisanya. Kartu tugas memakai judul tugas.
+
+---
+
 ## 2026-11-05
 
 ### Versi 4.0.0

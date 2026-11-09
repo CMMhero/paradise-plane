@@ -16,6 +16,7 @@ import { cn, getFileURL, renderFormattedDate } from "@plane/utils";
 import { useMember } from "@/hooks/store/use-member";
 import { PersetujuanService } from "@/services/persetujuan.service";
 import type { TPesan } from "@/services/chat.service";
+import { judulTugas } from "./judul-tugas";
 import { bacaKartuTugas } from "./muatan";
 import type { TKartuTugas, TStatusPersetujuan } from "./muatan";
 import { warnaKartu } from "./warna";
@@ -59,9 +60,11 @@ type Props = {
   namaOrang: (id: string) => string;
   /** Kartu yang saya picu (saya pengirimnya): warna gelembung keluar, tanpa tombol keputusan. */
   terang?: boolean;
+  /** Pembaca kartu; menentukan kalimat penugasan. */
+  sayaId?: string;
 };
 
-export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang, terang = false }: Props) {
+export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang, terang = false, sayaId }: Props) {
   const { t } = useTranslation();
   const {
     workspace: { getWorkspaceMemberDetails },
@@ -111,10 +114,26 @@ export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang, teran
   };
 
   const pelaku = kartu.aktor ? namaOrang(kartu.aktor) : t("chatkartu_ui.someone");
+  // Penugasan dibaca pemberi dan penerima; kalimatnya mengikuti pembacanya.
+  const judul = (() => {
+    if (pesan.jenis !== "tugas") return t(judulKartu(pesan.jenis, kartu), { name: pelaku });
+    const j = judulTugas({
+      aktor: kartu.aktor,
+      penerima: kartu.penerima,
+      assignees: kartu.tugas?.assignees ?? [],
+      sayaId,
+    });
+    if (j.kunci === "assigned_self") return t("chatkartu_ui.assigned_self");
+    if (j.kunci === "assigned_other") {
+      const assignee = j.idPenerima ? namaOrang(j.idPenerima) : t("chatkartu_ui.someone");
+      return t("chatkartu_ui.assigned_other", { name: pelaku, assignee });
+    }
+    return t("chatkartu_ui.assigned", { name: pelaku });
+  })();
 
   return (
     <div className="flex w-72 max-w-full flex-col gap-2">
-      <p className={cn("text-12", warna.sekunder)}>{t(judulKartu(pesan.jenis, kartu), { name: pelaku })}</p>
+      <p className={cn("text-12", warna.sekunder)}>{judul}</p>
 
       <div className={cn("flex flex-col gap-1 rounded-control border px-2.5 py-2", warna.kotak)}>
         {tugas ? (

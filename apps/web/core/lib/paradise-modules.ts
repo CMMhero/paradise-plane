@@ -19,9 +19,13 @@ import type { IInstanceConfig, TParadiseModule } from "@plane/types";
  * Kunci lain yang kebetulan sama dengan nama modul (mis. `stickies`, `modules`)
  * langsung dipetakan ke modul itu.
  */
+/** Tab Materials project departemen (KEP-97): materi Wiki, jadi ikut modul Wiki. */
+export const WIKI_MATERIALS_NAV_KEY = "wiki_materials";
+
 const MODUL_PER_KUNCI_MENU: Record<string, TParadiseGate> = {
   dashboard_divisi: "dashboards",
   persetujuan: "approvals",
+  [WIKI_MATERIALS_NAV_KEY]: "wiki",
   // Dicabut (KEP-53): menunya tak pernah tampil lagi.
   cycles: PARADISE_REMOVED,
 };
@@ -57,6 +61,7 @@ const MODUL_PER_PATH: [RegExp, TParadiseModule][] = [
   [pola(`${PROJECT}/pages`), "pages"],
   [pola(`${PROJECT}/(intake|inbox)`), "intake"],
   [pola(`${PROJECT}/persetujuan`), "approvals"],
+  [pola(`${PROJECT}/materials`), "wiki"],
   // Setelan project milik modul yang sama
   [pola(`${SETELAN_PROJECT}/features/modules`), "modules"],
   [pola(`${SETELAN_PROJECT}/features/views`), "views"],

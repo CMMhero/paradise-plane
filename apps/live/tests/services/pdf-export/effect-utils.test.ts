@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { describe, it, expect, assert } from "vitest";
+import { describe, it, expect, assert } from "vite-plus/test";
 import { Effect, Duration, Either } from "effect";
 import { withTimeoutAndRetry, recoverWithDefault, tryAsync } from "@/services/pdf-export/effect-utils";
 import { PdfTimeoutError } from "@/schema/pdf-export";
@@ -69,6 +69,7 @@ describe("effect-utils", () => {
 
       const result = await Effect.runPromise(Effect.either(wrapped));
 
+      // eslint-disable-next-line no-underscore-dangle
       expect(result._tag).toBe("Left");
     });
   });

@@ -48,9 +48,16 @@ export function HeaderColumn(props: Props) {
 
   if (!propertyDetails) return null;
 
-  // Kustomisasi Paradise: Approval tidak punya urutan di server; dropdown header-nya menyaring status.
+  // Kustomisasi Paradise: dropdown header Approval mengurutkan DAN menyaring status.
   if (property === "approval_status") {
-    return <ApprovalHeaderColumn title={t(propertyDetails.i18n_title)} onClose={onClose} />;
+    return (
+      <ApprovalHeaderColumn
+        title={t(propertyDetails.i18n_title)}
+        onClose={onClose}
+        orderBy={displayFilters?.order_by}
+        onOrderBy={(order) => handleOrderBy(order, property)}
+      />
+    );
   }
 
   // Kustomisasi Paradise: kolom tanpa urutan di server tampil sebagai judul biasa, tanpa menu sortir.

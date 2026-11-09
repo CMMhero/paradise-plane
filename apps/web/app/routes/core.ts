@@ -259,6 +259,13 @@ export const coreRoutes: RouteConfigEntry[] = [
               "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/persetujuan/page.tsx"
             ),
           ]),
+          // Materi Wiki departemen (Paradise KEP-97), dijaga modul Wiki.
+          layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/materials/layout.tsx", [
+            route(
+              ":workspaceSlug/projects/:projectId/materials",
+              "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/materials/page.tsx"
+            ),
+          ]),
         ]),
 
         // Project Archives - Issues, Cycles, Modules

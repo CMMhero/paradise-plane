@@ -5,7 +5,6 @@
  * See the LICENSE file for details.
  */
 
-import useSWR from "swr";
 // services
 import { WikiService, type TWikiFolder } from "@/services/wiki.service";
 
@@ -18,28 +17,18 @@ import { WikiService, type TWikiFolder } from "@/services/wiki.service";
  */
 export const layananWiki = new WikiService();
 
-export const kunciPohonWiki = (workspaceSlug: string) => `WIKI_TREE_${workspaceSlug}`;
-
-/**
- * Sengaja ikut segar saat tab kembali difokus (bawaan SWR global): izin bisa
- * berubah dari luar halaman ini, misalnya penempatan di God Mode.
- */
-export const usePohonWiki = (workspaceSlug?: string) => {
-  const { data, isLoading, error, mutate } = useSWR(
-    workspaceSlug ? kunciPohonWiki(workspaceSlug) : null,
-    workspaceSlug ? () => layananWiki.fetchTree(workspaceSlug) : null
-  );
-  return {
-    folder: data?.folders,
-    adalahAdmin: !!data?.is_admin,
-    sedangMemuat: isLoading,
-    galat: error as { error?: string } | undefined,
-    muatUlang: mutate,
-  };
-};
+// Pohonnya tinggal di core supaya tab Materials project departemen ikut memakai
+// kunci SWR yang sama (KEP-97).
+export { kunciPohonWiki, usePohonWiki } from "@/hooks/use-pohon-wiki";
 
 /** Folder yang tidak diarsipkan, yaitu yang layak ditampilkan. */
 export const folderTerlihat = (folder?: TWikiFolder[]): TWikiFolder[] => (folder ?? []).filter((f) => !f.archived_at);
+
+/** Tipe data seretan sebuah kartu materi, dibaca area lepas folder untuk memindahkannya. Huruf kecil: peramban menurunkan semua tipe kustom. */
+export const TIPE_SERET_MATERI = "application/x-paradise-wiki-materi";
+
+/** Muatan seretan kartu materi. */
+export type TSeretMateri = { id: string; folderId: string; judul: string };
 
 export const adalahUnit = (folder: TWikiFolder | undefined): boolean => !!(folder?.divisi_id || folder?.departemen_id);
 
@@ -49,17 +38,53 @@ export const anakDari = (folder: TWikiFolder[], indukId: string | null | undefin
     // oxlint-disable-next-line unicorn/no-array-sort -- filter already returned a copy
     .sort((a, b) => a.urutan - b.urutan || a.nama.localeCompare(b.nama));
 
+/**
+ * Sub-topik hanya satu tingkat: hanya divisi, departemen, dan folder tingkat
+ * atas yang boleh punya sub-topik. Server menolak sisanya; ini hanya menyembunyikan tombolnya.
+ */
+export const bisaPunyaSubtopik = (folder: TWikiFolder | undefined): boolean =>
+  !!folder && (adalahUnit(folder) || !folder.parent_id);
+
+/** Folder ini beserta leluhurnya, dari akar sampai folder itu sendiri. */
+export const jalurFolder = (folder: TWikiFolder[], id?: string | null): TWikiFolder[] => {
+  const jalur: TWikiFolder[] = [];
+  let sekarang = folderDenganId(folder, id);
+  // Batas langkah menjaga dari siklus data yang rusak.
+  for (let i = 0; sekarang && i < 20; i += 1) {
+    jalur.unshift(sekarang);
+    sekarang = folderDenganId(folder, sekarang.parent_id);
+  }
+  return jalur;
+};
+
 export const folderDenganId = (folder: TWikiFolder[], id?: string | null): TWikiFolder | undefined =>
   id ? folder.find((f) => f.id === id) : undefined;
 
-/** Materi di sebuah folder berikut seluruh sub-foldernya. `folder` harus sudah disaring `folderTerlihat`. */
-export const jumlahMateriDalam = (folder: TWikiFolder[], folderId: string | undefined): number => {
+/** Angka langsung sebuah folder dijumlahkan dengan seluruh sub-foldernya. `folder` harus sudah disaring `folderTerlihat`. */
+const jumlahDalam = (
+  folder: TWikiFolder[],
+  folderId: string | undefined,
+  angka: (f: TWikiFolder) => number
+): number => {
   if (!folderId) return 0;
+  const sendiri = folderDenganId(folder, folderId);
   return anakDari(folder, folderId).reduce(
-    (total, anak) => total + jumlahMateriDalam(folder, anak.id),
-    folderDenganId(folder, folderId)?.jumlah_materi ?? 0
+    (total, anak) => total + jumlahDalam(folder, anak.id, angka),
+    sendiri ? angka(sendiri) : 0
   );
 };
+
+/** Materi di sebuah folder berikut seluruh sub-foldernya. */
+export const jumlahMateriDalam = (folder: TWikiFolder[], folderId: string | undefined): number =>
+  jumlahDalam(folder, folderId, (f) => f.jumlah_materi);
+
+/**
+ * Halaman departemen di sebuah folder berikut seluruh sub-foldernya, dengan
+ * aturan yang sama dengan angka materi: kartu divisi ikut menghitung halaman
+ * departemen-departemennya. Angka per folder sudah disaring server (KEP-97).
+ */
+export const jumlahHalamanDalam = (folder: TWikiFolder[], folderId: string | undefined): number =>
+  jumlahDalam(folder, folderId, (f) => f.jumlah_halaman ?? 0);
 
 /** Ukuran berkas dengan basis 1024, supaya cocok dengan angka yang dilihat orang di Windows. */
 export const ukuranTerbaca = (bytes: number): string => {

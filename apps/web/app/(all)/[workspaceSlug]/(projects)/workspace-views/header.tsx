@@ -28,13 +28,84 @@ import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-to
 import { DefaultWorkspaceViewQuickActions } from "@/components/workspace/views/default-view-quick-action";
 import { CreateUpdateWorkspaceViewModal } from "@/components/workspace/views/modal";
 import { WorkspaceViewQuickActions } from "@/components/workspace/views/quick-action";
+import { ViewListHeader } from "@/components/views/view-list-header";
+import { ViewListMobileHeader } from "@/components/views/view-list-mobile-header";
 // hooks
 import { useGlobalView } from "@/hooks/store/use-global-view";
 import { useIssues } from "@/hooks/store/use-issues";
+import { useMember } from "@/hooks/store/use-member";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { GlobalViewLayoutSelection } from "@/plane-web/components/views/helper";
 
+/** Tombol "Add view": sama dengan halaman Views departemen (ikon saja di HP). */
+function AddViewButton({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <Button
+      variant="primary"
+      size="lg"
+      data-ph-element={GLOBAL_VIEW_TRACKER_ELEMENTS.RIGHT_HEADER_ADD_BUTTON}
+      onClick={onClick}
+      aria-label={t("workspace_views.add_view")}
+    >
+      {/* Di HP cukup ikon: label penuh memeras nama tampilan jadi "All wo". */}
+      <PlusIcon className="size-4 sm:hidden" />
+      <span className="max-sm:sr-only">{t("workspace_views.add_view")}</span>
+    </Button>
+  );
+}
+
+/**
+ * Kustomisasi Paradise: kepala daftar view workspace, cermin `ProjectViewsHeader`
+ * (breadcrumb, cari + urutan + filter lewat `ViewListHeader`, tombol tambah).
+ */
+const WorkspaceViewsListHeader = observer(function WorkspaceViewsListHeader() {
+  const [createViewModal, setCreateViewModal] = useState(false);
+  const { t } = useTranslation();
+  const {
+    workspace: { workspaceMemberIds },
+  } = useMember();
+
+  return (
+    <>
+      <CreateUpdateWorkspaceViewModal isOpen={createViewModal} onClose={() => setCreateViewModal(false)} />
+      <Header>
+        <Header.LeftItem>
+          <Breadcrumbs>
+            <Breadcrumbs.Item
+              component={
+                <BreadcrumbLink label={t("views")} icon={<ViewsIcon className="h-4 w-4 text-tertiary" />} isLast />
+              }
+              isLast
+            />
+          </Breadcrumbs>
+        </Header.LeftItem>
+        <Header.RightItem>
+          <ViewListHeader memberIds={workspaceMemberIds ?? undefined} />
+          <AddViewButton onClick={() => setCreateViewModal(true)} />
+        </Header.RightItem>
+      </Header>
+    </>
+  );
+});
+
+export const WorkspaceViewsMobileHeader = observer(function WorkspaceViewsMobileHeader() {
+  const { globalViewId } = useParams();
+  const {
+    workspace: { workspaceMemberIds },
+  } = useMember();
+  // Hanya untuk daftar; halaman satu view memakai filter work item, bukan filter daftar view.
+  if (globalViewId) return null;
+  return <ViewListMobileHeader memberIds={workspaceMemberIds ?? undefined} />;
+});
+
 export const GlobalIssuesHeader = observer(function GlobalIssuesHeader() {
+  const { globalViewId } = useParams();
+  if (!globalViewId) return <WorkspaceViewsListHeader />;
+  return <GlobalViewIssuesHeader />;
+});
+
+const GlobalViewIssuesHeader = observer(function GlobalViewIssuesHeader() {
   // states
   const [createViewModal, setCreateViewModal] = useState(false);
   // router
@@ -126,7 +197,13 @@ export const GlobalIssuesHeader = observer(function GlobalIssuesHeader() {
         <Header.LeftItem>
           <Breadcrumbs>
             <Breadcrumbs.Item
-              component={<BreadcrumbLink label={t("views")} icon={<ViewsIcon className="h-4 w-4 text-tertiary" />} />}
+              component={
+                <BreadcrumbLink
+                  label={t("views")}
+                  href={`/${workspaceSlug}/workspace-views/`}
+                  icon={<ViewsIcon className="h-4 w-4 text-tertiary" />}
+                />
+              }
             />
             <Breadcrumbs.Item
               component={
@@ -170,19 +247,15 @@ export const GlobalIssuesHeader = observer(function GlobalIssuesHeader() {
               />
             </FiltersDropdown>
           )}
-          <Button
-            variant="primary"
-            size="lg"
-            data-ph-element={GLOBAL_VIEW_TRACKER_ELEMENTS.RIGHT_HEADER_ADD_BUTTON}
-            onClick={() => setCreateViewModal(true)}
-            aria-label={t("workspace_views.add_view")}
-          >
-            {/* Di HP cukup ikon: label penuh memeras nama tampilan jadi "All wo". */}
-            <PlusIcon className="size-4 sm:hidden" />
-            <span className="max-sm:sr-only">{t("workspace_views.add_view")}</span>
-          </Button>
+          <AddViewButton onClick={() => setCreateViewModal(true)} />
           <div className="hidden md:block">
-            {viewDetails && <WorkspaceViewQuickActions workspaceSlug={workspaceSlug?.toString()} view={viewDetails} />}
+            {viewDetails && (
+              <WorkspaceViewQuickActions
+                workspaceSlug={workspaceSlug?.toString()}
+                view={viewDetails}
+                customClassName="flex-shrink-0 flex items-center justify-center size-[26px] bg-layer-1/70 rounded-sm"
+              />
+            )}
             {isDefaultView && defaultViewDetails && (
               <DefaultWorkspaceViewQuickActions workspaceSlug={workspaceSlug?.toString()} view={defaultViewDetails} />
             )}
