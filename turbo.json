@@ -49,10 +49,12 @@
       "dependsOn": ["check:format", "check:lint", "check:types"]
     },
     "check:format": {
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": []
     },
     "check:lint": {
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": []
     },
