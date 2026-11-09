@@ -143,7 +143,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             label={t("common.created_by")}
             childrenClassName="px-2"
           >
-            {createdByDetails.display_name.includes("-intake") ? (
+            {createdByDetails.display_name?.includes("-intake") ? (
               <>
                 <ButtonAvatars showTooltip userIds={null} />
                 <span className="grow truncate text-body-xs-medium leading-5 text-secondary">Sistem</span>
