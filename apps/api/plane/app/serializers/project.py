@@ -100,6 +100,11 @@ class ProjectSerializer(BaseSerializer):
     def create(self, validated_data):
         workspace_id = self.context["workspace_id"]
 
+        # Paradise: visibilitas yang tidak dikirim mengikuti bawaan God Mode (privat).
+        # Ini jalur pembuatan project dari departemen (God Mode), yang tidak mengirimnya.
+        from plane.utils.bawaan_project import baca_bawaan  # noqa: PLC0415
+
+        validated_data.setdefault("network", baca_bawaan()["network"])
         project = Project.objects.create(**validated_data, workspace_id=workspace_id)
 
         ProjectIdentifier.objects.create(name=project.identifier, project=project, workspace_id=workspace_id)
