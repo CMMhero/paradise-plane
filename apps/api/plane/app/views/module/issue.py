@@ -242,6 +242,11 @@ class ModuleIssueViewSet(BaseViewSet):
             batch_size=10,
             ignore_conflicts=True,
         )
+        # Assignee tugas yang masuk ikut jadi anggota module (KEP-98).
+        from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
+
+        for issue in issues:
+            naikkan_assignee(issue)
         # Bulk Update the activity
         _ = [
             issue_activity.delay(
@@ -288,6 +293,10 @@ class ModuleIssueViewSet(BaseViewSet):
                 batch_size=10,
                 ignore_conflicts=True,
             )
+            # Assignee tugas ini ikut jadi anggota module-nya (KEP-98).
+            from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
+
+            naikkan_assignee(issue_id)
             # Bulk Update the activity
             _ = [
                 issue_activity.delay(
