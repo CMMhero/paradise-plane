@@ -1,0 +1,30 @@
+{
+  "version": "2.6.1",
+  "date": "2026-11-12",
+  "entries": [
+    {
+      "type": "Changed",
+      "text": "Version numbers were renumbered: 3.0.0, 4.0.0, 4.1.0 and 4.2.0 are now 2.3.0, 2.4.0, 2.5.0 and 2.6.0. Nothing about the app itself changed."
+    },
+    {
+      "type": "Fixed",
+      "text": "When a manager approves a work item, the history and chat now show only \"approved\". The extra \"set state to Done\" line and \"updated your work item\" card are gone."
+    },
+    {
+      "type": "Fixed",
+      "text": "Approval and rejection notices now reach everyone assigned to the work item, not only the person who asked for approval."
+    },
+    {
+      "type": "Added",
+      "text": "Typing @ in a work item now also lists people outside the department, greyed out and not selectable, so you can tell they exist."
+    },
+    {
+      "type": "Changed",
+      "text": "The parent picker lists work items that already have sub-work items first."
+    },
+    {
+      "type": "Fixed",
+      "text": "Super Admins can change assignees on any work item, and a failed update now shows the server's reason."
+    }
+  ]
+}

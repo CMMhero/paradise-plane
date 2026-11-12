@@ -8,9 +8,40 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ## 2026-11-12
 
-### Versi 4.2.0
+### Versi 2.6.1
 
-- **Naik 4.1.0 ke 4.2.0, minor.** Fitur dan aturan baru yang kelihatan
+- **Naik 2.6.0 ke 2.6.1, patch.** Perbaikan dan penyempurnaan kecil, tanpa
+  migrasi dan tanpa variabel env baru. Langkah operator: tidak ada. Bersamaan
+  dengan ini skema versi diganti (lihat poin berikutnya), jadi nomor rilis
+  lama dinomori ulang.
+- **Skema versi diperbaiki dan riwayat dinomori ulang.** Patch (x.y.Z) untuk
+  perubahan kecil, minor (x.Y.0) untuk perubahan besar, major (X.0.0) hanya
+  untuk perombakan besar. Rilis yang dulu bernomor 3.0.0, 4.0.0, 4.1.0, dan
+  4.2.0 kini 2.3.0, 2.4.0, 2.5.0, dan 2.6.0 (2.3.0 lama tidak pernah dirilis
+  sendiri dan menyatu ke 3.0.0). Kartu Changelog yang sudah terbit di tiap
+  workspace ikut dinomori ulang oleh `catatan_rilis.terbitkan` saat API
+  menyala, tanpa kartu ganda. Tag git `p3.0.0`..`p4.2.0` diganti
+  `p2.4.0`..`p2.6.0`. Aturan baru ada di AGENTS.md > Versioning.
+- **Persetujuan tidak lagi meninggalkan baris status ganda.** Saat atasan
+  menyetujui, log aktivitas hanya mencatat "approved". Baris "set state to
+  Done", kartu chat "updated your work item", dan notifikasi inbox yang
+  mengulang hal yang sama tidak dibuat lagi. Penolakan tetap mencatat
+  perpindahan statusnya.
+- **Keputusan persetujuan sampai ke semua assignee.** Dulu hanya pemohon yang
+  menerima email dan kartu "approved"/"rejected"; rekan sesama assignee tidak.
+  Kini pemohon dan semua assignee tugas itu (kecuali yang memutuskan).
+- **Pemilih @ menampilkan orang di luar departemen.** Muncul abu-abu di bagian
+  "Outside this department" dan tidak bisa dipilih, jadi nama rekan yang tidak
+  sedepartemen tidak lagi terkesan hilang. Hanya muncul setelah mengetik.
+- **Pemilih induk mengutamakan work item yang sudah punya sub-item.** Berlaku
+  di form buat work item dan di detail work item.
+- **Super Admin bisa mengatur assignee di tugas mana pun** tanpa ditolak
+  "Staf hanya boleh mengajak rekan", dan toast gagal-ubah menampilkan alasan
+  dari server.
+
+### Versi 2.6.0
+
+- **Naik 2.5.0 ke 2.6.0, minor (dulu bernomor 4.2.0).** Fitur dan aturan baru yang kelihatan
   pengguna, plus satu migrasi data (0174, tanpa skema). Tidak ada data yang
   dibentuk ulang, tidak ada variabel env baru, jadi bukan major. Langkah
   operator: tidak wajib. Satu hal perlu dicek: bawaan visibilitas project di
@@ -53,9 +84,9 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ## 2026-11-09
 
-### Versi 4.1.0
+### Versi 2.5.0
 
-- **Naik 4.0.0 ke 4.1.0, minor.** Ada fitur baru yang kelihatan pengguna
+- **Naik 2.4.0 ke 2.5.0, minor (dulu bernomor 4.1.0).** Ada fitur baru yang kelihatan pengguna
   (halaman departemen dan pencarian isi di Wiki, pratinjau berkas, halaman
   Views workspace, kolom persetujuan) dan satu migrasi tambahan (0172, dua
   kolom berisi nilai bawaan, ekstensi `pg_trgm`, dua indeks). Tidak ada data
@@ -112,10 +143,10 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ## 2026-11-05
 
-### Versi 4.0.0
+### Versi 2.4.0
 
-- **Naik 3.0.0 ke 4.0.0, major.** 3.1.0 tidak pernah dirilis; peran per
-  tempat (KEP-93) menaikkannya ke major karena migrasi 0169 membentuk ulang
+- **Naik 2.3.0 ke 2.4.0, minor (dulu bernomor 4.0.0).** 3.1.0 tidak pernah
+  dirilis; peran per tempat (KEP-93) jadi rilis sendiri karena migrasi 0169 membentuk ulang
   baris penempatan yang sudah ada dan arti izin berubah. Langkah operator:
   tidak ada yang manual (deploy.sh menjalankan 0169), tapi setelah deploy cek
   papan Organization: manager yang dulu duduk di departemen divisi lain kini
@@ -286,12 +317,14 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ## 2026-11-04
 
-### Versi 3.0.0
+### Versi 2.3.0
 
-- **Naik 2.3.0 ke 3.0.0, major.** 2.3.0 belum dirilis, jadi seluruh isinya
-  ikut 3.0.0. Major karena semantik izin berubah dan orang kehilangan hak yang
-  kemarin mereka punya (aturan versi KEP-48). Tidak ada langkah operator: tanpa
-  migrasi, tanpa env baru.
+- **Naik 2.2.0 ke 2.3.0, minor (dulu bernomor 3.0.0).** Gabungan dua nomor
+  lama: 2.3.0, yang tidak pernah dirilis sendiri, dan 3.0.0. Semantik izin
+  berubah dan orang kehilangan hak yang kemarin mereka punya (KEP-85), ada
+  endpoint baru, dan satu migrasi data perapian (0163, jalan sendiri saat
+  deploy). Tidak ada langkah operator.
+
 - **Izin per sumber mengikuti kepemilikan dan hierarki (KEP-85).** Module, page,
   view, komentar, dan materi Wiki hanya bisa diubah, diarsipkan, atau dihapus
   pemiliknya (pembuat/owner, ditambah lead dan anggota module), atasannya di
@@ -313,12 +346,6 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
   bukan miliknya (bukan pembuat, lead, atau anggota). Mengatur state, termasuk
   urutannya, kini butuh wewenang alur kerja.
 
-### Versi 2.3.0
-
-- **Naik 2.2.0 ke 2.3.0, minor.** Endpoint baru, satu migrasi data perapian
-  (0163, jalan sendiri saat deploy) dan tanpa langkah operator, jadi bukan
-  major; bukan patch karena ada fitur baru. Pekerjaan lain yang belum dirilis
-  di branch ini ikut versi yang sama.
 - **Tampilan HP dirapikan di seluruh aplikasi.** Diuji dengan tangkapan layar
   390/360/768/1280 px. Nama di tabel Members tidak lagi pecah satu huruf per
   baris (juga di desktop). Bilah atas: pencarian jadi ikon yang membuka palet
