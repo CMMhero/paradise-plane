@@ -286,6 +286,13 @@ services:
       # hilang. Sebabnya jadi jauh dari gejalanya.
       # Pulihkan dengan `rm -rf` direktori itu lalu buat berkasnya.
       - ${ACMEDNS_CREDENTIALS_FILE:-./paradise/acmedns.json}:/etc/caddy/acmedns.json:ro
+      # Situs lain yang memakai proxy ini (mis. cipl-saipem): satu berkas `.caddy`
+      # per situs, diimpor oleh Caddyfile.ce. Folder ini ikut checkout
+      # (paradise/sites/.gitkeep) supaya Docker tidak membuatnya sebagai direktori
+      # milik root, dan berkas `.caddy` di dalamnya diabaikan git, jadi `git pull`
+      # dan `deploy.sh` tidak menyentuhnya. Proyek lain menaruh berkasnya di sini
+      # lalu menjalankan `docker exec proxy caddy reload --config /etc/caddy/Caddyfile`.
+      - ${PROXY_SITES_DIR:-./paradise/sites}:/etc/caddy/sites:ro
       # Penyimpanan sertifikat Caddy. TANPA volume ini, setiap kali container
       # proxy dibuat ulang Caddy kehilangan sertifikatnya dan meminta yang baru
       # ke Let's Encrypt.
