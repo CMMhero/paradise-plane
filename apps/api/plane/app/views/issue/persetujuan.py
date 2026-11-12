@@ -215,8 +215,13 @@ def _serial(baris, peran, boleh_memutuskan, penyetuju=None):
     }
 
 
-def _pindahkan_tugas(aktor, issue, tujuan):
-    """Ganti status tugas dan catat aktivitasnya atas nama `aktor`."""
+def _pindahkan_tugas(aktor, issue, tujuan, catat=True):
+    """Ganti status tugas dan (kalau `catat`) catat aktivitasnya atas nama `aktor`.
+
+    `catat=False` dipakai persetujuan: baris log "approved" sudah menjelaskan
+    bahwa tugas selesai. Baris "set state to Done" di sebelahnya, kartu obrolan
+    "updated your work item", dan notifikasi inbox-nya hanya mengulang hal yang sama.
+    """
     import json  # noqa: PLC0415
 
     from django.core.serializers.json import DjangoJSONEncoder  # noqa: PLC0415
@@ -226,6 +231,8 @@ def _pindahkan_tugas(aktor, issue, tujuan):
     lama = issue.state_id
     issue.state = tujuan
     issue.save(update_fields=["state", "completed_at", "updated_at"])
+    if not catat:
+        return
     issue_activity.delay(
         type="issue.activity.updated",
         requested_data=json.dumps({"state_id": str(tujuan.id)}, cls=DjangoJSONEncoder),
@@ -585,7 +592,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             return
         if setelan_angka(APPROVAL_FINISH_TIME) == SELESAI_SAAT_DIAJUKAN:
             issue._completed_at_override = baris.created_at
-        _pindahkan_tugas(request.user, issue, selesai)
+        _pindahkan_tugas(request.user, issue, selesai, catat=False)
 
     def _kembalikan_tugas(self, request, baris):
         """Tolak: kembalikan tugas ke In Progress supaya staf mengerjakannya lagi.

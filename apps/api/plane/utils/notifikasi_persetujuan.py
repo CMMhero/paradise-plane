@@ -207,28 +207,42 @@ def beritahu_diajukan(baris, issue=None):
         )
 
 
+def _calon_penerima_keputusan(baris, pemutus_id) -> list:
+    """Pemohon lebih dulu, lalu assignee tugas yang lain. Pemutus tidak ikut.
+
+    Pekerjaan yang disetujui adalah milik semua yang memegang tugasnya. Dulu hanya
+    pemohon yang diberi kabar, jadi rekan sesama assignee (staf yang ditambahkan
+    ke tugas itu) tidak pernah menerima email maupun kartu "approved".
+    """
+    from plane.db.models import IssueAssignee  # noqa: PLC0415
+
+    urut = [baris.pemohon_id] if baris.pemohon_id else []
+    if baris.issue_id:
+        lain = IssueAssignee.objects.filter(issue_id=baris.issue_id).values_list("assignee_id", flat=True)
+        urut += [a for a in lain if a not in urut]
+    return [u for u in urut if u != pemutus_id]
+
+
 def beritahu_diputuskan(baris, aksi, issue=None):
-    """Keputusan (setujui/tolak): beritahu pemohon."""
+    """Keputusan (setujui/tolak): beritahu pemohon dan assignee tugasnya."""
     try:
         issue = _muat_issue(baris.issue_id) or issue or baris.issue
-        if issue is None or baris.pemohon_id is None:
+        if issue is None:
             return
-        if baris.pemohon_id == getattr(baris.diputuskan_oleh, "id", None):
-            return
-        penerima = _penerima_aktif([baris.pemohon_id])
-        if baris.pemohon_id not in penerima:
-            return
-        _tulis(
-            baris.workspace_id,
-            baris.project_id,
-            issue,
-            baris.pemohon_id,
-            baris.diputuskan_oleh,
-            SENDER_DIPUTUSKAN,
-            "approved" if aksi == "setujui" else "rejected",
-            keputusan="disetujui" if aksi == "setujui" else "ditolak",
-            alasan=getattr(baris, "alasan", "") or "",
-            persetujuan=_data_persetujuan(baris),
-        )
+        pemutus_id = getattr(baris.diputuskan_oleh, "id", None)
+        target = _calon_penerima_keputusan(baris, pemutus_id)
+        for uid in _penerima_aktif(target):
+            _tulis(
+                baris.workspace_id,
+                baris.project_id,
+                issue,
+                uid,
+                baris.diputuskan_oleh,
+                SENDER_DIPUTUSKAN,
+                "approved" if aksi == "setujui" else "rejected",
+                keputusan="disetujui" if aksi == "setujui" else "ditolak",
+                alasan=getattr(baris, "alasan", "") or "",
+                persetujuan=_data_persetujuan(baris),
+            )
     except Exception:  # noqa: BLE001
         logger.exception("Gagal memberitahu keputusan persetujuan %s", getattr(baris, "id", "?"))
