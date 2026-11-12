@@ -6,6 +6,51 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-12
+
+### Versi 4.2.0
+
+- **Naik 4.1.0 ke 4.2.0, minor.** Fitur dan aturan baru yang kelihatan
+  pengguna, plus satu migrasi data (0174, tanpa skema). Tidak ada data yang
+  dibentuk ulang, tidak ada variabel env baru, jadi bukan major. Langkah
+  operator: tidak wajib. Satu hal perlu dicek: bawaan visibilitas project di
+  God Mode (Defaults > Project) yang SUDAH pernah disimpan tetap menang atas
+  bawaan pabrik baru. Kalau tersimpan "Public", ubah ke "Private" sekali.
+- **Assignee anak naik ke induk dan module (KEP-98).** Orang yang ditugaskan
+  di sub-work item otomatis jadi assignee induknya (berantai ke kakek) dan
+  anggota module tempat tugas-tugas itu berada, termasuk module milik induk.
+  Hanya menambah: melepas assignee dari anak tidak mencabutnya dari induk.
+  Dipanggil dari serializer buat/ubah tugas (web dan API v1), tambah sub-work
+  item, dan tambah tugas ke module. Tidak melewati gerbang penugasan karena
+  ini turunan dari penugasan anak yang sudah lolos. Kode:
+  `plane/utils/naik_assignee.py`. Data lama tidak diisi ulang.
+- **Menambah sub-work item di induk milik orang lain.** Staf yang pembuat atau
+  assignee salah satu anak sebuah tugas kini boleh menambah sub-work item di
+  induknya. Sebelumnya `POST .../sub-issues/` ditolak 403 karena induknya
+  bukan buatan atau tugasnya, sehingga orang harus membuat tugas baru lalu
+  mengisi induknya lewat formulir. Hanya menambah anak: judul, deskripsi, dan
+  assignee induk tetap hanya-lihat, dan tugas yang dijadikan anak tetap harus
+  milik sendiri. Server: `terlibat_di_anak` di `utils/task_access.py`; web:
+  `useTerlibatDiAnak` dan prop `subIssueDisabled` di widget work item.
+- **Project dan departemen baru privat.** Bawaan pabrik visibilitas project
+  jadi Private, dan project yang dibuat dari departemen (God Mode) ikut
+  bawaan itu, tidak lagi Public karena default kolom.
+- **Direktur hanya untuk tugas buatan manager ke atas.** Pengajuan
+  persetujuan selesai untuk tugas biasa (dibuat supervisor, staf, atau tanpa
+  pembuat) tidak lagi muncul di direktur: tidak di antrean, widget Needs
+  attention, Dashboard Divisi, notifikasi, maupun pengingat tenggat, dan POST
+  setuju/tolak dari direktur ditolak 403. Pembuat TUGAS yang dihitung, bukan
+  pemohon. Satu aturan di `saring_penyetuju` dan `pengajuan_boleh_diputuskan`
+  (kunci pengajuan kini `(project, pemohon, pembuat)`). Divisi tanpa atasan
+  sama sekali tetap jatuh ke Super Admin, bukan ke direktur.
+- **Departemen, project, dan folder Wiki satu kesatuan.** Mengganti nama
+  departemen di God Mode kini mengganti nama project-nya, dan folder Wiki
+  departemen membawa ikon project-nya (ikon pilihan tangan di folder itu tidak
+  disimpan lagi). Nama yang sudah dipakai project lain ditolak 400 sebelum
+  disimpan. Identifier project (kode di nomor tugas) sengaja tidak ikut kode
+  departemen. Migrasi 0174 menyamakan data yang sudah ada; nama yang bentrok
+  dilewati.
+
 ## 2026-11-09
 
 ### Versi 4.1.0
