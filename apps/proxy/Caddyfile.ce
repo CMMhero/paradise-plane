@@ -191,3 +191,22 @@
 {$SITE_ADDRESS} {
 	import plane_proxy
 }
+
+# Situs lain di server yang sama (mis. cipl-saipem), satu berkas `.caddy` per
+# situs di folder yang di-mount dari host (docker-compose.yml, PROXY_SITES_DIR,
+# bawaan `./paradise/sites`).
+#
+# KENAPA DI SINI, bukan ditempel ke Caddyfile yang sedang berjalan. `deploy.sh`
+# membandingkan ISI /etc/caddy/Caddyfile di proxy yang hidup dengan yang ada di
+# image. Satu baris `import` yang ditambahkan dengan tangan membuat keduanya
+# berbeda, jadi deploy berikutnya menganggap konfigurasi proxy berubah dan
+# membuat ulang SEMUA service, termasuk proxy, lalu tempelan itu hilang dan
+# situs lain mati. Dengan `import` ini ada di image, isi kedua Caddyfile selalu
+# sama, `deploy.sh` tidak menyentuh proxy, dan situs di folder itu tetap hidup.
+#
+# Folder kosong atau tidak di-mount (compose lain) bukan galat: Caddy hanya
+# memberi peringatan untuk glob yang tidak cocok dengan berkas apa pun.
+# Berkas baru atau berubah dibaca dengan `docker exec proxy caddy reload
+# --config /etc/caddy/Caddyfile`; kalau isinya salah, reload ditolak dan proxy
+# tetap memakai konfigurasi lama.
+import /etc/caddy/sites/*.caddy

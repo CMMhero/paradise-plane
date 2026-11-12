@@ -136,6 +136,10 @@ packages/i18n/src/types/keys.generated.ts
 paradise/.env
 .env.paradise
 
+# Situs lain yang memakai proxy ini (mis. cipl-saipem): berkas `.caddy` itu milik
+# proyek lain, bukan repo ini. Folder tetap dilacak lewat .gitkeep.
+paradise/sites/*.caddy
+
 # Kredensial karyawan - jangan pernah commit
 DAFTAR_AKUN_KARYAWAN.md
 
