@@ -619,7 +619,18 @@ def _wajib_persetujuan_jenjang(user_id, workspace_id, project_id=None):
     return tingkat is None or tingkat < setelan_angka(APPROVAL_REQUIRED_BELOW_LEVEL)
 
 
-def saring_penyetuju(calon, peta, pemohon_id):
+def direktur_ikut_memutuskan(peta, pembuat_id):
+    """Direktur hanya ikut memutuskan tugas yang DIBUAT manager ke atas.
+
+    Keputusan user 2026-11-12: pengajuan untuk tugas biasa (dibuat supervisor,
+    staf, atau tanpa pembuat) cukup diputuskan atasan di divisinya dan tidak
+    muncul di direktur. `peta` = peta jenjang project tugas itu, jadi jenjang
+    pembuat dibaca di tempat yang sama dengan jenjang calon penyetuju.
+    """
+    return peta.get(pembuat_id, 0) >= TINGKAT_MANAGER
+
+
+def saring_penyetuju(calon, peta, pemohon_id, pembuat_id=None):
     """Calon penyetuju yang sah untuk pengajuan milik `pemohon_id`.
 
     Pengajuan staf (jenjang < supervisor atau kosong): semua calon project itu,
@@ -627,11 +638,19 @@ def saring_penyetuju(calon, peta, pemohon_id):
     Pengajuan atasan (hanya mungkin bila APPROVAL_REQUIRED_BELOW_LEVEL dinaikkan):
     hanya calon yang jenjangnya LEBIH TINGGI dari pemohon, supaya supervisor tidak
     saling menyetujui tugas sesamanya.
+
+    `pembuat_id` = pembuat TUGAS (bukan pemohon). Direktur dibuang dari calon
+    kecuali tugasnya dibuat manager ke atas (`direktur_ikut_memutuskan`).
+    Pembuat tidak diketahui (None) dihitung bukan manager.
     """
     tingkat_pemohon = peta.get(pemohon_id)
     if tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR:
-        return list(calon)
-    return [uid for uid in calon if peta.get(uid, 0) > tingkat_pemohon]
+        hasil = list(calon)
+    else:
+        hasil = [uid for uid in calon if peta.get(uid, 0) > tingkat_pemohon]
+    if direktur_ikut_memutuskan(peta, pembuat_id):
+        return hasil
+    return [uid for uid in hasil if peta.get(uid, 0) < TINGKAT_DIREKTUR]
 
 
 def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
@@ -826,12 +845,13 @@ def project_boleh_diputuskan(user, workspace_id, project_ids):
 def pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
     """Wewenang memutuskan per BARIS pengajuan, untuk banyak baris sekaligus.
 
-    `pasangan`: iterable (project_id, pemohon_id). Hasil: himpunan pasangan yang
-    boleh diputuskan `user`, dengan aturan yang sama persis dengan POST
+    `pasangan`: iterable (project_id, pemohon_id, pembuat_id). Hasil: himpunan
+    tiga serangkai yang boleh diputuskan `user`, dengan aturan yang sama persis dengan POST
     setuju/tolak (`_Wewenang._sah_untuk` di app/views/issue/persetujuan.py):
     calon penyetuju project itu (`calon_penyetuju`), disaring jenjang pemohon
     (`saring_penyetuju`: pengajuan atasan hanya boleh diputuskan yang lebih
-    tinggi), lalu Super Admin hanya jalan keluar kalau daftar tersaring kosong.
+    tinggi, direktur hanya untuk tugas buatan manager ke atas), lalu Super Admin
+    hanya jalan keluar kalau daftar tersaring kosong.
 
     `project_boleh_diputuskan` hanya melihat project, jadi widget dan Dashboard
     Divisi bisa menghitung pengajuan supervisor (APPROVAL_REQUIRED_BELOW_LEVEL
@@ -860,26 +880,30 @@ def pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
             diawasi[uid] = {str(p) for p in divisi_diawasi(uid, workspace_id)}
         return diawasi[uid]
 
-    def sah(uid, project_id, tingkat_pemohon):
+    def sah(uid, project_id, tingkat_pemohon, pembuat_id):
         # `calon_penyetuju` (mengawasi project) + `saring_penyetuju` (lebih tinggi
-        # dari pemohon atasan). Kandidat sudah pasti berjenjang >= supervisor.
+        # dari pemohon atasan; direktur hanya untuk tugas buatan manager ke atas).
+        # Kandidat sudah pasti berjenjang >= supervisor.
+        peta_lokal = lokal(project_id)
         staf = tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR
-        return (staf or lokal(project_id).get(uid, 0) > tingkat_pemohon) and str(project_id) in awasi(uid)
+        if peta_lokal.get(uid, 0) >= TINGKAT_DIREKTUR and not direktur_ikut_memutuskan(peta_lokal, pembuat_id):
+            return False
+        return (staf or peta_lokal.get(uid, 0) > tingkat_pemohon) and str(project_id) in awasi(uid)
 
     saya_kandidat = peta.get(user.id, 0) >= TINGKAT_SUPERVISOR
     super_admin = None
     hasil = set()
-    for project_id, pemohon_id in pasangan:
+    for project_id, pemohon_id, pembuat_id in pasangan:
         tingkat_pemohon = lokal(project_id).get(pemohon_id)
-        if saya_kandidat and sah(user.id, project_id, tingkat_pemohon):
-            hasil.add((project_id, pemohon_id))
+        if saya_kandidat and sah(user.id, project_id, tingkat_pemohon, pembuat_id):
+            hasil.add((project_id, pemohon_id, pembuat_id))
             continue
         if super_admin is None:
             from plane.db.superadmin import is_super_admin  # noqa: PLC0415
 
             super_admin = is_super_admin(user)
-        if super_admin and not any(sah(uid, project_id, tingkat_pemohon) for uid in kandidat):
-            hasil.add((project_id, pemohon_id))
+        if super_admin and not any(sah(uid, project_id, tingkat_pemohon, pembuat_id) for uid in kandidat):
+            hasil.add((project_id, pemohon_id, pembuat_id))
     return hasil
 
 
