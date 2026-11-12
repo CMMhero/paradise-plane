@@ -23,6 +23,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
+import { pesanGalatServer } from "@/lib/pesan-galat-server";
 // local components
 import { IssuePeekOverview } from "../peek-overview";
 import { IssueMainContent } from "./main-content";
@@ -105,7 +106,7 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           setToast({
             title: t("common.error.label"),
             type: TOAST_TYPE.ERROR,
-            message: t("entity.update.failed", { entity: t("issue.label") }),
+            message: pesanGalatServer(error) ?? t("entity.update.failed", { entity: t("issue.label", { count: 1 }) }),
           });
         }
       },
@@ -116,14 +117,14 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           setToast({
             title: t("common.success"),
             type: TOAST_TYPE.SUCCESS,
-            message: t("entity.delete.success", { entity: t("issue.label") }),
+            message: t("entity.delete.success", { entity: t("issue.label", { count: 1 }) }),
           });
         } catch (error) {
           console.log("Error in deleting issue:", error);
           setToast({
             title: t("common.error.label"),
             type: TOAST_TYPE.ERROR,
-            message: t("entity.delete.failed", { entity: t("issue.label") }),
+            message: t("entity.delete.failed", { entity: t("issue.label", { count: 1 }) }),
           });
         }
       },

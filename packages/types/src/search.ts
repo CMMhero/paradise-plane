@@ -82,6 +82,8 @@ export type TSearchResponse = {
   page?: TPageSearchResponse[];
   project?: TProjectSearchResponse[];
   user_mention?: TUserSearchResponse[];
+  // Paradise: anggota workspace di luar project, hanya penanda (tidak bisa disebut).
+  user_mention_di_luar?: TUserSearchResponse[];
 };
 
 export type TSearchEntityRequestPayload = {

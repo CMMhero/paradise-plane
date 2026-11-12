@@ -364,7 +364,9 @@ export const useOpsiAssignee = (
 ): { memberIds: string[] | undefined; rapikan: (val: string[]) => string[] } => {
   const daftar = useBisaDitugaskan(workspaceSlug, projectId);
   const tingkat = useTingkatSaya(workspaceSlug, projectId);
-  const staf = stafSaja(tingkat, daftar.aturan.persetujuan_di_bawah);
+  // Mode "semua" = server mengizinkan siapa pun (Super Admin, direktur, gerbang mati):
+  // berjenjang staf pun tidak dibatasi, jadi assignee lama boleh dilepas.
+  const staf = stafSaja(tingkat, daftar.aturan.persetujuan_di_bawah) && daftar.mode !== "semua";
   const lama = assigneeIds ?? [];
   return {
     memberIds: daftar.memuat ? undefined : Array.from(new Set([...daftar.userIds, ...lama])),
