@@ -10,6 +10,7 @@
 3. Project/departemen baru privat sejak lahir.
 4. Direktur hanya melihat pengajuan untuk tugas buatan manager ke atas.
 5. Nama project dan ikon folder Wiki mengikuti departemen (termasuk data lama, migrasi 0174).
+6. Super Admin berjenjang staf boleh menugaskan siapa pun (susulan 12 Nov).
 """
 # ruff: noqa: F401, F811  (fixture `org` dan `super_admin` diimpor dari berkas tes lain)
 
@@ -331,3 +332,46 @@ class TestDepartemenMengikuti:
         assert WikiFolder.objects.get(departemen=org.smt1).logo_props == LOGO
         # Idempoten.
         modul.samakan(django_apps, None)
+
+
+# --------------------------------------------------------------------------
+# 6. Super Admin berjenjang staf tidak dibatasi aturan "staf hanya ajak rekan"
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.contract
+class TestSuperAdminBerjenjangStaf:
+    def _super_staf(self, org, super_admin):
+        from plane.db.models import JabatanOrganisasi, ProjectMember  # noqa: PLC0415
+
+        JabatanOrganisasi.objects.create(
+            workspace=org.ws, member=super_admin, tingkat=TINGKAT_MEMBER, departemen=org.smt1
+        )
+        ProjectMember.objects.update_or_create(
+            project=org.p1, member=super_admin, workspace=org.ws, defaults={"role": 20, "is_active": True}
+        )
+        return super_admin
+
+    @pytest.mark.django_db
+    def test_super_admin_staf_bisa_menambah_assignee_jenjang_lain(self, org, super_admin, monkeypatch):
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        sa = self._super_staf(org, super_admin)
+        tugas = _tugas(org, org.manager, "Tugas dengan induk", parent=_tugas(org, org.manager, "Induk"))
+        respon = _klien(sa).patch(
+            URL_ISSUE_DETAIL.format(slug=org.ws.slug, project_id=org.p1.id, issue_id=tugas.id),
+            {"assignee_ids": [str(org.manager.id)]},
+            format="json",
+        )
+        assert respon.status_code == status.HTTP_200_OK, getattr(respon, "data", None)
+        assert IssueAssignee.objects.filter(issue=tugas, assignee=org.manager).exists()
+
+    @pytest.mark.django_db
+    def test_staf_biasa_tetap_hanya_boleh_ajak_rekan(self, org, monkeypatch):
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        tugas = _tugas(org, org.staf, "Tugas staf", assignee=org.staf)
+        respon = _klien(org.staf).patch(
+            URL_ISSUE_DETAIL.format(slug=org.ws.slug, project_id=org.p1.id, issue_id=tugas.id),
+            {"assignee_ids": [str(org.staf.id), str(org.manager.id)]},
+            format="json",
+        )
+        assert respon.status_code == status.HTTP_400_BAD_REQUEST

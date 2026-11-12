@@ -202,8 +202,18 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Staf boleh MENAMBAH rekan setingkat sedepartemen ke tugas yang sudah ada,
         # tidak boleh melepas siapa pun (keputusan user 2026-10-26).
+        # Super Admin lolos: ia boleh menugaskan siapa pun walau penempatannya
+        # berjenjang staf (sama dengan `galat_penugasan` dan `galat_ubah_tugas`).
+        # Tanpa ini ia ditolak "Staf hanya boleh mengajak rekan" di tugas mana pun.
+        from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
         self._staf_tambah_rekan = False
-        if _staf and self.instance is not None and "assignee_ids" in attrs:
+        if (
+            _staf
+            and self.instance is not None
+            and "assignee_ids" in attrs
+            and not (_actor is not None and is_super_admin(_actor))
+        ):
             from plane.utils.hierarki import galat_tambah_rekan  # noqa: PLC0415
 
             galat_rekan = galat_tambah_rekan(self.context.get("project_id"), self.instance, attrs["assignee_ids"], _actor)
