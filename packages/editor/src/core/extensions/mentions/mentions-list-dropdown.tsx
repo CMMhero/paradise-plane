@@ -48,7 +48,7 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
       try {
         const item = sections?.[sectionIndex]?.items?.[itemIndex];
         const transactionId = uuidv4();
-        if (item) {
+        if (item && !item.isDisabled) {
           command({
             ...item,
             id: transactionId,
@@ -177,10 +177,12 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
                     key={item.id}
                     id={`mention-item-${sectionIndex}-${itemIndex}`}
                     type="button"
+                    aria-disabled={item.isDisabled || undefined}
                     className={cn(
                       "flex w-full items-center gap-2 truncate rounded-sm px-1 py-1.5 text-left text-11 text-secondary hover:bg-layer-1-hover",
                       {
-                        "bg-layer-1-hover": isSelected,
+                        "bg-layer-1-hover": isSelected && !item.isDisabled,
+                        "cursor-not-allowed opacity-60 hover:bg-transparent": item.isDisabled,
                       }
                     )}
                     onClick={(e) => {

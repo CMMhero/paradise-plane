@@ -330,6 +330,52 @@ class GlobalSearchEndpoint(BaseAPIView):
 class SearchEndpoint(BaseAPIView):
     permission_classes = (WorkspaceUserPermission,)
 
+    @staticmethod
+    def _anggota_di_luar_project(query, slug, project_id, count):
+        """Anggota workspace yang BUKAN anggota project ini, hanya sebagai penanda.
+
+        Pemilih "@" di work item hanya boleh menyebut anggota project, tapi
+        orang mengetik nama rekan lalu mengira pencariannya rusak ketika tak ada
+        hasil. Daftar ini ditampilkan abu-abu dan tidak bisa dipilih, supaya
+        jelas bahwa orangnya ada tapi di luar departemen. Baru dicari kalau ada
+        kata kunci: tanpa itu seluruh perusahaan memenuhi dropdown.
+        """
+        if not (query or "").strip():
+            return []
+        from plane.db.models import WorkspaceMember  # noqa: PLC0415
+
+        dalam = ProjectMember.objects.filter(project_id=project_id, is_active=True).values("member_id")
+        orang = (
+            sembunyikan(
+                WorkspaceMember.objects.filter(
+                    _q_cari_anggota(query),
+                    is_active=True,
+                    workspace__slug=slug,
+                    member__is_bot=False,
+                ).exclude(member_id__in=dalam),
+                project_id=project_id,
+            )
+            .annotate(
+                member__avatar_url=Case(
+                    When(
+                        member__avatar_asset__isnull=False,
+                        then=Concat(
+                            Value("/api/assets/v2/static/"),
+                            Cast("member__avatar_asset", CharField()),
+                            Value("/"),
+                        ),
+                    ),
+                    When(member__avatar_asset__isnull=True, then="member__avatar"),
+                    default=Value(None),
+                    output_field=CharField(),
+                )
+            )
+            .order_by("member__display_name")
+            .distinct()
+            .values("member__avatar_url", "member__display_name", "member__id")
+        )
+        return list(orang[:count])
+
     def get(self, request, slug):
         query = request.query_params.get("query", False)
         query_types = request.query_params.get("query_type", "user_mention").split(",")
@@ -388,6 +434,9 @@ class SearchEndpoint(BaseAPIView):
                     )
 
                     response_data["user_mention"] = list(users[:count])
+                    response_data["user_mention_di_luar"] = self._anggota_di_luar_project(
+                        query, slug, project_id, count
+                    )
 
                 elif query_type == "project":
                     fields = ["name", "identifier"]

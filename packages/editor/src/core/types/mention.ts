@@ -12,6 +12,8 @@ export type TMentionSuggestion = {
   entity_name: TSearchEntities;
   icon: React.ReactNode;
   id: string;
+  // Paradise: penanda saja (mis. orang di luar departemen). Tampil abu-abu dan tidak bisa dipilih.
+  isDisabled?: boolean;
   subTitle?: string;
   title: string;
 };
