@@ -24,12 +24,22 @@ type Props = {
   projectId: string;
   issueId: string;
   disabled: boolean;
+  /** Hanya untuk sub-work item (lihat IssueDetailWidgets). */
+  subIssueDisabled?: boolean;
   issueServiceType: TIssueServiceType;
   hideWidgets?: TWorkItemWidgets[];
 };
 
 export const IssueDetailWidgetCollapsibles = observer(function IssueDetailWidgetCollapsibles(props: Props) {
-  const { workspaceSlug, projectId, issueId, disabled, issueServiceType, hideWidgets } = props;
+  const {
+    workspaceSlug,
+    projectId,
+    issueId,
+    disabled,
+    subIssueDisabled = disabled,
+    issueServiceType,
+    hideWidgets,
+  } = props;
   // store hooks
   const {
     issue: { getIssueById },
@@ -59,7 +69,7 @@ export const IssueDetailWidgetCollapsibles = observer(function IssueDetailWidget
           workspaceSlug={workspaceSlug}
           projectId={projectId}
           issueId={issueId}
-          disabled={disabled}
+          disabled={subIssueDisabled}
           issueServiceType={issueServiceType}
         />
       )}

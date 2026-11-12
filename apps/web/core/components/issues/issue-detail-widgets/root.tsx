@@ -7,6 +7,9 @@
 import React from "react";
 // plane imports
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
+import { observer } from "mobx-react";
+// hooks
+import { useTerlibatDiAnak } from "@/hooks/use-aturan-tugas";
 // local imports
 import { IssueDetailWidgetActionButtons } from "./action-buttons";
 import { IssueDetailWidgetCollapsibles } from "./issue-detail-widget-collapsibles";
@@ -17,21 +20,28 @@ type Props = {
   projectId: string;
   issueId: string;
   disabled: boolean;
+  /** Tugas diarsipkan: sub-work item ikut terkunci walau saya terlibat di anaknya. */
+  isArchived?: boolean;
   renderWidgetModals?: boolean;
   issueServiceType: TIssueServiceType;
   hideWidgets?: TWorkItemWidgets[];
 };
 
-export function IssueDetailWidgets(props: Props) {
+export const IssueDetailWidgets = observer(function IssueDetailWidgets(props: Props) {
   const {
     workspaceSlug,
     projectId,
     issueId,
     disabled,
+    isArchived = false,
     renderWidgetModals = true,
     issueServiceType,
     hideWidgets,
   } = props;
+  // Kustomisasi Paradise: yang sudah mengerjakan salah satu anak boleh menambah
+  // sub-work item di induknya, walau induk itu bukan buatan atau tugasnya.
+  const terlibatDiAnak = useTerlibatDiAnak(issueId, issueServiceType);
+  const subIssueDisabled = isArchived || (disabled && !terlibatDiAnak);
 
   return (
     <>
@@ -41,6 +51,7 @@ export function IssueDetailWidgets(props: Props) {
           projectId={projectId}
           issueId={issueId}
           disabled={disabled}
+          subIssueDisabled={subIssueDisabled}
           issueServiceType={issueServiceType}
           hideWidgets={hideWidgets}
         />
@@ -49,6 +60,7 @@ export function IssueDetailWidgets(props: Props) {
           projectId={projectId}
           issueId={issueId}
           disabled={disabled}
+          subIssueDisabled={subIssueDisabled}
           issueServiceType={issueServiceType}
           hideWidgets={hideWidgets}
         />
@@ -64,4 +76,4 @@ export function IssueDetailWidgets(props: Props) {
       )}
     </>
   );
-}
+});

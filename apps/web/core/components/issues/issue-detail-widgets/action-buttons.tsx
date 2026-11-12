@@ -24,12 +24,22 @@ type Props = {
   projectId: string;
   issueId: string;
   disabled: boolean;
+  /** Hanya untuk kontrol sub-work item (lihat IssueDetailWidgets). */
+  subIssueDisabled?: boolean;
   issueServiceType: TIssueServiceType;
   hideWidgets?: TWorkItemWidgets[];
 };
 
 export function IssueDetailWidgetActionButtons(props: Props) {
-  const { workspaceSlug, projectId, issueId, disabled, issueServiceType, hideWidgets } = props;
+  const {
+    workspaceSlug,
+    projectId,
+    issueId,
+    disabled,
+    subIssueDisabled = disabled,
+    issueServiceType,
+    hideWidgets,
+  } = props;
   // translation
   const { t } = useTranslation();
 
@@ -42,10 +52,10 @@ export function IssueDetailWidgetActionButtons(props: Props) {
             <IssueDetailWidgetButton
               title={t("issue.add.sub_issue")}
               icon={<ViewsIcon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />}
-              disabled={disabled}
+              disabled={subIssueDisabled}
             />
           }
-          disabled={disabled}
+          disabled={subIssueDisabled}
           issueServiceType={issueServiceType}
         />
       )}
