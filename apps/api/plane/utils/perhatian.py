@@ -218,29 +218,37 @@ def susun_perhatian(user, slug):
     # wewenang dinilai per (project, pemohon), sama dengan POST setuju/tolak, jadi
     # pengajuan supervisor (APPROVAL_REQUIRED_BELOW_LEVEL dinaikkan) hanya muncul
     # untuk yang jenjangnya lebih tinggi dari pemohon.
+    # Pembuat TUGAS ikut dalam kunci: direktur hanya memutuskan tugas buatan manager.
     antrean = {
-        (pid, pemohon): n
-        for pid, pemohon, n in PersetujuanPenugasan.objects.filter(
+        (pid, pemohon, pembuat): n
+        for pid, pemohon, pembuat, n in PersetujuanPenugasan.objects.filter(
             project_id__in=project_ids, status=STATUS_PERSETUJUAN_MENUNGGU
         )
         .exclude(pemohon=user)
-        .values_list("project_id", "pemohon_id")
+        .values_list("project_id", "pemohon_id", "issue__created_by_id")
         .annotate(n=Count("id"))
     }
     sah = pengajuan_boleh_diputuskan(user, workspace_id, antrean) if antrean else set()
-    pemohon_sah = {}
     jumlah_sah = {}
-    for pid, pemohon in sah:
-        pemohon_sah.setdefault(pid, []).append(pemohon)
-        jumlah_sah[pid] = jumlah_sah.get(pid, 0) + antrean[(pid, pemohon)]
-    boleh = set(pemohon_sah)
+    for pid, pemohon, pembuat in sah:
+        jumlah_sah[pid] = jumlah_sah.get(pid, 0) + antrean[(pid, pemohon, pembuat)]
+    boleh = set(jumlah_sah)
     diawasi = divisi_diawasi(user.id, workspace_id) & set(project_ids)
     is_supervisor = bool(boleh or diawasi)
 
     if is_supervisor:
         # Kosong = Q yang tak pernah cocok (pk__in=[]), bukan "semua baris".
+        # Per (project, pemohon, pembuat tugas): pemohon yang sama bisa punya tugas
+        # buatan manager (boleh saya putuskan) dan buatan staf (tidak, bagi direktur).
         hanya_sah = reduce(
-            or_, (Q(project_id=pid, pemohon_id__in=daftar) for pid, daftar in pemohon_sah.items()), Q(pk__in=[])
+            or_,
+            (
+                Q(project_id=pid, pemohon_id=pemohon, issue__created_by_id=pembuat)
+                if pembuat is not None
+                else Q(project_id=pid, pemohon_id=pemohon, issue__created_by__isnull=True)
+                for pid, pemohon, pembuat in sah
+            ),
+            Q(pk__in=[]),
         )
         keputusan = (
             _persetujuan(list(boleh), _BATAL, status=STATUS_PERSETUJUAN_MENUNGGU)

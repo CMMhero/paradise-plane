@@ -219,6 +219,12 @@ class SubIssuesEndpoint(BaseAPIView):
 
         _ = Issue.objects.bulk_update(sub_issues, ["parent"], batch_size=10)
 
+        # Assignee anak yang baru dipasang ikut naik ke induknya (KEP-98).
+        from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
+
+        for sub_issue in sub_issues:
+            naikkan_assignee(sub_issue.id)
+
         updated_sub_issues = Issue.issue_objects.filter(id__in=sub_issue_ids).annotate(state_group=F("state__group"))
 
         # Track the issue

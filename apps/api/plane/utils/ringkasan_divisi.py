@@ -186,10 +186,10 @@ def _persetujuan_untuk_saya(user, projects):
     baris = (
         PersetujuanPenugasan.objects.filter(project_id__in=[p.id for p in projects], status=STATUS_PERSETUJUAN_MENUNGGU)
         .exclude(pemohon=user)
-        .values_list("project_id", "pemohon_id")
+        .values_list("project_id", "pemohon_id", "issue__created_by_id")
         .annotate(n=Count("id"))
     )
-    jumlah = {(pid, pemohon): n for pid, pemohon, n in baris}
+    jumlah = {(pid, pemohon, pembuat): n for pid, pemohon, pembuat, n in baris}
     if not jumlah:
         return {}
     # Hanya project yang memang punya antrean yang diperiksa wewenangnya.
@@ -199,8 +199,8 @@ def _persetujuan_untuk_saya(user, projects):
         per_workspace.setdefault(workspace_dari[pasangan[0]], set()).add(pasangan)
     hasil = {}
     for workspace_id, pasangan in per_workspace.items():
-        for pid, pemohon in pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
-            hasil[pid] = hasil.get(pid, 0) + jumlah[(pid, pemohon)]
+        for pid, pemohon, pembuat in pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
+            hasil[pid] = hasil.get(pid, 0) + jumlah[(pid, pemohon, pembuat)]
     return hasil
 
 

@@ -184,7 +184,8 @@ def penyetuju_tugas_menunggu(tenggat) -> tuple[list, dict]:
             peta[kunci] = peta_tingkat(ws, issue.project_id)
             calon[kunci] = calon_penyetuju(ws, issue.project_id, peta=peta[kunci])
         pid = pemohon.get(issue.id)
-        hasil[issue.id] = {uid for uid in saring_penyetuju(calon[kunci], peta[kunci], pid) if uid != pid}
+        sah = saring_penyetuju(calon[kunci], peta[kunci], pid, issue.created_by_id)
+        hasil[issue.id] = {uid for uid in sah if uid != pid}
     return antrian, hasil
 
 

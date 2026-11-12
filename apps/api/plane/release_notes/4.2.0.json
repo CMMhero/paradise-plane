@@ -1,0 +1,26 @@
+{
+  "version": "4.2.0",
+  "date": "2026-11-12",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "When someone is assigned to a sub-work item, they are now added to the parent work item too (all the way up), and to the modules those work items belong to."
+    },
+    {
+      "type": "Fixed",
+      "text": "If you work on a sub-work item, you can now add more sub-work items straight from its parent, even when the parent is not yours."
+    },
+    {
+      "type": "Changed",
+      "text": "New projects and departments are private by default."
+    },
+    {
+      "type": "Changed",
+      "text": "Directors only see approval requests for work items created by a manager or above. Everything else goes to the supervisors and managers of that department."
+    },
+    {
+      "type": "Fixed",
+      "text": "Renaming a department now renames its project and Wiki folder, and the folder takes the project's icon. Existing departments were synced."
+    }
+  ]
+}

@@ -66,6 +66,12 @@ def _keturunan(workspace_id, folder_id):
     return hasil
 
 
+def _punya_project(departemen_id) -> bool:
+    from plane.db.models import DepartemenProject  # noqa: PLC0415
+
+    return DepartemenProject.objects.filter(departemen_id=departemen_id, project__deleted_at__isnull=True).exists()
+
+
 class WikiAkarEndpoint(WikiAPIView):
     def get(self, request, slug):
         # Penyembuh sendiri: folder unit yang tertinggal menyusul di sini.
@@ -163,7 +169,10 @@ class WikiFolderEndpoint(WikiAPIView):
             folder.nama = _nama_bersih(data.get("nama"))
         if "keterangan" in data:
             folder.keterangan = str(data.get("keterangan") or "")
-        if "logo_props" in data:
+        # Ikon folder departemen mengikuti ikon project-nya (`pastikan_folder_unit`),
+        # jadi pilihan tangan tidak disimpan; formulir yang mengirim ulang semua
+        # kolom tetap berhasil.
+        if "logo_props" in data and not (folder.departemen_id and _punya_project(folder.departemen_id)):
             folder.logo_props = _logo_bersih(data.get("logo_props"))
         if "umum" in data:
             umum = bool(data.get("umum"))

@@ -270,25 +270,35 @@ def pastikan_folder_unit(workspace_id):
     ia juga dipanggil setiap pohon Wiki dibaca (KEP-95), supaya folder yang
     tertinggal karena sinkron God Mode gagal (galatnya cuma dicatat) atau unit
     yang dibuat lewat jalur lain menyusul sendiri. Mengembalikan jumlah folder
-    yang dibuat atau diubah."""
+    yang dibuat atau diubah.
+
+    Folder departemen juga mengikuti IKON project departemennya (2026-11-12):
+    ikon yang dipilih tangan di folder tidak bertahan, karena departemen dan
+    project-nya satu kesatuan dan ikonnya diatur di satu tempat (project)."""
     from django.db import transaction  # noqa: PLC0415
 
-    from plane.db.models import Departemen, Divisi, WikiFolder  # noqa: PLC0415
+    from plane.db.models import Departemen, DepartemenProject, Divisi, WikiFolder  # noqa: PLC0415
 
     divisi = list(Divisi.objects.filter(workspace_id=workspace_id).values_list("id", "nama"))
     departemen = list(Departemen.objects.filter(workspace_id=workspace_id).values_list("id", "nama", "divisi_id"))
     if not divisi and not departemen:
         return 0
+    logo_departemen = {
+        dep_id: (logo if isinstance(logo, dict) else {})
+        for dep_id, logo in DepartemenProject.objects.filter(
+            workspace_id=workspace_id, project__deleted_at__isnull=True
+        ).values_list("departemen_id", "project__logo_props")
+    }
     ada_div, ada_dep = {}, {}
-    for fid, div_id, dep_id, nama, parent_id in (
+    for fid, div_id, dep_id, nama, parent_id, logo in (
         WikiFolder.objects.filter(workspace_id=workspace_id)
         .filter(Q(divisi__isnull=False) | Q(departemen__isnull=False))
-        .values_list("id", "divisi_id", "departemen_id", "nama", "parent_id")
+        .values_list("id", "divisi_id", "departemen_id", "nama", "parent_id", "logo_props")
     ):
         if div_id:
             ada_div.setdefault(div_id, (fid, nama, parent_id))
         else:
-            ada_dep.setdefault(dep_id, (fid, nama, parent_id))
+            ada_dep.setdefault(dep_id, (fid, nama, parent_id, logo))
 
     berubah = 0
     with transaction.atomic():
@@ -310,12 +320,20 @@ def pastikan_folder_unit(workspace_id):
         for dep_id, nama, div_id in departemen:
             induk_id = folder_divisi.get(div_id)
             lama = ada_dep.get(dep_id)
+            # Departemen tanpa project (jarang, KEP-32) membiarkan ikon foldernya.
+            logo = logo_departemen.get(dep_id)
             if lama is None:
                 WikiFolder.objects.create(
-                    workspace_id=workspace_id, nama=nama, departemen_id=dep_id, parent_id=induk_id
+                    workspace_id=workspace_id,
+                    nama=nama,
+                    departemen_id=dep_id,
+                    parent_id=induk_id,
+                    logo_props=logo or {},
                 )
                 berubah += 1
-            elif lama[1] != nama or lama[2] != induk_id:
-                WikiFolder.objects.filter(pk=lama[0]).update(nama=nama, parent_id=induk_id)
+            elif lama[1] != nama or lama[2] != induk_id or (logo is not None and lama[3] != logo):
+                WikiFolder.objects.filter(pk=lama[0]).update(
+                    nama=nama, parent_id=induk_id, logo_props=logo if logo is not None else lama[3]
+                )
                 berubah += 1
     return berubah

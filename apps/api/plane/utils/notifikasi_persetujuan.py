@@ -185,7 +185,10 @@ def beritahu_diajukan(baris, issue=None):
         # Pengajuan atasan (KEP-83) hanya dikirim ke yang lebih tinggi darinya;
         # pengajuan staf tetap ke semua calon, sama seperti sebelumnya.
         manajer = saring_penyetuju(
-            calon_penyetuju(baris.workspace_id, baris.project_id, peta=peta), peta, baris.pemohon_id
+            calon_penyetuju(baris.workspace_id, baris.project_id, peta=peta),
+            peta,
+            baris.pemohon_id,
+            issue.created_by_id,
         )
     except Exception:  # noqa: BLE001
         logger.exception("Gagal menghitung calon penyetuju untuk %s", getattr(baris, "id", "?"))

@@ -32,8 +32,10 @@ VISIBILITAS_SAH = frozenset({0, 2})
 # Project.archive_in / close_in: 0 = mati, 1..12 bulan (validator model).
 BULAN_MAKS = 12
 
+# Keputusan user 2026-11-12: project dan departemen baru PRIVAT sejak lahir.
+# Membuka ke semua anggota workspace harus pilihan sadar, bukan bawaan.
 PABRIK = {
-    "network": 2,
+    "network": 0,
     "timezone": "UTC",
     "archive_in": 0,
     "close_in": 0,

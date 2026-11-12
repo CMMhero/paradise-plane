@@ -9,9 +9,10 @@ import { useContext } from "react";
 import { useParams } from "next/navigation";
 import useSWR, { type SWRConfiguration } from "swr";
 import { EUserPermissionsLevel } from "@plane/constants";
-import type { TIssue } from "@plane/types";
+import type { TIssue, TIssueServiceType } from "@plane/types";
 import { EUserProjectRoles } from "@plane/types";
 // hooks
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { StoreContext } from "@/lib/store-context";
@@ -293,6 +294,27 @@ export const useBolehUbahTugas = (
   projectId: string | null | undefined,
   issue: TugasKepemilikan | undefined | null
 ): boolean => usePenilaiUbahTugas(workspaceSlug, projectId)(issue);
+
+/**
+ * Apakah saya pembuat atau assignee salah satu sub-work item langsung dari
+ * tugas ini? Cerminan `terlibat_di_anak()` server: orang yang sudah mengerjakan
+ * sebagian dari sebuah tugas boleh menambah sub-work item di induknya, walau
+ * induknya bukan buatan atau tugasnya (hanya itu; judul, deskripsi, dan
+ * assignee induk tetap hanya-lihat bagi mereka).
+ */
+export const useTerlibatDiAnak = (issueId: string | null | undefined, serviceType?: TIssueServiceType): boolean => {
+  const { data: currentUser } = useUser();
+  const {
+    issue: { getIssueById },
+    subIssues: { subIssuesByIssueId },
+  } = useIssueDetail(serviceType);
+  const idSaya = currentUser?.id;
+  if (!idSaya || !issueId) return false;
+  return (subIssuesByIssueId(issueId) ?? []).some((anakId) => {
+    const anak = getIssueById(anakId);
+    return !!anak && (anak.created_by === idSaya || (anak.assignee_ids ?? []).includes(idSaya));
+  });
+};
 
 /**
  * Bentuk fungsi dari `useBolehUbahTugas`, untuk layar yang menilai BANYAK tugas
