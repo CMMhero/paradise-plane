@@ -6,6 +6,39 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-13
+
+### Versi 2.7.0
+
+- **Naik 2.6.1 ke 2.7.0, minor.** Fitur baru yang kelihatan pengguna (layar
+  hidup, balasan komentar, jenjang Sekretaris) dan satu migrasi aditif
+  (`0175_tingkat_sekretaris`, hanya mengubah pilihan kolom, data lama tidak
+  tersentuh). Langkah operator: tidak ada. `apps/live` ikut dibangun ulang
+  karena meneruskan sinyal baru, dan Redis yang sudah ada dipakai apa adanya.
+- **Layar hidup tanpa F5 (KEP-102).** Daftar, papan, kalender, detail tugas,
+  pemberitahuan, dan keanggotaan project menyegarkan diri saat orang lain
+  mengubahnya. Django menerbitkan petunjuk kecil (hanya id) ke Redis,
+  `apps/live` meneruskannya cuma ke orang yang boleh melihat, dan peramban
+  menarik ulang lewat API biasa. Ada tombol segarkan di bilah atas yang
+  menyegarkan isi layar tanpa memuat ulang halaman. Saat soket putus,
+  penyegaran berjalan tiap 45 detik.
+- **Balasan komentar (KEP-103).** Komentar bisa dibalas, balasan tersusun di
+  bawah komentar induk, penulis induk diberi tahu satu kali (tidak ganda bila
+  juga disebut), dan menghapus induk ikut menghapus balasannya.
+- **Jenjang Sekretaris (KEP-101).** Jenjang 35 antara Manager dan Direktur:
+  jangkauan seluruh organisasi seperti Direktur, tapi tidak bisa menugaskan
+  Direktur. Kartu profil kini menampilkan jenjang walau orangnya tidak
+  ditempatkan di departemen.
+- **Lampiran lebih andal (KEP-104).** Tipe berkas tidak lagi bergantung pada
+  registri OS komputer pengguna, kegagalan unggah tampil sebagai toast
+  terjemahan alih-alih diam, kegagalan sementara diulang, unggahan yang
+  dibatalkan tidak dianggap berhasil, dan memilih berkas yang sama dua kali
+  bekerja lagi.
+- **Onboarding sepenuhnya i18n (KEP-105).** Semua langkah onboarding, tur,
+  sapaan, dan kolom kata sandi memakai kunci terjemahan di 19 bahasa;
+  workspace baru diisi contoh project dalam bahasa pemiliknya. Skrip penjaga
+  `check:onboarding` gagal bila ada teks onboarding yang ditulis langsung.
+
 ## 2026-11-12
 
 ### Versi 2.6.1

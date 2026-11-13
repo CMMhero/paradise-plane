@@ -1,0 +1,30 @@
+{
+  "version": "2.7.0",
+  "date": "2026-11-13",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Work item lists, boards, calendars, details, notifications and project membership now update on their own when someone else changes them. No more F5."
+    },
+    {
+      "type": "Added",
+      "text": "A refresh button in the top bar reloads the content on screen without reloading the whole page, so your scroll position and open panels stay."
+    },
+    {
+      "type": "Added",
+      "text": "You can reply to a comment. Replies sit under the comment they answer, and the author is notified once."
+    },
+    {
+      "type": "Added",
+      "text": "A Secretary level between Manager and Director, with the same view across the organisation as a Director. Profiles now show the level even when someone has no department."
+    },
+    {
+      "type": "Fixed",
+      "text": "Attaching files is more reliable from the button, drag and drop, and paste, in comments, chat and when creating a work item. A failed upload now tells you why and retries on its own when the network blips."
+    },
+    {
+      "type": "Changed",
+      "text": "Onboarding now follows your language everywhere, and a new workspace gets its sample project in the owner's language."
+    }
+  ]
+}
