@@ -30,7 +30,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.app.views.base import BaseAPIView
 from plane.app.permissions import WorkspaceUserPermission
-from plane.db.superadmin import super_admin_user_ids, terlihat_di_project
+from plane.db.superadmin import sembunyikan, super_admin_user_ids, terlihat_di_project
 from plane.db.models import (
     Workspace,
     Project,
