@@ -28,6 +28,7 @@ import {
 } from "@plane/utils";
 // components
 import {
+  BerkasTertunda,
   IssueDefaultProperties,
   IssueDescriptionEditor,
   IssueParentTag,
@@ -50,11 +51,15 @@ import { IssueTypeSelect, WorkItemTemplateSelect } from "@/plane-web/components/
 import { WorkItemModalAdditionalProperties } from "@/plane-web/components/issues/issue-modal/modal-additional-properties";
 import { useDebouncedDuplicateIssues } from "@/hooks/use-debounced-duplicate-issues";
 
+const adalahBerkas = (e: React.DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes("Files");
+
 export interface IssueFormProps {
   data?: Partial<TIssue>;
   issueTitleRef: React.MutableRefObject<HTMLInputElement | null>;
   isCreateMoreToggleEnabled: boolean;
   onAssetUpload: (assetId: string) => void;
+  /** berkas yang ditampung sampai work item dibuat; kosong = dialog ini tidak menerima lampiran */
+  lampiranTertunda?: { berkas: File[]; tambah: (files: File[]) => void; hapus: (file: File) => void };
   onCreateMoreToggleChange: (value: boolean) => void;
   onChange?: (formData: Partial<TIssue> | null) => void;
   onClose: () => void;
@@ -81,6 +86,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     data,
     issueTitleRef,
     onAssetUpload,
+    lampiranTertunda,
     onChange,
     onClose,
     onSubmit,
@@ -373,16 +379,48 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
 
   // TODO: Remove this after the de-dupe feature is implemented
 
+  // Tempel/seret berkas di mana pun di dialog (judul, area kosong), bukan hanya di
+  // dalam kotak editor. Fokus awal dialog ada di judul: tanpa ini Ctrl+V gambar
+  // tidak melakukan apa-apa, dan berkas yang dilepas di luar kotak editor malah
+  // dibuka peramban. Berkas diteruskan ke editor sebagai peristiwa tempel/lepas
+  // biasa, jadi gambar tetap disisipkan di tempat kursor dan jenis lain masuk
+  // ke antrean lampiran.
+  const teruskanBerkasKeEditor = (e: React.ClipboardEvent | React.DragEvent, files: File[]) => {
+    const target = e.target as HTMLElement;
+    if (files.length === 0 || target.closest(".ProseMirror")) return;
+    const editorDom = formRef.current?.querySelector<HTMLElement>("#issue-modal-editor .ProseMirror, .ProseMirror");
+    if (!editorDom) return;
+    e.preventDefault();
+    try {
+      const dt = new DataTransfer();
+      files.forEach((file) => dt.items.add(file));
+      editorRef.current?.focus("end");
+      editorDom.dispatchEvent(
+        "clipboardData" in e
+          ? new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })
+          : new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true })
+      );
+    } catch (error) {
+      console.error("Failed to forward files to the editor:", error);
+    }
+  };
+
   const shouldRenderDuplicateModal = isDuplicateModalOpen && duplicateIssues?.length > 0;
 
   return (
     <FormProvider {...methods}>
       <div className="flex gap-2 bg-transparent">
         <div className="w-full rounded-lg">
+          {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- tempel/seret berkas di mana pun di dialog, bukan interaksi tombol */}
           <form
             ref={formRef}
             onSubmit={handleSubmit((formValues) => handleFormSubmit(formValues))}
             className="flex w-full flex-col"
+            onPasteCapture={(e) => teruskanBerkasKeEditor(e, Array.from(e.clipboardData?.files ?? []))}
+            onDragOver={(e) => {
+              if (adalahBerkas(e)) e.preventDefault();
+            }}
+            onDrop={(e) => teruskanBerkasKeEditor(e, Array.from(e.dataTransfer?.files ?? []))}
           >
             <div className="rounded-t-lg bg-surface-1 p-5">
               <h3 className="pb-2 text-h4-medium text-secondary">{modalTitle}</h3>
@@ -477,8 +515,12 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   setGptAssistantModal={setGptAssistantModal}
                   handleGptAssistantClose={() => reset(getValues())}
                   onAssetUpload={onAssetUpload}
+                  onAttachFiles={lampiranTertunda?.tambah}
                   onClose={onClose}
                 />
+                {lampiranTertunda && (
+                  <BerkasTertunda berkas={lampiranTertunda.berkas} onHapus={lampiranTertunda.hapus} />
+                )}
               </div>
               <WorkItemModalAdditionalProperties
                 isDraft={isDraft}

@@ -7,6 +7,8 @@
 import axios from "axios";
 // api service
 import { APIService } from "../api.service";
+// local imports
+import { retryTransient } from "./upload-error";
 
 /**
  * Service class for handling file upload operations
@@ -14,7 +16,7 @@ import { APIService } from "../api.service";
  * @extends {APIService}
  */
 export class FileUploadService extends APIService {
-  private cancelSource: any;
+  private cancelSource: ReturnType<typeof axios.CancelToken.source> | undefined;
 
   constructor() {
     super("");
@@ -25,31 +27,28 @@ export class FileUploadService extends APIService {
    * @param {string} url - The URL to upload the file to
    * @param {FormData} data - The form data to upload
    * @returns {Promise<void>} Promise resolving to void
-   * @throws {Error} If the request fails
+   * @throws {TUploadError} If the request fails after the transient-failure retries
+   * (code "cancelled" when the upload was canceled, so callers do not mark it as uploaded)
    */
   async uploadFile(url: string, data: FormData): Promise<void> {
-    this.cancelSource = axios.CancelToken.source();
-    return this.post(url, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      cancelToken: this.cancelSource.token,
-      withCredentials: false,
-    })
-      .then((response) => response?.data)
-      .catch((error) => {
-        if (axios.isCancel(error)) {
-          console.log(error.message);
-        } else {
-          throw error?.response?.data;
-        }
-      });
+    // oxlint-disable-next-line import/no-named-as-default-member -- kept as is: restructuring it is out of scope for this release
+    const source = axios.CancelToken.source();
+    this.cancelSource = source;
+    return retryTransient(() =>
+      this.post(url, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        cancelToken: source.token,
+        withCredentials: false,
+      }).then((response) => response?.data)
+    );
   }
 
   /**
    * Cancels the upload
    */
   cancelUpload() {
-    this.cancelSource.cancel("Upload canceled");
+    this.cancelSource?.cancel("Upload canceled");
   }
 }

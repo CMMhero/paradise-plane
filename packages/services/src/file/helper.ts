@@ -8,7 +8,7 @@
 import { fileTypeFromBuffer } from "file-type";
 // plane imports
 import type { TFileMetaDataLite, TFileSignedURLResponse } from "@plane/types";
-import { DANGEROUS_EXTENSIONS } from "@plane/constants";
+import { DANGEROUS_EXTENSIONS, resolveFileMimeType } from "@plane/constants";
 
 /**
  * @description Filename validation - checks for double extensions and dangerous patterns
@@ -82,10 +82,12 @@ const detectMimeTypeFromSignature = async (file: File): Promise<string> => {
 };
 
 /**
- * @description Validate and detect the MIME type of a file using signature detection
- * Also performs basic security checks on filename
+ * @description Validate and detect the MIME type of a file.
+ * Paradise: the signature alone is not enough (it knows nothing about text files and
+ * answers application/x-cfb for .doc/.xls) and the browser's File.type depends on the
+ * OS registry, so the final type is resolved from signature + extension + browser type.
  * @param {File} file
- * @returns {Promise<string>} validated and detected MIME type
+ * @returns {Promise<string>} resolved MIME type
  */
 const validateAndDetectFileType = async (file: File): Promise<string> => {
   // Basic filename validation
@@ -94,17 +96,8 @@ const validateAndDetectFileType = async (file: File): Promise<string> => {
     console.warn(`File validation warning: ${filenameError}`);
   }
 
-  try {
-    const signatureType = await detectMimeTypeFromSignature(file);
-    if (signatureType) {
-      return signatureType;
-    }
-  } catch (_error) {
-    console.warn("Error detecting file type from signature:", _error);
-  }
-
-  // fallback for unknown files
-  return "";
+  const sniffedType = await detectMimeTypeFromSignature(file);
+  return resolveFileMimeType({ name: file.name, browserType: file.type, sniffedType });
 };
 
 /**

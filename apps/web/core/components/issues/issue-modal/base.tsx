@@ -24,6 +24,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useParadiseModules } from "@/hooks/use-paradise-module";
+import { useUploadFailureText } from "@/hooks/use-upload-error-reporter";
 // services
 import { FileService } from "@/services/file.service";
 const fileService = new FileService();
@@ -33,6 +34,7 @@ import { DraftIssueLayout } from "./draft-issue-layout";
 import { IssueFormRoot } from "./form";
 import type { IssueFormProps } from "./form";
 import type { IssuesModalProps } from "./modal";
+import { useBerkasTertunda } from "./use-berkas-tertunda";
 
 export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueModalBase(props: IssuesModalProps) {
   const {
@@ -75,7 +77,12 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
   const { issues } = useIssues(storeType);
   const { issues: projectIssues } = useIssues(EIssuesStoreType.PROJECT);
   const { issues: draftIssues } = useIssues(EIssuesStoreType.WORKSPACE_DRAFT);
-  const { fetchIssue } = useIssueDetail();
+  const {
+    fetchIssue,
+    attachment: { createAttachment },
+  } = useIssueDetail();
+  const lampiranTertunda = useBerkasTertunda();
+  const describeUploadFailure = useUploadFailureText();
   const { allowedProjectIds, handleCreateUpdatePropertyValues, handleCreateSubWorkItem } = useIssueModal();
   const { getProjectByIdentifier } = useProject();
   // current store details
@@ -156,6 +163,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
 
     setActiveProjectId(null);
     setChangesMade(null);
+    lampiranTertunda.kosongkan();
     onClose();
     handleDuplicateIssueModal(false);
   };
@@ -234,6 +242,26 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
           projectId: response.project_id,
           parentId: response.id,
         });
+      }
+
+      // Berkas yang ditempel/diseret ke dialog menjadi lampiran work item baru.
+      // Kegagalan satu berkas tidak membatalkan work item yang sudah jadi.
+      const { id: issueBaruId, project_id: projectBaruId } = response;
+      if (!is_draft_issue && issueBaruId && projectBaruId && lampiranTertunda.berkas.length > 0) {
+        const hasil = await Promise.allSettled(
+          lampiranTertunda.berkas.map((file) =>
+            createAttachment(workspaceSlug.toString(), projectBaruId, issueBaruId, file)
+          )
+        );
+        hasil.forEach((h, i) => {
+          if (h.status === "rejected")
+            setToast({
+              type: TOAST_TYPE.ERROR,
+              title: t("navigasi_lampiran_ui.failed", { name: lampiranTertunda.berkas[i].name }),
+              message: describeUploadFailure(h.reason, { name: lampiranTertunda.berkas[i].name }).message,
+            });
+        });
+        lampiranTertunda.kosongkan();
       }
 
       setToast({
@@ -401,6 +429,8 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       module_ids: data?.module_ids ? data?.module_ids : moduleId ? [moduleId.toString()] : null,
     },
     onAssetUpload: handleUpdateUploadedAssetIds,
+    // Lampiran tertunda hanya untuk work item baru (draft belum punya lampiran).
+    lampiranTertunda: !data?.id && !isDraft ? lampiranTertunda : undefined,
     onClose: handleClose,
     onSubmit: (payload) => handleFormSubmit(payload, isDraft),
     projectId: activeProjectId,

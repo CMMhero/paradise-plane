@@ -15,6 +15,7 @@ import { getFileURL } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useFileSize } from "@/hooks/use-file-size";
+import { useUploadFailureText } from "@/hooks/use-upload-error-reporter";
 
 const BYTES_PER_MB = 1024 * 1024;
 
@@ -40,6 +41,7 @@ export const useLampiranTempel = (workspaceSlug: string, projectId: string, issu
     attachment: { createAttachment },
   } = useIssueDetail();
   const { maxFileSize } = useFileSize();
+  const describeUploadFailure = useUploadFailureText();
   const [gagal, setGagal] = useState<TLampiranGagal[]>([]);
   // files this editor is uploading right now, to pick their rows out of the
   // issue-wide upload status (the Attachments widget may be uploading too)
@@ -71,8 +73,11 @@ export const useLampiranTempel = (workspaceSlug: string, projectId: string, issu
             const lampiran = await createAttachment(workspaceSlug, projectId, issueId, file);
             const url = getFileURL(lampiran?.asset_url ?? "");
             return url ? { name: file.name, url } : null;
-          } catch {
-            catatGagal(t("navigasi_lampiran_ui.failed", { name: file.name }));
+          } catch (error) {
+            // say WHY (offline, type, server...) instead of one fixed sentence
+            const alasan = describeUploadFailure(error, { name: file.name });
+            if (!alasan.isCancelled)
+              catatGagal(`${t("navigasi_lampiran_ui.failed", { name: file.name })} · ${alasan.message}`);
             return null;
           } finally {
             setMenunggu((sebelumnya) => sebelumnya.filter((item) => item !== file));
@@ -89,7 +94,7 @@ export const useLampiranTempel = (workspaceSlug: string, projectId: string, issu
       }
       return berhasil;
     },
-    [catatGagal, createAttachment, issueId, maxFileSize, projectId, t, workspaceSlug]
+    [catatGagal, createAttachment, describeUploadFailure, issueId, maxFileSize, projectId, t, workspaceSlug]
   );
 
   // The editor builds its paste/drop plugin once and keeps the handler it got

@@ -7,7 +7,12 @@
 import type { AxiosRequestConfig } from "axios";
 // plane types
 import { API_BASE_URL } from "@plane/constants";
-import { getFileMetaDataForUpload, generateFileUploadPayload } from "@plane/services";
+import {
+  getFileMetaDataForUpload,
+  generateFileUploadPayload,
+  normalizeUploadError,
+  retryTransient,
+} from "@plane/services";
 import type { EFileAssetType, TFileEntityInfo, TFileSignedURLResponse } from "@plane/types";
 import { getAssetIdFromUrl } from "@plane/utils";
 // helpers
@@ -51,7 +56,6 @@ export enum TFileAssetType {
 }
 
 export class FileService extends APIService {
-  private cancelSource: any;
   private fileUploadService: FileUploadService;
 
   constructor() {
@@ -61,12 +65,12 @@ export class FileService extends APIService {
     this.fileUploadService = new FileUploadService();
   }
 
+  // Paradise: marking an asset uploaded is idempotent, so a transient failure is retried. Without
+  // that the file sits in storage while the row stays is_uploaded=false and the asset 404s later.
   private async updateWorkspaceAssetUploadStatus(workspaceSlug: string, assetId: string): Promise<void> {
-    return this.patch(`/api/assets/v2/workspaces/${workspaceSlug}/${assetId}/`)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
+    return retryTransient(() =>
+      this.patch(`/api/assets/v2/workspaces/${workspaceSlug}/${assetId}/`).then((response) => response?.data)
+    );
   }
 
   async uploadWorkspaceAsset(
@@ -92,7 +96,7 @@ export class FileService extends APIService {
         return signedURLResponse;
       })
       .catch((error) => {
-        throw error?.response?.data;
+        throw normalizeUploadError(error);
       });
   }
 
@@ -109,11 +113,11 @@ export class FileService extends APIService {
     projectId: string,
     assetId: string
   ): Promise<void> {
-    return this.patch(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${assetId}/`)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
+    return retryTransient(() =>
+      this.patch(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${assetId}/`).then(
+        (response) => response?.data
+      )
+    );
   }
 
   async updateBulkWorkspaceAssetsUploadStatus(
@@ -123,11 +127,10 @@ export class FileService extends APIService {
       asset_ids: string[];
     }
   ): Promise<void> {
-    return this.post(`/api/assets/v2/workspaces/${workspaceSlug}/${entityId}/bulk/`, data)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
+    // Paradise: attaching assets to their entity is idempotent, so a transient failure is retried
+    return retryTransient(() =>
+      this.post(`/api/assets/v2/workspaces/${workspaceSlug}/${entityId}/bulk/`, data).then((response) => response?.data)
+    );
   }
 
   async updateBulkProjectAssetsUploadStatus(
@@ -138,11 +141,12 @@ export class FileService extends APIService {
       asset_ids: string[];
     }
   ): Promise<void> {
-    return this.post(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${entityId}/bulk/`, data)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
+    // Paradise: attaching assets to their entity is idempotent, so a transient failure is retried
+    return retryTransient(() =>
+      this.post(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${entityId}/bulk/`, data).then(
+        (response) => response?.data
+      )
+    );
   }
 
   async uploadProjectAsset(
@@ -169,16 +173,14 @@ export class FileService extends APIService {
         return signedURLResponse;
       })
       .catch((error) => {
-        throw error?.response?.data;
+        throw normalizeUploadError(error);
       });
   }
 
   private async updateUserAssetUploadStatus(assetId: string): Promise<void> {
-    return this.patch(`/api/assets/v2/user-assets/${assetId}/`)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
+    return retryTransient(() =>
+      this.patch(`/api/assets/v2/user-assets/${assetId}/`).then((response) => response?.data)
+    );
   }
 
   async uploadUserAsset(data: TFileEntityInfo, file: File): Promise<TFileSignedURLResponse> {
@@ -195,7 +197,7 @@ export class FileService extends APIService {
         return signedURLResponse;
       })
       .catch((error) => {
-        throw error?.response?.data;
+        throw normalizeUploadError(error);
       });
   }
 
@@ -266,7 +268,8 @@ export class FileService extends APIService {
   }
 
   cancelUpload() {
-    this.cancelSource.cancel("Upload canceled");
+    // Paradise: `cancelSource` here was never assigned, so cancelling threw a TypeError.
+    this.fileUploadService.cancelUpload();
   }
 
   async getUnsplashImages(query?: string): Promise<UnSplashImage[]> {

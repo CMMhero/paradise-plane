@@ -56,6 +56,7 @@ import {
 } from "@/services/chat.service";
 // local imports
 import { susunBaris } from "./baris";
+import { urutkanDaftar } from "./urutan-daftar";
 import { BilahSematan } from "./bilah-sematan";
 import { useObrolanLangsung } from "./langsung";
 import { usePanggilanWorkspace } from "./penyedia-panggilan";
@@ -71,7 +72,7 @@ import { seretBerkas, useUnggahLampiran } from "./unggah-lampiran";
 import { DenganKehadiran, StatusKehadiranTeks, TitikKehadiran } from "@/components/chat/titik-kehadiran";
 import { MemberProfileTrigger } from "@/components/member-profile";
 import { usePetaKehadiran } from "@/hooks/use-kehadiran";
-import { urutkanMenurutKehadiran } from "@/lib/kehadiran";
+import { useUploadFailureText } from "@/hooks/use-upload-error-reporter";
 
 const chatService = new ChatService();
 
@@ -366,6 +367,17 @@ function ChatPage() {
     setAdaPesanBaru(false);
   };
 
+  // Lapis "belum dibaca" percakapan yang dibuka ditahan sampai berpindah: server
+  // menandainya terbaca begitu dimuat, dan tanpa ini barisnya melompat turun di
+  // depan mata yang sedang membaca. Disetel saat render karena harus sudah benar
+  // sebelum daftar berikutnya digambar.
+  const kunciTerbuka = dengan ?? ruangParam ?? null;
+  const belumTerbuka =
+    (percakapan ?? []).some((p) => (p.lawan_bicara === kunciTerbuka || p.id === kunciTerbuka) && p.belum_dibaca > 0) ||
+    (daftarKanal ?? []).some((r) => r.id === kunciTerbuka && r.belum_dibaca > 0);
+  const [beku, setBeku] = useState<{ id: string | null; belumDibaca: boolean }>({ id: null, belumDibaca: false });
+  if (beku.id !== kunciTerbuka) setBeku({ id: kunciTerbuka, belumDibaca: belumTerbuka });
+
   const daftar: TBarisDaftar[] = useMemo(() => {
     // Hanya baris DM yang masuk daftar orang. Sejak kanal ikut dikirim endpoint
     // yang sama, `lawan_bicara` bisa kosong, dan kanal yang menyelinap ke sini
@@ -383,20 +395,24 @@ function ChatPage() {
       const nama = getWorkspaceMemberDetails(id)?.member?.display_name ?? "";
       return nama.toLowerCase().includes(kunciCari);
     });
-    // Tidak ada pengurutan di sini sama sekali. Server sudah mengirim percakapan
-    // terbaru lebih dulu, dan store sudah mengurutkan anggota menurut nama, jadi
-    // menyambung dua daftar yang masing-masing sudah urut sudah cukup.
+    // Urutan: belum dibaca, lalu online, lalu sisanya; dalam tiap lapis yang
+    // terbaru dulu (urutan-daftar.ts). Percakapan yang sedang dibuka menahan
+    // lapis belum-dibacanya (`beku`) supaya tidak melompat turun saat dibaca.
     const cocok = new Set(kandidat);
-    const namaDari = (id: string) => getWorkspaceMemberDetails(id)?.member?.display_name ?? "";
-    // Online dulu, lalu away, lalu offline; dalam satu kelompok menurut nama.
-    const urut = urutkanMenurutKehadiran(
-      [
-        ...barisDM.map((baris) => baris.lawan_bicara).filter((id) => cocok.has(id)),
-        ...kandidat.filter((id) => !peta.has(id)),
-      ],
-      petaKehadiran,
-      namaDari
-    );
+    const butir = [
+      ...barisDM.map((baris) => baris.lawan_bicara).filter((id) => cocok.has(id)),
+      ...kandidat.filter((id) => !peta.has(id)),
+    ].map((id) => {
+      const baris = peta.get(id);
+      return {
+        id,
+        belumDibaca: (baris?.belum_dibaca ?? 0) > 0,
+        online: petaKehadiran.has(id),
+        terakhir: baris?.pesan_terakhir_pada ?? baris?.created_at ?? null,
+        nama: getWorkspaceMemberDetails(id)?.member?.display_name ?? "",
+      };
+    });
+    const urut = urutkanDaftar(butir, beku).map((b) => b.id);
     // Catatan untuk diri sendiri selalu paling atas, seperti "Saved messages":
     // ia tempat yang dicari dengan sengaja, bukan percakapan yang tenggelam.
     const namaSaya = (currentUser?.display_name ?? "").toLowerCase();
@@ -411,6 +427,7 @@ function ChatPage() {
     cari,
     getWorkspaceMemberDetails,
     petaKehadiran,
+    beku,
   ]);
 
   const semuaPesan = useMemo(() => [...lama, ...(pesan ?? [])], [lama, pesan]);
@@ -423,6 +440,7 @@ function ChatPage() {
   const lawanBicara = dengan ? getWorkspaceMemberDetails(dengan)?.member : undefined;
 
   const batasParadise = useParadiseLimits();
+  const describeUploadFailure = useUploadFailureText();
   // Tombol klip, tempel, dan seret semuanya lewat `tambahLampiran`: batas
   // jumlah/ukuran dan kemajuan unggah ada di unggah-lampiran.ts.
   const {
@@ -445,17 +463,24 @@ function ChatPage() {
             : t("chatux_kelola_ui.too_many_files", { count: maksLampiran }),
       });
     },
-    onGagal: (gagal, total, pesanServer) =>
+    onGagal: (gagal, total, alasan) => {
+      const teks = describeUploadFailure(alasan);
+      // pembatalan oleh pengguna sendiri tidak perlu toast
+      if (teks.isCancelled && gagal === total) return;
       setToast({
         type: TOAST_TYPE.ERROR,
         title: gagal === total ? t("chat_ui.upload_failed_all") : t("chat_ui.upload_failed_some", { count: gagal }),
-        message: pesanServer ?? t("chat_ui.upload_failed_hint"),
-      }),
+        message: teks.message || t("chat_ui.upload_failed_hint"),
+      });
+    },
   });
 
   const unggah = async (berkas: FileList | File[] | null) => {
+    // Salin dulu: mengosongkan input juga mengosongkan FileList miliknya, dan tanpa
+    // pengosongan, memilih berkas yang SAMA lagi (reaksi wajar sesudah gagal) tidak memicu apa-apa.
+    const daftarBerkas = berkas ? Array.from(berkas) : null;
     if (berkasRef.current) berkasRef.current.value = "";
-    await tambahLampiran(berkas);
+    await tambahLampiran(daftarBerkas);
   };
 
   /** Lepas berkas di area percakapan. Hanya aktif saat ada percakapan terbuka. */
@@ -684,7 +709,20 @@ function ChatPage() {
   // Kanal sistem yang hanya dibaca (Announcements, Changelog, Paradise) tidak
   // bisa ditelepon; kanal divisi/departemen bisa, karena isinya orang sungguhan.
   const kanalTanpaPanggilan = !!kanalAktif?.sistem && !/^(divisi|departemen):/.test(kanalAktif.kunci_sistem ?? "");
-  const kanalDiikuti = (daftarKanal ?? []).filter((r) => r.ikut);
+  const kanalDiikuti = (() => {
+    const diikuti = (daftarKanal ?? []).filter((r) => r.ikut);
+    const peta = new Map(diikuti.map((r) => [r.id, r]));
+    return urutkanDaftar(
+      diikuti.map((r) => ({
+        id: r.id,
+        belumDibaca: r.belum_dibaca > 0,
+        online: false,
+        terakhir: r.pesan_terakhir_pada,
+        nama: r.nama ?? "",
+      })),
+      beku
+    ).flatMap((b) => peta.get(b.id) ?? []);
+  })();
   const kanalBelumDiikuti = (daftarKanal ?? []).filter((r) => !r.ikut);
 
   const buatKanal = async (nama: string, privat: boolean): Promise<boolean> => {

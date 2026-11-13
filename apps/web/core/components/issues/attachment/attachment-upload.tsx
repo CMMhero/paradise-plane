@@ -7,6 +7,8 @@
 import { useCallback, useState } from "react";
 import { observer } from "mobx-react";
 import { useDropzone } from "react-dropzone";
+// plane imports
+import { useTranslation } from "@plane/i18n";
 // plane web hooks
 import { useFileSize } from "@/hooks/use-file-size";
 // types
@@ -24,6 +26,7 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
   const { workspaceSlug, disabled = false, attachmentOperations } = props;
   // states
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
   // file size
   const { maxFileSize } = useFileSize();
 
@@ -33,7 +36,11 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
       if (!currentFile || !workspaceSlug) return;
 
       setIsLoading(true);
-      attachmentOperations.create(currentFile).finally(() => setIsLoading(false));
+      // the operation already toasts the reason on failure; do not leave an unhandled rejection
+      attachmentOperations
+        .create(currentFile)
+        .catch(() => undefined)
+        .finally(() => setIsLoading(false));
     },
     [attachmentOperations, workspaceSlug]
   );
@@ -46,7 +53,11 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
   });
 
   const fileError =
-    fileRejections.length > 0 ? `Invalid file type or size (max ${maxFileSize / 1024 / 1024} MB)` : null;
+    fileRejections.length === 0
+      ? null
+      : fileRejections.length > 1
+        ? t("unggah_ui.one_file_only")
+        : t("unggah_ui.file_too_large", { size: Math.floor(maxFileSize / 1024 / 1024) });
 
   return (
     <div
@@ -62,7 +73,7 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
         ) : fileError ? (
           <p className="text-center text-danger-primary">{fileError}</p>
         ) : isLoading ? (
-          <p className="text-center">Uploading...</p>
+          <p className="text-center">{t("navigasi_lampiran_ui.uploading", { name: "" }).trim()}</p>
         ) : (
           <p className="text-center">Click or drag a file here</p>
         )}

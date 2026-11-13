@@ -51,6 +51,8 @@ type TIssueDescriptionEditorProps = {
   setGptAssistantModal: React.Dispatch<React.SetStateAction<boolean>>;
   handleGptAssistantClose: () => void;
   onAssetUpload: (assetId: string) => void;
+  /** berkas non-gambar yang ditempel/diseret; tanpa ini jenis itu diabaikan editor seperti dulu */
+  onAttachFiles?: (files: File[]) => void;
   onClose: () => void;
 };
 
@@ -71,6 +73,7 @@ export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(p
     setGptAssistantModal,
     handleGptAssistantClose,
     onAssetUpload,
+    onAttachFiles,
     onClose,
   } = props;
   // i18n
@@ -124,6 +127,7 @@ export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(p
         prompt: issueName,
         task: "Generate a proper description for this work item.",
       })
+      // oxlint-disable-next-line promise/always-return -- kept as is: restructuring it is out of scope for this release
       .then((res) => {
         if (res.response === "")
           setToast({
@@ -204,6 +208,15 @@ export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(p
                   })
                 }
                 containerClassName="pt-3 min-h-[120px]"
+                attachFiles={
+                  onAttachFiles
+                    ? async (files) => {
+                        onAttachFiles(files);
+                        // belum ada work item, jadi tidak ada tautan yang bisa disisipkan
+                        return [];
+                      }
+                    : undefined
+                }
                 uploadFile={async (blockId, file) => {
                   try {
                     const { asset_id } = await uploadEditorAsset({
@@ -222,7 +235,8 @@ export const IssueDescriptionEditor = observer(function IssueDescriptionEditor(p
                     return asset_id;
                   } catch (error) {
                     console.log("Error in uploading issue asset:", error);
-                    throw new Error("Asset upload failed. Please try again later.");
+                    // cause keeps the real reason (network, size...) for the upload error toast
+                    throw new Error("Asset upload failed. Please try again later.", { cause: error });
                   }
                 }}
                 duplicateFile={async (assetId: string) => {

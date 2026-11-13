@@ -34,6 +34,12 @@ export const ACCEPTED_ATTACHMENT_MIME_TYPES = [
   "text/plain",
   "text/markdown",
   "application/rtf",
+  // Paradise: the server accepts these too (ATTACHMENT_MIME_TYPES); the editor list had drifted
+  "application/vnd.oasis.opendocument.text",
+  "application/vnd.oasis.opendocument.spreadsheet",
+  "application/vnd.oasis.opendocument.presentation",
+  "application/x-7z-compressed",
+  "application/x-sql",
   "audio/mpeg",
   "audio/wav",
   "audio/ogg",

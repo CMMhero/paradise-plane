@@ -16,6 +16,7 @@ import { cn } from "@plane/utils";
 import { ACCEPTED_ATTACHMENT_MIME_TYPES } from "@/constants/config";
 // helpers
 import type { EFileError } from "@/helpers/file";
+import { reportEditorUploadFailure, reportInvalidEditorFile, trackUploadProgress } from "@/helpers/upload-tracking";
 // hooks
 import { useUploader, useDropZone } from "@/hooks/use-file-upload";
 // local imports
@@ -64,6 +65,7 @@ export function CustomFileNodeView(props: CustomFileNodeViewProps) {
   // stored name/size, so neither is needed just to show the row.
   useEffect(() => {
     if (!src) {
+      // oxlint-disable-next-line react/set-state-in-effect -- kept as is: restructuring it is out of scope for this release
       setDownloadSrc(undefined);
       setViewSrc(undefined);
       return;
@@ -114,14 +116,24 @@ export function CustomFileNodeView(props: CustomFileNodeViewProps) {
 
   const handleProgressStatus = useCallback(
     (isUploading: boolean) => {
-      editor.storage.utility.uploadInProgress = isUploading;
+      trackUploadProgress(editor, isUploading);
     },
     [editor]
   );
 
-  const handleInvalidFile = useCallback((_error: EFileError, _file: File, message: string) => {
-    alert(message);
-  }, []);
+  const handleInvalidFile = useCallback(
+    (error: EFileError, file: File, message: string) => {
+      reportInvalidEditorFile(editor, error, file, message);
+    },
+    [editor]
+  );
+
+  const handleUploadError = useCallback(
+    (error: unknown, file: File) => {
+      reportEditorUploadFailure(editor, error, file);
+    },
+    [editor]
+  );
 
   const { isUploading, uploadFile } = useUploader({
     acceptedMimeTypes: ACCEPTED_ATTACHMENT_MIME_TYPES,
@@ -129,6 +141,7 @@ export function CustomFileNodeView(props: CustomFileNodeViewProps) {
     handleProgressStatus,
     maxFileSize: getFileComponentMaxFileSize(editor),
     onInvalidFile: handleInvalidFile,
+    onUploadError: handleUploadError,
     onUpload,
   });
 
@@ -167,6 +180,8 @@ export function CustomFileNodeView(props: CustomFileNodeViewProps) {
       e.preventDefault();
       const selectedFile = e.target.files?.[0];
       if (!selectedFile) return;
+      // Paradise: clear the input so picking the same file again after a failure fires change again
+      e.target.value = "";
       await uploadFile(selectedFile);
     },
     [uploadFile]

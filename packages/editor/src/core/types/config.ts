@@ -32,6 +32,13 @@ export type TFileHandler = {
    * host's job, it owns the attachment store.
    */
   attachFiles?: (files: File[]) => Promise<TAttachedFile[]>;
+  /**
+   * Paradise: called when a paste, drop or file-picker upload cannot go through (wrong type, too
+   * large, network or server failure). `error` is either a normalized upload error (see
+   * normalizeUploadError in @plane/services) or a plain `{ error, code }` object built by the
+   * editor. Without it the editor can only log, which is how failed uploads used to vanish silently.
+   */
+  onUploadFailure?: (error: unknown, file: File) => void;
 } & TExtendedFileHandler;
 
 export type TAttachedFile = {
