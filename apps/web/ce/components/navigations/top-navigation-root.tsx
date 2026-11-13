@@ -8,6 +8,7 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { cn } from "@plane/utils";
+import { TombolSegarkan } from "@/components/data-live/tombol-segarkan";
 import { TopNavPowerK } from "@/components/navigation";
 import { NotificationsPopover } from "@/components/workspace-notifications/popover/root";
 import { HelpMenuRoot } from "@/components/workspace/sidebar/help-section/root";
@@ -46,6 +47,8 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
         {/* Paradise: lonceng membuka popover di tempat (lihat workspace-notifications/popover),
             bukan pindah ke /notifications. Lencana jumlah ikut pindah ke sana. */}
         {workspaceSlug && isModuleEnabled("inbox") && <NotificationsPopover workspaceSlug={workspaceSlug.toString()} />}
+        {/* Menyegarkan isi layar tanpa F5: posisi gulir dan panel yang terbuka tetap. */}
+        <TombolSegarkan />
         <HelpMenuRoot />
         {/* Link "Star us on GitHub" dibuang: ini instrumen promosi upstream, tidak
             ada gunanya di alat internal kantor. Header hak cipta di berkas sumber,

@@ -28,6 +28,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { ProjectAuthWrapper } from "@/layouts/auth-layout/project-wrapper";
 // plane web imports
 import { useWorkItemProperties } from "@/hooks/use-issue-properties";
+import { useSegarkanDetailTugas } from "@/hooks/use-segarkan-detail-tugas";
 import { WorkItemDetailRoot } from "@/plane-web/components/browse/workItem-detail";
 
 import type { Route } from "./+types/page";
@@ -63,6 +64,8 @@ export const IssueDetailsPage = observer(function IssueDetailsPage({ params }: R
   const project = (issue?.project_id && getProjectById(issue?.project_id)) || undefined;
   const issueLoader = !issue || isLoading;
   const pageTitle = project && issue ? `${project?.identifier}-${issue?.sequence_id} ${issue?.name}` : undefined;
+
+  useSegarkanDetailTugas(workspaceSlug.toString(), projectId || undefined, issueId?.toString());
 
   useWorkItemProperties(
     projectId,

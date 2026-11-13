@@ -48,6 +48,7 @@ from plane.app.serializers import (
     ProjectUserPropertySerializer,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.utils.sinyal_data import siarkan_tugas
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity
@@ -912,6 +913,9 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
 
         # Finally, delete the issues themselves
         issues.delete()
+        # Penghapusan massal tidak menulis aktivitas, jadi layar lain diberi tahu di sini.
+        if total_issues:
+            siarkan_tugas(project_id, None, bidang=["bulk"], aksi="deleted", oleh_id=request.user.id)
 
         pesan = f"{total_issues} tugas dihapus"
         if dilewati:

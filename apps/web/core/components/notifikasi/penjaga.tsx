@@ -17,6 +17,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useWorkspaceNotifications } from "@/hooks/store/notifications";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { useParadiseModules } from "@/hooks/use-paradise-module";
+import { useKehadiranTersambung } from "@/hooks/use-kehadiran";
 import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 // services
 import { ChatService, KUNCI_BELUM_DIBACA } from "@/services/chat.service";
@@ -38,6 +39,10 @@ const notifService = new WorkspaceNotificationService();
  * pesannya tidak terasa sebagai pemberitahuan, terasa sebagai laporan. Yang
  * ditarik cuma dua angka. */
 const SELANG = 15000;
+
+/** Soket live tersambung: sinyal server yang menyegarkan hitungan seketika, jadi
+ * jam ini tinggal jaring pengaman untuk sinyal yang terlewat. */
+const SELANG_CADANGAN_TERSAMBUNG = 90000;
 
 const KUNCI_JUMLAH_NOTIF = "WORKSPACE_UNREAD_NOTIFICATION_COUNT";
 
@@ -75,6 +80,7 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
   const { isModuleEnabled } = useParadiseModules();
   const pantauObrolan = !!workspaceSlug && isModuleEnabled("chat");
   const pantauNotif = !!workspaceSlug && isModuleEnabled("inbox");
+  const tersambung = useKehadiranTersambung();
   const {
     workspace: { getWorkspaceMemberDetails },
   } = useMember();
@@ -125,13 +131,13 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
   const { data: statusObrolan } = useSWR(
     pantauObrolan ? KUNCI_BELUM_DIBACA : null,
     pantauObrolan ? () => chatService.getStatus(workspaceSlug) : null,
-    { refreshInterval: SELANG }
+    { refreshInterval: tersambung ? SELANG_CADANGAN_TERSAMBUNG : SELANG }
   );
 
   const { data: statusNotif } = useSWR(
     pantauNotif ? KUNCI_JUMLAH_NOTIF : null,
     pantauNotif ? () => getUnreadNotificationsCount(workspaceSlug) : null,
-    { refreshInterval: SELANG }
+    { refreshInterval: tersambung ? SELANG_CADANGAN_TERSAMBUNG : SELANG }
   );
 
   const jumlahObrolan = statusObrolan?.jumlah ?? null;

@@ -57,6 +57,10 @@ import type { IBaseIssueFilterStore } from "./issue-filter-helper.store";
 
 export type TIssueDisplayFilterOptions = Exclude<TIssueGroupByOptions, null> | "target_date";
 
+/** Urutan menaik status persetujuan; sama dengan `APPROVAL_ORDER` di `order_queryset.py`. */
+const APPROVAL_SORT_ORDER: string[] = ["menunggu", "ditolak", "disetujui"];
+const APPROVAL_SORT_ORDER_DESC: string[] = ["disetujui", "ditolak", "menunggu"];
+
 /** True kalau `issueId` ada di salah satu grup/subgrup `groupedIssueIds`. */
 const adaDiDaftar = (grup: TIssues, issueId: string): boolean =>
   Object.values(grup).some((isi) =>
@@ -79,6 +83,8 @@ export interface IBaseIssuesStore {
   //actions
   removeIssue: (workspaceSlug: string, projectId: string, issueId: string) => Promise<void>;
   clear(shouldClearPaginationOptions?: boolean): void;
+  paginationOptions: IssuePaginationOptions | undefined;
+  tarikSenyap: <T>(kerja: () => Promise<T>) => Promise<T>;
   // helper methods
   getIssueIds: (groupId?: string, subGroupId?: string) => string[] | undefined;
   issuesSortWithOrderBy(issueIds: string[], key: Partial<TIssueOrderByOptions>): string[];
@@ -187,6 +193,8 @@ const ISSUE_ORDERBY_KEY: Record<TIssueOrderByOptions, keyof TIssue> = {
   "-attachment_count": "attachment_count",
   sub_issues_count: "sub_issues_count",
   "-sub_issues_count": "sub_issues_count",
+  approval_status: "approval_status",
+  "-approval_status": "approval_status",
 };
 
 export abstract class BaseIssuesStore implements IBaseIssuesStore {
@@ -197,6 +205,24 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   groupedIssueCount: TGroupedIssueCount = {};
   //
   paginationOptions: IssuePaginationOptions | undefined = undefined;
+  /** Hanya dibaca `clear()`. Tiap `fetchIssues` di turunan memanggil `clear` tepat
+   * sekali sebelum meminta ke server; bendera ini melewatkan panggilan itu saja. */
+  private lewatiClearBerikutnya = false;
+
+  /**
+   * Tarik ulang daftar TANPA mengosongkannya lebih dulu: untuk pembaruan hidup
+   * dari sinyal server dan tombol segarkan. Pemanggil membungkus `fetchIssues`
+   * miliknya; hasil tetap menggantikan seluruh isi (halaman pertama saja, jadi
+   * halaman tambahan yang sudah dimuat kembali ke halaman pertama).
+   */
+  tarikSenyap = async <T>(kerja: () => Promise<T>): Promise<T> => {
+    this.lewatiClearBerikutnya = true;
+    try {
+      return await kerja();
+    } finally {
+      this.lewatiClearBerikutnya = false;
+    }
+  };
 
   isArchived: boolean;
 
@@ -1191,6 +1217,13 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
    * Method called to clear out the current store
    */
   clear(shouldClearPaginationOptions = true) {
+    // Penarikan senyap (`tarikSenyap`): kosongkan-dulu-baru-isi dilewati, supaya
+    // daftar yang sedang tampil tidak berkedip kosong. Penggantian isinya tetap
+    // terjadi sekaligus di `onfetchIssues`.
+    if (this.lewatiClearBerikutnya) {
+      this.lewatiClearBerikutnya = false;
+      return;
+    }
     runInAction(() => {
       this.groupedIssueIds = undefined;
       this.issuePaginationData = {};
@@ -1865,6 +1898,18 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         const sortArray = ISSUE_PRIORITIES.map((i) => i.key);
         return getIssueIds(
           orderBy(array, (currentIssue: TIssue) => indexOf(sortArray, currentIssue?.priority), ["desc"])
+        );
+      }
+
+      // Kustomisasi Paradise: cermin urutan server (`order_issue_queryset`), tanpa persetujuan selalu di akhir.
+      case "approval_status":
+      case "-approval_status": {
+        const urutan = key === "approval_status" ? APPROVAL_SORT_ORDER : APPROVAL_SORT_ORDER_DESC;
+        return getIssueIds(
+          orderBy(array, (issue: TIssue) => {
+            const posisi = issue?.approval_status ? urutan.indexOf(issue.approval_status) : -1;
+            return posisi === -1 ? urutan.length : posisi;
+          })
         );
       }
 

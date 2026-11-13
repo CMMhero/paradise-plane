@@ -84,18 +84,22 @@ def catat_pesan_dm(pesan) -> None:
             Notification.objects.filter(pk=terbuka.pk).update(
                 data=data, triggered_by_id=pesan.pengirim_id, created_at=timezone.now(), snoozed_till=None
             )
-            return
-        Notification.objects.create(
-            workspace_id=pesan.workspace_id,
-            project=None,
-            sender=SENDER_CHAT,
-            triggered_by_id=pesan.pengirim_id,
-            receiver_id=penerima_id,
-            entity_identifier=pesan.ruang_id,
-            entity_name=ENTITY_CHAT,
-            title="",
-            data=data,
-        )
+        else:
+            Notification.objects.create(
+                workspace_id=pesan.workspace_id,
+                project=None,
+                sender=SENDER_CHAT,
+                triggered_by_id=pesan.pengirim_id,
+                receiver_id=penerima_id,
+                entity_identifier=pesan.ruang_id,
+                entity_name=ENTITY_CHAT,
+                title="",
+                data=data,
+            )
+        # Daftar Pemberitahuan penerima menyegarkan diri; menelan galatnya sendiri.
+        from plane.utils.sinyal_data import siarkan_notifikasi  # noqa: PLC0415
+
+        siarkan_notifikasi(pesan.workspace_id, [penerima_id])
     except Exception:  # noqa: BLE001
         logger.exception("Gagal menulis inbox obrolan untuk pesan %s", getattr(pesan, "id", None))
 

@@ -24,6 +24,7 @@ from plane.db.models import (
 )
 from plane.utils.paginator import BasePaginator
 from plane.utils.inbox_chat import ENTITY_CHAT
+from plane.utils.sinyal_data import siarkan_notifikasi
 from plane.utils.preferensi_email import SAKLAR_NOTIFIKASI, dikunci, kunci_admin, saklar_efektif, terapkan_perubahan
 from plane.utils.order_queryset import NOTIFICATION_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.app.permissions import allow_permission, ROLE
@@ -173,6 +174,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         notification = Notification.objects.get(receiver=request.user, workspace__slug=slug, pk=pk)
         notification.read_at = timezone.now()
         notification.save()
+        siarkan_notifikasi(notification.workspace_id, [request.user.id])
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -181,6 +183,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         notification = Notification.objects.get(receiver=request.user, workspace__slug=slug, pk=pk)
         notification.read_at = None
         notification.save()
+        siarkan_notifikasi(notification.workspace_id, [request.user.id])
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -189,6 +192,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         notification = Notification.objects.get(receiver=request.user, workspace__slug=slug, pk=pk)
         notification.archived_at = timezone.now()
         notification.save()
+        siarkan_notifikasi(notification.workspace_id, [request.user.id])
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -197,6 +201,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         notification = Notification.objects.get(receiver=request.user, workspace__slug=slug, pk=pk)
         notification.archived_at = None
         notification.save()
+        siarkan_notifikasi(notification.workspace_id, [request.user.id])
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -295,6 +300,8 @@ class MarkAllReadNotificationViewSet(BaseViewSet):
             notification.read_at = timezone.now()
             updated_notifications.append(notification)
         Notification.objects.bulk_update(updated_notifications, ["read_at"], batch_size=100)
+        if updated_notifications:
+            siarkan_notifikasi(updated_notifications[0].workspace_id, [request.user.id])
         return Response({"message": "Successful"}, status=status.HTTP_200_OK)
 
 

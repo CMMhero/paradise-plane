@@ -37,6 +37,7 @@ from plane.utils.exception_logger import log_exception
 from plane.bgtasks.penugasan_email import kirim_email_penugasan
 from plane.bgtasks.tugas_ke_dm_task import kirim_tugas_ke_dm, penerima_baru
 from plane.utils.issue_relation_mapper import get_inverse_relation
+from plane.utils.sinyal_data import siarkan_tugas
 from plane.utils.uuid import is_valid_uuid
 
 
@@ -1584,6 +1585,21 @@ def issue_activity(
 
         # Save all the values to database
         issue_activities_created = IssueActivity.objects.bulk_create(issue_activities)
+
+        # Kustomisasi Paradise: layar orang lain menyegarkan diri tanpa refresh.
+        # Di corong yang sama dengan DM penugasan di bawah, karena semua jalur
+        # ubah tugas (layar, API token, aksi massal, tugas berulang) lewat sini.
+        # Draf tidak muncul di daftar mana pun, jadi tak perlu disiarkan.
+        # Tetap dikirim walau `issue_activities_created` kosong: menggeser urutan
+        # (sort_order) mengubah papan tanpa menulis satu baris aktivitas pun.
+        if not str(type).startswith("issue_draft"):
+            siarkan_tugas(
+                project_id,
+                issue_id,
+                bidang=[a.field for a in issue_activities_created],
+                aksi=str(type).rsplit(".", 1)[-1],
+                oleh_id=actor_id,
+            )
 
         # Kustomisasi Paradise: rincian tugas ikut dikirim
         # sebagai DM dari pemberi ke penerima. Ditaruh DI SINI, bukan di view,

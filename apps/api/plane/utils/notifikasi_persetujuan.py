@@ -133,6 +133,9 @@ def _tulis(
             from plane.utils.kartu_obrolan import kirim_kartu_notifikasi  # noqa: PLC0415
 
             kirim_kartu_notifikasi([notif], persetujuan=persetujuan)
+            from plane.utils.sinyal_data import siarkan_notifikasi_baris  # noqa: PLC0415
+
+            siarkan_notifikasi_baris([notif])
         if _boleh(penerima_id, "approval"):
             EmailNotificationLog.objects.create(
                 receiver_id=penerima_id,

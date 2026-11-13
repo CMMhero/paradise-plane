@@ -22,6 +22,7 @@ from plane.app.permissions import WorkspaceUserPermission
 from plane.db.models import Project, ProjectMember, ProjectUserProperty, WorkspaceMember
 from plane.bgtasks.project_add_user_email_task import project_add_user_email
 from plane.utils.host import base_host
+from plane.utils.sinyal_data import siarkan_anggota_project
 from plane.app.permissions.base import allow_permission, ROLE
 
 
@@ -152,6 +153,8 @@ class ProjectMemberViewSet(BaseViewSet):
         ]
         # Serialize the project members
         serializer = ProjectMemberRoleSerializer(project_members, many=True)
+        # Penulisan massal tidak memicu signal, jadi disiarkan di sini.
+        siarkan_anggota_project(project_id, user_ids=[m.get("member_id") for m in members], oleh_id=request.user.id)
         # Return the serialized data
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

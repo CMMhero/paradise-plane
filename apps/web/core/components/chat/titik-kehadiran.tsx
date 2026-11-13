@@ -6,11 +6,9 @@
  */
 
 import type { ReactNode } from "react";
-import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import { cn } from "@plane/utils";
 import { useSambungKehadiran, useStatusKehadiran, type TStatusKehadiran } from "@/hooks/use-kehadiran";
-import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 /** Warna titik. Offline = cincin kosong, bukan abu-abu penuh, supaya tidak
  * bergantung pada warna saja untuk dibedakan dari away. */
@@ -54,9 +52,10 @@ export function StatusKehadiranTeks({ userId }: { userId: string | null | undefi
   return <>{t(`chatux_kelola_ui.presence_${status}`)}</>;
 }
 
-/** Dipasang sekali di lapisan workspace: membuka soket kehadiran tab ini. */
-export const SambunganKehadiran = observer(function SambunganKehadiran({ workspaceSlug }: { workspaceSlug: string }) {
-  const { isModuleEnabled } = useParadiseModules();
-  useSambungKehadiran(workspaceSlug, isModuleEnabled("chat"));
+/** Dipasang sekali di lapisan workspace: membuka soket tab ini. Soket yang sama
+ * membawa kehadiran, sinyal panggilan, dan sinyal "data berubah" (layar hidup),
+ * jadi ia menyala walau modul Chat dimatikan. */
+export function SambunganKehadiran({ workspaceSlug }: { workspaceSlug: string }) {
+  useSambungKehadiran(workspaceSlug, true);
   return null;
-});
+}

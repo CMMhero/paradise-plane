@@ -19,8 +19,9 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
+import { useSegarkanDaftarTugas } from "@/hooks/use-segarkan-daftar-tugas";
 // types
-import type { IQuickActionProps } from "../list/list-view-types";
+import type { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
 import { CalendarChart } from "./calendar";
 import { handleDragDrop } from "./utils";
 
@@ -108,6 +109,7 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
       );
     }
   }, [fetchIssues, storeType, startDate, endDate, layout, viewId]);
+  useSegarkanDaftarTugas(storeType, viewId);
 
   const handleDragAndDrop = async (
     issueId: string | undefined,
@@ -160,6 +162,33 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
     [canEditPropertiesBasedOnProject, enableInlineEditing, isEditingAllowed]
   );
 
+  const renderQuickActions = useCallback(
+    ({ issue, parentRef, customActionButton, placement }: Parameters<TRenderQuickActions>[0]) => (
+      <QuickActions
+        parentRef={parentRef}
+        customActionButton={customActionButton}
+        issue={issue}
+        handleDelete={async () => removeIssue(issue.project_id, issue.id)}
+        handleUpdate={async (data) => updateIssue && updateIssue(issue.project_id, issue.id, data)}
+        handleRemoveFromView={async () => removeIssueFromView && removeIssueFromView(issue.project_id, issue.id)}
+        handleArchive={async () => archiveIssue && archiveIssue(issue.project_id, issue.id)}
+        handleRestore={async () => restoreIssue && restoreIssue(issue.project_id, issue.id)}
+        readOnly={!canEditProperties(issue.project_id ?? undefined) || isCompletedCycle}
+        placements={placement}
+      />
+    ),
+    [
+      QuickActions,
+      canEditProperties,
+      isCompletedCycle,
+      removeIssue,
+      updateIssue,
+      removeIssueFromView,
+      archiveIssue,
+      restoreIssue,
+    ]
+  );
+
   return (
     <>
       <div className="h-full w-full overflow-hidden bg-surface-1 pt-4">
@@ -170,20 +199,7 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
           layout={displayFilters?.calendar?.layout}
           showWeekends={displayFilters?.calendar?.show_weekends ?? false}
           issueCalendarView={issueCalendarView}
-          quickActions={({ issue, parentRef, customActionButton, placement }) => (
-            <QuickActions
-              parentRef={parentRef}
-              customActionButton={customActionButton}
-              issue={issue}
-              handleDelete={async () => removeIssue(issue.project_id, issue.id)}
-              handleUpdate={async (data) => updateIssue && updateIssue(issue.project_id, issue.id, data)}
-              handleRemoveFromView={async () => removeIssueFromView && removeIssueFromView(issue.project_id, issue.id)}
-              handleArchive={async () => archiveIssue && archiveIssue(issue.project_id, issue.id)}
-              handleRestore={async () => restoreIssue && restoreIssue(issue.project_id, issue.id)}
-              readOnly={!canEditProperties(issue.project_id ?? undefined) || isCompletedCycle}
-              placements={placement}
-            />
-          )}
+          quickActions={renderQuickActions}
           loadMoreIssues={loadMoreIssues}
           getPaginationData={getPaginationData}
           getGroupIssueCount={getGroupIssueCount}

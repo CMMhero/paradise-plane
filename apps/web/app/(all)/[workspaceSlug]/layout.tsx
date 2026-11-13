@@ -11,6 +11,7 @@ import { AppRailVisibilityProvider } from "@/lib/app-rail";
 import { GlobalModals } from "@/plane-web/components/common/modal/global";
 import { PenjagaNotifikasi } from "@/components/notifikasi/penjaga";
 import { SambunganKehadiran } from "@/components/chat/titik-kehadiran";
+import { PenyegarLangsung } from "@/components/data-live/penyegar-langsung";
 import { PendengarPengajuanPersetujuan } from "@/components/issues/approval-requested-listener";
 import { WorkspaceAuthWrapper } from "@/layouts/auth-layout/workspace-wrapper";
 import { PenyediaPanggilan } from "./(projects)/chat/penyedia-panggilan";
@@ -32,6 +33,8 @@ export default function WorkspaceLayout(props: Route.ComponentProps) {
             <PenjagaNotifikasi workspaceSlug={workspaceSlug} />
             {/* Satu soket kehadiran per tab: titik online/away di Obrolan. */}
             <SambunganKehadiran workspaceSlug={workspaceSlug} />
+            {/* Layar hidup: pendengar dokumen + jam cadangan saat soket putus. */}
+            <PenyegarLangsung />
             <PendengarPengajuanPersetujuan />
             {/* Panggilan hidup di sini, bukan di halaman Obrolan: dering sampai
                 ke halaman mana pun, dan pindah halaman tidak memutus panggilan. */}

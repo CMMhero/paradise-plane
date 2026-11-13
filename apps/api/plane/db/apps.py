@@ -32,6 +32,9 @@ class DbConfig(AppConfig):
         # (Announcements, Changelog), 3 Nov 2026.
         from plane.db import kanal_sistem as _kanal_sistem_signal  # noqa: F401
 
+        # Keanggotaan project berubah -> layar yang terkena menyegarkan diri.
+        from plane.db import sinyal_anggota as _sinyal_anggota  # noqa: F401
+
         # Dev lokal: tiap runserver memuat ulang, migrasi + changelog
         # diterapkan sendiri (5 Nov 2026). No-op di luar runserver + DEBUG.
         from plane.db.sinkron_lokal import pasang as pasang_sinkron_lokal
