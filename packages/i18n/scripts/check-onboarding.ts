@@ -282,12 +282,13 @@ for (const key of Object.keys(flatten({ onboarding_ui: en["onboarding_ui"] as Re
 // 5. legacy files must stay unreferenced
 // ---------------------------------------------------------------------------
 
+// Escapes every regex metacharacter, backslash included.
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
+
 const everything = walk("core").concat(walk("ce"), walk("app"));
 for (const legacy of LEGACY_UNUSED) {
-  const stem = path.basename(legacy).replace(/\.tsx?$/, "");
-  const importer = new RegExp(
-    `from\\s+["'][^"']*/${stem.replace(/[-.]/g, "\\$&")}["']|from\\s+["']\\./${stem.replace(/[-.]/g, "\\$&")}["']`
-  );
+  const stem = escapeRegExp(path.basename(legacy).replace(/\.tsx?$/, ""));
+  const importer = new RegExp(`from\\s+["'][^"']*/${stem}["']|from\\s+["']\\./${stem}["']`);
   for (const abs of everything) {
     if (legacyAbs.has(abs)) continue;
     if (importer.test(fs.readFileSync(abs, "utf8"))) {
