@@ -312,7 +312,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
 
         ```
         { "member_id": "<uuid>",
-          "tingkat": 10|20|30|40|null,       # null = jenjang + semua tempat dicabut,
+          "tingkat": 10|20|30|35|40|null,    # null = jenjang + semua tempat dicabut,
                                                  # orangnya kembali Staf tanpa tempat
           "sumber": "...",                    # opsional, default "manual"
           "catatan": "...",                   # opsional

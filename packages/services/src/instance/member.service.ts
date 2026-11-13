@@ -30,7 +30,7 @@ export type TInstanceMemberProfile = {
   email: string;
   phone_extension: string;
   penempatan: {
-    /** 10 staf, 20 supervisor, 30 manager, 40 direktur. */
+    /** 10 staf, 20 supervisor, 30 manager, 35 sekretaris, 40 direktur. */
     tingkat: number;
     departemen: { id: string; kode: string; nama: string } | null;
     divisi: { id: string; kode: string; nama: string } | null;
@@ -188,7 +188,9 @@ export type TMemberDefaults = {
   /** Ditulis sekali saat akun lahir; akun lama tidak berubah. */
   profile: TMemberPreferences["profile"];
   /** Berlaku seketika untuk semua yang masih ikut bawaan jabatan. */
-  /** `pimpinan` = leader (supervisor, manager). `direktur` juga batas atas untuk setiap direktur. */
+  /**
+   * `pimpinan` = leader (supervisor, manager). `direktur` juga batas atas untuk setiap direktur.
+   */
   email: { staf: TSaklarEmail; pimpinan: TSaklarEmail; direktur: TSaklarEmail };
   /** Dipakai saat akun dibuat dari God Mode. `tingkat: null` = jabatan belum diisi. */
   keanggotaan: { workspace_role: 5 | 15; tingkat: 10 | 20 | 30 | null };
@@ -219,7 +221,11 @@ export type TMemberDefaultsResponse = TMemberDefaults & { pabrik: TMemberDefault
 
 export type TMemberDefaultsUpdate = {
   profile?: Partial<TMemberDefaults["profile"]>;
-  email?: { staf?: Partial<TSaklarEmail>; pimpinan?: Partial<TSaklarEmail>; direktur?: Partial<TSaklarEmail> };
+  email?: {
+    staf?: Partial<TSaklarEmail>;
+    pimpinan?: Partial<TSaklarEmail>;
+    direktur?: Partial<TSaklarEmail>;
+  };
   keanggotaan?: Partial<TMemberDefaults["keanggotaan"]>;
   navigasi?: TMemberPreferencesUpdate["navigasi"];
   work_items?: { layout?: TWorkItemLayout };

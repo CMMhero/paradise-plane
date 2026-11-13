@@ -110,7 +110,7 @@ export const settingsStrings = {
     ),
     notifications_roles: tab(
       "Defaults by role",
-      "Which notifications each position starts with. Staff and leaders are copied to an account when it is created; the director row applies to every director at once."
+      "Which notifications each position starts with. Staff and leaders are copied to an account when it is created; the director row applies to every director and secretary at once."
     ),
     notifications_preview: tab("Preview", "Every email the app sends, rendered with sample data. Nothing is sent."),
     modules_visibility: tab(
@@ -166,6 +166,10 @@ export const settingsStrings = {
     sending_chat: { title: "Chat" },
     sending_work: { title: "Work item email" },
     sending_assign: { title: "Assignments" },
+    sending_admin: {
+      title: "Super Admin emails",
+      hint: "Emails that only Super Admins receive, such as warnings about logs. They go to every active Super Admin, whatever their position.",
+    },
     schedule_reminders: { title: "Due date reminders" },
     schedule_summaries: { title: "Daily summaries" },
     schedule_content: { title: "What summaries show" },
@@ -360,6 +364,10 @@ export const settingsStrings = {
     EMAIL_ACTIVE_DAYS: {
       name: "Active within",
       help: "People who last used the app longer ago than this get no work item emails.",
+    },
+    ENABLE_ADMIN_RETENTION_EMAIL: {
+      name: "Warn before login history is deleted",
+      help: "Email every Super Admin a few days before the oldest sign-in history is deleted, so it can be exported first. The warning on the Retention tab always shows, and cleanup keeps running.",
     },
     ENABLE_TUGAS_KE_DM: {
       name: "Assignments to DM",
@@ -655,9 +663,9 @@ export const settingsStrings = {
     label: "Defaults by role",
     col_staf: "Staff (or no position)",
     col_pimpinan: "Leaders (supervisor, manager)",
-    col_direktur: "Directors",
+    col_direktur: "Directors and secretaries",
     direktur_note:
-      "Also a hard limit: anything off here is off for every director right away, whatever their own settings. Keep it to mentions, chat, and summaries.",
+      "Also a hard limit: anything off here is off for every director and secretary right away, whatever their own settings. Keep it to mentions, chat, and summaries.",
     admin_note:
       "A switch turned off on Sending rules or Schedule cannot be turned on by anyone; people see it greyed out as turned off by admin.",
   },

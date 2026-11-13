@@ -31,7 +31,9 @@ import {
   TINGKAT_DIREKTUR,
   TINGKAT_MANAGER,
   TINGKAT_MEMBER,
+  TINGKAT_SEKRETARIS,
   TINGKAT_SUPERVISOR,
+  menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
   type THierarkiResponse,
   type TOrangOrganisasi,
@@ -40,7 +42,13 @@ import {
 } from "@plane/services";
 import type { TGodmodeStrings } from "@/app/i18n/godmode";
 
-export const LAJUR_JENJANG = [TINGKAT_MEMBER, TINGKAT_SUPERVISOR, TINGKAT_MANAGER, TINGKAT_DIREKTUR] as const;
+export const LAJUR_JENJANG = [
+  TINGKAT_MEMBER,
+  TINGKAT_SUPERVISOR,
+  TINGKAT_MANAGER,
+  TINGKAT_SEKRETARIS,
+  TINGKAT_DIREKTUR,
+] as const;
 
 /** Akun terhapus (KEP-50) tidak boleh muncul atau diseret. */
 export const akunTerhapus = (email: string): boolean => email.toLowerCase().endsWith("@deleted.local");
@@ -186,7 +194,8 @@ export function rencanakan(
     };
   }
 
-  if (awal.tingkat >= TINGKAT_DIREKTUR) return rencanaTurunDirektur(awal, tujuan);
+  // Direktur dan sekretaris (KEP-101) sama-sama tanpa tempat: ditempatkan = diturunkan.
+  if (menjangkauSeluruhOrganisasi(awal.tingkat)) return rencanaTurunDirektur(awal, tujuan);
 
   if (tujuan.jenis === "departemen" && awal.tingkat >= TINGKAT_MANAGER)
     return rencanaManagerKeDepartemen(awal, asal, tujuan, mode, divisiDari);
@@ -363,7 +372,7 @@ function rencanaTurunKeDepartemen(
  */
 export const tingkatSesudahCabut = (tingkat: number, sisa: Pick<TPosisi, "departemen_ids" | "divisi_ids">): number =>
   tingkat >= TINGKAT_SUPERVISOR &&
-  tingkat < TINGKAT_DIREKTUR &&
+  !menjangkauSeluruhOrganisasi(tingkat) &&
   sisa.departemen_ids.length === 0 &&
   sisa.divisi_ids.length === 0
     ? TINGKAT_MEMBER
@@ -465,14 +474,16 @@ export function terapkanKePohon(pohon: TPohonOrganisasi, o: TAnggotaHierarki, p:
 export const namaJenjang = (t: number, s: TGodmodeStrings): string =>
   t >= TINGKAT_DIREKTUR
     ? s.members.level_director
-    : t >= TINGKAT_MANAGER
-      ? s.members.level_manager
-      : t >= TINGKAT_SUPERVISOR
-        ? s.members.level_supervisor
-        : s.members.level_staff;
+    : t >= TINGKAT_SEKRETARIS
+      ? s.members.level_secretary
+      : t >= TINGKAT_MANAGER
+        ? s.members.level_manager
+        : t >= TINGKAT_SUPERVISOR
+          ? s.members.level_supervisor
+          : s.members.level_staff;
 
 /** Orang tanpa departemen dan tanpa divisi (di bawah Direktur). */
 export const belumDitempatkan = (o: TAnggotaHierarki): boolean => {
   const p = posisiDari(o);
-  return p.tingkat < TINGKAT_DIREKTUR && p.departemen_ids.length === 0 && p.divisi_ids.length === 0;
+  return !menjangkauSeluruhOrganisasi(p.tingkat) && p.departemen_ids.length === 0 && p.divisi_ids.length === 0;
 };

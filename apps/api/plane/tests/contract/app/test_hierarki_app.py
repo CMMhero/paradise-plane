@@ -1599,7 +1599,7 @@ class TestPersetujuanSaatSelesai:
         assert not PersetujuanPenugasan.objects.filter(issue_id=issue_id).exists()
 
     @pytest.mark.django_db
-    def test_staf_bisa_mengubah_dan_menghapus_tanpa_persetujuan(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):
+    def test_staf_bisa_mengubah_dan_menghapus_tanpa_persetujuan(self, workspace, staf_a, divisi_a, jenjang, monkeypatch):  # noqa: E501
         monkeypatch.setenv(FLAG_GERBANG, "1")
         issue_id = self._buat(workspace, divisi_a, staf_a)
         mulai, _ = self._state(workspace, divisi_a)
@@ -1813,7 +1813,7 @@ class TestPersetujuanBerdasarkanJenjang:
         # bukan perpindahan ke selesai -> tidak diajukan
         assert selesai_perlu_persetujuan(divisi_a.id, super_admin, sedang, [super_admin.id]) is False
         # tugas yang sudah selesai tidak diajukan ulang
-        assert selesai_perlu_persetujuan(divisi_a.id, super_admin, selesai, [super_admin.id], sudah_selesai=True) is False
+        assert selesai_perlu_persetujuan(divisi_a.id, super_admin, selesai, [super_admin.id], sudah_selesai=True) is False  # noqa: E501
         # atasan menyelesaikan langsung
         assert selesai_perlu_persetujuan(divisi_a.id, bos_divisi_a, selesai, [bos_divisi_a.id]) is False
 
@@ -1882,3 +1882,40 @@ class TestStafMenambahRekanKeTugasYangAda:
         assert galat_ubah_tugas(divisi_a.id, tugas, actor=staf_a, mengubah_assignee=True, abaikan_katup=True) is None
         # staf yang tidak terlibat tetap ditolak
         assert galat_ubah_tugas(divisi_a.id, tugas, actor=staf_a2, mengubah_assignee=True, abaikan_katup=True)
+
+
+@pytest.mark.contract
+class TestAdminWorkspaceMenugaskan:
+    """13 Nov: admin workspace menugaskan siapa pun di project, seperti Super Admin."""
+
+    @pytest.mark.django_db
+    def test_admin_workspace_tanpa_jenjang_boleh_menugaskan_siapa_pun(
+        self, workspace, staf_a, staf_a2, divisi_a, jenjang
+    ):
+        admin = _buat_user("adminws", workspace, peran_workspace=20)
+        assert galat_penugasan(divisi_a.id, [staf_a.id, staf_a2.id], actor=admin, abaikan_katup=True) is None
+
+    @pytest.mark.django_db
+    def test_admin_project_biasa_TETAP_dibatasi(self, workspace, staf_a, staf_a2, divisi_a, jenjang):
+        """Role admin project Plane tidak memberi wewenang: hampir semua staf memilikinya."""
+        ProjectMember.objects.filter(project=divisi_a, member=staf_a).update(role=20)
+        assert galat_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a, abaikan_katup=True)
+
+    @pytest.mark.django_db
+    def test_anggota_workspace_biasa_TETAP_dibatasi(self, workspace, orang_luar, staf_a, divisi_a, jenjang):
+        assert galat_penugasan(divisi_a.id, [staf_a.id], actor=orang_luar, abaikan_katup=True)
+
+    @pytest.mark.django_db
+    def test_dropdown_admin_workspace_memuat_seluruh_anggota(
+        self, workspace, staf_a, staf_a2, bos_divisi_a, divisi_a, jenjang, monkeypatch
+    ):
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        admin = _buat_user("adminws2", workspace, peran_workspace=20)
+        ProjectMember.objects.create(project=divisi_a, member=admin, workspace=workspace, role=15)
+        response = _klien(admin).get(
+            f"/api/workspaces/{workspace.slug}/projects/{divisi_a.id}/persetujuan-penugasan/bisa-ditugaskan/"
+        )
+        assert response.status_code == status.HTTP_200_OK, response.content
+        assert response.json()["mode"] == "semua"
+        ids = set(response.json()["user_ids"])
+        assert {str(staf_a.id), str(staf_a2.id), str(bos_divisi_a.id)} <= ids

@@ -21,7 +21,8 @@ Keputusan user 2026-10-30, dipecah 2026-11-02 jadi tiga kelompok:
   laporan direktur (`direktur_digest_task`, ikhtisar per divisi). Sisanya dinyalakan sendiri.
 - Staf (atau jenjang belum diisi, mengikuti `tingkat_efektif`): ringkasan harian
   (hari ini, 7 hari ke depan, terlambat), keputusan persetujuan, tugas
-  selesai, dan tugas baru yang diberikan kepadanya (`assigned`). Pengingat per tugas (H-7..H+7) mati: ringkasan menggantikannya.
+  selesai, dan tugas baru yang diberikan kepadanya (`assigned`). Pengingat per tugas (H-7..H+7)
+  mati: ringkasan menggantikannya.
 
 Kenapa dihitung saat dibaca, bukan disimpan saat jabatan berubah: jabatan bisa
 berubah lewat lima jalur (God Mode, penempatan, organisasi, migrasi, `.update()`
@@ -120,20 +121,25 @@ BAWAAN_STAF = {
 
 # Kelompok tabel bawaan. "pimpinan" = leader (supervisor dan manager); namanya
 # dipertahankan karena sudah tersimpan di God Mode dan di potret `bawaan_email`.
+# Super Admin TIDAK punya baris sendiri (keputusan user 2026-11-06): ia mengikuti
+# jabatannya seperti orang lain. Email yang hanya diterima Super Admin diatur di
+# God Mode > Notifications > Sending rules (ENABLE_ADMIN_*).
 KELOMPOK_JABATAN = ("staf", "pimpinan", "direktur")
 
 
 def _kelompok_dari_tingkat(tingkat) -> str:
-    from plane.db.models import TINGKAT_DIREKTUR, TINGKAT_SUPERVISOR
+    from plane.db.models import TINGKAT_SUPERVISOR, menjangkau_seluruh_organisasi
 
     if tingkat is None or tingkat < TINGKAT_SUPERVISOR:
         return "staf"
-    return "direktur" if tingkat >= TINGKAT_DIREKTUR else "pimpinan"
+    # Sekretaris (KEP-101) memakai baris "direktur": jangkauannya sama, jadi kebijakan
+    # notifikasinya juga. Tidak ada baris bawaan keempat di God Mode.
+    return "direktur" if menjangkau_seluruh_organisasi(tingkat) else "pimpinan"
 
 
-def kelompok_massal(user_ids) -> dict:
-    """{user_id: kelompok} dengan satu kueri. Jabatan TERTINGGI di workspace mana pun,
-    karena preferensi notifikasi bersifat global."""
+def _kelompok_menurut_jabatan(user_ids) -> dict:
+    """{user_id: 'staf'|'pimpinan'|'direktur'} dengan satu kueri. Jabatan TERTINGGI di
+    workspace mana pun, karena preferensi notifikasi bersifat global."""
     from django.db.models import Max
 
     from plane.db.models import JabatanOrganisasi
@@ -148,6 +154,11 @@ def kelompok_massal(user_ids) -> dict:
     return {u: _kelompok_dari_tingkat(tertinggi.get(u)) for u in ids}
 
 
+def kelompok_massal(user_ids) -> dict:
+    """{user_id: kelompok} menurut jabatan, dengan satu kueri. Super Admin tidak istimewa."""
+    return _kelompok_menurut_jabatan(user_ids)
+
+
 def kelompok_jabatan(user_id) -> str:
     """'staf', 'pimpinan' (leader: supervisor/manager), atau 'direktur'."""
     return kelompok_massal([user_id])[user_id]
@@ -155,7 +166,7 @@ def kelompok_jabatan(user_id) -> str:
 
 def adalah_pimpinan(user_id) -> bool:
     """Supervisor ke atas di workspace MANA PUN. Preferensi email bersifat global."""
-    return kelompok_jabatan(user_id) != "staf"
+    return _kelompok_menurut_jabatan([user_id])[user_id] != "staf"
 
 
 def tabel_bawaan_sekarang() -> dict:

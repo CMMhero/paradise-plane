@@ -30,8 +30,10 @@ import {
   InstanceWorkspaceService,
   TINGKAT_DIREKTUR,
   TINGKAT_MANAGER,
+  TINGKAT_SEKRETARIS,
   TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
+  menjangkauSeluruhOrganisasi,
   type TInstanceMember,
   type TMemberUpdate,
   type TPilihanDepartemen,
@@ -55,6 +57,7 @@ const pilihanTingkat = (s: TGodmodeStrings): { value: string; label: string }[] 
   { value: String(TINGKAT_MEMBER), label: s.editor.position_member },
   { value: String(TINGKAT_SUPERVISOR), label: s.editor.position_supervisor },
   { value: String(TINGKAT_MANAGER), label: s.editor.position_manager },
+  { value: String(TINGKAT_SEKRETARIS), label: s.editor.position_secretary },
   { value: String(TINGKAT_DIREKTUR), label: s.editor.position_director },
 ];
 
@@ -469,7 +472,8 @@ function PenempatanBaca({
   pilihanDivisi: TPilihanDivisi[];
 }) {
   const { s, fill } = useGodmodeStrings();
-  if (tingkat >= TINGKAT_DIREKTUR) return null;
+  // Sekretaris dan direktur menjangkau seluruh perusahaan: tidak ditempatkan.
+  if (menjangkauSeluruhOrganisasi(tingkat)) return null;
   const namaDivisi = Object.fromEntries(pilihanDivisi.map((v) => [v.id, v.nama]));
   const depById = Object.fromEntries(pilihanDepartemen.map((d) => [d.id, d]));
   const deps = hierarki.departemen_ids ?? (hierarki.departemen_id ? [hierarki.departemen_id] : []);

@@ -25,6 +25,7 @@ import {
   calonAnggota,
   calonManager,
   cariDepartemen,
+  galatKode,
   kodeDariNama,
   type TAksiOrganisasi,
   type TPerintahKelola,
@@ -65,7 +66,8 @@ export function ModalKodeNama({
   // waktu nama dirapikan membingungkan orang yang sudah hafal kodenya.
   const [kodeManual, setKodeManual] = useState(kodeAwal !== "");
   const [sibuk, setSibuk] = useState(false);
-  const siap = kode.trim().length > 0 && nama.trim().length > 0 && !sibuk;
+  const kunciGalat = galatKode(kode);
+  const siap = kode.trim().length > 0 && nama.trim().length > 0 && !sibuk && !kunciGalat;
 
   const ubahNama = (nilai: string) => {
     setNama(nilai);
@@ -123,13 +125,15 @@ export function ModalKodeNama({
         <Field label={s.org.code}>
           <Input
             className="w-full uppercase"
-            maxLength={20}
             placeholder={s.org.code_placeholder}
             value={kode}
+            aria-invalid={kunciGalat ? true : undefined}
             onChange={(e) => ubahKode(e.target.value)}
           />
         </Field>
-        <p className="text-11 text-tertiary sm:col-span-2">{s.org.code_hint}</p>
+        <p className={`text-11 sm:col-span-2 ${kunciGalat ? "text-danger-primary" : "text-tertiary"}`}>
+          {kunciGalat ? s.org[kunciGalat] : s.org.code_hint}
+        </p>
         <button type="submit" hidden aria-hidden tabIndex={-1} />
       </form>
     </ParadiseModal>

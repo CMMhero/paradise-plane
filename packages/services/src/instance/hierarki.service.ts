@@ -14,13 +14,24 @@ import { APIService } from "../api.service";
 export const TINGKAT_MEMBER = 10;
 export const TINGKAT_SUPERVISOR = 20;
 export const TINGKAT_MANAGER = 30;
+/** Sekretaris (KEP-101): menjangkau seluruh organisasi seperti direktur, tapi satu anak tangga di bawahnya. */
+export const TINGKAT_SEKRETARIS = 35;
 export const TINGKAT_DIREKTUR = 40;
 
 export type TTingkat =
   | typeof TINGKAT_MEMBER
   | typeof TINGKAT_SUPERVISOR
   | typeof TINGKAT_MANAGER
+  | typeof TINGKAT_SEKRETARIS
   | typeof TINGKAT_DIREKTUR;
+
+/**
+ * True untuk sekretaris dan direktur: menjangkau semua divisi tanpa penempatan.
+ * Cermin `menjangkau_seluruh_organisasi` di `plane/db/models/hierarki.py`; batas
+ * "lintas organisasi" ditulis di sini saja, bukan `>= TINGKAT_DIREKTUR`.
+ */
+export const menjangkauSeluruhOrganisasi = (tingkat: number | null | undefined): boolean =>
+  tingkat != null && tingkat >= TINGKAT_SEKRETARIS;
 
 export type TAnggotaHierarki = {
   id: string;

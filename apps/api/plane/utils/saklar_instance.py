@@ -46,6 +46,13 @@ AUTO_DUE_DATE_ON_DONE = "AUTO_DUE_DATE_ON_DONE"
 ENABLE_EMAIL_BATCH = "ENABLE_EMAIL_BATCH"
 ENABLE_EMAIL_THREADING = "ENABLE_EMAIL_THREADING"
 ENABLE_EMAIL_ACTIVE_ONLY = "ENABLE_EMAIL_ACTIVE_ONLY"
+# Email yang HANYA diterima Super Admin (God Mode > Notifications > Super Admin
+# emails, keputusan user 2026-11-06). Satu kunci per jenis email admin-saja, agar
+# jenis baru tinggal menambah kunci di sini dan satu baris di layout God Mode.
+# - Peringatan retensi riwayat login (`login_activity_retention`): dikirim
+#   beberapa hari sebelum riwayat tertua dibuang. Mati = banner di God Mode tetap
+#   muncul, hanya emailnya yang tidak dikirim; pembersihan jalan terus.
+ENABLE_ADMIN_RETENTION_EMAIL = "ENABLE_ADMIN_RETENTION_EMAIL"
 # Aturan kerja (KEP-83, God Mode > Work rules). Keduanya SENSITIF: mengubahnya
 # lewat /api/instances/settings/ dengan frasa konfirmasi, dan tercatat di audit.
 # - Penolakan persetujuan wajib beralasan (app/views/issue/persetujuan.py). 1 =
@@ -127,6 +134,8 @@ SAKLAR_BAWAAN = {
     ENABLE_EMAIL_BATCH: "1",
     ENABLE_EMAIL_THREADING: "1",
     ENABLE_EMAIL_ACTIVE_ONLY: "1",
+    # Hidup: peringatan retensi sudah dikirim sebelum saklarnya ada.
+    ENABLE_ADMIN_RETENTION_EMAIL: "1",
     APPROVAL_REJECT_REASON_REQUIRED: "1",
     ASSIGN_DOWN_ONLY: "1",
     APPROVAL_PENDING_NOT_LATE: "1",

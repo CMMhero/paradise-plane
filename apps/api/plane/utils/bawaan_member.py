@@ -132,7 +132,7 @@ KUNCI_TEMA_PARADISE = (*GAYA_SAH, *SUARA_PABRIK)
 # bukan bawaan; Admin tetap diberikan per orang di halaman Member.
 PERAN_BAWAAN_SAH = frozenset({5, 15})
 # None = jabatan belum diisi (tetap dihitung staf oleh `tingkat_efektif`).
-# Direktur sengaja tidak bisa jadi bawaan: direktur tanpa penempatan menjangkau
+# Sekretaris dan direktur sengaja tidak bisa jadi bawaan (KEP-101): tanpa penempatan mereka menjangkau
 # seluruh perusahaan, jadi harus diberikan dengan sadar per orang.
 TINGKAT_BAWAAN_SAH = frozenset({None, 10, 20, 30})
 
@@ -159,7 +159,11 @@ PABRIK = {
         **SUARA_PABRIK,
     },
     # "pimpinan" = leader (supervisor, manager). Baris direktur juga batas atas.
-    "email": {"staf": dict(BAWAAN_STAF), "pimpinan": dict(BAWAAN_PIMPINAN), "direktur": dict(BAWAAN_DIREKTUR)},
+    "email": {
+        "staf": dict(BAWAAN_STAF),
+        "pimpinan": dict(BAWAAN_PIMPINAN),
+        "direktur": dict(BAWAAN_DIREKTUR),
+    },
     "keanggotaan": {"workspace_role": 15, "tingkat": 10},
     # Semua menu tersemat, project bertab, semua project tampil (permintaan user
     # 2 Nov 2026). Menu khusus admin tetap disaring izin di web.

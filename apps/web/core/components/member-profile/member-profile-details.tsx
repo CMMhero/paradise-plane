@@ -27,7 +27,7 @@ import { UserService } from "@/services/user.service";
 // local
 import { useMemberProfile } from "./use-member-profile";
 
-const TINGKAT_DIKENAL = new Set([10, 20, 30, 40]);
+const TINGKAT_DIKENAL = new Set([10, 20, 30, 35, 40]);
 
 // Sama dengan kunci SWR di `use-aturan-tugas.ts`, jadi status Super Admin diambil sekali per sesi.
 const OPSI_STATUS_SUPER_ADMIN: SWRConfiguration = {
@@ -73,14 +73,16 @@ export const MemberProfileDetails = observer(function MemberProfileDetails({
   if (error) return <p className={cn("text-12 text-tertiary", className)}>{t("profil_ui.load_failed")}</p>;
   if (isLoading || !profile) return <MemberProfileSkeleton className={className} />;
 
+  // Direktur dan sekretaris jabatannya melekat pada perusahaan, bukan pada divisi atau
+  // departemen, jadi barisnya tanpa tempat tetap harus tampil sebagai jenjang.
   const placements: TMemberProfilePlacement[] = profile.penempatan
-    .filter((p) => p.departemen || p.divisi)
     .map((p) => ({
-      key: `${p.departemen?.id ?? ""}-${p.divisi?.id ?? ""}`,
+      key: `${p.departemen?.id ?? ""}-${p.divisi?.id ?? ""}-${p.tingkat}`,
       division: p.divisi,
       department: p.departemen,
       levelLabel: TINGKAT_DIKENAL.has(p.tingkat) ? t(`profil_ui.level_${p.tingkat}`) : null,
-    }));
+    }))
+    .filter((p) => p.department || p.division || p.levelLabel);
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>

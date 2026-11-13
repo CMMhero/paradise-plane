@@ -33,9 +33,9 @@ memanggil `sinkronkan_satu` sesudahnya (akses project ikut).
 # Module imports
 from plane.db.models import (
     JabatanOrganisasi,
-    TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
+    TINGKAT_SEKRETARIS,
     TINGKAT_SUPERVISOR,
 )
 
@@ -52,11 +52,11 @@ def tingkat_sesudah_cabut(tingkat, dep_lama, div_lama, deps, divs):
     Supervisor dan manager yang dicabut dari tempat TERAKHIRNYA (tidak tersisa satu
     departemen atau divisi pun) jatuh ke Staf: tanpa tempat, tidak ada yang mereka
     awasi atau pimpin. Masih punya tempat lain mana pun = jenjang tetap. Direktur
-    tidak butuh tempat dan tidak pernah jatuh. Hanya PENCABUTAN yang memicu ini:
+    dan sekretaris (KEP-101) tidak butuh tempat dan tidak pernah jatuh. Hanya PENCABUTAN yang memicu ini:
     menyetel jenjang Manager sebelum diberi divisi tetap boleh.
     """
     dicabut = bool(set(dep_lama) - set(deps)) or bool(set(div_lama) - set(divs))
-    pimpinan = TINGKAT_SUPERVISOR <= tingkat < TINGKAT_DIREKTUR
+    pimpinan = TINGKAT_SUPERVISOR <= tingkat < TINGKAT_SEKRETARIS
     if pimpinan and dicabut and not deps and not divs:
         return TINGKAT_MEMBER
     return tingkat

@@ -9,8 +9,8 @@
  */
 
 import {
-  TINGKAT_DIREKTUR,
   TINGKAT_MANAGER,
+  menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
@@ -66,17 +66,17 @@ export type TPerintahKelola =
 export type TKelola = (perintah: TPerintahKelola) => void;
 
 /**
- * Calon manager divisi: siapa pun di bawah Direktur yang belum jadi manager di
+ * Calon manager divisi: siapa pun di bawah Sekretaris yang belum jadi manager di
  * sini. Penempatan ke divisi menaikkan jenjang ke Manager, jadi supervisor/staf
  * ikut jadi calon (tak perlu bolak-balik ke halaman Member).
  */
 export const calonManager = (orang: TAnggotaHierarki[], divisi: TDivisiOrganisasi): TAnggotaHierarki[] => {
   const sudah = new Set(divisi.manager.map((m) => m.id));
-  return orang.filter((o) => o.tingkat !== null && o.tingkat < TINGKAT_DIREKTUR && !sudah.has(o.id));
+  return orang.filter((o) => o.tingkat !== null && !menjangkauSeluruhOrganisasi(o.tingkat) && !sudah.has(o.id));
 };
 
 /**
- * Calon anggota departemen: semua jenjang di bawah Direktur yang belum di sini
+ * Calon anggota departemen: semua jenjang di bawah Sekretaris yang belum di sini
  * (KEP-76: manager boleh duduk di departemen di luar divisinya). Menambah tidak
  * memindahkan penempatan lamanya.
  */
@@ -101,7 +101,7 @@ export const calonAnggota = (
   // KEP-93: manager divisi ini sudah memimpin departemennya, bukan calon anggota.
   const memimpin = (o: TAnggotaHierarki) =>
     divisiId !== undefined && (o.tingkat ?? 0) >= TINGKAT_MANAGER && (o.divisi_ids ?? []).includes(divisiId);
-  return orang.filter((o) => (o.tingkat === null || o.tingkat < TINGKAT_DIREKTUR) && !sudah.has(o.id) && !memimpin(o));
+  return orang.filter((o) => !menjangkauSeluruhOrganisasi(o.tingkat) && !sudah.has(o.id) && !memimpin(o));
 };
 
 /** Departemen + divisi orang ini sekarang (semua barisnya), untuk penanda di daftar calon. */
@@ -142,7 +142,17 @@ export const cariDepartemen = (
   return undefined;
 };
 
-const KODE_MAKS = 20;
+/** Sama dengan BATAS_KODE di backend (organisasi.py) dan batas Project.identifier. */
+export const KODE_MAKS = 12;
+const POLA_KODE = /^[A-Z0-9-]+$/;
+
+/** Galat kode divisi/departemen: null = valid, selain itu kunci pesan. */
+export const galatKode = (kode: string): "code_invalid" | "code_too_long" | null => {
+  const k = kode.trim().toUpperCase();
+  if (k.length > KODE_MAKS) return "code_too_long";
+  if (k && !POLA_KODE.test(k)) return "code_invalid";
+  return null;
+};
 /** Kata sambung yang tak ikut jadi huruf kode ("Research and Development" -> RD). */
 const KATA_SAMBUNG = new Set(["and", "of", "the", "dan", "&", "untuk", "for"]);
 

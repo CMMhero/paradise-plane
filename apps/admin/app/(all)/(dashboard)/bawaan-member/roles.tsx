@@ -27,7 +27,7 @@ const memberService = new InstanceMemberService();
 type TEmailDefaults = TMemberDefaults["email"];
 type TGroup = keyof TEmailDefaults;
 
-// Staff, leaders (supervisor and manager), directors. The director column is also the cap.
+// Staff, leaders (supervisor and manager), directors (secretaries share this column). The director column is also the cap.
 const GROUPS: readonly TGroup[] = ["staf", "pimpinan", "direktur"];
 
 const isSame = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -98,7 +98,7 @@ export default function DefaultsByRolePage() {
               {t.reset}
             </Button>
           </div>
-          <div className="grid gap-6 rounded-card border border-subtle px-4 py-3 lg:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid gap-6 rounded-card border border-subtle px-4 py-3 lg:grid-cols-3">
             {GROUPS.map((group) => (
               <div key={group} className="space-y-1.5">
                 <span className="block text-11 font-medium text-secondary">{groupTitle[group]}</span>

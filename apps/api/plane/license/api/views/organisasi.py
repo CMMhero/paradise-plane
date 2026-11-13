@@ -50,10 +50,10 @@ from plane.db.models import (
     JabatanOrganisasi,
     Project,
     ProjectMember,
-    TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_NAMA,
+    menjangkau_seluruh_organisasi,
     User,
     Workspace,
 )
@@ -61,7 +61,9 @@ from plane.db.penempatan import penempatan_sekarang, setel_penempatan
 from plane.license.api.views.base import BaseAPIView
 from plane.utils.wiki_access import WIKI_IDENTIFIER
 
-BATAS_KODE = 20
+# Sama dengan batas Project.identifier (12): kode departemen jadi identifier project-nya.
+BATAS_KODE = 12
+POLA_KODE = re.compile(r"^[A-Z0-9-]+$")
 
 
 def _workspace_utama():
@@ -90,11 +92,13 @@ def _kode_nama(data, wajib):
     kode = (data.get("kode") or "").strip().upper() if "kode" in data or wajib else None
     nama = (data.get("nama") or "").strip() if "nama" in data or wajib else None
     if kode is not None and not kode:
-        return None, None, "kode is required."
+        return None, None, "Code is required."
     if kode is not None and len(kode) > BATAS_KODE:
-        return None, None, f"kode can be at most {BATAS_KODE} characters."
+        return None, None, f"Code can be at most {BATAS_KODE} characters."
+    if kode is not None and not POLA_KODE.match(kode):
+        return None, None, "Code may only contain letters, numbers and the - character."
     if nama is not None and not nama:
-        return None, None, "nama is required."
+        return None, None, "Name is required."
     return kode, nama, None
 
 
@@ -108,11 +112,11 @@ def _identifier_dari_kode(kode):
     """
     ident = (kode or "").replace("-", "").replace(" ", "").upper()
     if not ident:
-        return None, "kode does not leave a valid project identifier."
-    if len(ident) > 12:
-        return None, f"kode {kode} is too long for a project identifier (max 12 characters without dashes)."
+        return None, f"Department code {kode} must contain at least one letter or number."
+    if len(ident) > BATAS_IDENTIFIER:
+        return None, f"Department code {kode} is too long (max {BATAS_IDENTIFIER} characters without dashes)."
     if re.match(Project.FORBIDDEN_IDENTIFIER_CHARS_PATTERN, ident):
-        return None, f"kode {kode} contains characters not allowed in a project identifier."
+        return None, f"Department code {kode} contains characters that are not allowed."
     return ident, None
 
 
@@ -212,7 +216,7 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
 def pohon_organisasi(workspace):
     """Pohon divisi -> departemen -> project + project yang belum punya departemen."""
     projects = {
-        p.id: p for p in Project.objects.filter(workspace=workspace, deleted_at__isnull=True).only("id", "identifier", "name")
+        p.id: p for p in Project.objects.filter(workspace=workspace, deleted_at__isnull=True).only("id", "identifier", "name")  # noqa: E501
     }
     peta = {}
     for dep_id, pid in DepartemenProject.objects.filter(workspace=workspace).values_list("departemen_id", "project_id"):
@@ -234,8 +238,8 @@ def pohon_organisasi(workspace):
         }
         # Tempat yang BERLAKU menurut jenjang (lihat `project_penempatan`, KEP-76):
         # departemen berlaku untuk semua jenjang, divisi hanya untuk manager.
-        # Direktur menjangkau semuanya, jadi tidak didaftar di satu tempat.
-        if j.tingkat >= TINGKAT_DIREKTUR:
+        # Direktur dan sekretaris menjangkau semuanya, jadi tidak didaftar di satu tempat.
+        if menjangkau_seluruh_organisasi(j.tingkat):
             continue
         if j.divisi_id and j.tingkat >= TINGKAT_MANAGER:
             manager_div.setdefault(j.divisi_id, []).append(baris)
@@ -469,7 +473,7 @@ def _ganti_project(dep, project_ids):
     Project yang sebelumnya milik departemen LAIN dipindah ke sini (satu project
     tepat satu departemen). Project yang dikeluarkan jadi tanpa departemen.
     """
-    sekarang = {str(pid) for pid in DepartemenProject.objects.filter(departemen=dep).values_list("project_id", flat=True)}
+    sekarang = {str(pid) for pid in DepartemenProject.objects.filter(departemen=dep).values_list("project_id", flat=True)}  # noqa: E501
     for baris in DepartemenProject.objects.filter(departemen=dep):
         if str(baris.project_id) not in project_ids:
             baris.delete(soft=False)
@@ -524,7 +528,7 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
                 }
             )
         return Response(
-            {"project": {"id": str(project.id), "identifier": project.identifier, "name": project.name}, "anggota": hasil}
+            {"project": {"id": str(project.id), "identifier": project.identifier, "name": project.name}, "anggota": hasil}  # noqa: E501
         )
 
     def post(self, request):
@@ -537,14 +541,14 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
         if project is None:
             return Response({"error": "Project not found."}, status=400)
         if project.archived_at is not None:
-            return Response({"error": "An archived project cannot become a department. Unarchive it first."}, status=400)
+            return Response({"error": "An archived project cannot become a department. Unarchive it first."}, status=400)  # noqa: E501
         if DepartemenProject.objects.filter(project=project).exists():
             return Response({"error": f"{project.identifier} already has a department."}, status=400)
         divisi = Divisi.objects.filter(workspace=workspace, pk=request.data.get("divisi_id")).first()
         if divisi is None:
             return Response({"error": "Division not found."}, status=400)
 
-        data = {"kode": request.data.get("kode") or project.identifier, "nama": request.data.get("nama") or project.name}
+        data = {"kode": request.data.get("kode") or project.identifier, "nama": request.data.get("nama") or project.name}  # noqa: E501
         kode, nama, galat = _kode_nama(data, wajib=True)
         if galat:
             return Response({"error": galat}, status=400)

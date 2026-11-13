@@ -50,7 +50,9 @@ from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
+    TINGKAT_SEKRETARIS,
     TINGKAT_SUPERVISOR,
+    menjangkau_seluruh_organisasi,
     Departemen,
     Divisi,
     Issue,
@@ -71,7 +73,12 @@ from plane.utils.setelan_instance import DIGEST_WEEKDAYS, setelan_hari_kerja, zo
 
 logger = logging.getLogger("plane")
 
-NAMA_PERAN = {TINGKAT_SUPERVISOR: "Supervisor", TINGKAT_MANAGER: "Manager", TINGKAT_DIREKTUR: "Direktur"}
+NAMA_PERAN = {
+    TINGKAT_SUPERVISOR: "Supervisor",
+    TINGKAT_MANAGER: "Manager",
+    TINGKAT_SEKRETARIS: "Sekretaris",
+    TINGKAT_DIREKTUR: "Direktur",
+}
 
 # Celery dan Django berjalan di UTC. "Hari ini" dan "selesai hari ini" harus hari
 # kantor (OFFICE_TIMEZONE, God Mode > General > Company): tugas yang selesai
@@ -150,10 +157,10 @@ class TugasWorkspace:
 
 def _cakupan(user_id, workspace_id, tingkat, jumlah_project):
     """(cakupan, judul_tim) untuk baris peran dan judul bagian tim."""
-    if tingkat >= TINGKAT_DIREKTUR:
+    if menjangkau_seluruh_organisasi(tingkat):
         return "Seluruh divisi", "Seluruh divisi"
     if tingkat >= TINGKAT_MANAGER:
-        nama = list(Divisi.objects.filter(id__in=semua_divisi_ids(user_id, workspace_id)).values_list("nama", flat=True))
+        nama = list(Divisi.objects.filter(id__in=semua_divisi_ids(user_id, workspace_id)).values_list("nama", flat=True))  # noqa: E501
         judul = "Divisi Anda"
     else:
         nama = list(
@@ -200,7 +207,7 @@ def susun_ringkasan(user, workspace_id, data, hari_ini, bagian=None, sore=False)
     tingkat = tingkat_efektif(user.id, workspace_id)
     sendiri = [i for i in data.tugas if user.id in data.assignee[i.id]]
     diberikan = [
-        i for i in data.tugas if i.created_by_id == user.id and data.assignee[i.id] and user.id not in data.assignee[i.id]
+        i for i in data.tugas if i.created_by_id == user.id and data.assignee[i.id] and user.id not in data.assignee[i.id]  # noqa: E501
     ]
     # Daftar utuh tetap dipakai untuk mencegah tugas yang sama tampil lagi di bagian tim.
     sudah = {i.id for i in sendiri} | {i.id for i in diberikan}
@@ -209,7 +216,7 @@ def susun_ringkasan(user, workspace_id, data, hari_ini, bagian=None, sore=False)
 
     # Direktur: tanpa bagian tim. Ikhtisar divisinya datang lewat laporan direktur
     # (direktur_digest_task), angka saja, tanpa rincian staf (keputusan 2026-11-02).
-    pids = divisi_diawasi(user.id, workspace_id) if TINGKAT_SUPERVISOR <= tingkat < TINGKAT_DIREKTUR else set()
+    pids = divisi_diawasi(user.id, workspace_id) if TINGKAT_SUPERVISOR <= tingkat < TINGKAT_SEKRETARIS else set()
     cakupan, judul_tim = _cakupan(user.id, workspace_id, tingkat, len(pids))
     ringkasan = Ringkasan(
         peran=NAMA_PERAN.get(tingkat, "Staf"),

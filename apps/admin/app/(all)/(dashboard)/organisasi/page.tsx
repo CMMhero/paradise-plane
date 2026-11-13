@@ -28,7 +28,9 @@ import {
   InstanceOrganisasiService,
   TINGKAT_DIREKTUR,
   TINGKAT_MANAGER,
+  TINGKAT_SEKRETARIS,
   TINGKAT_SUPERVISOR,
+  menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
   type TPohonOrganisasi,
 } from "@plane/services";
@@ -170,11 +172,13 @@ export default function OrganisasiPage() {
         const namaJenjang =
           akhir >= TINGKAT_DIREKTUR
             ? s.members.level_director
-            : akhir >= TINGKAT_MANAGER
-              ? s.members.level_manager
-              : akhir >= TINGKAT_SUPERVISOR
-                ? s.members.level_supervisor
-                : s.members.level_staff;
+            : akhir >= TINGKAT_SEKRETARIS
+              ? s.members.level_secretary
+              : akhir >= TINGKAT_MANAGER
+                ? s.members.level_manager
+                : akhir >= TINGKAT_SUPERVISOR
+                  ? s.members.level_supervisor
+                  : s.members.level_staff;
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: fill(s.org.level_saved, { name: orang.display_name, level: namaJenjang }),
@@ -235,27 +239,29 @@ export default function OrganisasiPage() {
   const orang = (hierarki?.anggota ?? []).filter((o) => o.is_active && !akunTerhapus(o.email));
 
   const direktur = orang.filter((o) => o.tingkat !== null && o.tingkat >= TINGKAT_DIREKTUR);
+  const sekretaris = orang.filter(
+    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_SEKRETARIS && o.tingkat < TINGKAT_DIREKTUR
+  );
   const manager = orang.filter(
-    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_MANAGER && o.tingkat < TINGKAT_DIREKTUR
+    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_MANAGER && o.tingkat < TINGKAT_SEKRETARIS
   );
   const supervisor = orang.filter(
     (o) => o.tingkat !== null && o.tingkat >= TINGKAT_SUPERVISOR && o.tingkat < TINGKAT_MANAGER
   );
   const staf = orang.filter((o) => o.tingkat === null || o.tingkat < TINGKAT_SUPERVISOR);
-  const belum = orang.filter(
-    (o) => (o.tingkat === null || o.tingkat < TINGKAT_DIREKTUR) && !o.departemen_id && !o.divisi_id
-  );
+  const belum = orang.filter((o) => !menjangkauSeluruhOrganisasi(o.tingkat) && !o.departemen_id && !o.divisi_id);
   const totalDepartemen = data.divisi.reduce((n, v) => n + v.departemen.length, 0);
 
   return (
     <PageWrapper header={header}>
       <MenuTabs menu="people" />
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           <StatCard label={s.org.stat_division} value={data.divisi.length} />
           <StatCard label={s.org.stat_department} value={totalDepartemen} />
           <StatCard label={s.org.stat_project} value={semuaProject.length} />
           <StatCard label={s.org.stat_director} value={direktur.length} />
+          <StatCard label={s.org.stat_secretary} value={sekretaris.length} />
           <StatCard label={s.org.stat_manager} value={manager.length} />
           <StatCard label={s.org.stat_supervisor} value={supervisor.length} />
           <StatCard

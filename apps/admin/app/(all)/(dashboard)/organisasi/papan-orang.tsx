@@ -22,7 +22,14 @@ import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-d
 // plane imports
 import { Button } from "@plane/propel/button";
 import { Tabs } from "@plane/propel/tabs";
-import { TINGKAT_DIREKTUR, TINGKAT_MEMBER, TINGKAT_SUPERVISOR, type TPohonOrganisasi } from "@plane/services";
+import {
+  TINGKAT_DIREKTUR,
+  TINGKAT_MEMBER,
+  TINGKAT_SEKRETARIS,
+  TINGKAT_SUPERVISOR,
+  menjangkauSeluruhOrganisasi,
+  type TPohonOrganisasi,
+} from "@plane/services";
 import { CustomMenu, CustomSearchSelect, Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
@@ -127,8 +134,8 @@ function MenuOrang({ orangId, nama, asal, tingkat }: { orangId: string; nama: st
         </CustomMenu.MenuItem>
       )}
       {/* KEP-93: peran melekat pada tempat. Di departemen: ganti peran di sana saja.
-          Jenjang umum hanya Direktur (satu-satunya jenjang tanpa tempat). */}
-      {asal?.jenis === "departemen" && tingkat < TINGKAT_DIREKTUR && (
+          Jenjang umum hanya Sekretaris dan Direktur (jenjang tanpa tempat). */}
+      {asal?.jenis === "departemen" && !menjangkauSeluruhOrganisasi(tingkat) && (
         <CustomMenu.MenuItem
           onClick={() => {
             const lain = tingkat >= TINGKAT_SUPERVISOR ? TINGKAT_MEMBER : TINGKAT_SUPERVISOR;
@@ -141,17 +148,21 @@ function MenuOrang({ orangId, nama, asal, tingkat }: { orangId: string; nama: st
           })}
         </CustomMenu.MenuItem>
       )}
-      {tingkat >= TINGKAT_DIREKTUR ? (
+      {[TINGKAT_SEKRETARIS, TINGKAT_DIREKTUR]
+        .filter((t) => t !== tingkat)
+        .map((t) => (
+          <CustomMenu.MenuItem
+            key={t}
+            onClick={() => void eksekusi(orangId, asal, { jenis: "jenjang", tingkat: t }, false)}
+          >
+            {fill(s.org.board.menu_level, { level: namaJenjang(t, s) })}
+          </CustomMenu.MenuItem>
+        ))}
+      {menjangkauSeluruhOrganisasi(tingkat) && (
         <CustomMenu.MenuItem
           onClick={() => void eksekusi(orangId, asal, { jenis: "jenjang", tingkat: TINGKAT_MEMBER }, false)}
         >
-          {s.org.board.menu_remove_director}
-        </CustomMenu.MenuItem>
-      ) : (
-        <CustomMenu.MenuItem
-          onClick={() => void eksekusi(orangId, asal, { jenis: "jenjang", tingkat: TINGKAT_DIREKTUR }, false)}
-        >
-          {fill(s.org.board.menu_level, { level: namaJenjang(TINGKAT_DIREKTUR, s) })}
+          {fill(s.org.board.menu_remove_level, { level: namaJenjang(tingkat, s) })}
         </CustomMenu.MenuItem>
       )}
       {asal && (
@@ -190,7 +201,7 @@ export function ChipOrang({
   const bisa = orangById.has(orangId);
   const kunciAsal = asal ? `${asal.jenis}:${asal.id}` : "";
   // Hanya chip lajur Levels: direktur di daftar People sendiri tidak ikut turun saat dilepas di panelnya.
-  const direktur = ringkas && !asal && tingkat >= TINGKAT_DIREKTUR;
+  const direktur = ringkas && !asal && menjangkauSeluruhOrganisasi(tingkat);
 
   useEffect(() => {
     const el = ref.current;
@@ -290,7 +301,7 @@ export function PanelOrangPapan() {
         >
           {"asal" in lepas
             ? fill(s.org.board.drop_remove, { place: namaTempat(lepas.asal) })
-            : s.org.board.menu_remove_director}
+            : s.org.board.drop_remove_top}
         </span>
       )}
       <div className="flex items-center justify-between px-1">

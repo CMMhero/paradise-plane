@@ -120,8 +120,8 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
       label: m.col_edit,
       locked: true,
       srOnlyLabel: true,
-      headClassName: "w-12",
       sticky: true,
+      stickyWidth: 48,
       render: (r) => (
         <IconAction
           label={fill(m.edit_member, { name: r.display_name || r.email })}
@@ -134,6 +134,8 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
       key: "member",
       label: m.col_member,
       locked: true,
+      sticky: true,
+      stickyWidth: 280,
       className: "max-w-[280px]",
       sortValue: (r) => (r.display_name || r.email).toLowerCase(),
       render: (r) => (
