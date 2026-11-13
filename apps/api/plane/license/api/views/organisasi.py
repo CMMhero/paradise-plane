@@ -59,6 +59,7 @@ from plane.db.models import (
 )
 from plane.db.penempatan import penempatan_sekarang, setel_penempatan
 from plane.license.api.views.base import BaseAPIView
+from plane.utils.sinkron_departemen import nama_project_terpakai
 from plane.utils.wiki_access import WIKI_IDENTIFIER
 
 # Sama dengan batas Project.identifier (12): kode departemen jadi identifier project-nya.
@@ -71,15 +72,25 @@ def _workspace_utama():
 
 
 def _sinkron_wiki(workspace, actor):
-    """Folder Wiki mengikuti Divisi dan Departemen (2026-10-24, KEP-94).
+    """Turunan departemen mengikuti Divisi dan Departemen.
 
-    Gagalnya sinkron Wiki tidak boleh menggagalkan tulis organisasi yang
+    Nama project mengikuti nama departemennya (2026-11-12), lalu folder Wiki
+    (nama, induk, dan ikon project; KEP-94). Urutannya penting: ikon dan nama
+    folder dibaca dari keadaan yang sudah disamakan.
+
+    Gagalnya sinkron tidak boleh menggagalkan tulis organisasi yang
     sudah committed: struktur orang lebih penting daripada folder. Galatnya
-    dicatat lewat log, dan foldernya bisa dikejar manual/sync berikutnya.
+    dicatat lewat log, dan turunannya bisa dikejar manual/sync berikutnya.
     """
     try:
+        from plane.utils.sinkron_departemen import samakan_project_departemen  # noqa: PLC0415
         from plane.utils.wiki_mandiri import pastikan_folder_unit  # noqa: PLC0415
 
+        _, bentrok = samakan_project_departemen(workspace.id)
+        if bentrok:
+            import logging  # noqa: PLC0415
+
+            logging.getLogger("plane.api").warning("Nama project tidak bisa disamakan dengan departemen: %s", bentrok)
         pastikan_folder_unit(workspace.id)
     except Exception as exc:  # noqa: BLE001 -- lihat docstring kenapa ditelan
         from plane.utils.exception_logger import log_exception  # noqa: PLC0415
@@ -377,6 +388,19 @@ class InstanceDepartemenEndpoint(BaseAPIView):
             if divisi is None:
                 return Response({"error": "Division not found."}, status=400)
 
+        # Nama project ikut nama departemen, dan nama project unik per workspace.
+        if nama and nama != dep.nama:
+            milik_sendiri = DepartemenProject.objects.filter(departemen=dep).values_list("project_id", flat=True)
+            bentrok = nama_project_terpakai(dep.workspace_id, nama, kecuali_project_ids=milik_sendiri)
+            if bentrok is not None:
+                return Response(
+                    {
+                        "error": f"A project named {nama} already exists ({bentrok.identifier}). "
+                        "Rename or archive it first, or pick another department name."
+                    },
+                    status=400,
+                )
+
         project_ids = None
         if "project_ids" in request.data:
             diminta = request.data.get("project_ids")
@@ -554,6 +578,8 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
             return Response({"error": galat}, status=400)
         if Departemen.objects.filter(workspace=workspace, kode=kode).exists():
             return Response({"error": f"Department code {kode} is already in use."}, status=400)
+        if nama != project.name and nama_project_terpakai(workspace.id, nama, kecuali_project_ids=[project.id]):
+            return Response({"error": f"A project named {nama} already exists. Pick another name."}, status=400)
 
         diminta = request.data.get("member_ids") or []
         if not isinstance(diminta, list):

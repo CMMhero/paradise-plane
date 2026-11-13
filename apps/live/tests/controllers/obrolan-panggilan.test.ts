@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { ObrolanController } from "@/controllers/obrolan.controller";
 
 vi.mock("@plane/logger", () => ({

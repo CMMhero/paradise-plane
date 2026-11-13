@@ -181,7 +181,7 @@
     "approval": {
       "badge": {
         "pending": "Menunggu persetujuan",
-        "rejected": "Ditolak — perlu revisi",
+        "rejected": "Ditolak",
         "approved": "Disetujui"
       },
       "filter": {

@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+/* oxlint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- wrappers only stop click propagation; the dropdowns inside handle the keyboard */
 import { useCallback, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -38,6 +39,11 @@ export interface IIssueProperties {
     | undefined;
   className: string;
 }
+
+const handleEventPropagation = (e: React.MouseEvent) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
 
 export const DraftIssueProperties = observer(function DraftIssueProperties(props: IIssueProperties) {
   const { issue, updateIssue, className } = props;
@@ -122,18 +128,17 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
 
   if (!issue.project_id) return null;
 
-  const defaultLabelOptions = issue?.label_ids?.map((id) => labelMap[id]) || [];
+  const defaultLabelOptions =
+    issue?.label_ids?.flatMap((id) => {
+      const label = labelMap[id];
+      return label ? [label] : [];
+    }) || [];
 
   const minDate = getDate(issue.start_date);
   minDate?.setDate(minDate.getDate());
 
   const maxDate = getDate(issue.target_date);
   maxDate?.setDate(maxDate.getDate());
-
-  const handleEventPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
 
   return (
     <div className={className}>

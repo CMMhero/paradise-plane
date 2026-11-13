@@ -41,9 +41,9 @@ by hand:
 
 ```
 pnpm version:bump              # list versions, "!" marks drift
-pnpm version:bump patch        # 2.0.0 -> 2.0.1
-pnpm version:bump minor        # 2.0.0 -> 2.1.0
-pnpm version:bump major        # 2.0.0 -> 3.0.0
+pnpm version:bump patch        # 2.6.0 -> 2.6.1
+pnpm version:bump minor        # 2.6.0 -> 2.7.0
+pnpm version:bump major        # 2.6.0 -> 3.0.0 (user's call only)
 pnpm version:bump 2.3.0        # exact
 ```
 
@@ -51,24 +51,28 @@ pnpm version:bump 2.3.0        # exact
 `chore(release)` / `rilis x.y.z` commit or `CHANGELOG.md` entry), not against
 the last commit. Take the highest level that applies:
 
-| Bump      | When                                                                                                                                                                                                                                            | Commit signal                                |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| **MAJOR** | The deploy needs an operator step, or users lose something: a data migration that reshapes existing records, a removed page/menu/endpoint, a renamed or newly required env var, changed permissions semantics, a reorganised org/project model. | `feat!:` / `fix!:` / `BREAKING CHANGE:` body |
-| **MINOR** | A new user-visible feature, setting, page, endpoint, notification, or an additive migration (new table/column with a default). Old data and config keep working.                                                                                | `feat:`                                      |
-| **PATCH** | A bug fix, copy/i18n/style tweak, performance work, or refactor with no behaviour change.                                                                                                                                                       | `fix:` / `perf:` / `refactor:` / `style:`    |
-| none      | Only docs, tests, CI, or agent files. Nothing in the built images changes.                                                                                                                                                                      | `docs:` / `test:` / `ci:` / `chore:`         |
+| Bump      | When                                                                                                                                                                                                                                  | Commit signal                                             |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **MAJOR** | A major overhaul: the product is rebuilt or reorganised so much that it is effectively a new generation. Rare. Only on the user's explicit say-so. The line is 2.x today; 3.0.0 is the next overhaul.                                 | the user asks for it                                      |
+| **MINOR** | Major changes inside a generation: a substantial new feature, page or module, a permissions or role change, a data migration that reshapes existing records, or anything that needs an operator step. Old accounts keep working.      | `feat:` / `feat!:` / `BREAKING CHANGE:` body              |
+| **PATCH** | Minor changes: bug fixes, copy/i18n/style tweaks, performance work, refactors, and small additions (a sort order, an extra picker section, a new label). Additive migrations with a default also fit here when nothing else is large. | `fix:` / `perf:` / `refactor:` / `style:` / small `feat:` |
+| none      | Only docs, tests, CI, or agent files. Nothing in the built images changes.                                                                                                                                                            | `docs:` / `test:` / `ci:` / `chore:`                      |
+
+When two levels fit, take the lower one unless the change breaks something users
+had. `feat!:` marks a breaking commit, but it no longer forces a major: it means
+minor at least.
 
 Rules:
 
 - **Bump once per release, not once per commit.** Several `feat:` commits on one
   branch add up to a single minor bump. Unreleased work only escalates: if the
-  branch already bumped minor and a breaking change lands, move to the next
-  major. Never bump twice at the same level.
+  branch already bumped patch and a larger change lands, move to the next
+  minor. Never bump twice at the same level.
 - **A patch only follows a release.** `x.y.1` means `x.y.0` shipped and this
-  fixes it. The first version after a big change is always `x.0.0` or `x.y.0`.
+  fixes it. The first version after a big change is always `x.y.0`.
 - **Same pass:** bump, add a dated `### Versi x.y.z` entry at the top of
   `CHANGELOG.md` explaining why that level was chosen, and call out operator
-  steps for a major. After merge, tag `pX.Y.Z` (the `p` prefix keeps our tags
+  steps for a minor. After merge, tag `pX.Y.Z` (the `p` prefix keeps our tags
   apart from upstream `vX.Y.Z`).
 - Mark breaking commits with `!` (`feat(api)!: ...`) so the next bump can be read
   straight off `git log --oneline <last-release>..HEAD`.

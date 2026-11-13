@@ -1,6 +1,6 @@
 {
   "$schema": "https://v2-8-12.turborepo.dev/schema.json",
-  "globalDependencies": [".npmrc", ".oxfmtrc.json", ".oxlintrc.json"],
+  "globalDependencies": [".npmrc", "vite.config.ts"],
   "globalEnv": [
     "APP_VERSION",
     "DEV",
@@ -49,10 +49,12 @@
       "dependsOn": ["check:format", "check:lint", "check:types"]
     },
     "check:format": {
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": []
     },
     "check:lint": {
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": []
     },

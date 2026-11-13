@@ -266,7 +266,7 @@ class TestBawaanProject:
     def test_pabrik_dan_simpan(self, super_admin):
         response = _panggil(InstanceProjectDefaultsEndpoint, "get", super_admin)
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["network"] == 2
+        assert response.data["network"] == 0
         assert response.data["pabrik"] == bawaan_project.PABRIK
 
         response = _panggil(

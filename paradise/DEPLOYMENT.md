@@ -71,6 +71,25 @@ mengikuti `latest`.
 **Kalau nanti mau otomatis penuh**, `deploy.sh` sudah exit != 0 saat healthcheck
 gagal, jadi tinggal dipasang di cron (mis. `0 2 * * *`) tanpa perubahan kode.
 
+## Situs lain di proxy yang sama
+
+Proxy juga melayani situs di luar Task Tracker (sekarang `cipl-saipem`). Berkas
+situsnya ada di `paradise/sites/*.caddy`, diimpor oleh `apps/proxy/Caddyfile.ce`,
+dan folder itu di-mount ke proxy sebagai `/etc/caddy/sites`. Cara memasangnya dan
+yang tidak boleh dilakukan ada di [`sites/README.md`](sites/README.md).
+
+Hal yang perlu diingat saat deploy:
+
+- `deploy.sh` tidak menyentuh folder itu. Berkas `*.caddy` diabaikan git, jadi
+  `git pull` juga tidak.
+- Proxy tidak dibuat ulang oleh deploy biasa, jadi situs itu tidak ikut mati.
+  Satu-satunya pengecualian: deploy pertama sesudah perubahan ini, karena
+  Caddyfile dan mount-nya berubah. Itu membuat ulang SEMUA service sekali, jadi
+  lakukan di jam sepi.
+- Menempelkan `import` atau blok situs langsung ke Caddyfile di container yang
+  berjalan membuat deploy berikutnya membuat ulang proxy dan menghapus tempelan
+  itu. Selalu lewat folder.
+
 ## Scaling ~100 user
 
 Naikkan replika worker/web sesuai beban (env `*_REPLICAS` pada compose community),

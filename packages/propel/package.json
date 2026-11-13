@@ -1,6 +1,6 @@
 {
   "name": "@plane/propel",
-  "version": "4.0.0",
+  "version": "2.6.1",
   "private": true,
   "license": "AGPL-3.0",
   "type": "module",
@@ -53,13 +53,13 @@
     "./styles/react-day-picker": "./dist/styles/react-day-picker.css"
   },
   "scripts": {
-    "dev": "tsdown --watch --no-clean",
-    "build": "tsdown",
-    "check:lint": "oxlint --max-warnings=3605 .",
+    "dev": "vp pack --watch --no-clean",
+    "build": "vp pack",
+    "check:lint": "vp lint --max-warnings=99 .",
     "check:types": "tsc --noEmit",
-    "check:format": "oxfmt --check .",
-    "fix:lint": "oxlint --fix .",
-    "fix:format": "oxfmt .",
+    "check:format": "vp fmt --check .",
+    "fix:lint": "vp lint --fix .",
+    "fix:format": "vp fmt .",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf node_modules && rm -rf dist",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
@@ -93,7 +93,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "storybook": "catalog:",
-    "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

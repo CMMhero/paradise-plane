@@ -207,8 +207,18 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Staf boleh MENAMBAH rekan setingkat sedepartemen ke tugas yang sudah ada,
         # tidak boleh melepas siapa pun (keputusan user 2026-10-26).
+        # Super Admin lolos: ia boleh menugaskan siapa pun walau penempatannya
+        # berjenjang staf (sama dengan `galat_penugasan` dan `galat_ubah_tugas`).
+        # Tanpa ini ia ditolak "Staf hanya boleh mengajak rekan" di tugas mana pun.
+        from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
         self._staf_tambah_rekan = False
-        if _staf and self.instance is not None and "assignee_ids" in attrs:
+        if (
+            _staf
+            and self.instance is not None
+            and "assignee_ids" in attrs
+            and not (_actor is not None and is_super_admin(_actor))
+        ):
             from plane.utils.hierarki import galat_tambah_rekan  # noqa: PLC0415
 
             galat_rekan = galat_tambah_rekan(self.context.get("project_id"), self.instance, attrs["assignee_ids"], _actor)  # noqa: E501
@@ -419,6 +429,11 @@ class IssueCreateSerializer(BaseSerializer):
 
             catat_persetujuan(issue, actor=aktor_dari_context(self.context))
 
+        # Assignee anak ikut jadi assignee induknya (KEP-98).
+        from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
+
+        naikkan_assignee(issue.id)
+
         return issue
 
     def update(self, instance, validated_data):
@@ -493,6 +508,10 @@ class IssueCreateSerializer(BaseSerializer):
             from plane.utils.hierarki import batalkan_pengajuan_menunggu  # noqa: PLC0415
 
             batalkan_pengajuan_menunggu(tugas.id)
+        # Assignee atau induk berubah: assignee anak ikut naik ke induknya (KEP-98).
+        from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
+
+        naikkan_assignee(tugas.id)
         return tugas
 
 

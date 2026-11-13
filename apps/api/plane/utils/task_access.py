@@ -313,6 +313,31 @@ def tugas_disentuh_request(request, kwargs):
     return list(dict.fromkeys(ids))
 
 
+def terlibat_di_anak(issue_id, actor):
+    """True kalau actor pembuat atau assignee salah satu sub-work item LANGSUNG dari tugas ini.
+
+    Keputusan user 2026-11-12: staf yang sudah mengerjakan sebagian sebuah tugas
+    boleh menambah sub-work item di induknya, walau induk itu bukan buatan atau
+    tugasnya. Hanya untuk menambah anak (POST .../sub-issues/): judul, deskripsi,
+    dan assignee induk tetap hanya-lihat bagi mereka. Cerminan web:
+    `useTerlibatDiAnak`.
+    """
+    from django.db.models import Q  # noqa: PLC0415
+
+    from plane.db.models import Issue  # noqa: PLC0415
+
+    return Issue.issue_objects.filter(parent_id=issue_id).filter(
+        Q(created_by=actor) | Q(issue_assignee__assignee=actor, issue_assignee__deleted_at__isnull=True)
+    ).exists()
+
+
+def _induk_tambah_anak(request, kwargs):
+    """Id induk kalau request ini menambah anak ke tugas (POST .../sub-issues/), selain itu kosong."""
+    if request.method != "POST" or not request.path.rstrip("/").endswith("/sub-issues"):
+        return []
+    return _uuid_saja(kwargs.get("issue_id"))
+
+
 def galat_ubah_tugas_ids(issue_ids, actor):
     """Pesan galat pertama kalau actor tak boleh mengubah salah satu tugas, atau None."""
     from plane.utils.hierarki import galat_ubah_tugas, gerbang_aktif  # noqa: PLC0415
@@ -347,6 +372,13 @@ class KepemilikanTugasMixin:
         if not ids:
             return
         actor = request.user if getattr(request.user, "is_authenticated", False) else None
+        # Menambah anak: induknya cukup "saya terlibat di salah satu anaknya".
+        # Tugas yang ikut dipindah jadi anak (isi body) tetap dinilai penuh.
+        induk = _induk_tambah_anak(request, kwargs)
+        if induk and actor is not None and any(terlibat_di_anak(i, actor) for i in induk):
+            ids = [i for i in ids if i not in induk]
+            if not ids:
+                return
         galat = galat_ubah_tugas_ids(ids, actor)
         if galat:
             from rest_framework.exceptions import PermissionDenied  # noqa: PLC0415

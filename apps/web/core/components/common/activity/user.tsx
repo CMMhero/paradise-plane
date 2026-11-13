@@ -26,7 +26,7 @@ export const User = observer(function User(props: TUser) {
 
   return (
     <>
-      {customUserName || actorDetail?.display_name.includes("-intake") ? (
+      {customUserName || actorDetail?.display_name?.includes("-intake") ? (
         <span className="font-medium text-primary">{customUserName || "Sistem"}</span>
       ) : (
         <MemberProfileTrigger userId={actorDetail?.id}>

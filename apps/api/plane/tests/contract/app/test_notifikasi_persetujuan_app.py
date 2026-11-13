@@ -197,6 +197,53 @@ class TestNotifikasiDiputuskan:
         assert log.new_value == "disetujui"
 
     @pytest.mark.django_db
+    def test_setujui_memberitahu_rekan_assignee_juga(self, workspace, staf, bos, divisi, monkeypatch):
+        from plane.db.models import IssueAssignee
+
+        rekan = _buat_user("rekann", workspace)
+        ProjectMember.objects.create(project=divisi, member=rekan, workspace=workspace, role=15)
+        issue = _ajukan(staf, workspace, divisi, monkeypatch)
+        IssueAssignee.objects.create(issue=issue, assignee=rekan, project=divisi, workspace=workspace)
+        baris = PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").first()
+
+        res = _klien(bos).post(
+            URL_PUTUSKAN.format(slug=workspace.slug, project_id=divisi.id, pk=baris.id),
+            {"aksi": "setujui"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_200_OK, getattr(res, "data", None)
+
+        for penerima in (staf, rekan):
+            assert Notification.objects.filter(
+                receiver=penerima, entity_identifier=issue.id, sender="in_app:approval:decided"
+            ).count() == 1
+        # Yang memutuskan tidak mengabari dirinya sendiri.
+        assert not Notification.objects.filter(
+            receiver=bos, entity_identifier=issue.id, sender="in_app:approval:decided"
+        ).exists()
+
+    @pytest.mark.django_db
+    def test_setujui_tidak_menulis_aktivitas_status_ganda(self, workspace, staf, bos, divisi, monkeypatch):
+        from plane.db.models import IssueActivity, State
+
+        State.objects.create(name="Done", group="completed", project=divisi, workspace=workspace, sequence=90000)
+        issue = _ajukan(staf, workspace, divisi, monkeypatch)
+        baris = PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").first()
+
+        with mock.patch("plane.bgtasks.issue_activities_task.issue_activity.delay") as catat:
+            res = _klien(bos).post(
+                URL_PUTUSKAN.format(slug=workspace.slug, project_id=divisi.id, pk=baris.id),
+                {"aksi": "setujui"},
+                format="json",
+            )
+        assert res.status_code == status.HTTP_200_OK, getattr(res, "data", None)
+
+        # Log "approved" sudah mewakili selesainya tugas; baris "state -> Done"
+        # dan kartu "updated your work item" di sebelahnya hanya mengulang.
+        catat.assert_not_called()
+        assert IssueActivity.objects.filter(issue=issue, field="approval", verb="approved").count() == 1
+
+    @pytest.mark.django_db
     def test_tolak_membawa_alasan_ke_pemohon(self, workspace, staf, bos, divisi, monkeypatch):
         issue = _ajukan(staf, workspace, divisi, monkeypatch)
         baris = PersetujuanPenugasan.objects.filter(issue=issue, status="menunggu").first()

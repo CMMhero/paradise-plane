@@ -22,6 +22,7 @@ import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useWorkItemProperties } from "@/hooks/use-issue-properties";
 import { useSegarkanDetailTugas } from "@/hooks/use-segarkan-detail-tugas";
 import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
+import { pesanGalatServer } from "@/lib/pesan-galat-server";
 // local imports
 import type { TIssueOperations } from "../issue-detail";
 import { IssueView } from "./view";
@@ -87,11 +88,12 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
               fetchActivities(workspaceSlug, projectId, issueId);
               return;
             })
-            .catch((_error) => {
+            .catch((galat) => {
               setToast({
                 title: t("toast.error"),
                 type: TOAST_TYPE.ERROR,
-                message: t("entity.update.failed", { entity: t("issue.label", { count: 1 }) }),
+                message:
+                  pesanGalatServer(galat) ?? t("entity.update.failed", { entity: t("issue.label", { count: 1 }) }),
               });
             });
         }

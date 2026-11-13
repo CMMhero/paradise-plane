@@ -206,6 +206,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
         projectId={projectId}
         issueId={issueId}
         disabled={!isEditable || isArchived}
+        isArchived={isArchived}
         renderWidgetModals={!isPeekModeActive}
         issueServiceType={EIssueServiceType.ISSUES}
       />

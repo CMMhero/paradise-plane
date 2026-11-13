@@ -1,0 +1,66 @@
+{
+  "version": "2.5.0",
+  "date": "2026-11-09",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "A department's folder in the Wiki now lists that department's pages. You see the pages you could already open; private pages stay private."
+    },
+    {
+      "type": "Added",
+      "text": "Wiki search forgives typos and looks inside files and pages, not only titles, and shows where the words appear."
+    },
+    {
+      "type": "Added",
+      "text": "Preview text, Markdown, CSV, Excel and Word files in the Wiki without converting them to PDF."
+    },
+    {
+      "type": "Added",
+      "text": "The workspace Views page lists the department views you may open, with a cleaner list and a rebuilt create/edit form."
+    },
+    {
+      "type": "Changed",
+      "text": "The chat list sorts unread conversations first, then people who are online, then everyone else."
+    },
+    {
+      "type": "Changed",
+      "text": "Task cards in chat show the task title."
+    },
+    {
+      "type": "Added",
+      "text": "Filter work items by a created or updated date range."
+    },
+    {
+      "type": "Fixed",
+      "text": "After an update, a page that fails to load a stale file now recovers instead of staying blank."
+    },
+    {
+      "type": "Fixed",
+      "text": "A broken layout shows an error panel for that page instead of taking down the whole app."
+    },
+    {
+      "type": "Changed",
+      "text": "Under the hood: the backend moved to Django 5.2 and the tooling to Vite+. Nothing to do on your side."
+    },
+    {
+      "type": "Added",
+      "text": "A Refresh button in the header of every page. One click reloads what the screen is showing, such as work items and the approval queue, without reloading the page."
+    },
+    {
+      "type": "Changed",
+      "text": "Rejected work now shows a plain \"Rejected\" label instead of \"Rejected - needs revision\"."
+    },
+    {
+      "type": "Changed",
+      "text": "Super Admins get the login history retention warning once, then no more often than the interval set in God Mode (default 7 days, or match the retention period). A sudden jump in what is about to be deleted is still sent sooner."
+    },
+    {
+      "type": "Fixed",
+      "text": "The Modules selector in work item details is now the same height as the State selector."
+    },
+    {
+      "type": "Fixed",
+      "text": "The parent work item in work item details is a link you can click to open it, including on work items you can only view."
+    }
+  ]
+}

@@ -18,6 +18,7 @@ import logging
 from datetime import timedelta
 
 # Django imports
+from django.core.cache import cache
 from django.utils import timezone
 
 # Third party imports
@@ -39,6 +40,7 @@ from plane.utils.email_merek import (
     tanggal,
 )
 from plane.utils.saklar_instance import (
+    ADMIN_RETENTION_EMAIL_INTERVAL_DAYS,
     ENABLE_ADMIN_RETENTION_EMAIL,
     LOGIN_HISTORY_RETENTION_DAYS,
     saklar_aktif,
@@ -49,6 +51,18 @@ logger = logging.getLogger("plane.worker")
 
 # Berapa hari sebelum penghapusan peringatan mulai muncul.
 AMBANG_PERINGATAN_HARI = 7
+
+# Peringatan terus benar selama ada data yang akan dibuang, dan itu keadaan tetap
+# sesudah bulan ketiga: tiap hari ada baris yang masuk jendela 7 hari. Email
+# harian jadi gangguan yang akhirnya diabaikan. Jedanya diatur Super Admin di God
+# Mode (ADMIN_RETENTION_EMAIL_INTERVAL_DAYS, bawaan 7, 0 = ikut masa retensi);
+# angka yang melonjak tetap dikirim lebih cepat.
+# Lonjakan yang dianggap kabar baru: jumlah yang terancam sekurangnya segini kali
+# jumlah di email terakhir (misalnya retensi dipersingkat di God Mode).
+LONJAKAN_PELIPATAN = 2
+KUNCI_EMAIL_TERAKHIR = "retensi:email-peringatan-terakhir"
+# Penanda dibuang sendiri kalau task berhenti jalan; email berikutnya tetap sah.
+TTL_PENANDA_DETIK = 60 * 60 * 24 * 60
 
 # Sekali hapus berapa baris. Menghapus puluhan ribu baris dalam satu perintah
 # mengunci tabel cukup lama untuk terasa di aplikasi.
@@ -128,6 +142,33 @@ def susun_peringatan_retensi(keadaan, bahasa="id", email=""):
     return subjek, f"{p1}\n\n{s['p2']}\n\n{s['alasan']}\n", html
 
 
+def jeda_email_hari():
+    """Jeda antar email peringatan. 0 di God Mode = sama dengan masa retensi."""
+    jeda = setelan_angka(ADMIN_RETENTION_EMAIL_INTERVAL_DAYS)
+    return jeda if jeda > 0 else setelan_angka(LOGIN_HISTORY_RETENTION_DAYS)
+
+
+def perlu_kirim_email(terakhir, keadaan, sekarang=None, jeda_hari=None):
+    """Murni: apakah email peringatan hari ini layak dikirim.
+
+    `terakhir` = {"pada": datetime, "jumlah": int} dari email sebelumnya, atau None.
+    `jeda_hari` = pengaturan God Mode (bawaan dari setelan). Kirim kalau belum
+    pernah, sudah `jeda_hari` hari, atau jumlah yang
+    terancam melonjak (dan sudah lewat sehari, supaya tidak berulang pada hari
+    yang sama).
+    """
+    if not terakhir:
+        return True
+    sekarang = sekarang or timezone.now()
+    if jeda_hari is None:
+        jeda_hari = jeda_email_hari()
+    lewat = sekarang - terakhir["pada"]
+    if lewat >= timedelta(days=jeda_hari):
+        return True
+    sebelumnya = max(terakhir.get("jumlah", 0), 1)
+    return lewat >= timedelta(days=1) and keadaan["akan_dibuang"] >= sebelumnya * LONJAKAN_PELIPATAN
+
+
 def _kirim_email_peringatan(keadaan):
     """Email ke semua instance admin, masing-masing dalam bahasanya. Diam kalau SMTP belum jalan.
 
@@ -170,7 +211,21 @@ def bersihkan_login_activity():
     terkirim = 0
     if keadaan["perlu_peringatan"]:
         try:
-            terkirim = _kirim_email_peringatan(keadaan)
+            terakhir = cache.get(KUNCI_EMAIL_TERAKHIR)
+            if perlu_kirim_email(terakhir, keadaan):
+                terkirim = _kirim_email_peringatan(keadaan)
+                if terkirim:
+                    cache.set(
+                        KUNCI_EMAIL_TERAKHIR,
+                        {"pada": timezone.now(), "jumlah": keadaan["akan_dibuang"]},
+                        TTL_PENANDA_DETIK,
+                    )
+            else:
+                logger.info(
+                    "Retensi: email peringatan dikirim %s, ditahan sampai jeda %s hari lewat",
+                    terakhir["pada"],
+                    jeda_email_hari(),
+                )
         except Exception:
             # SMTP patah tidak boleh menghentikan pembersihan, kalau tidak,
             # tabel tumbuh selamanya karena email tidak bisa dikirim.

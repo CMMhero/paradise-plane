@@ -1120,7 +1120,8 @@ class TestPersetujuanPenugasan:
         assert baris["status"] == "menunggu"
         penyetuju = {p["id"] for p in baris["penyetuju_di_divisi"]}
         assert str(bos_divisi_a.id) in penyetuju
-        assert str(direktur.id) in penyetuju
+        # 12 Nov 2026 (KEP-98): tugas buatan staf tidak diputuskan direktur.
+        assert str(direktur.id) not in penyetuju
         assert str(staf_a.id) not in penyetuju, "pemohon bukan penyetujunya sendiri"
 
         sebagai_pemohon = _klien(staf_a).get(

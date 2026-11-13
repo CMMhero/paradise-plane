@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { settingsStrings } from "@/app/i18n/godmode-settings";
 import { MENU_TABS } from "@/components/common/menu-tree";
 import { buildPaletteEntries, searchPalette, settingAnchor } from "@/components/command-palette/entries";

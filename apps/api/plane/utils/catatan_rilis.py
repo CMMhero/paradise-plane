@@ -47,6 +47,18 @@ JENIS_ENTRI = ("Added", "Changed", "Fixed")
 # Kunci advisory lock: angka tetap, cukup unik untuk satu aplikasi.
 KUNCI_ADVISORY = 7_022_026_110_3
 
+# Rilis yang dulu bernomor lain (12 Nov 2026, skema versi dibenahi). Kartu yang
+# sudah terbit di tiap workspace memakai nomor lama; tanpa peta ini idempotensi
+# tidak mengenalinya dan kanal menerima kartu ganda, sementara kartu lama
+# menggantung dengan nomor yang sudah tidak ada. Isi kartunya dikoreksi
+# `selaraskan` dari berkas catatan versi baru.
+VERSI_DINOMORI_ULANG = {
+    "3.0.0": "2.3.0",
+    "4.0.0": "2.4.0",
+    "4.1.0": "2.5.0",
+    "4.2.0": "2.6.0",
+}
+
 
 def urai_versi(teks: str) -> tuple:
     try:
@@ -111,10 +123,7 @@ def terbitkan(versi_kini: str = None, folder: Path = FOLDER_CATATAN) -> int:
             kursor.execute("SELECT pg_advisory_xact_lock(%s)", [KUNCI_ADVISORY])
         for ws_id in Workspace.objects.values_list("id", flat=True):
             kanal = pastikan_kanal_sistem(ws_id)[KUNCI_CHANGELOG]
-            sudah = {
-                p.muatan.get("versi"): p
-                for p in PesanLangsung.objects.filter(ruang=kanal, jenis=JenisPesan.CHANGELOG).only("id", "muatan")
-            }
+            sudah = kartu_terbit(kanal)
             for c in catatan:
                 lama = sudah.get(c["versi"])
                 if lama is not None:
@@ -129,6 +138,25 @@ def terbitkan(versi_kini: str = None, folder: Path = FOLDER_CATATAN) -> int:
                     PesanLangsung.objects.filter(pk=pesan.pk).update(created_at=waktu)
                 jumlah += 1
     return jumlah
+
+
+def kartu_terbit(kanal) -> dict:
+    """{versi: pesan} untuk kartu Changelog yang sudah ada, nomor lama dipetakan ke yang baru.
+
+    Kalau nomor baru sudah punya kartu sendiri, kartu bernomor lama dibiarkan:
+    tidak ada yang ditimpa.
+    """
+    kartu = {}
+    lama = {}
+    for p in PesanLangsung.objects.filter(ruang=kanal, jenis=JenisPesan.CHANGELOG).only("id", "muatan"):
+        versi = p.muatan.get("versi")
+        if versi in VERSI_DINOMORI_ULANG:
+            lama[VERSI_DINOMORI_ULANG[versi]] = p
+        else:
+            kartu[versi] = p
+    for baru, pesan in lama.items():
+        kartu.setdefault(baru, pesan)
+    return kartu
 
 
 def selaraskan(pesan, catatan: dict, batas: tuple) -> None:

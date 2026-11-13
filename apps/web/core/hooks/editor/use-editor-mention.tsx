@@ -73,7 +73,32 @@ export const useEditorMention = (args: TArgs) => {
         const { sections } = updateAdditionalSections({
           response: res,
         });
-        return [...getEveryoneSection(query), ...suggestionSections, ...sections];
+        // Orang di luar departemen: ditampilkan sebagai penanda abu-abu, tidak bisa dipilih.
+        const outside = res.user_mention_di_luar ?? [];
+        const outsideSections: TMentionSection[] =
+          outside.length > 0
+            ? [
+                {
+                  key: "users-outside",
+                  title: t("rujukan_ui.section_outside"),
+                  items: outside.map((user) => ({
+                    icon: (
+                      <Avatar
+                        className="flex-shrink-0"
+                        src={getFileURL(user.member__avatar_url)}
+                        name={user.member__display_name}
+                      />
+                    ),
+                    id: `outside-${user.member__id}`,
+                    entity_identifier: user.member__id,
+                    entity_name: "user_mention",
+                    isDisabled: true,
+                    title: user.member__display_name,
+                  })),
+                },
+              ]
+            : [];
+        return [...getEveryoneSection(query), ...suggestionSections, ...sections, ...outsideSections];
       } catch (error) {
         console.error("Error in fetching mentions:", error);
         throw error;

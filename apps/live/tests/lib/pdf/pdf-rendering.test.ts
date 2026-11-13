@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "vite-plus/test";
 import { PDFParse } from "pdf-parse";
 import { renderPlaneDocToPdfBuffer } from "@/lib/pdf";
 import type { TipTapDocument, PDFExportMetadata } from "@/lib/pdf";

@@ -199,6 +199,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                         projectId={projectId}
                         issueId={issueId}
                         disabled={disabled || is_archived}
+                        isArchived={is_archived}
                         issueServiceType={EIssueServiceType.ISSUES}
                       />
                     </div>
@@ -243,6 +244,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                             projectId={projectId}
                             issueId={issueId}
                             disabled={disabled}
+                            isArchived={is_archived}
                             issueServiceType={EIssueServiceType.ISSUES}
                           />
                         </div>

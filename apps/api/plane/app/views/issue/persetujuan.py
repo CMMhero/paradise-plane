@@ -53,6 +53,7 @@ from plane.db.models import TINGKAT_SUPERVISOR
 from plane.utils.hierarki import (
     boleh_memutuskan,
     calon_penyetuju,
+    direktur_ikut_memutuskan,
     gerbang_aktif,
     peta_tingkat,
     saring_penyetuju,
@@ -130,17 +131,24 @@ class _Wewenang:
     def _sah_untuk(self, baris):
         """Calon penyetuju yang sah untuk pemohon baris ini (`saring_penyetuju`).
 
-        Pengajuan staf: daftar project apa adanya, tanpa kueri tambahan. Pengajuan
-        atasan (APPROVAL_REQUIRED_BELOW_LEVEL dinaikkan, KEP-83): hanya yang lebih
-        tinggi dari pemohon, dan "boleh" dihitung ulang dari daftar yang tersaring.
+        Pengajuan staf untuk tugas buatan manager ke atas: daftar project apa
+        adanya, tanpa kueri tambahan. Pengajuan atasan (APPROVAL_REQUIRED_BELOW_LEVEL
+        dinaikkan, KEP-83) hanya yang lebih tinggi dari pemohon, dan direktur hanya
+        ikut untuk tugas buatan manager ke atas; "boleh" dihitung ulang dari daftar
+        yang tersaring.
         """
         calon, boleh = self._hitung(baris.workspace_id, baris.project_id)
         peta = self._peta[(str(baris.workspace_id), str(baris.project_id))]
         tingkat_pemohon = peta.get(baris.pemohon_id)
-        if tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR:
+        pembuat_id = baris.issue.created_by_id if baris.issue_id else None
+        if (tingkat_pemohon is None or tingkat_pemohon < TINGKAT_SUPERVISOR) and direktur_ikut_memutuskan(
+            peta, pembuat_id
+        ):
             return calon, boleh
         calon_ids = {c["id"] for c in calon}
-        sah = saring_penyetuju([uid for uid in peta if str(uid) in calon_ids], peta, baris.pemohon_id)
+        sah = saring_penyetuju(
+            [uid for uid in peta if str(uid) in calon_ids], peta, baris.pemohon_id, pembuat_id
+        )
         sah_str = {str(uid) for uid in sah}
         tersaring = [c for c in calon if c["id"] in sah_str]
         return tersaring, boleh_memutuskan(self.user, baris.workspace_id, baris.project_id, penyetuju=sah)
@@ -163,9 +171,13 @@ def _serial(baris, peran, boleh_memutuskan, penyetuju=None):
     hitung di sini, cukup untuk balasan satu baris (POST).
     """
     if penyetuju is None:
+        peta = peta_tingkat(baris.workspace_id, baris.project_id)
+        pembuat_id = baris.issue.created_by_id if baris.issue_id else None
         penyetuju = [
-            {"id": str(uid), "tingkat": tingkat_anggota(uid, baris.workspace_id, baris.project_id)}
-            for uid in calon_penyetuju(baris.workspace_id, baris.project_id)
+            {"id": str(uid), "tingkat": peta.get(uid)}
+            for uid in saring_penyetuju(
+                calon_penyetuju(baris.workspace_id, baris.project_id, peta=peta), peta, baris.pemohon_id, pembuat_id
+            )
         ]
     return {
         "id": str(baris.id),
@@ -204,8 +216,13 @@ def _serial(baris, peran, boleh_memutuskan, penyetuju=None):
     }
 
 
-def _pindahkan_tugas(aktor, issue, tujuan):
-    """Ganti status tugas dan catat aktivitasnya atas nama `aktor`."""
+def _pindahkan_tugas(aktor, issue, tujuan, catat=True):
+    """Ganti status tugas dan (kalau `catat`) catat aktivitasnya atas nama `aktor`.
+
+    `catat=False` dipakai persetujuan: baris log "approved" sudah menjelaskan
+    bahwa tugas selesai. Baris "set state to Done" di sebelahnya, kartu obrolan
+    "updated your work item", dan notifikasi inbox-nya hanya mengulang hal yang sama.
+    """
     import json  # noqa: PLC0415
 
     from django.core.serializers.json import DjangoJSONEncoder  # noqa: PLC0415
@@ -215,6 +232,8 @@ def _pindahkan_tugas(aktor, issue, tujuan):
     lama = issue.state_id
     issue.state = tujuan
     issue.save(update_fields=["state", "completed_at", "updated_at"])
+    if not catat:
+        return
     issue_activity.delay(
         type="issue.activity.updated",
         requested_data=json.dumps({"state_id": str(tujuan.id)}, cls=DjangoJSONEncoder),
@@ -590,7 +609,7 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
             return
         if setelan_angka(APPROVAL_FINISH_TIME) == SELESAI_SAAT_DIAJUKAN:
             issue._completed_at_override = baris.created_at
-        _pindahkan_tugas(request.user, issue, selesai)
+        _pindahkan_tugas(request.user, issue, selesai, catat=False)
 
     def _kembalikan_tugas(self, request, baris):
         """Tolak: kembalikan tugas ke In Progress supaya staf mengerjakannya lagi.

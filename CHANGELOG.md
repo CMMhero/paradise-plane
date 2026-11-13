@@ -6,12 +6,147 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-12
+
+### Versi 2.6.1
+
+- **Naik 2.6.0 ke 2.6.1, patch.** Perbaikan dan penyempurnaan kecil, tanpa
+  migrasi dan tanpa variabel env baru. Langkah operator: tidak ada. Bersamaan
+  dengan ini skema versi diganti (lihat poin berikutnya), jadi nomor rilis
+  lama dinomori ulang.
+- **Skema versi diperbaiki dan riwayat dinomori ulang.** Patch (x.y.Z) untuk
+  perubahan kecil, minor (x.Y.0) untuk perubahan besar, major (X.0.0) hanya
+  untuk perombakan besar. Rilis yang dulu bernomor 3.0.0, 4.0.0, 4.1.0, dan
+  4.2.0 kini 2.3.0, 2.4.0, 2.5.0, dan 2.6.0 (2.3.0 lama tidak pernah dirilis
+  sendiri dan menyatu ke 3.0.0). Kartu Changelog yang sudah terbit di tiap
+  workspace ikut dinomori ulang oleh `catatan_rilis.terbitkan` saat API
+  menyala, tanpa kartu ganda. Tag git `p3.0.0`..`p4.2.0` diganti
+  `p2.4.0`..`p2.6.0`. Aturan baru ada di AGENTS.md > Versioning.
+- **Persetujuan tidak lagi meninggalkan baris status ganda.** Saat atasan
+  menyetujui, log aktivitas hanya mencatat "approved". Baris "set state to
+  Done", kartu chat "updated your work item", dan notifikasi inbox yang
+  mengulang hal yang sama tidak dibuat lagi. Penolakan tetap mencatat
+  perpindahan statusnya.
+- **Keputusan persetujuan sampai ke semua assignee.** Dulu hanya pemohon yang
+  menerima email dan kartu "approved"/"rejected"; rekan sesama assignee tidak.
+  Kini pemohon dan semua assignee tugas itu (kecuali yang memutuskan).
+- **Pemilih @ menampilkan orang di luar departemen.** Muncul abu-abu di bagian
+  "Outside this department" dan tidak bisa dipilih, jadi nama rekan yang tidak
+  sedepartemen tidak lagi terkesan hilang. Hanya muncul setelah mengetik.
+- **Pemilih induk mengutamakan work item yang sudah punya sub-item.** Berlaku
+  di form buat work item dan di detail work item.
+- **Super Admin bisa mengatur assignee di tugas mana pun** tanpa ditolak
+  "Staf hanya boleh mengajak rekan", dan toast gagal-ubah menampilkan alasan
+  dari server.
+
+### Versi 2.6.0
+
+- **Naik 2.5.0 ke 2.6.0, minor (dulu bernomor 4.2.0).** Fitur dan aturan baru yang kelihatan
+  pengguna, plus satu migrasi data (0174, tanpa skema). Tidak ada data yang
+  dibentuk ulang, tidak ada variabel env baru, jadi bukan major. Langkah
+  operator: tidak wajib. Satu hal perlu dicek: bawaan visibilitas project di
+  God Mode (Defaults > Project) yang SUDAH pernah disimpan tetap menang atas
+  bawaan pabrik baru. Kalau tersimpan "Public", ubah ke "Private" sekali.
+- **Assignee anak naik ke induk dan module (KEP-98).** Orang yang ditugaskan
+  di sub-work item otomatis jadi assignee induknya (berantai ke kakek) dan
+  anggota module tempat tugas-tugas itu berada, termasuk module milik induk.
+  Hanya menambah: melepas assignee dari anak tidak mencabutnya dari induk.
+  Dipanggil dari serializer buat/ubah tugas (web dan API v1), tambah sub-work
+  item, dan tambah tugas ke module. Tidak melewati gerbang penugasan karena
+  ini turunan dari penugasan anak yang sudah lolos. Kode:
+  `plane/utils/naik_assignee.py`. Data lama tidak diisi ulang.
+- **Menambah sub-work item di induk milik orang lain.** Staf yang pembuat atau
+  assignee salah satu anak sebuah tugas kini boleh menambah sub-work item di
+  induknya. Sebelumnya `POST .../sub-issues/` ditolak 403 karena induknya
+  bukan buatan atau tugasnya, sehingga orang harus membuat tugas baru lalu
+  mengisi induknya lewat formulir. Hanya menambah anak: judul, deskripsi, dan
+  assignee induk tetap hanya-lihat, dan tugas yang dijadikan anak tetap harus
+  milik sendiri. Server: `terlibat_di_anak` di `utils/task_access.py`; web:
+  `useTerlibatDiAnak` dan prop `subIssueDisabled` di widget work item.
+- **Project dan departemen baru privat.** Bawaan pabrik visibilitas project
+  jadi Private, dan project yang dibuat dari departemen (God Mode) ikut
+  bawaan itu, tidak lagi Public karena default kolom.
+- **Direktur hanya untuk tugas buatan manager ke atas.** Pengajuan
+  persetujuan selesai untuk tugas biasa (dibuat supervisor, staf, atau tanpa
+  pembuat) tidak lagi muncul di direktur: tidak di antrean, widget Needs
+  attention, Dashboard Divisi, notifikasi, maupun pengingat tenggat, dan POST
+  setuju/tolak dari direktur ditolak 403. Pembuat TUGAS yang dihitung, bukan
+  pemohon. Satu aturan di `saring_penyetuju` dan `pengajuan_boleh_diputuskan`
+  (kunci pengajuan kini `(project, pemohon, pembuat)`). Divisi tanpa atasan
+  sama sekali tetap jatuh ke Super Admin, bukan ke direktur.
+- **Departemen, project, dan folder Wiki satu kesatuan.** Mengganti nama
+  departemen di God Mode kini mengganti nama project-nya, dan folder Wiki
+  departemen membawa ikon project-nya (ikon pilihan tangan di folder itu tidak
+  disimpan lagi). Nama yang sudah dipakai project lain ditolak 400 sebelum
+  disimpan. Identifier project (kode di nomor tugas) sengaja tidak ikut kode
+  departemen. Migrasi 0174 menyamakan data yang sudah ada; nama yang bentrok
+  dilewati.
+
+## 2026-11-09
+
+### Versi 2.5.0
+
+- **Naik 2.4.0 ke 2.5.0, minor (dulu bernomor 4.1.0).** Ada fitur baru yang kelihatan pengguna
+  (halaman departemen dan pencarian isi di Wiki, pratinjau berkas, halaman
+  Views workspace, kolom persetujuan) dan satu migrasi tambahan (0172, dua
+  kolom berisi nilai bawaan, ekstensi `pg_trgm`, dua indeks). Tidak ada data
+  yang dibentuk ulang dan tidak ada variabel env baru, jadi bukan major.
+  Langkah operator: tidak wajib. Materi Wiki lama baru ikut pencarian isi
+  setelah `docker exec api python manage.py wiki_indeks_ulang` dijalankan
+  sekali; unggahan baru terindeks sendiri.
+- **Susulan di versi yang sama (9 Nov).** Menyusul rilis awal 4.1.0, perubahan
+  berikut ikut 4.1.0 atas keputusan user (versi tidak dinaikkan). Tanpa
+  migrasi, tanpa variabel env baru, tanpa langkah operator.
+- **Tombol segarkan.** Ada di header semua halaman. Satu klik menjalankan
+  ulang semua data SWR yang sedang dipakai layar (daftar work item, antrean
+  persetujuan, lencana) tanpa memuat ulang halaman. Komponen:
+  `core/components/common/refresh-button.tsx`.
+- **Email peringatan retensi tidak lagi harian, dan jedanya diatur Super
+  Admin.** Sesudah bulan ketiga selalu ada baris di jendela 7 hari, jadi
+  peringatan menyala tiap hari selamanya. Kini jedanya setelan God Mode
+  `ADMIN_RETENTION_EMAIL_INTERVAL_DAYS` (Notifications > Sending, bawaan 7
+  hari, 1 sampai 365; **0 = ikut masa retensi riwayat login**, jadi retensi 90
+  hari berarti satu email per 90 hari). Jumlah yang melonjak dua kali lipat
+  atau lebih (misalnya retensi dipersingkat) dikirim lebih cepat, tapi tidak
+  dua kali sehari. Penanda terakhir kirim ada di cache dan hanya ditulis kalau
+  email benar terkirim, jadi SMTP mati tidak menahan percobaan besok. Retensi
+  Trash tidak punya email peringatan, jadi setelan ini hanya menyangkut riwayat
+  login.
+- **Label ditolak.** "Rejected - needs revision" jadi "Rejected" (Indonesia:
+  "Ditolak") di 19 locale.
+- **Tinggi pilihan Modul di detail work item** sama dengan pilihan State.
+- **Induk work item bisa diklik** dari properti Parent, juga untuk tugas
+  orang lain yang hanya-lihat (tautannya sebelumnya di dalam tombol yang
+  nonaktif, jadi mati). Membuka di tab yang sama.
+
+- **Django 4.2 ke 5.2 dan DRF 3.18.** Dukungan 4.2 sudah habis. Migrasi 0173
+  hanya mengubah status (`through_fields` pada tiga M2M), tanpa SQL. Butuh
+  PostgreSQL 14 ke atas; server produksi 15.7. Kode ini tidak bisa lagi jalan
+  di Django 4.2, jadi mundur berarti memasang ulang image lama.
+- **Pindah ke Vite+.** Skrip paket kini memanggil `vp lint`, `vp fmt`,
+  `vp pack`, `vp test`; Turbo, Dockerfile, dan CI tetap.
+- **Tujuh perbaikan dari Plane hulu.** Saringan rentang tanggal created_at
+  dan updated_at, pemulihan galat aset basi, zona jatuh hapus di Kanban,
+  batas galat per layout, perbaikan layanan notifikasi, dan hook klik-luar
+  serta dropdown.
+- **Wiki.** Folder departemen menampilkan halaman project departemen
+  (baca saja, izin dijaga di server). Pencarian memaafkan salah ketik dan
+  mencari isi berkas serta halaman. Berkas teks, Markdown, CSV, Excel, dan
+  Word dipratinjau di aplikasi tanpa konversi PDF, sebagai blok JSON
+  terstruktur (tidak pernah HTML).
+- **Views.** Halaman Views workspace memuat view departemen yang boleh dibuka
+  orang itu; penyaringan di server. Formulir view dan daftar view dirombak.
+- **Obrolan.** Daftar percakapan diurut: belum dibaca, lalu sedang online,
+  lalu sisanya. Kartu tugas memakai judul tugas.
+
+---
+
 ## 2026-11-05
 
-### Versi 4.0.0
+### Versi 2.4.0
 
-- **Naik 3.0.0 ke 4.0.0, major.** 3.1.0 tidak pernah dirilis; peran per
-  tempat (KEP-93) menaikkannya ke major karena migrasi 0169 membentuk ulang
+- **Naik 2.3.0 ke 2.4.0, minor (dulu bernomor 4.0.0).** 3.1.0 tidak pernah
+  dirilis; peran per tempat (KEP-93) jadi rilis sendiri karena migrasi 0169 membentuk ulang
   baris penempatan yang sudah ada dan arti izin berubah. Langkah operator:
   tidak ada yang manual (deploy.sh menjalankan 0169), tapi setelah deploy cek
   papan Organization: manager yang dulu duduk di departemen divisi lain kini
@@ -182,12 +317,14 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ## 2026-11-04
 
-### Versi 3.0.0
+### Versi 2.3.0
 
-- **Naik 2.3.0 ke 3.0.0, major.** 2.3.0 belum dirilis, jadi seluruh isinya
-  ikut 3.0.0. Major karena semantik izin berubah dan orang kehilangan hak yang
-  kemarin mereka punya (aturan versi KEP-48). Tidak ada langkah operator: tanpa
-  migrasi, tanpa env baru.
+- **Naik 2.2.0 ke 2.3.0, minor (dulu bernomor 3.0.0).** Gabungan dua nomor
+  lama: 2.3.0, yang tidak pernah dirilis sendiri, dan 3.0.0. Semantik izin
+  berubah dan orang kehilangan hak yang kemarin mereka punya (KEP-85), ada
+  endpoint baru, dan satu migrasi data perapian (0163, jalan sendiri saat
+  deploy). Tidak ada langkah operator.
+
 - **Izin per sumber mengikuti kepemilikan dan hierarki (KEP-85).** Module, page,
   view, komentar, dan materi Wiki hanya bisa diubah, diarsipkan, atau dihapus
   pemiliknya (pembuat/owner, ditambah lead dan anggota module), atasannya di
@@ -209,12 +346,6 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
   bukan miliknya (bukan pembuat, lead, atau anggota). Mengatur state, termasuk
   urutannya, kini butuh wewenang alur kerja.
 
-### Versi 2.3.0
-
-- **Naik 2.2.0 ke 2.3.0, minor.** Endpoint baru, satu migrasi data perapian
-  (0163, jalan sendiri saat deploy) dan tanpa langkah operator, jadi bukan
-  major; bukan patch karena ada fitur baru. Pekerjaan lain yang belum dirilis
-  di branch ini ikut versi yang sama.
 - **Tampilan HP dirapikan di seluruh aplikasi.** Diuji dengan tangkapan layar
   390/360/768/1280 px. Nama di tabel Members tidak lagi pecah satu huruf per
   baris (juga di desktop). Bilah atas: pencarian jadi ikon yang membuka palet

@@ -31,7 +31,7 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.utils import catatan_rilis
-from plane.utils.kanal_sistem import ikutkan_ke_kanal_sistem, pastikan_kanal_sistem
+from plane.utils.kanal_sistem import ikutkan_ke_kanal_sistem, kirim_pesan_sistem, pastikan_kanal_sistem
 from plane.utils.kartu_obrolan import kirim_kartu_notifikasi, tandai_persetujuan_diputuskan
 
 
@@ -179,20 +179,44 @@ class TestChangelog:
             json.dumps({"version": versi, "date": tanggal, "entries": [{"type": "Added", "text": teks}]}),
             encoding="utf-8",
         )
-        tulis("3.0.0", "2026-11-05", "salah tanggal")
-        tulis("3.1.0", "2026-11-05", "kini")
-        assert catatan_rilis.terbitkan("3.1.0", folder=tmp_path) == 2
+        tulis("5.0.0", "2026-11-05", "salah tanggal")
+        tulis("5.1.0", "2026-11-05", "kini")
+        assert catatan_rilis.terbitkan("5.1.0", folder=tmp_path) == 2
 
-        tulis("3.0.0", "2026-11-04", "tanggal benar")
-        assert catatan_rilis.terbitkan("3.1.0", folder=tmp_path) == 0  # tidak ada kartu baru
+        tulis("5.0.0", "2026-11-04", "tanggal benar")
+        assert catatan_rilis.terbitkan("5.1.0", folder=tmp_path) == 0  # tidak ada kartu baru
 
         kanal = _kanal(workspace, KUNCI_CHANGELOG)
-        pesan = PesanLangsung.objects.get(ruang=kanal, muatan__versi="3.0.0")
+        pesan = PesanLangsung.objects.get(ruang=kanal, muatan__versi="5.0.0")
         assert pesan.muatan["tanggal"] == "2026-11-04"
         assert pesan.muatan["entri"] == [{"type": "Added", "text": "tanggal benar"}]
         assert "2026-11-04" in pesan.isi
         assert timezone.localtime(pesan.created_at).date().isoformat() == "2026-11-04"
         assert PesanLangsung.objects.filter(ruang=kanal).count() == 2
+
+    @pytest.mark.django_db
+    def test_kartu_bernomor_lama_dinomori_ulang_tanpa_kartu_ganda(self, kantor, tmp_path):
+        workspace, *_ = kantor
+        kanal = _kanal(workspace, KUNCI_CHANGELOG)
+        # Keadaan produksi sebelum skema versi dibenahi: kartu terbit dengan nomor lama.
+        kirim_pesan_sistem(
+            kanal,
+            JenisPesan.CHANGELOG,
+            {"versi": "4.2.0", "tanggal": "2026-11-12", "entri": [{"type": "Added", "text": "lama"}]},
+            "Paradise 4.2.0",
+        )
+        (tmp_path / "2.6.0.json").write_text(
+            json.dumps({"version": "2.6.0", "date": "2026-11-12", "entries": [{"type": "Added", "text": "kini"}]}),
+            encoding="utf-8",
+        )
+
+        assert catatan_rilis.terbitkan("2.6.0", folder=tmp_path) == 0  # dinomori ulang, bukan kartu baru
+        assert catatan_rilis.terbitkan("2.6.0", folder=tmp_path) == 0
+
+        pesan = PesanLangsung.objects.get(ruang=kanal)
+        assert pesan.muatan["versi"] == "2.6.0"
+        assert pesan.muatan["entri"] == [{"type": "Added", "text": "kini"}]
+        assert "2.6.0" in pesan.isi and "4.2.0" not in pesan.isi
 
     def test_tanggal_catatan_sama_dengan_changelog(self):
         """Tanggal JSON = tanggal rilis di CHANGELOG.md, bukan tanggal ditulis."""

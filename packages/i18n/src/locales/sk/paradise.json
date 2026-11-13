@@ -1199,6 +1199,7 @@
     "tip": "Tip: type @ to mention people, yourself or @all, and # for channels and work items",
     "tip_short": "@ people · # channels & work items",
     "section_people": "People",
+    "section_outside": "Outside this department",
     "section_everyone": "Everyone",
     "section_channels": "Channels",
     "section_work_items": "Work items",

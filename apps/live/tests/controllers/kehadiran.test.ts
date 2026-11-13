@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { BATAS_DETAK_MS, PenyimpanMemori, ringkasKehadiran } from "@/controllers/kehadiran";
 
 describe("ringkas kehadiran", () => {

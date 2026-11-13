@@ -1,7 +1,7 @@
 import path from "node:path";
 import * as dotenv from "dotenv";
 import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { joinUrlPath } from "@plane/utils";
 
@@ -18,6 +18,13 @@ const viteEnv = Object.keys(process.env)
 const basePath = joinUrlPath(process.env.VITE_ADMIN_BASE_PATH ?? "", "/") ?? "/";
 
 export default defineConfig(() => ({
+  test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
+  },
   base: basePath,
   define: {
     "process.env": JSON.stringify(viteEnv),
@@ -25,7 +32,7 @@ export default defineConfig(() => ({
   build: {
     assetsInlineLimit: 0,
   },
-  plugins: [reactRouter(), tsconfigPaths({ projects: [path.resolve(__dirname, "tsconfig.json")] })],
+  plugins: lazyPlugins(() => [reactRouter(), tsconfigPaths({ projects: [path.resolve(__dirname, "tsconfig.json")] })]),
   resolve: {
     alias: {
       // Next.js compatibility shims used within admin

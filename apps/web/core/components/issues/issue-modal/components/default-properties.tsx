@@ -78,7 +78,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   const tingkatSaya = useTingkatSaya(workspaceSlug, projectId);
   const { idSaya } = useAturanTugas();
   const daftarBoleh = useBisaDitugaskan(workspaceSlug, projectId);
-  const stafSaja = hanyaStaf(tingkatSaya, daftarBoleh.aturan.persetujuan_di_bawah);
+  const stafSaja = hanyaStaf(tingkatSaya, daftarBoleh.aturan.persetujuan_di_bawah) && daftarBoleh.mode !== "semua";
   const opsiAssignee = daftarBoleh.memuat ? undefined : daftarBoleh.userIds;
   const projectDetails = getProjectById(projectId);
 

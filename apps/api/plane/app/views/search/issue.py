@@ -3,7 +3,7 @@
 # See the LICENSE file for details.
 
 # Django imports
-from django.db.models import Q, QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet
 
 # Third party imports
 from rest_framework import status
@@ -96,6 +96,16 @@ class IssueSearchEndpoint(BaseAPIView):
         issues = issues.filter(target_date__isnull=True)
         return issues
 
+    def utamakan_yang_punya_sub_item(self, issues: QuerySet) -> QuerySet:
+        """Pemilih induk: work item yang sudah punya sub-item tampil lebih dulu.
+
+        Orang yang memilih induk hampir selalu menambah anak ke tugas yang memang
+        sudah berinduk, jadi tugas tanpa anak didorong ke bawah. Urutan di dalam
+        tiap kelompok: yang terbaru dulu.
+        """
+        punya_sub = Exists(Issue.issue_objects.filter(parent_id=OuterRef("pk")))
+        return issues.annotate(punya_sub_item=punya_sub).order_by("-punya_sub_item", "-created_at")
+
     def get(self, request, slug, project_id):
         query = request.query_params.get("search", False)
         workspace_search = request.query_params.get("workspace_search", "false")
@@ -142,6 +152,9 @@ class IssueSearchEndpoint(BaseAPIView):
             project_id=project_id, member=self.request.user, is_active=True, role=5
         ).exists():
             issues = issues.filter(created_by=self.request.user)
+
+        if parent == "true":
+            issues = self.utamakan_yang_punya_sub_item(issues)
 
         return Response(
             issues.values(

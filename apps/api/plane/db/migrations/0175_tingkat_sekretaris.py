@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     kalau tidak, `migrate` menolak dengan "Conflicting migrations".
     """
 
-    dependencies = [("db", "0172_wiki_pencarian_isi")]
+    dependencies = [("db", "0174_sinkron_departemen_project")]
 
     operations = [
         migrations.AlterField(

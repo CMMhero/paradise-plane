@@ -1,6 +1,6 @@
 {
   "name": "@plane/ui",
-  "version": "4.0.0",
+  "version": "2.6.1",
   "private": true,
   "description": "UI components shared across multiple apps internally",
   "license": "AGPL-3.0",
@@ -14,16 +14,16 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch --no-clean",
+    "build": "vp pack",
+    "dev": "vp pack --watch --no-clean",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "postcss": "postcss styles/globals.css -o styles/output.css --watch",
-    "check:lint": "oxlint --max-warnings=66 .",
+    "check:lint": "vp lint --max-warnings=53 .",
     "check:types": "tsc --noEmit",
-    "check:format": "oxfmt --check .",
-    "fix:lint": "oxlint --fix .",
-    "fix:format": "oxfmt .",
+    "check:format": "vp fmt --check .",
+    "fix:lint": "vp lint --fix .",
+    "fix:format": "vp fmt .",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf node_modules && rm -rf dist"
   },
   "dependencies": {
@@ -68,8 +68,8 @@
     "postcss-cli": "catalog:",
     "postcss-nested": "catalog:",
     "storybook": "catalog:",
-    "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "react": "catalog:",

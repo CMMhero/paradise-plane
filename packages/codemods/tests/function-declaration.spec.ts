@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "vite-plus/test";
 import { applyTransform } from "@hypermod/utils";
 import * as transformer from "../function-declaration";
 
