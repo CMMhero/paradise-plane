@@ -113,6 +113,10 @@
         "error": "Yorum bağlantısı kopyalanırken hata oluştu. Lütfen daha sonra tekrar deneyin."
       },
       "replies": {
+        "action": "Yanıtla",
+        "replying_to": "{name} kişisine yanıt veriliyor",
+        "show_earlier": "{count, plural, one {# önceki yanıtı göster} other {# önceki yanıtı göster}}",
+        "hide_earlier": "Önceki yanıtları gizle",
         "create": {
           "submit_button": "Yanıt ekle",
           "placeholder": "Yanıt ekle"

@@ -113,6 +113,10 @@
         "error": "Chyba pri kopírovaní odkazu na komentár. Skúste to prosím neskôr."
       },
       "replies": {
+        "action": "Odpovedať",
+        "replying_to": "Odpoveď pre {name}",
+        "show_earlier": "{count, plural, one {Zobraziť # predchádzajúcu odpoveď} few {Zobraziť # predchádzajúce odpovede} many {Zobraziť # predchádzajúcej odpovede} other {Zobraziť # predchádzajúcich odpovedí}}",
+        "hide_earlier": "Skryť predchádzajúce odpovede",
         "create": {
           "submit_button": "Pridať odpoveď",
           "placeholder": "Pridať odpoveď"

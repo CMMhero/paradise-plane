@@ -113,6 +113,10 @@
         "error": "Fehler beim Kopieren des Kommentar-Links. Bitte versuchen Sie es später erneut."
       },
       "replies": {
+        "action": "Antworten",
+        "replying_to": "Antwort an {name}",
+        "show_earlier": "{count, plural, one {# frühere Antwort anzeigen} other {# frühere Antworten anzeigen}}",
+        "hide_earlier": "Frühere Antworten ausblenden",
         "create": {
           "submit_button": "Antwort hinzufügen",
           "placeholder": "Antwort hinzufügen"

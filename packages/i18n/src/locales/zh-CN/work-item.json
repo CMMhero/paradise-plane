@@ -113,6 +113,10 @@
         "error": "复制评论链接时出错。请稍后再试。"
       },
       "replies": {
+        "action": "回复",
+        "replying_to": "回复 {name}",
+        "show_earlier": "{count, plural, one {显示更早的 # 条回复} other {显示更早的 # 条回复}}",
+        "hide_earlier": "隐藏更早的回复",
         "create": {
           "submit_button": "添加回复",
           "placeholder": "添加回复"

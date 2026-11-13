@@ -113,6 +113,10 @@
         "error": "댓글 링크 복사 중 오류가 발생했습니다. 나중에 다시 시도해 주세요."
       },
       "replies": {
+        "action": "답글",
+        "replying_to": "{name}님에게 답글 작성 중",
+        "show_earlier": "{count, plural, one {이전 답글 #개 보기} other {이전 답글 #개 보기}}",
+        "hide_earlier": "이전 답글 숨기기",
         "create": {
           "submit_button": "답글 추가",
           "placeholder": "답글 추가"

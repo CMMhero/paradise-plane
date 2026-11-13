@@ -113,6 +113,10 @@
         "error": "Error al copiar el enlace del comentario. Inténtelo de nuevo más tarde."
       },
       "replies": {
+        "action": "Responder",
+        "replying_to": "Respondiendo a {name}",
+        "show_earlier": "{count, plural, one {Mostrar # respuesta anterior} other {Mostrar # respuestas anteriores}}",
+        "hide_earlier": "Ocultar respuestas anteriores",
         "create": {
           "submit_button": "Agregar respuesta",
           "placeholder": "Agregar respuesta"

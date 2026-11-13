@@ -113,6 +113,10 @@
         "error": "Chyba při kopírování odkazu na komentář. Zkuste to prosím později."
       },
       "replies": {
+        "action": "Odpovědět",
+        "replying_to": "Odpověď pro {name}",
+        "show_earlier": "{count, plural, one {Zobrazit # dřívější odpověď} few {Zobrazit # dřívější odpovědi} many {Zobrazit # dřívější odpovědi} other {Zobrazit # dřívějších odpovědí}}",
+        "hide_earlier": "Skrýt dřívější odpovědi",
         "create": {
           "submit_button": "Přidat odpověď",
           "placeholder": "Přidat odpověď"

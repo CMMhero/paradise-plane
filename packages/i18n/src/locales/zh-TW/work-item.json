@@ -113,6 +113,10 @@
         "error": "複製評論連結時出錯。請稍後再試。"
       },
       "replies": {
+        "action": "回覆",
+        "replying_to": "回覆 {name}",
+        "show_earlier": "{count, plural, one {顯示更早的 # 則回覆} other {顯示更早的 # 則回覆}}",
+        "hide_earlier": "隱藏更早的回覆",
         "create": {
           "submit_button": "新增回覆",
           "placeholder": "新增回覆"
