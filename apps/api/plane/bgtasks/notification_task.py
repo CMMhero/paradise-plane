@@ -217,6 +217,38 @@ def _jenis_kabar(issue_activity, subscriber, project_id) -> str:
     return "property_change"
 
 
+def penerima_balasan_komentar(issue_activities, issue_id, actor_id, anggota_aktif) -> dict:
+    """{id penulis induk (str): (aktivitas, teks balasan)} untuk komentar BARU yang membalas.
+
+    Kustomisasi Paradise (balasan komentar): penulis komentar yang dibalas dikabari
+    walau bukan subscriber. Hanya aktivitas "created" (menyunting balasan tidak
+    mengabari ulang), hanya induk pada work item yang sama, bukan diri sendiri,
+    dan hanya anggota aktif project. Induk tanpa penulis (komentar sistem/impor)
+    tidak dikabari.
+    """
+    hasil: dict = {}
+    for aktivitas in issue_activities or []:
+        if aktivitas.get("field") != "comment" or aktivitas.get("verb") != "created":
+            continue
+        komentar_id = aktivitas.get("issue_comment")
+        if not komentar_id:
+            continue
+        balasan = IssueComment.objects.filter(pk=komentar_id, issue_id=issue_id).first()
+        if balasan is None or balasan.parent_id is None:
+            continue
+        induk = IssueComment.objects.filter(pk=balasan.parent_id, issue_id=issue_id).first()
+        if induk is None:
+            continue
+        penulis = induk.actor_id or induk.created_by_id
+        if penulis is None:
+            continue
+        penulis = str(penulis)
+        if penulis == str(actor_id) or penulis not in anggota_aktif:
+            continue
+        hasil.setdefault(penulis, (aktivitas, balasan.comment_stripped))
+    return hasil
+
+
 def create_mention_notification(project, notification_comment, issue, actor_id, mention_id, issue_id, activity):
     return Notification(
         workspace=project.workspace,
@@ -343,6 +375,20 @@ def notifications(
             comment_mention_subscribers = extract_mentions_as_subscribers(
                 project_id=project_id, issue_id=issue_id, mentions=all_comment_mentions
             )
+            # Balasan komentar: penulis induk dikabari sebagai balasan. Yang sudah
+            # disebut di komentar yang sama dan memang menerima kabar sebutan hanya
+            # mendapat kabar sebutan, jadi tidak ada yang dikabari dua kali. Kalau
+            # kabar sebutannya dimatikan (saklar sendiri atau batas direktur),
+            # balasan tetap dikabari menurut saklar komentar.
+            sudah_disebut = {str(mention) for mention in comment_mentions}
+            penerima_balasan = penerima_balasan_komentar(
+                issue_activities_created, issue_id, actor_id, {str(member) for member in project_members}
+            )
+            for penerima in list(penerima_balasan):
+                if penerima in sudah_disebut:
+                    saklar_sebutan = saklar_untuk(penerima)
+                    if saklar_sebutan["inbox_mention"] or saklar_sebutan["mention"]:
+                        del penerima_balasan[penerima]
             """
             We will not send subscription activity notification to the below mentioned user sets
             - Those who have been newly mentioned in the issue description, we will send mention notification to them.
@@ -359,7 +405,7 @@ def notifications(
                     issue_id=issue_id,
                     subscriber__in=Subquery(project_members),
                 )
-                .exclude(subscriber_id__in=list(new_mentions + comment_mentions + [actor_id]))
+                .exclude(subscriber_id__in=list(new_mentions + comment_mentions + [actor_id] + list(penerima_balasan)))
                 .values_list("subscriber", flat=True)
             )
 
@@ -533,6 +579,67 @@ def notifications(
                                 },
                             )
                         )
+
+            # Kabar balasan: pengarang komentar yang dibalas. Saklar yang dipakai
+            # adalah saklar komentar (inbox_comment / comment), jadi pilihan pribadi
+            # dan batas direktur (KEP-59) berlaku apa adanya.
+            for penerima, (aktivitas, isi_balasan) in penerima_balasan.items():
+                preference = SimpleNamespace(**saklar_untuk(penerima))
+                data_kabar = {
+                    "issue": {
+                        "id": str(issue_id),
+                        "name": str(issue.name),
+                        "identifier": str(issue.project.identifier),
+                        "project_id": str(issue.project.id),
+                        "workspace_slug": str(issue.project.workspace.slug),
+                        "sequence_id": issue.sequence_id,
+                        "state_name": issue.state.name,
+                        "state_group": issue.state.group,
+                    },
+                    "issue_activity": {
+                        "id": str(aktivitas.get("id")),
+                        "verb": str(aktivitas.get("verb")),
+                        "field": str(aktivitas.get("field")),
+                        "actor": str(aktivitas.get("actor_id")),
+                        "new_value": str(aktivitas.get("new_value")),
+                        "old_value": str(aktivitas.get("old_value")),
+                        "issue_comment": str(isi_balasan or ""),
+                        "old_identifier": None,
+                        "new_identifier": (
+                            str(aktivitas.get("new_identifier")) if aktivitas.get("new_identifier") else None
+                        ),
+                    },
+                }
+                if preference.inbox_comment:
+                    bulk_notifications.append(
+                        Notification(
+                            workspace=project.workspace,
+                            sender="in_app:issue_activities:subscribed",
+                            triggered_by_id=actor_id,
+                            receiver_id=penerima,
+                            entity_identifier=issue_id,
+                            entity_name="issue",
+                            project=project,
+                            title="replied to your comment",
+                            data=data_kabar,
+                        )
+                    )
+                if preference.comment:
+                    bulk_email_logs.append(
+                        EmailNotificationLog(
+                            triggered_by_id=actor_id,
+                            receiver_id=penerima,
+                            entity_identifier=issue_id,
+                            entity_name="issue",
+                            data={
+                                **data_kabar,
+                                "issue_activity": {
+                                    **data_kabar["issue_activity"],
+                                    "activity_time": aktivitas.get("created_at"),
+                                },
+                            },
+                        )
+                    )
 
             # -------------------------------------------------------------------------------------------------------- #
 
@@ -753,6 +860,13 @@ def notifications(
                 new_mentions=sebut_tersurat,
                 removed_mention=removed_mention,
             )
+            # Kustomisasi Paradise: perubahan beruntun atas kolom yang sama
+            # (status, prioritas, tanggal, ...) digabung jadi satu kabar, di
+            # aplikasi, kartu obrolan, dan email. Lihat utils/gabung_kabar.py.
+            from plane.utils.gabung_kabar import gabungkan_email, gabungkan_notifikasi  # noqa: PLC0415
+
+            bulk_notifications = gabungkan_notifikasi(bulk_notifications)
+            bulk_email_logs = gabungkan_email(bulk_email_logs)
             # Bulk create notifications
             Notification.objects.bulk_create(bulk_notifications, batch_size=100)
             EmailNotificationLog.objects.bulk_create(bulk_email_logs, batch_size=100, ignore_conflicts=True)
@@ -761,6 +875,11 @@ def notifications(
             from plane.utils.kartu_obrolan import kirim_kartu_notifikasi  # noqa: PLC0415
 
             kirim_kartu_notifikasi(bulk_notifications)
+            # Lencana dan daftar Pemberitahuan di layar penerima menyegarkan diri
+            # tanpa menunggu putaran berikutnya. Menelan galatnya sendiri.
+            from plane.utils.sinyal_data import siarkan_notifikasi_baris  # noqa: PLC0415
+
+            siarkan_notifikasi_baris(bulk_notifications)
         return
     except Exception as e:
         print(e)

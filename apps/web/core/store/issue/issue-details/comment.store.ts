@@ -54,6 +54,8 @@ export class IssueCommentStore implements IIssueCommentStore {
   comments: TIssueCommentIdMap = {};
   commentMap: TIssueCommentMap = {};
   serviceType;
+  // newest created_at seen in a server response, per issue (not observable)
+  private newestFetchedAt: Record<string, string> = {};
   // root store
   rootIssueDetail: IIssueDetail;
   // services
@@ -97,16 +99,19 @@ export class IssueCommentStore implements IIssueCommentStore {
   ) => {
     this.loader = loaderType;
 
-    let props = {};
-    const _commentIds = this.getCommentsByIssueId(issueId);
-    if (_commentIds && _commentIds.length > 0) {
-      const _comment = this.getCommentById(_commentIds[_commentIds.length - 1]);
-      if (_comment) props = { created_at__gt: _comment.created_at };
-    }
+    // Pull only what is newer than the last SERVER response, not than the last id in the list: a
+    // comment or reply created from this tab is appended locally and can be newer than one by
+    // someone else that has not been pulled yet; the list is deduplicated by id, so overlap is safe.
+    const props = this.newestFetchedAt[issueId] ? { created_at__gt: this.newestFetchedAt[issueId] } : {};
 
     const comments = await this.issueCommentService.getIssueComments(workspaceSlug, projectId, issueId, props);
 
     const commentIds = comments.map((comment) => comment.id);
+    comments.forEach((comment) => {
+      const newest = this.newestFetchedAt[issueId];
+      if (!newest || new Date(comment.created_at) > new Date(newest))
+        this.newestFetchedAt[issueId] = comment.created_at;
+    });
     runInAction(() => {
       update(this.comments, issueId, (_commentIds) => {
         if (!_commentIds) return commentIds;
@@ -174,8 +179,11 @@ export class IssueCommentStore implements IIssueCommentStore {
     const response = await this.issueCommentService.deleteIssueComment(workspaceSlug, projectId, issueId, commentId);
 
     runInAction(() => {
-      pull(this.comments[issueId], commentId);
+      // The server deletes a comment together with its replies, so drop them here too.
+      const replyIds = (this.comments[issueId] ?? []).filter((id) => this.commentMap[id]?.parent === commentId);
+      pull(this.comments[issueId], commentId, ...replyIds);
       delete this.commentMap[commentId];
+      replyIds.forEach((replyId) => delete this.commentMap[replyId]);
     });
 
     return response;

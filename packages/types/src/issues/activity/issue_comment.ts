@@ -45,6 +45,8 @@ export type TIssueComment = {
   external_id: string | undefined;
   external_source: string | undefined;
   access: EIssueCommentAccessSpecifier;
+  /** Id of the thread root this comment replies to. Threads are one level deep; the server enforces it. */
+  parent?: string | null;
 };
 
 export type TCommentsOperations = {

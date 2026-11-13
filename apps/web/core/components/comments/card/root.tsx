@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
 // plane imports
@@ -13,6 +14,7 @@ import type { TIssueComment, TCommentsOperations } from "@plane/types";
 import { CommentBlock, CommentCardDisplay } from "@/plane-web/components/comments";
 // local imports
 import { CommentQuickActions } from "../quick-actions";
+import { CommentReplyButton } from "./reply-button";
 
 type TCommentCard = {
   workspaceSlug: string;
@@ -25,6 +27,12 @@ type TCommentCard = {
   enableReplies: boolean;
   disabled?: boolean;
   projectId?: string;
+  /** Rendered as a reply inside a thread: a compact inset box instead of a timeline entry. */
+  isReply?: boolean;
+  /** Shows the Reply button; the thread owner decides what replying to this comment means. */
+  onReply?: () => void;
+  /** Rendered inside the card under the comment, e.g. its replies. */
+  children?: ReactNode;
 };
 
 export const CommentCard = observer(function CommentCard(props: TCommentCard) {
@@ -38,6 +46,9 @@ export const CommentCard = observer(function CommentCard(props: TCommentCard) {
     showCopyLinkOption,
     disabled = false,
     projectId,
+    isReply = false,
+    onReply,
+    children,
   } = props;
   // states
   const [isEditing, setIsEditing] = useState(false);
@@ -48,21 +59,22 @@ export const CommentCard = observer(function CommentCard(props: TCommentCard) {
 
   if (!comment || !workspaceId) return null;
 
-  return (
-    <CommentBlock comment={comment} ends={ends}>
-      <CommentCardDisplay
-        activityOperations={activityOperations}
-        entityId={entityId}
-        comment={comment}
-        disabled={disabled}
-        projectId={projectId}
-        readOnlyEditorRef={readOnlyEditorRef}
-        showAccessSpecifier={showAccessSpecifier}
-        workspaceId={workspaceId}
-        workspaceSlug={workspaceSlug}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        renderQuickActions={() => (
+  const display = (
+    <CommentCardDisplay
+      activityOperations={activityOperations}
+      entityId={entityId}
+      comment={comment}
+      disabled={disabled}
+      projectId={projectId}
+      readOnlyEditorRef={readOnlyEditorRef}
+      showAccessSpecifier={showAccessSpecifier}
+      workspaceId={workspaceId}
+      workspaceSlug={workspaceSlug}
+      isEditing={isEditing}
+      setIsEditing={setIsEditing}
+      renderQuickActions={() => (
+        <>
+          {onReply && <CommentReplyButton onClick={onReply} />}
           <CommentQuickActions
             activityOperations={activityOperations}
             comment={comment}
@@ -70,8 +82,24 @@ export const CommentCard = observer(function CommentCard(props: TCommentCard) {
             showAccessSpecifier={showAccessSpecifier}
             showCopyLinkOption={showCopyLinkOption}
           />
-        )}
-      />
+        </>
+      )}
+    />
+  );
+
+  if (isReply) {
+    return (
+      <div className="rounded-md border border-subtle bg-surface-1 p-2.5 text-body-sm-regular">
+        {display}
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <CommentBlock comment={comment} ends={ends}>
+      {display}
+      {children}
     </CommentBlock>
   );
 });

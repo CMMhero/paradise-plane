@@ -182,6 +182,7 @@ class IssueCreateSerializer(BaseSerializer):
         from plane.utils.hierarki import (  # noqa: PLC0415
             aktor_dari_context,
             galat_penugasan,
+            adalah_admin_penuh,
             gerbang_aktif,
             tingkat_anggota,
         )
@@ -194,7 +195,11 @@ class IssueCreateSerializer(BaseSerializer):
             if (_actor is not None and _project is not None)
             else None
         )
-        _staf = gerbang_aktif() and (_tingkat is None or _tingkat < 20)
+        _staf = (
+            gerbang_aktif()
+            and (_tingkat is None or _tingkat < 20)
+            and not (_actor is not None and _project is not None and adalah_admin_penuh(_actor, _project.workspace_id))
+        )
 
         if _staf and self.instance is None and not attrs.get("assignee_ids"):
             # Create tanpa assignee oleh staf -> isi dirinya sendiri.
@@ -206,7 +211,7 @@ class IssueCreateSerializer(BaseSerializer):
         if _staf and self.instance is not None and "assignee_ids" in attrs:
             from plane.utils.hierarki import galat_tambah_rekan  # noqa: PLC0415
 
-            galat_rekan = galat_tambah_rekan(self.context.get("project_id"), self.instance, attrs["assignee_ids"], _actor)
+            galat_rekan = galat_tambah_rekan(self.context.get("project_id"), self.instance, attrs["assignee_ids"], _actor)  # noqa: E501
             if galat_rekan:
                 raise serializers.ValidationError({"assignee_ids": galat_rekan})
             self._staf_tambah_rekan = True
@@ -900,6 +905,9 @@ class IssueCommentSerializer(BaseSerializer):
             "updated_by",
             "created_at",
             "updated_at",
+            # Balasan: diisi view lewat `save(parent=...)` setelah dicek (work item
+            # sama, akar utas), tidak pernah dari body, dan tidak bisa diubah lagi.
+            "parent",
         ]
 
     def validate(self, attrs):
