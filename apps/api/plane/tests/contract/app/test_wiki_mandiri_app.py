@@ -11,7 +11,8 @@ Yang dikunci:
 - unggah: staf di folder departemennya dan topik di bawahnya, tidak di departemen
   lain; manager di semua departemen divisinya; direktur di mana saja; folder
   General untuk semua anggota;
-- struktur folder (buat, ubah, arsip, hapus) hanya admin, dan folder unit tidak
+- struktur folder tingkat atas hanya admin (pengelola divisi/departemen di
+  `test_wiki_pengelola_app.py`, KEP-95), dan folder unit tidak
   bisa diganti nama, diarsipkan, atau dihapus lewat Wiki;
 - ubah/hapus materi: pengunggah atau admin, orang lain 403;
 - tong sampah + pulihkan, berkas 302, dan `pastikan_folder_unit`.
@@ -256,6 +257,20 @@ class TestStrukturFolder:
         assert res.data["created_by"] == str(wiki.admin.id)
         assert res.data["can_manage"] is True
 
+    def test_sub_topik_tidak_bisa_bersarang(self, wiki):
+        # `wiki.topik` (SOP) sudah sub-topik di bawah departemen: tidak boleh punya anak.
+        res = _klien(wiki.admin).post(
+            f"{wiki.base}folders/", {"nama": "Terlalu dalam", "parent_id": str(wiki.topik.id)}, format="json"
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+        assert "sub-topic" in res.data["error"]
+        # Departemen, divisi, dan folder tingkat atas tetap boleh punya sub-topik.
+        for induk in (wiki.f_t1, wiki.f_sales, wiki.umum):
+            ok = _klien(wiki.admin).post(
+                f"{wiki.base}folders/", {"nama": "Sub", "parent_id": str(induk.id)}, format="json"
+            )
+            assert ok.status_code == status.HTTP_201_CREATED, induk.nama
+
     def test_umum_hanya_tanpa_induk(self, wiki):
         ok = _klien(wiki.admin).post(f"{wiki.base}folders/", {"nama": "Umum 2", "umum": True}, format="json")
         assert ok.status_code == status.HTTP_201_CREATED and ok.data["umum"] is True
@@ -279,8 +294,9 @@ class TestStrukturFolder:
         )
         assert res.status_code == status.HTTP_200_OK
         assert (res.data["nama"], res.data["keterangan"], res.data["urutan"]) == ("SOP Baru", "ket", 5.0)
+        # Staf tidak mengelola; manager divisi Sales sekarang boleh (KEP-95, lihat test_wiki_pengelola_app).
         assert (
-            _klien(wiki.manager).patch(f"{wiki.base}folders/{wiki.topik.id}/", {"nama": "x"}, format="json").status_code
+            _klien(wiki.staf2).patch(f"{wiki.base}folders/{wiki.topik.id}/", {"nama": "x"}, format="json").status_code
             == 403
         )
 
@@ -390,6 +406,40 @@ class TestMateri:
         assert _klien(wiki.staf1).patch(url, {"judul": " "}, format="json").status_code == 400
         assert _klien(wiki.staf1).patch(url, {"judul": "x" * 256}, format="json").status_code == 400
 
+    def test_pindah_ke_sub_topik_oleh_pengunggah(self, wiki):
+        materi = _materi(wiki, wiki.f_t1, wiki.staf1)
+        url = f"{wiki.base}materials/{materi.id}/"
+        res = _klien(wiki.staf1).patch(url, {"folder_id": str(wiki.topik.id)}, format="json")
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["folder_id"] == str(wiki.topik.id)
+        materi.refresh_from_db()
+        assert materi.folder_id == wiki.topik.id
+        assert materi.judul == "panduan.pdf"
+        assert FileAsset.objects.get(id=materi.berkas_id).entity_identifier == str(wiki.topik.id)
+
+    def test_pindah_ke_folder_yang_tak_boleh_diunggah_ditolak(self, wiki):
+        materi = _materi(wiki, wiki.f_t1, wiki.staf1)
+        res = _klien(wiki.staf1).patch(
+            f"{wiki.base}materials/{materi.id}/", {"folder_id": str(wiki.f_t2.id)}, format="json"
+        )
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+        materi.refresh_from_db()
+        assert materi.folder_id == wiki.f_t1.id
+
+    def test_pindah_materi_orang_lain_ditolak(self, wiki):
+        materi = _materi(wiki, wiki.f_t1, wiki.staf1)
+        res = _klien(wiki.staf2).patch(
+            f"{wiki.base}materials/{materi.id}/", {"folder_id": str(wiki.topik.id)}, format="json"
+        )
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_pindah_ke_folder_sendiri_tak_mengubah_apa_apa(self, wiki):
+        materi = _materi(wiki, wiki.f_t1, wiki.staf1)
+        res = _klien(wiki.staf1).patch(
+            f"{wiki.base}materials/{materi.id}/", {"folder_id": str(wiki.f_t1.id)}, format="json"
+        )
+        assert res.status_code == status.HTTP_200_OK and res.data["folder_id"] == str(wiki.f_t1.id)
+
     def test_hapus_oleh_pengunggah_dan_orang_lain_ditolak(self, wiki):
         materi = _materi(wiki, wiki.f_t1, wiki.staf1)
         url = f"{wiki.base}materials/{materi.id}/"
@@ -435,11 +485,40 @@ class TestMateri:
         WikiMaterial.objects.filter(id=materi.id).update(judul="Stok Opname")
         klien = _klien(wiki.biasa)
         for q in ("opname", "GUDANG"):
-            hasil = klien.get(f"{wiki.base}search/", {"q": q}).data
+            hasil = klien.get(f"{wiki.base}search/", {"q": q}).data["materials"]
             assert [h["id"] for h in hasil] == [str(materi.id)]
             assert [j["nama"] for j in hasil[0]["jejak"]] == ["Sales", "Team 1", "SOP"]
-        assert klien.get(f"{wiki.base}search/", {"q": "o"}).data == []
-        assert klien.get(f"{wiki.base}search/", {"q": "tidakada"}).data == []
+        assert klien.get(f"{wiki.base}search/", {"q": "o"}).data == {"materials": [], "pages": []}
+        assert klien.get(f"{wiki.base}search/", {"q": "tidakada"}).data["materials"] == []
+
+    def test_cari_isi_dokumen_dengan_cuplikan(self, wiki):
+        materi = _materi(wiki, wiki.topik, wiki.staf1, nama="scan-001.pdf")
+        isi = "Prosedur pengiriman barang ke gudang Surabaya wajib melampirkan surat jalan yang ditandatangani."
+        WikiMaterial.objects.filter(id=materi.id).update(isi_teks=isi)
+        hasil = _klien(wiki.biasa).get(f"{wiki.base}search/", {"q": "surat jalan"}).data["materials"]
+        assert [h["id"] for h in hasil] == [str(materi.id)]
+        assert "surat jalan" in hasil[0]["cuplikan"]
+        assert set(hasil[0]["sorot"]) == {"surat", "jalan"}
+
+    def test_cari_memaafkan_salah_ketik(self, wiki):
+        judul = _materi(wiki, wiki.topik, wiki.staf1, nama="a.pdf")
+        WikiMaterial.objects.filter(id=judul.id).update(judul="Laporan Keuangan Bulanan")
+        isi = _materi(wiki, wiki.topik, wiki.staf1, nama="b.pdf")
+        WikiMaterial.objects.filter(id=isi.id).update(judul="b.pdf", isi_teks="Rekapitulasi pengeluaran departemen.")
+        klien = _klien(wiki.biasa)
+        # Salah ketik di judul dan di isi sama-sama ketemu.
+        assert [h["id"] for h in klien.get(f"{wiki.base}search/", {"q": "keuagan"}).data["materials"]] == [str(judul.id)]  # noqa: E501
+        hasil = klien.get(f"{wiki.base}search/", {"q": "pengeluran"}).data["materials"]
+        assert [h["id"] for h in hasil] == [str(isi.id)]
+        assert hasil[0]["sorot"] == ["pengeluaran"]
+
+    def test_cari_judul_lebih_dulu_dari_isi(self, wiki):
+        hanya_isi = _materi(wiki, wiki.topik, wiki.staf1, nama="x.pdf")
+        WikiMaterial.objects.filter(id=hanya_isi.id).update(judul="x.pdf", isi_teks="catatan kontrak vendor")
+        di_judul = _materi(wiki, wiki.topik, wiki.staf1, nama="y.pdf")
+        WikiMaterial.objects.filter(id=di_judul.id).update(judul="Kontrak vendor 2026")
+        hasil = _klien(wiki.biasa).get(f"{wiki.base}search/", {"q": "kontrak vendor"}).data["materials"]
+        assert [h["id"] for h in hasil] == [str(di_judul.id), str(hanya_isi.id)]
 
     def test_pratinjau_pdf_dan_tipe_tanpa_konversi(self, wiki):
         materi = _materi(wiki, wiki.f_t1, wiki.staf1)

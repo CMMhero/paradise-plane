@@ -35,8 +35,13 @@ export const alamatDariTeks = (teks: string, maks = MAKS_KARTU): string[] =>
 export const alamatDariHtml = (html: string | null | undefined, maks = MAKS_KARTU): string[] => {
   if (!html || typeof DOMParser === "undefined") return [];
   const dok = new DOMParser().parseFromString(html, "text/html");
-  return unik(
-    Array.from(dok.querySelectorAll("a[href]"), (a) => a.getAttribute("href")?.trim() ?? ""),
-    maks
-  );
+  const tertaut = Array.from(dok.querySelectorAll("a[href]"), (a) => a.getAttribute("href")?.trim() ?? "");
+  // URL polos di teks (belum diberi mark tautan oleh editor) ikut, sama seperti turunan di backend.
+  const polos: string[] = [];
+  const penjelajah = dok.createTreeWalker(dok.body, NodeFilter.SHOW_TEXT);
+  for (let simpul = penjelajah.nextNode(); simpul; simpul = penjelajah.nextNode()) {
+    if (simpul.parentElement?.closest("a, code, pre")) continue;
+    polos.push(...alamatDariTeks(simpul.textContent ?? "", Number.MAX_SAFE_INTEGER));
+  }
+  return unik([...tertaut, ...polos], maks);
 };

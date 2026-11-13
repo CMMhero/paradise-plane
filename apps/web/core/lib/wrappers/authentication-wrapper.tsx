@@ -5,6 +5,7 @@
  */
 
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useSearchParams, usePathname } from "next/navigation";
 import useSWR from "swr";
@@ -78,67 +79,52 @@ export const AuthenticationWrapper = observer(function AuthenticationWrapper(pro
     return redirectionRoute;
   };
 
-  if ((isUserSWRLoading || isUserLoading || workspacesLoader) && !currentUser?.id)
+  // Paradise: hanya pengambilan PERTAMA yang menahan layar. `isUserLoading`
+  // menyala pada tiap revalidasi, jadi pengunjung yang belum masuk menunggu
+  // spinner kedua setelah dialihkan ke layar masuk.
+  const isBlocking = (isUserSWRLoading || workspacesLoader || (isUserLoading && !currentUser)) && !currentUser?.id;
+
+  // `next_path` membawa query-nya juga, dan di-encode supaya `?a=1&b=2` tidak
+  // terbaca sebagai parameter layar masuk.
+  const search = searchParams.toString();
+  const loginRoute = `/?next_path=${encodeURIComponent(`${pathname ?? ""}${search ? `?${search}` : ""}`)}`;
+
+  const isReady = !!currentUserProfile?.id && isUserOnboard;
+
+  // Tujuan pengalihan untuk keadaan sekarang, atau undefined kalau halaman
+  // boleh tampil. Dijalankan di efek, bukan saat render: `router.push` saat
+  // render menyisakan layar kosong dan bisa terpanggil berulang.
+  const getRedirectRoute = (): string | undefined => {
+    switch (pageType) {
+      case EPageTypes.NON_AUTHENTICATED:
+        if (!currentUser?.id) return undefined;
+        return isReady ? getWorkspaceRedirectionUrl() : "/onboarding";
+      case EPageTypes.ONBOARDING:
+        if (!currentUser?.id) return loginRoute;
+        return isReady ? getWorkspaceRedirectionUrl() : undefined;
+      case EPageTypes.SET_PASSWORD:
+        if (!currentUser?.id) return loginRoute;
+        return !currentUser.is_password_autoset && isReady ? getWorkspaceRedirectionUrl() : undefined;
+      case EPageTypes.AUTHENTICATED:
+        if (!currentUser?.id) return loginRoute;
+        return isReady ? undefined : "/onboarding";
+      default:
+        return undefined;
+    }
+  };
+
+  const redirectRoute = isBlocking || pageType === EPageTypes.PUBLIC ? undefined : getRedirectRoute();
+
+  useEffect(() => {
+    if (redirectRoute) router.replace(redirectRoute);
+  }, [redirectRoute, router]);
+
+  if (isBlocking || redirectRoute)
     return (
       <div className="relative flex h-screen w-full items-center justify-center">
         <LogoSpinner />
       </div>
     );
-
-  if (pageType === EPageTypes.PUBLIC) return <>{children}</>;
-
-  if (pageType === EPageTypes.NON_AUTHENTICATED) {
-    if (!currentUser?.id) return <>{children}</>;
-    else {
-      if (currentUserProfile?.id && isUserOnboard) {
-        const currentRedirectRoute = getWorkspaceRedirectionUrl();
-        router.push(currentRedirectRoute);
-        return <></>;
-      } else {
-        router.push("/onboarding");
-        return <></>;
-      }
-    }
-  }
-
-  if (pageType === EPageTypes.ONBOARDING) {
-    if (!currentUser?.id) {
-      router.push(`/${pathname ? `?next_path=${pathname}` : ``}`);
-      return <></>;
-    } else {
-      if (currentUser && currentUserProfile?.id && isUserOnboard) {
-        const currentRedirectRoute = getWorkspaceRedirectionUrl();
-        router.replace(currentRedirectRoute);
-        return <></>;
-      } else return <>{children}</>;
-    }
-  }
-
-  if (pageType === EPageTypes.SET_PASSWORD) {
-    if (!currentUser?.id) {
-      router.push(`/${pathname ? `?next_path=${pathname}` : ``}`);
-      return <></>;
-    } else {
-      if (currentUser && !currentUser?.is_password_autoset && currentUserProfile?.id && isUserOnboard) {
-        const currentRedirectRoute = getWorkspaceRedirectionUrl();
-        router.push(currentRedirectRoute);
-        return <></>;
-      } else return <>{children}</>;
-    }
-  }
-
-  if (pageType === EPageTypes.AUTHENTICATED) {
-    if (currentUser?.id) {
-      if (currentUserProfile && currentUserProfile?.id && isUserOnboard) return <>{children}</>;
-      else {
-        router.push(`/onboarding`);
-        return <></>;
-      }
-    } else {
-      router.push(`/${pathname ? `?next_path=${pathname}` : ``}`);
-      return <></>;
-    }
-  }
 
   return <>{children}</>;
 });

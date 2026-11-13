@@ -24,8 +24,8 @@ import { useTranslation } from "@plane/i18n";
 import { Banner } from "@plane/propel/banner";
 import { Button } from "@plane/propel/button";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
+import { TabNavigationItem, TabNavigationList } from "@plane/propel/tab-navigation";
 import { EHeaderVariant, Header } from "@plane/ui";
-import { cn } from "@plane/utils";
 // components
 import { ListLayout } from "@/components/core/list";
 import { ViewListLoader } from "@/components/ui/loader/view-list-loader";
@@ -48,7 +48,7 @@ type TApprovalTabNavigationProps = {
   jumlahMenunggu: number | undefined;
 };
 
-/** Tab bergaris bawah, sama persis dengan `PageTabNavigation`. */
+/** Tab bersama aplikasi (`TabNavigationList/Item`), sama dengan tab header project. */
 function ApprovalTabNavigation(props: TApprovalTabNavigationProps) {
   const { workspaceSlug, projectId, tab, jumlahMenunggu } = props;
   const { t } = useTranslation();
@@ -58,7 +58,7 @@ function ApprovalTabNavigation(props: TApprovalTabNavigationProps) {
   ];
 
   return (
-    <div className="relative flex h-full items-center">
+    <TabNavigationList>
       {tabs.map((item) => (
         <Link
           key={item.key}
@@ -66,26 +66,16 @@ function ApprovalTabNavigation(props: TApprovalTabNavigationProps) {
           onClick={(e) => {
             if (item.key === tab) e.preventDefault();
           }}
-          className="flex h-full flex-col"
         >
-          <div
-            className={cn("flex flex-1 items-center justify-center gap-1.5 px-4 text-13 font-medium transition-all", {
-              "text-accent-primary": item.key === tab,
-            })}
-          >
-            {item.label}
+          <TabNavigationItem isActive={item.key === tab}>
+            <span>{item.label}</span>
             {!!item.jumlah && (
               <span className="rounded-control bg-layer-3 px-1.5 text-11 text-secondary">{item.jumlah}</span>
             )}
-          </div>
-          <div
-            className={cn("w-full rounded-t border-t-2 border-transparent transition-all", {
-              "border-accent-strong": item.key === tab,
-            })}
-          />
+          </TabNavigationItem>
         </Link>
       ))}
-    </div>
+    </TabNavigationList>
   );
 }
 

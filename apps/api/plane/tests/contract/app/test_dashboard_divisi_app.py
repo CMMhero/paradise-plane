@@ -15,11 +15,10 @@ Yang dijaga:
 4. Field lama (`totals.projects`, `issues_open`, `worklog_minutes_*`) tetap ada.
 """
 
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -40,8 +39,16 @@ from plane.db.models import (
 )
 from plane.license.models import InstanceConfiguration
 from plane.utils.hierarki import boleh_memutuskan, project_boleh_diputuskan
-from plane.utils.ringkasan_divisi import KRITIS, LANCAR, PERHATIAN, ambang_kesehatan, status_kesehatan
+from plane.utils.ringkasan_divisi import (
+    KRITIS,
+    LANCAR,
+    PERHATIAN,
+    ambang_kesehatan,
+    hitung_ringkasan,
+    status_kesehatan,
+)
 from plane.utils.saklar_instance import DASHBOARD_KRITIS_PERSEN, DASHBOARD_PERHATIAN_PERSEN
+from plane.utils.setelan_instance import hari_ini_kantor, zona_kantor
 
 URL = "/api/workspaces/{slug}/divisi-dashboard/"
 
@@ -94,8 +101,8 @@ def klien(direktur):
 def organisasi(db, workspace, direktur):
     """Supply Chain (1 dari 4 tugas aktif terlambat = 25%), HR (lancar),
     satu project tanpa departemen, dan satu project yang direktur bukan anggotanya."""
-    kemarin = timezone.localdate() - timedelta(days=1)
-    besok = timezone.localdate() + timedelta(days=1)
+    kemarin = hari_ini_kantor() - timedelta(days=1)
+    besok = hari_ini_kantor() + timedelta(days=1)
 
     scm = Divisi.objects.create(workspace=workspace, kode="SCM", nama="Supply Chain")
     hr = Divisi.objects.create(workspace=workspace, kode="HR", nama="Human Resources")
@@ -210,6 +217,41 @@ class TestDashboardDivisi:
         _simpan(DASHBOARD_KRITIS_PERSEN, "50")
         data = klien.get(URL.format(slug=workspace.slug)).data
         assert data["divisions"][0]["health"] == PERHATIAN
+
+
+@pytest.mark.contract
+class TestTepatWaktuHariKantor:
+    """Selesai-tepat-waktu dihitung per hari kantor (WIB), bukan hari UTC."""
+
+    @pytest.mark.django_db
+    def test_selesai_lewat_tengah_malam_wib_itu_terlambat(self, workspace, direktur):
+        zona = zona_kantor()
+        tenggat = date(2026, 11, 2)
+        project, states = _project(workspace, "Gudang", "WH", [direktur])
+        tepat = _tugas(project, states["completed"], tenggat)
+        telat = _tugas(project, states["completed"], tenggat)
+        # 23.30 WIB di hari tenggat = 16.30 UTC (tanggal sama); 00.30 WIB sehari
+        # sesudahnya = 17.30 UTC di hari tenggat, yang dulu salah dihitung tepat waktu.
+        Issue.objects.filter(pk=tepat.pk).update(completed_at=datetime(2026, 11, 2, 23, 30, tzinfo=zona))
+        Issue.objects.filter(pk=telat.pk).update(completed_at=datetime(2026, 11, 3, 0, 30, tzinfo=zona))
+
+        sekarang = datetime(2026, 11, 4, 12, 0, tzinfo=zona)
+        totals = hitung_ringkasan(direktur, workspace.slug, sekarang=sekarang)["totals"]
+
+        assert totals["issues_completed"] == 2
+        assert totals["on_time_rate"] == 50
+
+    @pytest.mark.django_db
+    def test_hari_ini_mengikuti_zona_kantor(self, workspace, direktur):
+        zona = zona_kantor()
+        project, states = _project(workspace, "Gudang", "WH", [direktur])
+        # Tenggat kemarin (WIB). Pukul 06.00 WIB hari ini masih tanggal kemarin di UTC,
+        # tapi di kantor sudah terlambat.
+        _tugas(project, states["unstarted"], date(2026, 11, 4))
+        sekarang = datetime(2026, 11, 5, 6, 0, tzinfo=zona)
+        baris = hitung_ringkasan(direktur, workspace.slug, sekarang=sekarang)["projects"][0]
+
+        assert baris["issues_overdue"] == 1
 
 
 @pytest.mark.contract

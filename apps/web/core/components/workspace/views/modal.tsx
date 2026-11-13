@@ -4,15 +4,20 @@
  * See the LICENSE file for details.
  */
 
+import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { IWorkspaceView } from "@plane/types";
+import type { IProjectView, IWorkspaceView } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+// components
+import { ProjectViewForm } from "@/components/views/form";
+import { ViewScopeField } from "@/components/views/form-sections";
 // hooks
 import { useGlobalView } from "@/hooks/store/use-global-view";
+import { useProjectView } from "@/hooks/store/use-project-view";
 import { useWorkItemFilters } from "@/hooks/store/work-item-filters/use-work-item-filters";
 import { useAppRouter } from "@/hooks/use-app-router";
 // local imports
@@ -27,16 +32,21 @@ type Props = {
 
 export const CreateUpdateWorkspaceViewModal = observer(function CreateUpdateWorkspaceViewModal(props: Props) {
   const { isOpen, onClose, data, preLoadedData } = props;
+  // Kustomisasi Paradise: saat MEMBUAT, view bisa ditaruh di workspace atau di satu departemen.
+  // `null` = workspace. Sesudah dibuat tempatnya terkunci (kolom `project` hanya-baca di server).
+  const [scopeProjectId, setScopeProjectId] = useState<string | null>(null);
   // router
   const router = useAppRouter();
   const { workspaceSlug: routerWorkspaceSlug } = useParams();
   const workspaceSlug = routerWorkspaceSlug ? routerWorkspaceSlug.toString() : undefined;
   // store hooks
   const { createGlobalView, updateGlobalView } = useGlobalView();
+  const { createView } = useProjectView();
   const { resetExpression } = useWorkItemFilters();
 
   const handleClose = () => {
     onClose();
+    setScopeProjectId(null);
   };
 
   const handleCreateView = async (payload: Partial<IWorkspaceView>) => {
@@ -56,6 +66,27 @@ export const CreateUpdateWorkspaceViewModal = observer(function CreateUpdateWork
         message: "View created successfully.",
       });
       router.push(`/${workspaceSlug}/workspace-views/${res.id}`);
+      handleClose();
+    } catch (_error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Error!",
+        message: "View could not be created. Please try again.",
+      });
+    }
+  };
+
+  const handleCreateDepartmentView = async (payload: IProjectView) => {
+    if (!workspaceSlug || !scopeProjectId) return;
+
+    try {
+      const res = await createView(workspaceSlug, scopeProjectId, payload);
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "Success!",
+        message: "View created successfully.",
+      });
+      router.push(`/${workspaceSlug}/projects/${scopeProjectId}/views/${res.id}`);
       handleClose();
     } catch (_error) {
       setToast({
@@ -103,15 +134,31 @@ export const CreateUpdateWorkspaceViewModal = observer(function CreateUpdateWork
   };
 
   if (!workspaceSlug) return null;
+
+  const scopeSlot = data ? undefined : <ViewScopeField projectId={scopeProjectId} onChange={setScopeProjectId} />;
+
   return (
     <ModalCore isOpen={isOpen} handleClose={handleClose} position={EModalPosition.TOP} width={EModalWidth.XXL}>
-      <WorkspaceViewForm
-        handleFormSubmit={handleFormSubmit}
-        handleClose={handleClose}
-        data={data}
-        preLoadedData={preLoadedData}
-        workspaceSlug={workspaceSlug}
-      />
+      {!data && scopeProjectId ? (
+        // Formulir departemen: filter, layout, dan tampilan milik departemen itu.
+        <ProjectViewForm
+          key={scopeProjectId}
+          handleClose={handleClose}
+          handleFormSubmit={handleCreateDepartmentView}
+          projectId={scopeProjectId}
+          workspaceSlug={workspaceSlug}
+          scopeSlot={scopeSlot}
+        />
+      ) : (
+        <WorkspaceViewForm
+          handleFormSubmit={handleFormSubmit}
+          handleClose={handleClose}
+          data={data}
+          preLoadedData={preLoadedData}
+          workspaceSlug={workspaceSlug}
+          scopeSlot={scopeSlot}
+        />
+      )}
     </ModalCore>
   );
 });

@@ -12,6 +12,8 @@ import type { IProjectView, TViewFilters } from "@plane/types";
 // constants
 // helpers
 import { getValidatedViewFilters, getViewName, orderViews, shouldFilterView } from "@plane/utils";
+// lib
+import { buatViewBawaanDepartemen, isViewBawaan } from "@/lib/view-bawaan";
 // services
 import { ViewService } from "@/services/view.service";
 // store
@@ -30,8 +32,13 @@ export interface IProjectViewStore {
   getProjectViews: (projectId: string) => IProjectView[] | undefined;
   getFilteredProjectViews: (projectId: string) => IProjectView[] | undefined;
   getViewById: (viewId: string) => IProjectView;
+  /** Kustomisasi Paradise: view departemen yang boleh dibuka di seluruh workspace (halaman Views workspace). */
+  getWorkspaceProjectViews: (workspaceId: string) => IProjectView[] | undefined;
+  /** Saring (cari + filter) lalu urutkan daftar view apa pun dengan `filters` yang sama dengan halaman departemen. */
+  applyListFilters: <T extends IProjectView>(views: T[]) => T[];
   // fetch actions
   fetchViews: (workspaceSlug: string, projectId: string) => Promise<undefined | IProjectView[]>;
+  fetchWorkspaceProjectViews: (workspaceSlug: string) => Promise<IProjectView[] | undefined>;
   fetchViewDetails: (workspaceSlug: string, projectId: string, viewId: string) => Promise<IProjectView>;
   // CRUD actions
   createView: (workspaceSlug: string, projectId: string, data: Partial<IProjectView>) => Promise<IProjectView>;
@@ -55,6 +62,8 @@ export class ProjectViewStore implements IProjectViewStore {
   viewMap: Record<string, IProjectView> = {};
   //loaders
   fetchedMap: Record<string, boolean> = {};
+  /** workspaceSlug -> view departemen se-workspace sudah diambil. */
+  workspaceFetchedMap: Record<string, boolean> = {};
   filters: TViewFilters = { searchQuery: "", sortBy: "desc", sortKey: "updated_at" };
   // root store
   rootStore;
@@ -67,11 +76,13 @@ export class ProjectViewStore implements IProjectViewStore {
       loader: observable.ref,
       viewMap: observable,
       fetchedMap: observable,
+      workspaceFetchedMap: observable,
       filters: observable,
       // computed
       projectViewIds: computed,
       // fetch actions
       fetchViews: action,
+      fetchWorkspaceProjectViews: action,
       fetchViewDetails: action,
       // CRUD actions
       createView: action,
@@ -99,14 +110,35 @@ export class ProjectViewStore implements IProjectViewStore {
   get projectViewIds() {
     const projectId = this.rootStore.router.projectId;
     if (!projectId || !this.fetchedMap[projectId]) return null;
-    const viewIds = Object.keys(this.viewMap ?? {})?.filter((viewId) => this.viewMap?.[viewId]?.project === projectId);
+    const viewIds = Object.keys(this.viewMap ?? {})?.filter(
+      (viewId) => this.viewMap?.[viewId]?.project === projectId && !isViewBawaan(viewId)
+    );
     return viewIds;
   }
+
+  /** View tersimpan saja: view bawaan tiruan (kunci statis) ikut tinggal di `viewMap` tapi bukan milik daftar. */
+  private get savedViews(): IProjectView[] {
+    return Object.values(this.viewMap ?? {}).filter((view) => !!view && !isViewBawaan(view.id));
+  }
+
+  getWorkspaceProjectViews = computedFn((workspaceId: string) => {
+    const workspaceSlug = this.rootStore.router.workspaceSlug;
+    if (!workspaceSlug || !this.workspaceFetchedMap[workspaceSlug]) return undefined;
+    return this.savedViews.filter((view) => !!view.project && view.workspace === workspaceId);
+  });
+
+  applyListFilters = <T extends IProjectView>(views: T[]): T[] => {
+    const query = this.filters.searchQuery.toLowerCase();
+    const filtered = views.filter(
+      (view) => getViewName(view.name).toLowerCase().includes(query) && shouldFilterView(view, this.filters.filters)
+    );
+    return orderViews(filtered, this.filters.sortKey, this.filters.sortBy) as T[];
+  };
 
   getProjectViews = computedFn((projectId: string) => {
     if (!this.fetchedMap[projectId]) return undefined;
 
-    const ViewsList = Object.values(this.viewMap ?? {});
+    const ViewsList = this.savedViews;
     // helps to filter views based on the projectId
     let filteredViews = ViewsList.filter((view) => view?.project === projectId);
     filteredViews = orderViews(filteredViews, this.filters.sortKey, this.filters.sortBy);
@@ -119,7 +151,7 @@ export class ProjectViewStore implements IProjectViewStore {
   getFilteredProjectViews = computedFn((projectId: string) => {
     if (!this.fetchedMap[projectId]) return undefined;
 
-    const ViewsList = Object.values(this.viewMap ?? {});
+    const ViewsList = this.savedViews;
     // helps to filter views based on the projectId, searchQuery and filters
     let filteredViews = ViewsList.filter(
       (view) =>
@@ -188,13 +220,40 @@ export class ProjectViewStore implements IProjectViewStore {
    * @param viewId
    * @returns Promise<IProjectView>
    */
-  fetchViewDetails = async (workspaceSlug: string, projectId: string, viewId: string): Promise<IProjectView> =>
-    await this.viewService.getViewDetails(workspaceSlug, projectId, viewId).then((response) => {
+  fetchWorkspaceProjectViews = async (workspaceSlug: string) => {
+    try {
+      const response = await this.viewService.getWorkspaceProjectViews(workspaceSlug);
+      runInAction(() => {
+        response.forEach((view) => {
+          set(this.viewMap, [view.id], view);
+        });
+        set(this.workspaceFetchedMap, workspaceSlug, true);
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to fetch department views for the workspace", error);
+      runInAction(() => set(this.workspaceFetchedMap, workspaceSlug, true));
+      return undefined;
+    }
+  };
+
+  fetchViewDetails = async (workspaceSlug: string, projectId: string, viewId: string): Promise<IProjectView> => {
+    // Kustomisasi Paradise: view bawaan departemen tidak ada di server; dibangun di sini.
+    if (isViewBawaan(viewId)) {
+      const workspaceId = this.rootStore.workspaceRoot.getWorkspaceBySlug(workspaceSlug)?.id;
+      const view = buatViewBawaanDepartemen(viewId, projectId, workspaceId);
+      runInAction(() => {
+        set(this.viewMap, [viewId], view);
+      });
+      return view;
+    }
+    return await this.viewService.getViewDetails(workspaceSlug, projectId, viewId).then((response) => {
       runInAction(() => {
         set(this.viewMap, [viewId], response);
       });
       return response;
     });
+  };
 
   /**
    * Creates a new view for a specific project and adds it to the store
@@ -246,11 +305,10 @@ export class ProjectViewStore implements IProjectViewStore {
    * @returns
    */
   deleteView = async (workspaceSlug: string, projectId: string, viewId: string): Promise<any> => {
-    await this.viewService.deleteView(workspaceSlug, projectId, viewId).then(() => {
-      runInAction(() => {
-        delete this.viewMap[viewId];
-        if (this.rootStore.favorite.entityMap[viewId]) this.rootStore.favorite.removeFavoriteFromStore(viewId);
-      });
+    await this.viewService.deleteView(workspaceSlug, projectId, viewId);
+    runInAction(() => {
+      delete this.viewMap[viewId];
+      if (this.rootStore.favorite.entityMap[viewId]) this.rootStore.favorite.removeFavoriteFromStore(viewId);
     });
   };
 

@@ -40,6 +40,7 @@ from plane.app.views.wiki_berkas import (
     WikiPratinjauEndpoint,
     WikiSampahEndpoint,
 )
+from plane.app.views.wiki_halaman import WikiHalamanEndpoint, WikiHalamanFolderEndpoint
 from plane.app.views.workspace.organisasi import StrukturOrganisasiEndpoint
 from plane.app.views.workspace.quick_link_bersama import QuickLinkBersamaEndpoint
 from plane.app.views.workspace.profil_anggota import ProfilAnggotaEndpoint
@@ -387,6 +388,16 @@ urlpatterns = [
         "workspaces/<str:slug>/wiki/trash/materials/<uuid:materi_id>/restore/",
         WikiMateriPulihkanEndpoint.as_view(),
         name="wiki-trash-material-restore",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/pages/",
+        WikiHalamanFolderEndpoint.as_view(),
+        name="wiki-folder-pages",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/pages/<uuid:page_id>/",
+        WikiHalamanEndpoint.as_view(),
+        name="wiki-page",
     ),
     path(
         "workspaces/<str:slug>/link-preview/",

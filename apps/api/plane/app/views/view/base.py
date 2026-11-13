@@ -25,6 +25,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.app.permissions import allow_permission, ROLE
 from plane.app.serializers import IssueViewSerializer, ViewIssueListSerializer
+from plane.app.serializers.view import lampirkan_status_persetujuan
 from plane.db.models import (
     Issue,
     FileAsset,
@@ -43,7 +44,7 @@ from plane.db.models import (
 from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import VIEW_ORDER_BY_ALLOWLIST, order_issue_queryset, sanitize_order_by
 from plane.bgtasks.recent_visited_task import recent_visited_task
-from .. import BaseViewSet
+from .. import BaseAPIView, BaseViewSet
 from plane.db.models import UserFavorite
 from plane.utils.filters import ComplexFilterBackend
 from plane.utils.filters import IssueFilterSet
@@ -162,6 +163,56 @@ class WorkspaceViewViewSet(BaseViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def project_views_visible_to(user, slug):
+    """Department (project) views this user may open, across the workspace.
+
+    The same rules as `IssueViewViewSet.list`, applied to every project at once,
+    so the workspace Views page never shows a view the department page would hide:
+    active membership in a live project with Views enabled, public views or the
+    user's own, and guests without `guest_view_all_features` only see their own.
+    """
+    keanggotaan = ProjectMember.objects.filter(
+        workspace__slug=slug,
+        member=user,
+        is_active=True,
+        project__archived_at__isnull=True,
+        project__deleted_at__isnull=True,
+        project__issue_views_view=True,
+    )
+    project_tamu_terbatas = keanggotaan.filter(role=5, project__guest_view_all_features=False).values("project_id")
+    favorit = UserFavorite.objects.filter(
+        user=user,
+        entity_identifier=OuterRef("pk"),
+        entity_type="view",
+        project_id=OuterRef("project_id"),
+        workspace__slug=slug,
+    )
+    return (
+        IssueView.objects.filter(
+            workspace__slug=slug,
+            project_id__in=keanggotaan.values("project_id"),
+        )
+        .filter(Q(owned_by=user) | Q(access=1))
+        .exclude(Q(project_id__in=project_tamu_terbatas) & ~Q(owned_by=user))
+        .select_related("project", "workspace")
+        .annotate(is_favorite=Exists(favorit))
+        .order_by("-is_favorite", "name")
+    )
+
+
+class WorkspaceProjectViewsEndpoint(BaseAPIView):
+    """Kustomisasi Paradise: view departemen yang boleh dibuka, untuk halaman Views workspace.
+
+    Penyaringan di server (bukan di web) supaya view privat orang lain dan view
+    departemen yang bukan tempat kita tidak pernah terkirim.
+    """
+
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    def get(self, request, slug):
+        views = project_views_visible_to(request.user, slug)
+        return Response(IssueViewSerializer(views, many=True).data, status=status.HTTP_200_OK)
+
+
 class WorkspaceViewIssuesViewSet(BaseViewSet):
     filter_backends = (ComplexFilterBackend,)
     filterset_class = IssueFilterSet
@@ -275,7 +326,7 @@ class WorkspaceViewIssuesViewSet(BaseViewSet):
             order_by=order_by_param,
             request=request,
             queryset=issue_queryset,
-            on_results=lambda issues: ViewIssueListSerializer(issues, many=True).data,
+            on_results=lambda issues: ViewIssueListSerializer(lampirkan_status_persetujuan(issues), many=True).data,
             total_count_queryset=total_issue_count_queryset,
         )
 

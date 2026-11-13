@@ -7,12 +7,13 @@
 import { useMemo, useCallback } from "react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { Stamp } from "lucide-react";
+import { BookOpen, Stamp } from "lucide-react";
 import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
 import type { EUserProjectRoles, IPartialProject } from "@plane/types";
 import type { TNavigationItem } from "@/components/navigation/tab-navigation-root";
 import { useInstance } from "@/hooks/store/use-instance";
-import { isNavKeyEnabled } from "@/lib/paradise-modules";
+import { useFolderWikiProject } from "@/hooks/use-pohon-wiki";
+import { WIKI_MATERIALS_NAV_KEY, isNavKeyEnabled } from "@/lib/paradise-modules";
 
 type UseNavigationItemsProps = {
   workspaceSlug: string;
@@ -34,6 +35,11 @@ export const useNavigationItems = ({
 }: UseNavigationItemsProps): TNavigationItem[] => {
   // Modul yang dimatikan di God Mode > Features (Views) tidak muncul sebagai tab.
   const { config: instanceConfig } = useInstance();
+  const folderWiki = useFolderWikiProject(
+    workspaceSlug,
+    projectId,
+    isNavKeyEnabled(instanceConfig, WIKI_MATERIALS_NAV_KEY)
+  );
   // Base navigation items
   const baseNavigation = useCallback(
     (slug: string, id: string): TNavigationItem[] => [
@@ -109,8 +115,20 @@ export const useNavigationItems = ({
         shouldRender: true,
         sortOrder: 7,
       },
+      // Paradise KEP-97: materi Wiki departemen ini. Ikut modul Wiki (God Mode)
+      // dan hanya tampil kalau project ini milik departemen yang punya folder Wiki.
+      {
+        i18n_key: "wiki_ui.tab.title",
+        key: WIKI_MATERIALS_NAV_KEY,
+        name: "Materials",
+        href: `/${slug}/projects/${id}/materials`,
+        icon: BookOpen,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+        shouldRender: !!folderWiki,
+        sortOrder: 8,
+      },
     ],
-    [project]
+    [project, folderWiki]
   );
 
   // Combine, filter, and sort navigation items

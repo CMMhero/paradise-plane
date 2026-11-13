@@ -68,7 +68,9 @@ class WikiAPIView(BaseAPIView):
     def url_berkas(self, berkas_id):
         return f"/api/workspaces/{self.workspace.slug}/wiki/files/{berkas_id}/"
 
-    def folder_json(self, f, jumlah=0):
+    def folder_json(self, f, jumlah=0, jumlah_halaman=0, project_id=None):
+        """`jumlah_halaman` dan `project_id` hanya diisi pohon (`GET wiki/`): angka
+        halaman departemen yang boleh dilihat, dan project departemen folder itu."""
         return {
             "id": str(f.id),
             "parent_id": str(f.parent_id) if f.parent_id else None,
@@ -84,6 +86,8 @@ class WikiAPIView(BaseAPIView):
             "created_by": str(f.created_by_id) if f.created_by_id else None,
             "created_at": f.created_at,
             "jumlah_materi": jumlah,
+            "jumlah_halaman": jumlah_halaman,
+            "project_id": str(project_id) if project_id else None,
             "can_upload": f.archived_at is None and self.penilai.boleh_unggah(f.id),
             "can_manage": self.penilai.boleh_kelola_folder(f.id),
         }

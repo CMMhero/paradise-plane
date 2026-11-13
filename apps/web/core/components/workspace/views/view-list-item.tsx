@@ -4,80 +4,64 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
+import { useRef } from "react";
 import { observer } from "mobx-react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 // plane imports
-import { EditIcon, TrashIcon } from "@plane/propel/icons";
-import { CustomMenu } from "@plane/ui";
-import { truncateText } from "@plane/utils";
+import { Logo } from "@plane/propel/emoji-icon-picker";
+import { ViewsIcon } from "@plane/propel/icons";
+import type { IWorkspaceView } from "@plane/types";
+// components
+import { ListItem } from "@/components/core/list";
+import { ViewListItemMeta } from "@/components/views/view-list-item-meta";
 // hooks
-import { useGlobalView } from "@/hooks/store/use-global-view";
+import { usePlatformOS } from "@/hooks/use-platform-os";
 // local imports
-import { DeleteGlobalViewModal } from "./delete-view-modal";
-import { CreateUpdateWorkspaceViewModal } from "./modal";
+import { WorkspaceViewQuickActions } from "./quick-action";
 
-type Props = { viewId: string };
+type Props = { view: IWorkspaceView };
 
-export const GlobalViewListItem = observer(function GlobalViewListItem(props: Props) {
-  const { viewId } = props;
-  // states
-  const [updateViewModal, setUpdateViewModal] = useState(false);
-  const [deleteViewModal, setDeleteViewModal] = useState(false);
+/**
+ * Kustomisasi Paradise: baris view workspace memakai `ListItem` dan metadata yang sama
+ * dengan baris view departemen (ikon, akses, pemilik, menu, klik kanan). Bedanya
+ * hanya tanpa bintang favorit: favorit view di server terikat ke departemen.
+ */
+export const GlobalViewListItem = observer(function GlobalViewListItem({ view }: Props) {
+  // refs
+  const parentRef = useRef(null);
   // router
   const { workspaceSlug } = useParams();
-  // store hooks
-  const { getViewDetailsById } = useGlobalView();
-  // derived data
-  const view = getViewDetailsById(viewId);
+  // hooks
+  const { isMobile } = usePlatformOS();
 
-  if (!view) return null;
+  if (!workspaceSlug) return null;
 
   return (
-    <>
-      <CreateUpdateWorkspaceViewModal data={view} isOpen={updateViewModal} onClose={() => setUpdateViewModal(false)} />
-      <DeleteGlobalViewModal data={view} isOpen={deleteViewModal} onClose={() => setDeleteViewModal(false)} />
-      <div className="group border-b border-subtle hover:bg-surface-2">
-        <Link href={`/${workspaceSlug}/workspace-views/${view.id}`}>
-          <div className="relative flex h-[52px] w-full items-center justify-between rounded-sm p-4">
-            <div className="flex w-full items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col">
-                  <p className="truncate text-13 leading-4 font-medium">{truncateText(view.name, 75)}</p>
-                  {view?.description && <p className="text-11 text-secondary">{view.description}</p>}
-                </div>
-              </div>
-              <div className="ml-2 flex flex-shrink-0">
-                <div className="flex items-center gap-4">
-                  <CustomMenu ellipsis>
-                    <CustomMenu.MenuItem
-                      onClick={() => {
-                        setUpdateViewModal(true);
-                      }}
-                    >
-                      <span className="flex items-center justify-start gap-2">
-                        <EditIcon width={14} height={14} strokeWidth={2} />
-                        <span>Edit View</span>
-                      </span>
-                    </CustomMenu.MenuItem>
-                    <CustomMenu.MenuItem
-                      onClick={() => {
-                        setDeleteViewModal(true);
-                      }}
-                    >
-                      <span className="flex items-center justify-start gap-2">
-                        <TrashIcon width={14} height={14} strokeWidth={2} />
-                        <span>Delete View</span>
-                      </span>
-                    </CustomMenu.MenuItem>
-                  </CustomMenu>
-                </div>
-              </div>
-            </div>
+    <ListItem
+      prependTitleElement={
+        view.logo_props?.in_use ? (
+          <Logo logo={view.logo_props} size={16} type="lucide" />
+        ) : (
+          <ViewsIcon className="h-4 w-4 text-tertiary" />
+        )
+      }
+      title={view.name}
+      itemLink={`/${workspaceSlug}/workspace-views/${view.id}`}
+      actionableItems={
+        <>
+          <ViewListItemMeta access={view.access} ownerId={view.owned_by} scope={{ projectId: null }} />
+          <div className="hidden md:block">
+            <WorkspaceViewQuickActions parentRef={parentRef} workspaceSlug={workspaceSlug.toString()} view={view} />
           </div>
-        </Link>
-      </div>
-    </>
+        </>
+      }
+      quickActionElement={
+        <div className="block md:hidden">
+          <WorkspaceViewQuickActions workspaceSlug={workspaceSlug.toString()} view={view} />
+        </div>
+      }
+      isMobile={isMobile}
+      parentRef={parentRef}
+    />
   );
 });

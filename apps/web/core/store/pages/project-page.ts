@@ -115,7 +115,12 @@ export class ProjectPage extends BasePage implements TProjectPage {
    */
   get canCurrentUserAccessPage() {
     const isPagePublic = this.access === EPageAccess.PUBLIC;
-    return isPagePublic || this.isCurrentUserOwner;
+    if (isPagePublic || this.isCurrentUserOwner) return true;
+    // Paradise KEP-95: server hanya mengirim halaman privat orang lain kepada
+    // admin Wiki, direktur, dan manager divisinya (`saringan_akses_halaman`).
+    // Semua isi store ini datang dari jawaban server itu, jadi halaman privat
+    // yang sudah ada di sini memang boleh dibuka; server tetap penegaknya.
+    return !!this.id;
   }
 
   /**

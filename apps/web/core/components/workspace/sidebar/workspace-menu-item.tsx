@@ -58,7 +58,8 @@ export const SidebarWorkspaceMenuItem = observer(function SidebarWorkspaceMenuIt
     return null;
   }
 
-  const isActive = item.href === pathname;
+  // Kustomisasi Paradise: Views tetap aktif di daftar view maupun di dalam satu view.
+  const isActive = item.href === pathname || (item.key === "views" && pathname.startsWith(item.href));
 
   return (
     <Link href={item.href} onClick={() => handleLinkClick()}>

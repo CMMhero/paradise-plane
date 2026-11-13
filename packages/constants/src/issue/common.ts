@@ -24,6 +24,8 @@ export type TIssueFilterPriorityObject = {
   icon: string;
 };
 
+// team_project sengaja dipetakan ke kolom yang sama dengan project.
+/* oxlint-disable typescript/no-duplicate-enum-values */
 export enum EIssueGroupByToServerOptions {
   "state" = "state_id",
   "priority" = "priority",
@@ -35,9 +37,9 @@ export enum EIssueGroupByToServerOptions {
   "target_date" = "target_date",
   "project" = "project_id",
   "created_by" = "created_by",
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   "team_project" = "project_id",
 }
+/* oxlint-enable typescript/no-duplicate-enum-values */
 
 export enum EIssueGroupBYServerToProperty {
   "state_id" = "state_id",
@@ -137,6 +139,8 @@ export const ISSUE_ORDER_BY_OPTIONS: {
   { key: "start_date", titleTranslationKey: "common.order_by.start_date" },
   { key: "target_date", titleTranslationKey: "common.order_by.due_date" },
   { key: "-priority", titleTranslationKey: "common.priority" },
+  // Kustomisasi Paradise: yang menunggu persetujuan lebih dulu (KEP-55).
+  { key: "approval_status", titleTranslationKey: "issue.approval.filter.label" },
 ];
 
 /**
@@ -263,8 +267,13 @@ export type TSpreadsheetPropertyDetail = { i18n_title: string; icon: string } & 
 export const SPREADSHEET_PROPERTY_DETAILS: {
   [key in keyof IIssueDisplayProperties]: TSpreadsheetPropertyDetail;
 } = {
+  // Menaik = menunggu, ditolak, disetujui; tugas tanpa persetujuan selalu di akhir (server).
   approval_status: {
     i18n_title: "issue.approval.filter.label",
+    ascendingOrderKey: "approval_status",
+    ascendingOrderTitle: "Awaiting",
+    descendingOrderKey: "-approval_status",
+    descendingOrderTitle: "Approved",
     icon: "ApprovalPropertyIcon",
   },
   assignee: {

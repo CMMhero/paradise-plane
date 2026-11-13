@@ -89,6 +89,7 @@ from .state.base import StateViewSet, IntakeStateEndpoint
 from .view.base import (
     WorkspaceViewViewSet,
     WorkspaceViewIssuesViewSet,
+    WorkspaceProjectViewsEndpoint,
     IssueViewViewSet,
     IssueViewFavoriteViewSet,
 )

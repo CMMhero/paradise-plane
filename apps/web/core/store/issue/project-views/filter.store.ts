@@ -23,6 +23,8 @@ import type {
 } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 import { handleIssueQueryParamsByLayout } from "@plane/utils";
+// lib
+import { isViewBawaan } from "@/lib/view-bawaan";
 // services
 import { ViewService } from "@/services/view.service";
 import type { IBaseIssueFilterStore } from "../helpers/issue-filter-helper.store";
@@ -107,9 +109,9 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
     const displayFilters = this.filters[viewId] || undefined;
     if (isEmpty(displayFilters)) return undefined;
 
-    const _filters: IIssueFilters = this.computedIssueFilters(displayFilters);
+    const currentFilters: IIssueFilters = this.computedIssueFilters(displayFilters);
 
-    return _filters;
+    return currentFilters;
   }
 
   getAppliedFilters(viewId: string) {
@@ -136,7 +138,14 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
       groupId: string | undefined,
       subGroupId: string | undefined
     ) => {
-      const filterParams = this.getAppliedFilters(viewId);
+      let filterParams = this.getAppliedFilters(viewId);
+
+      // Kustomisasi Paradise: view bawaan departemen (Assigned/Created/Subscribed) = syarat
+      // "milik saya" yang sama dengan view bawaan workspace, dikirim sebagai parameter API.
+      if (isViewBawaan(viewId)) {
+        const syarat = this.getFilterConditionBasedOnViews(this.rootIssueStore.currentUserId, viewId);
+        if (syarat) filterParams = { ...filterParams, ...syarat };
+      }
 
       const paginationParams = this.getPaginationParams(filterParams, options, cursor, groupId, subGroupId);
       return paginationParams;
@@ -155,14 +164,14 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
     };
     const currentUserId = this.rootIssueStore.currentUserId;
     if (currentUserId) {
-      const _kanbanFilters = this.handleIssuesLocalFilters.get(
+      const storedKanbanFilters = this.handleIssuesLocalFilters.get(
         EIssuesStoreType.PROJECT_VIEW,
         workspaceSlug,
         viewId,
         currentUserId
       );
-      kanbanFilters.group_by = _kanbanFilters?.kanban_filters?.group_by || [];
-      kanbanFilters.sub_group_by = _kanbanFilters?.kanban_filters?.sub_group_by || [];
+      kanbanFilters.group_by = storedKanbanFilters?.kanban_filters?.group_by || [];
+      kanbanFilters.sub_group_by = storedKanbanFilters?.kanban_filters?.sub_group_by || [];
     }
 
     runInAction(() => {
@@ -173,8 +182,31 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
     });
   });
 
+  /** Kunci penyimpanan lokal tampilan view bawaan: per departemen, per orang. */
+  private kunciLokalBawaan = (projectId: string, viewId: string) => `${projectId}:${viewId}`;
+
   fetchFilters = async (workspaceSlug: string, projectId: string, viewId: string) => {
     try {
+      if (isViewBawaan(viewId)) {
+        // View bawaan tidak punya baris di server: tampilannya (layout, properti) disimpan lokal.
+        const viewBawaan = await this.rootIssueStore.rootStore.projectView.fetchViewDetails(
+          workspaceSlug,
+          projectId,
+          viewId
+        );
+        const tersimpan = this.handleIssuesLocalFilters.get(
+          EIssuesStoreType.PROJECT_VIEW,
+          workspaceSlug,
+          this.kunciLokalBawaan(projectId, viewId),
+          this.rootIssueStore.currentUserId
+        );
+        this.mutateFilters(workspaceSlug, viewId, {
+          ...viewBawaan,
+          display_filters: tersimpan?.display_filters ?? viewBawaan.display_filters,
+          display_properties: tersimpan?.display_properties ?? viewBawaan.display_properties,
+        });
+        return;
+      }
       const viewDetails = await this.issueFilterService.getViewDetails(workspaceSlug, projectId, viewId);
       this.mutateFilters(workspaceSlug, viewId, viewDetails);
     } catch (error) {
@@ -221,7 +253,7 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
     try {
       if (isEmpty(this.filters) || isEmpty(this.filters[viewId])) return;
 
-      const _filters = {
+      const currentFilters = {
         richFilters: this.filters[viewId].richFilters,
         displayFilters: this.filters[viewId].displayFilters as IIssueDisplayFilterOptions,
         displayProperties: this.filters[viewId].displayProperties as IIssueDisplayProperties,
@@ -231,24 +263,24 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
       switch (type) {
         case EIssueFilterType.DISPLAY_FILTERS: {
           const updatedDisplayFilters = filters as IIssueDisplayFilterOptions;
-          _filters.displayFilters = { ..._filters.displayFilters, ...updatedDisplayFilters };
+          currentFilters.displayFilters = { ...currentFilters.displayFilters, ...updatedDisplayFilters };
 
           // set sub_group_by to null if group_by is set to null
-          if (_filters.displayFilters.group_by === null) {
-            _filters.displayFilters.sub_group_by = null;
+          if (currentFilters.displayFilters.group_by === null) {
+            currentFilters.displayFilters.sub_group_by = null;
             updatedDisplayFilters.sub_group_by = null;
           }
           // set sub_group_by to null if layout is switched to kanban group_by and sub_group_by are same
           if (
-            _filters.displayFilters.layout === "kanban" &&
-            _filters.displayFilters.group_by === _filters.displayFilters.sub_group_by
+            currentFilters.displayFilters.layout === "kanban" &&
+            currentFilters.displayFilters.group_by === currentFilters.displayFilters.sub_group_by
           ) {
-            _filters.displayFilters.sub_group_by = null;
+            currentFilters.displayFilters.sub_group_by = null;
             updatedDisplayFilters.sub_group_by = null;
           }
           // set group_by to state if layout is switched to kanban and group_by is null
-          if (_filters.displayFilters.layout === "kanban" && _filters.displayFilters.group_by === null) {
-            _filters.displayFilters.group_by = "state";
+          if (currentFilters.displayFilters.layout === "kanban" && currentFilters.displayFilters.group_by === null) {
+            currentFilters.displayFilters.group_by = "state";
             updatedDisplayFilters.group_by = "state";
           }
 
@@ -261,6 +293,16 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
               );
             });
           });
+
+          if (isViewBawaan(viewId))
+            this.handleIssuesLocalFilters.set(
+              EIssuesStoreType.PROJECT_VIEW,
+              type,
+              workspaceSlug,
+              this.kunciLokalBawaan(projectId, viewId),
+              this.rootIssueStore.currentUserId,
+              { display_filters: currentFilters.displayFilters }
+            );
 
           if (this.getShouldClearIssues(updatedDisplayFilters)) {
             this.rootIssueStore.projectIssues.clear(true); // clear issues for local store when some filters like layout changes
@@ -279,7 +321,7 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
         }
         case EIssueFilterType.DISPLAY_PROPERTIES: {
           const updatedDisplayProperties = filters as IIssueDisplayProperties;
-          _filters.displayProperties = { ..._filters.displayProperties, ...updatedDisplayProperties };
+          currentFilters.displayProperties = { ...currentFilters.displayProperties, ...updatedDisplayProperties };
 
           runInAction(() => {
             Object.keys(updatedDisplayProperties).forEach((_key) => {
@@ -291,11 +333,21 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
             });
           });
 
+          if (isViewBawaan(viewId))
+            this.handleIssuesLocalFilters.set(
+              EIssuesStoreType.PROJECT_VIEW,
+              type,
+              workspaceSlug,
+              this.kunciLokalBawaan(projectId, viewId),
+              this.rootIssueStore.currentUserId,
+              { display_properties: currentFilters.displayProperties }
+            );
+
           break;
         }
         case EIssueFilterType.KANBAN_FILTERS: {
           const updatedKanbanFilters = filters as TIssueKanbanFilters;
-          _filters.kanbanFilters = { ..._filters.kanbanFilters, ...updatedKanbanFilters };
+          currentFilters.kanbanFilters = { ...currentFilters.kanbanFilters, ...updatedKanbanFilters };
 
           const currentUserId = this.rootIssueStore.currentUserId;
           if (currentUserId)
@@ -306,7 +358,7 @@ export class ProjectViewIssuesFilter extends IssueFilterHelperStore implements I
               viewId,
               currentUserId,
               {
-                kanban_filters: _filters.kanbanFilters,
+                kanban_filters: currentFilters.kanbanFilters,
               }
             );
 

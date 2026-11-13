@@ -10,12 +10,14 @@ import { useParams } from "next/navigation";
 
 // plane imports
 import {
+  DEFAULT_GLOBAL_VIEWS_LIST,
   EIssueFilterType,
   ISSUE_DISPLAY_FILTERS_BY_PAGE,
   EUserPermissions,
   EUserPermissionsLevel,
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { LockIcon, ViewsIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
@@ -28,6 +30,9 @@ import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label"
 import { DisplayFiltersSelection, FiltersDropdown, LayoutSelection } from "@/components/issues/issue-layouts/filters";
 import { ViewQuickActions } from "@/components/views/quick-actions";
 import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
+import { DefaultWorkspaceViewQuickActions } from "@/components/workspace/views/default-view-quick-action";
+// lib
+import { getTautanViewBawaan, getViewBawaan } from "@/lib/view-bawaan";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useIssues } from "@/hooks/store/use-issues";
@@ -50,6 +55,7 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.PROJECT_VIEW);
   const { toggleCreateIssueModal } = useCommandPalette();
+  const { t } = useTranslation();
   const { allowPermissions } = useUserPermissions();
 
   const { currentProjectDetails, loader } = useProject();
@@ -108,17 +114,28 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
 
   if (!viewDetails) return;
 
-  const switcherOptions = projectViewIds
+  // Kustomisasi Paradise: view bawaan (Assigned, dst.) tampil dengan label terjemahan,
+  // ikut di pemilih view, dan menunya hanya buka/salin tautan (tidak ada yang bisa diubah).
+  const viewBawaan = getViewBawaan(viewId);
+  const viewName = viewBawaan ? t(viewBawaan.i18n_label) : viewDetails.name;
+  const defaultOptions: ICustomSearchSelectOption[] = DEFAULT_GLOBAL_VIEWS_LIST.map((view) => ({
+    value: view.key,
+    query: t(view.i18n_label),
+    content: <SwitcherLabel name={t(view.i18n_label)} LabelIcon={ViewsIcon} />,
+  }));
+
+  const savedOptions = projectViewIds
     ?.map((id) => {
-      const _view = id === viewId ? viewDetails : getViewById(id);
-      if (!_view) return;
+      const simpanan = id === viewId ? viewDetails : getViewById(id);
+      if (!simpanan) return;
       return {
-        value: _view.id,
-        query: _view.name,
-        content: <SwitcherLabel logo_props={_view.logo_props} name={_view.name} LabelIcon={ViewsIcon} />,
+        value: simpanan.id,
+        query: simpanan.name,
+        content: <SwitcherLabel logo_props={simpanan.logo_props} name={simpanan.name} LabelIcon={ViewsIcon} />,
       };
     })
     .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
+  const switcherOptions = [...defaultOptions, ...(savedOptions ?? [])];
 
   return (
     <Header>
@@ -142,7 +159,7 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
                 onChange={(value: string) => {
                   router.push(`/${workspaceSlug}/projects/${projectId}/views/${value}`);
                 }}
-                title={viewDetails?.name}
+                title={viewName}
                 icon={
                   <Breadcrumbs.Icon>
                     <SwitcherIcon logo_props={viewDetails.logo_props} LabelIcon={ViewsIcon} size={16} />
@@ -209,13 +226,21 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
           </Button>
         )}
         <div className="hidden md:block">
-          <ViewQuickActions
-            parentRef={parentRef}
-            customClassName="flex-shrink-0 flex items-center justify-center size-[26px] bg-layer-1/70 rounded-sm"
-            projectId={projectId.toString()}
-            view={viewDetails}
-            workspaceSlug={workspaceSlug.toString()}
-          />
+          {viewBawaan ? (
+            <DefaultWorkspaceViewQuickActions
+              workspaceSlug={workspaceSlug.toString()}
+              view={viewBawaan}
+              viewLink={getTautanViewBawaan(workspaceSlug.toString(), viewBawaan.key, projectId.toString()).slice(1)}
+            />
+          ) : (
+            <ViewQuickActions
+              parentRef={parentRef}
+              customClassName="flex-shrink-0 flex items-center justify-center size-[26px] bg-layer-1/70 rounded-sm"
+              projectId={projectId.toString()}
+              view={viewDetails}
+              workspaceSlug={workspaceSlug.toString()}
+            />
+          )}
         </div>
       </Header.RightItem>
     </Header>

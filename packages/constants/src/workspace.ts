@@ -202,7 +202,8 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
   views: {
     key: "views",
     labelTranslationKey: "views",
-    href: `/workspace-views/all-issues/`,
+    // Kustomisasi Paradise: menu Views membuka daftar view, sama dengan tab Views departemen.
+    href: `/workspace-views/`,
     access: [EUserWorkspaceRoles.ADMIN],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },

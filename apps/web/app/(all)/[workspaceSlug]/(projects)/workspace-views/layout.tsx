@@ -7,12 +7,12 @@
 import { Outlet } from "react-router";
 import { AppHeader } from "@/components/core/app-header";
 import { ContentWrapper } from "@/components/core/content-wrapper";
-import { GlobalIssuesHeader } from "./header";
+import { GlobalIssuesHeader, WorkspaceViewsMobileHeader } from "./header";
 
 export default function GlobalIssuesLayout() {
   return (
     <>
-      <AppHeader header={<GlobalIssuesHeader />} />
+      <AppHeader header={<GlobalIssuesHeader />} mobileHeader={<WorkspaceViewsMobileHeader />} />
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>

@@ -417,7 +417,7 @@ export function Gelembung(props: Props) {
       {dihapus ? (
         <p className={`text-13 italic ${redup}`}>{t("chat_ui.message_deleted")}</p>
       ) : kartu ? (
-        <KartuPesan pesan={pesan} namaOrang={namaOrang} onTelepon={props.onTelepon} terang={terang} />
+        <KartuPesan pesan={pesan} namaOrang={namaOrang} onTelepon={props.onTelepon} terang={terang} sayaId={sayaId} />
       ) : pesan.isi ? (
         <p className="text-13 [overflow-wrap:anywhere] whitespace-pre-wrap">
           {adaRujukan

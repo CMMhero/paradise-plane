@@ -305,6 +305,7 @@ class TestKartuKabar:
         assert kartu.pengirim_id is None
         assert kartu.muatan["tugas"]["nomor"] == f"GDG-{issue.sequence_id}"
         assert kartu.muatan["workspace_slug"] == workspace.slug
+        assert kartu.muatan["penerima"] == str(staf.id)
 
         # Orang lain tidak bisa membaca ruang kabar staf.
         jawab = _klien(admin).get(f"/api/workspaces/{workspace.slug}/chat/ruang/{ruang.id}/")

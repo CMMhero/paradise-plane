@@ -175,3 +175,30 @@ class TestRetensiBersama:
 
         (m,) = mail.outbox
         assert sorted(m.to) == sorted([dunia.sup.email, dunia.mgr.email])
+
+    @pytest.mark.django_db
+    def test_saklar_god_mode_mematikan_email_saja(self, dunia, settings):
+        """ENABLE_ADMIN_RETENTION_EMAIL mati = tidak ada email, tapi pembersihan jalan terus."""
+        from django.utils import timezone
+
+        from plane.bgtasks import login_activity_retention as r
+        from plane.license.models import Instance, InstanceAdmin, InstanceConfiguration
+        from plane.utils.saklar_instance import ENABLE_ADMIN_RETENTION_EMAIL, SAKLAR_BAWAAN
+
+        settings.EMAIL_BACKEND = LOCMEM
+        settings.SKIP_ENV_VAR = True
+        assert SAKLAR_BAWAAN[ENABLE_ADMIN_RETENTION_EMAIL] == "1"  # perilaku lama: hidup
+
+        instance = Instance.objects.first() or Instance.objects.create(
+            instance_name="uji", instance_id="uji-saklar", current_version="uji", last_checked_at=timezone.now()
+        )
+        InstanceAdmin.objects.create(user=dunia.sup, instance=instance, role=20)
+        InstanceConfiguration.objects.update_or_create(key=ENABLE_ADMIN_RETENTION_EMAIL, defaults={"value": "0"})
+        keadaan = {"akan_dibuang": 3, "retensi_hari": 90, "ambang_peringatan_hari": 7, "tertua": None}
+
+        with mock.patch.object(r, "get_email_configuration", return_value=("smtp.uji",) + ("",) * 6):
+            assert r._kirim_email_peringatan(keadaan) == 0
+            assert mail.outbox == []
+
+            InstanceConfiguration.objects.filter(key=ENABLE_ADMIN_RETENTION_EMAIL).update(value="1")
+            assert r._kirim_email_peringatan(keadaan) == 1

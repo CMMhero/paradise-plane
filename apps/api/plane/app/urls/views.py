@@ -9,6 +9,7 @@ from plane.app.views import (
     IssueViewViewSet,
     WorkspaceViewViewSet,
     WorkspaceViewIssuesViewSet,
+    WorkspaceProjectViewsEndpoint,
     IssueViewFavoriteViewSet,
 )
 
@@ -47,6 +48,12 @@ urlpatterns = [
             }
         ),
         name="global-view",
+    ),
+    # Kustomisasi Paradise: view departemen yang boleh dibuka, untuk halaman Views workspace.
+    path(
+        "workspaces/<str:slug>/project-views/",
+        WorkspaceProjectViewsEndpoint.as_view(),
+        name="workspace-project-views",
     ),
     path(
         "workspaces/<str:slug>/issues/",

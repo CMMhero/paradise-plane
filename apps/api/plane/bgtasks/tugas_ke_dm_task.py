@@ -262,7 +262,7 @@ def kirim_tugas_ke_dm(issue_id, actor_id, penerima_ids):
                 penerima_id=penerima_id,
                 isi=isi,
                 jenis=JenisPesan.TUGAS,
-                muatan=muatan,
+                muatan={**muatan, "penerima": str(penerima_id)},
             )
             # Denormalisasi yang membuat daftar percakapan bisa diurutkan tanpa
             # subquery, sama seperti jalur kirim biasa.

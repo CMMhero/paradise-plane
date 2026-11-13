@@ -109,6 +109,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
           issueId={issueId}
           issue={issue}
           issueOperations={issueOperations}
+          isPeek
         />
       )}
       <div className="flex items-center justify-between gap-2">

@@ -38,7 +38,12 @@ from plane.utils.email_merek import (
     paragraf,
     tanggal,
 )
-from plane.utils.saklar_instance import LOGIN_HISTORY_RETENTION_DAYS, setelan_angka
+from plane.utils.saklar_instance import (
+    ENABLE_ADMIN_RETENTION_EMAIL,
+    LOGIN_HISTORY_RETENTION_DAYS,
+    saklar_aktif,
+    setelan_angka,
+)
 
 logger = logging.getLogger("plane.worker")
 
@@ -84,7 +89,7 @@ TEKS_RETENSI = {
     "id": {
         "subjek": "[{merek}] {n} riwayat login akan dihapus",
         "judul": "Riwayat login akan dihapus",
-        "p1": "Riwayat login disimpan {retensi} hari. Sebanyak {n} peristiwa akan dihapus dalam {ambang} hari ke depan{tertua}.",
+        "p1": "Riwayat login disimpan {retensi} hari. Sebanyak {n} peristiwa akan dihapus dalam {ambang} hari ke depan{tertua}.",  # noqa: E501
         "tertua": ", terhitung dari data tertua {tgl}",
         "p2": "Kalau angkanya masih diperlukan, ekspor dulu lewat God Mode > Activity sebelum tanggal itu. "
         "Sesudah dihapus, data ini tidak bisa dikembalikan.",
@@ -93,7 +98,7 @@ TEKS_RETENSI = {
     "en": {
         "subjek": "[{merek}] {n} login records will be deleted",
         "judul": "Login history will be deleted",
-        "p1": "Login history is kept for {retensi} days. {n} events will be deleted within the next {ambang} days{tertua}.",
+        "p1": "Login history is kept for {retensi} days. {n} events will be deleted within the next {ambang} days{tertua}.",  # noqa: E501
         "tertua": ", counting from the oldest record on {tgl}",
         "p2": "If you still need these numbers, export them from God Mode > Activity before then. "
         "Once deleted, this data cannot be recovered.",
@@ -124,7 +129,14 @@ def susun_peringatan_retensi(keadaan, bahasa="id", email=""):
 
 
 def _kirim_email_peringatan(keadaan):
-    """Email ke semua instance admin, masing-masing dalam bahasanya. Diam kalau SMTP belum jalan."""
+    """Email ke semua instance admin, masing-masing dalam bahasanya. Diam kalau SMTP belum jalan.
+
+    Saklar God Mode `ENABLE_ADMIN_RETENTION_EMAIL` mematikan emailnya saja; banner
+    di God Mode dan pembersihan tidak ikut berhenti.
+    """
+    if not saklar_aktif(ENABLE_ADMIN_RETENTION_EMAIL):
+        logger.info("Retensi: email peringatan dimatikan di God Mode, dilewati")
+        return 0
     admin = [
         a.user
         for a in InstanceAdmin.objects.filter(user__is_active=True)

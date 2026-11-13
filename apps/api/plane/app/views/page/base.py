@@ -57,6 +57,7 @@ from plane.app.permissions import ProjectPagePermission
 from plane.utils.izin_sumber import tolak_izin
 from plane.utils.saklar_instance import PERM_PAGE_ARCHIVE, PERM_PAGE_DELETE
 from plane.utils.wiki_access import is_wiki_governed
+from plane.utils.wiki_mandiri import pengawas_halaman_privat
 
 
 def _galat_arsip_halaman(request, page, project_id, pesan_lama):
@@ -82,6 +83,19 @@ def _galat_arsip_halaman(request, page, project_id, pesan_lama):
         project_id=project_id,
         pemilik_id=page.owned_by_id,
     )
+
+
+def saringan_akses_halaman(user, project_id):
+    """Q halaman yang boleh terlihat di project ini.
+
+    Plane: milik sendiri atau publik. KEP-95 (6 Nov 2026): admin Wiki, direktur,
+    dan manager divisi departemen project ini juga melihat halaman privat orang
+    lain. Saringan ini hanya berlaku di project yang ada di URL, jadi tidak ada
+    daftar lain (pencarian, favorit, kunjungan terakhir) yang ikut terbuka.
+    """
+    if pengawas_halaman_privat(user, project_id):
+        return Q()
+    return Q(owned_by=user) | Q(access=Page.PUBLIC_ACCESS)
 
 
 def unarchive_archive_page_and_descendants(page_id, archived_at):
@@ -122,7 +136,7 @@ class PageViewSet(BaseViewSet):
                 projects__project_projectmember__is_active=True,
                 projects__archived_at__isnull=True,
             )
-            .filter(Q(owned_by=self.request.user) | Q(access=0))
+            .filter(saringan_akses_halaman(self.request.user, self.kwargs.get("project_id")))
             .prefetch_related("projects")
             .select_related("workspace")
             .select_related("owned_by")
@@ -460,7 +474,7 @@ class PageViewSet(BaseViewSet):
                 projects__archived_at__isnull=True,
             )
             .filter(parent__isnull=True)
-            .filter(Q(owned_by=request.user) | Q(access=0))
+            .filter(saringan_akses_halaman(request.user, project_id))
             .annotate(
                 project=Exists(
                     ProjectPage.objects.filter(page_id=OuterRef("id"), project_id=self.kwargs.get("project_id"))
@@ -533,7 +547,7 @@ class PagesDescriptionViewSet(BaseViewSet):
 
     def retrieve(self, request, slug, project_id, page_id):
         page = Page.objects.get(
-            Q(owned_by=self.request.user) | Q(access=0),
+            saringan_akses_halaman(self.request.user, project_id),
             pk=page_id,
             workspace__slug=slug,
             projects__id=project_id,
@@ -553,7 +567,7 @@ class PagesDescriptionViewSet(BaseViewSet):
 
     def partial_update(self, request, slug, project_id, page_id):
         page = Page.objects.get(
-            Q(owned_by=self.request.user) | Q(access=0),
+            saringan_akses_halaman(self.request.user, project_id),
             pk=page_id,
             workspace__slug=slug,
             projects__id=project_id,
@@ -619,8 +633,13 @@ class PageDuplicateEndpoint(BaseAPIView):
             project_pages__deleted_at__isnull=True,
         )
 
-        # check for permission
-        if page.access == Page.PRIVATE_ACCESS and page.owned_by_id != request.user.id:
+        # check for permission (KEP-95: yang boleh membaca halaman privat orang
+        # lain juga boleh menyalinnya; salinannya milik penyalin)
+        if (
+            page.access == Page.PRIVATE_ACCESS
+            and page.owned_by_id != request.user.id
+            and not pengawas_halaman_privat(request.user, project_id)
+        ):
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
         # get all the project ids where page is present

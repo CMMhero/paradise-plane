@@ -4,15 +4,12 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
 // plane imports
 import { ETabIndices, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { Button } from "@plane/propel/button";
-import { EmojiPicker, EmojiIconPickerTypes, Logo } from "@plane/propel/emoji-icon-picker";
-import { ViewsIcon } from "@plane/propel/icons";
 import type {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
@@ -28,12 +25,13 @@ import { DisplayFiltersSelection, FiltersDropdown } from "@/components/issues/is
 import { WorkItemFiltersRow } from "@/components/work-item-filters/filters-row";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+import { useUser } from "@/hooks/store/user";
 import { usePlatformOS } from "@/hooks/use-platform-os";
-// plane web imports
-import { AccessController } from "@/plane-web/components/views/access-controller";
 // local imports
 import { LayoutDropDown } from "../dropdowns/layout";
 import { ProjectLevelWorkItemFiltersHOC } from "../work-item-filters/filters-hoc/project-level";
+import { ViewFormFooter, ViewFormHeader, ViewFormSection, ViewScopeField, ViewVisibilityField } from "./form-sections";
+import { ViewLogoPicker } from "./logo-picker";
 
 type Props = {
   data?: IProjectView | null;
@@ -42,6 +40,11 @@ type Props = {
   preLoadedData?: Partial<IProjectView> | null;
   projectId: string;
   workspaceSlug: string;
+  /**
+   * Kustomisasi Paradise: bagian "Tempat". Halaman Views workspace memberi pemilih
+   * workspace/departemen; tanpa ini departemennya ditampilkan hanya-baca.
+   */
+  scopeSlot?: ReactNode;
 };
 
 const DEFAULT_VALUES: Partial<IProjectView> = {
@@ -53,13 +56,12 @@ const DEFAULT_VALUES: Partial<IProjectView> = {
 };
 
 export const ProjectViewForm = observer(function ProjectViewForm(props: Props) {
-  const { handleFormSubmit, handleClose, data, preLoadedData, projectId, workspaceSlug } = props;
+  const { handleFormSubmit, handleClose, data, preLoadedData, projectId, workspaceSlug, scopeSlot } = props;
   // i18n
   const { t } = useTranslation();
-  // state
-  const [isOpen, setIsOpen] = useState(false);
   // store hooks
   const { getProjectById } = useProject();
+  const { data: currentUser } = useUser();
   const { isMobile } = usePlatformOS();
   // form info
   const defaultValues = {
@@ -80,7 +82,8 @@ export const ProjectViewForm = observer(function ProjectViewForm(props: Props) {
   });
   // derived values
   const projectDetails = getProjectById(projectId);
-  const logoValue = watch("logo_props");
+  // Server hanya mengizinkan pemilik mengganti akses; view baru selalu milik pembuatnya.
+  const canChangeAccess = !data || data.owned_by === currentUser?.id;
   const workItemFilters: IIssueFilters = {
     richFilters: getValues("rich_filters"),
     displayFilters: getValues("display_filters"),
@@ -107,51 +110,13 @@ export const ProjectViewForm = observer(function ProjectViewForm(props: Props) {
 
   return (
     <form onSubmit={handleSubmit(handleCreateUpdateView)}>
-      <div className="space-y-5 p-5">
-        <h3 className="text-18 font-medium text-secondary">{data ? t("view.update.label") : t("view.create.label")}</h3>
-        <div className="space-y-3">
+      <div className="flex flex-col gap-6 p-5">
+        <ViewFormHeader isEditing={!!data} />
+        {scopeSlot ?? <ViewScopeField projectId={projectId} isLocked />}
+        <ViewFormSection title={t("views_ui.details_label")}>
           <div className="flex w-full items-start gap-2">
-            <EmojiPicker
-              iconType="lucide"
-              isOpen={isOpen}
-              handleToggle={(val: boolean) => setIsOpen(val)}
-              className="flex-shrink0 flex items-center justify-center"
-              buttonClassName="flex items-center justify-center"
-              label={
-                <span className="grid h-9 w-9 place-items-center rounded-md bg-surface-2">
-                  <>
-                    {logoValue?.in_use ? (
-                      <Logo logo={logoValue} size={18} type="lucide" />
-                    ) : (
-                      <ViewsIcon className="h-4 w-4 text-tertiary" />
-                    )}
-                  </>
-                </span>
-              }
-              // TODO: fix types
-              onChange={(val: any) => {
-                let logoValue = {};
-
-                if (val?.type === "emoji")
-                  logoValue = {
-                    value: val.value,
-                  };
-                else if (val?.type === "icon") logoValue = val.value;
-
-                setValue("logo_props", {
-                  in_use: val?.type,
-                  [val?.type]: logoValue,
-                });
-                setIsOpen(false);
-              }}
-              defaultIconColor={logoValue?.in_use && logoValue?.in_use === "icon" ? logoValue?.icon?.color : undefined}
-              defaultOpen={
-                logoValue?.in_use && logoValue?.in_use === "emoji"
-                  ? EmojiIconPickerTypes.EMOJI
-                  : EmojiIconPickerTypes.ICON
-              }
-            />
-            <div className="flew-grow w-full space-y-1">
+            <ViewLogoPicker value={watch("logo_props")} onChange={(logo) => setValue("logo_props", logo)} />
+            <div className="w-full flex-grow space-y-1">
               <Controller
                 control={control}
                 name="name"
@@ -170,9 +135,11 @@ export const ProjectViewForm = observer(function ProjectViewForm(props: Props) {
                     value={value}
                     onChange={onChange}
                     hasError={Boolean(errors.name)}
-                    placeholder={t("common.title")}
+                    placeholder={t("views_ui.name_placeholder")}
+                    aria-label={t("views_ui.name_placeholder")}
                     className="w-full text-14"
                     tabIndex={getIndex("name")}
+                    // oxlint-disable-next-line jsx-a11y/no-autofocus -- dialog dibuka untuk mengetik nama; fokus tetap di dalam dialog
                     autoFocus
                   />
                 )}
@@ -180,32 +147,38 @@ export const ProjectViewForm = observer(function ProjectViewForm(props: Props) {
               <span className="text-11 text-danger-primary">{errors?.name?.message?.toString()}</span>
             </div>
           </div>
-          <div>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field: { value, onChange } }) => (
-                <TextArea
-                  id="description"
-                  name="description"
-                  placeholder={t("common.description")}
-                  className="min-h-24 w-full resize-none text-14"
-                  hasError={Boolean(errors?.description)}
-                  value={value}
-                  onChange={onChange}
-                  tabIndex={getIndex("descriptions")}
-                />
-              )}
-            />
-          </div>
-          <div className="flex gap-2">
-            <AccessController control={control} />
+          <Controller
+            name="description"
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <TextArea
+                id="description"
+                name="description"
+                placeholder={t("views_ui.description_placeholder")}
+                aria-label={t("views_ui.description_placeholder")}
+                className="min-h-20 w-full resize-none text-14"
+                hasError={Boolean(errors?.description)}
+                value={value}
+                onChange={onChange}
+                tabIndex={getIndex("descriptions")}
+              />
+            )}
+          />
+        </ViewFormSection>
+        <Controller
+          control={control}
+          name="access"
+          render={({ field: { value, onChange } }) => (
+            <ViewVisibilityField value={value} onChange={onChange} scope="department" canChange={canChangeAccess} />
+          )}
+        />
+        <ViewFormSection title={t("views_ui.display_label")}>
+          <div className="flex flex-wrap items-center gap-2">
             <Controller
               control={control}
               name="display_filters"
               render={({ field: { onChange: onDisplayFiltersChange, value: displayFilters } }) => (
                 <>
-                  {/* layout dropdown */}
                   <LayoutDropDown
                     onChange={(selectedValue: EIssueLayoutTypes) =>
                       onDisplayFiltersChange({
@@ -215,7 +188,6 @@ export const ProjectViewForm = observer(function ProjectViewForm(props: Props) {
                     }
                     value={displayFilters.layout}
                   />
-                  {/* display filters dropdown */}
                   <Controller
                     control={control}
                     name="display_properties"
@@ -251,48 +223,40 @@ export const ProjectViewForm = observer(function ProjectViewForm(props: Props) {
               )}
             />
           </div>
-          <div>
-            {/* filters dropdown */}
-            <Controller
-              control={control}
-              name="rich_filters"
-              render={({ field: { onChange: onFiltersChange } }) => (
-                <ProjectLevelWorkItemFiltersHOC
-                  entityId={data?.id}
-                  entityType={EIssuesStoreType.PROJECT_VIEW}
-                  filtersToShowByLayout={ISSUE_DISPLAY_FILTERS_BY_PAGE.issues.filters}
-                  initialWorkItemFilters={workItemFilters}
-                  isTemporary
-                  updateFilters={(updateFilters) => onFiltersChange(updateFilters)}
-                  projectId={projectId}
-                  showOnMount
-                  workspaceSlug={workspaceSlug}
-                >
-                  {({ filter: projectViewWorkItemsFilter }) =>
-                    projectViewWorkItemsFilter && (
-                      <WorkItemFiltersRow filter={projectViewWorkItemsFilter} variant="modal" />
-                    )
-                  }
-                </ProjectLevelWorkItemFiltersHOC>
-              )}
-            />
-          </div>
-        </div>
+        </ViewFormSection>
+        <ViewFormSection title={t("views_ui.filters_label")} description={t("views_ui.filters_hint")}>
+          <Controller
+            control={control}
+            name="rich_filters"
+            render={({ field: { onChange: onFiltersChange } }) => (
+              <ProjectLevelWorkItemFiltersHOC
+                entityId={data?.id}
+                entityType={EIssuesStoreType.PROJECT_VIEW}
+                filtersToShowByLayout={ISSUE_DISPLAY_FILTERS_BY_PAGE.issues.filters}
+                initialWorkItemFilters={workItemFilters}
+                isTemporary
+                updateFilters={(updateFilters) => onFiltersChange(updateFilters)}
+                projectId={projectId}
+                showOnMount
+                workspaceSlug={workspaceSlug}
+              >
+                {({ filter: projectViewWorkItemsFilter }) =>
+                  projectViewWorkItemsFilter && (
+                    <WorkItemFiltersRow filter={projectViewWorkItemsFilter} variant="modal" />
+                  )
+                }
+              </ProjectLevelWorkItemFiltersHOC>
+            )}
+          />
+        </ViewFormSection>
       </div>
-      <div className="flex items-center justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
-        <Button variant="secondary" size="lg" onClick={handleClose} tabIndex={getIndex("cancel")}>
-          {t("common.cancel")}
-        </Button>
-        <Button variant="primary" size="lg" type="submit" tabIndex={getIndex("submit")} loading={isSubmitting}>
-          {data
-            ? isSubmitting
-              ? t("common.updating")
-              : t("view.update.label")
-            : isSubmitting
-              ? t("common.creating")
-              : t("view.create.label")}
-        </Button>
-      </div>
+      <ViewFormFooter
+        isEditing={!!data}
+        isSubmitting={isSubmitting}
+        onCancel={handleClose}
+        cancelTabIndex={getIndex("cancel")}
+        submitTabIndex={getIndex("submit")}
+      />
     </form>
   );
 });

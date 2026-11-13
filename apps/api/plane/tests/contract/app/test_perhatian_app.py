@@ -23,6 +23,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from plane.utils.setelan_instance import hari_ini_kantor
 from plane.db.models import (
     Departemen,
     DepartemenProject,
@@ -100,7 +101,7 @@ def _kunci(data):
 class TestPerhatian:
     @pytest.mark.django_db
     def test_pengelompokan_untuk_staf(self, org):
-        hari = timezone.localdate()
+        hari = hari_ini_kantor()
         lewat = _tugas(org.p1, org.s["unstarted"], "Lewat", hari - timedelta(days=3), org.staf)
         _tugas(org.p1, org.s["unstarted"], "Hari ini", hari, org.staf)
         _tugas(org.p1, org.s["unstarted"], "Minggu depan", hari + timedelta(days=7), org.staf)
@@ -142,7 +143,7 @@ class TestPerhatian:
 
     @pytest.mark.django_db
     def test_bagian_atasan_tidak_bocor_ke_staf(self, org):
-        hari = timezone.localdate()
+        hari = hari_ini_kantor()
         _tugas(org.p1, org.s["unstarted"], "Rekan lewat", hari - timedelta(days=2), org.rekan)
         diajukan = _tugas(org.p1, org.s["completed"], "Diajukan rekan", None, org.rekan)
         PersetujuanPenugasan.objects.create(
@@ -154,7 +155,7 @@ class TestPerhatian:
 
     @pytest.mark.django_db
     def test_manager_melihat_antrean_dan_tim(self, org):
-        hari = timezone.localdate()
+        hari = hari_ini_kantor()
         _tugas(org.p1, org.s["unstarted"], "Rekan lewat", hari - timedelta(days=2), org.rekan)
         _tugas(org.p1, org.s["unstarted"], "Manager lewat", hari - timedelta(days=2), org.manager)
         diajukan = _tugas(org.p1, org.s["completed"], "Diajukan rekan", None, org.rekan)
@@ -173,14 +174,14 @@ class TestPerhatian:
 
     @pytest.mark.django_db
     def test_hanya_project_yang_dianggotai(self, org):
-        hari = timezone.localdate()
+        hari = hari_ini_kantor()
         _tugas(org.asing, org.states[org.asing.id]["unstarted"], "Di project asing", hari - timedelta(days=1), org.staf)
         g = _kunci(_klien(org.staf).get(URL.format(slug=org.ws.slug)).json())
         assert g["overdue_mine"]["count"] == 0
 
     @pytest.mark.django_db
     def test_jumlah_penuh_item_dipotong_dan_kueri_tetap(self, org):
-        hari = timezone.localdate()
+        hari = hari_ini_kantor()
         url = URL.format(slug=org.ws.slug)
         _tugas(org.p1, org.s["unstarted"], "Awal", hari - timedelta(days=1), org.manager)
         _klien(org.manager).get(url)  # pemanasan cache (setelan, dll.)
