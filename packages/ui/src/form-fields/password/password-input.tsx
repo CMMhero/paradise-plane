@@ -18,6 +18,9 @@ type TPasswordInputProps = {
   showToggle?: boolean;
   error?: boolean;
   autoComplete?: React.HTMLInputAutoCompleteAttribute;
+  /** Tooltip labels for the show/hide toggle; callers pass translated text. */
+  showLabel?: string;
+  hideLabel?: string;
 };
 
 export function PasswordInput({
@@ -29,6 +32,8 @@ export function PasswordInput({
   showToggle = true,
   error = false,
   autoComplete = "off",
+  showLabel = "Show password",
+  hideLabel = "Hide password",
 }: TPasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   return (
@@ -50,7 +55,7 @@ export function PasswordInput({
         autoComplete={autoComplete}
       />
       {showToggle && (
-        <Tooltip tooltipContent={showPassword ? "Hide password" : "Show password"} position="top">
+        <Tooltip tooltipContent={showPassword ? hideLabel : showLabel} position="top">
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}

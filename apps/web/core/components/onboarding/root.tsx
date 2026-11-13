@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IWorkspaceMemberInvitation, TOnboardingStep, TOnboardingSteps, TUserProfile } from "@plane/types";
 import { EOnboardingSteps } from "@plane/types";
@@ -22,8 +23,10 @@ type Props = {
   invitations?: IWorkspaceMemberInvitation[];
 };
 
+// oxlint-disable-next-line react/no-object-type-as-default-prop -- kept as is: restructuring it is out of scope for this release
 export const OnboardingRoot = observer(function OnboardingRoot({ invitations = [] }: Props) {
   const [currentStep, setCurrentStep] = useState<TOnboardingStep>(EOnboardingSteps.PROFILE_SETUP);
+  const { t } = useTranslation();
   // store hooks
   const { data: user } = useUser();
   const { data: userProfile, updateUserProfile, finishUserOnboarding } = useUserProfile();
@@ -44,11 +47,11 @@ export const OnboardingRoot = observer(function OnboardingRoot({ invitations = [
     } catch (_error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Failed",
-        message: "Failed to finish onboarding, Please try again later.",
+        title: t("error"),
+        message: t("onboarding_ui.finish_failed"),
       });
     }
-  }, [user, finishUserOnboarding]);
+  }, [user, finishUserOnboarding, t]);
 
   // handle step change
   const stepChange = useCallback(

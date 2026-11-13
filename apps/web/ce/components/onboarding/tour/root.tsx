@@ -7,10 +7,10 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { CloseIcon, PlaneLockup } from "@plane/propel/icons";
 // assets
-import CyclesTour from "@/app/assets/onboarding/cycles.webp?url";
 import IssuesTour from "@/app/assets/onboarding/issues.webp?url";
 import ModulesTour from "@/app/assets/onboarding/modules.webp?url";
 import PagesTour from "@/app/assets/onboarding/pages.webp?url";
@@ -24,54 +24,45 @@ export type TOnboardingTourProps = {
   onComplete: () => void;
 };
 
-export type TTourSteps = "welcome" | "work-items" | "cycles" | "modules" | "views" | "pages";
+// Cycles were removed from Paradise (KEP-53), so the tour no longer has a Cycles step.
+export type TTourSteps = "welcome" | "work-items" | "modules" | "views" | "pages";
 
+// `titleKey` / `descriptionKey` are i18n keys, resolved at render time.
 const TOUR_STEPS: {
   key: TTourSteps;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   image: string;
   prevStep?: TTourSteps;
   nextStep?: TTourSteps;
 }[] = [
   {
     key: "work-items",
-    title: "Plan with work items",
-    description:
-      "Work items are the smallest unit of work in Paradise Task Tracker. Almost every other concept connects to work items and their properties.",
+    titleKey: "onboarding_ui.tour_work_items_title",
+    descriptionKey: "onboarding_ui.tour_work_items_description",
     image: IssuesTour,
-    nextStep: "cycles",
-  },
-  {
-    key: "cycles",
-    title: "Move with cycles",
-    description:
-      "Cycles help you and your team to progress faster, similar to the sprints commonly used in agile development.",
-    image: CyclesTour,
-    prevStep: "work-items",
     nextStep: "modules",
   },
   {
     key: "modules",
-    title: "Break into modules",
-    description: "Modules break your big thing into Projects or Features, to help you organize better.",
+    titleKey: "onboarding_ui.tour_modules_title",
+    descriptionKey: "onboarding_ui.tour_modules_description",
     image: ModulesTour,
-    prevStep: "cycles",
+    prevStep: "work-items",
     nextStep: "views",
   },
   {
     key: "views",
-    title: "Views",
-    description:
-      "Create custom filters to display only the work items that matter to you. Save and share your filters in just a few clicks.",
+    titleKey: "onboarding_ui.tour_views_title",
+    descriptionKey: "onboarding_ui.tour_views_description",
     image: ViewsTour,
     prevStep: "modules",
     nextStep: "pages",
   },
   {
     key: "pages",
-    title: "Document with pages",
-    description: "Use Pages to quickly jot down work items when you're in a meeting or starting a day.",
+    titleKey: "onboarding_ui.tour_pages_title",
+    descriptionKey: "onboarding_ui.tour_pages_description",
     image: PagesTour,
     prevStep: "views",
   },
@@ -79,6 +70,7 @@ const TOUR_STEPS: {
 
 export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) {
   const { onComplete } = props;
+  const { t } = useTranslation();
   // states
   const [step, setStep] = useState<TTourSteps>("welcome");
   // store hooks
@@ -97,12 +89,11 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
             </div>
             <div className="flex flex-col overflow-y-auto p-6">
               <h3 className="font-semibold sm:text-18">
-                Selamat datang di Paradise Task Tracker, {currentUser?.first_name} {currentUser?.last_name}
+                {t("onboarding_ui.tour_welcome_title", {
+                  name: [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(" "),
+                })}
               </h3>
-              <p className="mt-3 text-13 text-secondary">
-                We{"'"}re senang Anda bergabung. You can now manage your departments with ease. Take a quick tour to see
-                how it works.
-              </p>
+              <p className="mt-3 text-13 text-secondary">{t("onboarding_ui.tour_welcome_description")}</p>
               <div className="flex h-full items-end">
                 <div className="mt-12 flex items-center gap-6">
                   <Button
@@ -111,7 +102,7 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
                       setStep("work-items");
                     }}
                   >
-                    Take a Product Tour
+                    {t("onboarding_ui.tour_start")}
                   </Button>
                   <button
                     type="button"
@@ -120,7 +111,7 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
                       onComplete();
                     }}
                   >
-                    No thanks, I will explore it myself
+                    {t("onboarding_ui.tour_skip")}
                   </button>
                 </div>
               </div>
@@ -143,21 +134,25 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
                 currentStepIndex % 2 === 0 ? "justify-end" : "justify-start"
               }`}
             >
-              <img src={currentStep?.image} className="h-full w-full object-cover" alt={currentStep?.title} />
+              <img
+                src={currentStep?.image}
+                className="h-full w-full object-cover"
+                alt={currentStep ? t(currentStep.titleKey) : ""}
+              />
             </div>
             <div className="flex h-1/2 flex-col overflow-y-auto p-4 sm:h-2/5">
-              <h3 className="font-semibold sm:text-18">{currentStep?.title}</h3>
-              <p className="mt-3 text-13 text-secondary">{currentStep?.description}</p>
+              <h3 className="font-semibold sm:text-18">{currentStep ? t(currentStep.titleKey) : ""}</h3>
+              <p className="mt-3 text-13 text-secondary">{currentStep ? t(currentStep.descriptionKey) : ""}</p>
               <div className="mt-3 flex h-full items-end justify-between gap-4">
                 <div className="flex items-center gap-4">
                   {currentStep?.prevStep && (
                     <Button variant="secondary" onClick={() => setStep(currentStep.prevStep ?? "welcome")}>
-                      Back
+                      {t("common.back")}
                     </Button>
                   )}
                   {currentStep?.nextStep && (
                     <Button variant="primary" onClick={() => setStep(currentStep.nextStep ?? "work-items")}>
-                      Next
+                      {t("common.next")}
                     </Button>
                   )}
                 </div>

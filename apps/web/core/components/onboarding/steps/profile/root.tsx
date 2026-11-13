@@ -83,6 +83,7 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
   // derived values
   const userAvatar = watch("avatar_url");
 
+  // oxlint-disable-next-line unicorn/consistent-function-scoping -- kept as is: restructuring it is out of scope for this release
   const handleSetPassword = async (password: string) => {
     const token = await authService.requestCSRFToken().then((data) => data?.csrf_token);
     await authService.setPassword(token, { password });
@@ -102,8 +103,8 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
     } catch {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error",
-        message: "User details update failed. Please try again!",
+        title: t("error"),
+        message: t("onboarding_ui.profile_update_failed"),
       });
     }
   };
@@ -154,7 +155,7 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10">
       {/* Header */}
       <CommonOnboardingHeader
-        title="Create your profile."
+        title={t("onboarding_ui.profile_title")}
         description={t("shared_ui.onboarding_profile_description")}
       />
 
@@ -200,7 +201,9 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
           onClick={() => setIsImageUploadModalOpen(true)}
         >
           <ImageIcon className="size-4" />
-          <span className="text-13">{userAvatar ? "Change image" : "Upload image"}</span>
+          <span className="text-13">
+            {userAvatar ? t("onboarding_ui.change_image") : t("onboarding_ui.upload_image")}
+          </span>
         </button>
       </div>
 
@@ -211,17 +214,22 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
             className="block text-13 font-medium text-tertiary after:ml-0.5 after:text-danger-primary after:content-['*']"
             htmlFor="first_name"
           >
-            Name
+            {t("common.name")}
           </label>
           <Controller
             control={control}
             name="first_name"
             rules={{
-              required: "Name is required",
-              validate: validatePersonName,
+              required: t("common.errors.required"),
+              validate: (value: string) => {
+                if (validatePersonName(value) === true) return true;
+                if (value.trim() === "") return t("common.errors.required");
+                if (value.length > 50) return t("onboarding_ui.name_max_length");
+                return t("onboarding_ui.name_invalid_chars");
+              },
               maxLength: {
                 value: 50,
-                message: "Name must be within 50 characters.",
+                message: t("onboarding_ui.name_max_length"),
               },
             }}
             render={({ field: { value, onChange, ref } }) => (
@@ -240,7 +248,7 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
                     "border-strong": !errors.first_name,
                   }
                 )}
-                placeholder="Enter your full name"
+                placeholder={t("onboarding_ui.name_placeholder")}
                 autoComplete="on"
               />
             )}
@@ -258,7 +266,7 @@ export const ProfileSetupStep = observer(function ProfileSetupStep({ handleStepC
       </div>
       {/* Continue Button */}
       <Button variant="primary" type="submit" className="w-full" size="xl" disabled={isButtonDisabled}>
-        Continue
+        {t("common.continue")}
       </Button>
 
       {/* Marketing Consent */}

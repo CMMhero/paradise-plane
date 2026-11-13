@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Alur kerja inti",
+    "project_id": 1,
+    "sort_order": 1,
+    "status": "planned",
+    "description": "Kelola, lihat, dan lacak tugas Anda di berbagai tampilan."
+  },
+  {
+    "id": 2,
+    "name": "Alur pengenalan",
+    "project_id": 1,
+    "sort_order": 2,
+    "status": "backlog",
+    "description": "Semua tentang memulai: mengenal papan dan mengundang rekan tim."
+  },
+  {
+    "id": 3,
+    "name": "Pengaturan ruang kerja",
+    "project_id": 1,
+    "sort_order": 3,
+    "status": "in-progress",
+    "description": "Lapisan personalisasi: pengaturan, label, dan otomasi."
+  }
+]

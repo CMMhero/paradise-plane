@@ -24,41 +24,16 @@ type TAuthHeader = {
   currentAuthStep: EAuthSteps;
 };
 
-const Titles = {
-  [EAuthModes.SIGN_IN]: {
-    [EAuthSteps.EMAIL]: {
-      header: "Sign in",
-      subHeader: "Use your Space Paradise Perkasa account.",
-    },
-    [EAuthSteps.PASSWORD]: {
-      header: "Sign in",
-      subHeader: "Use your Space Paradise Perkasa account.",
-    },
-    [EAuthSteps.UNIQUE_CODE]: {
-      header: "Sign in",
-      subHeader: "Use your Space Paradise Perkasa account.",
-    },
-  },
-  [EAuthModes.SIGN_UP]: {
-    [EAuthSteps.EMAIL]: {
-      header: "Create your account",
-      subHeader: "Set up your Space Paradise Perkasa account.",
-    },
-    [EAuthSteps.PASSWORD]: {
-      header: "Create your account",
-      subHeader: "Set up your Space Paradise Perkasa account.",
-    },
-    [EAuthSteps.UNIQUE_CODE]: {
-      header: "Create your account",
-      subHeader: "Set up your Space Paradise Perkasa account.",
-    },
-  },
+// i18n keys per mode; the heading is the same on every step.
+const TITLE_KEYS = {
+  [EAuthModes.SIGN_IN]: { header: "login_ui.sign_in_title", subHeader: "login_ui.sign_in_subtitle" },
+  [EAuthModes.SIGN_UP]: { header: "login_ui.sign_up_title", subHeader: "login_ui.sign_up_subtitle" },
 };
 
 const workSpaceService = new WorkspaceService();
 
 export const AuthHeader = observer(function AuthHeader(props: TAuthHeader) {
-  const { workspaceSlug, invitationId, invitationEmail, authMode, currentAuthStep } = props;
+  const { workspaceSlug, invitationId, invitationEmail, authMode } = props;
   // plane imports
   const { t } = useTranslation();
 
@@ -72,7 +47,6 @@ export const AuthHeader = observer(function AuthHeader(props: TAuthHeader) {
   );
 
   const getHeaderSubHeader = (
-    step: EAuthSteps,
     mode: EAuthModes,
     memberInvitation: IWorkspaceMemberInvitation | undefined,
     email: string | undefined
@@ -87,17 +61,14 @@ export const AuthHeader = observer(function AuthHeader(props: TAuthHeader) {
             {workspace.name}
           </span>
         ),
-        subHeader:
-          mode == EAuthModes.SIGN_UP
-            ? "Create an account to start managing work with your team."
-            : "Log in to start managing work with your team.",
+        subHeader: mode == EAuthModes.SIGN_UP ? t("auth.sign_up.header.label") : t("auth.sign_in.header.label"),
       };
     }
 
-    return Titles[mode][step];
+    return { header: t(TITLE_KEYS[mode].header), subHeader: t(TITLE_KEYS[mode].subHeader) };
   };
 
-  const { header, subHeader } = getHeaderSubHeader(currentAuthStep, authMode, invitation || undefined, invitationEmail);
+  const { header, subHeader } = getHeaderSubHeader(authMode, invitation || undefined, invitationEmail);
 
   if (isLoading)
     return (

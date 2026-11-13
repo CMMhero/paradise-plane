@@ -5,6 +5,7 @@
  */
 
 import { GOD_MODE_URL } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 // assets
 import ParadiseLogo from "@/app/assets/images/paradise-logo.png?url";
 import DefaultLayout from "@/layouts/default-layout";
@@ -12,6 +13,7 @@ import { PlaneLockup } from "@plane/propel/icons";
 import { Button } from "@plane/propel/button";
 
 export function InstanceNotReady() {
+  const { t } = useTranslation();
   return (
     <DefaultLayout>
       <div className="relative z-10 flex h-screen w-screen overflow-hidden">
@@ -35,17 +37,18 @@ export function InstanceNotReady() {
           </div>
           <div className="flex h-full w-full flex-col items-center justify-center gap-7">
             <div className="flex flex-col items-center gap-11">
-              <img src={ParadiseLogo} className="h-24 w-40 object-contain" alt="Paradise Perkasa Logo" />
+              {/* i18n-ignore: company name, same in every language */}
+              <img src={ParadiseLogo} className="h-24 w-40 object-contain" alt="Paradise Perkasa" />
               <div className="flex max-w-124 flex-col items-center gap-3">
-                <h1 className="text-h2-semibold text-primary">Welcome to Paradise Task Tracker</h1>
+                <h1 className="text-h2-semibold text-primary">{t("onboarding_ui.instance_not_ready_title")}</h1>
                 <p className="text-center text-body-md-regular text-secondary">
-                  Set up your instance and create your first workspace to begin managing departments and work.
+                  {t("onboarding_ui.instance_not_ready_description")}
                 </p>
               </div>
             </div>
             <a href={GOD_MODE_URL} className="w-72">
               <Button variant="primary" className="w-full" size="xl">
-                Get started
+                {t("common.get_started")}
               </Button>
             </a>
           </div>

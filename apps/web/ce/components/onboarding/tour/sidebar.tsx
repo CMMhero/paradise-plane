@@ -5,41 +5,22 @@
  */
 
 // plane imports
-import { CycleIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
+import { ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
 import type { ISvgIcons } from "@plane/propel/icons";
 // types
 import type { TTourSteps } from "./root";
 
 const sidebarOptions: {
   key: TTourSteps;
-  label: string;
+  // Same keys as the sidebar navigation, so the tour uses the app's own wording.
+  labelKey: string;
   Icon: React.FC<ISvgIcons>;
 }[] = [
-  {
-    key: "work-items",
-    label: "Work items",
-    Icon: WorkItemsIcon,
-  },
-  {
-    key: "cycles",
-    label: "Cycles",
-    Icon: CycleIcon,
-  },
-  {
-    key: "modules",
-    label: "Modules",
-    Icon: ModuleIcon,
-  },
-  {
-    key: "views",
-    label: "Views",
-    Icon: ViewsIcon,
-  },
-  {
-    key: "pages",
-    label: "Pages",
-    Icon: PageIcon,
-  },
+  { key: "work-items", labelKey: "sidebar.work_items", Icon: WorkItemsIcon },
+  { key: "modules", labelKey: "sidebar.modules", Icon: ModuleIcon },
+  { key: "views", labelKey: "sidebar.views", Icon: ViewsIcon },
+  { key: "pages", labelKey: "sidebar.pages", Icon: PageIcon },
 ];
 
 type Props = {
@@ -48,12 +29,13 @@ type Props = {
 };
 
 export function TourSidebar({ step, setStep }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="col-span-3 hidden bg-surface-2 p-8 lg:block">
       <h3 className="text-16 font-medium">
-        Let{"'"}s get started!
+        {t("onboarding_ui.tour_sidebar_title")}
         <br />
-        Kenali Paradise Task Tracker lebih jauh.
+        {t("onboarding_ui.tour_sidebar_subtitle")}
       </h3>
       <div className="mt-8 space-y-5">
         {sidebarOptions.map((option) => (
@@ -69,7 +51,7 @@ export function TourSidebar({ step, setStep }: Props) {
             onClick={() => setStep(option.key)}
           >
             <option.Icon className="h-4 w-4" aria-hidden="true" />
-            {option.label}
+            {t(option.labelKey)}
           </button>
         ))}
       </div>

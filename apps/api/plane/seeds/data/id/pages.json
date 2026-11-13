@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "name": "Spesifikasi proyek",
+    "project_id": 1,
+    "description_html": "<p class=\"editor-paragraph-block\">Selamat datang di <strong>Halaman proyek</strong>, pusat dokumentasi untuk proyek ini. Gunakan halaman untuk mencatat <strong>rencana, spesifikasi, pembaruan, dan pelajaran</strong> yang terhubung dengan tugas Anda.</p><h2>Ringkasan proyek</h2><ul class=\"list-disc pl-7 space-y-(--list-spacing-y) tight\" data-tight=\"true\"><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Nama proyek: tambahkan nama proyek Anda</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Penanggung jawab: tambahkan nama pemilik proyek</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Status: aktif, berjalan, atau terhambat</p></li></ul><h2>Tujuan</h2><ul class=\"list-disc pl-7 space-y-(--list-spacing-y) tight\" data-tight=\"true\"><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Selesaikan semua pekerjaan prioritas minggu ini</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Pastikan setiap tugas punya penanggung jawab dan tenggat</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Tinjau kemajuan bersama tim setiap minggu</p></li></ul>",
+    "description_stripped": "Selamat datang di Halaman proyek, pusat dokumentasi untuk proyek ini. Gunakan halaman untuk mencatat rencana, spesifikasi, pembaruan, dan pelajaran yang terhubung dengan tugas Anda.Ringkasan proyekNama proyek: tambahkan nama proyek AndaPenanggung jawab: tambahkan nama pemilik proyekStatus: aktif, berjalan, atau terhambatTujuanSelesaikan semua pekerjaan prioritas minggu iniPastikan setiap tugas punya penanggung jawab dan tenggatTinjau kemajuan bersama tim setiap minggu",
+    "type": "PROJECT",
+    "access": 0,
+    "logo_props": {
+      "emoji": {
+        "url": "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f680.png",
+        "value": "128640"
+      },
+      "in_use": "emoji"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Draf rencana",
+    "project_id": 1,
+    "description_html": "<p class=\"editor-paragraph-block\">Ini area <strong>draf</strong>: ruang pribadi di dalam proyek untuk menyusun ide dan catatan kasar sebelum dibagikan ke halaman proyek.</p><p class=\"editor-paragraph-block\">Hanya Anda yang bisa melihatnya, kecuali Anda membagikannya.</p><ul class=\"list-disc pl-7 space-y-(--list-spacing-y) tight\" data-tight=\"true\"><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Susun ringkasan dan tujuan</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Tulis rencana pekerjaan berikutnya</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Kumpulkan masukan dari tim</p></li></ul>",
+    "description_stripped": "Ini area draf: ruang pribadi di dalam proyek untuk menyusun ide dan catatan kasar sebelum dibagikan ke halaman proyek.Hanya Anda yang bisa melihatnya, kecuali Anda membagikannya.Susun ringkasan dan tujuanTulis rencana pekerjaan berikutnyaKumpulkan masukan dari tim",
+    "type": "PROJECT",
+    "access": 1,
+    "logo_props": "{\"emoji\": {\"url\": \"https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f9f1.png\", \"value\": \"129521\"}, \"in_use\": \"emoji\"}"
+  }
+]
