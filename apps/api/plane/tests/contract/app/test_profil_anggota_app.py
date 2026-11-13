@@ -115,6 +115,22 @@ class TestSuperAdminDitempatkanBisaDipilih:
     def test_mention_project_departemennya_memuat_super_admin(self, org):
         assert str(org.sa.id) in self._mention(org, org.p1, "superadm")
 
+    def test_mention_menawarkan_orang_di_luar_project_setelah_anggota_project(self, org):
+        """13 Nov: menyebut orang di luar departemen harus bisa (tanpa notifikasi, lihat notification_task)."""
+        luar = _user("luarproject", org.ws)
+        hasil = self._mention(org, org.p1, "")
+        assert str(luar.id) in hasil
+        assert str(org.rekan.id) in hasil
+
+    def test_mention_anggota_project_didahulukan(self, org):
+        luar = _user("aaluar", org.ws)
+        res = _klien(org.rekan).get(
+            f"/api/workspaces/{org.ws.slug}/entity-search/",
+            {"query_type": "user_mention", "project_id": str(org.p1.id), "query": "", "count": 50},
+        )
+        urut = [str(u["member__id"]) for u in res.data["user_mention"]]
+        assert urut.index(str(org.rekan.id)) < urut.index(str(luar.id))
+
     def test_mention_project_lain_tetap_tersembunyi(self, org):
         assert str(org.sa.id) not in self._mention(org, org.p2, "superadm")
 

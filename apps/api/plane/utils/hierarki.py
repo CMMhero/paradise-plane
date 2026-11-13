@@ -45,10 +45,12 @@ from plane.db.models import (
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_SUPERVISOR,
+    menjangkau_seluruh_organisasi,
 )
 
 __all__ = [
     "gerbang_aktif",
+    "adalah_admin_penuh",
     "peta_tingkat",
     "tingkat_anggota",
     "divisi_anggota",
@@ -170,12 +172,13 @@ def _tingkat_lokal(baris, tempat):
     A. Baris yang menjangkau project ini (departemennya, atau divisinya untuk
     manager) yang menentukan; kalau tidak ada satu pun (anggota project eksplisit,
     atau struktur belum aktif) jenjang orangnya (tertinggi) yang berlaku, seperti
-    sebelum KEP-93. Direktur selalu direktur.
+    sebelum KEP-93. Direktur dan sekretaris (KEP-101) selalu jenjangnya sendiri:
+    keduanya tanpa tempat, jadi tidak ada yang bisa menurunkan mereka per project.
     """
     if not baris:
         return None
     puncak = max(t for t, _, _ in baris)
-    if tempat is None or puncak >= TINGKAT_DIREKTUR:
+    if tempat is None or menjangkau_seluruh_organisasi(puncak):
         return puncak
     deps, divs = tempat
     lokal = [
@@ -190,6 +193,26 @@ def _tempat_jika_aktif(workspace_id, project_id):
     if project_id is None or not struktur_aktif(workspace_id):
         return None
     return _tempat_project(project_id)
+
+
+def adalah_admin_penuh(user, workspace_id):
+    """Super Admin atau admin workspace aktif: lolos dari gerbang penugasan.
+
+    KEP-85 sudah menetapkan "admin workspace = seperti Super Admin" untuk izin per
+    sumber; gerbang penugasan ketinggalan dan memperlakukan admin workspace tanpa
+    jenjang sebagai staf (hanya boleh menugaskan dirinya sendiri). Role "admin
+    project" TIDAK dihitung: hampir semua staf admin project.
+    """
+    from plane.db.models import WorkspaceMember  # noqa: PLC0415
+    from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+    if is_super_admin(user):
+        return True
+    return WorkspaceMember.objects.filter(
+        workspace_id=workspace_id, member_id=user.id, role=20, is_active=True
+    ).exists()
 
 
 def peta_tingkat(workspace_id, project_id=None):
@@ -403,7 +426,7 @@ def jangkauan_hierarki(user_id, workspace_id):
     if not baris:
         return {}
     tingkat = max(t for t, _, _ in baris)
-    if tingkat >= TINGKAT_DIREKTUR:
+    if menjangkau_seluruh_organisasi(tingkat):
         return {pid: 20 for pid in _semua_project(workspace_id)}
     # KEP-93: role per project mengikuti peran di tempat yang menjangkaunya.
     atasan = project_penempatan(baris, tingkat, min_peran=TINGKAT_SUPERVISOR)
@@ -434,7 +457,7 @@ def divisi_diawasi(user_id, workspace_id):
     baris = penempatan_semua(user_id, workspace_id)
     tingkat = max((t for t, _, _ in baris), default=None)
 
-    if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
+    if menjangkau_seluruh_organisasi(tingkat):
         return _semua_project(workspace_id)
 
     if tingkat is None:
@@ -565,6 +588,10 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 
     workspace_id = project.workspace_id
 
+    # Admin workspace: boleh menugaskan siapa pun di project ini (13 Nov).
+    if adalah_admin_penuh(actor, workspace_id):
+        return None
+
     # Kolaborasi staf: boleh menambah rekan setingkat di departemen yang sama,
     # tapi dirinya sendiri WAJIB tetap ada (staf hanya membuat tugasnya sendiri).
     if _adalah_staf(actor.id, workspace_id, project_id):
@@ -580,16 +607,25 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 
     if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
         # "direktur bisa create task cross divisi manapun karena tingkat teratas".
+        # Sengaja `>= TINGKAT_DIREKTUR`, bukan `menjangkau_seluruh_organisasi`: sekretaris
+        # (KEP-101) mengawasi semua project tetapi BUKAN puncak tangga, jadi ia jatuh ke
+        # cabang `divisi_diawasi` di bawah: direktur selalu ditolak sebagai penerima
+        # (`_di_bawah_direktur`), sesama sekretaris ditolak oleh ASSIGN_DOWN_ONLY.
         return None
 
     if project_id in divisi_diawasi(actor.id, workspace_id):
-        if periksa_tingkat_penerima():
+        ke_bawah = periksa_tingkat_penerima()
+        if ke_bawah or _di_bawah_direktur(tingkat):
             peta = peta_tingkat(workspace_id, project_id)
             for uid in assignee_ids:
                 if uid in dari_id:
                     continue
                 lain = peta.get(uid)
-                if lain is not None and lain >= (tingkat or TINGKAT_MEMBER):
+                if lain is None:
+                    continue
+                if (ke_bawah and lain >= (tingkat or TINGKAT_MEMBER)) or (
+                    _di_bawah_direktur(tingkat) and lain >= TINGKAT_DIREKTUR
+                ):
                     return (
                         "Penerima tugas berada pada jenjang yang sama atau lebih tinggi "
                         "dari Anda, jadi ia bukan bawahan yang dapat Anda tugaskan."
@@ -597,6 +633,15 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
         return None
 
     return _pesan_tolak(tingkat, project.identifier)
+
+
+def _di_bawah_direktur(tingkat):
+    """True untuk sekretaris (KEP-101): menjangkau seluruh organisasi tapi bukan puncak.
+
+    Direktur tidak pernah ditugaskan oleh sekretaris, apa pun nilai saklar
+    ASSIGN_DOWN_ONLY: itu aturan kedudukan, bukan pilihan yang bisa dimatikan.
+    """
+    return menjangkau_seluruh_organisasi(tingkat) and tingkat < TINGKAT_DIREKTUR
 
 
 def _adalah_staf(user_id, workspace_id, project_id=None):
@@ -946,6 +991,8 @@ def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, aba
     if project is None:
         return "Project tujuan tidak ditemukan."
     workspace_id = project.workspace_id
+    if adalah_admin_penuh(actor, workspace_id):
+        return None
     tingkat = tingkat_anggota(actor.id, workspace_id, project_id)
 
     assignee_ids = set(issue.issue_assignee.values_list("assignee_id", flat=True))

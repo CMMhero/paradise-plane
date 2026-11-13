@@ -21,7 +21,8 @@ Keputusan user 2026-10-30, dipecah 2026-11-02 jadi tiga kelompok:
   laporan direktur (`direktur_digest_task`, ikhtisar per divisi). Sisanya dinyalakan sendiri.
 - Staf (atau jenjang belum diisi, mengikuti `tingkat_efektif`): ringkasan harian
   (hari ini, 7 hari ke depan, terlambat), keputusan persetujuan, tugas
-  selesai, dan tugas baru yang diberikan kepadanya (`assigned`). Pengingat per tugas (H-7..H+7) mati: ringkasan menggantikannya.
+  selesai, dan tugas baru yang diberikan kepadanya (`assigned`). Pengingat per tugas (H-7..H+7)
+  mati: ringkasan menggantikannya.
 
 Kenapa dihitung saat dibaca, bukan disimpan saat jabatan berubah: jabatan bisa
 berubah lewat lima jalur (God Mode, penempatan, organisasi, migrasi, `.update()`
@@ -127,11 +128,13 @@ KELOMPOK_JABATAN = ("staf", "pimpinan", "direktur")
 
 
 def _kelompok_dari_tingkat(tingkat) -> str:
-    from plane.db.models import TINGKAT_DIREKTUR, TINGKAT_SUPERVISOR
+    from plane.db.models import TINGKAT_SUPERVISOR, menjangkau_seluruh_organisasi
 
     if tingkat is None or tingkat < TINGKAT_SUPERVISOR:
         return "staf"
-    return "direktur" if tingkat >= TINGKAT_DIREKTUR else "pimpinan"
+    # Sekretaris (KEP-101) memakai baris "direktur": jangkauannya sama, jadi kebijakan
+    # notifikasinya juga. Tidak ada baris bawaan keempat di God Mode.
+    return "direktur" if menjangkau_seluruh_organisasi(tingkat) else "pimpinan"
 
 
 def _kelompok_menurut_jabatan(user_ids) -> dict:

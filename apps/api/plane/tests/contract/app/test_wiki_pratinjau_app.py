@@ -2,6 +2,7 @@
 # Kustomisasi Paradise Task Tracker: tes kontrak pratinjau isi Materi Wiki
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
+# ruff: noqa: F811 -- pytest fixtures imported from conftest are used as arguments
 
 """Pratinjau teks, Markdown, CSV, Excel, dan Word yang dibaca server, plus tebakan
 tipe saat unggah (berkas teks datang tanpa tipe dari peramban)."""
@@ -100,7 +101,7 @@ class TestPratinjauIsi:
         wb.active.append(["Pipa", 4])
         buf = io.BytesIO()
         wb.save(buf)
-        materi = _materi_bertipe(wiki, "stok.xlsx", tipe="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        materi = _materi_bertipe(wiki, "stok.xlsx", tipe="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")  # noqa: E501
         _isi_penyimpanan(s3_palsu, buf.getvalue())
         hasil = _pratinjau(wiki, materi)
         assert hasil["kind"] == "table"
@@ -109,7 +110,7 @@ class TestPratinjauIsi:
 
     def test_xlsx_terlalu_besar_ditolak(self, wiki, s3_palsu, monkeypatch):
         monkeypatch.setattr("plane.app.views.wiki_berkas.BERKAS_ZIP_MAKS_BYTE", 10)
-        materi = _materi_bertipe(wiki, "stok.xlsx", tipe="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        materi = _materi_bertipe(wiki, "stok.xlsx", tipe="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")  # noqa: E501
         _isi_penyimpanan(s3_palsu, b"x" * 50)
         hasil = _pratinjau(wiki, materi)
         assert hasil["kind"] == "none" and "too large" in hasil["reason"]

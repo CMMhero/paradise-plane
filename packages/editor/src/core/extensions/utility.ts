@@ -51,6 +51,10 @@ export type UtilityExtensionStorage = {
   assetsList: TEditorAsset[];
   assetsUploadStatus: TFileHandler["assetsUploadStatus"];
   uploadInProgress: boolean;
+  /** Paradise: number of uploads running in this editor, see helpers/upload-tracking.ts */
+  uploadsInFlight: number;
+  /** Paradise: host hook that shows a failed upload to the user, see TFileHandler.onUploadFailure */
+  onUploadFailure?: TFileHandler["onUploadFailure"];
   activeDropbarExtensions: TActiveDropbarExtensions[];
   isTouchDevice: boolean;
 };
@@ -99,6 +103,8 @@ export const UtilityExtension = (props: Props) => {
         assetsList: [],
         assetsUploadStatus: isEditable && "assetsUploadStatus" in fileHandler ? fileHandler.assetsUploadStatus : {},
         uploadInProgress: false,
+        uploadsInFlight: 0,
+        onUploadFailure: fileHandler.onUploadFailure,
         activeDropbarExtensions: [],
         isTouchDevice,
       };
@@ -117,6 +123,7 @@ export const UtilityExtension = (props: Props) => {
               uniqueAssets.add(args.asset);
             }
           } else if ("idToRemove" in args) {
+            // oxlint-disable-next-line eslint/no-shadow -- kept as is: restructuring it is out of scope for this release
             const asset = this.storage.assetsList.find((asset) => asset.id === args.idToRemove);
             if (asset) {
               uniqueAssets.delete(asset);

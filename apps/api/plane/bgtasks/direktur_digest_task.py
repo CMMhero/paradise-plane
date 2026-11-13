@@ -41,8 +41,8 @@ from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI, hari_ini_kantor
 from plane.bgtasks.direktur_digest_email import Angka, DivisiLaporan, Laporan, Unit, susun_email
 from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
-    TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
+    TINGKAT_SEKRETARIS,
     TINGKAT_SUPERVISOR,
     DepartemenProject,
     Issue,
@@ -183,10 +183,10 @@ def susun_laporan(data, pids, jendela):
 
 
 def direktur_workspace():
-    """{workspace_id: [User]} direktur aktif, satu kali per orang per workspace."""
+    """{workspace_id: [User]} direktur dan sekretaris aktif (KEP-101), satu kali per orang per workspace."""
     hasil = defaultdict(dict)
     for j in JabatanOrganisasi.objects.filter(
-        tingkat__gte=TINGKAT_DIREKTUR, member__is_active=True, member__is_bot=False
+        tingkat__gte=TINGKAT_SEKRETARIS, member__is_active=True, member__is_bot=False
     ).select_related("member"):
         hasil[j.workspace_id][j.member_id] = j.member
     return {ws: list(orang.values()) for ws, orang in hasil.items()}

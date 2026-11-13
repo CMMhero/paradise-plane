@@ -30,7 +30,7 @@ export type TInstanceMemberProfile = {
   email: string;
   phone_extension: string;
   penempatan: {
-    /** 10 staf, 20 supervisor, 30 manager, 40 direktur. */
+    /** 10 staf, 20 supervisor, 30 manager, 35 sekretaris, 40 direktur. */
     tingkat: number;
     departemen: { id: string; kode: string; nama: string } | null;
     divisi: { id: string; kode: string; nama: string } | null;

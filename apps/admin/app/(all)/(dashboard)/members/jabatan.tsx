@@ -10,7 +10,7 @@
  */
 
 import { Badge } from "@plane/propel/badge";
-import { TINGKAT_DIREKTUR, TINGKAT_MANAGER, TINGKAT_SUPERVISOR } from "@plane/services";
+import { TINGKAT_DIREKTUR, TINGKAT_MANAGER, TINGKAT_SEKRETARIS, TINGKAT_SUPERVISOR } from "@plane/services";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 
@@ -18,7 +18,7 @@ type TVarian = "brand" | "success" | "warning" | "neutral" | "danger";
 
 const varianTingkat = (tingkat: number | null): TVarian => {
   if (tingkat === null) return "danger";
-  if (tingkat >= TINGKAT_DIREKTUR) return "brand";
+  if (tingkat >= TINGKAT_SEKRETARIS) return "brand";
   if (tingkat >= TINGKAT_MANAGER) return "success";
   if (tingkat >= TINGKAT_SUPERVISOR) return "warning";
   return "neutral";
@@ -31,11 +31,13 @@ export function BadgeJabatan({ tingkat, size = "base" }: { tingkat: number | nul
       ? s.members.level_unset
       : tingkat >= TINGKAT_DIREKTUR
         ? s.members.level_director
-        : tingkat >= TINGKAT_MANAGER
-          ? s.members.level_manager
-          : tingkat >= TINGKAT_SUPERVISOR
-            ? s.members.level_supervisor
-            : s.members.level_staff;
+        : tingkat >= TINGKAT_SEKRETARIS
+          ? s.members.level_secretary
+          : tingkat >= TINGKAT_MANAGER
+            ? s.members.level_manager
+            : tingkat >= TINGKAT_SUPERVISOR
+              ? s.members.level_supervisor
+              : s.members.level_staff;
   return (
     <Badge variant={varianTingkat(tingkat)} size={size}>
       {label}

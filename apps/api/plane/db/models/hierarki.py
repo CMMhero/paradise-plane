@@ -48,16 +48,32 @@ from .base import BaseModel
 TINGKAT_MEMBER = 10
 TINGKAT_SUPERVISOR = 20
 TINGKAT_MANAGER = 30
+# Sekretaris (KEP-101): jangkauannya SAMA dengan direktur (seluruh organisasi, tanpa
+# tempat), tapi kedudukannya satu anak tangga di bawah direktur. Angka 35 menyisakan
+# 30 dan 40 apa adanya, jadi semua baris yang sudah tersimpan tidak berubah arti.
+TINGKAT_SEKRETARIS = 35
 TINGKAT_DIREKTUR = 40
 
 TINGKAT_CHOICES = (
     (TINGKAT_MEMBER, "Member"),
     (TINGKAT_SUPERVISOR, "Supervisor"),
     (TINGKAT_MANAGER, "Manager"),
+    (TINGKAT_SEKRETARIS, "Sekretaris"),
     (TINGKAT_DIREKTUR, "Direktur"),
 )
 
 TINGKAT_NAMA = dict(TINGKAT_CHOICES)
+
+
+def menjangkau_seluruh_organisasi(tingkat) -> bool:
+    """True untuk jenjang yang menjangkau semua divisi tanpa penempatan: sekretaris dan direktur.
+
+    SATU-SATUNYA tempat batas "lintas organisasi" ditulis. Pemanggil yang bertanya
+    "apakah orang ini melihat/mengawasi semuanya?" memakai fungsi ini, bukan
+    `>= TINGKAT_DIREKTUR` (itu hanya untuk hal yang benar-benar milik direktur:
+    puncak tangga, penerima tugas tanpa batas). `None` = jenjang belum diisi.
+    """
+    return tingkat is not None and tingkat >= TINGKAT_SEKRETARIS
 
 # Asal data. Dibedakan supaya tebakan (mis. dari konvensi nama email) bisa dicabut
 # seluruhnya tanpa menyentuh data yang berasal dari berkas resmi.

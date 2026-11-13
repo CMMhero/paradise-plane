@@ -8,6 +8,7 @@ import re
 # Django imports
 from django.db import models
 from django.db.models import (
+    Exists,
     Q,
     OuterRef,
     Subquery,
@@ -29,7 +30,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.app.views.base import BaseAPIView
 from plane.app.permissions import WorkspaceUserPermission
-from plane.db.superadmin import sembunyikan
+from plane.db.superadmin import sembunyikan, super_admin_user_ids, terlihat_di_project
 from plane.db.models import (
     Workspace,
     Project,
@@ -390,23 +391,35 @@ class SearchEndpoint(BaseAPIView):
                 if query_type == "user_mention":
                     q = _q_cari_anggota(query)
 
-                    # sembunyikan(): pemilih mention "@" ini mengirim
-                    # display_name langsung ke browser, jadi tanpa penyaring
-                    # Super Admin muncul LENGKAP DENGAN NAMANYA ke semua orang.
-                    # Ini kebocoran yang lebih telanjang daripada dropdown
-                    # assignee, yang setidaknya hanya membocorkan id.
+                    # Kustomisasi Paradise (13 Nov): menyebut orang di luar
+                    # project/departemen HARUS bisa. Pemilih menawarkan anggota
+                    # project lebih dulu, lalu karyawan workspace lainnya. Yang
+                    # di luar project hanya tersebut di teks: server tidak
+                    # mengirim notifikasi ke mereka (mereka tak bisa membuka
+                    # work item itu), lihat bgtasks/notification_task.py.
+                    #
+                    # Super Admin tetap disembunyikan kecuali terlihat di
+                    # project ini: pemilih mengirim display_name langsung ke
+                    # browser, jadi tanpa penyaring namanya bocor ke semua orang.
+                    sembunyi = super_admin_user_ids()
+                    if sembunyi:
+                        sembunyi = sembunyi - terlihat_di_project(project_id, sembunyi)
                     users = (
-                        sembunyikan(
-                            ProjectMember.objects.filter(
-                                q,
-                                is_active=True,
-                                workspace__slug=slug,
-                                member__is_bot=False,
-                                project_id=project_id,
-                            ),
-                            project_id=project_id,
+                        WorkspaceMember.objects.filter(
+                            q,
+                            is_active=True,
+                            workspace__slug=slug,
+                            member__is_bot=False,
                         )
+                        .exclude(member_id__in=sembunyi)
                         .annotate(
+                            _anggota_project=Exists(
+                                ProjectMember.objects.filter(
+                                    project_id=project_id,
+                                    member_id=OuterRef("member_id"),
+                                    is_active=True,
+                                )
+                            ),
                             member__avatar_url=Case(
                                 When(
                                     member__avatar_asset__isnull=False,
@@ -422,15 +435,14 @@ class SearchEndpoint(BaseAPIView):
                                 ),
                                 default=Value(None),
                                 output_field=CharField(),
-                            )
+                            ),
                         )
-                        .order_by("-created_at")
-                    )
-
-                    users = users.distinct().values(
-                        "member__avatar_url",
-                        "member__display_name",
-                        "member__id",
+                        .order_by("-_anggota_project", "member__display_name")
+                        .values(
+                            "member__avatar_url",
+                            "member__display_name",
+                            "member__id",
+                        )
                     )
 
                     response_data["user_mention"] = list(users[:count])

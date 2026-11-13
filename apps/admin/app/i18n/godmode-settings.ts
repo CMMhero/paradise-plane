@@ -110,7 +110,7 @@ export const settingsStrings = {
     ),
     notifications_roles: tab(
       "Defaults by role",
-      "Which notifications each position starts with. Staff and leaders are copied to an account when it is created; the director row applies to every director at once."
+      "Which notifications each position starts with. Staff and leaders are copied to an account when it is created; the director row applies to every director and secretary at once."
     ),
     notifications_preview: tab("Preview", "Every email the app sends, rendered with sample data. Nothing is sent."),
     modules_visibility: tab(
@@ -667,9 +667,9 @@ export const settingsStrings = {
     label: "Defaults by role",
     col_staf: "Staff (or no position)",
     col_pimpinan: "Leaders (supervisor, manager)",
-    col_direktur: "Directors",
+    col_direktur: "Directors and secretaries",
     direktur_note:
-      "Also a hard limit: anything off here is off for every director right away, whatever their own settings. Keep it to mentions, chat, and summaries.",
+      "Also a hard limit: anything off here is off for every director and secretary right away, whatever their own settings. Keep it to mentions, chat, and summaries.",
     admin_note:
       "A switch turned off on Sending rules or Schedule cannot be turned on by anyone; people see it greyed out as turned off by admin.",
   },

@@ -113,6 +113,10 @@
         "error": "Gagal menyalin tautan komentar. Silakan coba lagi nanti."
       },
       "replies": {
+        "action": "Balas",
+        "replying_to": "Membalas {name}",
+        "show_earlier": "{count, plural, one {Tampilkan # balasan sebelumnya} other {Tampilkan # balasan sebelumnya}}",
+        "hide_earlier": "Sembunyikan balasan sebelumnya",
         "create": {
           "submit_button": "Tambah balasan",
           "placeholder": "Tambah balasan"

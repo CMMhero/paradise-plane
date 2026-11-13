@@ -507,7 +507,7 @@ class TestMateri:
         WikiMaterial.objects.filter(id=isi.id).update(judul="b.pdf", isi_teks="Rekapitulasi pengeluaran departemen.")
         klien = _klien(wiki.biasa)
         # Salah ketik di judul dan di isi sama-sama ketemu.
-        assert [h["id"] for h in klien.get(f"{wiki.base}search/", {"q": "keuagan"}).data["materials"]] == [str(judul.id)]
+        assert [h["id"] for h in klien.get(f"{wiki.base}search/", {"q": "keuagan"}).data["materials"]] == [str(judul.id)]  # noqa: E501
         hasil = klien.get(f"{wiki.base}search/", {"q": "pengeluran"}).data["materials"]
         assert [h["id"] for h in hasil] == [str(isi.id)]
         assert hasil[0]["sorot"] == ["pengeluaran"]

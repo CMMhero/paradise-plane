@@ -235,6 +235,9 @@ class IssueCommentSerializer(BaseSerializer):
             "updated_by",
             "created_at",
             "updated_at",
+            # Balasan hanya lewat API app (utas dicek di sana); papan publik tidak
+            # boleh menyetel induk dari body.
+            "parent",
         ]
 
 

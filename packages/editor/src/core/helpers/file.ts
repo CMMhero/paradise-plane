@@ -4,11 +4,21 @@
  * See the LICENSE file for details.
  */
 
+import { resolveFileMimeType } from "@plane/constants";
+
 export enum EFileError {
   INVALID_FILE_TYPE = "INVALID_FILE_TYPE",
   FILE_SIZE_TOO_LARGE = "FILE_SIZE_TOO_LARGE",
   NO_FILE_SELECTED = "NO_FILE_SELECTED",
 }
+
+/**
+ * The type the editor judges a file by. `File.type` alone is unreliable: the browser fills it from
+ * the OS registry, so `.md`, `.csv` or `.mkv` is empty on one machine and set on another, and a
+ * screenshot pasted in some browsers has no type. Falls back to the extension (see resolveFileMimeType).
+ */
+export const getEffectiveFileType = (file: File): string =>
+  resolveFileMimeType({ name: file.name, browserType: file.type });
 
 type TArgs = {
   acceptedMimeTypes: string[];
@@ -25,7 +35,7 @@ export const isFileValid = (args: TArgs): boolean => {
     return false;
   }
 
-  if (!acceptedMimeTypes.includes(file.type)) {
+  if (!acceptedMimeTypes.includes(getEffectiveFileType(file))) {
     onError(EFileError.INVALID_FILE_TYPE, "Invalid file type.");
     return false;
   }

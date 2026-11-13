@@ -113,6 +113,10 @@
         "error": "Błąd podczas kopiowania linka do komentarza. Spróbuj ponownie później."
       },
       "replies": {
+        "action": "Odpowiedz",
+        "replying_to": "Odpowiedź dla {name}",
+        "show_earlier": "{count, plural, one {Pokaż # wcześniejszą odpowiedź} few {Pokaż # wcześniejsze odpowiedzi} many {Pokaż # wcześniejszych odpowiedzi} other {Pokaż # wcześniejszej odpowiedzi}}",
+        "hide_earlier": "Ukryj wcześniejsze odpowiedzi",
         "create": {
           "submit_button": "Dodaj odpowiedź",
           "placeholder": "Dodaj odpowiedź"

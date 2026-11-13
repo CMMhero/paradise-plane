@@ -16,6 +16,7 @@ import { Building2, Crown, Plus } from "lucide-react";
 import {
   TINGKAT_DIREKTUR,
   TINGKAT_SUPERVISOR,
+  menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
@@ -201,7 +202,11 @@ export function BaganOrganisasi({
   onKelola: TKelola;
 }) {
   const { s, fill } = useGodmodeStrings();
-  const direktur = anggota.filter((o) => o.is_active && o.tingkat !== null && o.tingkat >= TINGKAT_DIREKTUR);
+  // Puncak = direktur lalu sekretaris (KEP-101): sama-sama menjangkau seluruh perusahaan.
+  const direktur = anggota
+    .filter((o) => o.is_active && menjangkauSeluruhOrganisasi(o.tingkat))
+    // oxlint-disable-next-line unicorn/no-array-sort -- kept as is: restructuring it is out of scope for this release
+    .sort((a, b) => (b.tingkat ?? 0) - (a.tingkat ?? 0));
 
   return (
     // Lebar alami (w-max): ukuran ini yang dibaca kanvas untuk "pas ke layar".
@@ -226,6 +231,9 @@ export function BaganOrganisasi({
                 <li key={d.id} className="flex items-center gap-2 text-12 text-primary" title={d.email}>
                   <PersonAvatar name={d.display_name} size="sm" />
                   <span className="truncate">{d.display_name}</span>
+                  {(d.tingkat ?? 0) < TINGKAT_DIREKTUR && (
+                    <span className="ml-auto shrink-0 text-11 text-tertiary">{s.members.level_secretary}</span>
+                  )}
                 </li>
               ))}
             </ul>

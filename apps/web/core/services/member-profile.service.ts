@@ -13,7 +13,7 @@ import { APIService } from "@/services/api.service";
 export type TOrgUnit = { id: string; kode: string; nama: string };
 
 export type TMemberPlacement = {
-  /** 10 staf · 20 supervisor · 30 manager · 40 direktur (KEP-29). */
+  /** 10 staf · 20 supervisor · 30 manager · 35 sekretaris · 40 direktur (KEP-29, KEP-101). */
   tingkat: number;
   departemen: TOrgUnit | null;
   divisi: TOrgUnit | null;

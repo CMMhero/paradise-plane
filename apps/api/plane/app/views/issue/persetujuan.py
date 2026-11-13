@@ -59,6 +59,7 @@ from plane.utils.hierarki import (
     saring_penyetuju,
     tingkat_anggota,
 )
+from plane.utils.sinyal_data import siarkan_tugas
 from plane.utils.saklar_instance import (
     APPROVAL_REJECT_REASON_REQUIRED,
     APPROVAL_REQUIRED_BELOW_LEVEL,
@@ -261,6 +262,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         from plane.db.models import ProjectMember, User  # noqa: PLC0415
         from plane.utils.hierarki import (  # noqa: PLC0415
             _bawahan_ids,
+            _di_bawah_direktur,
             gerbang_aktif,
             tingkat_anggota,
         )
@@ -272,7 +274,13 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             return Response({"error": "Project tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
         saya = request.user.id
-        if not gerbang_aktif() or is_super_admin(request.user):
+        from plane.utils.hierarki import adalah_admin_penuh  # noqa: PLC0415
+
+        if (
+            not gerbang_aktif()
+            or is_super_admin(request.user)
+            or adalah_admin_penuh(request.user, project.workspace_id)
+        ):
             anggota = list(
                 ProjectMember.objects.filter(project_id=project_id, is_active=True).values_list(
                     "member_id", flat=True
@@ -332,6 +340,13 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 if str(project_id) in {str(p) for p in divisi_diawasi(saya, project.workspace_id)}:
                     boleh |= anggota
             boleh &= anggota
+            # Sekretaris (KEP-101) tidak pernah boleh menugaskan direktur, walau saklar
+            # ASSIGN_DOWN_ONLY mati: samakan daftar dengan `galat_penugasan`.
+            if _di_bawah_direktur(tingkat):
+                from plane.utils.hierarki import peta_tingkat  # noqa: PLC0415
+
+                peta = peta_tingkat(project.workspace_id, project_id)
+                boleh = {u for u in boleh if u == saya or peta.get(u, 0) < TINGKAT_DIREKTUR}
             users = {u.id: u for u in User.objects.filter(id__in=boleh)}
             return Response(
                 {
@@ -559,6 +574,8 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         # jadi dibaca ulang: `tugas.state_id` di balasan wajib status sesudahnya.
         if baris.issue_id:
             baris.issue.refresh_from_db(fields=["state"])
+        # Antrean dan chip persetujuan di layar orang lain ikut menyegarkan diri.
+        siarkan_tugas(baris.project_id, baris.issue_id, bidang=["approval"], oleh_id=request.user.id)
         return Response(_serial(baris, "penyetuju", False, penyetuju=wewenang.penyetuju(baris)))
 
     def _selesaikan_tugas(self, request, baris):
@@ -670,5 +687,6 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         from plane.utils.hierarki import catat_persetujuan  # noqa: PLC0415
 
         baru = catat_persetujuan(issue, actor=request.user, state_sebelumnya_id=issue.state_id)
+        siarkan_tugas(baris.project_id, issue.id, bidang=["approval"], oleh_id=request.user.id)
         # None hanya kalau gerbang hierarki dimatikan di tengah jalan.
         return Response(_serial(baru or baris, "pemohon", False))

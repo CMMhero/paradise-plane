@@ -113,6 +113,10 @@
         "error": "Error copying comment link. Please try again later."
       },
       "replies": {
+        "action": "Reply",
+        "replying_to": "Replying to {name}",
+        "show_earlier": "{count, plural, one {Show # earlier reply} other {Show # earlier replies}}",
+        "hide_earlier": "Hide earlier replies",
         "create": {
           "submit_button": "Add reply",
           "placeholder": "Add reply"

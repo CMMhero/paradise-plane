@@ -30,9 +30,9 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
-  TINGKAT_DIREKTUR,
   TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
+  menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
@@ -98,9 +98,9 @@ function LajurJenjang({ tingkat, orang }: { tingkat: number; orang: TAnggotaHier
   const { s, fill } = useGodmodeStrings();
   const ref = useRef<HTMLDivElement>(null);
   // KEP-93: Staf/Supervisor/Manager melekat pada tempat (lajur departemen, zona
-  // manager divisi), jadi lajur ini hanya tampilan + sumber seretan. Direktur
-  // satu-satunya jenjang tanpa tempat, jadi hanya lajurnya yang menerima lepasan.
-  const bisaLepas = tingkat >= TINGKAT_DIREKTUR;
+  // manager divisi), jadi lajur ini hanya tampilan + sumber seretan.
+  // Sekretaris dan direktur jenjang tanpa tempat, jadi hanya lajur mereka yang menerima lepasan.
+  const bisaLepas = menjangkauSeluruhOrganisasi(tingkat);
   const mode = useTujuanLepas(ref, { jenis: "jenjang", tingkat }, bisaLepas);
   const nama = namaJenjang(tingkat, s);
   return (
@@ -484,9 +484,9 @@ export function PapanOrganisasi({
     const eksekusi: TKonteksPapan["eksekusi"] = async (orangId, asal, tujuanAwal, salin) => {
       const o = orangById.get(orangId);
       if (!o) return;
-      // Direktur (tanpa tempat) diseret ke People = turun ke Staf, sama dengan menu
-      // "Remove Director". Selain direktur, chip tanpa asal tidak bisa dilepas ke sana.
-      const turunDirektur = tujuanAwal.jenis === "lepas" && !asal && (o.tingkat ?? 0) >= TINGKAT_DIREKTUR;
+      // Direktur/sekretaris (tanpa tempat) diseret ke People = turun ke Staf, sama dengan menu
+      // "Remove Director". Selain keduanya, chip tanpa asal tidak bisa dilepas ke sana.
+      const turunDirektur = tujuanAwal.jenis === "lepas" && !asal && menjangkauSeluruhOrganisasi(o.tingkat);
       const tujuan: TTujuan = turunDirektur ? { jenis: "jenjang", tingkat: TINGKAT_MEMBER } : tujuanAwal;
       const r = rencanakan(o, asal, tujuan, salin, divisiDari);
       const nama = o.display_name;
@@ -538,6 +538,7 @@ export function PapanOrganisasi({
       const judul = r.turunDirektur
         ? fill(s.org.board.director_demoted, {
             name: nama,
+            level: namaJenjang(o.tingkat ?? TINGKAT_MEMBER, s),
             role: namaJenjang(r.sesudah.tingkat, s),
             place: ke,
           })
@@ -630,7 +631,7 @@ export function PapanOrganisasi({
               <span className="text-11 font-semibold text-tertiary">{s.org.board.levels}</span>
               <span className="text-11 text-tertiary">{s.org.board.levels_hint}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
               {LAJUR_JENJANG.map((t) => (
                 <LajurJenjang key={t} tingkat={t} orang={orangJenjang(t)} />
               ))}

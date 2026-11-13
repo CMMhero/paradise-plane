@@ -9,8 +9,8 @@
  */
 
 import {
-  TINGKAT_DIREKTUR,
   TINGKAT_MANAGER,
+  menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
@@ -66,17 +66,17 @@ export type TPerintahKelola =
 export type TKelola = (perintah: TPerintahKelola) => void;
 
 /**
- * Calon manager divisi: siapa pun di bawah Direktur yang belum jadi manager di
+ * Calon manager divisi: siapa pun di bawah Sekretaris yang belum jadi manager di
  * sini. Penempatan ke divisi menaikkan jenjang ke Manager, jadi supervisor/staf
  * ikut jadi calon (tak perlu bolak-balik ke halaman Member).
  */
 export const calonManager = (orang: TAnggotaHierarki[], divisi: TDivisiOrganisasi): TAnggotaHierarki[] => {
   const sudah = new Set(divisi.manager.map((m) => m.id));
-  return orang.filter((o) => o.tingkat !== null && o.tingkat < TINGKAT_DIREKTUR && !sudah.has(o.id));
+  return orang.filter((o) => o.tingkat !== null && !menjangkauSeluruhOrganisasi(o.tingkat) && !sudah.has(o.id));
 };
 
 /**
- * Calon anggota departemen: semua jenjang di bawah Direktur yang belum di sini
+ * Calon anggota departemen: semua jenjang di bawah Sekretaris yang belum di sini
  * (KEP-76: manager boleh duduk di departemen di luar divisinya). Menambah tidak
  * memindahkan penempatan lamanya.
  */
@@ -101,7 +101,7 @@ export const calonAnggota = (
   // KEP-93: manager divisi ini sudah memimpin departemennya, bukan calon anggota.
   const memimpin = (o: TAnggotaHierarki) =>
     divisiId !== undefined && (o.tingkat ?? 0) >= TINGKAT_MANAGER && (o.divisi_ids ?? []).includes(divisiId);
-  return orang.filter((o) => (o.tingkat === null || o.tingkat < TINGKAT_DIREKTUR) && !sudah.has(o.id) && !memimpin(o));
+  return orang.filter((o) => !menjangkauSeluruhOrganisasi(o.tingkat) && !sudah.has(o.id) && !memimpin(o));
 };
 
 /** Departemen + divisi orang ini sekarang (semua barisnya), untuk penanda di daftar calon. */

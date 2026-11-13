@@ -147,7 +147,7 @@ class TestDocx:
     def test_judul_paragraf_dan_gaya(self):
         isi = _docx(
             '<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Bab</w:t></w:r></w:p>'
-            "<w:p><w:r><w:rPr><w:b/><w:i/></w:rPr><w:t>Tebal miring</w:t></w:r><w:r><w:t xml:space=\"preserve\"> biasa</w:t></w:r></w:p>"
+            "<w:p><w:r><w:rPr><w:b/><w:i/></w:rPr><w:t>Tebal miring</w:t></w:r><w:r><w:t xml:space=\"preserve\"> biasa</w:t></w:r></w:p>"  # noqa: E501
             "<w:p></w:p>"
         )
         blok = wp.baca_docx(isi)["blocks"]
@@ -157,7 +157,7 @@ class TestDocx:
 
     def test_daftar_dan_tabel(self):
         isi = _docx(
-            '<w:p><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>butir</w:t></w:r></w:p>'
+            '<w:p><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>butir</w:t></w:r></w:p>'  # noqa: E501
             "<w:tbl><w:tr><w:tc><w:p><w:r><w:t>a</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>b</w:t></w:r></w:p></w:tc></w:tr></w:tbl>"
         )
         blok = wp.baca_docx(isi)["blocks"]

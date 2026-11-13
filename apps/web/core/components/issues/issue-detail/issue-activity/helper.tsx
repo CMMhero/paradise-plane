@@ -41,6 +41,7 @@ export const useWorkItemCommentOperations = (
   // translation
   const { t } = useTranslation();
 
+  /* oxlint-disable react-hooks/exhaustive-deps -- the operations read live store values at call time; listing them would rebuild the editor config */
   const operations: TCommentsOperations = useMemo(() => {
     // Define operations object with all methods
     const ops: TCommentsOperations = {
@@ -55,6 +56,7 @@ export const useWorkItemCommentOperations = (
             sequenceId: issueDetails.sequence_id,
           });
           const commentLink = `${workItemLink}#comment-${id}`;
+          // oxlint-disable-next-line promise/always-return -- fire-and-forget toast after the copy
           copyUrlToClipboard(commentLink).then(() => {
             setToast({
               title: t("common.success"),
@@ -139,7 +141,7 @@ export const useWorkItemCommentOperations = (
           return res;
         } catch (error) {
           console.log("Error in uploading comment asset:", error);
-          throw new Error(t("issue.comments.upload.error"));
+          throw new Error(t("issue.comments.upload.error"), { cause: error });
         }
       },
       duplicateCommentAsset: async (assetId, commentId) => {
@@ -210,7 +212,9 @@ export const useWorkItemCommentOperations = (
       },
     };
     return ops;
+    // oxlint-disable-next-line react/memo-dependencies -- stable by design: the operations read live store values at call time
   }, [workspaceSlug, projectId, issueId, createComment, updateComment, uploadEditorAsset, removeComment]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   return operations;
 };

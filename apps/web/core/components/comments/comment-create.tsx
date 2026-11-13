@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useForm, Controller } from "react-hook-form";
@@ -31,6 +31,14 @@ type TCommentCreate = {
   attachFiles?: TFileHandler["attachFiles"];
   /** rendered under the editor, e.g. attachment upload progress and errors */
   attachmentStatus?: ReactNode;
+  /** reply mode: id of the thread root the new comment attaches to */
+  parentId?: string;
+  /** editor content on mount, e.g. a mention when replying to a reply */
+  initialHtml?: string;
+  /** focus the editor (cursor at the end) once it is ready */
+  focusOnMount?: boolean;
+  /** rendered above the editor, e.g. who the reply is for */
+  header?: ReactNode;
 };
 
 // services
@@ -46,11 +54,22 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
     onSubmitCallback,
     attachFiles,
     attachmentStatus,
+    parentId,
+    initialHtml = "<p></p>",
+    focusOnMount = false,
+    header,
   } = props;
   // states
   const [uploadedAssetIds, setUploadedAssetIds] = useState<string[]>([]);
   // refs
   const editorRef = useRef<EditorRefApi>(null);
+
+  useEffect(() => {
+    if (!focusOnMount) return;
+    // the editor mounts a tick after this component
+    const timeout = setTimeout(() => editorRef.current?.focus("end"), 50);
+    return () => clearTimeout(timeout);
+  }, [focusOnMount]);
   // store hooks
   const workspaceStore = useWorkspace();
   // derived values
@@ -64,7 +83,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
     reset,
   } = useForm<Partial<TIssueComment>>({
     defaultValues: {
-      comment_html: "<p></p>",
+      comment_html: initialHtml,
     },
   });
   // Paradise: dulu `watch("comment_html")` + Controller, jadi tiap huruf
@@ -77,7 +96,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
 
   const onSubmit = async (formData: Partial<TIssueComment>) => {
     try {
-      const comment = await activityOperations.createComment(formData);
+      const comment = await activityOperations.createComment(parentId ? { ...formData, parent: parentId } : formData);
       if (comment?.id) onSubmitCallback?.(comment.id);
       if (uploadedAssetIds.length > 0) {
         if (projectId) {
@@ -104,7 +123,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
 
   return (
     <div
-      className={cn("sticky bottom-0 z-[4] bg-surface-1 sm:static")}
+      className={cn({ "sticky bottom-0 z-[4] bg-surface-1 sm:static": !parentId })}
       role="presentation"
       onKeyDown={(e) => {
         if (
@@ -119,6 +138,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
           handleSubmit(onSubmit)(e);
       }}
     >
+      {header}
       <Controller
         name="access"
         control={control}
@@ -126,7 +146,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
           <LiteTextEditor
             editable
             workspaceId={workspaceId}
-            id={"add_comment_" + entityId}
+            id={"add_comment_" + entityId + (parentId ? "_reply_" + parentId : "")}
             value={"<p></p>"}
             workspaceSlug={workspaceSlug}
             projectId={projectId}
@@ -137,7 +157,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
             }}
             ref={editorRef}
             // Isi awal editor saja; editor hanya membacanya saat dibuat.
-            initialValue="<p></p>"
+            initialValue={initialHtml}
             isEmpty={isEmpty}
             containerClassName="min-h-min"
             onChange={(_comment_json, comment_html) => {

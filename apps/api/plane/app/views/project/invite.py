@@ -26,6 +26,7 @@ from plane.app.serializers import (
 from plane.app.permissions import allow_permission, ROLE
 from plane.bgtasks.project_invitation_task import project_invitation
 from plane.db.membership import jadikan_anggota_project
+from plane.utils.sinyal_data import siarkan_anggota_project
 from plane.db.models import (
     ProjectMember,
     Workspace,
@@ -214,6 +215,10 @@ class UserProjectInvitationsViewset(BaseViewSet):
             ],
             ignore_conflicts=True,
         )
+
+        # Penulisan massal tidak memicu signal, jadi disiarkan di sini.
+        for pid in validated_project_ids:
+            siarkan_anggota_project(pid, user_ids=[request.user.id], oleh_id=request.user.id)
 
         return Response({"message": "Projects joined successfully"}, status=status.HTTP_201_CREATED)
 

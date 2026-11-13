@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { useTranslation } from "@plane/i18n";
 import { CheckIcon } from "@plane/propel/icons";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function MarketingConsent({ isChecked, handleChange }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center gap-1.5">
       <button
@@ -23,7 +25,7 @@ export function MarketingConsent({ isChecked, handleChange }: Props) {
       >
         {isChecked && <CheckIcon className="h-3 w-3 text-on-color" />}
       </button>
-      <span className="text-13 text-tertiary">Saya bersedia menerima pemberitahuan dari kantor</span>
+      <span className="text-13 text-tertiary">{t("onboarding_ui.marketing_consent")}</span>
     </div>
   );
 }

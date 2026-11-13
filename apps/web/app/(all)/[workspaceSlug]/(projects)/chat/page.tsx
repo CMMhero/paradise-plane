@@ -72,6 +72,7 @@ import { seretBerkas, useUnggahLampiran } from "./unggah-lampiran";
 import { DenganKehadiran, StatusKehadiranTeks, TitikKehadiran } from "@/components/chat/titik-kehadiran";
 import { MemberProfileTrigger } from "@/components/member-profile";
 import { usePetaKehadiran } from "@/hooks/use-kehadiran";
+import { useUploadFailureText } from "@/hooks/use-upload-error-reporter";
 
 const chatService = new ChatService();
 
@@ -439,6 +440,7 @@ function ChatPage() {
   const lawanBicara = dengan ? getWorkspaceMemberDetails(dengan)?.member : undefined;
 
   const batasParadise = useParadiseLimits();
+  const describeUploadFailure = useUploadFailureText();
   // Tombol klip, tempel, dan seret semuanya lewat `tambahLampiran`: batas
   // jumlah/ukuran dan kemajuan unggah ada di unggah-lampiran.ts.
   const {
@@ -461,17 +463,24 @@ function ChatPage() {
             : t("chatux_kelola_ui.too_many_files", { count: maksLampiran }),
       });
     },
-    onGagal: (gagal, total, pesanServer) =>
+    onGagal: (gagal, total, alasan) => {
+      const teks = describeUploadFailure(alasan);
+      // pembatalan oleh pengguna sendiri tidak perlu toast
+      if (teks.isCancelled && gagal === total) return;
       setToast({
         type: TOAST_TYPE.ERROR,
         title: gagal === total ? t("chat_ui.upload_failed_all") : t("chat_ui.upload_failed_some", { count: gagal }),
-        message: pesanServer ?? t("chat_ui.upload_failed_hint"),
-      }),
+        message: teks.message || t("chat_ui.upload_failed_hint"),
+      });
+    },
   });
 
   const unggah = async (berkas: FileList | File[] | null) => {
+    // Salin dulu: mengosongkan input juga mengosongkan FileList miliknya, dan tanpa
+    // pengosongan, memilih berkas yang SAMA lagi (reaksi wajar sesudah gagal) tidak memicu apa-apa.
+    const daftarBerkas = berkas ? Array.from(berkas) : null;
     if (berkasRef.current) berkasRef.current.value = "";
-    await tambahLampiran(berkas);
+    await tambahLampiran(daftarBerkas);
   };
 
   /** Lepas berkas di area percakapan. Hanya aktif saat ada percakapan terbuka. */

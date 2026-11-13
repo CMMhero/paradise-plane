@@ -113,6 +113,10 @@
         "error": "Errore durante la copia del link del commento. Riprova più tardi."
       },
       "replies": {
+        "action": "Rispondi",
+        "replying_to": "In risposta a {name}",
+        "show_earlier": "{count, plural, one {Mostra # risposta precedente} many {Mostra # risposte precedenti} other {Mostra # risposte precedenti}}",
+        "hide_earlier": "Nascondi le risposte precedenti",
         "create": {
           "submit_button": "Aggiungi risposta",
           "placeholder": "Aggiungi risposta"

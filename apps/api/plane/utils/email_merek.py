@@ -283,6 +283,7 @@ def tanggal(nilai, bahasa="id", pendek=False) -> str:
 # jendela laporan). Teks lain lewat kamus per email.
 _DATA_EN = {
     "Staf": "Staff",
+    "Sekretaris": "Secretary",
     "Direktur": "Director",
     "Seluruh divisi": "All divisions",
     "Divisi Anda": "Your division",

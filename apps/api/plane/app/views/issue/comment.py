@@ -23,6 +23,7 @@ from plane.db.models import IssueComment, ProjectMember, CommentReaction, Projec
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.host import base_host
 from plane.bgtasks.webhook_task import model_activity
+from plane.utils.balasan_komentar import hapus_balasan, induk_balasan
 from plane.utils.izin_sumber import tolak_izin_komentar
 from plane.utils.saklar_instance import PERM_COMMENT_DELETE, PERM_COMMENT_EDIT
 
@@ -81,9 +82,19 @@ class IssueCommentViewSet(BaseViewSet):
                 {"error": "You are not allowed to comment on the issue"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # Balasan: induk dicek di server (work item yang sama, naik ke akar utas).
+        # Tanpa `parent` di body, ini komentar biasa.
+        induk = None
+        if request.data.get("parent"):
+            induk = induk_balasan(slug, project_id, issue_id, request.data.get("parent"))
+            if induk is None:
+                return Response(
+                    {"error": "The comment you are replying to does not exist on this work item"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         serializer = IssueCommentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(project_id=project_id, issue_id=issue_id, actor=request.user)
+            serializer.save(project_id=project_id, issue_id=issue_id, actor=request.user, parent=induk)
             issue_activity.delay(
                 type="comment.activity.created",
                 requested_data=json.dumps(serializer.data, cls=DjangoJSONEncoder),
@@ -156,6 +167,8 @@ class IssueCommentViewSet(BaseViewSet):
             return galat
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
         issue_comment.delete()
+        # Menghapus induk membawa balasannya (lihat utils/balasan_komentar.py).
+        hapus_balasan(issue_comment)
         issue_activity.delay(
             type="comment.activity.deleted",
             requested_data=json.dumps({"comment_id": str(pk)}),

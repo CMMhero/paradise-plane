@@ -103,7 +103,7 @@ TEKS_RETENSI = {
     "id": {
         "subjek": "[{merek}] {n} riwayat login akan dihapus",
         "judul": "Riwayat login akan dihapus",
-        "p1": "Riwayat login disimpan {retensi} hari. Sebanyak {n} peristiwa akan dihapus dalam {ambang} hari ke depan{tertua}.",
+        "p1": "Riwayat login disimpan {retensi} hari. Sebanyak {n} peristiwa akan dihapus dalam {ambang} hari ke depan{tertua}.",  # noqa: E501
         "tertua": ", terhitung dari data tertua {tgl}",
         "p2": "Kalau angkanya masih diperlukan, ekspor dulu lewat God Mode > Activity sebelum tanggal itu. "
         "Sesudah dihapus, data ini tidak bisa dikembalikan.",
@@ -112,7 +112,7 @@ TEKS_RETENSI = {
     "en": {
         "subjek": "[{merek}] {n} login records will be deleted",
         "judul": "Login history will be deleted",
-        "p1": "Login history is kept for {retensi} days. {n} events will be deleted within the next {ambang} days{tertua}.",
+        "p1": "Login history is kept for {retensi} days. {n} events will be deleted within the next {ambang} days{tertua}.",  # noqa: E501
         "tertua": ", counting from the oldest record on {tgl}",
         "p2": "If you still need these numbers, export them from God Mode > Activity before then. "
         "Once deleted, this data cannot be recovered.",

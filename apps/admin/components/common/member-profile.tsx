@@ -38,7 +38,13 @@ const LABELS = {
   phoneExtension: "Phone extension",
   notSet: "Not set",
 };
-const LEVEL_LABELS: Record<number, string> = { 10: "Staff", 20: "Supervisor", 30: "Manager", 40: "Director" };
+const LEVEL_LABELS: Record<number, string> = {
+  10: "Staff",
+  20: "Supervisor",
+  30: "Manager",
+  35: "Secretary",
+  40: "Director",
+};
 
 const toPlacements = (profile: TInstanceMemberProfile): TMemberProfilePlacement[] =>
   profile.penempatan

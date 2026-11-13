@@ -50,6 +50,7 @@ export const ProjectLinkDetail = observer(function ProjectLinkDetail(props: TPro
       setIsInView(true);
       return;
     }
+    // oxlint-disable-next-line eslint/no-shadow -- kept as is: restructuring it is out of scope for this release
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) {
         setIsInView(true);

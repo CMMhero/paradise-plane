@@ -50,10 +50,10 @@ from plane.db.models import (
     JabatanOrganisasi,
     Project,
     ProjectMember,
-    TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_NAMA,
+    menjangkau_seluruh_organisasi,
     User,
     Workspace,
 )
@@ -227,7 +227,7 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
 def pohon_organisasi(workspace):
     """Pohon divisi -> departemen -> project + project yang belum punya departemen."""
     projects = {
-        p.id: p for p in Project.objects.filter(workspace=workspace, deleted_at__isnull=True).only("id", "identifier", "name")
+        p.id: p for p in Project.objects.filter(workspace=workspace, deleted_at__isnull=True).only("id", "identifier", "name")  # noqa: E501
     }
     peta = {}
     for dep_id, pid in DepartemenProject.objects.filter(workspace=workspace).values_list("departemen_id", "project_id"):
@@ -249,8 +249,8 @@ def pohon_organisasi(workspace):
         }
         # Tempat yang BERLAKU menurut jenjang (lihat `project_penempatan`, KEP-76):
         # departemen berlaku untuk semua jenjang, divisi hanya untuk manager.
-        # Direktur menjangkau semuanya, jadi tidak didaftar di satu tempat.
-        if j.tingkat >= TINGKAT_DIREKTUR:
+        # Direktur dan sekretaris menjangkau semuanya, jadi tidak didaftar di satu tempat.
+        if menjangkau_seluruh_organisasi(j.tingkat):
             continue
         if j.divisi_id and j.tingkat >= TINGKAT_MANAGER:
             manager_div.setdefault(j.divisi_id, []).append(baris)
@@ -497,7 +497,7 @@ def _ganti_project(dep, project_ids):
     Project yang sebelumnya milik departemen LAIN dipindah ke sini (satu project
     tepat satu departemen). Project yang dikeluarkan jadi tanpa departemen.
     """
-    sekarang = {str(pid) for pid in DepartemenProject.objects.filter(departemen=dep).values_list("project_id", flat=True)}
+    sekarang = {str(pid) for pid in DepartemenProject.objects.filter(departemen=dep).values_list("project_id", flat=True)}  # noqa: E501
     for baris in DepartemenProject.objects.filter(departemen=dep):
         if str(baris.project_id) not in project_ids:
             baris.delete(soft=False)
@@ -552,7 +552,7 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
                 }
             )
         return Response(
-            {"project": {"id": str(project.id), "identifier": project.identifier, "name": project.name}, "anggota": hasil}
+            {"project": {"id": str(project.id), "identifier": project.identifier, "name": project.name}, "anggota": hasil}  # noqa: E501
         )
 
     def post(self, request):
@@ -565,14 +565,14 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
         if project is None:
             return Response({"error": "Project not found."}, status=400)
         if project.archived_at is not None:
-            return Response({"error": "An archived project cannot become a department. Unarchive it first."}, status=400)
+            return Response({"error": "An archived project cannot become a department. Unarchive it first."}, status=400)  # noqa: E501
         if DepartemenProject.objects.filter(project=project).exists():
             return Response({"error": f"{project.identifier} already has a department."}, status=400)
         divisi = Divisi.objects.filter(workspace=workspace, pk=request.data.get("divisi_id")).first()
         if divisi is None:
             return Response({"error": "Division not found."}, status=400)
 
-        data = {"kode": request.data.get("kode") or project.identifier, "nama": request.data.get("nama") or project.name}
+        data = {"kode": request.data.get("kode") or project.identifier, "nama": request.data.get("nama") or project.name}  # noqa: E501
         kode, nama, galat = _kode_nama(data, wajib=True)
         if galat:
             return Response({"error": galat}, status=400)

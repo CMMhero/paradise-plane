@@ -113,6 +113,10 @@
         "error": "Eroare la copierea linkului comentariului. Încercați din nou mai târziu."
       },
       "replies": {
+        "action": "Răspunde",
+        "replying_to": "Răspuns pentru {name}",
+        "show_earlier": "{count, plural, one {Afișează # răspuns anterior} few {Afișează # răspunsuri anterioare} other {Afișează # de răspunsuri anterioare}}",
+        "hide_earlier": "Ascunde răspunsurile anterioare",
         "create": {
           "submit_button": "Adaugă răspuns",
           "placeholder": "Adaugă răspuns"

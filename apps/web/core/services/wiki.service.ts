@@ -6,7 +6,7 @@
  */
 
 import { API_BASE_URL } from "@plane/constants";
-import { getFileMetaDataForUpload } from "@plane/services";
+import { getFileMetaDataForUpload, normalizeUploadError, retryTransient } from "@plane/services";
 import type { TLogoProps } from "@plane/types";
 import { getFileURL } from "@plane/utils";
 // services
@@ -184,29 +184,6 @@ type TCreateMaterialResponse = {
 const fileUploadService = new FileUploadService();
 
 /**
- * Deteksi tipe di `getFileMetaDataForUpload` hanya membaca tanda tangan biner,
- * jadi berkas teks (.txt, .md, .csv) kembali bertipe kosong dan ditolak server.
- * Untuk itu ekstensi dipakai sebagai cadangan. Server menebak dengan tabel yang
- * sama, ini hanya supaya tipe yang dikirim ikut benar.
- */
-const TIPE_DARI_EKSTENSI: Record<string, string> = {
-  md: "text/markdown",
-  markdown: "text/markdown",
-  csv: "text/csv",
-  txt: "text/plain",
-  log: "text/plain",
-  json: "application/json",
-  xml: "text/xml",
-  sql: "application/x-sql",
-};
-
-const tipeBerkas = (nama: string, terdeteksi: string): string => {
-  if (terdeteksi && terdeteksi !== "application/octet-stream") return terdeteksi;
-  const ekstensi = nama.includes(".") ? nama.slice(nama.lastIndexOf(".") + 1).toLowerCase() : "";
-  return TIPE_DARI_EKSTENSI[ekstensi] ?? terdeteksi ?? "application/octet-stream";
-};
-
-/**
  * Alamat berkas dari server berbentuk `/api/...` (relatif). Di produksi, Caddy
  * memetakan `/api` ke API sehingga itu cukup. Di dev, web (:4000) dan API
  * (:8000) beda asal, dan alamat relatif jatuh ke server web yang menjawab 404.
@@ -287,11 +264,17 @@ export class WikiService extends APIService {
     file: File,
     onProgress?: (percent: number) => void
   ): Promise<TWikiMaterial> {
-    const terdeteksi = await getFileMetaDataForUpload(file);
-    const meta = { ...terdeteksi, type: tipeBerkas(file.name, terdeteksi.type) };
-    const { upload_data, material } = await this.panggil<TCreateMaterialResponse>(() =>
-      this.post(`${this.base(workspaceSlug)}/folders/${folderId}/materials/`, meta)
-    );
+    // Paradise: the type is resolved from signature + extension + browser type (resolveFileMimeType),
+    // and every step throws a normalized upload error so the caller can say WHY (offline, too large...)
+    const meta = await getFileMetaDataForUpload(file);
+    const { upload_data, material } = await this.post(
+      `${this.base(workspaceSlug)}/folders/${folderId}/materials/`,
+      meta
+    )
+      .then((response) => response?.data as TCreateMaterialResponse)
+      .catch((error) => {
+        throw normalizeUploadError(error);
+      });
     const payload = new FormData();
     Object.entries(upload_data.fields).forEach(([key, value]) => payload.append(key, value));
     payload.append("file", file);
@@ -299,7 +282,8 @@ export class WikiService extends APIService {
       if (!onProgress || !event.total) return;
       onProgress(Math.round((event.loaded * 100) / event.total));
     });
-    await this.panggil(() => this.post(`${this.base(workspaceSlug)}/materials/${material.id}/uploaded/`));
+    // marking uploaded is idempotent: a dropped connection here must not leave a file in storage that never shows
+    await retryTransient(() => this.post(`${this.base(workspaceSlug)}/materials/${material.id}/uploaded/`));
     return material;
   }
 

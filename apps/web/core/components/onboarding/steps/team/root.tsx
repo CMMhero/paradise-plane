@@ -20,7 +20,7 @@ import { XCircle } from "lucide-react";
 import { Listbox } from "@headlessui/react";
 // plane imports
 import type { EUserPermissions } from "@plane/constants";
-import { ROLE, ROLE_DETAILS } from "@plane/constants";
+import { ROLE_DETAILS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { PlusIcon, CheckIcon, ChevronDownIcon } from "@plane/propel/icons";
@@ -66,18 +66,6 @@ type InviteMemberFormProps = {
 const workspaceService = new WorkspaceService();
 const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
-const placeholderEmails = [
-  "charlie.taylor@frstflt.com",
-  "octave.chanute@frstflt.com",
-  "george.spratt@frstflt.com",
-  "frank.coffyn@frstflt.com",
-  "amos.root@frstflt.com",
-  "edward.deeds@frstflt.com",
-  "charles.m.manly@frstflt.com",
-  "glenn.curtiss@frstflt.com",
-  "thomas.selfridge@frstflt.com",
-  "albert.zahm@frstflt.com",
-];
 const InviteMemberInput = observer(function InviteMemberInput(props: InviteMemberFormProps) {
   const {
     control,
@@ -145,7 +133,7 @@ const InviteMemberInput = observer(function InviteMemberInput(props: InviteMembe
             rules={{
               pattern: {
                 value: emailRegex,
-                message: "Invalid Email ID",
+                message: t("onboarding_ui.invalid_email"),
               },
             }}
             render={({ field: { value, onChange, ref } }) => (
@@ -160,7 +148,7 @@ const InviteMemberInput = observer(function InviteMemberInput(props: InviteMembe
                 }}
                 ref={ref}
                 hasError={Boolean(errors.emails?.[index]?.email)}
-                placeholder={placeholderEmails[index % placeholderEmails.length]}
+                placeholder={t("onboarding_ui.invite_email_placeholder")}
                 className="w-full border-strong text-11 placeholder:text-placeholder sm:text-13"
                 autoComplete="off"
               />
@@ -192,7 +180,7 @@ const InviteMemberInput = observer(function InviteMemberInput(props: InviteMembe
                       !getValues(`emails.${index}.role_active`) ? "text-placeholder" : "text-primary"
                     } sm:text-13`}
                   >
-                    {ROLE[value]}
+                    {ROLE_DETAILS[value] ? t(ROLE_DETAILS[value].i18n_title) : ""}
                   </span>
 
                   <ChevronDownIcon
@@ -253,7 +241,7 @@ const InviteMemberInput = observer(function InviteMemberInput(props: InviteMembe
       {email && !emailRegex.test(email) && (
         <div className="mx-8 my-1">
           <span className="text-13">🤥</span>{" "}
-          <span className="mt-1 text-11 text-danger-primary">That doesn{"'"}t look like an email address.</span>
+          <span className="mt-1 text-11 text-danger-primary">{t("onboarding_ui.invalid_email")}</span>
         </div>
       )}
     </div>
@@ -262,6 +250,7 @@ const InviteMemberInput = observer(function InviteMemberInput(props: InviteMembe
 
 export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
   const { handleStepChange } = props;
+  const { t } = useTranslation();
 
   const [isInvitationDisabled, setIsInvitationDisabled] = useState(true);
 
@@ -305,15 +294,15 @@ export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Success!",
-        message: "Invitations sent successfully.",
+        title: t("success"),
+        message: t("onboarding_ui.invite_sent"),
       });
       await nextStep();
     } catch (err: any) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: err?.error,
+        title: t("error"),
+        message: err?.error ?? t("onboarding_ui.invite_failed"),
       });
     }
   };
@@ -338,6 +327,7 @@ export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
   }, [fields, append]);
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- kept as is: restructuring it is out of scope for this release
     <form
       className="flex flex-col gap-10"
       onSubmit={handleSubmit(onSubmit)}
@@ -346,13 +336,13 @@ export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
       }}
     >
       <CommonOnboardingHeader
-        title="Invite your teammates"
-        description="Kerja paling enak kalau timnya lengkap. Undang mereka sekarang supaya Paradise Task Tracker terpakai sepenuhnya."
+        title={t("onboarding_ui.invite_title")}
+        description={t("onboarding_ui.invite_description")}
       />
       <div className="w-full py-4 text-13">
         <div className="group relative mx-8 grid grid-cols-10 gap-4 py-2">
-          <div className="col-span-6 px-1 text-13 font-medium text-secondary">Email</div>
-          <div className="col-span-4 px-1 text-13 font-medium text-secondary">Role</div>
+          <div className="col-span-6 px-1 text-13 font-medium text-secondary">{t("email")}</div>
+          <div className="col-span-4 px-1 text-13 font-medium text-secondary">{t("role")}</div>
         </div>
         <div className="mb-3 space-y-3 sm:space-y-4">
           {fields.map((field, index) => (
@@ -378,7 +368,7 @@ export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
           onClick={appendField}
         >
           <PlusIcon className="h-4 w-4" strokeWidth={2} />
-          Add another
+          {t("onboarding_ui.add_another")}
         </button>
       </div>
       <div className="mx-auto flex w-full flex-col items-center justify-center gap-4 px-8 sm:px-2">
@@ -389,10 +379,10 @@ export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
           className="w-full"
           disabled={isInvitationDisabled || !isValid || isSubmitting}
         >
-          {isSubmitting ? <Spinner height="20px" width="20px" /> : "Continue"}
+          {isSubmitting ? <Spinner height="20px" width="20px" /> : t("common.continue")}
         </Button>
         <Button variant="ghost" size="xl" className="w-full" onClick={nextStep}>
-          I’ll do it later
+          {t("onboarding_ui.invite_later")}
         </Button>
       </div>
     </form>

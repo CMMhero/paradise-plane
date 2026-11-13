@@ -34,6 +34,7 @@ from plane.utils.exception_logger import log_exception
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.utils.saklar_instance import PERM_WIKI_DELETE, PERM_WIKI_EDIT
+from plane.utils.tipe_unggahan import rapikan_tipe_unggahan
 from plane.utils.wiki_cari import MIN_TOKEN_MIRIP, ambang_mirip, cuplikan, pecah_kueri, skor_judul
 from plane.utils.wiki_pratinjau import (  # noqa: F401 - jenis_pratinjau juga diimpor tes
     BERKAS_ZIP_MAKS_BYTE,
@@ -110,6 +111,7 @@ class WikiMateriFolderEndpoint(WikiAPIView):
             ukuran = int(request.data.get("size", batas_unggah_byte()))
         except (TypeError, ValueError):
             raise Galat("size must be a number.")
+        tipe = rapikan_tipe_unggahan(nama, tipe, allowed_mime_types("WIKI_MATERIAL"))
         if tipe not in allowed_mime_types("WIKI_MATERIAL"):
             raise Galat(f"Invalid file type '{tipe}'.")
         # Kuota tingkatan ditegakkan di sini, sama seperti titik unggah lain.

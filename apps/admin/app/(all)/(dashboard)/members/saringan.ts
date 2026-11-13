@@ -28,6 +28,7 @@ import {
 import {
   TINGKAT_DIREKTUR,
   TINGKAT_MANAGER,
+  TINGKAT_SEKRETARIS,
   TINGKAT_SUPERVISOR,
   type TAnggotaHierarki,
   type THierarkiResponse,
@@ -36,7 +37,7 @@ import {
 import type { TFilterField, TViewState } from "@/components/common/data-view";
 import type { TGodmodeStrings } from "@/app/i18n/godmode";
 
-export type TLevel = "director" | "manager" | "supervisor" | "staff" | "unset" | "outside";
+export type TLevel = "director" | "secretary" | "manager" | "supervisor" | "staff" | "unset" | "outside";
 export type TSesi = "in_use" | "signed_in" | "signed_out";
 
 export type TBarisMember = TInstanceMember & {
@@ -52,6 +53,7 @@ export const levelDari = (h: TAnggotaHierarki | undefined): TLevel => {
   if (!h) return "outside";
   if (h.tingkat === null) return "unset";
   if (h.tingkat >= TINGKAT_DIREKTUR) return "director";
+  if (h.tingkat >= TINGKAT_SEKRETARIS) return "secretary";
   if (h.tingkat >= TINGKAT_MANAGER) return "manager";
   if (h.tingkat >= TINGKAT_SUPERVISOR) return "supervisor";
   return "staff";
@@ -60,11 +62,12 @@ export const levelDari = (h: TAnggotaHierarki | undefined): TLevel => {
 /** Urutan jabatan dari yang paling luas, untuk mengurutkan kolom Position. */
 export const URUTAN_LEVEL: Record<TLevel, number> = {
   director: 0,
-  manager: 1,
-  supervisor: 2,
-  staff: 3,
-  unset: 4,
-  outside: 5,
+  secretary: 1,
+  manager: 2,
+  supervisor: 3,
+  staff: 4,
+  unset: 5,
+  outside: 6,
 };
 
 const URUTAN_SESI: Record<TSesi, number> = { in_use: 0, signed_in: 1, signed_out: 2 };
@@ -113,6 +116,7 @@ export const bangunBaris = (members: TInstanceMember[], hierarki: THierarkiRespo
 export const labelLevel = (level: TLevel, s: TGodmodeStrings): string =>
   ({
     director: s.members.level_director,
+    secretary: s.members.level_secretary,
     manager: s.members.level_manager,
     supervisor: s.members.level_supervisor,
     staff: s.members.level_staff,

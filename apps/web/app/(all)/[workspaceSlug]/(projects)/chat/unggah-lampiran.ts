@@ -33,7 +33,8 @@ export type TLampiranNaik = { kunci: string; nama: string; ukuran: number; perse
 type Opsi = {
   slug: string | undefined;
   onTolak: (penolakan: TPenolakan[], maksUkuran: number) => void;
-  onGagal: (gagal: number, total: number, pesan?: string) => void;
+  /** `alasan` = galat mentah berkas pertama yang gagal (sudah dinormalkan layanan unggah). */
+  onGagal: (gagal: number, total: number, alasan?: unknown) => void;
 };
 
 export function useUnggahLampiran({ slug, onTolak, onGagal }: Opsi) {
@@ -82,10 +83,7 @@ export function useUnggahLampiran({ slug, onTolak, onGagal }: Opsi) {
         })
       );
       const gagal = hasil.filter((h): h is PromiseRejectedResult => h.status === "rejected");
-      if (gagal.length > 0) {
-        const alasan = (gagal[0].reason as { error?: string } | undefined)?.error;
-        onGagal(gagal.length, hasil.length, alasan);
-      }
+      if (gagal.length > 0) onGagal(gagal.length, hasil.length, gagal[0].reason);
     },
     [slug, maxFileSize, maksJumlah, onTolak, onGagal]
   );

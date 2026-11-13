@@ -14,6 +14,7 @@ import { ACCEPTED_IMAGE_MIME_TYPES } from "@/constants/config";
 import { CORE_EXTENSIONS } from "@/constants/extension";
 // helpers
 import type { EFileError } from "@/helpers/file";
+import { reportEditorUploadFailure, reportInvalidEditorFile, trackUploadProgress } from "@/helpers/upload-tracking";
 // hooks
 import { useUploader, useDropZone, uploadFirstFileAndInsertRemaining } from "@/hooks/use-file-upload";
 // local imports
@@ -104,14 +105,26 @@ export function CustomImageUploader(props: CustomImageUploaderProps) {
 
   const handleProgressStatus = useCallback(
     (isUploading: boolean) => {
-      editor.storage.utility.uploadInProgress = isUploading;
+      trackUploadProgress(editor, isUploading);
     },
     [editor]
   );
 
-  const handleInvalidFile = useCallback((_error: EFileError, _file: File, message: string) => {
-    alert(message);
-  }, []);
+  const handleInvalidFile = useCallback(
+    (error: EFileError, file: File, message: string) => {
+      reportInvalidEditorFile(editor, error, file, message);
+    },
+    [editor]
+  );
+
+  const handleUploadError = useCallback(
+    (error: unknown, file: File) => {
+      // the node is left in its initial state so the user can click it again to retry
+      updateAttributes({ status: ECustomImageStatus.PENDING });
+      reportEditorUploadFailure(editor, error, file);
+    },
+    [editor, updateAttributes]
+  );
 
   // hooks
   const { isUploading: isImageBeingUploaded, uploadFile } = useUploader({
@@ -121,6 +134,7 @@ export function CustomImageUploader(props: CustomImageUploaderProps) {
     loadFileFromFileSystem: loadImageFromFileSystem,
     maxFileSize,
     onInvalidFile: handleInvalidFile,
+    onUploadError: handleUploadError,
     onUpload,
   });
 
@@ -163,9 +177,14 @@ export function CustomImageUploader(props: CustomImageUploaderProps) {
       if (!filesList || pos === undefined) {
         return;
       }
+      // copy before clearing: the input's FileList is emptied together with its value
+      const files = Array.from(filesList);
+      // Paradise: clear the input so choosing the SAME file again (after a failed upload, the
+      // usual reaction) fires change again. Without this the second pick did nothing at all.
+      e.target.value = "";
       await uploadFirstFileAndInsertRemaining({
         editor,
-        filesList,
+        filesList: files,
         pos,
         type: "image",
         uploader: uploadFile,
@@ -209,6 +228,7 @@ export function CustomImageUploader(props: CustomImageUploaderProps) {
   );
 
   return (
+    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- kept as is: restructuring it is out of scope for this release
     <div
       className={cn(
         "image-upload-component flex cursor-default items-center justify-start gap-2 rounded-lg border border-dashed bg-layer-3 px-2 py-3 text-tertiary transition-all duration-200 ease-in-out",

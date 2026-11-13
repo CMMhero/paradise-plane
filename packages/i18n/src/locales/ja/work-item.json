@@ -113,6 +113,10 @@
         "error": "コメントリンクのコピーに失敗しました。後でもう一度お試しください。"
       },
       "replies": {
+        "action": "返信",
+        "replying_to": "{name}さんに返信中",
+        "show_earlier": "{count, plural, one {以前の返信を#件表示} other {以前の返信を#件表示}}",
+        "hide_earlier": "以前の返信を非表示",
         "create": {
           "submit_button": "返信を追加",
           "placeholder": "返信を追加"

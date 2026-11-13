@@ -8,6 +8,7 @@ import React, { useCallback, useState } from "react";
 import { observer } from "mobx-react";
 import type { FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
+import { useTranslation } from "@plane/i18n";
 import { PlusIcon } from "@plane/propel/icons";
 // plane imports
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -34,6 +35,7 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
   const [isLoading, setIsLoading] = useState(false);
   // store hooks
   const { setLastWidgetAction, fetchActivities } = useIssueDetail(issueServiceType);
+  const { t } = useTranslation();
   // file size
   const { maxFileSize } = useFileSize();
   // operations
@@ -59,13 +61,9 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
         setIsLoading(true);
         attachmentOperations
           .create(currentFile)
-          .catch(() => {
-            setToast({
-              type: TOAST_TYPE.ERROR,
-              title: "Error!",
-              message: "File could not be attached. Try uploading again.",
-            });
-          })
+          // the operation already shows a toast with the reason; swallow it here so it is not
+          // reported a second time (and not left as an unhandled rejection)
+          .catch(() => undefined)
           .finally(() => {
             handleFetchPropertyActivities();
             setLastWidgetAction("attachments");
@@ -76,15 +74,15 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
 
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
+        title: totalAttachedFiles > 1 ? t("unggah_ui.one_file_only") : t("unggah_ui.failed_generic_title"),
         message:
           totalAttachedFiles > 1
-            ? "Only one file can be uploaded at a time."
-            : `File must be of ${maxFileSize / 1024 / 1024}MB or less in size.`,
+            ? undefined
+            : t("unggah_ui.file_too_large", { size: Math.floor(maxFileSize / 1024 / 1024) }),
       });
       return;
     },
-    [attachmentOperations, maxFileSize, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction]
+    [attachmentOperations, maxFileSize, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction, t]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -95,6 +93,7 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
   });
 
   return (
+    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- kept as is: restructuring it is out of scope for this release
     <div
       onClick={(e) => {
         // TODO: Remove extra div and move event propagation to button

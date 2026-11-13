@@ -33,6 +33,8 @@ type Props = {
 };
 
 const workspaceService = new WorkspaceService();
+// Stored value of the first ORGANIZATION_SIZE option; only its label is translated.
+const JUST_MYSELF = "Just myself";
 
 export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
   user,
@@ -84,7 +86,7 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
           });
           await fetchWorkspaces();
           await completeStep(workspaceResponse.id);
-          onComplete(formData.organization_size === "Just myself");
+          onComplete(formData.organization_size === JUST_MYSELF);
         } catch {
           setToast({
             type: TOAST_TYPE.ERROR,
@@ -117,11 +119,7 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
   if (isWorkspaceCreationDisabled) {
     return (
       <div className="flex flex-col gap-10">
-        <span className="text-center text-14 text-tertiary">
-          You don&apos;t seem to have any invites to a workspace and your instance admin has restricted creation of new
-          workspaces. Please ask a workspace owner or admin to invite you to a workspace first and come back to this
-          screen to join.
-        </span>
+        <span className="text-center text-14 text-tertiary">{t("onboarding_ui.workspace_creation_restricted")}</span>
       </div>
     );
   }
@@ -132,7 +130,10 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
         void handleSubmit(handleCreateWorkspace)(e);
       }}
     >
-      <CommonOnboardingHeader title="Create your workspace" description="All your work, unified." />
+      <CommonOnboardingHeader
+        title={t("workspace_creation.heading")}
+        description={t("onboarding_ui.workspace_tagline")}
+      />
       <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-2">
           <label
@@ -146,7 +147,12 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
             name="name"
             rules={{
               required: t("common.errors.required"),
-              validate: (value) => validateWorkspaceName(value, true),
+              validate: (value) => {
+                if (validateWorkspaceName(value, true) === true) return true;
+                if (value.trim() === "") return t("common.errors.required");
+                if (value.length > 80) return t("workspace_creation.errors.validation.name_length");
+                return t("workspace_creation.errors.validation.name_alphanumeric");
+              },
               maxLength: {
                 value: 80,
                 message: t("workspace_creation.errors.validation.name_length"),
@@ -166,7 +172,7 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
                       shouldValidate: true,
                     });
                   }}
-                  placeholder="Enter workspace name"
+                  placeholder={t("workspace_creation.form.name.placeholder")}
                   ref={ref}
                   mode="primary"
                   hasError={Boolean(errors.name)}
@@ -276,7 +282,9 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
                       >
                         <CircleCheck className={cn("size-4 text-placeholder", isSelected && "text-secondary")} />
 
-                        <span className="font-medium">{size}</span>
+                        <span className="font-medium">
+                          {size === JUST_MYSELF ? t("onboarding_ui.org_size_just_myself") : size}
+                        </span>
                       </button>
                     );
                   })}
@@ -295,7 +303,7 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
         </Button>
         {hasInvitations && (
           <Button variant="ghost" size="xl" className="w-full" onClick={handleCurrentViewChange}>
-            Join existing workspace
+            {t("onboarding_ui.join_existing_workspace")}
           </Button>
         )}
       </div>

@@ -29,6 +29,16 @@ const defaultValues = {
   use_case: [] as string[],
 };
 
+// USE_CASES values are what gets stored on the profile, so they stay English
+// constants; only the label shown to the user goes through i18n.
+const USE_CASE_LABEL_KEYS: Record<string, string> = {
+  "Plan and track product roadmaps": "onboarding_ui.usecase_plan_roadmaps",
+  "Manage engineering sprints": "onboarding_ui.usecase_engineering_sprints",
+  "Coordinate cross-functional projects": "onboarding_ui.usecase_cross_functional",
+  "Replace our current tool": "onboarding_ui.usecase_replace_tool",
+  "Just exploring": "onboarding_ui.usecase_exploring",
+};
+
 export const UseCaseSetupStep = observer(function UseCaseSetupStep({ handleStepChange }: Props) {
   const { t } = useTranslation();
   // store hooks
@@ -57,14 +67,14 @@ export const UseCaseSetupStep = observer(function UseCaseSetupStep({ handleStepC
       await updateUserProfile(profileUpdatePayload);
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Success",
-        message: "Profile setup completed!",
+        title: t("success"),
+        message: t("onboarding_ui.profile_saved"),
       });
     } catch {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error",
-        message: "Profile setup failed. Please try again!",
+        title: t("error"),
+        message: t("onboarding_ui.profile_save_failed"),
       });
     }
   };
@@ -89,19 +99,19 @@ export const UseCaseSetupStep = observer(function UseCaseSetupStep({ handleStepC
       {/* Header */}
       <CommonOnboardingHeader
         title={t("shared_ui.onboarding_usecase_title")}
-        description="Tell us your goals and team size."
+        description={t("onboarding_ui.usecase_description")}
       />
 
       {/* Use Case Selection */}
       <div className="flex flex-col gap-3">
-        <p className="text-body-sm-semibold text-placeholder">Select one or more</p>
+        <p className="text-body-sm-semibold text-placeholder">{t("onboarding_ui.select_one_or_more")}</p>
 
         <Controller
           control={control}
           name="use_case"
           rules={{
-            required: "Please select at least one option",
-            validate: (value) => (value && value.length > 0) || "Please select at least one option",
+            required: t("onboarding_ui.usecase_required"),
+            validate: (value) => (value && value.length > 0) || t("onboarding_ui.usecase_required"),
           }}
           render={({ field: { value, onChange } }) => (
             <div className="flex flex-col gap-3">
@@ -142,7 +152,9 @@ export const UseCaseSetupStep = observer(function UseCaseSetupStep({ handleStepC
                       />
                     </span>
 
-                    <span className="text-body-sm-regular">{useCase}</span>
+                    <span className="text-body-sm-regular">
+                      {USE_CASE_LABEL_KEYS[useCase] ? t(USE_CASE_LABEL_KEYS[useCase]) : useCase}
+                    </span>
                   </button>
                 );
               })}
@@ -155,10 +167,10 @@ export const UseCaseSetupStep = observer(function UseCaseSetupStep({ handleStepC
       {/* Action Buttons */}
       <div className="space-y-3">
         <Button variant="primary" type="submit" className="w-full" size="xl" disabled={isButtonDisabled}>
-          Continue
+          {t("common.continue")}
         </Button>
         <Button variant="ghost" onClick={handleSkip} className="w-full" size="xl">
-          Skip
+          {t("onboarding_ui.skip")}
         </Button>
       </div>
     </form>

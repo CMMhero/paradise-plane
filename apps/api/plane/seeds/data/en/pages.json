@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "name": "Project spec",
+    "project_id": 1,
+    "description_html": "<p class=\"editor-paragraph-block\">Welcome to <strong>Project pages</strong>, the documentation hub for this project. Use pages to keep <strong>plans, specs, updates and learnings</strong> connected to your work items.</p><h2>Project summary</h2><ul class=\"list-disc pl-7 space-y-(--list-spacing-y) tight\" data-tight=\"true\"><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Project name: add your project name</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Owner: add the project owner</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Status: active, in progress or blocked</p></li></ul><h2>Goals</h2><ul class=\"list-disc pl-7 space-y-(--list-spacing-y) tight\" data-tight=\"true\"><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Finish all priority work this week</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Make sure every work item has an assignee and a due date</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Review progress with the team every week</p></li></ul>",
+    "description_stripped": "Welcome to Project pages, the documentation hub for this project. Use pages to keep plans, specs, updates and learnings connected to your work items.Project summaryProject name: add your project nameOwner: add the project ownerStatus: active, in progress or blockedGoalsFinish all priority work this weekMake sure every work item has an assignee and a due dateReview progress with the team every week",
+    "type": "PROJECT",
+    "access": 0,
+    "logo_props": {
+      "emoji": {
+        "url": "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f680.png",
+        "value": "128640"
+      },
+      "in_use": "emoji"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Draft plan",
+    "project_id": 1,
+    "description_html": "<p class=\"editor-paragraph-block\">This is your <strong>draft</strong> area: a private space inside the project to outline ideas and rough notes before sharing them on a project page.</p><p class=\"editor-paragraph-block\">Only you can see it unless you share it.</p><ul class=\"list-disc pl-7 space-y-(--list-spacing-y) tight\" data-tight=\"true\"><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Outline the summary and goals</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Write down the next work plan</p></li><li class=\"not-prose space-y-2\"><p class=\"editor-paragraph-block\">Collect feedback from the team</p></li></ul>",
+    "description_stripped": "This is your draft area: a private space inside the project to outline ideas and rough notes before sharing them on a project page.Only you can see it unless you share it.Outline the summary and goalsWrite down the next work planCollect feedback from the team",
+    "type": "PROJECT",
+    "access": 1,
+    "logo_props": "{\"emoji\": {\"url\": \"https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f9f1.png\", \"value\": \"129521\"}, \"in_use\": \"emoji\"}"
+  }
+]

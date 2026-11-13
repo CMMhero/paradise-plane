@@ -113,6 +113,10 @@
         "error": "Lỗi khi sao chép liên kết bình luận. Vui lòng thử lại sau."
       },
       "replies": {
+        "action": "Trả lời",
+        "replying_to": "Đang trả lời {name}",
+        "show_earlier": "{count, plural, one {Hiển thị # câu trả lời trước đó} other {Hiển thị # câu trả lời trước đó}}",
+        "hide_earlier": "Ẩn các câu trả lời trước đó",
         "create": {
           "submit_button": "Thêm trả lời",
           "placeholder": "Thêm trả lời"

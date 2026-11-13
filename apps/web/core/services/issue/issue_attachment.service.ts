@@ -7,7 +7,12 @@
 import type { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "@plane/constants";
 // plane types
-import { getFileMetaDataForUpload, generateFileUploadPayload } from "@plane/services";
+import {
+  getFileMetaDataForUpload,
+  generateFileUploadPayload,
+  normalizeUploadError,
+  retryTransient,
+} from "@plane/services";
 import type { TIssueAttachment, TIssueAttachmentUploadResponse, TIssueServiceType } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 // services
@@ -31,13 +36,12 @@ export class IssueAttachmentService extends APIService {
     issueId: string,
     attachmentId: string
   ): Promise<void> {
-    return this.patch(
-      `/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/${issueId}/attachments/${attachmentId}/`
-    )
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
+    // Paradise: idempotent, so a transient failure is retried instead of leaving the asset not-uploaded
+    return retryTransient(() =>
+      this.patch(
+        `/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/${issueId}/attachments/${attachmentId}/`
+      ).then((response) => response?.data)
+    );
   }
 
   async uploadIssueAttachment(
@@ -64,7 +68,7 @@ export class IssueAttachmentService extends APIService {
         return signedURLResponse.attachment;
       })
       .catch((error) => {
-        throw error?.response?.data;
+        throw normalizeUploadError(error);
       });
   }
 

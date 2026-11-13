@@ -46,7 +46,7 @@ const userService = new UserService();
 const issueService = new IssueService();
 const persetujuanService = new PersetujuanService();
 
-/** Batas supervisor di tangga jenjang (10 member · 20 supervisor · 30 manager · 40 direktur). */
+/** Batas supervisor di tangga jenjang (10 member · 20 supervisor · 30 manager · 35 sekretaris · 40 direktur). */
 export const TINGKAT_SUPERVISOR = 20;
 
 /**

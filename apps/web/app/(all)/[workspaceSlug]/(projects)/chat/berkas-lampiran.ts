@@ -29,23 +29,36 @@ export function pilahBerkas(
   return { terima, tolak };
 }
 
-/** Berkas dari peristiwa tempel. Gambar tempelan tak bernama diberi nama berwaktu. */
+const NAMA_GAMBAR_PAPAN_KLIP = /^image.(png|jpe?g|gif|webp)$/i;
+
+/**
+ * Berkas dari peristiwa tempel. Gambar tempelan tak bernama diberi nama berwaktu.
+ *
+ * Dua jalan baca: `items` (bisa memberi `null` dari getAsFile) lalu `files`, yang
+ * kadang satu-satunya yang terisi. Salin sel Excel atau Word menyertakan GAMBAR
+ * "image.png" di samping teksnya; kalau gambar itu diambil, teksnya hilang
+ * dan tempel terasa rusak. Jadi gambar generik yang datang bersama teks biasa
+ * dibiarkan, dan tempel teks berjalan normal.
+ */
 export function berkasDariTempel(data: DataTransfer | null): File[] {
   if (!data) return [];
-  const hasil: File[] = [];
-  for (const item of Array.from(data.items ?? [])) {
-    if (item.kind !== "file") continue;
-    const f = item.getAsFile();
-    if (!f) continue;
+  let mentah: File[] = Array.from(data.items ?? [])
+    .filter((item) => item.kind === "file")
+    .flatMap((item) => item.getAsFile() ?? []);
+  if (mentah.length === 0) mentah = Array.from(data.files ?? []);
+  if (mentah.length === 0) return [];
+
+  const teks = data.getData?.("text/plain")?.trim() ?? "";
+  if (teks && mentah.every((f) => NAMA_GAMBAR_PAPAN_KLIP.test(f.name))) return [];
+
+  return mentah.map((f, indeks) => {
     // Tangkapan layar dari papan klip bernama "image.png" di semua peramban;
     // lima tempelan berturut-turut jadi lima "image.png" yang tidak bisa dibedakan.
-    if (/^image\.(png|jpe?g|gif|webp)$/i.test(f.name)) {
-      const ekstensi = f.name.split(".").pop();
-      const cap = new Date().toISOString().replace(/[:.]/g, "-");
-      hasil.push(new File([f], `tempelan-${cap}-${hasil.length + 1}.${ekstensi}`, { type: f.type }));
-    } else hasil.push(f);
-  }
-  return hasil;
+    if (!NAMA_GAMBAR_PAPAN_KLIP.test(f.name)) return f;
+    const ekstensi = f.name.split(".").pop();
+    const cap = new Date().toISOString().replace(/[:.]/g, "-");
+    return new File([f], `tempelan-${cap}-${indeks + 1}.${ekstensi}`, { type: f.type });
+  });
 }
 
 /** Peristiwa seret membawa berkas (bukan teks atau tautan yang diseret). */

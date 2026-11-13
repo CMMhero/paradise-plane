@@ -47,19 +47,28 @@ from plane.db.models import (
 logger = logging.getLogger("plane.worker")
 
 
-def read_seed_file(filename):
+def read_seed_file(filename, bahasa=None):
     """
     Read a JSON file from the seed directory.
 
+    Kustomisasi Paradise: isi contoh ditulis per bahasa di `seeds/data/<bahasa>/`
+    ("id" atau "en", sama dengan bahasa email). Berkas yang tidak ada di folder
+    bahasa jatuh ke `seeds/data/` (bawaan upstream).
+
     Args:
         filename (str): Name of the JSON file to read
+        bahasa (str | None): "id" or "en"; None = bawaan upstream
 
     Returns:
         dict: Contents of the JSON file
     """
     file_path = os.path.join(settings.SEED_DIR, "data", filename)
+    if bahasa:
+        kandidat = os.path.join(settings.SEED_DIR, "data", bahasa, filename)
+        if os.path.exists(kandidat):
+            file_path = kandidat
     try:
-        with open(file_path, "r") as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             return json.load(file)
     except FileNotFoundError:
         logger.error(f"Seed file {filename} not found in {settings.SEED_DIR}/data")
@@ -69,7 +78,7 @@ def read_seed_file(filename):
         return None
 
 
-def create_project_and_member(workspace: Workspace, bot_user: User) -> Dict[int, uuid.UUID]:
+def create_project_and_member(workspace: Workspace, bot_user: User, bahasa: str | None = None) -> Dict[int, uuid.UUID]:
     """Creates a project and associated members for a workspace.
 
     Creates a new project using the workspace name and sets up all necessary
@@ -81,7 +90,7 @@ def create_project_and_member(workspace: Workspace, bot_user: User) -> Dict[int,
     Returns:
         A mapping of seed project IDs to actual project IDs
     """
-    project_seeds = read_seed_file("projects.json")
+    project_seeds = read_seed_file("projects.json", bahasa)
     project_identifier = "".join(ch for ch in workspace.name if ch.isalnum())[:5]
 
     # Create members
@@ -175,7 +184,7 @@ def create_project_and_member(workspace: Workspace, bot_user: User) -> Dict[int,
 
 
 def create_project_states(
-    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User
+    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User, bahasa: str | None = None
 ) -> Dict[int, uuid.UUID]:
     """Creates states for each project in the workspace.
 
@@ -187,7 +196,7 @@ def create_project_states(
         A mapping of seed state IDs to actual state IDs
     """
 
-    state_seeds = read_seed_file("states.json")
+    state_seeds = read_seed_file("states.json", bahasa)
     state_map: Dict[int, uuid.UUID] = {}
 
     if not state_seeds:
@@ -210,7 +219,7 @@ def create_project_states(
 
 
 def create_project_labels(
-    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User
+    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User, bahasa: str | None = None
 ) -> Dict[int, uuid.UUID]:
     """Creates labels for each project in the workspace.
 
@@ -221,7 +230,7 @@ def create_project_labels(
     Returns:
         A mapping of seed label IDs to actual label IDs
     """
-    label_seeds = read_seed_file("labels.json")
+    label_seeds = read_seed_file("labels.json", bahasa)
     label_map: Dict[int, uuid.UUID] = {}
 
     if not label_seeds:
@@ -251,6 +260,7 @@ def create_project_issues(
     cycles_map: Dict[int, uuid.UUID],
     module_map: Dict[int, uuid.UUID],
     bot_user: User,
+    bahasa: str | None = None,
 ) -> None:
     """Creates issues and their associated records for each project.
 
@@ -262,7 +272,7 @@ def create_project_issues(
         states_map: Mapping of seed state IDs to actual state IDs
         labels_map: Mapping of seed label IDs to actual label IDs
     """
-    issue_seeds = read_seed_file("issues.json")
+    issue_seeds = read_seed_file("issues.json", bahasa)
 
     if not issue_seeds:
         return
@@ -280,8 +290,8 @@ def create_project_issues(
         labels = issue_seed.pop("labels")
         project_id = issue_seed.pop("project_id")
         state_id = issue_seed.pop("state_id")
-        cycle_id = issue_seed.pop("cycle_id")
-        module_ids = issue_seed.pop("module_ids")
+        cycle_id = issue_seed.pop("cycle_id", None)
+        module_ids = issue_seed.pop("module_ids", [])
 
         issue = Issue(
             **issue_seed,
@@ -343,7 +353,9 @@ def create_project_issues(
     return
 
 
-def create_pages(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User) -> None:
+def create_pages(
+    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User, bahasa: str | None = None
+) -> None:
     """Creates pages for each project in the workspace.
 
     Args:
@@ -351,7 +363,7 @@ def create_pages(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_us
         project_map: Mapping of seed project IDs to actual project IDs
         bot_user: The bot user to use for creating the pages
     """
-    page_seeds = read_seed_file("pages.json")
+    page_seeds = read_seed_file("pages.json", bahasa)
 
     if not page_seeds:
         return
@@ -389,7 +401,9 @@ def create_pages(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_us
     return
 
 
-def create_cycles(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User) -> Dict[int, uuid.UUID]:
+def create_cycles(
+    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User, bahasa: str | None = None
+) -> Dict[int, uuid.UUID]:
     """Creates cycles for each project in the workspace.
 
     Args:
@@ -399,7 +413,7 @@ def create_cycles(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_u
     Returns:
         A mapping of seed cycle IDs to actual cycle IDs
     """
-    cycle_seeds = read_seed_file("cycles.json")
+    cycle_seeds = read_seed_file("cycles.json", bahasa)
     if not cycle_seeds:
         return {}
 
@@ -440,7 +454,9 @@ def create_cycles(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_u
     return cycle_map
 
 
-def create_modules(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User) -> None:
+def create_modules(
+    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User, bahasa: str | None = None
+) -> None:
     """Creates modules for each project in the workspace.
 
     Args:
@@ -448,7 +464,7 @@ def create_modules(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_
         project_map: Mapping of seed project IDs to actual project IDs
         bot_user: The bot user to use for creating the modules
     """
-    module_seeds = read_seed_file("modules.json")
+    module_seeds = read_seed_file("modules.json", bahasa)
     if not module_seeds:
         return {}
 
@@ -475,7 +491,9 @@ def create_modules(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_
     return module_map
 
 
-def create_views(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User) -> None:
+def create_views(
+    workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_user: User, bahasa: str | None = None
+) -> None:
     """Creates views for each project in the workspace.
 
     Args:
@@ -484,7 +502,7 @@ def create_views(workspace: Workspace, project_map: Dict[int, uuid.UUID], bot_us
         bot_user: The bot user to use for creating the views
     """
 
-    view_seeds = read_seed_file("views.json")
+    view_seeds = read_seed_file("views.json", bahasa)
     if not view_seeds:
         return
 
@@ -519,6 +537,12 @@ def workspace_seed(workspace_id: uuid.UUID) -> None:
         # Get the workspace
         workspace = Workspace.objects.get(id=workspace_id)
 
+        # Kustomisasi Paradise: isi contoh mengikuti bahasa pembuat workspace.
+        # Jebakan KEP-68: bahasa ada di Profile, bukan di User.
+        from plane.utils.email_merek import bahasa_penerima  # noqa: PLC0415
+
+        bahasa = bahasa_penerima(workspace.owner)
+
         # Create a bot user for creating all the workspace data
         bot_user = User.objects.create(
             username=f"bot_user_{workspace.id}",
@@ -541,28 +565,28 @@ def workspace_seed(workspace_id: uuid.UUID) -> None:
         )
 
         # Create a project with the same name as workspace
-        project_map = create_project_and_member(workspace, bot_user)
+        project_map = create_project_and_member(workspace, bot_user, bahasa)
 
         # Create project states
-        state_map = create_project_states(workspace, project_map, bot_user)
+        state_map = create_project_states(workspace, project_map, bot_user, bahasa)
 
         # Create project labels
-        label_map = create_project_labels(workspace, project_map, bot_user)
+        label_map = create_project_labels(workspace, project_map, bot_user, bahasa)
 
         # Create project cycles
-        cycle_map = create_cycles(workspace, project_map, bot_user)
+        cycle_map = create_cycles(workspace, project_map, bot_user, bahasa)
 
         # Create project modules
-        module_map = create_modules(workspace, project_map, bot_user)
+        module_map = create_modules(workspace, project_map, bot_user, bahasa)
 
         # create project issues
-        create_project_issues(workspace, project_map, state_map, label_map, cycle_map, module_map, bot_user)
+        create_project_issues(workspace, project_map, state_map, label_map, cycle_map, module_map, bot_user, bahasa)
 
         # create project views
-        create_views(workspace, project_map, bot_user)
+        create_views(workspace, project_map, bot_user, bahasa)
 
         # create project pages
-        create_pages(workspace, project_map, bot_user)
+        create_pages(workspace, project_map, bot_user, bahasa)
 
         logger.info(f"Task: workspace_seed_task -> Workspace {workspace_id} seeded successfully")
         return

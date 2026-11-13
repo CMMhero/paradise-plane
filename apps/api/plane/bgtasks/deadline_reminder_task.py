@@ -26,6 +26,7 @@ from plane.utils.menunggu_persetujuan import menunggu_tidak_terlambat, q_bisa_te
 from plane.utils.penerima_aktif import aktif_sejak, batas_aktif
 from plane.utils.preferensi_email import boleh_email, penyaring
 from plane.utils.saklar_instance import ENABLE_DEADLINE_REMINDER, saklar_aktif
+from plane.utils.sinyal_data import siarkan_notifikasi_baris
 from plane.utils.setelan_instance import (
     DEADLINE_REMINDER_EMAIL_DAYS,
     DEADLINE_REMINDER_INBOX_DAYS,
@@ -218,6 +219,7 @@ def tulis_inbox_penyetuju(hari_ini):
             if (issue.id, uid) not in sudah
         ]
         Notification.objects.bulk_create(baru, batch_size=100)
+        siarkan_notifikasi_baris(baru)
         ditulis += len(baru)
     return ditulis
 
@@ -321,6 +323,7 @@ def tulis_inbox_tenggat(hari_ini):
             if (issue.id, uid) not in sudah
         ]
         Notification.objects.bulk_create(baru, batch_size=100)
+        siarkan_notifikasi_baris(baru)
         ditulis += len(baru)
     return ditulis
 

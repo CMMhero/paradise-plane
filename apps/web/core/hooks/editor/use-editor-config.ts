@@ -13,6 +13,7 @@ import { useEditorAsset } from "@/hooks/store/use-editor-asset";
 // plane web hooks
 import { useExtendedEditorConfig } from "@/hooks/editor/use-extended-editor-config";
 import { useFileSize } from "@/hooks/use-file-size";
+import { useUploadErrorReporter } from "@/hooks/use-upload-error-reporter";
 // services
 import { FileService } from "@/services/file.service";
 const fileService = new FileService();
@@ -32,6 +33,7 @@ export const useEditorConfig = () => {
   const { assetsUploadPercentage } = useEditorAsset();
   // file size
   const { maxFileSize } = useFileSize();
+  const reportUploadError = useUploadErrorReporter();
   const { getExtendedEditorFileHandlers } = useExtendedEditorConfig();
 
   const getEditorFileHandlers = useCallback(
@@ -96,13 +98,15 @@ export const useEditorConfig = () => {
         upload: uploadFile,
         duplicate: duplicateFile,
         attachFiles,
+        // Paradise: failed uploads (paste, drop, picker) end in a toast instead of only console.error
+        onUploadFailure: (error, file) => reportUploadError(error, { name: file.name }),
         validation: {
           maxFileSize,
         },
         ...getExtendedEditorFileHandlers({ projectId, workspaceSlug }),
       };
     },
-    [assetsUploadPercentage, getExtendedEditorFileHandlers, maxFileSize]
+    [assetsUploadPercentage, getExtendedEditorFileHandlers, maxFileSize, reportUploadError]
   );
 
   return {

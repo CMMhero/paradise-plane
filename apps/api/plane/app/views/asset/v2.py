@@ -26,6 +26,7 @@ from plane.utils.wiki_access import can_edit_wiki_page, is_wiki_governed
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
+from plane.utils.tipe_unggahan import rapikan_tipe_unggahan
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.throttles.asset import AssetRateThrottle
 
@@ -155,6 +156,8 @@ class UserAssetsV2Endpoint(BaseAPIView):
 
         # Check if the file type is allowed
         # entity_type di sini sudah dipastikan USER_AVATAR/USER_COVER → gambar saja.
+        # Paradise: tipe kosong/tak dikenal ditebak dari ekstensi (lihat utils/tipe_unggahan.py)
+        type = rapikan_tipe_unggahan(name, type, allowed_mime_types(entity_type))
         if type not in allowed_mime_types(entity_type):
             return Response(
                 {
@@ -386,6 +389,8 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
                 )
 
         # Check if the file type is allowed
+        # Paradise: tipe kosong/tak dikenal ditebak dari ekstensi (lihat utils/tipe_unggahan.py)
+        type = rapikan_tipe_unggahan(name, type, allowed_mime_types(entity_type))
         if type not in allowed_mime_types(entity_type):
             return Response(
                 {
@@ -634,6 +639,8 @@ class ProjectAssetEndpoint(BaseAPIView):
                 )
 
         # Check if the file type is allowed
+        # Paradise: tipe kosong/tak dikenal ditebak dari ekstensi (lihat utils/tipe_unggahan.py)
+        type = rapikan_tipe_unggahan(name, type, allowed_mime_types(entity_type))
         if type not in allowed_mime_types(entity_type):
             return Response(
                 {

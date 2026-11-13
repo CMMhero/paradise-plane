@@ -34,6 +34,12 @@ import {
 const POLA_KANAL = "obrolan:*";
 const AWALAN_KANAL = "obrolan:";
 
+/** Kanal sinyal "data berubah" dari `plane/utils/sinyal_data.py`. Awalan yang
+ * sama di dua berkas; mengubah salah satu tanpa yang lain membuat siaran hilang
+ * tanpa error di mana pun. */
+const POLA_KANAL_DATA = "data:*";
+const AWALAN_KANAL_DATA = "data:";
+
 /** Satu peramban yang sedang membuka satu ruang. */
 type Klien = {
   ws: WebSocket;
@@ -200,8 +206,12 @@ export class ObrolanController {
     // Koneksi terpisah: klien yang sedang berlangganan tidak bisa dipakai
     // perintah biasa lagi, dan klien utama masih dipakai bagian lain.
     this.pelanggan = dasar.duplicate();
-    await this.pelanggan.psubscribe(POLA_KANAL, POLA_KANAL_HADIR);
+    await this.pelanggan.psubscribe(POLA_KANAL, POLA_KANAL_HADIR, POLA_KANAL_DATA);
     this.pelanggan.on("pmessage", (pola: string, kanal: string, muatan: string) => {
+      if (pola === POLA_KANAL_DATA) {
+        this.teruskanData(kanal.slice(AWALAN_KANAL_DATA.length), muatan);
+        return;
+      }
       if (pola === POLA_KANAL_HADIR) {
         this.teruskanKehadiran(kanal.slice(AWALAN_KANAL_HADIR.length), muatan);
         return;
@@ -209,7 +219,7 @@ export class ObrolanController {
       const ruang = kanal.slice(AWALAN_KANAL.length);
       this.teruskan(ruang, muatan);
     });
-    logger.info(`OBROLAN: berlangganan ${POLA_KANAL} dan ${POLA_KANAL_HADIR}`);
+    logger.info(`OBROLAN: berlangganan ${POLA_KANAL}, ${POLA_KANAL_HADIR}, dan ${POLA_KANAL_DATA}`);
   }
 
   // ------------------------------------------------------------------------
@@ -347,6 +357,31 @@ export class ObrolanController {
     }
     for (const klien of klienLokal) {
       if (klien.ws.readyState === klien.ws.OPEN) klien.ws.send(muatan);
+    }
+  }
+
+  /** Teruskan sinyal "data berubah" HANYA ke tab milik orang di daftar `untuk`.
+   *
+   * Daftar itu ditentukan Django berdasarkan hak lihat; di sini cuma disaring
+   * dan dibuang sebelum sampai ke peramban, supaya id project/tugas tidak pernah
+   * terkirim ke orang yang tak boleh melihatnya. Muatan tanpa `untuk` yang sah
+   * dibuang: gagal ke arah aman, bukan menyiarkan ke seluruh workspace. */
+  private teruskanData(slug: string, muatan: string) {
+    const klienLokal = this.klienHadir.get(slug);
+    if (!klienLokal || klienLokal.size === 0) return;
+    let sinyal: { untuk?: unknown; jenis?: unknown } & Record<string, unknown>;
+    try {
+      sinyal = JSON.parse(muatan);
+    } catch {
+      logger.warn("OBROLAN: sinyal data bukan JSON, diabaikan");
+      return;
+    }
+    if (!Array.isArray(sinyal.untuk) || typeof sinyal.jenis !== "string") return;
+    const { untuk, ...tanpaDaftar } = sinyal;
+    const penerima = new Set(untuk.filter((u): u is string => typeof u === "string"));
+    const kirim = JSON.stringify({ tipe: "data", ...tanpaDaftar });
+    for (const klien of klienLokal) {
+      if (penerima.has(klien.userId) && klien.ws.readyState === klien.ws.OPEN) klien.ws.send(kirim);
     }
   }
 

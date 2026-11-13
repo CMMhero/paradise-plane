@@ -36,6 +36,7 @@ const berkas = (nama: string, ukuran: number, type = "image/png") => new File([n
 
 // --- tempel ------------------------------------------------------------------
 {
+  // oxlint-disable-next-line unicorn/consistent-function-scoping -- kept as is: restructuring it is out of scope for this release
   const item = (f: File | null, kind = "file") => ({ kind, getAsFile: () => f });
   const data = {
     items: [item(berkas("image.png", 3)), item(berkas("laporan.pdf", 3, "application/pdf")), item(null, "string")],
@@ -47,6 +48,29 @@ const berkas = (nama: string, ukuran: number, type = "image/png") => new File([n
   assert.equal(hasil[0].type, "image/png");
   assert.equal(hasil[1].name, "laporan.pdf");
   assert.deepEqual(berkasDariTempel(null), []);
+}
+{
+  // items kosong tapi files terisi (beberapa peramban): tetap terbaca
+  const dariFiles = { items: [], files: [berkas("foto.jpg", 2, "image/jpeg")] } as unknown as DataTransfer;
+  assert.deepEqual(
+    berkasDariTempel(dariFiles).map((f) => f.name),
+    ["foto.jpg"]
+  );
+  // getAsFile() bisa mengembalikan null untuk item berjenis file
+  const nullFile = { items: [{ kind: "file", getAsFile: () => null }] } as unknown as DataTransfer;
+  assert.deepEqual(berkasDariTempel(nullFile), []);
+  // salin sel Excel: teks + gambar generik. Tempel teks harus jalan, tidak ada lampiran.
+  const excel = {
+    items: [{ kind: "file", getAsFile: () => berkas("image.png", 3) }],
+    getData: () => "a\tb",
+  } as unknown as DataTransfer;
+  assert.deepEqual(berkasDariTempel(excel), []);
+  // berkas bernama sungguhan tetap lampiran walau ada teks (salin berkas di Finder)
+  const finder = {
+    items: [{ kind: "file", getAsFile: () => berkas("laporan.pdf", 3, "application/pdf") }],
+    getData: () => "laporan.pdf",
+  } as unknown as DataTransfer;
+  assert.equal(berkasDariTempel(finder).length, 1);
 }
 
 // --- seret -------------------------------------------------------------------

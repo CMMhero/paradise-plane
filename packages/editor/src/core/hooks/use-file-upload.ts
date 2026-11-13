@@ -22,6 +22,8 @@ type TUploaderArgs = {
   loadFileFromFileSystem?: (file: string) => void;
   maxFileSize: number;
   onInvalidFile: (error: EFileError, file: File, message: string) => void;
+  /** Paradise: called when the upload itself fails, so the user is told instead of nothing happening */
+  onUploadError?: (error: unknown, file: File) => void;
   onUpload: (url: string, file: File) => void;
 };
 
@@ -33,6 +35,7 @@ export const useUploader = (args: TUploaderArgs) => {
     loadFileFromFileSystem,
     maxFileSize,
     onInvalidFile,
+    onUploadError,
     onUpload,
   } = args;
   // states
@@ -56,6 +59,7 @@ export const useUploader = (args: TUploaderArgs) => {
       try {
         if (loadFileFromFileSystem) {
           const reader = new FileReader();
+          // oxlint-disable-next-line unicorn/prefer-add-event-listener -- kept as is: restructuring it is out of scope for this release
           reader.onload = () => {
             if (reader.result) {
               loadFileFromFileSystem(reader.result as string);
@@ -63,6 +67,7 @@ export const useUploader = (args: TUploaderArgs) => {
               console.error("Failed to read the file: reader.result is null");
             }
           };
+          // oxlint-disable-next-line unicorn/prefer-add-event-listener -- kept as is: restructuring it is out of scope for this release
           reader.onerror = () => {
             console.error("Error reading file");
           };
@@ -74,8 +79,11 @@ export const useUploader = (args: TUploaderArgs) => {
           throw new Error("Something went wrong while uploading the file.");
         }
         onUpload(url, file);
-      } catch {
-        console.error("useFileUpload: Error in uploading file");
+      } catch (error) {
+        // the host's upload function throws the real cause (network, size, type...); surface it
+        // instead of only logging, which left the block stuck on "Add a file" with no explanation
+        console.error("useFileUpload: Error in uploading file", error);
+        onUploadError?.(error, file);
       } finally {
         handleProgressStatus?.(false);
         setIsUploading(false);
@@ -88,6 +96,7 @@ export const useUploader = (args: TUploaderArgs) => {
       loadFileFromFileSystem,
       maxFileSize,
       onInvalidFile,
+      onUploadError,
       onUpload,
     ]
   );
@@ -161,7 +170,7 @@ export const useDropZone = (args: TDropzoneArgs) => {
 
 type TMultipleFileArgs = {
   editor: Editor;
-  filesList: FileList;
+  filesList: FileList | File[];
   pos: number;
   type: Extract<TEditorCommands, "attachment" | "image">;
   uploader: (file: File) => Promise<void>;

@@ -9,6 +9,9 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
 import { ACCEPTED_ATTACHMENT_MIME_TYPES, ACCEPTED_IMAGE_MIME_TYPES } from "@/constants/config";
+// helpers
+import { getEffectiveFileType } from "@/helpers/file";
+import { reportEditorUploadFailure } from "@/helpers/upload-tracking";
 // types
 import type { TAttachedFile, TEditorCommands, TExtensions, TFileHandler } from "@/types";
 
@@ -24,10 +27,12 @@ type TRoutedFiles = {
   inline: File[];
   /** files handed to the host app through `fileHandler.attachFiles` */
   attach: File[];
+  /** files nothing can take; reported to the user instead of vanishing */
+  rejected: File[];
 };
 
 const isInlineImage = (file: File, disabledExtensions?: TExtensions[]) =>
-  ACCEPTED_IMAGE_MIME_TYPES.includes(file.type) && !disabledExtensions?.includes("image");
+  ACCEPTED_IMAGE_MIME_TYPES.includes(getEffectiveFileType(file)) && !disabledExtensions?.includes("image");
 
 /**
  * Splits pasted/dropped files. Without an `attachFiles` host hook nothing
@@ -40,13 +45,19 @@ const routeFiles = (files: File[], fileHandler?: TFileHandler, disabledExtension
     return {
       inline: files.filter((f) => isInlineImage(f, disabledExtensions)),
       attach: files.filter((f) => !isInlineImage(f, disabledExtensions)),
+      rejected: [],
     };
   }
+  // judged by the effective type, not `File.type`: that one is empty for many files on some machines
+  // oxlint-disable-next-line unicorn/consistent-function-scoping -- kept as is: restructuring it is out of scope for this release
+  const isAccepted = (f: File) => {
+    const type = getEffectiveFileType(f);
+    return ACCEPTED_IMAGE_MIME_TYPES.includes(type) || ACCEPTED_ATTACHMENT_MIME_TYPES.includes(type);
+  };
   return {
-    inline: files.filter(
-      (f) => ACCEPTED_IMAGE_MIME_TYPES.includes(f.type) || ACCEPTED_ATTACHMENT_MIME_TYPES.includes(f.type)
-    ),
+    inline: files.filter(isAccepted),
     attach: [],
+    rejected: files.filter((f) => !isAccepted(f)),
   };
 };
 
@@ -97,7 +108,11 @@ const handleFiles = (args: {
   pos: number;
 }): boolean => {
   const { disabledExtensions, flaggedExtensions, editor, fileHandler, files, pos } = args;
-  const { inline, attach } = routeFiles(files, fileHandler, disabledExtensions);
+  const { inline, attach, rejected } = routeFiles(files, fileHandler, disabledExtensions);
+  // Paradise: a rejected file used to disappear without a word (handlePaste even swallowed the paste)
+  rejected.forEach((file) =>
+    reportEditorUploadFailure(editor, { error: "Invalid file type.", code: "type_not_allowed" }, file)
+  );
   if (inline.length === 0 && attach.length === 0) return false;
 
   if (inline.length > 0) {
@@ -182,8 +197,9 @@ export const insertFilesSafely = async (args: InsertFilesSafelyArgs) => {
         if (["image", "attachment"].includes(type)) fileType = type;
         else throw new Error("Wrong file type passed");
       } else {
-        if (ACCEPTED_IMAGE_MIME_TYPES.includes(file.type)) fileType = "image";
-        else if (ACCEPTED_ATTACHMENT_MIME_TYPES.includes(file.type)) fileType = "attachment";
+        const effectiveType = getEffectiveFileType(file);
+        if (ACCEPTED_IMAGE_MIME_TYPES.includes(effectiveType)) fileType = "image";
+        else if (ACCEPTED_ATTACHMENT_MIME_TYPES.includes(effectiveType)) fileType = "attachment";
       }
       // insert file depending on the type at the current position
       if (fileType === "image" && !disabledExtensions?.includes("image")) {

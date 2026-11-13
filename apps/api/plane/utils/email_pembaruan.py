@@ -19,12 +19,14 @@ from plane.utils.email_teks import KOLOM, PRIORITAS, teks
 KOLOM_TANPA_NILAI = {"description", "description_html"}
 KOLOM_TANGGAL = {"target_date", "start_date"}
 BATAS_NILAI = 3
+KOLOM_TUNGGAL = {"state", "priority", "name", "target_date", "start_date", "parent", "estimate_point"}
 
 
-def _rapikan(kolom, nilai, bahasa):
+def _rapikan(kolom, nilai, bahasa, awal=False):
     daftar = [str(v) for v in (nilai or []) if v not in (None, "", "None")]
     if kolom in ("state", "priority", "name", "target_date", "start_date", "parent", "estimate_point"):
-        daftar = daftar[-1:]
+        # Nilai lama = yang PERTAMA (keadaan sebelum rentetan perubahan), nilai baru = yang terakhir.
+        daftar = daftar[:1] if awal else daftar[-1:]
     if kolom == "priority":
         daftar = [PRIORITAS[bahasa].get(v, v) for v in daftar]
     if kolom in KOLOM_TANGGAL:
@@ -46,10 +48,12 @@ def baris_perubahan(changes, bahasa="id") -> list:
         if kolom in KOLOM_TANPA_NILAI:
             hasil.append({"label": nama, "lama": "", "baru": teks("pembaruan", bahasa)["diubah"]})
             continue
-        lama = _rapikan(kolom, nilai.get("old_value"), bahasa)
+        lama = _rapikan(kolom, nilai.get("old_value"), bahasa, awal=True)
         baru = _rapikan(kolom, nilai.get("new_value"), bahasa)
         if not lama and not baru:
             continue
+        if lama and lama == baru and kolom in KOLOM_TUNGGAL:
+            continue  # dikembalikan ke nilai awal: tidak ada yang berubah
         hasil.append({"label": nama, "lama": lama, "baru": baru or kosong})
     return hasil
 
@@ -92,7 +96,7 @@ def konteks_pembaruan(issue, aktor, bahasa="id", gambar=None) -> dict:
         if jumlah <= 1
         else teks("pembaruan", bahasa, n=jumlah)["judul_banyak"]
     )
-    return {"t": s, "issue": issue, "issue_url": issue.get("issue_url", ""), "perubahan": blok, "judul_email": judul_email}
+    return {"t": s, "issue": issue, "issue_url": issue.get("issue_url", ""), "perubahan": blok, "judul_email": judul_email}  # noqa: E501
 
 
 def susun_email_pembaruan(issue, aktor, base_api, bahasa="id", email_penerima=""):

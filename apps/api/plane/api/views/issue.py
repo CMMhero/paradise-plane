@@ -82,6 +82,7 @@ from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan
 from plane.utils.task_access import bisa_ganti_tenggat, bisa_hapus_tugas, pesan_tolak_tenggat, tenggat_diubah
+from plane.utils.balasan_komentar import hapus_balasan
 from plane.utils.izin_sumber import tolak_izin, tolak_izin_komentar, tolak_izin_project
 from plane.utils.saklar_instance import PERM_COMMENT_DELETE, PERM_COMMENT_EDIT, PERM_PROJECT_WORKFLOW
 from plane.utils.order_queryset import (
@@ -1706,6 +1707,8 @@ class IssueCommentDetailAPIEndpoint(BaseAPIView):
             return galat
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
         issue_comment.delete()
+        # Replies go with their thread root (see plane/utils/balasan_komentar.py).
+        hapus_balasan(issue_comment)
         issue_activity.delay(
             type="comment.activity.deleted",
             requested_data=json.dumps({"comment_id": str(pk)}),

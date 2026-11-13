@@ -21,6 +21,7 @@ import { GridKartu, KartuKerangka, KartuMateri } from "@/components/wiki/kartu";
 import { useMember } from "@/hooks/store/use-member";
 import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import useLocalStorage from "@/hooks/use-local-storage";
+import { useUploadFailureText } from "@/hooks/use-upload-error-reporter";
 // services
 import type { TWikiFolder, TWikiMaterialList } from "@/services/wiki.service";
 // local imports
@@ -69,6 +70,7 @@ type TUnggah = { bolehUnggah: boolean; sedangUnggah: boolean; pilihBerkas: () =>
  */
 export function useMateriTopik(konteks: TKonteks, topik: TWikiFolder | undefined, aktif = true) {
   const { t } = useTranslation();
+  const describeUploadFailure = useUploadFailureText();
   const { workspaceSlug, onJumlahBerubah } = konteks;
   const { mutate: segarkan } = useSWRConfig();
   const topikId = topik?.id;
@@ -100,7 +102,8 @@ export function useMateriTopik(konteks: TKonteks, topik: TWikiFolder | undefined
         setToast({
           type: TOAST_TYPE.ERROR,
           title: t("wiki_ui.folder.upload_failed_title", { name: file.name }),
-          message: (error as { error?: string })?.error || t("wiki_ui.folder.upload_failed_message"),
+          message:
+            describeUploadFailure(error, { name: file.name }).message || t("wiki_ui.folder.upload_failed_message"),
         });
       }
     }

@@ -132,11 +132,13 @@ kanal, orang yang disebut juga dapat kartu di ruang Paradise-nya. Tiap divisi
 dan departemen punya kanal privat sendiri yang anggotanya ikut penempatan di God
 Mode (`plane/utils/kanal_organisasi.py`, dipanggil dari `plane/db/jangkauan.py`):
 tambahkan orang ke departemen lain, ia ikut masuk kanalnya; cabut, ia keluar.
-Direktur tidak diikutkan otomatis.
+Direktur dan sekretaris tidak diikutkan otomatis.
 
 **Penempatan orang (KEP-76).** Tiap orang punya satu jenjang (Staf, Supervisor,
-Manager, Direktur) dan satu daftar tempat. Semua jenjang boleh di banyak
-departemen; manager juga memimpin satu atau beberapa divisi. Menambah tempat tidak
+Manager, Sekretaris, Direktur) dan satu daftar tempat. Semua jenjang boleh di banyak
+departemen; manager juga memimpin satu atau beberapa divisi. Sekretaris (35, KEP-101)
+menjangkau seluruh organisasi seperti direktur tanpa ditempatkan, tetapi berada satu
+anak tangga di bawahnya: tidak bisa menugaskan direktur dan bukan penyetuju tugasnya. Menambah tempat tidak
 pernah memindahkan tempat lama, dan menurunkan manager melepas divisinya saja.
 Semua tulisan penempatan lewat `plane/db/penempatan.py`. Contoh, menambah Ani ke
 departemen kedua dari God Mode:
@@ -158,6 +160,14 @@ mau ngirim ke it.ai1@itechmandiri.com).
 induknya, admin bisa override. Sengaja nggak nambah dependency: keanggotaan
 divisi itu berubah-ubah, jadi grant statis malah gampang melenceng dari
 kenyataan.
+
+**Layar hidup, tanpa F5.** Kalau tugas, komentar, atau pemberitahuan berubah,
+Django nerbitin petunjuk kecil ke Redis (`data:<slug>`, cuma id dan nama
+bidang, nggak ada isi), `apps/live` nerusin ke tab orang yang boleh ngelihat,
+lalu layar narik ulang lewat API biasa. Jadi aturan hak lihat tetap di satu
+tempat. Ada juga tombol segarkan di top nav yang nyegarin isi layar tanpa
+muat ulang halaman. Kalau soket putus, ada jam cadangan 45 detik. Rancangan
+dan jebakannya ada di vault (KEP-102).
 
 ## Bagian operasionalnya
 

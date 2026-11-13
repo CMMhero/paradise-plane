@@ -166,7 +166,7 @@ def susun_perhatian(user, slug):
     )
 
     # Ditolak dan belum diajukan ulang: hanya baris TERBARU tugas itu yang dihitung.
-    lebih_baru = PersetujuanPenugasan.objects.filter(issue_id=OuterRef("issue_id"), created_at__gt=OuterRef("created_at"))
+    lebih_baru = PersetujuanPenugasan.objects.filter(issue_id=OuterRef("issue_id"), created_at__gt=OuterRef("created_at"))  # noqa: E501
     ditolak = (
         _persetujuan(
             project_ids,

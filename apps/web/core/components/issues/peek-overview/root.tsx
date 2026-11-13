@@ -20,6 +20,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useWorkItemProperties } from "@/hooks/use-issue-properties";
+import { useSegarkanDetailTugas } from "@/hooks/use-segarkan-detail-tugas";
 import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 import { pesanGalatServer } from "@/lib/pesan-galat-server";
 // local imports
@@ -60,6 +61,8 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
   );
   // state
   const [error, setError] = useState(false);
+
+  useSegarkanDetailTugas(peekIssue?.workspaceSlug, peekIssue?.projectId, peekIssue?.issueId);
 
   const removeRoutePeekId = useCallback(() => {
     setPeekIssue(undefined);

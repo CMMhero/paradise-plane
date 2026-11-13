@@ -25,14 +25,14 @@ tempat). "Mengelola" = buat sub-folder, ubah, arsip, hapus, pulihkan dari
 sampah, dan ubah/hapus materi siapa pun di wilayah itu. Nama folder unit tetap
 mengikuti God Mode, folder tingkat atas tetap urusan admin.
 
-Direktur (KEP-95, diperluas 6 Nov 2026) mengelola SEMUA folder divisi dan
+Direktur (KEP-95, diperluas 6 Nov 2026; sekretaris ikut, KEP-101) mengelola SEMUA folder divisi dan
 departemen beserta isinya, dengan kuasa yang sama dengan manager divisi, di
 mana saja. General dan folder tanpa unit tetap urusan admin.
 """
 
 from django.db.models import Q
 
-from plane.db.models.hierarki import TINGKAT_DIREKTUR, TINGKAT_SUPERVISOR
+from plane.db.models.hierarki import TINGKAT_SUPERVISOR, menjangkau_seluruh_organisasi
 
 _MAX_DEPTH = 50
 _ROLE_MEMBER = 15
@@ -112,7 +112,8 @@ class PenilaiWiki:
 
     @property
     def direktur(self):
-        return self.tingkat is not None and self.tingkat >= TINGKAT_DIREKTUR
+        """Direktur atau sekretaris (KEP-101): menjangkau seluruh organisasi."""
+        return menjangkau_seluruh_organisasi(self.tingkat)
 
     @property
     def punya_wilayah(self):
@@ -173,6 +174,7 @@ class PenilaiWiki:
         if departemen_id and str(departemen_id) in self.departemen:
             return True
         return bool(divisi_id) and str(divisi_id) in self.divisi_pimpin
+
 
     def unit(self, folder_id):
         """Simpul pertama ke atas yang menentukan hak unggah, atau None."""
@@ -246,7 +248,7 @@ def pengawas_halaman_privat(user, project_id):
     if is_wiki_admin(user, workspace_id):
         return True
     tingkat, _, _ = penempatan_sekarang(workspace_id, user.id)
-    if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
+    if menjangkau_seluruh_organisasi(tingkat):
         return True
     divisi_id = (
         DepartemenProject.objects.filter(project_id=project_id, departemen__deleted_at__isnull=True)

@@ -18,6 +18,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { LIVE_BASE_PATH, LIVE_BASE_URL } from "@plane/constants";
+import { segarkanSemua, terimaSinyalData, type TSinyalData } from "@/lib/data-live";
 import {
   statusTab,
   terapkanPesanKehadiran,
@@ -121,6 +122,7 @@ function mulai(slug: string): () => void {
   let gerakTerakhir = Date.now();
   let dicatatPada = 0;
   let terkirim: "online" | "away" | null = null;
+  let pernahTersambung = false;
 
   const kirim = (paksa = false) => {
     const status = statusTab(gerakTerakhir, Date.now(), document.visibilityState === "visible");
@@ -158,6 +160,9 @@ function mulai(slug: string): () => void {
     const soket = new WebSocket(url.toString());
     ws = soket;
     soket.addEventListener("open", () => {
+      // Tersambung lagi sesudah putus: sinyal yang lewat selama itu hilang, jadi kejar.
+      if (pernahTersambung) void segarkanSemua();
+      pernahTersambung = true;
       percobaan = 0;
       terkirim = null;
       soketTerbuka = soket;
@@ -166,7 +171,16 @@ function mulai(slug: string): () => void {
     });
     soket.addEventListener("message", (ev) => {
       try {
-        const pesan = JSON.parse(ev.data as string) as TPesanKehadiran | { tipe: "panggilan" };
+        const pesan = JSON.parse(ev.data as string) as
+          | TPesanKehadiran
+          | { tipe: "panggilan" }
+          | ({ tipe: "data" } & TSinyalData);
+        if (pesan.tipe === "data") {
+          // Sinyal "data berubah" (tugas, notifikasi, anggota project). Isinya cuma petunjuk.
+          const { tipe: _tipe, ...sinyal } = pesan;
+          terimaSinyalData(sinyal);
+          return;
+        }
         if (pesan.tipe === "panggilan") {
           // Satu pendengar yang galat tidak boleh menelan sinyal untuk yang lain.
           pendengarPanggilan.forEach((f) => {

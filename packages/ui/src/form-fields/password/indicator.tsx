@@ -14,17 +14,25 @@ export interface PasswordStrengthIndicatorProps {
   password: string;
   showCriteria?: boolean;
   isFocused?: boolean;
+  /** Translated strength messages; the English defaults apply when omitted. */
+  messages?: Partial<Record<E_PASSWORD_STRENGTH, string>>;
+  /** Translated criteria labels keyed by criterion key (length, uppercase, ...). */
+  criteriaLabels?: Partial<Record<string, string>>;
 }
 
 export function PasswordStrengthIndicator({
   password,
   showCriteria = true,
   isFocused = false,
+  messages,
+  criteriaLabels,
 }: PasswordStrengthIndicatorProps) {
   const strength = getPasswordStrength(password);
   const criteria = getPasswordCriteria(password);
   const strengthInfo = getStrengthInfo(strength);
+  const strengthMessage = messages?.[strength] ?? strengthInfo.message;
 
+  // oxlint-disable-next-line eslint/no-unneeded-ternary -- kept as is: restructuring it is out of scope for this release
   const isPasswordMeterVisible = isFocused ? true : strength === E_PASSWORD_STRENGTH.STRENGTH_VALID ? false : true;
 
   if ((!password && !showCriteria) || !isPasswordMeterVisible) {
@@ -48,7 +56,7 @@ export function PasswordStrengthIndicator({
         </div>
 
         {/* Strength Message */}
-        {password && <p className={cn("!text-13 font-medium", strengthInfo.textColor)}>{strengthInfo.message}</p>}
+        {password && <p className={cn("!text-13 font-medium", strengthInfo.textColor)}>{strengthMessage}</p>}
       </div>
 
       {/* Criteria list */}
@@ -70,7 +78,7 @@ export function PasswordStrengthIndicator({
                   "text-primary": !criterion.isValid,
                 })}
               >
-                {criterion.label}
+                {criteriaLabels?.[criterion.key] ?? criterion.label}
               </span>
             </div>
           ))}

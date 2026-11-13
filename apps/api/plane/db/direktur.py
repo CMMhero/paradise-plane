@@ -2,7 +2,7 @@
 # Kustomisasi Paradise Task Tracker: direktur otomatis anggota semua divisi
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
-"""Direktur (tingkat 40) selalu jadi anggota setiap project di workspace-nya.
+"""Direktur (tingkat 40) dan sekretaris (35, KEP-101) selalu jadi anggota setiap project di workspace-nya.
 
 Keputusan user: "by default, direktur can view all division in projects".
 Tanpa ini, KEP-02 (divisi = project private) mengunci direktur keluar dari
@@ -28,7 +28,7 @@ seluruh 33 tempat yang membaca keanggotaan langsung mengenalinya.
 ## Kapan keanggotaan lahir
 
 1. **Project baru dibuat** → seluruh direktur di workspace itu ikut ditambahkan.
-2. **Seseorang diangkat jadi direktur** (baris `JabatanOrganisasi` tingkat 40
+2. **Seseorang diangkat jadi direktur atau sekretaris** (baris `JabatanOrganisasi` tingkat 40 atau 35
    dibuat) → ia disusulkan ke seluruh project yang ada di workspace itu.
 3. **Jenjang direktur dicabut** → TIDAK mengeluarkan dari project. Mengeluarkan
    orang dari 31 divisi karena satu baris jenjang berubah adalah tindakan
@@ -42,10 +42,10 @@ from django.dispatch import receiver
 
 
 def direktur_user_ids(workspace_id=None):
-    """Id user berjenjang direktur (tingkat >= 40)."""
-    from plane.db.models import JabatanOrganisasi, TINGKAT_DIREKTUR
+    """Id user yang menjangkau seluruh organisasi: direktur dan sekretaris (tingkat >= 35)."""
+    from plane.db.models import JabatanOrganisasi, TINGKAT_SEKRETARIS
 
-    qs = JabatanOrganisasi.objects.filter(tingkat__gte=TINGKAT_DIREKTUR)
+    qs = JabatanOrganisasi.objects.filter(tingkat__gte=TINGKAT_SEKRETARIS)
     if workspace_id is not None:
         qs = qs.filter(workspace_id=workspace_id)
     return set(qs.values_list("member_id", flat=True))
@@ -111,9 +111,9 @@ def jabatan_direktur_baru_disusulkan(sender, instance, created, **kwargs):
     `upsert` lewat create-or-revive). Pencabutan tidak mengeluarkan dari
     project (lihat docstring modul).
     """
-    from plane.db.models import TINGKAT_DIREKTUR
+    from plane.db.models import menjangkau_seluruh_organisasi
 
-    if (instance.tingkat or 0) < TINGKAT_DIREKTUR:
+    if not menjangkau_seluruh_organisasi(instance.tingkat):
         return
     if instance.deleted_at is not None:
         return

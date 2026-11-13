@@ -16,6 +16,7 @@ export * from "./endpoints";
 export * from "./estimates";
 export * from "./event-tracker";
 export * from "./file";
+export * from "./file-type";
 export * from "./fetch-keys";
 export * from "./filter";
 export * from "./gantt-chart";

@@ -115,6 +115,7 @@ class DraftIssueCreateSerializer(BaseSerializer):
             from plane.utils.hierarki import (  # noqa: PLC0415
                 aktor_dari_context,
                 galat_penugasan,
+                adalah_admin_penuh,
                 gerbang_aktif,
                 tingkat_anggota,
             )
@@ -127,7 +128,11 @@ class DraftIssueCreateSerializer(BaseSerializer):
                 if (_actor is not None and _project is not None)
                 else None
             )
-            _staf = gerbang_aktif() and (_tingkat is None or _tingkat < 20)
+            _staf = (
+            gerbang_aktif()
+            and (_tingkat is None or _tingkat < 20)
+            and not (_actor is not None and _project is not None and adalah_admin_penuh(_actor, _project.workspace_id))
+        )
 
             if _staf and self.instance is None and not attrs.get("assignee_ids"):
                 attrs["assignee_ids"] = [_actor.id]
