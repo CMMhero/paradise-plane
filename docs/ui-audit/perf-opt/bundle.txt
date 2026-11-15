@@ -1,0 +1,41 @@
+build: apps/web/build/client
+JS    1034 files  raw  15959.1 KB  gzip   4890.1 KB
+CSS      3 files  raw    293.9 KB  gzip     45.5 KB
+other  177 files  raw  12372.0 KB
+
+initial JS, shell (entry + root): 40 files, raw   2120.1 KB, gzip    563.7 KB
+initial JS per route, heaviest 12 (entry + route chain + static imports):
+    2367.2 KB gz   8005.4 KB raw  252 files  :workspaceSlug/projects/:projectId/pages/:pageId
+    2285.3 KB gz   7704.3 KB raw  225 files  (all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/pages/(detail)/layout
+    1608.7 KB gz   5650.4 KB raw  225 files  :workspaceSlug/projects/:projectId/pages
+    1507.6 KB gz   5188.7 KB raw  264 files  :workspaceSlug/projects/:projectId/modules/:moduleId
+    1399.3 KB gz   4803.3 KB raw  237 files  (all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/modules/(detail)/layout
+    1395.0 KB gz   4791.9 KB raw  235 files  :workspaceSlug/projects/:projectId/modules
+    1393.0 KB gz   4788.2 KB raw  232 files  (all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/modules/(list)/layout
+    1391.5 KB gz   4783.4 KB raw  233 files  :workspaceSlug/projects/:projectId/archives/modules
+    1386.0 KB gz   4729.0 KB raw  255 files  :workspaceSlug/projects/:projectId/issues
+    1385.6 KB gz   4726.5 KB raw  256 files  :workspaceSlug/projects/:projectId/views/:viewId
+    1378.7 KB gz   4738.8 KB raw  217 files  :workspaceSlug/analytics/:tabId
+    1365.6 KB gz   4691.1 KB raw  220 files  :workspaceSlug/profile/:userId
+
+largest 15 JS chunks (raw / gzip KB):
+    1776.8    583.5  assets/toolbar-a2cS2KR3.js
+    1332.4    338.2  assets/document-collaborative-events-M5DT9Vee-BXxQ2ETA.js
+     626.0    202.4  assets/empty-state-7vcQCaPX.js
+     557.4    144.0  assets/livekit-client.esm-CsSN2D8d.js
+     554.5    185.0  assets/dist-BcQzj-QP.js
+     389.3    106.6  assets/dist-D8jBDEC_.js
+     359.5     25.4  assets/manifest-cc5bc967.js
+     342.6     69.1  assets/store-context-Bg_JD_QH.js
+     340.4     88.6  assets/generateCategoricalChart-B2RXMAaV.js
+     288.1     97.3  assets/dist-DF8DCFyR.js
+     203.2     60.8  assets/api.service-2F3KoXLb.js
+     168.7     63.1  assets/icons-BePuyfsZ.js
+     129.6     41.5  assets/react-dom-Cjy_N9Wu.js
+     120.3     39.2  assets/chunk-4N6VE7H7-DJlbOgeS.js
+     112.6     36.9  assets/tab-navigation-XZkWuwLb.js
+
+largest CSS (raw / gzip KB):
+     276.3     43.4  assets/globals-Btt4-nEP.css
+      15.3      1.5  assets/root-DBVKX4YV.css
+       2.3      0.6  assets/AppProgressBar-D_Zs2VgL.css

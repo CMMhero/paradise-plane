@@ -1,0 +1,13 @@
+{
+  "name": "ui-audit",
+  "private": true,
+  "description": "Screenshot + perf harness for the local Paradise app. Standalone: install with `pnpm install --ignore-workspace` inside this folder.",
+  "type": "module",
+  "scripts": {
+    "shoot": "node shoot.mjs"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "playwright": "1.65.1"
+  }
+}
