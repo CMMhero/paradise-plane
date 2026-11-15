@@ -6,6 +6,61 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-15
+
+### Versi 2.7.1
+
+- **Naik 2.7.0 ke 2.7.1, patch.** Audit tampilan, tata letak, aksesibilitas,
+  dan kinerja. Semua perbaikan dan penyempurnaan kecil, tanpa migrasi dan tanpa
+  variabel env baru. Langkah operator: tidak ada.
+- **Tablet tidak lagi dibuka dengan sidebar menutupi isi.** Sidebar melayang di
+  bawah 1024px, tetapi penutupnya masih memakai ambang 768px, jadi di 768-1023px
+  sidebar terbuka di atas konten lalu runtuh setelah render pertama. Ambangnya
+  kini seragam, dan keadaan awalnya dihitung sejak render pertama. Pergeseran
+  tata letak (CLS) median di tablet turun dari 0,20 ke 0; halaman dengan CLS
+  di atas 0,1 turun dari 28 ke 1 (dari 186 tangkapan).
+- **Kolom isian tidak memicu zoom otomatis di iOS** (huruf 16px di perangkat
+  sentuh), dan Enter di kotak chat memberi baris baru di HP (kirim lewat
+  tombol) serta tidak mengirim saat IME masih menyusun kata.
+- **Galat `undefined` yang tak tertangani di semua tampilan work item hilang.**
+  Permintaan daftar yang dibatalkan oleh permintaan yang lebih baru dilempar
+  ulang sebagai penolakan tanpa alasan. Kini dilewati; galat sungguhan tetap
+  dilempar.
+- **Aksesibilitas, nol pelanggaran axe.** Dari 151 dari 155 muatan halaman
+  dengan pelanggaran serius atau kritis menjadi 0 di 31 halaman, mobile dan
+  desktop, terang dan gelap. Isinya: nama untuk tombol ikon (`IconButton`
+  sekarang mewajibkan `aria-label`), menu tiga titik, menu yang tidak lagi
+  bersarang dalam tombol, label formulir, target sentuh 24px, dialog pemilihan
+  departemen dan layar panggilan dengan perangkap fokus, pola combobox untuk
+  pemilih @, `aria-pressed` pada mik dan kamera, notifikasi pop-up yang berhenti
+  menutup diri saat difokus.
+- **Kontras warna.** Teks bahaya, sukses, dan peringatan di tema gelap memakai
+  langkah 900 yang di palet gelap Plane berbalik menjadi merah muda pucat, jadi
+  tanggal telat tampak putih. Kini memakai langkah 700 (kontras 5:1 atau lebih).
+  Teks tersier dan placeholder di tema terang sedikit digelapkan. Di dashboard
+  divisi bilah kemajuan mengikuti status, spanduk ringkasan memakai satu
+  pasangan token di kedua tema, dan jam "Diperbarui" memakai zona waktu profil.
+  Lencana belum dibaca chat memakai merah penuh.
+- **Responsif.** Baris daftar work item di tablet menumpuk judul di atas chip
+  (dulu judul tersisa "Dok..."); kolom kanban kosong menyempit (80vw dengan
+  scroll-snap di HP); kalender HP memberi penanda hari dan memilih hari kerja
+  terdekat; tiga bilah alat di HP jadi satu; tab proyek punya petunjuk pudar di
+  tepi; formulir profil, Initiatives, dan padding halaman lintas divisi muat di
+  390px; detail work item di HP menaruh Properties tepat setelah deskripsi;
+  Intake dan Notifikasi memakai panel terpisah mulai tablet; `vh` diganti `dvh`.
+- **Kinerja (build produksi, CPU 4x dan Fast 4G).** JS yang dimuat pertama kali
+  di halaman work item turun dari 1978 ke 1386 KB gzip (sekitar 28 persen di
+  semua rute ruang kerja): editor teks kaya dimuat saat dipakai, pustaka grafik
+  tidak lagi ikut di halaman work item dan modul, penampil gambar chat dan
+  `file-type` dimuat saat perlu. Gelembung chat di-memo sehingga polling 5 detik
+  tidak merender ulang seluruh percakapan, dan UI panggilan dimuat malas.
+- **Teks:** judul "Initiatives" dan "Dashboard Divisi" kini lewat i18n; pemilih
+  @ menerjemahkan "memuat" dan "tidak ada hasil"; "Add Module" dan "Add quick
+  Link" menjadi huruf kecil di kalimat.
+- **Tangkapan layar:** `docs/ui-audit/` berisi 186 tangkapan sebelum dan sesudah
+  (31 halaman x 3 ukuran x terang/gelap) beserta metrik axe dan kinerja; skrip
+  pengambilnya di `scripts/ui-audit/`.
+
 ## 2026-11-13
 
 ### Versi 2.7.0

@@ -1,0 +1,30 @@
+{
+  "version": "2.7.1",
+  "date": "2026-11-15",
+  "entries": [
+    {
+      "type": "Fixed",
+      "text": "On a tablet the sidebar no longer opens over your work and then jumps away. Pages stay put while they load, so nothing moves under your finger."
+    },
+    {
+      "type": "Fixed",
+      "text": "Work item lists on a tablet show the full title again. Kanban columns on a phone let the next column peek in, and the calendar marks the days that have work items."
+    },
+    {
+      "type": "Fixed",
+      "text": "Profile settings, Intake, Notifications and the work item page now fit phone and tablet screens. Typing in a field on an iPhone no longer zooms the page."
+    },
+    {
+      "type": "Fixed",
+      "text": "Overdue dates, the division dashboard and unread counts keep their red, amber and green in dark mode, with enough contrast to read."
+    },
+    {
+      "type": "Changed",
+      "text": "Buttons, menus and dialogs now have names for screen readers and work from the keyboard. An automated accessibility check finds no issues on any of the 31 pages."
+    },
+    {
+      "type": "Changed",
+      "text": "Pages open with about 28 percent less code to download, and long chat threads no longer redraw every message on each refresh."
+    }
+  ]
+}
