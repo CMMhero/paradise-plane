@@ -40,11 +40,19 @@ export const RelationActionButton = observer(function RelationActionButton(props
   };
 
   // button element
-  const customButtonElement = customButton ? <>{customButton}</> : <PlusIcon className="h-4 w-4" />;
+  // size-6: sasaran 24px untuk tombol ikon bawaan (WCAG 2.5.8)
+  const customButtonElement = customButton ? (
+    <>{customButton}</>
+  ) : (
+    <span className="grid size-6 place-items-center">
+      <PlusIcon className="h-4 w-4" />
+    </span>
+  );
 
   return (
     <CustomMenu
       customButton={customButtonElement}
+      ariaLabel={customButton ? undefined : t("issue.add.relation")}
       placement="bottom-start"
       disabled={disabled}
       maxHeight="lg"

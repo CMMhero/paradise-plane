@@ -127,6 +127,7 @@ export class ProfileIssues extends BaseIssuesStore implements IProfileIssues {
     view: TProfileViews,
     isExistingPaginationOptions: boolean = false
   ) => {
+    let signal: AbortSignal | undefined;
     try {
       // set loader and clear store
       runInAction(() => {
@@ -151,14 +152,18 @@ export class ProfileIssues extends BaseIssuesStore implements IProfileIssues {
       else if (this.currentView === "subscribed") params = { ...params, subscriber: userId };
 
       // call the fetch issues API with the params
+      signal = this.controller.signal;
       const response = await this.userService.getUserProfileIssues(workspaceSlug, userId, params, {
-        signal: this.controller.signal,
+        signal,
       });
 
       // after fetching issues, call the base method to process the response further
       this.onfetchIssues(response, options, workspaceSlug, undefined, undefined, !isExistingPaginationOptions);
       return response;
     } catch (error) {
+      // A newer fetch called clear(), which aborted this request. That fetch owns the
+      // loader and the result, so end quietly instead of rejecting with `undefined`.
+      if (signal?.aborted) return undefined;
       // set loader to undefined if errored out
       this.setLoader(undefined);
       throw error;

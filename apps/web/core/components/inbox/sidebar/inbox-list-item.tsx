@@ -66,12 +66,15 @@ export const InboxIssueListItem = observer(function InboxIssueListItem(props: In
         <Row
           className={cn(
             `relative flex cursor-pointer flex-col gap-2 border border-t-transparent border-r-transparent border-b-subtle-1 border-l-transparent py-4 transition-all hover:bg-accent-primary/5`,
-            { "border border-accent-strong": selectedInboxIssueId === issue.id }
+            // Kustomisasi Paradise: butir terpilih memakai latar "selected" seperti daftar
+            // notifikasi; bingkai merah sebelumnya terbaca sebagai galat validasi.
+            { "bg-layer-transparent-selected": selectedInboxIssueId === issue.id }
           )}
+          aria-current={selectedInboxIssueId === issue.id || undefined}
         >
           <div className="space-y-1">
             <div className="relative flex items-center justify-between gap-2">
-              <div className="flex-shrink-0 text-11 font-medium text-tertiary">
+              <div className="flex-shrink-0 text-11 font-medium text-secondary">
                 {projectIdentifier}-{issue.sequence_id}
               </div>
               <div className="flex items-center gap-2">

@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useLocation, Link, useNavigate } from "react-router";
 import { EUserPermissionsLevel, EUserPermissions } from "@plane/constants";
@@ -30,6 +30,39 @@ import { useActiveTab } from "./use-active-tab";
 import { useProjectActions } from "./use-project-actions";
 import { useResponsiveTabLayout } from "./use-responsive-tab-layout";
 import { useTabPreferences } from "./use-tab-preferences";
+
+/**
+ * Paradise: jajaran tab yang bisa digeser di HP terpotong begitu saja ("Moc", "ıtake")
+ * tanpa tanda masih ada isi. Tepi yang masih bisa digeser diberi pudar (mask-image),
+ * dan hanya tepi itu: tab pertama tidak ikut pudar saat jajaran di posisi awal.
+ */
+const LEBAR_PUDAR = 24;
+const useTepiPudar = (scroller: HTMLDivElement | null, enabled: boolean) => {
+  const [tepi, setTepi] = useState({ start: false, end: false });
+
+  useEffect(() => {
+    if (!scroller || !enabled) return;
+    const hitung = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = scroller;
+      const start = scrollLeft > 1;
+      const end = scrollLeft + clientWidth < scrollWidth - 1;
+      setTepi((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+    };
+    hitung();
+    scroller.addEventListener("scroll", hitung, { passive: true });
+    const pengamat = new ResizeObserver(hitung);
+    pengamat.observe(scroller);
+    if (scroller.firstElementChild) pengamat.observe(scroller.firstElementChild);
+    return () => {
+      scroller.removeEventListener("scroll", hitung);
+      pengamat.disconnect();
+    };
+  }, [scroller, enabled]);
+
+  if (!enabled || (!tepi.start && !tepi.end)) return undefined;
+  const gradient = `linear-gradient(to right, ${tepi.start ? "transparent" : "black"} 0, black ${LEBAR_PUDAR}px, black calc(100% - ${LEBAR_PUDAR}px), ${tepi.end ? "transparent" : "black"} 100%)`;
+  return { maskImage: gradient, WebkitMaskImage: gradient } satisfies React.CSSProperties;
+};
 
 // Local type definition for navigation items with app-specific fields
 export type TNavigationItem = {
@@ -125,6 +158,15 @@ export const TabNavigationRoot = observer(function TabNavigationRoot(props: TTab
     hiddenNavigationItems,
     isActive,
   });
+  const [tabScroller, setTabScroller] = useState<HTMLDivElement | null>(null);
+  const setScrollerRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      containerRef(node);
+      setTabScroller(node);
+    },
+    [containerRef]
+  );
+  const tepiPudarStyle = useTepiPudar(tabScroller, isScrollMode);
 
   // Redirect to default tab when navigating to project root
   useEffect(() => {
@@ -191,8 +233,9 @@ export const TabNavigationRoot = observer(function TabNavigationRoot(props: TTab
         <div className="h-5 w-1 shrink-0 border-l border-subtle" />
 
         <div
-          ref={containerRef}
+          ref={setScrollerRef}
           data-tab-scroller
+          style={tepiPudarStyle}
           className={cn("flex h-full min-w-0 flex-1 items-center", {
             "overflow-hidden": !isScrollMode,
             "scrollbar-hide overflow-x-auto overscroll-x-contain": isScrollMode,

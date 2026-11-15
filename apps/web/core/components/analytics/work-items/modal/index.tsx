@@ -4,15 +4,21 @@
  * See the LICENSE file for details.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 // plane package imports
 import { ModalPortal, EPortalWidth, EPortalPosition } from "@plane/propel/portal";
 import type { ICycle, IModule, IProject } from "@plane/types";
 import { useAnalytics } from "@/hooks/store/use-analytics";
 // plane web components
-import { WorkItemsModalMainContent } from "./content";
 import { WorkItemsModalHeader } from "./header";
+
+// Paradise: isi modal (grafik recharts) dimuat saat modal dibuka. Modal ini
+// diimpor statis oleh header daftar work item & modul, jadi tanpa ini recharts
+// ikut bundel awal halaman-halaman itu walau modal jarang dibuka.
+const WorkItemsModalMainContent = lazy(() =>
+  import("./content").then((m) => ({ default: m.WorkItemsModalMainContent }))
+);
 
 type Props = {
   isOpen: boolean;
@@ -58,13 +64,15 @@ export const WorkItemsModal = observer(function WorkItemsModal(props: Props) {
           cycle={cycleDetails}
           module={moduleDetails}
         />
-        <WorkItemsModalMainContent
-          fullScreen={fullScreen}
-          projectDetails={projectDetails}
-          cycleDetails={cycleDetails}
-          moduleDetails={moduleDetails}
-          isEpic={isEpic}
-        />
+        <Suspense fallback={<div className="flex-1" />}>
+          <WorkItemsModalMainContent
+            fullScreen={fullScreen}
+            projectDetails={projectDetails}
+            cycleDetails={cycleDetails}
+            moduleDetails={moduleDetails}
+            isEpic={isEpic}
+          />
+        </Suspense>
       </div>
     </ModalPortal>
   );

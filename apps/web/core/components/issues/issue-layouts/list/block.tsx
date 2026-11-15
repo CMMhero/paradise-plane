@@ -11,6 +11,7 @@ import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { ChevronRightIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 // types
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
@@ -59,6 +60,7 @@ interface IssueBlockProps {
 }
 
 export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
+  const { t } = useTranslation();
   const {
     issuesMap,
     issueId,
@@ -194,8 +196,11 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
             "last:border-b-transparent": !getIsIssuePeeked(issue.id) && !isIssueActive,
             "bg-accent-primary/5 hover:bg-accent-primary/10": isIssueSelected,
             "bg-layer-1": isCurrentBlockDragging,
-            "md:flex-row md:items-center": isSidebarCollapsed,
-            "lg:flex-row lg:items-center": !isSidebarCollapsed,
+            // Paradise: satu baris (judul + chip) baru dari lg/xl. Di tablet (md) chip
+            // properti memakan seluruh lebar sampai judul tinggal "Dok…" dan chip
+            // tumpah ke kanan, jadi di bawah itu chip turun ke baris kedua seperti HP.
+            "lg:flex-row lg:items-center": isSidebarCollapsed,
+            "xl:flex-row xl:items-center": !isSidebarCollapsed,
             // Kustomisasi Paradise: baris tunggu-approval beda bawah kuning
             // tipis (KEP-25) — sama bahasanya dengan kartu kanban.
             "bg-warning-primary/[0.04] hover:bg-warning-primary/[0.07]": getVisibleApprovalStatus(issue) === "menunggu",
@@ -214,7 +219,14 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
           }
         }}
       >
-        <div className="flex w-full gap-2 truncate">
+        <div
+          className={cn("flex w-full gap-2 truncate", {
+            // Baris tunggal: judul mengisi sisa ruang (basis 0) tapi tak di bawah 16rem;
+            // chip yang mengalah dan turun baris kalau tak muat.
+            "lg:min-w-64 lg:flex-1 lg:basis-0": isSidebarCollapsed,
+            "xl:min-w-64 xl:flex-1 xl:basis-0": !isSidebarCollapsed,
+          })}
+        >
           <div className="flex flex-grow items-center gap-0.5 truncate">
             <div className="flex items-center gap-1" style={isSubIssue ? { marginLeft } : {}}>
               {/* select checkbox */}
@@ -264,8 +276,11 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                 {subIssuesCount > 0 && !isEpic && (
                   <button
                     type="button"
-                    className="grid size-4 place-items-center rounded-xs text-placeholder hover:text-tertiary"
+                    // size-6 -m-1: sasaran 24px (WCAG 2.5.8) tanpa menggeser tata letak kolom 16px
+                    className="-m-1 grid size-6 place-items-center rounded-xs text-placeholder hover:text-tertiary"
                     onClick={handleToggleExpand}
+                    aria-label={t("common.sub_work_items")}
+                    aria-expanded={isExpanded}
                   >
                     <ChevronRightIcon
                       className={cn("size-4", {
@@ -310,8 +325,8 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
           {!issue?.tempId && (
             <div
               className={cn("block rounded-sm border border-strong", {
-                "md:hidden": isSidebarCollapsed,
-                "lg:hidden": !isSidebarCollapsed,
+                "lg:hidden": isSidebarCollapsed,
+                "xl:hidden": !isSidebarCollapsed,
               })}
             >
               {quickActions({
@@ -321,11 +336,16 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
             </div>
           )}
         </div>
-        <div className="flex flex-shrink-0 items-center gap-2">
+        <div
+          className={cn("flex flex-shrink-0 items-center gap-2", {
+            "lg:min-w-0 lg:flex-shrink": isSidebarCollapsed,
+            "xl:min-w-0 xl:flex-shrink": !isSidebarCollapsed,
+          })}
+        >
           {!issue?.tempId ? (
             <>
               <IssueProperties
-                className={`relative flex flex-wrap ${isSidebarCollapsed ? "md:flex-shrink-0 md:flex-grow" : "lg:flex-shrink-0 lg:flex-grow"} items-center gap-2 whitespace-nowrap`}
+                className={`relative flex flex-wrap ${isSidebarCollapsed ? "lg:min-w-0 lg:flex-grow lg:justify-end" : "xl:min-w-0 xl:flex-grow xl:justify-end"} items-center gap-2 whitespace-nowrap`}
                 issue={issue}
                 isReadOnly={!canEditIssueProperties}
                 updateIssue={updateIssue}
@@ -335,8 +355,8 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
               />
               <div
                 className={cn("hidden", {
-                  "md:flex": isSidebarCollapsed,
-                  "lg:flex": !isSidebarCollapsed,
+                  "lg:flex": isSidebarCollapsed,
+                  "xl:flex": !isSidebarCollapsed,
                 })}
                 role="presentation"
                 onClick={(e) => {

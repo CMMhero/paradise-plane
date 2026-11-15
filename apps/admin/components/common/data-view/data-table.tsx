@@ -112,7 +112,7 @@ export function DataTable<Row>({
   }
 
   return (
-    <div className="max-h-[calc(100vh-17rem)] overflow-auto rounded-card border border-subtle">
+    <div className="max-h-[calc(100dvh-17rem)] overflow-auto rounded-card border border-subtle">
       <table className="w-full text-13" style={{ minWidth }}>
         <thead className="sticky top-0 z-[3] bg-layer-1 text-tertiary">
           <tr>

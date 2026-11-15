@@ -33,10 +33,30 @@ export interface IThemeStore {
   toggleProjectOverviewSidebar: (collapsed?: boolean) => void;
 }
 
+/**
+ * Kustomisasi Paradise: nilai awal sidebar dibaca saat store dibuat, bukan
+ * menunggu efek StoreWrapper/SidebarWrapper. Dulu render pertama selalu
+ * menggambar sidebar TERBUKA lalu efek menutupnya di layar < 1024px, dan isi
+ * halaman melompat 250px (layout shift ~0,25 di tiap halaman HP/tablet).
+ * Aturannya sama dengan efek-efek itu: layar sempit selalu mulai tertutup,
+ * selain itu ikut localStorage. localStorage tidak ditulis di sini.
+ */
+const bacaSidebarAwal = (): boolean | undefined => {
+  if (typeof window === "undefined") return undefined;
+  // 1023px = KUERI_SEMPIT di @plane/hooks/use-platform-os.
+  if (typeof window.matchMedia === "function" && window.matchMedia("(max-width: 1023px)").matches) return true;
+  try {
+    const tersimpan = window.localStorage.getItem("app_sidebar_collapsed");
+    return tersimpan ? tersimpan === "true" : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export class ThemeStore implements IThemeStore {
   // observables
   isAnySidebarDropdownOpen: boolean | undefined = undefined;
-  sidebarCollapsed: boolean | undefined = undefined;
+  sidebarCollapsed: boolean | undefined = bacaSidebarAwal();
   sidebarPeek: boolean | undefined = undefined;
   isExtendedSidebarOpened: boolean | undefined = undefined;
   isExtendedProjectSidebarOpened: boolean | undefined = undefined;

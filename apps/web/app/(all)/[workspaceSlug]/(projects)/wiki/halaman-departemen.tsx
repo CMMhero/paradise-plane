@@ -166,7 +166,7 @@ export function BacaHalaman({ workspaceSlug, halaman, onClose }: TBaca) {
 
   return (
     <ModalCore isOpen handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XXXL}>
-      <div className="flex max-h-[80vh] flex-col">
+      <div className="flex max-h-[80dvh] flex-col">
         <div className="border-b border-subtle px-5 py-4">
           <p className="text-11 text-tertiary">
             {t("wiki_ui.pages.from_department", { name: halaman.departemen_nama })}

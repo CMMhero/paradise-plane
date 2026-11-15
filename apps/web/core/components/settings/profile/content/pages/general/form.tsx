@@ -229,7 +229,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
             <div className="absolute -bottom-6 left-6 flex items-end justify-between">
               <div className="flex gap-3">
                 <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-surface-2">
-                  <button type="button" onClick={() => setIsImageUploadModalOpen(true)}>
+                  <button type="button" onClick={() => setIsImageUploadModalOpen(true)} aria-label={t("avatar")}>
                     {!userAvatar || userAvatar === "" ? (
                       <div className="h-16 w-16 rounded-md bg-layer-1 p-2">
                         <CircleUserRound className="h-full w-full text-secondary" />
@@ -239,9 +239,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                         <img
                           src={getFileURL(userAvatar)}
                           className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
-                          onClick={() => setIsImageUploadModalOpen(true)}
                           alt={currentUser?.display_name}
-                          role="button"
                         />
                       </div>
                     )}

@@ -17,6 +17,7 @@ import {
   EUserPermissionsLevel,
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { ModuleIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
@@ -52,6 +53,7 @@ import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/com
 import { IconButton } from "@plane/propel/icon-button";
 
 export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
+  const { t } = useTranslation();
   // refs
   const parentRef = useRef<HTMLDivElement>(null);
   // states
@@ -236,6 +238,8 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
                   onClick={() => setAnalyticsModal(true)}
                   variant="secondary"
                   size="lg"
+                  // di lebar sedang hanya ikon yang tampil; aria-label = teks yang terlihat di layar lebar
+                  aria-label="Analytics"
                 >
                   <span className="hidden @4xl:flex">Analytics</span>
                   <span className="@4xl:hidden">
@@ -259,6 +263,11 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
             <></>
           )}
           <IconButton
+            aria-label={t(
+              isSidebarCollapsed
+                ? "aria_labels.projects_sidebar.expand_sidebar"
+                : "aria_labels.projects_sidebar.collapse_sidebar"
+            )}
             variant="tertiary"
             size="lg"
             icon={PanelRight}

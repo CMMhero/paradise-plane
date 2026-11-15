@@ -238,7 +238,8 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   const maxDate = getDate(issue.target_date);
 
   return (
-    <div className={className}>
+    // data-sasaran-chip: area klik chip 20px diperbesar ke 24px (paradise.css bagian 11)
+    <div className={className} data-sasaran-chip>
       {/* pemberi tugas */}
       {pemberiTugas && (
         // Tanpa onClick/onFocus, beda dengan pembungkus di bawahnya: isi chip ini

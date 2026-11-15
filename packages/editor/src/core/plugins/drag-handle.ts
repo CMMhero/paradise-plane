@@ -47,6 +47,8 @@ const createDragHandleElement = (): HTMLElement => {
   dragHandleElement.id = "drag-handle";
   dragHandleElement.draggable = true;
   dragHandleElement.dataset.dragHandle = "";
+  // Tombol ikon tanpa teks: beri nama supaya pembaca layar tidak hanya menyebut "tombol" (axe button-name).
+  dragHandleElement.setAttribute("aria-label", "Drag block");
   dragHandleElement.classList.value =
     "hidden sm:flex items-center size-5 aspect-square rounded-xs cursor-grab outline-none hover:bg-layer-1-hover active:bg-layer-1 active:cursor-grabbing transition-[background-color,_opacity] duration-200 ease-linear";
 

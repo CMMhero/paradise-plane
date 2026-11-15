@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useRef } from "react";
 import { EmojiRoot } from "../emoji-icon-picker/emoji/emoji";
 import { emojiToString } from "../emoji-icon-picker/helper";
 import { Popover } from "../popover";
@@ -20,6 +20,13 @@ export interface EmojiReactionPickerProps {
   disabled?: boolean;
   dropdownClassName?: string;
   label: React.ReactNode;
+  /**
+   * `button` (bawaan): `label` dibungkus tombol pemicu.
+   * `anchor`: `label` sudah berisi tombol sendiri (mis. EmojiReactionGroup dengan tombol tambah), jadi tidak
+   * dibungkus tombol lagi (tombol di dalam tombol, axe nested-interactive); picker hanya menempel padanya dan
+   * dibuka lewat `isOpen`.
+   */
+  triggerMode?: "button" | "anchor";
   onChange: (emoji: string) => void;
   placement?: TPlacement;
   searchDisabled?: boolean;
@@ -43,7 +50,9 @@ export function EmojiReactionPicker(props: EmojiReactionPickerProps) {
     searchPlaceholder = "Search",
     side = "bottom",
     align = "start",
+    triggerMode = "button",
   } = props;
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   // side and align calculations
   const { finalSide, finalAlign } = useMemo(() => {
@@ -65,10 +74,17 @@ export function EmojiReactionPicker(props: EmojiReactionPickerProps) {
 
   return (
     <Popover open={isOpen} onOpenChange={handleToggle}>
-      <Popover.Button className={cn("outline-none", buttonClassName)} disabled={disabled}>
-        {label}
-      </Popover.Button>
+      {triggerMode === "anchor" ? (
+        <div ref={anchorRef} className={buttonClassName}>
+          {label}
+        </div>
+      ) : (
+        <Popover.Button className={cn("outline-none", buttonClassName)} disabled={disabled}>
+          {label}
+        </Popover.Button>
+      )}
       <Popover.Panel
+        anchor={triggerMode === "anchor" ? anchorRef : undefined}
         positionerClassName="z-50"
         className={cn(
           "w-80 overflow-hidden rounded-popover border-[0.5px] border-strong bg-surface-1",

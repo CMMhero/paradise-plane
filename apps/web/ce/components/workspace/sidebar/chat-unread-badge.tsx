@@ -41,7 +41,7 @@ export const ChatUnreadBadge = observer(function ChatUnreadBadge({ workspaceSlug
 
   return (
     <div className="ml-auto">
-      <CountChip count={getNumberCount(jumlah)} />
+      <CountChip variant="unread" count={getNumberCount(jumlah)} />
     </div>
   );
 });

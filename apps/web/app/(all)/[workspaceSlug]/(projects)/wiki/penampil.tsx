@@ -77,7 +77,7 @@ export function PenampilMateri({ pratinjau, title }: { pratinjau: TWikiPreview; 
 
   if (!url) return null;
 
-  const tinggi = layarPenuh ? "h-[calc(100vh-3.5rem)]" : "h-[calc(100vh-16rem)]";
+  const tinggi = layarPenuh ? "h-[calc(100dvh-3.5rem)]" : "h-[calc(100dvh-16rem)]";
 
   const isi = () => {
     if (kind === "image")

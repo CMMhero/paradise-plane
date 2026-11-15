@@ -7,6 +7,7 @@
 import { observer } from "mobx-react";
 import { Clock, FileStack, MoreHorizontal, PanelLeft, MoveRight } from "lucide-react";
 import { IconButton, getIconButtonStyling } from "@plane/propel/icon-button";
+import { useTranslation } from "@plane/i18n";
 import {
   LinkIcon,
   NewTabIcon,
@@ -56,6 +57,7 @@ type Props = {
 };
 
 export const InboxIssueActionsMobileHeader = observer(function InboxIssueActionsMobileHeader(props: Props) {
+  const { t } = useTranslation();
   const {
     inboxIssue,
     isSubmitting,
@@ -136,6 +138,7 @@ export const InboxIssueActionsMobileHeader = observer(function InboxIssueActions
         <div className="ml-auto">
           <CustomMenu
             customButton={<MoreHorizontal className="size-4" />}
+            ariaLabel={t("aria_labels.common.more_actions")}
             customButtonClassName={getIconButtonStyling("secondary", "lg")}
             placement="bottom-start"
           >

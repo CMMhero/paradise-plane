@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
@@ -18,10 +19,11 @@ import {
 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
-import { NewTabIcon, WorkItemsIcon } from "@plane/propel/icons";
+import { NewTabIcon, PlusIcon, WorkItemsIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import { EIssuesStoreType } from "@plane/types";
 import { Breadcrumbs, Header } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { CountChip } from "@/components/common/count-chip";
@@ -38,7 +40,17 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 
-export const IssuesHeader = observer(function IssuesHeader() {
+type TIssuesHeaderProps = {
+  /**
+   * Paradise: alat HP (tata letak/filter/tampilan). Kalau diisi, di bawah md alat ini
+   * menggantikan breadcrumb "... > Work Items 17" yang mubazir (tab project sudah
+   * menyebut "Work items"), jadi header project di HP tinggal satu baris alat.
+   */
+  mobileToolbar?: ReactNode;
+};
+
+export const IssuesHeader = observer(function IssuesHeader(props: TIssuesHeaderProps) {
+  const { mobileToolbar } = props;
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
@@ -66,8 +78,9 @@ export const IssuesHeader = observer(function IssuesHeader() {
 
   return (
     <Header>
-      <Header.LeftItem>
-        <div className="flex items-center gap-2.5">
+      <Header.LeftItem className={cn({ "max-md:max-w-none max-md:flex-nowrap": !!mobileToolbar })}>
+        {mobileToolbar}
+        <div className={cn("flex items-center gap-2.5", { "max-md:hidden": !!mobileToolbar })}>
           <Breadcrumbs onBack={() => router.back()} isLoading={loader === "init-loader"} className="flex-grow-0">
             <CommonProjectBreadcrumbs workspaceSlug={workspaceSlug?.toString()} projectId={projectId?.toString()} />
             <Breadcrumbs.Item
@@ -125,7 +138,15 @@ export const IssuesHeader = observer(function IssuesHeader() {
             }}
             data-ph-element={WORK_ITEM_TRACKER_ELEMENTS.HEADER_ADD_BUTTON.WORK_ITEMS}
           >
-            <div className="block sm:hidden">{t("issue.label", { count: 1 })}</div>
+            {mobileToolbar ? (
+              <>
+                {/* Paradise: di HP cukup ikon "+" supaya baris alat muat tanpa digeser. */}
+                <PlusIcon className="size-4 sm:hidden" aria-hidden="true" />
+                <span className="sr-only sm:hidden">{t("issue.add.label")}</span>
+              </>
+            ) : (
+              <div className="block sm:hidden">{t("issue.label", { count: 1 })}</div>
+            )}
             <div className="hidden sm:block">{t("issue.add.label")}</div>
           </Button>
         )}

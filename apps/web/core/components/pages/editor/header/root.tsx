@@ -44,8 +44,8 @@ export const PageEditorHeaderRoot = observer(function PageEditorHeaderRoot(props
               className="flex items-center justify-center"
               buttonClassName="flex items-center justify-center"
               label={
-                <button
-                  type="button"
+                // span, bukan button: EmojiPicker sudah membungkus label dengan tombol pemicu (axe nested-interactive)
+                <span
                   className={cn(
                     "flex items-center gap-1 rounded-sm p-1 text-13 font-medium text-tertiary transition-colors outline-none hover:bg-layer-1",
                     {
@@ -55,7 +55,7 @@ export const PageEditorHeaderRoot = observer(function PageEditorHeaderRoot(props
                 >
                   <SmilePlus className="size-4 flex-shrink-0" />
                   Icon
-                </button>
+                </span>
               }
               onChange={updatePageLogo}
               defaultIconColor={

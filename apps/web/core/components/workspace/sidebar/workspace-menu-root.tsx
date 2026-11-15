@@ -62,7 +62,7 @@ export const WorkspaceMenuRoot = observer(function WorkspaceMenuRoot(props: Work
   };
 
   const handleItemClick = () => {
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 1024) {
       toggleSidebar();
     }
   };
@@ -95,9 +95,10 @@ export const WorkspaceMenuRoot = observer(function WorkspaceMenuRoot(props: Work
                 className={cn("flex size-8 w-full items-center justify-center rounded-md", {
                   "bg-layer-1": open,
                 })}
+                aria-label={t("aria_labels.projects_sidebar.open_workspace_switcher")}
               >
                 <AppSidebarItem
-                  variant="button"
+                  variant="static"
                   item={{
                     icon: (
                       <WorkspaceLogo
@@ -118,7 +119,8 @@ export const WorkspaceMenuRoot = observer(function WorkspaceMenuRoot(props: Work
                     "bg-layer-1": open,
                   }
                 )}
-                aria-label={t("aria_labels.projects_sidebar.open_workspace_switcher")}
+                // Tanpa aria-label: namanya diambil dari teks terlihat (logo + nama ruang kerja), sesuai WCAG 2.5.3;
+                // aria-haspopup="menu" dari Headless UI sudah memberi tahu bahwa ini membuka pemilih.
               >
                 <div className="flex flex-grow items-center gap-2 truncate">
                   <WorkspaceLogo

@@ -20,6 +20,7 @@ import type { ICustomSearchSelectProps } from "./helper";
 
 export function CustomSearchSelect(props: ICustomSearchSelectProps) {
   const {
+    ariaLabel,
     customButtonClassName = "",
     buttonClassName = "",
     className = "",
@@ -114,6 +115,7 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
                     customButtonClassName
                   )}
                   onClick={toggleDropdown}
+                  aria-label={ariaLabel}
                 >
                   {customButton}
                 </button>

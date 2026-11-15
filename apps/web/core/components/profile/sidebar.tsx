@@ -100,6 +100,7 @@ export const ProfileSidebar = observer(function ProfileSidebar(props: TProfileSi
             {currentUser?.id === userId && (
               <div className="absolute top-3.5 right-3.5">
                 <IconButton
+                  aria-label={t("edit")}
                   variant="secondary"
                   icon={EditIcon}
                   onClick={() =>

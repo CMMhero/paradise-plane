@@ -111,7 +111,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
   });
 
   return (
-    <div key={issueId}>
+    <div key={issueId} className="@container">
       <ControlLink
         id={`issue-${issue.id}`}
         href={workItemLink}
@@ -120,7 +120,11 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
       >
         {issue && (
           <div
-            className="group relative flex h-full min-h-11 w-full items-center py-1 pr-2 transition-all hover:bg-surface-2"
+            // Kustomisasi Paradise: kalau kolomnya sempit (ponsel, juga tablet karena panel
+            // properti memakan sisi kanan) judul mengambil satu baris penuh dan chip properti
+            // turun ke baris kedua, supaya judul tidak terdesak habis oleh chip. Memakai
+            // container query, bukan lebar layar.
+            className="group relative flex h-full min-h-11 w-full flex-wrap items-center gap-y-1 py-1 pr-2 transition-all hover:bg-surface-2 @xl:flex-nowrap"
             style={{ paddingLeft: `${spacingLeft}px` }}
           >
             <div className="flex size-5 flex-shrink-0 items-center justify-center">
@@ -159,7 +163,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
               )}
             </div>
 
-            <div className="flex w-full cursor-pointer items-center gap-3 truncate">
+            <div className="flex w-full min-w-0 basis-[calc(100%-1.25rem)] cursor-pointer items-center gap-3 truncate @xl:basis-auto">
               <WithDisplayPropertiesHOC displayProperties={displayProperties || {}} displayPropertyKey="key">
                 <div className="flex-shrink-0">
                   {projectDetail && (
@@ -180,7 +184,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
             </div>
 
             <div
-              className="flex-shrink-0 text-13"
+              className="ml-5 min-w-0 flex-1 text-13 @xl:ml-0 @xl:flex-none @xl:flex-shrink-0"
               role="presentation"
               onClick={(e) => {
                 e.preventDefault();
@@ -199,7 +203,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
             </div>
 
             <div className="flex-shrink-0 text-13">
-              <CustomMenu placement="bottom-end" ellipsis>
+              <CustomMenu ariaLabel={t("aria_labels.common.more_actions")} placement="bottom-end" ellipsis>
                 {bisaUbahAnak && (
                   <CustomMenu.MenuItem
                     onClick={() => {

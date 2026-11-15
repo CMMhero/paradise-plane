@@ -114,7 +114,7 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
                 }
                 className="group w-3/5 flex-grow"
                 buttonContainerClassName="w-full text-left"
-                buttonClassName={`text-13 justify-between ${
+                buttonClassName={`text-13 justify-between [&_span]:text-13 ${
                   (issue?.assignee_ids || [])?.length > 0 ? "" : "text-placeholder"
                 }`}
                 hideIcon={issue.assignee_ids?.length === 0}
@@ -137,12 +137,14 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
                 buttonVariant="border-with-text"
                 className="w-3/5 flex-grow rounded-sm px-2 hover:bg-layer-1"
                 buttonContainerClassName="w-full text-left"
-                buttonClassName="w-min h-auto whitespace-nowrap"
+                buttonClassName="w-min h-auto whitespace-nowrap [&_span]:text-13"
               />
             </div>
           </div>
         </div>
         <div className={`mt-3 divide-y-2 divide-subtle-1 ${!isEditable ? "opacity-60" : ""}`}>
+          {/* Kustomisasi Paradise: nilai properti bawaan dropdown 11px, lebih kecil dari
+              labelnya (13px); [&_span]:text-13 / labelClassName menyamakannya. */}
           <div className="flex flex-col gap-3">
             {/* Due Date */}
             <div className="flex h-8 items-center gap-2">
@@ -165,6 +167,7 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
                 className="group w-3/5 flex-grow"
                 buttonContainerClassName="w-full text-left"
                 buttonClassName={`text-13 ${issue?.target_date ? "" : "text-placeholder"}`}
+                labelClassName="text-13"
                 hideIcon
                 clearIconClassName="h-3 w-3 hidden group-hover:inline"
               />

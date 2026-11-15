@@ -36,6 +36,7 @@ export function TabNavigationOverflowMenu({ overflowItems, isActive, tabPreferen
   return (
     <Menu
       ellipsis
+      ariaLabel={t("aria_labels.common.more_actions")}
       buttonClassName="!p-1.5"
       optionsClassName="min-w-[200px] space-y-1"
       customButton={

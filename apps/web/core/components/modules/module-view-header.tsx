@@ -104,6 +104,7 @@ export const ModuleViewHeader = observer(function ModuleViewHeader() {
       <div className="flex items-center">
         {!isSearchOpen && (
           <IconButton
+            aria-label={t("search")}
             variant="ghost"
             size="lg"
             className="p- -mr-1"
@@ -188,6 +189,8 @@ export const ModuleViewHeader = observer(function ModuleViewHeader() {
                 if (!projectId) return;
                 updateDisplayFilters(projectId.toString(), { layout: layout.key });
               }}
+              aria-label={t(layout.i18n_title)}
+              aria-pressed={displayFilters?.layout === layout.key}
             >
               <ModuleLayoutIcon layoutType={layout.key} />
             </button>

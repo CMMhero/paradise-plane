@@ -26,7 +26,7 @@ export function SettingsBoxedControlItem(props: Props) {
     >
       <div className="flex flex-col gap-1.5">
         <h4 className="text-body-sm-medium text-primary">{title}</h4>
-        {description && <p className="text-caption-md-regular text-tertiary">{description}</p>}
+        {description && <p className="text-caption-md-regular leading-relaxed text-tertiary">{description}</p>}
       </div>
       {control && <div className="shrink-0">{control}</div>}
     </div>

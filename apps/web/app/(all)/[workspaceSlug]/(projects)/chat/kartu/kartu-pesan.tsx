@@ -47,7 +47,7 @@ function KartuChangelog({ pesan }: { pesan: TPesan }) {
         {urut.map((e) => (
           <li key={`${e.type}-${e.text}`} className="flex items-start gap-2 text-13 text-secondary">
             <span
-              className={`mt-px w-16 shrink-0 rounded-control px-1.5 py-px text-center text-11 font-medium ${GAYA_ENTRI[e.type]}`}
+              className={`mt-px w-auto min-w-16 shrink-0 rounded-control px-1.5 py-px text-center text-11 font-medium whitespace-nowrap ${GAYA_ENTRI[e.type]}`}
             >
               {t(KUNCI_ENTRI[e.type])}
             </span>

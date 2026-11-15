@@ -242,6 +242,10 @@ export function ResizableSidebar({
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize sidebar"
+            // separator yang bisa difokus wajib membawa nilainya (lebar sidebar saat ini)
+            aria-valuenow={Math.round(width)}
+            aria-valuemin={minWidth}
+            aria-valuemax={maxWidth}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -293,6 +297,10 @@ export function ResizableSidebar({
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize sidebar"
+            // separator yang bisa difokus wajib membawa nilainya (lebar sidebar saat ini)
+            aria-valuenow={Math.round(width)}
+            aria-valuemin={minWidth}
+            aria-valuemax={maxWidth}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {

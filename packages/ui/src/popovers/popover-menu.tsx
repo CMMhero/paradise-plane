@@ -18,6 +18,7 @@ export function PopoverMenu<T>(props: TPopoverMenu<T>) {
     popperPadding = 0,
     buttonClassName = "",
     button,
+    buttonAriaLabel,
     disabled,
     panelClassName = "",
     data,
@@ -33,6 +34,7 @@ export function PopoverMenu<T>(props: TPopoverMenu<T>) {
       popperPadding={popperPadding}
       buttonClassName={buttonClassName}
       button={button}
+      buttonAriaLabel={buttonAriaLabel}
       disabled={disabled}
       panelClassName={cn(
         "my-1 w-48 rounded-popover border-[0.5px] border-strong bg-surface-1 px-2 py-2 text-11 shadow-raised-200 focus:outline-none",

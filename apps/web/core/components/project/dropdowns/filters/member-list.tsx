@@ -7,11 +7,12 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 // plane imports
-import { Button } from "@plane/propel/button";
+import { getButtonStyling } from "@plane/propel/button";
 import { ChevronDownIcon } from "@plane/propel/icons";
 import { EUserProjectRoles, EUserWorkspaceRoles } from "@plane/types";
 // plane ui
 import { CustomMenu } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
 import { FilterHeader, FilterOption } from "@/components/issues/issue-layouts/filters";
 
@@ -101,10 +102,11 @@ export const MemberListFiltersDropdown = observer(function MemberListFiltersDrop
     <CustomMenu
       customButton={
         <div className="relative">
-          <Button variant="secondary" size="lg" className="flex items-center gap-2">
+          {/* span bergaya tombol: CustomMenu sudah merender <button> pembungkus (axe nested-interactive) */}
+          <span className={cn(getButtonStyling("secondary", "lg"), "flex items-center gap-2")}>
             <span>Filters</span>
             <ChevronDownIcon className="h-3 w-3" />
-          </Button>
+          </span>
           {appliedFiltersCount > 0 && (
             <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent-primary" />
           )}

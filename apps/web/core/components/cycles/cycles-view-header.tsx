@@ -80,6 +80,7 @@ export const CyclesViewHeader = observer(function CyclesViewHeader(props: Props)
     <div className="flex items-center gap-2">
       {!isSearchOpen ? (
         <IconButton
+          aria-label={t("search")}
           variant="ghost"
           size="lg"
           onClick={() => {

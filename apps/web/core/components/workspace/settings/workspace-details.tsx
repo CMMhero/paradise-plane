@@ -163,13 +163,18 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
           </div>
           <div className="flex flex-col gap-1">
             <div className="mb:-my-5 text-h5-semibold leading-6">{watch("name")}</div>
-            <button type="button" onClick={handleCopyUrl} className="text-left text-body-xs-regular tracking-tight">{`${
+            <button
+              type="button"
+              onClick={handleCopyUrl}
+              // min-h-6: sasaran klik 24px (WCAG 2.5.8)
+              className="min-h-6 text-left text-body-xs-regular tracking-tight"
+            >{`${
               typeof window !== "undefined" && window.location.origin.replace("http://", "").replace("https://", "")
             }/${currentWorkspace.slug}`}</button>
             {isAdmin && (
               <button
                 type="button"
-                className="flex items-center gap-1.5 text-left text-caption-sm-medium text-accent-primary"
+                className="flex min-h-6 items-center gap-1.5 text-left text-caption-sm-medium text-accent-primary"
                 onClick={() => setIsImageUploadModalOpen(true)}
               >
                 {workspaceLogo && workspaceLogo !== "" ? (
@@ -226,7 +231,9 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
                       ORGANIZATION_SIZE.find((c) => c === value) ??
                       t("workspace_settings.settings.general.errors.company_size.select_a_range")
                     }
-                    buttonClassName="border border-subtle bg-layer-2"
+                    // Kustomisasi Paradise: di layar sentuh input asli dipaksa 16px (paradise.css);
+                    // pemicu pilihan ini bukan <input>, jadi samakan manual supaya ukurannya seragam.
+                    buttonClassName="border border-subtle bg-layer-2 sentuh:text-16"
                     input
                     disabled={!isAdmin}
                   >
@@ -240,7 +247,9 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <h4 className="text-body-sm-medium text-tertiary">{t("workspace_settings.settings.general.url")}</h4>
+              <label htmlFor="url" className="text-body-sm-medium text-tertiary">
+                {t("workspace_settings.settings.general.url")}
+              </label>
               <Controller
                 control={control}
                 name="url"

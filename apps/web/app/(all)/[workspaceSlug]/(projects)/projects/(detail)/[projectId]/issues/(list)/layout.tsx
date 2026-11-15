@@ -9,12 +9,12 @@ import { Outlet } from "react-router";
 import { AppHeader } from "@/components/core/app-header";
 import { ContentWrapper } from "@/components/core/content-wrapper";
 import { ProjectIssuesHeader } from "./header";
-import { ProjectIssuesMobileHeader } from "./mobile-header";
 
 export default function ProjectIssuesLayout() {
   return (
     <>
-      <AppHeader header={<ProjectIssuesHeader />} mobileHeader={<ProjectIssuesMobileHeader />} />
+      {/* Paradise: alat HP ikut di dalam baris header (lihat ./header.tsx), bukan mobileHeader terpisah. */}
+      <AppHeader header={<ProjectIssuesHeader />} />
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>

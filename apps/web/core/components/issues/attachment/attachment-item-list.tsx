@@ -130,7 +130,7 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
             {...getRootProps()}
             className={`relative flex flex-col ${isDragActive && issueAttachments.length < 3 ? "min-h-[200px]" : ""} ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
           >
-            <input {...getInputProps()} />
+            <input {...getInputProps({ "aria-label": t("attachments") })} />
             {isDragActive && (
               <div className="absolute top-0 left-0 z-30 flex h-full w-full items-center justify-center bg-surface-2/75">
                 <div className="flex items-center justify-center rounded-md bg-surface-1 p-1">

@@ -43,6 +43,7 @@ export const ProjectSettingsSidebarHeader = observer(function ProjectSettingsSid
     <div className="shrink-0">
       <div className="flex items-center gap-1 py-3 pr-5 pl-4 text-body-md-medium">
         <IconButton
+          aria-label={t("common.back")}
           variant="ghost"
           size="base"
           icon={ArrowLeft}

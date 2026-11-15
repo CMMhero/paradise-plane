@@ -57,6 +57,7 @@ export const StickySearch = observer(function StickySearch() {
     <div className="my-auto mr-2 flex items-center">
       {!isSearchOpen && (
         <IconButton
+          aria-label={t("search")}
           variant="ghost"
           size="lg"
           className="-mr-2"

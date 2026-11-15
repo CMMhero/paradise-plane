@@ -25,6 +25,8 @@ export type TLinkItemBlockProps = {
   description?: string;
   /** Paradise KEP-82: icon picked by the user (project-style emoji/icon). Wins over `iconSrc`. */
   icon?: React.ReactNode;
+  /** Nama aksesibel tombol menu titik-tiga (isinya hanya ikon). */
+  menuAriaLabel?: string;
 };
 
 function LinkMenuItemContent({ item }: { item: TContextMenuItem }) {
@@ -50,7 +52,7 @@ function LinkMenuItemContent({ item }: { item: TContextMenuItem }) {
 
 export function LinkItemBlock(props: TLinkItemBlockProps) {
   // props
-  const { title, url, createdAt, menuItems, onClick, iconSrc, imageSrc, description, icon } = props;
+  const { title, url, createdAt, menuItems, onClick, iconSrc, imageSrc, description, icon, menuAriaLabel } = props;
   // icons
   const Icon = getIconForLink(url);
   // A favicon that fails to decode falls back to the link-type icon instead of a broken image.
@@ -117,7 +119,13 @@ export function LinkItemBlock(props: TLinkItemBlockProps) {
           // `display:none` juga mengeluarkan tombol menu dari urutan Tab. Dengan
           // opacity tombolnya tetap bisa difokus papan ketik dan muncul saat itu.
           <div className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 sentuh:opacity-100">
-            <CustomMenu placement="bottom-end" menuItemsClassName="z-20" closeOnSelect verticalEllipsis>
+            <CustomMenu
+              placement="bottom-end"
+              menuItemsClassName="z-20"
+              closeOnSelect
+              verticalEllipsis
+              ariaLabel={menuAriaLabel}
+            >
               {menuItems.map((item) => (
                 <CustomMenu.MenuItem
                   key={item.key}

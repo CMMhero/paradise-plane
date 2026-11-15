@@ -304,6 +304,9 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
           onClick={() => handleIssuePeekOverview(issue)}
           disabled={!!issue?.tempId}
         >
+          {/* Isi kartu baru dirender saat terlihat (RenderIfVisible); sebelum itu tautannya kosong tanpa nama
+              (axe link-name). Judul sr-only memberi nama yang selalu ada. */}
+          <span className="sr-only">{issue.name}</span>
           <RenderIfVisible
             classNames="space-y-2"
             root={scrollableContainerRef}

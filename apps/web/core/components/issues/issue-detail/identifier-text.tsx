@@ -53,7 +53,8 @@ export function IdentifierText(props: TIdentifierTextProps) {
       <button
         type="button"
         className={cn("text-12 font-medium whitespace-nowrap text-tertiary", textSizeClassName, variantClassName, {
-          "cursor-pointer": enableClickToCopyIdentifier,
+          // -my-1.5 py-1.5: sasaran klik 24px untuk teks 12px tanpa menggeser baris (WCAG 2.5.8)
+          "-my-1.5 cursor-pointer py-1.5": enableClickToCopyIdentifier,
         })}
         onClick={handleCopyIssueIdentifier}
         disabled={!enableClickToCopyIdentifier}

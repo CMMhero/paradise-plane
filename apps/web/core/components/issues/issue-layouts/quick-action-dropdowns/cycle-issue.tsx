@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
 import { ARCHIVABLE_STATE_GROUPS, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import type { TIssue } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 import { ContextMenu, CustomMenu } from "@plane/ui";
@@ -32,6 +33,7 @@ import type { MenuItemFactoryProps } from "./helper";
 import { useCycleIssueMenuItems } from "./helper";
 
 export const CycleIssueQuickActions = observer(function CycleIssueQuickActions(props: IQuickActionProps) {
+  const { t } = useTranslation();
   const {
     issue,
     handleDelete,
@@ -162,6 +164,7 @@ export const CycleIssueQuickActions = observer(function CycleIssueQuickActions(p
 
       <ContextMenu parentRef={parentRef} items={CONTEXT_MENU_ITEMS} />
       <CustomMenu
+        ariaLabel={t("aria_labels.common.more_actions")}
         ellipsis
         placement={placements}
         customButton={customActionButton}

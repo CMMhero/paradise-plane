@@ -20,13 +20,10 @@ import { ModuleViewHeader } from "@/components/modules";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
-import { useAppRouter } from "@/hooks/use-app-router";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 
 export const ModulesListHeader = observer(function ModulesListHeader() {
-  // router
-  const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
   // store hooks
   const { toggleCreateModuleModal } = useCommandPalette();
@@ -46,7 +43,9 @@ export const ModulesListHeader = observer(function ModulesListHeader() {
     <Header>
       <Header.LeftItem>
         <div>
-          <Breadcrumbs onBack={router.back} isLoading={loader === "init-loader"}>
+          {/* Paradise: tanpa onBack. Di HP onBack menampilkan tombol "..." yang tak berarti
+              (header Pages/Intake/Approvals juga tanpa itu); tab project sudah jadi navigasinya. */}
+          <Breadcrumbs isLoading={loader === "init-loader"}>
             <CommonProjectBreadcrumbs workspaceSlug={workspaceSlug?.toString()} projectId={projectId?.toString()} />
             <Breadcrumbs.Item
               component={

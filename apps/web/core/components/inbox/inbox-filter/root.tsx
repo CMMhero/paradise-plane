@@ -17,7 +17,12 @@ import useSize from "@/hooks/use-window-size";
 import { InboxIssueFilterSelection } from "./filters/filter-selection";
 import { InboxIssueOrderByDropdown } from "./sorting/order-by";
 
-const smallButton = <ListFilter className="size-3" />;
+// size-6: sasaran klik 24px (WCAG 2.5.8)
+const smallButton = (
+  <span className="grid size-6 place-items-center">
+    <ListFilter className="size-3" />
+  </span>
+);
 
 const largeButton = (
   <div className={cn(getButtonStyling("secondary", "base"), "px-2 text-tertiary")}>
@@ -32,7 +37,11 @@ export function FiltersRoot() {
   return (
     <div className="relative flex items-center gap-2">
       <div>
-        <FiltersDropdown menuButton={windowSize[0] > 1280 ? largeButton : smallButton} title="" placement="bottom-end">
+        <FiltersDropdown
+          menuButton={windowSize[0] > 1280 ? largeButton : smallButton}
+          title="Filters"
+          placement="bottom-end"
+        >
           <InboxIssueFilterSelection />
         </FiltersDropdown>
       </div>

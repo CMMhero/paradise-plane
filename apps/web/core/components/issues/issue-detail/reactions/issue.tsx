@@ -134,6 +134,7 @@ export const IssueReaction = observer(function IssueReaction(props: TIssueReacti
         handleToggle={setIsPickerOpen}
         onChange={handleEmojiSelect}
         disabled={disabled}
+        triggerMode="anchor"
         label={
           <EmojiReactionGroup
             reactions={reactions}

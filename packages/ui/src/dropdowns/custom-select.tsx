@@ -24,6 +24,7 @@ const DropdownContext = createContext<() => void>(() => {});
 
 function CustomSelect(props: ICustomSelectProps) {
   const {
+    ariaLabel,
     customButtonClassName = "",
     buttonClassName = "",
     placement,
@@ -91,6 +92,7 @@ function CustomSelect(props: ICustomSelectProps) {
                   disabled ? "cursor-not-allowed text-secondary" : "cursor-pointer hover:bg-layer-transparent-hover"
                 } ${customButtonClassName}`}
                 onClick={toggleDropdown}
+                aria-label={ariaLabel}
               >
                 {customButton}
               </button>

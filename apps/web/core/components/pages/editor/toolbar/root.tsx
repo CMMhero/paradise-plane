@@ -64,6 +64,7 @@ export const PageEditorToolbarRoot = observer(function PageEditorToolbarRoot(pro
                   type="button"
                   className="grid size-6 shrink-0 place-items-center rounded-sm text-secondary transition-colors hover:bg-layer-transparent-hover hover:text-primary"
                   onClick={handleOpenNavigationPane}
+                  aria-label={t("page_navigation_pane.open_button")}
                 >
                   <PanelRight className="size-3.5" />
                 </button>

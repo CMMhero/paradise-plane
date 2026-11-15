@@ -21,6 +21,7 @@ export function CustomMentionExtension(props: TMentionHandler) {
     searchCallback,
     searchHashCallback,
     tip,
+    labels,
     renderComponent,
     getMentionedEntityDetails,
     getMentionedEntityLabel,
@@ -45,14 +46,14 @@ export function CustomMentionExtension(props: TMentionHandler) {
     suggestions: [
       {
         char: "@",
-        render: renderMentionsDropdown({ searchCallback, tip }),
+        render: renderMentionsDropdown({ searchCallback, tip, labels }),
         allowSpaces: true,
       },
       ...(searchHashCallback
         ? [
             {
               char: "#",
-              render: renderMentionsDropdown({ searchCallback: searchHashCallback, tip }),
+              render: renderMentionsDropdown({ searchCallback: searchHashCallback, tip, labels }),
               allowSpaces: false,
               // Di awal baris "# " adalah aturan heading markdown: "#" saja tidak boleh membuka dropdown,
               // baru boleh bila sudah ada karakter sesudahnya (mis. "#12" atau "#umum").

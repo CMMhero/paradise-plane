@@ -23,6 +23,11 @@ export type TCalonSebut = {
   semua?: boolean;
 };
 
+/** Id daftar dan opsinya, supaya textarea bisa menunjuk lewat aria-controls dan
+ * aria-activedescendant (pola combobox ARIA, fokus tetap di textarea). */
+export const ID_DAFTAR_SEBUT = "daftar-sebut-obrolan";
+export const idOpsiSebut = (i: number) => `opsi-sebut-obrolan-${i}`;
+
 /** Entri `@all` di puncak daftar. Namanya yang masuk ke teks: `@all`. */
 const CALON_SEMUA: TCalonSebut = { id: "__semua__", nama: "all", semua: true };
 
@@ -150,6 +155,7 @@ export function DaftarSebut({ cocok, sorot, onSorot, onPilih }: TDaftarProps) {
     // Pola combobox ARIA: fokus tetap di textarea, jadi <select>/<datalist> tidak
     // bisa dipakai (keduanya mencuri fokus dan tidak bisa menampilkan avatar).
     <div
+      id={ID_DAFTAR_SEBUT}
       // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="listbox"
       aria-label={t("chatkartu_ui.mention_label")}
@@ -173,6 +179,7 @@ export function DaftarSebut({ cocok, sorot, onSorot, onPilih }: TDaftarProps) {
               type="button"
               // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- opsi combobox ARIA, lihat di atas
               role="option"
+              id={idOpsiSebut(i)}
               aria-selected={i === sorot}
               // mousedown, bukan click: click datang SESUDAH textarea kehilangan
               // fokus, dan kursor yang dipakai sisipan sudah hilang.

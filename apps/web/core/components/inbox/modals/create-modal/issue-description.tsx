@@ -15,7 +15,7 @@ import { EFileAssetType } from "@plane/types";
 import { Loader } from "@plane/ui";
 import { getDescriptionPlaceholderI18n, getTabIndex } from "@plane/utils";
 // components
-import { RichTextEditor } from "@/components/editor/rich-text/editor";
+import { RichTextEditor } from "@/components/editor/rich-text";
 // hooks
 import { useEditorAsset } from "@/hooks/store/use-editor-asset";
 import { useProjectInbox } from "@/hooks/store/use-project-inbox";

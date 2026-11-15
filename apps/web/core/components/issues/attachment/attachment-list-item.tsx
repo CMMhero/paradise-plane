@@ -54,61 +54,67 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={`${fileName}.${fileExtension}`}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          window.open(fileURL, "_blank");
-        }}
-      >
-        <div className="group flex h-11 items-center justify-between gap-3 pr-2 pl-9 hover:bg-surface-2">
-          <div className="flex items-center gap-3 truncate text-13">
-            <div className="flex items-center gap-3">{fileIcon}</div>
-            <Tooltip tooltipContent={`${fileName}.${fileExtension}`} isMobile={isMobile}>
-              <p className="truncate font-medium text-secondary">{`${fileName}.${fileExtension}`}</p>
-            </Tooltip>
-            <span className="flex size-1.5 rounded-full bg-layer-1" />
-            <span className="flex-shrink-0 text-placeholder">{convertBytesToSize(attachment.attributes.size)}</span>
-          </div>
+      {/* Paradise (audit a11y): dulu SELURUH baris adalah <button>, padahal di dalamnya ada pemicu kartu profil dan
+          menu titik-tiga (tombol di dalam tombol). Sekarang hanya bagian nama berkas yang jadi tombol pembuka. */}
+      <div className="group flex h-11 items-center justify-between gap-3 pr-2 pl-9 hover:bg-surface-2">
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-3 truncate text-left text-13"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(fileURL, "_blank");
+          }}
+        >
+          <div className="flex items-center gap-3">{fileIcon}</div>
+          <Tooltip tooltipContent={`${fileName}.${fileExtension}`} isMobile={isMobile}>
+            <p className="truncate font-medium text-secondary">{`${fileName}.${fileExtension}`}</p>
+          </Tooltip>
+          <span className="flex size-1.5 rounded-full bg-layer-1" />
+          <span className="flex-shrink-0 text-placeholder">{convertBytesToSize(attachment.attributes.size)}</span>
+        </button>
 
-          <div className="flex items-center gap-3">
-            {attachment?.created_by && (
-              <>
-                <Tooltip
-                  isMobile={isMobile}
-                  tooltipContent={`${
-                    getUserDetails(attachment?.created_by)?.display_name ?? ""
-                  } uploaded on ${renderFormattedDate(attachment.updated_at)}`}
-                >
-                  <div className="flex items-center justify-center">
-                    <ButtonAvatars showProfileCard showTooltip userIds={attachment?.created_by} />
-                  </div>
-                </Tooltip>
-              </>
-            )}
+        <div className="flex items-center gap-3">
+          {attachment?.created_by && (
+            <>
+              <Tooltip
+                isMobile={isMobile}
+                tooltipContent={`${
+                  getUserDetails(attachment?.created_by)?.display_name ?? ""
+                } uploaded on ${renderFormattedDate(attachment.updated_at)}`}
+              >
+                <div className="flex items-center justify-center">
+                  <ButtonAvatars showProfileCard showTooltip userIds={attachment?.created_by} />
+                </div>
+              </Tooltip>
+            </>
+          )}
 
-            {/* Paradise KEP-88: images from the description/comments are read-only here. */}
-            {attachment.sumber === "description" || attachment.sumber === "comment" ? (
-              <LabelSumberTeks sumber={attachment.sumber} />
-            ) : (
-              <CustomMenu ellipsis closeOnSelect placement="bottom-end" disabled={disabled}>
-                <CustomMenu.MenuItem
-                  onClick={() => {
-                    toggleDeleteAttachmentModal(attachmentId);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <TrashIcon className="h-3.5 w-3.5" strokeWidth={2} />
-                    <span>{t("common.actions.delete")}</span>
-                  </div>
-                </CustomMenu.MenuItem>
-              </CustomMenu>
-            )}
-          </div>
+          {/* Paradise KEP-88: images from the description/comments are read-only here. */}
+          {attachment.sumber === "description" || attachment.sumber === "comment" ? (
+            <LabelSumberTeks sumber={attachment.sumber} />
+          ) : (
+            <CustomMenu
+              ariaLabel={t("aria_labels.common.more_actions")}
+              ellipsis
+              closeOnSelect
+              placement="bottom-end"
+              disabled={disabled}
+            >
+              <CustomMenu.MenuItem
+                onClick={() => {
+                  toggleDeleteAttachmentModal(attachmentId);
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <TrashIcon className="h-3.5 w-3.5" strokeWidth={2} />
+                  <span>{t("common.actions.delete")}</span>
+                </div>
+              </CustomMenu.MenuItem>
+            </CustomMenu>
+          )}
         </div>
-      </button>
+      </div>
     </>
   );
 });

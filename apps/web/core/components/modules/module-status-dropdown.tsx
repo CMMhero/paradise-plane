@@ -30,11 +30,12 @@ export const ModuleStatusDropdown = observer(function ModuleStatusDropdown(props
     <CustomSelect
       customButton={
         <span
-          className={`flex h-6 w-20 items-center justify-center rounded-sm text-center text-11 ${
+          // Teks memakai token teks utama; warna status tinggal di latar tipis. Teks berwarna status di atas
+          // latar status sendiri cuma 2-3:1 (axe color-contrast), terutama kuning/abu.
+          className={`flex h-6 w-20 items-center justify-center rounded-sm text-center text-11 text-primary ${
             isDisabled ? "cursor-not-allowed" : "cursor-pointer"
           }`}
           style={{
-            color: moduleStatus ? moduleStatus.color : "#a3a3a2",
             backgroundColor: moduleStatus ? `${moduleStatus.color}20` : "#a3a3a220",
           }}
         >

@@ -120,6 +120,7 @@ export const BlockItemAction = observer(function BlockItemAction(props: Props) {
       {/* favorite/unfavorite */}
       {canCurrentUserFavoritePage && (
         <FavoriteStar
+          ariaLabel={t("favorites")}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

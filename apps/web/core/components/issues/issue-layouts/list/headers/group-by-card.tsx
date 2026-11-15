@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { CircleDashed } from "lucide-react";
 import { PlusIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 // types
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssue, ISearchIssueResponse, TIssueGroupByOptions } from "@plane/types";
@@ -43,6 +44,7 @@ interface IHeaderGroupByCard {
 }
 
 export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHeaderGroupByCard) {
+  const { t } = useTranslation();
   const {
     groupID,
     groupBy,
@@ -129,10 +131,11 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           (renderExistingIssueModal ? (
             <CustomMenu
               customButton={
-                <span className="flex h-5 w-5 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1">
+                <span className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1">
                   <PlusIcon className="h-3.5 w-3.5" strokeWidth={2} />
                 </span>
               }
+              ariaLabel={t("add_work_item")}
             >
               <CustomMenu.MenuItem
                 onClick={() => {
@@ -150,14 +153,16 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
               </CustomMenu.MenuItem>
             </CustomMenu>
           ) : (
-            <div
-              className="flex h-5 w-5 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1"
+            <button
+              type="button"
+              className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1"
               onClick={() => {
                 setIsOpen(true);
               }}
+              aria-label={t("add_work_item")}
             >
               <PlusIcon width={14} strokeWidth={2} />
-            </div>
+            </button>
           ))}
 
         {isEpic ? (

@@ -93,7 +93,7 @@ function ProfileSettingsPage(props: Route.ComponentProps) {
           />
           <ProfileSettingsContent
             activeTab={profileTabId as TProfileSettingsTabs}
-            className="mx-auto w-fit max-w-225 min-w-0 grow px-page-x py-6 md:py-20"
+            className="mx-auto w-full max-w-225 min-w-0 shrink grow px-page-x py-6 md:py-20"
           />
         </div>
       </div>

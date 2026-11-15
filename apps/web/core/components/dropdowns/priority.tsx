@@ -427,6 +427,8 @@ export function PriorityDropdown(props: Props) {
           disabled={disabled}
           tabIndex={tabIndex}
         >
+          {/* nama tombol: varian tanpa teks hanya berisi ikon prioritas */}
+          <span className="sr-only">{t("priority")}</span>
           <ButtonToRender
             priority={value ?? undefined}
             className={buttonClassName}

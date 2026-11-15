@@ -17,6 +17,8 @@ export interface PopoverContentProps extends React.ComponentProps<typeof BasePop
   side?: TSide;
   containerRef?: React.RefObject<HTMLElement>;
   positionerClassName?: string;
+  /** Jangkar posisi bila popover tidak punya Popover.Button (pemicu dibuka dari luar). */
+  anchor?: BasePopover.Positioner.Props["anchor"];
 }
 
 // PopoverContent component
@@ -29,6 +31,7 @@ const PopoverContent = memo(function PopoverContent({
   sideOffset = 8,
   containerRef,
   positionerClassName,
+  anchor,
   ...props
 }: PopoverContentProps) {
   // side and align calculations
@@ -43,7 +46,13 @@ const PopoverContent = memo(function PopoverContent({
   return (
     // oxlint-disable-next-line react/refs -- container must be resolved on first render so the portal mounts in the right node; a state/effect copy would mount it in the default container first
     <PopoverPortal container={containerRef?.current}>
-      <PopoverPositioner side={finalSide} sideOffset={sideOffset} align={finalAlign} className={positionerClassName}>
+      <PopoverPositioner
+        side={finalSide}
+        sideOffset={sideOffset}
+        align={finalAlign}
+        className={positionerClassName}
+        anchor={anchor}
+      >
         <BasePopover.Popup data-slot="popover-content" className={className} {...props}>
           {children}
         </BasePopover.Popup>

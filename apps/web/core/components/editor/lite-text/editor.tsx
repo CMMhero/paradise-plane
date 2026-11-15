@@ -115,7 +115,7 @@ export const LiteTextEditor = React.forwardRef(function LiteTextEditor(
     workspaceSlug,
   });
   // use editor mention
-  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip } = useEditorMention({
+  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip, mentionLabels } = useEditorMention({
     workspaceSlug,
     searchEntity: async (payload) =>
       await workspaceService.searchEntity(workspaceSlug, {
@@ -172,6 +172,7 @@ export const LiteTextEditor = React.forwardRef(function LiteTextEditor(
               },
               searchHashCallback: fetchHashMentions,
               tip,
+              labels: mentionLabels,
               getMentionedEntityLabel,
               renderComponent: EditorMentionsRoot,
               getMentionedEntityDetails: (id) => ({

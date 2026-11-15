@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "@plane/i18n";
 // plane editor
 import type { TMentionSection, TMentionSuggestion } from "@plane/editor";
@@ -29,6 +29,8 @@ export const useEditorMention = (args: TArgs) => {
   const { enableAdvancedMentions = false, searchEntity, workspaceSlug } = args;
   const { t } = useTranslation();
   const { getEveryoneSection, fetchHashMentions, tip } = useRujukanMention({ workspaceSlug });
+  // Teks dropdown yang dirender paket editor (editor tidak punya i18n).
+  const mentionLabels = useMemo(() => ({ loading: t("rujukan_ui.loading"), noResults: t("rujukan_ui.none") }), [t]);
   // additional mentions
   const { editorMentionTypes, updateAdditionalSections } = useAdditionalEditorMention({
     enableAdvancedMentions,
@@ -93,6 +95,7 @@ export const useEditorMention = (args: TArgs) => {
                     entity_identifier: user.member__id,
                     entity_name: "user_mention",
                     isDisabled: true,
+                    disabledReason: t("rujukan_ui.outside_reason"),
                     title: user.member__display_name,
                   })),
                 },
@@ -112,5 +115,6 @@ export const useEditorMention = (args: TArgs) => {
     fetchHashMentions,
     getMentionedEntityLabel: getRujukanLabel,
     tip,
+    mentionLabels,
   };
 };

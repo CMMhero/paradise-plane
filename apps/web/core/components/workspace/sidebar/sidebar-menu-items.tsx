@@ -178,11 +178,8 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
                     onClick={() => toggleExtendedSidebar()}
                     className="flex flex-grow items-center gap-1.5 text-13 font-medium text-tertiary"
                     id="extended-sidebar-toggle"
-                    aria-label={t(
-                      isExtendedSidebarOpened
-                        ? "aria_labels.projects_sidebar.close_extended_sidebar"
-                        : "aria_labels.projects_sidebar.open_extended_sidebar"
-                    )}
+                    // nama dari teks terlihat ("Lainnya"/"Sembunyikan"); aria-label berbeda melanggar WCAG 2.5.3
+                    aria-expanded={isExtendedSidebarOpened}
                   >
                     <Ellipsis className="size-4 flex-shrink-0" />
                     <span>{isExtendedSidebarOpened ? t("hide") : t("more")}</span>

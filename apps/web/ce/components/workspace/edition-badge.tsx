@@ -22,7 +22,15 @@ export const WorkspaceEditionBadge = observer(function WorkspaceEditionBadge() {
 
   return (
     <Tooltip tooltipContent={`Versi v${packageJson.version}`} isMobile={isMobile}>
-      <span className="rounded-sm bg-layer-2 px-2 py-1 text-11 font-medium text-secondary">v{packageJson.version}</span>
+      {/* Fokusable supaya tooltip-nya terjangkau papan ketik, bukan hanya kursor. */}
+      <span
+        // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- tooltip trigger must be keyboard reachable
+        tabIndex={0}
+        aria-label={`Versi v${packageJson.version}`}
+        className="rounded-sm bg-layer-2 px-2 py-1 text-11 font-medium text-secondary focus-visible:ring-2 focus-visible:ring-accent-strong focus-visible:outline-none"
+      >
+        v{packageJson.version}
+      </span>
     </Tooltip>
   );
 });

@@ -40,8 +40,43 @@ export function BreadcrumbNavigationSearchDropdown(props: TBreadcrumbNavigationS
   // state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  return (
+  // Remah terakhir tidak bernavigasi: labelnya <span> di dalam tombol pemilih. Remah lain adalah tombol navigasi
+  // sendiri dan dirender DI SAMPING tombol pemilih, bukan di dalamnya (axe nested-interactive).
+  const LabelTag = isLast ? "span" : "button";
+  const navigationLabel = (
+    <Tooltip tooltipContent={title} position="bottom">
+      <LabelTag
+        {...(isLast ? {} : { type: "button" as const })}
+        onClick={(e: React.MouseEvent) => {
+          if (!isLast) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleOnClick?.();
+          }
+        }}
+        className={cn(
+          "group flex h-full cursor-pointer items-center gap-2 rounded-sm rounded-r-none px-1.5 py-1 text-13 font-medium text-tertiary",
+          {
+            "hover:bg-layer-1 hover:text-primary": !isLast,
+          }
+        )}
+      >
+        {shouldTruncate && <div className="flex text-tertiary @4xl:hidden">...</div>}
+        <div
+          className={cn("flex items-center gap-2", {
+            "hidden @4xl:flex": shouldTruncate,
+          })}
+        >
+          {icon && <Breadcrumbs.Icon>{icon}</Breadcrumbs.Icon>}
+          <Breadcrumbs.Label>{title}</Breadcrumbs.Label>
+        </div>
+      </LabelTag>
+    </Tooltip>
+  );
+
+  const select = (
     <CustomSearchSelect
+      ariaLabel={isLast ? undefined : title}
       onOpen={() => {
         setIsDropdownOpen(true);
       }}
@@ -57,33 +92,7 @@ export function BreadcrumbNavigationSearchDropdown(props: TBreadcrumbNavigationS
       }}
       customButton={
         <>
-          <Tooltip tooltipContent={title} position="bottom">
-            <button
-              onClick={(e) => {
-                if (!isLast) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleOnClick?.();
-                }
-              }}
-              className={cn(
-                "group flex h-full cursor-pointer items-center gap-2 rounded-sm rounded-r-none px-1.5 py-1 text-13 font-medium text-tertiary",
-                {
-                  "hover:bg-layer-1 hover:text-primary": !isLast,
-                }
-              )}
-            >
-              {shouldTruncate && <div className="flex text-tertiary @4xl:hidden">...</div>}
-              <div
-                className={cn("flex items-center gap-2", {
-                  "hidden @4xl:flex": shouldTruncate,
-                })}
-              >
-                {icon && <Breadcrumbs.Icon>{icon}</Breadcrumbs.Icon>}
-                <Breadcrumbs.Label>{title}</Breadcrumbs.Label>
-              </div>
-            </button>
-          </Tooltip>
+          {isLast && navigationLabel}
           <Breadcrumbs.Separator
             className={cn("rounded-r-sm", {
               "bg-layer-1": isDropdownOpen && !isLast,
@@ -107,5 +116,13 @@ export function BreadcrumbNavigationSearchDropdown(props: TBreadcrumbNavigationS
         }
       )}
     />
+  );
+
+  if (isLast) return select;
+  return (
+    <div className="flex h-full items-center">
+      {navigationLabel}
+      {select}
+    </div>
   );
 }

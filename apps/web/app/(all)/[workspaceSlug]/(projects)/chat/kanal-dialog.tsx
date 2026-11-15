@@ -132,7 +132,7 @@ export const DialogJelajahKanal = observer(function DialogJelajahKanal({
 
   return (
     <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XL}>
-      <div className="flex max-h-[75vh] flex-col">
+      <div className="flex max-h-[75dvh] flex-col">
         <div className="space-y-3 p-5 pb-3">
           <h3 className="text-18 font-medium text-secondary">{t("chat_ui.joinable_channels")}</h3>
           <div className="flex items-center gap-2 search-field border border-subtle px-2.5 py-1.5 focus-within:border-accent-strong">

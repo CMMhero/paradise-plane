@@ -22,6 +22,8 @@ type Placement =
   | "right-end";
 
 export interface IDropdownProps {
+  /** Nama aksesibel tombol pemicu. Wajib diisi bila `customButton` hanya berisi ikon. */
+  ariaLabel?: string;
   customButtonClassName?: string;
   customButtonTabIndex?: number;
   buttonClassName?: string;

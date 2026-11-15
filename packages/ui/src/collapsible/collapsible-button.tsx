@@ -4,10 +4,12 @@
  * See the LICENSE file for details.
  */
 
-import React from "react";
+import React, { useContext } from "react";
+import { createPortal } from "react-dom";
 import type { ISvgIcons } from "@plane/propel/icons";
 import { DropdownIcon } from "@plane/propel/icons";
 import { cn } from "../utils";
+import { CollapsibleActionsSlot } from "./actions-slot";
 
 type Props = {
   isOpen: boolean;
@@ -31,6 +33,8 @@ export function CollapsibleButton(props: Props) {
     titleClassName = "",
     ChevronIcon = DropdownIcon,
   } = props;
+  const actionsSlot = useContext(CollapsibleActionsSlot);
+  const actions = actionItemElement && isOpen ? actionItemElement : null;
   return (
     <div className={cn("flex h-12 items-center justify-between gap-3 border-b border-subtle px-2.5 py-3", className)}>
       <div className="flex items-center gap-3.5">
@@ -46,7 +50,7 @@ export function CollapsibleButton(props: Props) {
         </div>
         {indicatorElement && indicatorElement}
       </div>
-      {actionItemElement && isOpen && actionItemElement}
+      {actions && (actionsSlot ? createPortal(actions, actionsSlot) : actions)}
     </div>
   );
 }

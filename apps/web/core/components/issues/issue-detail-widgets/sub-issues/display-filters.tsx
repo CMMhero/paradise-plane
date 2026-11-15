@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { SlidersHorizontal } from "lucide-react";
 // plane imports
 import type { IIssueDisplayFilterOptions, ILayoutDisplayFiltersOptions, IIssueDisplayProperties } from "@plane/types";
+import { useTranslation } from "@plane/i18n";
 import { cn } from "@plane/utils";
 // components
 import {
@@ -29,6 +30,7 @@ type TSubIssueDisplayFiltersProps = {
 };
 
 export const SubIssueDisplayFilters = observer(function SubIssueDisplayFilters(props: TSubIssueDisplayFiltersProps) {
+  const { t } = useTranslation();
   const {
     isEpic = false,
     displayProperties,
@@ -48,10 +50,11 @@ export const SubIssueDisplayFilters = observer(function SubIssueDisplayFilters(p
       {layoutDisplayFiltersOptions?.display_filters && layoutDisplayFiltersOptions?.display_properties.length > 0 && (
         <FiltersDropdown
           placement="bottom-end"
+          title={t("common.display")}
           menuButton={
             <div
               className={cn(
-                "relative rounded-sm p-1 transition-all duration-200",
+                "relative rounded-sm p-[5px] transition-all duration-200",
                 isFilterApplied && "bg-accent-primary/20"
               )}
             >

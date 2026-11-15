@@ -31,6 +31,7 @@ const meta = {
   tags: ["autodocs"],
   args: {
     icon,
+    "aria-label": "Add",
   },
 } satisfies Meta<typeof IconButton>;
 
@@ -134,12 +135,12 @@ export const AllVariants: Story = {
         <div className="space-y-2">
           <h3 className="text-16 font-semibold">Primary Variants</h3>
           <div className="flex flex-wrap gap-2">
-            <IconButton variant="primary" icon={icon} />
-            <IconButton variant="error-fill" icon={icon} />
-            <IconButton variant="error-outline" icon={icon} />
-            <IconButton variant="secondary" icon={icon} />
-            <IconButton variant="tertiary" icon={icon} />
-            <IconButton variant="ghost" icon={icon} />
+            <IconButton aria-label="Add" variant="primary" icon={icon} />
+            <IconButton aria-label="Add" variant="error-fill" icon={icon} />
+            <IconButton aria-label="Add" variant="error-outline" icon={icon} />
+            <IconButton aria-label="Add" variant="secondary" icon={icon} />
+            <IconButton aria-label="Add" variant="tertiary" icon={icon} />
+            <IconButton aria-label="Add" variant="ghost" icon={icon} />
           </div>
         </div>
       </div>
@@ -152,10 +153,10 @@ export const AllSizes: Story = {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <IconButton size="sm" icon={icon} />
-          <IconButton size="base" icon={icon} />
-          <IconButton size="lg" icon={icon} />
-          <IconButton size="xl" icon={icon} />
+          <IconButton aria-label="Add" size="sm" icon={icon} />
+          <IconButton aria-label="Add" size="base" icon={icon} />
+          <IconButton aria-label="Add" size="lg" icon={icon} />
+          <IconButton aria-label="Add" size="xl" icon={icon} />
         </div>
       </div>
     );
@@ -169,9 +170,9 @@ export const AllStates: Story = {
         <div className="space-y-2">
           <h3 className="text-16 font-semibold">Button States</h3>
           <div className="flex flex-wrap gap-2">
-            <IconButton icon={icon} />
-            <IconButton loading icon={icon} />
-            <IconButton disabled icon={icon} />
+            <IconButton aria-label="Add" icon={icon} />
+            <IconButton aria-label="Add" loading icon={icon} />
+            <IconButton aria-label="Add" disabled icon={icon} />
           </div>
         </div>
       </div>

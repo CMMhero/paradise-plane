@@ -225,6 +225,12 @@ export const DescriptionInput = observer(function DescriptionInput(props: Props)
     []
   );
 
+  // Paradise: editor dimuat malas (lihat `lazy-editor.tsx`). Unduh bersamaan
+  // dengan data deskripsi, bukan sesudah data tiba.
+  useEffect(() => {
+    RichTextEditor.muatAwal();
+  }, []);
+
   if (!workspaceDetails) return null;
 
   if (!localDescription.description_html) return <DescriptionInputLoader />;
@@ -238,6 +244,8 @@ export const DescriptionInput = observer(function DescriptionInput(props: Props)
   return (
     <RichTextEditor
       key={entityId}
+      // kerangka yang sama dengan saat data dimuat, supaya tidak ada lompatan
+      fallbackMemuat={<DescriptionInputLoader />}
       editable={!disabled}
       ref={editorRef}
       id={entityId}

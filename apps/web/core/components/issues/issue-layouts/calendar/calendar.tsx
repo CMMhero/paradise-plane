@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { observer } from "mobx-react";
@@ -91,6 +91,12 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
   } = props;
   // states
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Paradise: pilihan tanggal dari pengguna tidak boleh ditimpa pilihan bawaan di bawah.
+  const hasUserPickedDateRef = useRef(false);
+  const handleSelectDate = useCallback((date: Date) => {
+    hasUserPickedDateRef.current = true;
+    setSelectedDate(date);
+  }, []);
   //refs
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
   // store hooks
@@ -107,6 +113,35 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
   const allWeeksOfActiveMonth = issueCalendarView.allWeeksOfActiveMonth;
 
   const formattedDatePayload = renderFormattedPayloadDate(selectedDate) ?? undefined;
+
+  // Paradise: bawaannya "hari ini". Kalau hari ini akhir pekan dan akhir pekan disembunyikan,
+  // daftar di HP kosong untuk hari yang bahkan tak tampil di grid. Pilih hari kerja terlihat
+  // terdekat yang punya item (atau hari kerja terdekat bila tak ada).
+  const activeDays =
+    layout === "week"
+      ? Object.values(issueCalendarView.allDaysOfActiveWeek ?? {})
+      : Object.values(allWeeksOfActiveMonth ?? {}).flatMap((week) => Object.values(week));
+  const isVisible = (date: Date) => showWeekends || ![0, 6].includes(date.getDay());
+  const defaultDateKey = (() => {
+    const today = new Date();
+    if (isVisible(today)) return renderFormattedPayloadDate(today);
+    const visibleDays = activeDays.map((day) => day.date).filter(isVisible);
+    const withItems = visibleDays.filter(
+      (date) => (groupedIssueIds?.[renderFormattedPayloadDate(date) ?? ""]?.length ?? 0) > 0
+    );
+    const pool = withItems.length > 0 ? withItems : visibleDays;
+    if (pool.length === 0) return renderFormattedPayloadDate(today);
+    const distance = (date: Date) => Math.abs(date.getTime() - today.getTime());
+    return renderFormattedPayloadDate(pool.reduce((best, date) => (distance(date) < distance(best) ? date : best)));
+  })();
+
+  useEffect(() => {
+    if (hasUserPickedDateRef.current || !defaultDateKey) return;
+    const [year, month, day] = defaultDateKey.split("-").map(Number);
+    setSelectedDate((current) =>
+      renderFormattedPayloadDate(current) === defaultDateKey ? current : new Date(year, month - 1, day)
+    );
+  }, [defaultDateKey]);
 
   // Enable Auto Scroll for calendar
   useEffect(() => {
@@ -134,7 +169,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
     <>
       <div className="flex h-full w-full flex-col overflow-hidden">
         <CalendarHeader
-          setSelectedDate={setSelectedDate}
+          setSelectedDate={handleSelectDate}
           issuesFilterStore={issuesFilterStore}
           updateFilters={updateFilters}
         />
@@ -154,7 +189,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
                     Object.entries(allWeeksOfActiveMonth).map(([weekNumber, week]: [string, ICalendarWeek]) => (
                       <CalendarWeekDays
                         selectedDate={selectedDate}
-                        setSelectedDate={setSelectedDate}
+                        setSelectedDate={handleSelectDate}
                         handleDragAndDrop={handleDragAndDrop}
                         issuesFilterStore={issuesFilterStore}
                         key={weekNumber}
@@ -179,7 +214,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
               {layout === "week" && (
                 <CalendarWeekDays
                   selectedDate={selectedDate}
-                  setSelectedDate={setSelectedDate}
+                  setSelectedDate={handleSelectDate}
                   handleDragAndDrop={handleDragAndDrop}
                   issuesFilterStore={issuesFilterStore}
                   week={issueCalendarView.allDaysOfActiveWeek}

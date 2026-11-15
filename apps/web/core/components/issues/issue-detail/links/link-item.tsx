@@ -109,6 +109,7 @@ export const IssueLinkItem = observer(function IssueLinkItem(props: TIssueLinkIt
             <LabelSumberTeks sumber={linkDetail.sumber} />
           ) : (
             <CustomMenu
+              ariaLabel={t("aria_labels.common.more_actions")}
               ellipsis
               buttonClassName="text-placeholder group-hover:text-secondary"
               placement="bottom-end"

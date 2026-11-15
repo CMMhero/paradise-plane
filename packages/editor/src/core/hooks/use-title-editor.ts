@@ -60,6 +60,8 @@ export const useTitleEditor = (props: TUseTitleEditorProps) => {
       editable,
       immediatelyRender: false,
       shouldRerenderOnTransaction: false,
+      // role="textbox" dari ProseMirror butuh nama (axe aria-input-field-name)
+      editorProps: { attributes: { "aria-label": "Title" } },
       extensions: [
         ...TitleExtensions,
         ...(extensions ?? []),

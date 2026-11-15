@@ -46,6 +46,9 @@ type IconButtonPropsWithChildren = React.ButtonHTMLAttributes<HTMLButtonElement>
     icon: React.FC<{ className?: string }>;
     loading?: boolean;
     iconClassName?: string;
+    /** Paradise: WAJIB. Tombol ikon tidak punya teks, jadi tanpa ini pembaca layar hanya menyebut "tombol"
+     *  (axe button-name). Dibuat wajib di tipe supaya pemanggil baru tidak bisa lupa. */
+    "aria-label": string;
   };
 export type IconButtonProps = Omit<IconButtonPropsWithChildren, "children">;
 

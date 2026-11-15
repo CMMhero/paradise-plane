@@ -271,7 +271,7 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
                     type="button"
                     onClick={handleMenuButtonClick}
                     disabled={disabled}
-                    className={`relative grid place-items-center rounded-sm p-1 text-secondary outline-none hover:text-primary ${
+                    className={`relative grid place-items-center rounded-sm p-[5px] text-secondary outline-none hover:text-primary ${
                       disabled ? "cursor-not-allowed" : "cursor-pointer hover:bg-layer-transparent-hover"
                     } ${buttonClassName}`}
                     tabIndex={customButtonTabIndex}

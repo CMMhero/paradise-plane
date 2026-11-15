@@ -293,6 +293,7 @@ export const CycleListItemAction = observer(function CycleListItemAction(props: 
       )}
       {isEditingAllowed && !cycleDetails.archived_at && (
         <FavoriteStar
+          ariaLabel={t("favorites")}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

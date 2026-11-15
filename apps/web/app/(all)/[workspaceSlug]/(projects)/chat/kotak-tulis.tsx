@@ -13,14 +13,18 @@ import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
 import { EmojiReactionPicker } from "@plane/propel/emoji-reaction";
 import { IconButton } from "@plane/propel/icon-button";
 import { PratinjauTautanDraf } from "@/components/pratinjau-tautan/kartu";
-import { DaftarRujukan, useRujukan } from "./pemilih-rujukan";
-import { DaftarSebut, useSebutan } from "./pemilih-sebut";
+import { DaftarRujukan, ID_DAFTAR_RUJUKAN, idOpsiRujukan, useRujukan } from "./pemilih-rujukan";
+import { DaftarSebut, ID_DAFTAR_SEBUT, idOpsiSebut, useSebutan } from "./pemilih-sebut";
 import type { TCalonSebut } from "./pemilih-sebut";
 import type { TRujukanKirim } from "@/services/chat.service";
 import { sambungTip } from "@/hooks/editor/placeholder-rujukan";
 import { berkasDariTempel } from "./unggah-lampiran";
 
 const TINGGI_TULIS_MAKS = 160;
+
+/** Layar sentuh (penunjuk kasar): papan ketik virtual tidak punya Shift+Enter
+ * yang nyaman, jadi Enter di sana mengganti baris dan Kirim lewat tombolnya. */
+const penunjukKasar = () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
 /** Pegangan halaman obrolan ke draf yang hidup di sini. */
 export type TKendaliKotakTulis = {
@@ -119,6 +123,16 @@ export function KotakTulis({
     el.style.height = `${Math.min(el.scrollHeight, TINGGI_TULIS_MAKS)}px`;
   };
 
+  // Pemilih yang terbuka ditunjuk textarea lewat atribut combobox ARIA.
+  const idDaftarAktif = sebutan.terbuka ? ID_DAFTAR_SEBUT : rujukan.terbuka ? ID_DAFTAR_RUJUKAN : undefined;
+  const idOpsiAktif = sebutan.terbuka
+    ? sebutan.cocok.length > 0
+      ? idOpsiSebut(sebutan.sorot)
+      : undefined
+    : rujukan.terbuka && rujukan.cocok.length > 0
+      ? idOpsiRujukan(rujukan.sorot)
+      : undefined;
+
   const isi = draf.trim();
   const kirimAtauSimpan = () => {
     if (menyunting) onSimpanSuntingan(isi);
@@ -200,11 +214,15 @@ export function KotakTulis({
               onTempelBerkas(berkas);
             }}
             onKeyDown={(e) => {
+              // Enter yang memilih kandidat IME (Jepang, Mandarin, Korea) bukan
+              // perintah kirim; keyCode 229 untuk peramban yang tidak mengisi isComposing.
+              if (e.nativeEvent.isComposing || e.keyCode === 229) return;
               // Pemilih sebutan yang terbuka menang atas Enter/Escape.
               if (sebutan.onKeyDown(e) || rujukan.onKeyDown(e)) return;
-              // Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
-              // sudah dibawa orang dari aplikasi obrolan lain.
-              if (e.key === "Enter" && !e.shiftKey) {
+              // Desktop: Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
+              // sudah dibawa orang dari aplikasi obrolan lain. Layar sentuh: Enter
+              // = baris baru, kirim lewat tombol Kirim.
+              if (e.key === "Enter" && !e.shiftKey && !penunjukKasar()) {
                 e.preventDefault();
                 kirimAtauSimpan();
               }
@@ -219,6 +237,13 @@ export function KotakTulis({
             // Petunjuk @/# ikut di placeholder (KEP-91), jadi hanya terlihat saat kotak kosong.
             placeholder={sambungTip(t("chat_ui.write_message"), t("rujukan_ui.tip_inline"))}
             aria-label={t("chat_ui.write_message")}
+            // Pola combobox ARIA untuk pemilih @ dan #: fokus tetap di textarea.
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <input> satu baris tidak bisa menumbuhkan tinggi
+            role="combobox"
+            aria-expanded={idDaftarAktif !== undefined}
+            aria-controls={idDaftarAktif}
+            aria-autocomplete="list"
+            aria-activedescendant={idOpsiAktif}
             className="block min-h-9 w-full resize-none rounded-field border border-subtle bg-transparent px-3 py-2 text-13 text-primary outline-none placeholder:text-placeholder focus:border-accent-strong"
           />
         </div>

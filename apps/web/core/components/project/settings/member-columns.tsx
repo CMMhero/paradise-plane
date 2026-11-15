@@ -11,6 +11,7 @@ import { CircleMinus } from "lucide-react";
 import { Disclosure } from "@headlessui/react";
 // plane imports
 import { ROLE, EUserPermissions, MEMBER_TRACKER_ELEMENTS } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { EUserProjectRoles, IUser, IWorkspaceMember, TProjectMembership } from "@plane/types";
 import { CustomMenu, CustomSelect } from "@plane/ui";
@@ -39,6 +40,7 @@ type AccountTypeProps = {
 };
 
 export function NameColumn(props: NameProps) {
+  const { t } = useTranslation();
   const { rowData, isAdmin, currentUser, setRemoveMemberModal } = props;
   // derived values
   const { avatar_url, display_name, email, first_name, id, last_name } = rowData.member;
@@ -74,6 +76,7 @@ export function NameColumn(props: NameProps) {
             </div>
             {(isAdmin || id === currentUser?.id) && (
               <CustomMenu
+                ariaLabel={t("aria_labels.common.more_actions")}
                 ellipsis
                 buttonClassName="p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                 optionsClassName="p-1.5"

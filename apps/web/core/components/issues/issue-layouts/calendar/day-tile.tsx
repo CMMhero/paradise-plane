@@ -131,6 +131,7 @@ export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
   if (!formattedDatePayload) return null;
   const issueIds = groupedIssueIds?.[formattedDatePayload];
 
+  const issueCount = getGroupIssueCount(formattedDatePayload) ?? issueIds?.length ?? 0;
   const isToday = date.date.toDateString() === new Date().toDateString();
   const isSelectedDate = date.date.toDateString() == selectedDate.toDateString();
 
@@ -145,7 +146,7 @@ export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
       <div ref={dayTileRef} className="group relative flex h-full w-full flex-col">
         {/* header */}
         <div
-          className={`hidden flex-shrink-0 justify-end px-2 py-1.5 text-right text-11 md:flex ${
+          className={`hidden flex-shrink-0 justify-end px-2 py-1.5 text-right text-12 md:flex ${
             isMonthLayout // if month layout, highlight current month days
               ? date.is_current_month
                 ? "font-medium"
@@ -197,7 +198,8 @@ export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
           type="button"
           onClick={() => setSelectedDate(date.date)}
           className={cn(
-            "mx-auto flex h-full w-full cursor-pointer flex-col items-center justify-start py-2.5 text-13 font-medium opacity-80 md:hidden",
+            // text-secondary, bukan opacity-80: opacity ikut memudarkan lencana tanggal terpilih sampai 3,85:1
+            "mx-auto flex h-full w-full cursor-pointer flex-col items-center justify-start py-2.5 text-13 font-medium text-secondary md:hidden",
             {
               "bg-layer-2": !isWeekend,
             }
@@ -211,6 +213,12 @@ export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
           >
             {date.date.getDate()}
           </div>
+          {/* Paradise: penanda hari yang punya item, supaya grid bulan di HP tidak tampak kosong. */}
+          <span
+            aria-hidden="true"
+            className={cn("mt-1 size-1.5 rounded-full", issueCount > 0 ? "bg-accent-primary" : "bg-transparent")}
+          />
+          {issueCount > 0 && <span className="sr-only">{`, ${issueCount} work item`}</span>}
         </button>
       </div>
     </>

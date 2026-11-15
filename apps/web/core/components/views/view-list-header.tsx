@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 // icons
 import { ListFilter } from "lucide-react";
 import { useOutsideClickDetector } from "@plane/hooks";
+import { useTranslation } from "@plane/i18n";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
 import { Input } from "@plane/ui";
 // plane helpers
@@ -28,6 +29,7 @@ type TViewListHeaderProps = {
 };
 
 export const ViewListHeader = observer(function ViewListHeader(props: TViewListHeaderProps) {
+  const { t } = useTranslation();
   // states
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   // refs
@@ -64,6 +66,7 @@ export const ViewListHeader = observer(function ViewListHeader(props: TViewListH
       <div className="flex items-center">
         {!isSearchOpen && (
           <IconButton
+            aria-label={t("search")}
             variant="ghost"
             size="lg"
             className="-mr-1"

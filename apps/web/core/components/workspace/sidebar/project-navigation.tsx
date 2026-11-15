@@ -65,7 +65,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
   const folderWiki = useFolderWikiProject(workspaceSlug, projectId, isNavKeyEnabled(WIKI_MATERIALS_NAV_KEY));
   // handlers
   const handleProjectClick = () => {
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 1024) {
       toggleSidebar();
     }
     // close the extended sidebar if it is open

@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // ui
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { EIssuesStoreType } from "@plane/types";
 import { ContextMenu, CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
@@ -23,6 +24,7 @@ import type { MenuItemFactoryProps } from "./helper";
 import { useArchivedIssueMenuItems } from "./helper";
 
 export const ArchivedIssueQuickActions = observer(function ArchivedIssueQuickActions(props: IQuickActionProps) {
+  const { t } = useTranslation();
   const {
     issue,
     handleDelete,
@@ -96,6 +98,7 @@ export const ArchivedIssueQuickActions = observer(function ArchivedIssueQuickAct
 
       <ContextMenu parentRef={parentRef} items={CONTEXT_MENU_ITEMS} />
       <CustomMenu
+        ariaLabel={t("aria_labels.common.more_actions")}
         ellipsis
         customButton={customActionButton}
         portalElement={portalElement}

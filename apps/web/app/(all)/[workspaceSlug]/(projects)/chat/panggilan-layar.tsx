@@ -129,7 +129,23 @@ export function PanggilanLayar({
 }: Props) {
   const { t } = useTranslation();
   const tata = tataPanggilan(status, pakaiVideo, Boolean(streamLokal), pesertaJauh.length);
-  if (!tata.tampil) return null;
+  const tombolUtamaRef = useRef<HTMLButtonElement>(null);
+  const tampil = tata.tampil;
+
+  // Dialog modal: fokus dipindah ke tombol utama (tutup, atau angkat saat
+  // berdering) begitu layar muncul, dan dikembalikan ke elemen sebelumnya saat
+  // layar hilang. Efek ini jalan lagi saat berpindah dering -> tersambung
+  // karena tombol yang tampil berganti.
+  useEffect(() => {
+    if (!tampil) return undefined;
+    const sebelumnya = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    tombolUtamaRef.current?.focus();
+    return () => {
+      // Hanya kalau sebelumnya masih ada di dokumen; elemen yang sudah dilepas tidak bisa difokus.
+      if (sebelumnya?.isConnected) sebelumnya.focus();
+    };
+  }, [tampil]);
+  if (!tampil) return null;
 
   const keterangan =
     status === "berdering"
@@ -143,7 +159,38 @@ export function PanggilanLayar({
             : t("chat_ui.call.connected");
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-3 sm:p-6">
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- penangan Escape/Tab milik dialog modal
+    <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <dialog> asli butuh showModal(); lapisan ini sengaja selalu terpasang
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="panggilan-layar-judul"
+      aria-describedby="panggilan-layar-keterangan"
+      className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-3 sm:p-6"
+      onKeyDown={(e) => {
+        // Escape TIDAK mengakhiri panggilan: satu ketukan tak sengaja tidak
+        // boleh memutus rapat. Menutup hanya lewat tombol Akhiri.
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        // Fokus terkurung di tombol layar ini selagi dialog modal terbuka.
+        if (e.key !== "Tab") return;
+        const tombol = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
+        if (tombol.length === 0) return;
+        const pertama = tombol[0];
+        const terakhir = tombol[tombol.length - 1];
+        const aktif = document.activeElement;
+        if (e.shiftKey && (aktif === pertama || !e.currentTarget.contains(aktif))) {
+          e.preventDefault();
+          terakhir.focus();
+        } else if (!e.shiftKey && (aktif === terakhir || !e.currentTarget.contains(aktif))) {
+          e.preventDefault();
+          pertama.focus();
+        }
+      }}
+    >
       <div className="relative flex min-h-0 w-full max-w-5xl flex-1 items-center justify-center">
         {tata.adaPeserta ? (
           // Kisi mengikuti RUANG YANG ADA, bukan jumlah peserta. `auto-fit`
@@ -176,20 +223,28 @@ export function PanggilanLayar({
         ) : null}
       </div>
 
-      <p className="mt-5 text-16 font-medium text-white">{judul}</p>
-      <p className="mt-1 text-13 text-white/60">{keterangan}</p>
-      {/* Angka byte adalah SATU-SATUNYA bukti media benar-benar mengalir. Status
-          koneksi, track yang tiba, bahkan tulisan "Tersambung" semuanya bisa
-          terlihat benar sementara nol byte berpindah. */}
-      <p className="mt-1 text-12 text-white/35">
-        {koneksi}
-        {streamLokal ? ` · ${t("chat_ui.call.mic_ready")}` : ` · ${t("chat_ui.call.mic_not_ready")}`}
-        {` · ${t("chat_ui.call.incoming")} `}
-        {Math.round(byteMasuk.audio / 1024)} {t("chat_ui.call.kb_audio")} / {Math.round(byteMasuk.video / 1024)}{" "}
-        {t("chat_ui.call.kb_video")}
+      <p id="panggilan-layar-judul" className="mt-5 text-16 font-medium text-white">
+        {judul}
       </p>
+      <p id="panggilan-layar-keterangan" className="mt-1 text-13 text-white/75">
+        {keterangan}
+      </p>
+      {/* Angka byte adalah SATU-SATUNYA bukti media benar-benar mengalir: status
+          koneksi, track yang tiba, bahkan tulisan "Tersambung" semuanya bisa
+          terlihat benar sementara nol byte berpindah. Tapi itu bahan diagnosis,
+          bukan informasi untuk orang yang sedang menelepon, jadi baris teknis ini
+          HANYA muncul saat sudah tersambung namun belum ada byte yang masuk. */}
       {status === "tersambung" && byteMasuk.audio === 0 && byteMasuk.video === 0 ? (
-        <p className="mt-2 max-w-md text-center text-12 text-label-yellow-icon">{t("chat_ui.call.no_data")}</p>
+        <>
+          <p className="mt-1 text-12 text-white/70">
+            {koneksi}
+            {streamLokal ? ` · ${t("chat_ui.call.mic_ready")}` : ` · ${t("chat_ui.call.mic_not_ready")}`}
+            {` · ${t("chat_ui.call.incoming")} `}
+            {Math.round(byteMasuk.audio / 1024)} {t("chat_ui.call.kb_audio")} / {Math.round(byteMasuk.video / 1024)}{" "}
+            {t("chat_ui.call.kb_video")}
+          </p>
+          <p className="mt-2 max-w-md text-center text-12 text-label-yellow-icon">{t("chat_ui.call.no_data")}</p>
+        </>
       ) : null}
 
       {/* Merah dan hijau di sini SENGAJA dipatok, bukan memakai token semantik.
@@ -205,15 +260,16 @@ export function PanggilanLayar({
               type="button"
               onClick={onAngkat}
               aria-label={t("chat_ui.call.accept")}
-              className="flex size-14 items-center justify-center rounded-control bg-success-primary text-white hover:opacity-90"
+              className="bg-green-600 hover:bg-green-700 flex size-14 items-center justify-center rounded-control text-white"
             >
               <Phone className="size-6" />
             </button>
             <button
+              ref={tombolUtamaRef}
               type="button"
               onClick={onTutup}
               aria-label={t("chat_ui.call.decline")}
-              className="flex size-14 items-center justify-center rounded-control bg-danger-primary text-white hover:bg-danger-primary-hover"
+              className="bg-red-600 hover:bg-red-700 flex size-14 items-center justify-center rounded-control text-white"
             >
               <PhoneOff className="size-6" />
             </button>
@@ -223,7 +279,11 @@ export function PanggilanLayar({
             <button
               type="button"
               onClick={() => onSetelMik(!mikMati)}
-              aria-label={mikMati ? t("chat_ui.call.mic_on") : t("chat_ui.call.mic_off")}
+              // Nama tetap, keadaannya lewat aria-pressed (menyala = ditekan); judul
+              // tooltip menyebut aksi berikutnya.
+              aria-label={t("chat_ui.call.mic_label")}
+              aria-pressed={!mikMati}
+              title={mikMati ? t("chat_ui.call.mic_on") : t("chat_ui.call.mic_off")}
               className="flex size-12 items-center justify-center rounded-control bg-white/15 text-white hover:bg-white/25"
             >
               {mikMati ? <MicOff className="size-5" /> : <Mic className="size-5" />}
@@ -232,17 +292,20 @@ export function PanggilanLayar({
               <button
                 type="button"
                 onClick={() => onSetelKamera(!kameraMati)}
-                aria-label={kameraMati ? t("chat_ui.call.camera_on") : t("chat_ui.call.camera_off")}
+                aria-label={t("chat_ui.call.camera_label")}
+                aria-pressed={!kameraMati}
+                title={kameraMati ? t("chat_ui.call.camera_on") : t("chat_ui.call.camera_off")}
                 className="flex size-12 items-center justify-center rounded-control bg-white/15 text-white hover:bg-white/25"
               >
                 {kameraMati ? <VideoOff className="size-5" /> : <Video className="size-5" />}
               </button>
             ) : null}
             <button
+              ref={tombolUtamaRef}
               type="button"
               onClick={onTutup}
               aria-label={t("chat_ui.call.end")}
-              className="flex size-14 items-center justify-center rounded-control bg-danger-primary text-white hover:bg-danger-primary-hover"
+              className="bg-red-600 hover:bg-red-700 flex size-14 items-center justify-center rounded-control text-white"
             >
               <PhoneOff className="size-6" />
             </button>

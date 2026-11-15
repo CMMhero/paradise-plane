@@ -72,7 +72,7 @@ export const MonthChartView = observer(function MonthChartView(_props: any) {
                   className={cn(
                     "flex flex-shrink-0 justify-between px-2 py-1 text-center capitalize outline-[0.25px] outline-subtle-1",
                     {
-                      "bg-accent-primary/20": weekBlock.today,
+                      "bg-accent-primary/10": weekBlock.today,
                     }
                   )}
                   style={{ width: `${currentViewData?.data.dayWidth * 7}px` }}
@@ -97,7 +97,7 @@ export const MonthChartView = observer(function MonthChartView(_props: any) {
               <div
                 key={`column-${weekBlock.startDate.toString()}-${weekBlock.endDate.toString()}`}
                 className={cn("h-full overflow-hidden outline-[0.25px] outline-subtle", {
-                  "bg-accent-primary/20": weekBlock.today,
+                  "bg-accent-primary/10": weekBlock.today,
                 })}
                 style={{ width: `${currentViewData?.data.dayWidth * 7}px` }}
               />

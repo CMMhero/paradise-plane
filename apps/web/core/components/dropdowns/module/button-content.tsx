@@ -91,16 +91,20 @@ export function ModuleButtonContent(props: ModuleButtonContentProps) {
                       isMobile={isMobile}
                       renderByDefault={false}
                     >
-                      <button
-                        type="button"
-                        className="flex-shrink-0"
-                        onClick={() => {
+                      {/* Pintasan tetikus saja: chip ini berada DI DALAM tombol pemicu dropdown, jadi tidak boleh
+                          jadi tombol sendiri (axe nested-interactive). Papan ketik/pembaca layar melepas modul
+                          lewat daftar di dropdown, yang memang multi-pilih. */}
+                      {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- lihat komentar di atas */}
+                      <span
+                        className="flex-shrink-0 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           const newModuleIds = value.filter((m) => m !== moduleId);
                           onChange(newModuleIds);
                         }}
                       >
                         <CloseIcon className="h-2.5 w-2.5 text-tertiary hover:text-danger-primary" />
-                      </button>
+                      </span>
                     </Tooltip>
                   )}
                 </div>

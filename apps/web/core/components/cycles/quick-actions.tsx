@@ -10,11 +10,11 @@ import { MoreHorizontal } from "lucide-react";
 // ui
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { IconButton } from "@plane/propel/icon-button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TContextMenuItem } from "@plane/ui";
 import { ContextMenu, CustomMenu } from "@plane/ui";
 import { copyUrlToClipboard, cn } from "@plane/utils";
+import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 // hooks
 import { useCycleMenuItems } from "@/components/common/quick-actions-helper";
 import { useCycle } from "@/hooks/store/use-cycle";
@@ -140,7 +140,8 @@ export const CycleQuickActions = observer(function CycleQuickActions(props: Prop
       )}
       <ContextMenu parentRef={parentRef} items={CONTEXT_MENU_ITEMS} />
       <CustomMenu
-        customButton={<IconButton variant="tertiary" size="lg" icon={MoreHorizontal} />}
+        customButton={<MenuTriggerIcon variant="tertiary" size="lg" icon={MoreHorizontal} />}
+        ariaLabel={t("aria_labels.common.more_actions")}
         placement="bottom-end"
         closeOnSelect
         maxHeight="lg"

@@ -88,6 +88,8 @@ export const IssueSubscription = observer(function IssueSubscription(props: TIss
         onClick={handleSubscription}
         disabled={!isEditable || loading}
         size="lg"
+        // teks disembunyikan di layar sempit; aria-label = teks yang terlihat di layar lebar
+        aria-label={t(isSubscribed ? "common.actions.unsubscribe" : "common.actions.subscribe")}
       >
         {loading ? (
           <span>

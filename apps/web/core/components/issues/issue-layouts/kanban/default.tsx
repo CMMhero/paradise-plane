@@ -5,6 +5,7 @@
  */
 
 import type { MutableRefObject } from "react";
+import { useSyncExternalStore } from "react";
 import { observer } from "mobx-react";
 import type {
   GroupByColumnTypes,
@@ -20,6 +21,7 @@ import type {
 } from "@plane/types";
 // constants
 import { ContentWrapper } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 import { KanbanColumnLoader } from "@/components/ui/loader/layouts/kanban-layout-loader";
@@ -69,6 +71,20 @@ export interface IKanBan {
   isEpic?: boolean;
 }
 
+/** Sama dengan batas `md` Tailwind: di bawahnya papan dipakai dengan satu jari. */
+const KUERI_SEMPIT = "(max-width: 767px)";
+const subscribeSempit = (callback: () => void) => {
+  const mql = window.matchMedia(KUERI_SEMPIT);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+};
+const useLayarSempit = () =>
+  useSyncExternalStore(
+    subscribeSempit,
+    () => window.matchMedia(KUERI_SEMPIT).matches,
+    () => false
+  );
+
 export const KanBan = observer(function KanBan(props: IKanBan) {
   const {
     issuesMap,
@@ -101,6 +117,7 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
   // store hooks
   const storeType = useIssueStoreType();
   const issueKanBanView = useKanbanView();
+  const layarSempit = useLayarSempit();
   // derived values
   const isDragDisabled = !issueKanBanView?.getCanUserDragDrop(group_by, sub_group_by);
 
@@ -142,12 +159,25 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
   const isGroupByCreatedBy = group_by === "created_by";
   const approximateCardHeight = getApproximateCardHeight(displayProperties);
   const isSubGroup = !!sub_group_id && sub_group_id !== "null";
+  const isGroupEmpty = (groupId: string) => (getGroupIssueCount(groupId, undefined, false) ?? 0) === 0;
+  // Paradise: di HP satu kolom hampir selebar layar, jadi kolom kosong (mis. Backlog 0)
+  // di depan membuat papan tampak kosong padahal ada belasan item. Kolom berisi
+  // didahulukan; urutan aslinya tetap di layar lebar.
+  const columns =
+    layarSempit && !sub_group_by
+      ? [...list.filter((g) => !isGroupEmpty(g.id)), ...list.filter((g) => isGroupEmpty(g.id))]
+      : list;
 
   return (
-    <ContentWrapper className={`relative flex-row gap-4 !pt-2 !pb-0`}>
-      {list &&
-        list.length > 0 &&
-        list.map((subList: IGroupByColumn, groupIndex) => {
+    <ContentWrapper
+      className={cn("relative flex-row gap-4 !pt-2 !pb-0", {
+        // Tanpa ini wrapper ini sendiri jadi wadah gulir terdekat dan scroll-snap kolom
+        // menempel padanya, bukan pada penggulir horizontal papan.
+        "max-md:overflow-visible": !sub_group_by,
+      })}
+    >
+      {columns.length > 0 &&
+        columns.map((subList: IGroupByColumn, groupIndex) => {
           const groupByVisibilityToggle = visibilityGroupBy(subList);
 
           if (groupByVisibilityToggle.showGroup === false) return <></>;
@@ -161,9 +191,15 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
           return (
             <div
               key={subList.id}
-              className={`group relative flex flex-shrink-0 flex-col ${
-                groupByVisibilityToggle.showIssues ? `w-[350px]` : ``
-              } `}
+              className={cn("group relative flex flex-shrink-0 flex-col", {
+                // Swimlane: lebar tetap supaya sejajar dengan judul sub-grup.
+                "w-[350px]": groupByVisibilityToggle.showIssues && !!sub_group_by,
+                // HP: ~80vw supaya kolom berikutnya mengintip, plus snap per kolom.
+                // Layar lebar: kolom kosong cukup selebar judulnya, tetap jadi target drop.
+                "w-[80vw] max-w-[350px] max-md:snap-start max-md:scroll-ml-4":
+                  groupByVisibilityToggle.showIssues && !sub_group_by,
+                "md:max-w-[220px]": groupByVisibilityToggle.showIssues && !sub_group_by && isGroupEmpty(subList.id),
+              })}
             >
               {sub_group_by === null && (
                 <div className="sticky top-0 z-[2] w-full flex-shrink-0 bg-surface-2 py-1">

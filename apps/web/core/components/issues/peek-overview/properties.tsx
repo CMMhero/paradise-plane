@@ -133,7 +133,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             buttonVariant="transparent-with-text"
             className="h-7.5 w-full grow rounded-sm"
             buttonContainerClassName="w-full text-left h-7.5"
-            buttonClassName={`text-body-xs-medium whitespace-nowrap [&_svg]:size-3.5 ${!issue?.priority || issue?.priority === "none" ? "text-placeholder" : ""}`}
+            buttonClassName={`text-body-xs-medium whitespace-nowrap [&_span]:text-body-xs-medium [&_svg]:size-3.5 ${!issue?.priority || issue?.priority === "none" ? "text-placeholder" : ""}`}
           />
         </SidebarPropertyListItem>
 
@@ -169,6 +169,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             className="group w-full grow"
             buttonContainerClassName="w-full text-left h-7.5"
             buttonClassName={`text-body-xs-medium ${issue?.start_date ? "" : "text-placeholder"}`}
+            labelClassName="text-body-xs-medium"
             hideIcon
             clearIconClassName="h-3 w-3 hidden group-hover:inline"
           />
@@ -197,6 +198,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
                   issue.approval_status
                 ),
               })}
+              labelClassName="text-body-xs-medium"
               hideIcon
               clearIconClassName="h-3 w-3 hidden group-hover:inline text-primary"
             />

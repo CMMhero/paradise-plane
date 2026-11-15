@@ -22,9 +22,9 @@ import { MentionsListDropdown } from "./mentions-list-dropdown";
 const noop = () => {};
 
 export const renderMentionsDropdown =
-  (args: Pick<TMentionHandler, "searchCallback" | "tip">): SuggestionOptions["render"] =>
+  (args: Pick<TMentionHandler, "searchCallback" | "tip" | "labels">): SuggestionOptions["render"] =>
   () => {
-    const { searchCallback, tip } = args;
+    const { searchCallback, tip, labels } = args;
     let component: ReactRenderer<CommandListInstance, MentionsListDropdownProps> | null = null;
     let cleanup: () => void = noop;
     let editorRef: Editor | null = null;
@@ -45,6 +45,7 @@ export const renderMentionsDropdown =
             ...props,
             searchCallback,
             tip,
+            labels,
             onClose: () => handleClose(props.editor),
           } satisfies MentionsListDropdownProps,
           editor: props.editor,

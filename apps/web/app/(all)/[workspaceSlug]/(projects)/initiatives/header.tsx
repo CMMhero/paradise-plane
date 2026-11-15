@@ -7,18 +7,23 @@
 
 import { observer } from "mobx-react";
 import { Target } from "lucide-react";
+// plane imports
+import { useTranslation } from "@plane/i18n";
 // ui
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 
 export const InitiativesHeader = observer(function InitiativesHeader() {
+  const { t } = useTranslation();
   return (
     <Header>
       <Header.LeftItem>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            component={<BreadcrumbLink label="Initiatives" icon={<Target className="h-4 w-4 text-tertiary" />} />}
+            component={
+              <BreadcrumbLink label={t("initiatives_ui.title")} icon={<Target className="h-4 w-4 text-tertiary" />} />
+            }
           />
         </Breadcrumbs>
       </Header.LeftItem>

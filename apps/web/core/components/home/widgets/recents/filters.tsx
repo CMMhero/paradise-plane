@@ -43,10 +43,11 @@ export const FiltersDropdown = observer(function FiltersDropdown(props: TFilters
       className={cn("flex w-fit justify-center text-11 text-secondary", className)}
       placement="bottom-start"
       customButton={
-        <button className="flex gap-1 rounded-button border border-subtle px-2 py-1 capitalize hover:bg-layer-transparent-hover">
+        // span, bukan button: CustomMenu sudah merender <button> pembungkus (axe nested-interactive)
+        <span className="flex gap-1 rounded-button border border-subtle px-2 py-1 capitalize hover:bg-layer-transparent-hover">
           <span className="my-auto text-13 font-medium">{t(title || "")}</span>
           <ChevronDownIcon className={cn("my-auto size-3 text-tertiary duration-300 hover:text-secondary")} />
-        </button>
+        </span>
       }
       customButtonClassName="flex justify-center"
       closeOnSelect

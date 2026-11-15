@@ -21,6 +21,7 @@ export function Popover(props: TPopover) {
     buttonClassName = "",
     popoverClassName = "",
     button,
+    buttonAriaLabel,
     disabled = false,
     panelClassName = "",
     children,
@@ -57,6 +58,7 @@ export function Popover(props: TPopover) {
             buttonClassName
           )}
           disabled={disabled}
+          aria-label={buttonAriaLabel}
         >
           {button ? button : <EllipsisVertical className="h-3 w-3" />}
         </HeadlessReactPopover.Button>

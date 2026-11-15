@@ -16,7 +16,7 @@ import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { cn } from "@plane/utils";
 import type { TDivisionDashboard, TDivisionGroup } from "@/services/workspace_dashboard.service";
-import { HealthPill, ProgressBar, TrendNote, divisionLabel, formatPercent } from "./bagian";
+import { ALERT_BANNER, HealthPill, ProgressBar, TrendNote, divisionLabel, formatPercent } from "./bagian";
 import type { TAttentionItem } from "./ringkasan";
 import { buildAttentionItems, buildHeadline, trendTone, weeklyDelta } from "./ringkasan";
 
@@ -84,6 +84,8 @@ export function SummaryView({ workspaceSlug, data, onShowDetail }: Props) {
   );
 }
 
+const BANNER = "rounded-card border border-l-4 border-subtle bg-layer-1 px-4 py-3 text-14 leading-relaxed text-primary";
+
 function Headline({ divisions }: { divisions: TDivisionGroup[] }) {
   const { t } = useTranslation();
   const headline = buildHeadline(divisions);
@@ -92,20 +94,10 @@ function Headline({ divisions }: { divisions: TDivisionGroup[] }) {
     return <p className="text-14 text-tertiary">{t("division_dashboard_ui.headline_empty")}</p>;
   }
   if (headline.kind === "all_ok") {
-    return (
-      <p className="rounded-card bg-success-subtle px-4 py-3 text-14 text-primary">
-        {t("division_dashboard_ui.headline_all_ok")}
-      </p>
-    );
+    return <p className={cn(BANNER, ALERT_BANNER.lancar)}>{t("division_dashboard_ui.headline_all_ok")}</p>;
   }
-  const isCritical = headline.worst.health === "kritis";
   return (
-    <p
-      className={cn(
-        "rounded-card px-4 py-3 text-14 leading-relaxed text-primary",
-        isCritical ? "bg-danger-subtle" : "bg-warning-subtle"
-      )}
-    >
+    <p className={cn(BANNER, ALERT_BANNER[headline.worst.health])}>
       {t("division_dashboard_ui.headline_ok_count", { ok: headline.ok, total: headline.total })}{" "}
       <span className="font-semibold">
         {t("division_dashboard_ui.headline_worst", {
@@ -174,7 +166,7 @@ function DivisionCard({ division }: { division: TDivisionGroup }) {
         <HealthPill health={division.health} />
       </div>
       <div className="mt-3 mb-1.5">
-        <ProgressBar percent={division.completion_rate} />
+        <ProgressBar percent={division.completion_rate} health={division.health} />
       </div>
       <div className="flex justify-between gap-2 text-12 text-tertiary">
         <span>{t("division_dashboard_ui.done_pct", { pct: formatPercent(division.completion_rate) })}</span>

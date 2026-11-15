@@ -149,9 +149,54 @@ export const MemberDropdownBase = observer(function MemberDropdownBase(props: TM
       </div>
     );
 
+  // Paradise (audit a11y): avatar yang membuka kartu profil adalah tombol sendiri. Di dalam tombol pemicu
+  // dropdown, itu tombol di dalam tombol (axe nested-interactive): Tab berhenti di dua tempat yang bertumpuk dan
+  // pembaca layar tidak bisa memisahkan keduanya. Jadi chip-nya dibelah: avatar (kartu profil) berdiri sendiri,
+  // tombol pemicu hanya membungkus nama + panah. Tampilannya tetap satu chip.
+  const splitProfileTrigger = showProfileCard && hasMembers && !disabled && !button;
+  const splitButton = splitProfileTrigger ? (
+    <div className={cn("flex h-full max-w-full items-center", buttonContainerClassName)}>
+      <DropdownButton
+        className={buttonClassName}
+        isActive={isOpen}
+        tooltipHeading={placeholder}
+        tooltipContent={
+          tooltipContent ?? `${value?.length ?? 0} ${value?.length !== 1 ? t("assignees") : t("assignee")}`
+        }
+        showTooltip={showTooltip}
+        variant={buttonVariant}
+        renderToolTipByDefault={renderByDefault}
+      >
+        {!hideIcon && (
+          <ButtonAvatars showTooltip={showTooltip} userIds={value} icon={icon} showProfileCard={showProfileCard} />
+        )}
+        <button
+          ref={setReferenceElement}
+          type="button"
+          // min-w-6: sasaran sentuh 24px di samping avatar (WCAG 2.5.8)
+          className="clickable flex h-full min-w-6 cursor-pointer items-center justify-center gap-1.5 self-stretch outline-none"
+          onClick={handleOnClick}
+          tabIndex={tabIndex}
+          aria-label={hasText ? undefined : placeholder}
+        >
+          {hasText && (
+            <span className="flex-grow truncate text-left text-caption-sm-medium leading-5">
+              {getDisplayName(value, showUserDetails, placeholder)}
+            </span>
+          )}
+          {(dropdownArrow || !hasText) && (
+            <ChevronDownIcon className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
+          )}
+        </button>
+      </DropdownButton>
+    </div>
+  ) : null;
+
   const comboButton = (
     <>
-      {button ? (
+      {splitButton ? (
+        splitButton
+      ) : button ? (
         <button
           ref={setReferenceElement}
           type="button"

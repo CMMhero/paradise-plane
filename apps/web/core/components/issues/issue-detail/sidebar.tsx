@@ -133,7 +133,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 buttonVariant="transparent-with-text"
                 className="h-7.5 w-full grow rounded-sm"
                 buttonContainerClassName="size-full text-left"
-                buttonClassName="size-full px-2 py-0.5 whitespace-nowrap [&_svg]:size-3.5"
+                buttonClassName="size-full px-2 py-0.5 whitespace-nowrap [&_span]:text-body-xs-regular [&_svg]:size-3.5"
               />
             </SidebarPropertyListItem>
 
@@ -165,6 +165,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 className="group w-full grow"
                 buttonContainerClassName="w-full text-left h-7.5"
                 buttonClassName={`text-body-xs-regular ${issue?.start_date ? "" : "text-placeholder"}`}
+                labelClassName="text-body-xs-regular"
                 hideIcon
                 clearIconClassName="h-3 w-3 hidden group-hover:inline"
               />
@@ -197,6 +198,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                       issue.approval_status
                     ),
                   })}
+                  labelClassName="text-body-xs-regular"
                   hideIcon
                   clearIconClassName="h-3 w-3 hidden group-hover:inline text-primary"
                 />

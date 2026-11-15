@@ -60,7 +60,11 @@ const KartuPopup = ({
 }) => {
   const { t } = useTranslation();
   const [terlihat, setTerlihat] = useState(false);
-  const [berjalan, setBerjalan] = useState(false);
+  const [siap, setSiap] = useState(false);
+  // Hitungan mundur berhenti selama kursor ATAU fokus papan ketik ada di kartu.
+  const [disinggahi, setDisinggahi] = useState(false);
+  const [terfokus, setTerfokus] = useState(false);
+  const berjalan = siap && !disinggahi && !terfokus;
   const jam = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tutup = useCallback(() => {
@@ -75,7 +79,7 @@ const KartuPopup = ({
     const bingkai = requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         setTerlihat(true);
-        setBerjalan(true);
+        setSiap(true);
       })
     );
     return () => cancelAnimationFrame(bingkai);
@@ -100,10 +104,15 @@ const KartuPopup = ({
     <div
       // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <output> would change layout semantics of the toast container
       role="status"
-      onMouseEnter={() => setBerjalan(false)}
-      onMouseLeave={() => setBerjalan(true)}
+      onMouseEnter={() => setDisinggahi(true)}
+      onMouseLeave={() => setDisinggahi(false)}
+      onFocus={() => setTerfokus(true)}
+      onBlur={(e) => {
+        // Fokus pindah di dalam kartu (tombol buka -> tombol tutup) tidak dihitung keluar.
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setTerfokus(false);
+      }}
       className={cn(
-        "group pointer-events-auto relative w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-popover",
+        "group pointer-events-auto relative w-full overflow-hidden rounded-popover sm:w-[22rem]",
         "border border-subtle bg-surface-1 shadow-overlay-200",
         "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
         "motion-reduce:translate-x-0 motion-reduce:transition-opacity",
@@ -184,7 +193,7 @@ export const TumpukanPopup = ({
   if (daftar.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed top-[4.5rem] right-4 z-[90] flex flex-col items-end gap-2">
+    <div className="pointer-events-none fixed top-[4.5rem] right-4 left-4 z-[90] flex flex-col items-end gap-2 sm:left-auto">
       {daftar.map((p) => (
         <KartuPopup key={p.id} data={p} onTutup={onTutup} onBuka={onBuka} />
       ))}

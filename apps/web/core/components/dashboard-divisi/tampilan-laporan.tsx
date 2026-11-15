@@ -42,7 +42,7 @@ const TIMING_CLASS: Record<TReportTiming, string> = {
 const isPeriod = (value: unknown): value is TReportPeriod => REPORT_PERIODS.includes(value as TReportPeriod);
 
 export function ReportView({ workspaceSlug }: { workspaceSlug: string }) {
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
   const { storedValue, setValue: setPeriod } = useLocalStorage<TReportPeriod>(PERIOD_STORAGE_KEY, "7d");
   const period: TReportPeriod = isPeriod(storedValue) ? storedValue : "7d";
   const { data, isLoading } = useSWR(
@@ -79,8 +79,8 @@ export function ReportView({ workspaceSlug }: { workspaceSlug: string }) {
           {data && (
             <span className="text-12 text-tertiary">
               {t("division_dashboard_ui.report_range", {
-                start: formatDay(data.period.start),
-                end: formatDay(data.period.end, true),
+                start: formatDay(data.period.start, currentLocale),
+                end: formatDay(data.period.end, currentLocale, true),
               })}
             </span>
           )}
@@ -250,7 +250,7 @@ function ProjectItems({
 }
 
 function CompletedRow({ workspaceSlug, item }: { workspaceSlug: string; item: TCompletedItem }) {
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
   const href = generateWorkItemLink({
     workspaceSlug,
     projectId: item.project_id,
@@ -276,7 +276,9 @@ function CompletedRow({ workspaceSlug, item }: { workspaceSlug: string; item: TC
         <span className="max-w-[12rem] min-w-0 flex-1 truncate text-12 text-tertiary sm:flex-none" title={assignees}>
           {assignees}
         </span>
-        <span className="w-16 shrink-0 text-right text-12 text-tertiary">{formatDay(item.completed_date)}</span>
+        <span className="w-16 shrink-0 text-right text-12 text-tertiary">
+          {formatDay(item.completed_date, currentLocale)}
+        </span>
         <span
           className={cn(
             "inline-flex shrink-0 items-center rounded-control px-2 py-0.5 text-11 font-semibold whitespace-nowrap",

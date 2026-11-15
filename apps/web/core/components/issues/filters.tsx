@@ -128,7 +128,14 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
         />
       </FiltersDropdown>
       {canUserCreateIssue && isModuleEnabled("analytics") ? (
-        <Button className="hidden px-2 md:block" onClick={() => setAnalyticsModal(true)} variant="secondary" size="lg">
+        <Button
+          className="hidden px-2 md:block"
+          onClick={() => setAnalyticsModal(true)}
+          variant="secondary"
+          size="lg"
+          // di lebar sedang hanya ikon yang tampil; aria-label = teks yang terlihat di layar lebar
+          aria-label={t("common.analytics")}
+        >
           <div className="hidden @4xl:flex">{t("common.analytics")}</div>
           <div className="flex @4xl:hidden">
             <ChartNoAxesColumn className="size-3.5" />

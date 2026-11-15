@@ -83,6 +83,7 @@ export const GroupItem = observer(function GroupItem(props: TGroupItem) {
         <button
           type="button"
           data-ph-element={STATE_TRACKER_ELEMENTS.STATE_GROUP_ADD_BUTTON}
+          aria-label={`${t("project_settings.workflows.detail.add_states")}: ${groupKey}`}
           className={cn(
             "flex h-6 w-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm text-accent-primary/80 transition-colors hover:bg-layer-1 hover:text-accent-primary",
             (!isEditable || createState) && "cursor-not-allowed text-placeholder hover:text-placeholder"

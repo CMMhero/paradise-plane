@@ -4,8 +4,6 @@
  * See the LICENSE file for details.
  */
 
-// external imports
-import { fileTypeFromBuffer } from "file-type";
 // plane imports
 import type { TFileMetaDataLite, TFileSignedURLResponse } from "@plane/types";
 import { DANGEROUS_EXTENSIONS, resolveFileMimeType } from "@plane/constants";
@@ -74,6 +72,11 @@ const detectMimeTypeFromSignature = async (file: File): Promise<string> => {
     const buffer = await chunk.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
+    // Paradise: `file-type` (plus pembaca zip/tokenizer-nya) dimuat saat ada
+    // berkas yang diunggah. Impor statis menaruhnya di bundel awal setiap
+    // halaman web lewat api.service. Gagal memuat jatuh ke `catch` di bawah,
+    // jalur yang sama dengan "tipe tidak dikenali".
+    const { fileTypeFromBuffer } = await import("file-type");
     const fileType = await fileTypeFromBuffer(uint8Array);
     return fileType?.mime || "";
   } catch (_error) {

@@ -17,7 +17,7 @@ export const buttonVariants = cva(
         "error-fill":
           "bg-danger-primary text-on-color hover:bg-danger-primary-hover active:bg-danger-primary-active disabled:bg-layer-disabled disabled:text-disabled",
         "error-outline":
-          "border border-danger-strong bg-layer-2 text-danger-secondary hover:bg-danger-subtle active:bg-danger-subtle-hover disabled:border-subtle-1 disabled:bg-layer-2 disabled:text-disabled",
+          "border border-danger-strong bg-layer-2 text-danger-primary hover:bg-danger-subtle active:bg-danger-subtle-hover disabled:border-subtle-1 disabled:bg-layer-2 disabled:text-disabled",
         secondary:
           "border border-strong bg-layer-2 text-secondary hover:bg-layer-2-hover active:bg-layer-2-active disabled:border-subtle-1 disabled:bg-layer-transparent disabled:text-disabled",
         tertiary:

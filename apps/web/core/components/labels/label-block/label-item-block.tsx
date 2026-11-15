@@ -9,6 +9,7 @@ import { useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 // plane helpers
 import { PROJECT_SETTINGS_TRACKER_ELEMENTS } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { useOutsideClickDetector } from "@plane/hooks";
 import type { ISvgIcons } from "@plane/propel/icons";
 import { CloseIcon } from "@plane/propel/icons";
@@ -41,6 +42,7 @@ interface ILabelItemBlock {
 }
 
 export function LabelItemBlock(props: ILabelItemBlock) {
+  const { t } = useTranslation();
   const {
     label,
     isDragging,
@@ -81,7 +83,12 @@ export function LabelItemBlock(props: ILabelItemBlock) {
               : "opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
           } ${isLabelGroup && "-top-0.5"}`}
         >
-          <CustomMenu ellipsis menuButtonOnClick={() => setIsMenuActive(!isMenuActive)} useCaptureForOutsideClick>
+          <CustomMenu
+            ariaLabel={t("aria_labels.common.more_actions")}
+            ellipsis
+            menuButtonOnClick={() => setIsMenuActive(!isMenuActive)}
+            useCaptureForOutsideClick
+          >
             {customMenuItems.map(
               ({ isVisible, onClick, CustomIcon, text, key }) =>
                 isVisible && (

@@ -5,13 +5,15 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Dialog } from "@headlessui/react";
 import { useParams } from "react-router";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { RadioGroup } from "@plane/propel/radio-group";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // services
 import { penempatanService } from "@/services/penempatan.service";
 
@@ -42,23 +44,6 @@ export function PilihDepartemen() {
   );
 
   const tampil = !!slug && !!data?.perlu_pilih && !ditunda;
-
-  // Escape = "Nanti saja", sama seperti tombolnya; layar ini tidak boleh jadi
-  // jalan buntu bagi yang memakai papan ketik.
-  useEffect(() => {
-    if (!tampil) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      try {
-        sessionStorage.setItem(KUNCI_NANTI, "1");
-      } catch {
-        // sessionStorage bisa diblokir; penundaan cukup untuk layar ini.
-      }
-      setDitunda(true);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [tampil]);
 
   if (!tampil || !slug || !data) return null;
 
@@ -100,52 +85,54 @@ export function PilihDepartemen() {
     return acc;
   }, {});
 
+  // ModalCore (headlessui Dialog) memberi jebakan fokus, kunci gulir latar, dan
+  // Escape/klik latar = "Nanti saja", jadi layar ini tidak jadi jalan buntu bagi
+  // pengguna papan ketik. Saat menyimpan, penutupan dimatikan supaya tidak
+  // memutus permintaan yang sedang jalan.
   return (
-    <div
-      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- native <dialog> needs open/showModal and changes default styling
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="pilih-departemen-judul"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    <ModalCore
+      isOpen
+      handleClose={menyimpan ? undefined : nanti}
+      position={EModalPosition.CENTER}
+      width={EModalWidth.MD}
+      className="flex max-h-[85dvh] flex-col gap-4 border border-subtle p-5"
     >
-      <div className="flex max-h-[85vh] w-full max-w-md flex-col gap-4 rounded-overlay border border-subtle bg-surface-1 p-5">
-        <div>
-          <h2 id="pilih-departemen-judul" className="text-16 font-semibold">
-            {t("department_picker_ui.title")}
-          </h2>
-          <p className="mt-1 text-13 text-secondary">{t("department_picker_ui.description")}</p>
-        </div>
-        {/* Satu grup untuk semua divisi supaya tombol panah berpindah lintas divisi. */}
-        <RadioGroup
-          name="departemen"
-          aria-labelledby="pilih-departemen-judul"
-          className="gap-3 overflow-y-auto"
-          value={terpilih}
-          onValueChange={setTerpilih}
-        >
-          {Object.entries(perDivisi).map(([divisi, daftar]) => (
-            <fieldset key={divisi} className="flex flex-col gap-1">
-              <legend className="mb-1 text-12 font-medium text-tertiary">{divisi}</legend>
-              {daftar.map((d) => (
-                <RadioGroup.Item
-                  key={d.id}
-                  value={d.id}
-                  label={d.nama}
-                  className="border border-subtle px-3 py-2 has-[[data-checked]]:border-accent-strong has-[[data-checked]]:bg-accent-subtle"
-                />
-              ))}
-            </fieldset>
-          ))}
-        </RadioGroup>
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={nanti} disabled={menyimpan}>
-            {t("notification_ui.later")}
-          </Button>
-          <Button variant="primary" onClick={() => void simpan()} disabled={!terpilih || menyimpan}>
-            {menyimpan ? t("saving") : t("save")}
-          </Button>
-        </div>
+      <div>
+        <Dialog.Title as="h2" id="pilih-departemen-judul" className="text-16 font-semibold">
+          {t("department_picker_ui.title")}
+        </Dialog.Title>
+        <p className="mt-1 text-13 text-secondary">{t("department_picker_ui.description")}</p>
       </div>
-    </div>
+      {/* Satu grup untuk semua divisi supaya tombol panah berpindah lintas divisi. */}
+      <RadioGroup
+        name="departemen"
+        aria-labelledby="pilih-departemen-judul"
+        className="gap-3 overflow-y-auto"
+        value={terpilih}
+        onValueChange={setTerpilih}
+      >
+        {Object.entries(perDivisi).map(([divisi, daftar]) => (
+          <fieldset key={divisi} className="flex flex-col gap-1">
+            <legend className="mb-1 text-12 font-medium text-tertiary">{divisi}</legend>
+            {daftar.map((d) => (
+              <RadioGroup.Item
+                key={d.id}
+                value={d.id}
+                label={d.nama}
+                className="border border-subtle px-3 py-2 has-[[data-checked]]:border-accent-strong has-[[data-checked]]:bg-accent-subtle"
+              />
+            ))}
+          </fieldset>
+        ))}
+      </RadioGroup>
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={nanti} disabled={menyimpan}>
+          {t("notification_ui.later")}
+        </Button>
+        <Button variant="primary" onClick={() => void simpan()} disabled={!terpilih || menyimpan}>
+          {menyimpan ? t("saving") : t("save")}
+        </Button>
+      </div>
+    </ModalCore>
   );
 }

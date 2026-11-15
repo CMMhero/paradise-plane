@@ -101,6 +101,7 @@ export class WorkspaceIssues extends BaseIssuesStore implements IWorkspaceIssues
     options: IssuePaginationOptions,
     isExistingPaginationOptions: boolean = false
   ) => {
+    let signal: AbortSignal | undefined;
     try {
       // set loader and clear store
       runInAction(() => {
@@ -111,14 +112,18 @@ export class WorkspaceIssues extends BaseIssuesStore implements IWorkspaceIssues
       // get params from pagination options
       const params = this.issueFilterStore?.getFilterParams(options, viewId, undefined, undefined, undefined);
       // call the fetch issues API with the params
+      signal = this.controller.signal;
       const response = await this.workspaceService.getViewIssues(workspaceSlug, params, {
-        signal: this.controller.signal,
+        signal,
       });
 
       // after fetching issues, call the base method to process the response further
       this.onfetchIssues(response, options, workspaceSlug, undefined, undefined, !isExistingPaginationOptions);
       return response;
     } catch (error) {
+      // A newer fetch called clear(), which aborted this request. That fetch owns the
+      // loader and the result, so end quietly instead of rejecting with `undefined`.
+      if (signal?.aborted) return undefined;
       // set loader to undefined if errored out
       this.setLoader(undefined);
       throw error;

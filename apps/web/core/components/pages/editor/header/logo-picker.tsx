@@ -36,6 +36,7 @@ export const PageEditorHeaderLogoPicker = observer(function PageEditorHeaderLogo
         handleToggle={(val) => setIsLogoPickerOpen(val)}
         className="flex items-center justify-center"
         buttonClassName="flex items-center justify-center"
+        buttonAriaLabel="Icon"
         label={
           <div
             className={cn("-ml-[8px] grid size-[56px] place-items-center rounded-sm transition-colors", {
