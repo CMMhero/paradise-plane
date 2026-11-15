@@ -4,6 +4,7 @@
       "workspace_logo": "Arbeitsbereich-Logo",
       "open_workspace_switcher": "Arbeitsbereich-Umschalter öffnen",
       "open_user_menu": "Benutzermenü öffnen",
+      "open_help_menu": "Hilfemenü öffnen",
       "open_command_palette": "Befehlspalette öffnen",
       "open_extended_sidebar": "Erweiterte Seitenleiste öffnen",
       "close_extended_sidebar": "Erweiterte Seitenleiste schließen",
@@ -29,6 +30,9 @@
       "hide_password": "Passwort verbergen",
       "close_alert": "Warnung schließen",
       "close_popover": "Popover schließen"
+    },
+    "common": {
+      "more_actions": "Weitere Aktionen"
     }
   }
 }

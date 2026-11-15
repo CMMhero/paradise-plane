@@ -4,6 +4,7 @@
       "workspace_logo": "ワークスペースロゴ",
       "open_workspace_switcher": "ワークスペーススイッチャーを開く",
       "open_user_menu": "ユーザーメニューを開く",
+      "open_help_menu": "ヘルプメニューを開く",
       "open_command_palette": "コマンドパレットを開く",
       "open_extended_sidebar": "拡張サイドバーを開く",
       "close_extended_sidebar": "拡張サイドバーを閉じる",
@@ -29,6 +30,9 @@
       "hide_password": "パスワードを非表示",
       "close_alert": "アラートを閉じる",
       "close_popover": "ポップオーバーを閉じる"
+    },
+    "common": {
+      "more_actions": "その他の操作"
     }
   }
 }

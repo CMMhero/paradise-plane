@@ -4,6 +4,7 @@
       "workspace_logo": "工作空間標誌",
       "open_workspace_switcher": "打開工作空間切換器",
       "open_user_menu": "打開用戶選單",
+      "open_help_menu": "開啟說明選單",
       "open_command_palette": "打開命令面板",
       "open_extended_sidebar": "打開擴展側邊欄",
       "close_extended_sidebar": "關閉擴展側邊欄",
@@ -29,6 +30,9 @@
       "hide_password": "隱藏密碼",
       "close_alert": "關閉警告",
       "close_popover": "關閉彈出框"
+    },
+    "common": {
+      "more_actions": "更多操作"
     }
   }
 }

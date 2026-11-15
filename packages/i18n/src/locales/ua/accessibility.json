@@ -4,6 +4,7 @@
       "workspace_logo": "Логотип робочого простору",
       "open_workspace_switcher": "Відкрити перемикач робочого простору",
       "open_user_menu": "Відкрити меню користувача",
+      "open_help_menu": "Відкрити меню довідки",
       "open_command_palette": "Відкрити палітру команд",
       "open_extended_sidebar": "Відкрити розширену бічну панель",
       "close_extended_sidebar": "Закрити розширену бічну панель",
@@ -29,6 +30,9 @@
       "hide_password": "Приховати пароль",
       "close_alert": "Закрити сповіщення",
       "close_popover": "Закрити спливаюче вікно"
+    },
+    "common": {
+      "more_actions": "Інші дії"
     }
   }
 }

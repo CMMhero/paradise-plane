@@ -4,6 +4,7 @@
       "workspace_logo": "워크스페이스 로고",
       "open_workspace_switcher": "워크스페이스 전환기 열기",
       "open_user_menu": "사용자 메뉴 열기",
+      "open_help_menu": "도움말 메뉴 열기",
       "open_command_palette": "명령 팔레트 열기",
       "open_extended_sidebar": "확장된 사이드바 열기",
       "close_extended_sidebar": "확장된 사이드바 닫기",
@@ -29,6 +30,9 @@
       "hide_password": "비밀번호 숨기기",
       "close_alert": "알림 닫기",
       "close_popover": "팝오버 닫기"
+    },
+    "common": {
+      "more_actions": "추가 작업"
     }
   }
 }

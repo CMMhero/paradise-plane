@@ -4,6 +4,7 @@
       "workspace_logo": "Логотип рабочей области",
       "open_workspace_switcher": "Открыть переключатель рабочей области",
       "open_user_menu": "Открыть пользовательское меню",
+      "open_help_menu": "Открыть меню справки",
       "open_command_palette": "Открыть палитру команд",
       "open_extended_sidebar": "Открыть расширенную боковую панель",
       "close_extended_sidebar": "Закрыть расширенную боковую панель",
@@ -29,6 +30,9 @@
       "hide_password": "Скрыть пароль",
       "close_alert": "Закрыть уведомление",
       "close_popover": "Закрыть всплывающее окно"
+    },
+    "common": {
+      "more_actions": "Другие действия"
     }
   }
 }

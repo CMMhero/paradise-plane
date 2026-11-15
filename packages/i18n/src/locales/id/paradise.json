@@ -474,6 +474,8 @@
       "mic_off": "Matikan mikrofon",
       "camera_on": "Nyalakan kamera",
       "camera_off": "Matikan kamera",
+      "mic_label": "Mikrofon",
+      "camera_label": "Kamera",
       "end": "Akhiri panggilan"
     },
     "today": "Hari ini",
@@ -836,7 +838,9 @@
     "delete_named": "Hapus {name}",
     "unlink_named": "Lepas {name}",
     "link_placeholder": "tautkan divisi…",
-    "link_division": "Tautkan divisi"
+    "link_division": "Tautkan divisi",
+    "title": "Inisiatif",
+    "name_label": "Nama inisiatif"
   },
   "connections_ui": {
     "connected_toast": "Google Calendar tersambung",
@@ -1142,7 +1146,8 @@
     "group_team_overdue": "Terlambat di tim Anda",
     "group_due_soon": "Jatuh tempo {days} hari ke depan",
     "group_waiting_mine": "Menunggu persetujuan atasan",
-    "group_mentioned": "Anda disebut baru-baru ini"
+    "group_mentioned": "Anda disebut baru-baru ini",
+    "load_failed": "Ringkasan ini gagal dimuat."
   },
   "quick_links_ui": {
     "shared_title": "Dari organisasi",
@@ -1200,6 +1205,7 @@
     "tip_short": "@ orang · # kanal & work item",
     "section_people": "Orang",
     "section_outside": "Di luar departemen",
+    "outside_reason": "Tidak bisa disebut: di luar departemen ini",
     "section_everyone": "Semua",
     "section_channels": "Kanal",
     "section_work_items": "Work item",
