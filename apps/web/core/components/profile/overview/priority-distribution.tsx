@@ -16,12 +16,14 @@ type Props = {
   userProfile: IUserProfileData | undefined;
 };
 
+// Kustomisasi Paradise: token prioritas, sama dengan ikon prioritas di seluruh aplikasi. Hex bawaan
+// membuat "Urgent" (#991b1b, merah tua) nyaris hilang di kartu tema gelap dan "None" putih menyilaukan.
 const priorityColors = {
-  urgent: "#991b1b",
-  high: "#ef4444",
-  medium: "#f59e0b",
-  low: "#16a34a",
-  none: "#e5e5e5",
+  urgent: "var(--priority-urgent)",
+  high: "var(--priority-high)",
+  medium: "var(--priority-medium)",
+  low: "var(--priority-low)",
+  none: "var(--priority-none)",
 };
 
 export function ProfilePriorityDistribution({ userProfile }: Props) {
@@ -55,6 +57,8 @@ export function ProfilePriorityDistribution({ userProfile }: Props) {
               xAxis={{
                 key: "name",
                 label: t("common.priority"),
+                // Hanya lima kategori: tampilkan semua label (bawaan recharts menyembunyikan "High").
+                interval: 0,
               }}
               yAxis={{
                 key: "count",
@@ -71,15 +75,17 @@ export function ProfilePriorityDistribution({ userProfile }: Props) {
           )}
         </Card>
       ) : (
-        <div className="grid place-items-center p-7">
-          <Loader className="flex items-end gap-12">
+        // Kustomisasi Paradise: kerangka di dalam Card yang sama dan setinggi
+        // grafik (300px), supaya kartu tidak tumbuh ~45px saat data tiba.
+        <Card>
+          <Loader className="flex h-[300px] items-end justify-center gap-12">
             <Loader.Item width="30px" height="200px" />
             <Loader.Item width="30px" height="150px" />
             <Loader.Item width="30px" height="250px" />
             <Loader.Item width="30px" height="150px" />
             <Loader.Item width="30px" height="100px" />
           </Loader>
-        </div>
+        </Card>
       )}
     </div>
   );

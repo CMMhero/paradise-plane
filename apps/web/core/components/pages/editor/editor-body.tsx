@@ -106,7 +106,7 @@ export const PageEditorBody = observer(function PageEditorBody(props: Props) {
   } = page;
   const workspaceId = getWorkspaceBySlug(workspaceSlug)?.id ?? "";
   // use editor mention
-  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip } = useEditorMention({
+  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip, mentionLabels } = useEditorMention({
     workspaceSlug,
     enableAdvancedMentions: true,
     searchEntity: handlers.fetchEntity,
@@ -293,6 +293,7 @@ export const PageEditorBody = observer(function PageEditorBody(props: Props) {
               },
               searchHashCallback: fetchHashMentions,
               tip,
+              labels: mentionLabels,
               getMentionedEntityLabel,
               renderComponent: (mentionProps) => <EditorMentionsRoot {...mentionProps} />,
               getMentionedEntityDetails: (id: string) => ({ display_name: getUserDetails(id)?.display_name ?? "" }),

@@ -22,7 +22,9 @@ interface AppSidebarItemData {
 }
 
 interface AppSidebarItemProps {
-  variant?: "link" | "button";
+  /** `static`: tampilan saja (span), untuk dipakai DI DALAM tombol lain (Menu.Button / CustomMenu customButton)
+   *  supaya tidak ada tombol bersarang di dalam tombol. */
+  variant?: "link" | "button" | "static";
   item?: AppSidebarItemData;
 }
 
@@ -140,6 +142,10 @@ function AppSidebarItem({ variant = "link", item }: AppSidebarItemProps) {
 
   if (variant === "link") {
     return <AppSidebarLinkItem href={href}>{commonItems}</AppSidebarLinkItem>;
+  }
+
+  if (variant === "static") {
+    return <span className={styles.base}>{commonItems}</span>;
   }
 
   return (

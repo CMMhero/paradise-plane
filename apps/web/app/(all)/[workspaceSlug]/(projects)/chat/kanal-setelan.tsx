@@ -221,7 +221,7 @@ export const DialogSetelanKanal = observer(function DialogSetelanKanal({
   return (
     <>
       <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.LG}>
-        <div className="flex max-h-[80vh] flex-col">
+        <div className="flex max-h-[80dvh] flex-col">
           <h3 className="flex items-center gap-2 p-5 pb-3 text-18 font-medium text-secondary">
             <Ikon className="size-4 text-tertiary" />
             <span className="truncate">{detail?.nama ?? t("chat_ui.channel")}</span>

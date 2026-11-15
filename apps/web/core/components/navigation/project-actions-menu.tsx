@@ -49,23 +49,16 @@ export function ProjectActionsMenu({
   return (
     <CustomMenu
       customButton={
+        // Tampilan saja: CustomMenu sudah membungkusnya dengan <button> (yang juga menerima Enter/Spasi),
+        // jadi span ini tidak boleh punya role/tabIndex sendiri (axe nested-interactive).
         <span
           ref={actionSectionRef}
-          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- already rendered inside CustomMenu button; nested <button> is invalid
-          role="button"
-          tabIndex={0}
-          className="grid place-items-center rounded-sm p-0.5 text-placeholder hover:bg-layer-1"
-          onClick={() => setIsMenuActive(!isMenuActive)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setIsMenuActive(!isMenuActive);
-            }
-          }}
+          className="grid size-6 place-items-center rounded-sm text-placeholder hover:bg-layer-1"
         >
           <MoreHorizontal className="size-4" />
         </span>
       }
+      menuButtonOnClick={() => setIsMenuActive(!isMenuActive)}
       className="flex-shrink-0"
       customButtonClassName="grid place-items-center"
       placement="bottom-start"

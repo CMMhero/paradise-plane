@@ -190,7 +190,7 @@ export const WorkspaceInvitationsListItem = observer(function WorkspaceInvitatio
             })}
           </CustomSelect>
           {isAdmin && (
-            <CustomMenu ellipsis placement="bottom-end" closeOnSelect>
+            <CustomMenu ariaLabel={t("aria_labels.common.more_actions")} ellipsis placement="bottom-end" closeOnSelect>
               {MENU_ITEMS.map((item) => {
                 if (item.shouldRender === false) return null;
                 return (

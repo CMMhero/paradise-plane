@@ -16,6 +16,7 @@ import { CustomMenu } from "@plane/ui";
 import { AppSidebarItem } from "@/components/sidebar/sidebar-item";
 // hooks
 import { usePowerK } from "@/hooks/store/use-power-k";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useParadiseModules } from "@/hooks/use-paradise-module";
 
 // Menu bantuan ini dulu mengarah ke properti upstream: docs go.plane.so,
@@ -30,6 +31,7 @@ export const HelpMenuRoot = observer(function HelpMenuRoot() {
   const { isModuleEnabled } = useParadiseModules();
   // routers
   const { workspaceSlug } = useParams();
+  const router = useAppRouter();
   // states
   const [isNeedHelpOpen, setIsNeedHelpOpen] = useState(false);
 
@@ -38,14 +40,14 @@ export const HelpMenuRoot = observer(function HelpMenuRoot() {
       <CustomMenu
         customButton={
           <AppSidebarItem
-            variant="button"
+            variant="static"
             item={{
               icon: <HelpCircle className="size-5" />,
               isActive: isNeedHelpOpen,
             }}
           />
         }
-        // customButtonClassName="relative grid place-items-center rounded-md p-1.5 outline-none"
+        ariaLabel={t("aria_labels.projects_sidebar.open_help_menu")}
         menuButtonOnClick={() => !isNeedHelpOpen && setIsNeedHelpOpen(true)}
         onMenuClose={() => setIsNeedHelpOpen(false)}
         placement="bottom-end"
@@ -55,7 +57,7 @@ export const HelpMenuRoot = observer(function HelpMenuRoot() {
         {/* Kustomisasi Paradise: "Dokumentasi" = Wiki, ikut saklar modulnya. */}
         {isModuleEnabled("wiki") && (
           <>
-            <CustomMenu.MenuItem onClick={() => window.open(`/${workspaceSlug}/wiki/`, "_self")}>
+            <CustomMenu.MenuItem onClick={() => router.push(`/${workspaceSlug}/wiki/`)}>
               <div className="flex items-center gap-x-2 rounded-sm text-11">
                 <PageIcon className="h-3.5 w-3.5 text-secondary" height={14} width={14} />
                 <span className="text-11">{t("documentation")}</span>

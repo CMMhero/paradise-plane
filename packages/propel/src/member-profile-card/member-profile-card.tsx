@@ -247,7 +247,8 @@ export function MemberProfilePopover({
         nativeButton={false}
         render={<span />}
         // base-ui memberi role="button" + tabIndex sendiri saat nativeButton=false.
-        aria-label={ariaLabel}
+        // Nama lewat teks sr-only, BUKAN aria-label: isi pemicu sering berupa teks terlihat (nama, inisial avatar),
+        // dan aria-label yang tidak memuat teks itu melanggar WCAG 2.5.3 (axe label-content-name-mismatch).
         className={cn("inline-flex max-w-full cursor-pointer items-center rounded-sm outline-none", triggerClassName)}
         onMouseEnter={hoverHandlers?.onMouseEnter}
         onMouseLeave={hoverHandlers?.onMouseLeave}
@@ -260,6 +261,7 @@ export function MemberProfilePopover({
           if (e.key === "Enter" || e.key === " ") e.stopPropagation();
         }}
       >
+        <span className="sr-only">{ariaLabel}</span>
         {children}
       </Popover.Button>
       <Popover.Panel

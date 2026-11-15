@@ -37,20 +37,26 @@ export const PieChart = React.memo(function PieChart<K extends string, T extends
 
   const renderCells = useMemo(
     () =>
-      cells.map((cell, index) => (
-        <Cell
-          key={cell.key}
-          className="transition-opacity duration-200"
-          fill={cell.fill}
-          opacity={!!activeLegend && activeLegend !== cell.key ? 0.1 : 1}
-          style={{
-            outline: "none",
-          }}
-          onMouseEnter={() => setActiveIndex(index)}
-          onMouseLeave={() => setActiveIndex(null)}
-        />
-      )),
-    [activeLegend, cells]
+      cells.map((cell, index) => {
+        // recharts merender tiap irisan sebagai <path role="img">; tanpa nama, pembaca layar hanya
+        // menyebut "gambar" (axe svg-img-alt). Nama = label data + nilainya.
+        const item = data[index] as Record<string, unknown> | undefined;
+        return (
+          <Cell
+            key={cell.key}
+            aria-label={`${String(item?.name ?? cell.key)}: ${String(item?.[dataKey] ?? "")}`}
+            className="transition-opacity duration-200"
+            fill={cell.fill}
+            opacity={!!activeLegend && activeLegend !== cell.key ? 0.1 : 1}
+            style={{
+              outline: "none",
+            }}
+            onMouseEnter={() => setActiveIndex(index)}
+            onMouseLeave={() => setActiveIndex(null)}
+          />
+        );
+      }),
+    [activeLegend, cells, data, dataKey]
   );
 
   return (

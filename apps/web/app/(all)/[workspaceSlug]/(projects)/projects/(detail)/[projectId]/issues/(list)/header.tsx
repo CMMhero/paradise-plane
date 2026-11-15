@@ -5,7 +5,8 @@
  */
 
 import { IssuesHeader } from "@/plane-web/components/issues/header";
+import { ProjectIssuesMobileHeader } from "./mobile-header";
 
 export function ProjectIssuesHeader() {
-  return <IssuesHeader />;
+  return <IssuesHeader mobileToolbar={<ProjectIssuesMobileHeader />} />;
 }

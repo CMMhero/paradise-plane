@@ -66,7 +66,7 @@ export const RichTextEditor = forwardRef(function RichTextEditor(
     projectId,
   });
   // use editor mention
-  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip } = useEditorMention({
+  const { fetchMentions, fetchHashMentions, getMentionedEntityLabel, tip, mentionLabels } = useEditorMention({
     workspaceSlug,
     searchEntity: editable ? async (payload) => await props.searchMentionCallback(payload) : async () => ({}),
   });
@@ -101,6 +101,7 @@ export const RichTextEditor = forwardRef(function RichTextEditor(
         },
         searchHashCallback: fetchHashMentions,
         tip,
+        labels: mentionLabels,
         getMentionedEntityLabel,
         renderComponent: EditorMentionsRoot,
         getMentionedEntityDetails: (id) => ({

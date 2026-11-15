@@ -10,6 +10,7 @@ import { useParams } from "next/navigation";
 // lucide icons
 import { Minimize2, Maximize2, Circle } from "lucide-react";
 import { PlusIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssue, ISearchIssueResponse, TIssueKanbanFilters, TIssueGroupByOptions } from "@plane/types";
 // ui
@@ -40,6 +41,7 @@ interface IHeaderGroupByCard {
 }
 
 export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHeaderGroupByCard) {
+  const { t } = useTranslation();
   const {
     group_by,
     sub_group_by,
@@ -143,8 +145,12 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
 
         {sub_group_by === null && (
           <button
-            className="flex h-[20px] w-[20px] flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover"
+            type="button"
+            // size-6 (bukan 20px): sasaran klik 24px, WCAG 2.5.8
+            className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover"
             onClick={() => handleCollapsedGroups("group_by", column_id)}
+            aria-label={title}
+            aria-pressed={verticalAlignPosition}
           >
             {verticalAlignPosition ? (
               <Maximize2 width={14} strokeWidth={2} />
@@ -158,11 +164,12 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           (renderExistingIssueModal ? (
             <CustomMenu
               customButton={
-                <span className="flex h-[20px] w-[20px] flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover">
+                <span className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover">
                   <PlusIcon height={14} width={14} strokeWidth={2} />
                 </span>
               }
               placement="bottom-end"
+              ariaLabel={t("add_work_item")}
             >
               <CustomMenu.MenuItem
                 onClick={() => {
@@ -181,10 +188,12 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
             </CustomMenu>
           ) : (
             <button
-              className="flex h-[20px] w-[20px] flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover"
+              type="button"
+              className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover"
               onClick={() => {
                 setIsOpen(true);
               }}
+              aria-label={t("add_work_item")}
             >
               <PlusIcon width={14} strokeWidth={2} />
             </button>

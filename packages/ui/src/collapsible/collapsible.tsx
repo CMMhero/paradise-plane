@@ -6,6 +6,7 @@
 
 import { Disclosure, Transition } from "@headlessui/react";
 import React, { useState, useEffect, useCallback } from "react";
+import { CollapsibleActionsSlot } from "./actions-slot";
 
 export type TCollapsibleProps = {
   title: string | React.ReactNode;
@@ -22,6 +23,7 @@ export function Collapsible(props: TCollapsibleProps) {
   const { title, children, buttonRef, className, buttonClassName, isOpen, onToggle, defaultOpen } = props;
   // state
   const [localIsOpen, setLocalIsOpen] = useState<boolean>(isOpen || defaultOpen ? true : false);
+  const [actionsSlot, setActionsSlot] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (isOpen !== undefined) {
@@ -40,9 +42,16 @@ export function Collapsible(props: TCollapsibleProps) {
 
   return (
     <Disclosure as="div" className={className}>
-      <Disclosure.Button ref={buttonRef} className={buttonClassName} onClick={handleOnClick}>
-        {title}
-      </Disclosure.Button>
+      {/* Tombol aksi di judul (mis. "tambah") dirender ke slot di SAMPING tombol pembuka lewat portal, bukan di
+          dalamnya: tombol di dalam tombol tidak bisa dipakai pembaca layar (axe nested-interactive). */}
+      <div className="relative">
+        <CollapsibleActionsSlot.Provider value={actionsSlot}>
+          <Disclosure.Button ref={buttonRef} className={buttonClassName} onClick={handleOnClick}>
+            {title}
+          </Disclosure.Button>
+        </CollapsibleActionsSlot.Provider>
+        <div ref={setActionsSlot} className="absolute inset-y-0 right-2.5 flex items-center" />
+      </div>
       <Transition
         show={localIsOpen}
         enter="transition-all duration-300 ease-in-out"

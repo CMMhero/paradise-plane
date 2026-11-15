@@ -5,6 +5,7 @@
  * See the LICENSE file for details.
  */
 
+import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import type { LucideIcon } from "lucide-react";
 import { MembersPropertyIcon } from "@plane/propel/icons";
@@ -55,6 +56,20 @@ const MemberAvatar = observer(function MemberAvatar({ userId, showProfileCard, s
   );
 });
 
+/**
+ * Avatar yang membuka kartu profil adalah sasaran klik 20px. `data-sasaran-avatar` (paradise.css bagian 11)
+ * memperbesar area kliknya ke 24px dan melepas tumpukan -space-x-1, supaya tiap avatar lolos WCAG 2.5.8.
+ * `contents`: pembungkus ini tidak ikut tata letak.
+ */
+function SasaranAvatar({ active, children }: { active: boolean; children: ReactNode }) {
+  if (!active) return <>{children}</>;
+  return (
+    <span data-sasaran-avatar className="contents">
+      {children}
+    </span>
+  );
+}
+
 export const ButtonAvatars = observer(function ButtonAvatars(props: AvatarProps) {
   const { showTooltip, userIds, icon: Icon, size = "md", showProfileCard = false } = props;
   // store hooks
@@ -64,14 +79,20 @@ export const ButtonAvatars = observer(function ButtonAvatars(props: AvatarProps)
     const knownIds = userIds.filter((userId) => getUserDetails(userId));
     if (knownIds.length > 0)
       return (
-        <AvatarGroup size={size} showTooltip={!showTooltip}>
-          {knownIds.map((userId) => (
-            <MemberAvatar key={userId} userId={userId} showProfileCard={showProfileCard} />
-          ))}
-        </AvatarGroup>
+        <SasaranAvatar active={showProfileCard}>
+          <AvatarGroup size={size} showTooltip={!showTooltip}>
+            {knownIds.map((userId) => (
+              <MemberAvatar key={userId} userId={userId} showProfileCard={showProfileCard} />
+            ))}
+          </AvatarGroup>
+        </SasaranAvatar>
       );
   } else if (userIds) {
-    return <MemberAvatar userId={userIds} showProfileCard={showProfileCard} size={size} showTooltip={!showTooltip} />;
+    return (
+      <SasaranAvatar active={showProfileCard}>
+        <MemberAvatar userId={userIds} showProfileCard={showProfileCard} size={size} showTooltip={!showTooltip} />
+      </SasaranAvatar>
+    );
   }
 
   return Icon ? (

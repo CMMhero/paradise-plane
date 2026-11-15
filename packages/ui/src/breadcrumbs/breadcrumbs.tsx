@@ -176,7 +176,9 @@ function BreadcrumbItemWrapper(props: BreadcrumbItemWrapperProps) {
     <Tooltip tooltipContent={label} position="bottom" disabled={!label || label === "" || disableTooltip}>
       <div
         className={cn(
-          "group flex h-full cursor-default items-center gap-2 rounded-sm px-1.5 py-1 text-13 font-medium",
+          // min-w-0: tanpa ini label tidak pernah menyusut, sehingga di layar sempit
+          // terpotong tanpa elipsis (mis. "Your worl" di header profil ponsel).
+          "group flex h-full min-w-0 cursor-default items-center gap-2 rounded-sm px-1.5 py-1 text-13 font-medium",
           {
             "text-primary": isLast,
             "text-tertiary": !isLast,

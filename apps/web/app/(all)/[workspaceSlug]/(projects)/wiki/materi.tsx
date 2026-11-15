@@ -62,7 +62,7 @@ function WikiMateriPage() {
     return (
       <div className="flex h-full w-full flex-col gap-4 px-page-x py-8">
         <div className="h-6 w-1/3 animate-pulse rounded-item bg-layer-3" />
-        <div className="h-[60vh] w-full animate-pulse rounded-card bg-layer-3" />
+        <div className="h-[60dvh] w-full animate-pulse rounded-card bg-layer-3" />
         <p className="text-center text-12 text-tertiary">{t("wiki_ui.material.preparing")}</p>
       </div>
     );

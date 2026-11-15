@@ -215,6 +215,8 @@ export function LabelDropdown(props: ILabelDropdownProps) {
         onClick={handleOnClick}
         disabled={disabled}
       >
+        {/* nama tombol; isi `label` bisa hanya ikon atau kosong */}
+        <span className="sr-only">{t("labels")}</span>
         {label}
         {!hideDropdownArrow && !disabled && <ChevronDownIcon className="h-3 w-3" aria-hidden="true" />}
       </button>
@@ -229,6 +231,7 @@ export function LabelDropdown(props: ILabelDropdownProps) {
       maxRender,
       value.length,
       setReferenceElement,
+      t,
     ]
   );
 

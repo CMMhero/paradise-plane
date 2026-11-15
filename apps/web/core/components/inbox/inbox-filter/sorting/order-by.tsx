@@ -26,12 +26,16 @@ export const InboxIssueOrderByDropdown = observer(function InboxIssueOrderByDrop
   const { inboxSorting, handleInboxIssueSorting } = useProjectInbox();
   const orderByDetails =
     INBOX_ISSUE_ORDER_BY_OPTIONS.find((option) => inboxSorting?.order_by?.includes(option.key)) || undefined;
-  const smallButton =
-    inboxSorting?.sort_by === "asc" ? (
-      <ArrowUpWideNarrow className="size-3" />
-    ) : (
-      <ArrowDownWideNarrow className="size-3" />
-    );
+  // size-6: sasaran klik 24px untuk versi ikon saja (WCAG 2.5.8)
+  const smallButton = (
+    <span className="grid size-6 place-items-center">
+      {inboxSorting?.sort_by === "asc" ? (
+        <ArrowUpWideNarrow className="size-3" />
+      ) : (
+        <ArrowDownWideNarrow className="size-3" />
+      )}
+    </span>
+  );
   const largeButton = (
     <div className={cn(getButtonStyling("secondary", "base"), "px-2 text-tertiary")}>
       {inboxSorting?.sort_by === "asc" ? (
@@ -46,6 +50,7 @@ export const InboxIssueOrderByDropdown = observer(function InboxIssueOrderByDrop
   return (
     <CustomMenu
       customButton={windowSize[0] > 1280 ? largeButton : smallButton}
+      ariaLabel={windowSize[0] > 1280 ? undefined : t(orderByDetails?.i18n_label || "inbox_issue.order_by.created_at")}
       placement="bottom-end"
       maxHeight="lg"
       closeOnSelect

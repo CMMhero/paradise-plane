@@ -7,6 +7,7 @@
 import { observer } from "mobx-react";
 // plane imports
 import { IconButton } from "@plane/propel/icon-button";
+import { useTranslation } from "@plane/i18n";
 import { FilterIcon, FilterAppliedIcon } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
 import type { IFilterInstance } from "@plane/shared-state";
@@ -21,6 +22,7 @@ type TFiltersToggleProps<P extends TFilterProperty, E extends TExternalFilter> =
 export const FiltersToggle = observer(function FiltersToggle<P extends TFilterProperty, E extends TExternalFilter>(
   props: TFiltersToggleProps<P, E>
 ) {
+  const { t } = useTranslation();
   const { filter } = props;
   // derived values
   const hasAnyConditions = (filter?.allConditionsForDisplay.length ?? 0) > 0;
@@ -78,6 +80,7 @@ export const FiltersToggle = observer(function FiltersToggle<P extends TFilterPr
 
   return (
     <IconButton
+      aria-label={t("common.filters")}
       size="lg"
       variant="secondary"
       icon={showFilterRowChangesPill ? FilterAppliedIcon : FilterIcon}

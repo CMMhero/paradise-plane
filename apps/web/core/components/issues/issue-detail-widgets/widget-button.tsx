@@ -6,7 +6,8 @@
 
 import React from "react";
 // helpers
-import { Button } from "@plane/propel/button";
+import { getButtonStyling } from "@plane/propel/button";
+import { cn } from "@plane/utils";
 
 type Props = {
   icon: React.ReactNode;
@@ -14,12 +15,20 @@ type Props = {
   disabled?: boolean;
 };
 
+/**
+ * Selalu dipakai sebagai isi pemicu (dropdown/popover/tombol unggah) yang sudah berupa <button>, jadi tampilannya
+ * tombol tapi elemennya <span>: tombol di dalam tombol tidak bisa dipakai pembaca layar (axe nested-interactive).
+ */
 export function IssueDetailWidgetButton(props: Props) {
   const { icon, title, disabled = false } = props;
   return (
-    <Button variant={"secondary"} disabled={disabled} size="lg">
+    <span
+      className={cn(getButtonStyling("secondary", "lg"), {
+        "cursor-not-allowed border-subtle-1 bg-layer-transparent text-disabled": disabled,
+      })}
+    >
       {icon && icon}
       <span className="text-body-xs-medium">{title}</span>
-    </Button>
+    </span>
   );
 }

@@ -11,10 +11,12 @@ import { useParams } from "next/navigation";
 import { Ellipsis } from "lucide-react";
 // plane imports
 import { ARCHIVABLE_STATE_GROUPS, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import type { TIssue } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 import { ContextMenu, CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
+import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
@@ -31,7 +33,6 @@ import { CreateUpdateIssueModal } from "../../issue-modal/modal";
 import type { IQuickActionProps } from "../list/list-view-types";
 import type { MenuItemFactoryProps } from "./helper";
 import { useWorkItemDetailMenuItems } from "./helper";
-import { IconButton } from "@plane/propel/icon-button";
 
 type TWorkItemDetailQuickActionProps = IQuickActionProps & {
   toggleEditIssueModal?: (value: boolean) => void;
@@ -44,6 +45,7 @@ type TWorkItemDetailQuickActionProps = IQuickActionProps & {
 export const WorkItemDetailQuickActions = observer(function WorkItemDetailQuickActions(
   props: TWorkItemDetailQuickActionProps
 ) {
+  const { t } = useTranslation();
   const {
     issue,
     handleDelete,
@@ -262,7 +264,8 @@ export const WorkItemDetailQuickActions = observer(function WorkItemDetailQuickA
       <CustomMenu
         ellipsis
         placement={placements}
-        customButton={<IconButton size="lg" variant="secondary" icon={Ellipsis} />}
+        customButton={<MenuTriggerIcon size="lg" variant="secondary" icon={Ellipsis} />}
+        ariaLabel={t("aria_labels.common.more_actions")}
         portalElement={portalElement}
         menuItemsClassName="z-[14]"
         maxHeight="lg"

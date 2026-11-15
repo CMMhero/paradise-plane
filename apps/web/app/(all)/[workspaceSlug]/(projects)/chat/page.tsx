@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
@@ -56,6 +56,7 @@ import {
 } from "@/services/chat.service";
 // local imports
 import { susunBaris } from "./baris";
+import { KerangkaDaftar } from "./kerangka-daftar";
 import { urutkanDaftar } from "./urutan-daftar";
 import { BilahSematan } from "./bilah-sematan";
 import { useObrolanLangsung } from "./langsung";
@@ -114,6 +115,16 @@ const waktuRingkas = (waktu: string): string => {
   const hariIni = new Date().toDateString() === tanggal.toDateString();
   return (hariIni ? renderFormattedTime(waktu) : renderFormattedDate(waktu, "dd MMM")) ?? "";
 };
+
+/** Pembungkus yang identitasnya tetap tapi selalu memanggil `fn` terbaru, supaya
+ * props `memo` seperti penangan gelembung tidak berubah tiap render halaman. */
+function useCallbackStabil<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) => R {
+  const ref = useRef(fn);
+  useLayoutEffect(() => {
+    ref.current = fn;
+  });
+  return useCallback((...args: A) => ref.current(...args), []);
+}
 
 function ChatPage() {
   const { workspaceSlug } = useParams();
@@ -181,17 +192,21 @@ function ChatPage() {
 
   const slug = workspaceSlug?.toString();
 
-  const { data: percakapan, mutate: muatPercakapan } = useSWR(
-    slug ? `CHAT_PERCAKAPAN_${slug}` : null,
-    slug ? () => chatService.getPercakapan(slug) : null,
-    { refreshInterval: SELANG_DAFTAR }
-  );
+  const {
+    data: percakapan,
+    error: galatPercakapan,
+    mutate: muatPercakapan,
+  } = useSWR(slug ? `CHAT_PERCAKAPAN_${slug}` : null, slug ? () => chatService.getPercakapan(slug) : null, {
+    refreshInterval: SELANG_DAFTAR,
+  });
 
-  const { data: daftarKanal, mutate: muatKanal } = useSWR(
-    slug ? `CHAT_KANAL_${slug}` : null,
-    slug ? () => chatService.getDaftarRuang(slug) : null,
-    { refreshInterval: SELANG_DAFTAR }
-  );
+  const {
+    data: daftarKanal,
+    error: galatKanal,
+    mutate: muatKanal,
+  } = useSWR(slug ? `CHAT_KANAL_${slug}` : null, slug ? () => chatService.getDaftarRuang(slug) : null, {
+    refreshInterval: SELANG_DAFTAR,
+  });
 
   // Ruang yang sedang dibuka. Untuk kanal langsung dari URL; untuk DM dicari
   // dari daftar percakapan. DM yang belum pernah berisi pesan belum punya
@@ -681,11 +696,6 @@ function ChatPage() {
   };
 
   const kanalAktif = (daftarKanal ?? []).find((r) => r.id === ruangParam);
-  /** Nama tampilan untuk gelembung dan bilah sematan; "Anda" untuk diri sendiri. */
-  const namaOrang = (id: string) =>
-    id === currentUser?.id
-      ? t("chat_ui.you")
-      : (getWorkspaceMemberDetails(id)?.member?.display_name ?? t("chat_ui.member"));
   /** Konferensi di kanal yang sedang dibuka. Tidak berlaku di DM. */
   const mulaiKonferensi = (video: boolean) => {
     if (!ruangParam) return;
@@ -724,6 +734,9 @@ function ChatPage() {
     ).flatMap((b) => peta.get(b.id) ?? []);
   })();
   const kanalBelumDiikuti = (daftarKanal ?? []).filter((r) => !r.ikut);
+  // Daftar digambar sekali, setelah kanal dan percakapan sama-sama tiba (kerangka-daftar.tsx).
+  // Galat juga dihitung selesai, supaya kegagalan tidak menyisakan kerangka selamanya.
+  const daftarSiap = (percakapan !== undefined || !!galatPercakapan) && (daftarKanal !== undefined || !!galatKanal);
 
   const buatKanal = async (nama: string, privat: boolean): Promise<boolean> => {
     if (!slug) return false;
@@ -760,6 +773,57 @@ function ChatPage() {
   };
 
   // Keluar kanal pindah ke DialogSetelanKanal (kanal-setelan.tsx).
+
+  // Gelembung dibungkus `memo`, jadi semua yang diteruskan ke sana harus stabil
+  // antar render (penarikan pesan, denyut kehadiran). Dua fungsi nama bergantung
+  // pada data anggota: `kunciNama` berubah kalau nama anggota mana pun berubah
+  // (dibaca di render, jadi MobX ikut melacaknya), dan itulah satu-satunya
+  // alasan gelembung boleh dihitung ulang karena nama.
+  const kunciNama = (workspaceMemberIds ?? [])
+    .map((id) => getWorkspaceMemberDetails(id)?.member?.display_name)
+    .join("\u0000");
+  const meNama = currentUser?.display_name;
+  /** Nama tampilan untuk gelembung dan bilah sematan; "Anda" untuk diri sendiri. */
+  const namaOrang = useCallback(
+    (id: string) =>
+      id === meId ? t("chat_ui.you") : (getWorkspaceMemberDetails(id)?.member?.display_name ?? t("chat_ui.member")),
+    // oxlint-disable-next-line react/memo-dependencies, react-hooks/exhaustive-deps -- kunciNama memicu hitung ulang saat nama anggota berubah
+    [meId, t, getWorkspaceMemberDetails, kunciNama]
+  );
+  const namaSebutan = useCallback(
+    (id: string) => (id === meId ? (meNama ?? "") : (getWorkspaceMemberDetails(id)?.member?.display_name ?? "")),
+    // oxlint-disable-next-line react/memo-dependencies, react-hooks/exhaustive-deps -- kunciNama memicu hitung ulang saat nama anggota berubah
+    [meId, meNama, getWorkspaceMemberDetails, kunciNama]
+  );
+  // Penangan gelembung: pembungkus stabil yang selalu memanggil versi terbaru.
+  const bukaKutipan = useCallbackStabil((pesanId: string) => lompatKePesan(pesanId));
+  const balasPesan = useCallbackStabil((pesanIni: TPesan) => {
+    setMenyunting(null);
+    setMembalas(pesanIni);
+    tulisRef.current?.focus();
+  });
+  const suntingPesan = useCallbackStabil((pesanIni: TPesan) => {
+    setMembalas(null);
+    setMenyunting(pesanIni);
+    setDraf(pesanIni.isi);
+    tulisRef.current?.focus();
+  });
+  const hapusPesan = useCallbackStabil((pesanIni: TPesan) =>
+    minta({ judul: t("chat_ui.confirm_delete_title"), isi: t("chat_ui.confirm_delete_body") }, () => hapus(pesanIni))
+  );
+  const reaksiPesan = useCallbackStabil((pesanIni: TPesan, emoji: string, reaksiBaru: TPesan["reaksi"]) => {
+    // Riwayat lama disimpan di luar SWR dan tidak ikut ditarik ulang `reaksi()`;
+    // tanpa ini reaksi pada pesan lama tersimpan di server tapi tidak tampak,
+    // lalu klik berikutnya malah membatalkannya.
+    setLama((sebelumnya) => sebelumnya.map((x) => (x.id === pesanIni.id ? { ...x, reaksi: reaksiBaru } : x)));
+    void reaksi(pesanIni, emoji);
+  });
+  const sematkanPesan = useCallbackStabil((pesanIni: TPesan, aktif: boolean) => void sematkan(pesanIni.id, aktif));
+  const teleponDariKartu = useCallbackStabil((video: boolean) => {
+    if (adalahKanal) mulaiKonferensi(video);
+    else telepon(video);
+  });
+  const bolehSematkan = Boolean(sematan?.boleh_sematkan);
 
   if (!slug) return <></>;
 
@@ -820,15 +884,17 @@ function ChatPage() {
           {/* Kanal ditaruh di ATAS daftar orang. Kanal jumlahnya sedikit dan
               dibuka berulang kali; daftar orang panjang dan sebagian besar
               tidak pernah disentuh. */}
-          {!hasilCari ? (
+          {!hasilCari && daftarSiap ? (
             <div className="border-b border-subtle pb-1">
               <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
                 <p className="text-12 font-semibold text-tertiary">{t("chat_ui.channels")}</p>
-                <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-0.5 sentuh:gap-5">
                   <IconButton
                     type="button"
                     onClick={() => setJelajah(true)}
                     title={t("chat_ui.browse_channels")}
+                    aria-label={t("chat_ui.browse_channels")}
+                    data-sentuh-lega
                     variant="ghost"
                     size="sm"
                     icon={Compass}
@@ -837,6 +903,8 @@ function ChatPage() {
                     type="button"
                     onClick={() => setBuatTerbuka(true)}
                     title={t("chat_ui.create_channel")}
+                    aria-label={t("chat_ui.create_channel")}
+                    data-sentuh-lega
                     variant="ghost"
                     size="sm"
                     icon={Plus}
@@ -880,7 +948,9 @@ function ChatPage() {
                               : t("chatkartu_ui.system_badge")}
                         </span>
                       ) : null}
-                      {adaBaru ? <CountChip count={getNumberCount(r.belum_dibaca)} className="shrink-0" /> : null}
+                      {adaBaru ? (
+                        <CountChip variant="unread" count={getNumberCount(r.belum_dibaca)} className="shrink-0" />
+                      ) : null}
                     </button>
                   );
                 })
@@ -938,6 +1008,8 @@ function ChatPage() {
                 );
               })}
             </div>
+          ) : !daftarSiap ? (
+            <KerangkaDaftar />
           ) : daftar.length === 0 ? (
             // Kosong tanpa kata kunci berarti memang belum ada anggota lain,
             // bukan hasil pencarian. "Tidak ada yang cocok" di situ menyesatkan.
@@ -993,7 +1065,11 @@ function ChatPage() {
                             : t("chat_ui.no_messages")}
                       </p>
                       {adaBaru ? (
-                        <CountChip count={getNumberCount(terakhir?.belum_dibaca ?? 0)} className="shrink-0" />
+                        <CountChip
+                          variant="unread"
+                          count={getNumberCount(terakhir?.belum_dibaca ?? 0)}
+                          className="shrink-0"
+                        />
                       ) : null}
                     </div>
                   </div>
@@ -1078,6 +1154,7 @@ function ChatPage() {
                       disabled={!tersambung || panggilan.status !== "diam" || kanalTanpaPanggilan}
                       title={tersambung ? t("chat_ui.start_channel_voice") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.channel_voice_call")}
+                      data-sentuh-lega
                       variant="ghost"
                       size="lg"
                       icon={Phone}
@@ -1088,6 +1165,7 @@ function ChatPage() {
                       disabled={!tersambung || panggilan.status !== "diam" || kanalTanpaPanggilan}
                       title={tersambung ? t("chat_ui.start_channel_video") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.channel_video_call")}
+                      data-sentuh-lega
                       variant="ghost"
                       size="lg"
                       icon={Video}
@@ -1100,6 +1178,7 @@ function ChatPage() {
                       onClick={() => setSetelanTerbuka(true)}
                       title={t("chatux_kelola_ui.channel_settings")}
                       aria-label={t("chatux_kelola_ui.channel_settings")}
+                      data-sentuh-lega
                       variant="ghost"
                       size="lg"
                       icon={Settings2}
@@ -1149,6 +1228,7 @@ function ChatPage() {
                       disabled={!panggilan.siap || panggilan.status !== "diam"}
                       title={panggilan.siap ? t("chat_ui.voice_call") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.voice_call")}
+                      data-sentuh-lega
                       variant="ghost"
                       size="lg"
                       icon={Phone}
@@ -1159,6 +1239,7 @@ function ChatPage() {
                       disabled={!panggilan.siap || panggilan.status !== "diam"}
                       title={panggilan.siap ? t("chat_ui.video_call") : t("chat_ui.realtime_down")}
                       aria-label={t("chat_ui.video_call")}
+                      data-sentuh-lega
                       variant="ghost"
                       size="lg"
                       icon={Video}
@@ -1262,49 +1343,15 @@ function ChatPage() {
                             akhirKelompok={akhirKelompok}
                             sayaId={currentUser?.id}
                             namaOrang={namaOrang}
-                            namaSebutan={(id) =>
-                              id === currentUser?.id
-                                ? (currentUser?.display_name ?? "")
-                                : (getWorkspaceMemberDetails(id)?.member?.display_name ?? "")
-                            }
-                            onBukaKutipan={lompatKePesan}
-                            onBalas={(pesanIni) => {
-                              setMenyunting(null);
-                              setMembalas(pesanIni);
-                              tulisRef.current?.focus();
-                            }}
-                            onSunting={(pesanIni) => {
-                              setMembalas(null);
-                              setMenyunting(pesanIni);
-                              setDraf(pesanIni.isi);
-                              tulisRef.current?.focus();
-                            }}
-                            onHapus={(pesanIni) =>
-                              minta(
-                                { judul: t("chat_ui.confirm_delete_title"), isi: t("chat_ui.confirm_delete_body") },
-                                () => hapus(pesanIni)
-                              )
-                            }
+                            namaSebutan={namaSebutan}
+                            onBukaKutipan={bukaKutipan}
+                            onBalas={balasPesan}
+                            onSunting={suntingPesan}
+                            onHapus={hapusPesan}
                             batasHapusJam={batasHapusJam}
-                            onReaksi={(pesanIni, emoji, reaksiBaru) => {
-                              // Riwayat lama disimpan di luar SWR dan tidak ikut
-                              // ditarik ulang `reaksi()`; tanpa ini reaksi pada
-                              // pesan lama tersimpan di server tapi tidak tampak,
-                              // lalu klik berikutnya malah membatalkannya.
-                              setLama((sebelumnya) =>
-                                sebelumnya.map((x) => (x.id === pesanIni.id ? { ...x, reaksi: reaksiBaru } : x))
-                              );
-                              void reaksi(pesanIni, emoji);
-                            }}
-                            onSematkan={
-                              sematan?.boleh_sematkan
-                                ? (pesanIni, aktif) => void sematkan(pesanIni.id, aktif)
-                                : undefined
-                            }
-                            onTelepon={(video) => {
-                              if (adalahKanal) mulaiKonferensi(video);
-                              else telepon(video);
-                            }}
+                            onReaksi={reaksiPesan}
+                            onSematkan={bolehSematkan ? sematkanPesan : undefined}
+                            onTelepon={teleponDariKartu}
                           />
                         </div>
                       );
@@ -1329,6 +1376,25 @@ function ChatPage() {
                 </button>
               ) : null}{" "}
             </div>
+
+            {/* Ajakan gabung, bukan dering. Muncul untuk yang sedang membuka ruang
+                saat orang lain memulai panggilan di sana. Barisnya mengalir tepat
+                di atas kotak tulis, BUKAN melayang `fixed`: yang melayang menutupi
+                kotak tulis di HP. */}
+            {panggilan.konferensiBerjalan &&
+            panggilan.konferensiBerjalan.ruang === ruangSaatIni &&
+            panggilan.status === "diam" ? (
+              <div className="flex items-center justify-between gap-3 border-t border-subtle bg-layer-3 px-4 py-2">
+                <span className="text-13 text-primary">{t("chat_ui.call_in_progress")}</span>
+                <Button
+                  variant="primary"
+                  size="base"
+                  onClick={() => mulaiKonferensi(panggilan.konferensiBerjalan?.video ?? false)}
+                >
+                  {t("chat_ui.join")}
+                </Button>
+              </div>
+            ) : null}
 
             {/* Kanal sistem yang hanya bisa dibaca: Changelog, ruang kabar
                 "Paradise", dan Announcements bagi yang bukan admin. Server tetap
@@ -1460,23 +1526,6 @@ function ChatPage() {
       </section>
 
       {dialogKonfirmasi}
-
-      {/* Ajakan gabung, bukan dering. Muncul untuk yang sedang membuka ruang
-          saat orang lain memulai panggilan di sana. */}
-      {panggilan.konferensiBerjalan &&
-      panggilan.konferensiBerjalan.ruang === ruangSaatIni &&
-      panggilan.status === "diam" ? (
-        <div className="fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-control border border-subtle bg-layer-3 px-4 py-2">
-          <span className="text-13 text-primary">{t("chat_ui.call_in_progress")}</span>
-          <Button
-            variant="primary"
-            size="base"
-            onClick={() => mulaiKonferensi(panggilan.konferensiBerjalan?.video ?? false)}
-          >
-            {t("chat_ui.join")}
-          </Button>
-        </div>
-      ) : null}
 
       {/* Layar panggilan dirender PenyediaPanggilan di lapisan workspace. */}
 

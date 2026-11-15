@@ -62,11 +62,15 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
   return (
     <div
       {...getRootProps()}
-      className={`flex h-[60px] items-center justify-center rounded-md border-2 border-dashed bg-accent-primary/5 px-4 text-11 text-accent-primary ${
-        isDragActive ? "border-accent-strong bg-accent-primary/10" : "border-subtle"
+      // Kustomisasi Paradise: keadaan diam netral (aksen merah terbaca sebagai galat);
+      // warna aksen hanya saat berkas sedang diseret ke atasnya.
+      className={`flex h-[60px] items-center justify-center rounded-md border-2 border-dashed px-4 text-11 ${
+        isDragActive
+          ? "border-accent-strong bg-accent-primary/10 text-accent-primary"
+          : "border-subtle bg-layer-1 text-secondary"
       } ${isDragReject ? "bg-danger-subtle" : ""} ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps({ "aria-label": t("attachments") })} />
       <span className="flex items-center gap-2">
         {isDragActive ? (
           <p>Drop here...</p>

@@ -10,6 +10,8 @@ import React from "react";
 import { cn } from "./utils";
 
 type Props = {
+  /** Wajib: tombolnya hanya ikon bintang. Status terpilih dibacakan lewat aria-pressed. */
+  ariaLabel: string;
   buttonClassName?: string;
   iconClassName?: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -17,10 +19,17 @@ type Props = {
 };
 
 export function FavoriteStar(props: Props) {
-  const { buttonClassName, iconClassName, onClick, selected } = props;
+  const { ariaLabel, buttonClassName, iconClassName, onClick, selected } = props;
 
   return (
-    <button type="button" className={cn("grid h-4 w-4 place-items-center", buttonClassName)} onClick={onClick}>
+    <button
+      type="button"
+      // size-6 -m-1: sasaran 24px (WCAG 2.5.8) tanpa menggeser tata letak ikon 16px
+      className={cn("-m-1 grid size-6 place-items-center", buttonClassName)}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      aria-pressed={selected}
+    >
       <Star
         className={cn(
           "h-4 w-4 text-tertiary transition-all",

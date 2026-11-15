@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { observer } from "mobx-react";
 // plane imports
 import { IconButton } from "@plane/propel/icon-button";
+import { useTranslation } from "@plane/i18n";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
@@ -19,6 +20,7 @@ import { ProfileSettingsContent } from "./content";
 import { ProfileSettingsSidebarRoot } from "./sidebar";
 
 export const ProfileSettingsModal = observer(function ProfileSettingsModal() {
+  const { t } = useTranslation();
   // store hooks
   const { profileSettingsModal, toggleProfileSettingsModal } = useCommandPalette();
   const { config } = useInstance();
@@ -55,7 +57,7 @@ export const ProfileSettingsModal = observer(function ProfileSettingsModal() {
           <ProfileSettingsContent activeTab={activeTab} className="flex-1 rounded-r-xl" />
         </div>
         <div className="absolute top-3.5 right-3.5">
-          <IconButton size="base" variant="tertiary" icon={X} onClick={handleClose} />
+          <IconButton aria-label={t("close")} size="base" variant="tertiary" icon={X} onClick={handleClose} />
         </div>
       </div>
     </ModalCore>

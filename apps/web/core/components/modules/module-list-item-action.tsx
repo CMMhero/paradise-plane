@@ -182,6 +182,7 @@ export const ModuleListItemAction = observer(function ModuleListItemAction(props
 
       {isEditingAllowed && !moduleDetails.archived_at && (
         <FavoriteStar
+          ariaLabel={t("favorites")}
           onClick={(e) => {
             if (moduleDetails.is_favorite) handleRemoveFromFavorites(e);
             else handleAddToFavorites(e);

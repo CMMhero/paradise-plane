@@ -111,6 +111,7 @@ const EmojiReactionButton = React.forwardRef(function EmojiReactionButton(
       <IconButton
         ref={ref}
         icon={AddReactionIcon}
+        aria-label="Add reaction"
         variant="ghost"
         size="sm"
         onClick={onAddReaction}

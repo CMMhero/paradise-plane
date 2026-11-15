@@ -201,16 +201,9 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
         </div>
       </div>
 
-      <IssueDetailWidgets
-        workspaceSlug={workspaceSlug}
-        projectId={projectId}
-        issueId={issueId}
-        disabled={!isEditable || isArchived}
-        isArchived={isArchived}
-        renderWidgetModals={!isPeekModeActive}
-        issueServiceType={EIssueServiceType.ISSUES}
-      />
-
+      {/* Kustomisasi Paradise: di layar sempit Properties tampil sebelum widget
+          (sub-item, relasi, lampiran) supaya status/penanggung jawab terjangkau tanpa
+          menggulir melewati semuanya. Desktop tetap memakai panel samping. */}
       {windowSize[0] < 768 && (
         <PeekOverviewProperties
           workspaceSlug={workspaceSlug}
@@ -220,6 +213,16 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           disabled={!isEditable || isArchived}
         />
       )}
+
+      <IssueDetailWidgets
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
+        issueId={issueId}
+        disabled={!isEditable || isArchived}
+        isArchived={isArchived}
+        renderWidgetModals={!isPeekModeActive}
+        issueServiceType={EIssueServiceType.ISSUES}
+      />
 
       <IssueActivity workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={isArchived} />
     </>

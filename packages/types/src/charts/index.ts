@@ -43,6 +43,8 @@ export type TAxisChartProps<K extends string, T extends string> = TBaseChartProp
     label?: string;
     strokeColor?: string;
     dy?: number;
+    /** Recharts tick interval; 0 shows every category label. Default: recharts' "preserveEnd". */
+    interval?: number | "preserveStart" | "preserveEnd" | "preserveStartEnd" | "equidistantPreserveStart";
   };
   yAxis: {
     allowDecimals?: boolean;

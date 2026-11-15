@@ -100,9 +100,23 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
         e.stopPropagation();
       }}
     >
-      <button {...getRootProps()} type="button" disabled={disabled}>
-        <input {...getInputProps()} />
-        {customButton ? customButton : <PlusIcon className="h-4 w-4" />}
+      {/* Input berkas di LUAR tombol: input di dalam tombol = elemen fokus bersarang (axe nested-interactive). */}
+      <input {...getInputProps({ "aria-label": t("attachments") })} />
+      {/* react-dropzone memberi role="presentation" ke akar; di <button> itu menghapus perannya sebagai tombol */}
+      <button
+        {...getRootProps({ role: "button" })}
+        type="button"
+        disabled={disabled}
+        aria-label={customButton ? undefined : t("attachments")}
+      >
+        {customButton ? (
+          customButton
+        ) : (
+          // size-6: sasaran klik 24px (WCAG 2.5.8)
+          <span className="grid size-6 place-items-center">
+            <PlusIcon className="h-4 w-4" />
+          </span>
+        )}
       </button>
     </div>
   );

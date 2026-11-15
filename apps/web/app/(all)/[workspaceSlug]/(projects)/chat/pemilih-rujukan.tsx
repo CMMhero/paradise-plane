@@ -166,6 +166,10 @@ type TDaftarProps = {
   onPilih: (calon: TCalonRujukan) => void;
 };
 
+/** Id daftar dan opsinya untuk aria-controls / aria-activedescendant di textarea. */
+export const ID_DAFTAR_RUJUKAN = "daftar-rujukan-obrolan";
+export const idOpsiRujukan = (i: number) => `opsi-rujukan-obrolan-${i}`;
+
 const judulBagian = (teks: string) => (
   <p role="presentation" className="px-3 pt-1.5 pb-0.5 text-11 font-semibold text-tertiary">
     {teks}
@@ -179,6 +183,7 @@ export function DaftarRujukan({ cocok, memuat, sorot, onSorot, onPilih }: TDafta
   const idxTugasPertama = cocok.findIndex((c) => c.jenis === "tugas");
   return (
     <div
+      id={ID_DAFTAR_RUJUKAN}
       // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- combobox ARIA, lihat DaftarSebut
       role="listbox"
       aria-label={t("rujukan_ui.mention_channel_label")}
@@ -196,6 +201,7 @@ export function DaftarRujukan({ cocok, memuat, sorot, onSorot, onPilih }: TDafta
               type="button"
               // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- opsi combobox ARIA, lihat DaftarSebut
               role="option"
+              id={idOpsiRujukan(i)}
               aria-selected={i === sorot}
               // mousedown, bukan click: click datang sesudah textarea kehilangan fokus.
               onMouseDown={(e) => {

@@ -38,12 +38,18 @@ const ActiveProjects = observer(function ActiveProjects() {
       subtitle={selectedDurationLabel}
       className="md:col-span-2"
     >
-      <div className="flex h-[350px] flex-col gap-4 overflow-auto">
+      {/* Daftar yang bisa digulir harus bisa dicapai papan ketik (isinya tidak punya elemen fokus). */}
+      <section
+        className="flex h-[350px] flex-col gap-4 overflow-auto"
+        aria-label={t("workspace_analytics.active_projects")}
+        // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- wilayah gulir wajib bisa difokus (WCAG 2.1.1)
+        tabIndex={0}
+      >
         {isProjectAnalyticsCountLoading &&
           Array.from({ length: 5 }).map((_, index) => <Loader.Item key={index} height="40px" width="100%" />)}
         {!isProjectAnalyticsCountLoading &&
           projectAnalyticsCount?.map((project) => <ActiveProjectItem key={project.id} project={project} />)}
-      </div>
+      </section>
     </AnalyticsSectionWrapper>
   );
 });

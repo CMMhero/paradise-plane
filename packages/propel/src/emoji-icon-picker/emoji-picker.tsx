@@ -18,6 +18,7 @@ export function EmojiPicker(props: TCustomEmojiPicker) {
   const {
     isOpen,
     handleToggle,
+    buttonAriaLabel,
     buttonClassName,
     closeOnSelect = true,
     defaultIconColor = "#6d7b8a",
@@ -101,7 +102,7 @@ export function EmojiPicker(props: TCustomEmojiPicker) {
 
   return (
     <Popover open={isOpen} onOpenChange={handleToggle}>
-      <Popover.Button className={cn("outline-none", buttonClassName)} disabled={disabled}>
+      <Popover.Button className={cn("outline-none", buttonClassName)} disabled={disabled} aria-label={buttonAriaLabel}>
         {label}
       </Popover.Button>
       <Popover.Panel

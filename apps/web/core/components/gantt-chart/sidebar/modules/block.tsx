@@ -10,7 +10,7 @@ import { Row } from "@plane/ui";
 // components
 import { cn } from "@plane/utils";
 import { BLOCK_HEIGHT } from "@/components/gantt-chart/constants";
-import { ModuleGanttSidebarBlock } from "@/components/modules";
+import { ModuleGanttSidebarBlock } from "@/components/modules/gantt-chart/blocks";
 // helpers
 // hooks
 import { useTimeLineChartStore } from "@/hooks/use-timeline-chart";

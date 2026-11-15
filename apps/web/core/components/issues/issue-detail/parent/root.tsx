@@ -104,7 +104,7 @@ export const IssueParentDetail = observer(function IssueParentDetail(props: TIss
           </div>
         </ControlLink>
 
-        <CustomMenu ellipsis optionsClassName="p-1.5">
+        <CustomMenu ariaLabel={t("aria_labels.common.more_actions")} ellipsis optionsClassName="p-1.5">
           <div className="border-b border-strong text-11 font-medium text-secondary">{t("issue.sibling.label")}</div>
 
           <IssueParentSiblings workspaceSlug={workspaceSlug} currentIssue={issue} parentIssue={parentIssue} />

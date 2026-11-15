@@ -127,6 +127,7 @@ export const ProjectLinkDetail = observer(function ProjectLinkDetail(props: TPro
   return (
     <div ref={cardRef} className="min-w-0">
       <LinkItemBlock
+        menuAriaLabel={t("aria_labels.common.more_actions")}
         title={getQuickLinkTitle(linkDetail)}
         iconSrc={getQuickLinkIcon(linkDetail)}
         icon={renderLogo(linkDetail)}

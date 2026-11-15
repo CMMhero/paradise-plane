@@ -287,7 +287,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
         />
       </>
 
-      <Row className="relative z-15 hidden h-full w-full items-center justify-between gap-2 border-b border-subtle bg-surface-1 lg:flex">
+      <Row className="relative z-15 hidden h-full w-full items-center justify-between gap-2 border-b border-subtle bg-surface-1 md:flex">
         <div className="flex items-center gap-4">
           {isNotificationEmbed && (
             <button onClick={embedRemoveCurrentNotification}>
@@ -306,8 +306,10 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Kustomisasi Paradise: di md (tablet, daftar tampil di samping) panah
+              sebelumnya/berikutnya disembunyikan supaya Accept/Decline muat satu baris. */}
           {!isNotificationEmbed && (
-            <div className="flex items-center gap-x-2">
+            <div className="hidden items-center gap-x-2 lg:flex">
               <IconButton
                 variant="secondary"
                 size="lg"
@@ -381,6 +383,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
                 {isAllowed && (
                   <CustomMenu
                     customButton={<MoreHorizontal className="size-4" />}
+                    ariaLabel={t("aria_labels.common.more_actions")}
                     customButtonClassName={getIconButtonStyling("secondary", "lg")}
                     placement="bottom-start"
                   >
@@ -440,7 +443,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
         </div>
       </Row>
 
-      <div className="lg:hidden">
+      <div className="md:hidden">
         <InboxIssueActionsMobileHeader
           inboxIssue={inboxIssue}
           isSubmitting={isSubmitting}

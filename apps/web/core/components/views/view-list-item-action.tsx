@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel, IS_FAVORITE_MENU_OPEN } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { useLocalStorage } from "@plane/hooks";
 import type { IProjectView } from "@plane/types";
 import { FavoriteStar } from "@plane/ui";
@@ -31,6 +32,7 @@ type Props = {
 };
 
 export const ViewListItemAction = observer(function ViewListItemAction(props: Props) {
+  const { t } = useTranslation();
   const { parentRef, view, showScope = false } = props;
   // states
   const [isPublishModalOpen, setPublishModalOpen] = useState<boolean>(false);
@@ -102,6 +104,7 @@ export const ViewListItemAction = observer(function ViewListItemAction(props: Pr
 
       {isEditingAllowed && (
         <FavoriteStar
+          ariaLabel={t("favorites")}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

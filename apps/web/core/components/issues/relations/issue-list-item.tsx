@@ -164,7 +164,7 @@ export const RelationIssueListItem = observer(function RelationIssueListItem(pro
               />
             </div>
             <div className="flex-shrink-0 pl-2 text-13">
-              <CustomMenu placement="bottom-end" ellipsis>
+              <CustomMenu ariaLabel={t("aria_labels.common.more_actions")} placement="bottom-end" ellipsis>
                 {!disabled && (
                   <CustomMenu.MenuItem onClick={handleEditIssue}>
                     <div className="flex items-center gap-2">

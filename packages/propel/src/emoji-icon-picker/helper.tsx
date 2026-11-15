@@ -29,6 +29,8 @@ export type TEmojiIconPickerTypes = typeof EmojiIconPickerTypes.EMOJI | typeof E
 export type TCustomEmojiPicker = {
   isOpen: boolean;
   handleToggle: (value: boolean) => void;
+  /** Nama aksesibel tombol pemicu bila `label` tidak berisi teks (mis. hanya logo). */
+  buttonAriaLabel?: string;
   buttonClassName?: string;
   className?: string;
   closeOnSelect?: boolean;

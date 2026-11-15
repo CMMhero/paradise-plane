@@ -5,6 +5,7 @@
  */
 
 import { FloatingOverlay } from "@floating-ui/react";
+import { Lock } from "lucide-react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import {
   forwardRef,
@@ -27,12 +28,25 @@ import { DROPDOWN_NAVIGATION_KEYS, getNextValidIndex } from "@/helpers/tippy";
 import type { TMentionHandler, TMentionSection, TMentionSuggestion } from "@/types";
 
 export type MentionsListDropdownProps = SuggestionProps<TMentionSection, TMentionSuggestion> &
-  Pick<TMentionHandler, "searchCallback" | "tip"> & {
+  Pick<TMentionHandler, "searchCallback" | "tip" | "labels"> & {
     onClose: () => void;
   };
 
+type TSelectedIndex = { section: number; item: number };
+
+/** Entri pertama yang boleh dipilih (bukan penanda abu-abu); null kalau semuanya mati. */
+const firstEnabledIndex = (sections: TMentionSection[]): TSelectedIndex | null => {
+  for (let section = 0; section < sections.length; section++) {
+    const item = sections[section].items.findIndex((i) => !i.isDisabled);
+    if (item !== -1) return { section, item };
+  }
+  return null;
+};
+
 export const MentionsListDropdown = forwardRef(function MentionsListDropdown(props: MentionsListDropdownProps, ref) {
-  const { command, query, searchCallback, tip, onClose } = props;
+  const { command, query, searchCallback, tip, labels, onClose } = props;
+  const loadingLabel = labels?.loading ?? "Loading...";
+  const noResultsLabel = labels?.noResults ?? "No results";
   // states
   const [sections, setSections] = useState<TMentionSection[]>([]);
   const [selectedIndex, setSelectedIndex] = useState({
@@ -70,13 +84,19 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
         return true;
       }
 
-      const newIndex = getNextValidIndex({
-        event,
-        sections,
-        selectedIndex,
-      });
-      if (newIndex) {
-        setSelectedIndex(newIndex);
+      // Lompati entri yang tidak bisa dipilih ("Di luar departemen"): sorotan
+      // yang mendarat di sana membuat Enter tidak melakukan apa pun.
+      const total = sections.reduce((jumlah, section) => jumlah + section.items.length, 0);
+      let cursor: TSelectedIndex = selectedIndex;
+      for (let langkah = 0; langkah < total; langkah++) {
+        const next = getNextValidIndex({ event, sections, selectedIndex: cursor });
+        if (!next) break;
+        cursor = next;
+        const kandidat = sections[cursor.section]?.items?.[cursor.item];
+        if (kandidat && !kandidat.isDisabled) {
+          setSelectedIndex(cursor);
+          break;
+        }
       }
 
       return true;
@@ -91,8 +111,8 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
           const sectionsResponse = await searchCallback?.(searchQuery);
           if (sectionsResponse) {
             setSections(sectionsResponse);
-            // reset the selected index to 0 whenever new sections arrive
-            setSelectedIndex({ section: 0, item: 0 });
+            // reset the selection to the first selectable entry whenever new sections arrive
+            setSelectedIndex(firstEnabledIndex(sectionsResponse) ?? { section: 0, item: 0 });
           }
         } catch (error) {
           console.error("Failed to fetch suggestions:", error);
@@ -164,25 +184,30 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
         }}
       >
         {isLoading ? (
-          <div className="text-center text-13 text-placeholder">Loading...</div>
+          <div className="text-center text-13 text-placeholder">{loadingLabel}</div>
         ) : sections.length ? (
           sections.map((section, sectionIndex) => (
             <div key={section.key} className="space-y-2">
               {section.title && <h6 className="text-11 font-semibold text-tertiary">{section.title}</h6>}
               {section.items.map((item, itemIndex) => {
                 const isSelected = sectionIndex === selectedIndex.section && itemIndex === selectedIndex.item;
+                const itemId = `mention-item-${sectionIndex}-${itemIndex}`;
 
                 return (
                   <button
                     key={item.id}
-                    id={`mention-item-${sectionIndex}-${itemIndex}`}
+                    id={itemId}
                     type="button"
                     aria-disabled={item.isDisabled || undefined}
+                    aria-describedby={item.isDisabled && item.disabledReason ? `${itemId}-reason` : undefined}
+                    title={item.isDisabled ? item.disabledReason : undefined}
                     className={cn(
                       "flex w-full items-center gap-2 truncate rounded-sm px-1 py-1.5 text-left text-11 text-secondary hover:bg-layer-1-hover",
                       {
                         "bg-layer-1-hover": isSelected && !item.isDisabled,
-                        "cursor-not-allowed opacity-60 hover:bg-transparent": item.isDisabled,
+                        // Tanpa opacity pada teks: meredupkan teks menurunkan kontras di bawah 4.5:1.
+                        // Token tertiary sudah abu-abu, dan gembok di kanan menandai "tidak bisa dipilih".
+                        "cursor-not-allowed text-tertiary hover:bg-transparent": item.isDisabled,
                       }
                     )}
                     onClick={(e) => {
@@ -190,25 +215,40 @@ export const MentionsListDropdown = forwardRef(function MentionsListDropdown(pro
                       e.stopPropagation();
                       selectItem(sectionIndex, itemIndex);
                     }}
-                    onMouseEnter={() =>
+                    onMouseEnter={() => {
+                      if (item.isDisabled) return;
                       setSelectedIndex({
                         section: sectionIndex,
                         item: itemIndex,
-                      })
-                    }
+                      });
+                    }}
                   >
-                    <span className="grid size-5 flex-shrink-0 place-items-center">{item.icon}</span>
+                    <span
+                      className={cn("grid size-5 flex-shrink-0 place-items-center", item.isDisabled && "opacity-60")}
+                    >
+                      {item.icon}
+                    </span>
                     {item.subTitle && (
                       <h5 className="flex-shrink-0 text-11 whitespace-nowrap text-tertiary">{item.subTitle}</h5>
                     )}
                     <p className="flex-grow truncate">{item.title}</p>
+                    {item.isDisabled ? (
+                      <>
+                        <Lock className="size-3 flex-shrink-0 text-tertiary" aria-hidden="true" />
+                        {item.disabledReason ? (
+                          <span id={`${itemId}-reason`} className="sr-only">
+                            {item.disabledReason}
+                          </span>
+                        ) : null}
+                      </>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
           ))
         ) : (
-          <div className="text-center text-13 text-placeholder">No results</div>
+          <div className="text-center text-13 text-placeholder">{noResultsLabel}</div>
         )}
         {tip && <p className="border-t-[0.5px] border-subtle pt-2 text-11 text-placeholder">{tip}</p>}
       </div>

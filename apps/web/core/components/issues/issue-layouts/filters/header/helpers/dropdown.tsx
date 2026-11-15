@@ -52,7 +52,13 @@ export function FiltersDropdown(props: Props) {
         <>
           {menuButton ? (
             <Popover.Button as={React.Fragment}>
-              <button type="button" ref={setReferenceElement} className="flex items-center rounded-button">
+              <button
+                type="button"
+                ref={setReferenceElement}
+                className="flex items-center rounded-button"
+                // menuButton biasanya ikon saja; judul dropdown jadi namanya
+                aria-label={title || undefined}
+              >
                 {menuButton}
               </button>
             </Popover.Button>

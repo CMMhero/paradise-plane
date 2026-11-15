@@ -10,6 +10,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import { Disclosure } from "@headlessui/react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { ROLE, EUserPermissions, EUserPermissionsLevel, MEMBER_TRACKER_ELEMENTS } from "@plane/constants";
 import { TrashIcon, SuspendedUserIcon } from "@plane/propel/icons";
 import { Pill, EPillVariant, EPillSize } from "@plane/propel/pill";
@@ -44,6 +45,7 @@ type AccountTypeProps = {
 
 export function NameColumn(props: NameProps) {
   const { rowData, isAdmin, currentUser, setRemoveMemberModal } = props;
+  const { t } = useTranslation();
   // derived values
   const { avatar_url, display_name, email, first_name, id, last_name } = rowData.member;
   const isSuspended = rowData.is_active === false;
@@ -92,6 +94,7 @@ export function NameColumn(props: NameProps) {
               <div className="shrink-0">
                 <PopoverMenu
                   data={[""]}
+                  buttonAriaLabel={t("aria_labels.common.more_actions")}
                   keyExtractor={(item) => item}
                   popoverClassName="justify-end"
                   buttonClassName="outline-none	origin-center rotate-90 size-8 aspect-square flex-shrink-0 grid place-items-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 sentuh:opacity-100 transition-opacity"

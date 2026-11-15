@@ -61,6 +61,7 @@ export const DefaultWorkspaceViewQuickActions = observer(function DefaultWorkspa
   return (
     <>
       <CustomMenu
+        ariaLabel={t("aria_labels.common.more_actions")}
         ellipsis
         placement="bottom-end"
         closeOnSelect

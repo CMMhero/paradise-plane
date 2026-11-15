@@ -28,16 +28,34 @@ export function HealthPill({ health }: { health: TDashboardHealth }) {
 }
 
 /**
+ * Warna bilah mengikuti kesehatan divisi, bukan warna merek (merek = merah, terbaca "kritis").
+ * `bg-danger-primary` gelap = merah tua (L 0,44), cuma ~1,9:1 terhadap jalur bilah; di gelap
+ * bilah kritis memakai langkah `danger-strong` (L 0,70) supaya sejelas bilah hijau.
+ */
+const HEALTH_BAR: Record<TDashboardHealth, string> = {
+  lancar: "bg-success-primary",
+  perhatian: "bg-warning-primary",
+  kritis: "bg-danger-primary dark:bg-(--border-danger-strong)",
+};
+
+/**
  * Bilah kemajuan. `percent` null = belum ada tugas, bilah kosong. Hiasan saja:
  * persentasenya selalu tertulis di sebelahnya, jadi pembaca layar tidak kehilangan apa pun.
  */
-export function ProgressBar({ percent }: { percent: number | null }) {
+export function ProgressBar({ percent, health }: { percent: number | null; health: TDashboardHealth }) {
   return (
     <div aria-hidden className="h-1.5 w-full overflow-hidden rounded-control bg-layer-3">
-      <div className="h-full rounded-control bg-accent-primary" style={{ width: `${percent ?? 0}%` }} />
+      <div className={cn("h-full rounded-control", HEALTH_BAR[health])} style={{ width: `${percent ?? 0}%` }} />
     </div>
   );
 }
+
+/** Pita peringatan: permukaan netral + garis kiri berwarna, jadi sama terbacanya di tema terang dan gelap. */
+export const ALERT_BANNER: Record<TDashboardHealth, string> = {
+  lancar: "border-l-success-strong",
+  perhatian: "border-l-warning-strong",
+  kritis: "border-l-danger-strong",
+};
 
 const TONE_CLASS: Record<TTrendTone, string> = {
   good: "text-success-primary",

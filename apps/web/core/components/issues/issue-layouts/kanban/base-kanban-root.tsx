@@ -7,6 +7,7 @@
 import type { FC } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -119,6 +120,9 @@ export const BaseKanBanRoot = observer(function BaseKanBanRoot(props: IBaseKanBa
   // states
   const [draggedIssueId, setDraggedIssueId] = useState<string | undefined>(undefined);
   const [deleteIssueModal, setDeleteIssueModal] = useState(false);
+  // Selama menyeret, scroll-snap HP dimatikan: auto-scroll menggeser sedikit demi
+  // sedikit dan snap "mandatory" akan menariknya kembali ke kolom semula.
+  const [isDragging, setIsDragging] = useState(false);
 
   const isEditingAllowed = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
@@ -153,6 +157,10 @@ export const BaseKanBanRoot = observer(function BaseKanBanRoot(props: IBaseKanBa
     return combine(
       autoScrollForElements({
         element,
+      }),
+      monitorForElements({
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
       })
     );
   }, []);
@@ -221,7 +229,7 @@ export const BaseKanBanRoot = observer(function BaseKanBanRoot(props: IBaseKanBa
       <KanbanDeleteDropZone onRequestDelete={handleRequestDelete} />
       <IssueLayoutHOC layout={EIssueLayoutTypes.KANBAN}>
         <div
-          className={`horizontal-scrollbar relative flex scrollbar-lg h-full w-full bg-surface-2 ${sub_group_by ? "vertical-scrollbar overflow-y-auto" : "overflow-x-auto overflow-y-hidden"}`}
+          className={`horizontal-scrollbar relative flex scrollbar-lg h-full w-full bg-surface-2 ${sub_group_by ? "vertical-scrollbar overflow-y-auto" : "overflow-x-auto overflow-y-hidden"} ${!sub_group_by && !isDragging ? "max-md:snap-x max-md:snap-mandatory" : ""}`}
           ref={scrollableContainerRef}
         >
           <div className="relative h-full w-max min-w-full bg-surface-2">

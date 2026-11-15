@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { ArrowRight } from "lucide-react";
 // helpers
 import type { IBlockUpdateData, IGanttBlock } from "@plane/types";
+import { useTranslation } from "@plane/i18n";
 import { cn } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -29,6 +30,7 @@ type Props = {
 };
 
 export const BlockRow = observer(function BlockRow(props: Props) {
+  const { t } = useTranslation();
   const { blockId, showAllBlocks, blockUpdateHandler, handleScrollToBlock, enableAddBlock, selectionHelpers } = props;
   // states
   const [isHidden, setIsHidden] = useState(false);
@@ -106,6 +108,7 @@ export const BlockRow = observer(function BlockRow(props: Props) {
                   left: `${SIDEBAR_WIDTH + 4}px`,
                 }}
                 onClick={() => handleScrollToBlock(block)}
+                aria-label={block.data?.name ?? t("common.layout")}
               >
                 <ArrowRight
                   className={cn("h-3.5 w-3.5", {

@@ -18,6 +18,7 @@ import {
   EUserPermissionsLevel,
   IS_FAVORITE_MENU_OPEN,
 } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { useLocalStorage } from "@plane/hooks";
 import { WorkItemsIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/propel/toast";
@@ -48,6 +49,7 @@ const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
 };
 
 export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
+  const { t } = useTranslation();
   const { moduleId } = props;
   // refs
   const parentRef = useRef(null);
@@ -265,6 +267,7 @@ export const ModuleCardItem = observer(function ModuleCardItem(props: Props) {
       <div className="absolute right-4 bottom-[18px] flex items-center gap-1.5">
         {isEditingAllowed && (
           <FavoriteStar
+            ariaLabel={t("favorites")}
             onClick={(e) => {
               if (moduleDetails.is_favorite) handleRemoveFromFavorites(e);
               else handleAddToFavorites(e);

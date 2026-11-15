@@ -9,11 +9,11 @@ import { ListFilter } from "lucide-react";
 // plane imports
 import type { TActivityFilters, TActivityFilterOption } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { IconButton } from "@plane/propel/icon-button";
 import { CheckIcon } from "@plane/propel/icons";
 import { PopoverMenu } from "@plane/ui";
 // helper
 import { cn } from "@plane/utils";
+import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 // constants
 
 type TActivityFilter = {
@@ -30,9 +30,10 @@ export const ActivityFilter = observer(function ActivityFilter(props: TActivityF
   return (
     <PopoverMenu
       buttonClassName="outline-none"
+      buttonAriaLabel={t("common.filters")}
       button={
         <>
-          <IconButton variant="tertiary" icon={ListFilter} />
+          <MenuTriggerIcon variant="tertiary" icon={ListFilter} />
           {selectedFilters.length < filterOptions.length && (
             <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent-primary" />
           )}

@@ -19,6 +19,7 @@ import emptyIssueLight from "@/app/assets/empty-state/search/issues-light.webp?u
 // components
 import { EmptyState } from "@/components/common/empty-state";
 import { PageHead } from "@/components/core/page-title";
+import { RichTextEditor } from "@/components/editor/rich-text";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -32,6 +33,13 @@ import { useSegarkanDetailTugas } from "@/hooks/use-segarkan-detail-tugas";
 import { WorkItemDetailRoot } from "@/plane-web/components/browse/workItem-detail";
 
 import type { Route } from "./+types/page";
+
+// Paradise: editor dimuat malas (lihat `lazy-editor.tsx`), tapi halaman ini
+// selalu menampilkan deskripsi. Mulai unduh saat modul rute dievaluasi supaya
+// editor tiba bersamaan dengan data work item; kalau baru diunduh saat
+// deskripsi dirender, kerangka -> editor terjadi setelah properti di bawahnya
+// tampil dan mendorongnya ke bawah (CLS).
+RichTextEditor.muatAwal();
 
 export const IssueDetailsPage = observer(function IssueDetailsPage({ params }: Route.ComponentProps) {
   // router

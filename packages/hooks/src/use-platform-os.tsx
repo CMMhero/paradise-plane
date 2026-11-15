@@ -71,27 +71,42 @@ const bacaPlatform = (userAgent: string): string => {
   return "Unknown";
 };
 
+const ukurPlatform = (): TPlatform => {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return { isMobile: false, isLayarSempit: false, platform: "" };
+  }
+  const sentuh = window.matchMedia(KUERI_SENTUH).matches;
+  return {
+    isMobile: sentuh,
+    isLayarSempit: window.matchMedia(KUERI_SEMPIT).matches,
+    // Dikosongkan untuk perangkat sentuh, sama seperti perilaku lama, supaya
+    // pemanggil yang menampilkan pintasan papan ketik tidak mendadak
+    // menawarkan pintasan di perangkat yang tidak punya papan ketik.
+    platform: sentuh ? "" : bacaPlatform(window.navigator.userAgent),
+  };
+};
+
 export const usePlatformOS = (): TPlatform => {
-  const [platformData, setPlatformData] = useState<TPlatform>({
-    isMobile: false,
-    isLayarSempit: false,
-    platform: "",
-  });
+  // Diukur saat render pertama, bukan menunggu efek. Kalau mulai dari `false`,
+  // render pertama di HP menaruh sidebar MENEMPEL (250px memakan isi), lalu
+  // efek membaliknya jadi melayang: seluruh isi halaman melompat ke kiri
+  // (layout shift 0,2 sampai 0,26 di tiap halaman). Aman tanpa hidrasi: web
+  // berjalan `ssr: false` dan komponen rute tidak pernah dihidrasi.
+  const [platformData, setPlatformData] = useState<TPlatform>(ukurPlatform);
 
   useEffect(() => {
     const sempit = window.matchMedia(KUERI_SEMPIT);
     const sentuh = window.matchMedia(KUERI_SENTUH);
 
-    const hitung = () => {
-      setPlatformData({
-        isMobile: sentuh.matches,
-        isLayarSempit: sempit.matches,
-        // Dikosongkan untuk perangkat sentuh, sama seperti perilaku lama, supaya
-        // pemanggil yang menampilkan pintasan papan ketik tidak mendadak
-        // menawarkan pintasan di perangkat yang tidak punya papan ketik.
-        platform: sentuh.matches ? "" : bacaPlatform(window.navigator.userAgent),
+    const hitung = () =>
+      setPlatformData((lama) => {
+        const baru = ukurPlatform();
+        return lama.isMobile === baru.isMobile &&
+          lama.isLayarSempit === baru.isLayarSempit &&
+          lama.platform === baru.platform
+          ? lama
+          : baru;
       });
-    };
 
     hitung();
 

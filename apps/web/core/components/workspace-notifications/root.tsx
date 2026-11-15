@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import useSWR from "swr";
 // plane imports
 import { ENotificationLoader, ENotificationQueryParamType } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
 import { cn } from "@plane/utils";
 // components
@@ -28,6 +29,7 @@ type NotificationsRootProps = {
 
 export const NotificationsRoot = observer(function NotificationsRoot({ workspaceSlug }: NotificationsRootProps) {
   // hooks
+  const { t } = useTranslation();
   const { currentWorkspace } = useWorkspace();
   const {
     currentSelectedNotificationId,
@@ -86,7 +88,12 @@ export const NotificationsRoot = observer(function NotificationsRoot({ workspace
     <div className={cn("h-full w-full overflow-hidden", isWorkItem && "overflow-y-auto")}>
       {!currentSelectedNotificationId ? (
         <div className="flex size-full items-center justify-center">
-          <EmptyStateCompact assetKey="unknown" assetClassName="size-20" />
+          {/* Kustomisasi Paradise: ikon saja tidak memberi tahu apa-apa; tambahkan petunjuk. */}
+          <EmptyStateCompact
+            assetKey="unknown"
+            assetClassName="size-20"
+            title={t("notification.empty_state.detail.select_notification")}
+          />
         </div>
       ) : (
         <>

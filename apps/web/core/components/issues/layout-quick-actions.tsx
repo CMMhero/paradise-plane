@@ -6,12 +6,13 @@
 
 import { observer } from "mobx-react";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import { useTranslation } from "@plane/i18n";
 import type { TContextMenuItem } from "@plane/ui";
 import { CustomMenu } from "@plane/ui";
 import { copyUrlToClipboard, cn } from "@plane/utils";
+import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 import { useLayoutMenuItems } from "@/components/common/quick-actions-helper";
 import { Ellipsis } from "lucide-react";
-import { IconButton } from "@plane/propel/icon-button";
 
 type Props = {
   workspaceSlug: string;
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export const LayoutQuickActions = observer(function LayoutQuickActions(props: Props) {
+  const { t } = useTranslation();
   const { workspaceSlug, projectId, storeType } = props;
 
   const layoutLink = `${workspaceSlug}/projects/${projectId}/${storeType === "EPIC" ? "epics" : "issues"}`;
@@ -55,7 +57,8 @@ export const LayoutQuickActions = observer(function LayoutQuickActions(props: Pr
         closeOnSelect
         maxHeight="lg"
         className="flex size-[26px] flex-shrink-0 items-center justify-center rounded"
-        customButton={<IconButton size="lg" variant="tertiary" icon={Ellipsis} />}
+        customButton={<MenuTriggerIcon size="lg" variant="tertiary" icon={Ellipsis} />}
+        ariaLabel={t("aria_labels.common.more_actions")}
       >
         {MENU_ITEMS.map((item) => {
           if (item.shouldRender === false) return null;

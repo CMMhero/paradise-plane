@@ -97,7 +97,8 @@ export const CalendarOptionsDropdown = observer(function CalendarOptionsDropdown
       {({ open, close: closePopover }) => (
         <>
           <Popover.Button as={React.Fragment}>
-            <button type="button" ref={setReferenceElement}>
+            {/* aria-label = teks yang terlihat di layar lebar; di HP hanya ikon yang tampil */}
+            <button type="button" ref={setReferenceElement} aria-label={t("common.options")}>
               <div
                 className={`hidden items-center gap-1.5 rounded-sm bg-layer-1 px-2.5 py-1 text-11 outline-none hover:bg-layer-1 md:flex ${
                   open ? "text-primary" : "text-secondary"
@@ -110,7 +111,7 @@ export const CalendarOptionsDropdown = observer(function CalendarOptionsDropdown
                   <ChevronUpIcon width={12} strokeWidth={2} />
                 </div>
               </div>
-              <div className="md:hidden">
+              <div className="grid size-6 place-items-center md:hidden">
                 <MoreVerticalIcon className="h-4 text-secondary" strokeWidth={2} />
               </div>
             </button>

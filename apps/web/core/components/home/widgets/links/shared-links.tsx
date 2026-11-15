@@ -120,6 +120,7 @@ export const SharedQuickLinks = observer(function SharedQuickLinks({ workspaceSl
         <div className={QUICK_LINK_GRID_CLASS}>
           {links.map((link) => (
             <LinkItemBlock
+              menuAriaLabel={t("aria_labels.common.more_actions")}
               key={link.id}
               title={getQuickLinkTitle(link)}
               iconSrc={getQuickLinkIcon(link)}

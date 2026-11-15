@@ -11,12 +11,12 @@ import { MoreHorizontal } from "lucide-react";
 // plane imports
 import { EIssueCommentAccessSpecifier } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { IconButton } from "@plane/propel/icon-button";
 import { LinkIcon, GlobeIcon, LockIcon, EditIcon, TrashIcon } from "@plane/propel/icons";
 import type { TIssueComment, TCommentsOperations } from "@plane/types";
 import type { TContextMenuItem } from "@plane/ui";
 import { CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
+import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 // hooks
 import { useUser } from "@/hooks/store/user";
 import { useIzinSumber } from "@/hooks/use-izin-sumber";
@@ -91,7 +91,11 @@ export const CommentQuickActions = observer(function CommentQuickActions(props: 
   if (MENU_ITEMS.length === 0) return null;
 
   return (
-    <CustomMenu customButton={<IconButton icon={MoreHorizontal} variant="ghost" size="sm" />} closeOnSelect>
+    <CustomMenu
+      customButton={<MenuTriggerIcon icon={MoreHorizontal} variant="ghost" size="sm" />}
+      ariaLabel={t("aria_labels.common.more_actions")}
+      closeOnSelect
+    >
       {MENU_ITEMS.map((item) => (
         <CustomMenu.MenuItem
           key={item.key}

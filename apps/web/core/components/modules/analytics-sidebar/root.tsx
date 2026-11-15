@@ -190,8 +190,11 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
         <div className={`sticky top-0 z-10 flex items-center justify-between bg-surface-1 pt-5 pb-5`}>
           <div>
             <button
-              className="flex h-5 w-5 items-center justify-center rounded-control bg-layer-3"
+              type="button"
+              // size-6: sasaran 24px; ikon panah butuh nama
+              className="flex size-6 items-center justify-center rounded-control bg-layer-3"
               onClick={() => handleClose()}
+              aria-label={t("close")}
             >
               <ChevronRightIcon className="h-3 w-3 stroke-2 text-on-color" />
             </button>
@@ -207,11 +210,11 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
                 <CustomSelect
                   customButton={
                     <span
-                      className={`flex h-6 w-20 items-center justify-center rounded-xs text-center text-11 ${
+                      // teks token utama; warna status hanya di latar tipis (teks berwarna status cuma 2-3:1)
+                      className={`flex h-6 w-20 items-center justify-center rounded-xs text-center text-11 text-primary ${
                         isEditingAllowed && !isArchived ? "cursor-pointer" : "cursor-not-allowed"
                       }`}
                       style={{
-                        color: moduleStatus ? moduleStatus.color : "#a3a3a2",
                         backgroundColor: moduleStatus ? `${moduleStatus.color}20` : "#a3a3a220",
                       }}
                     >
@@ -243,6 +246,7 @@ export const ModuleAnalyticsSidebar = observer(function ModuleAnalyticsSidebar(p
           <TextArea
             className="ring-none !m-0 max-h-max w-full resize-none !border-0 bg-transparent !p-0 text-13 leading-5 text-secondary outline-none"
             value={moduleDetails.description}
+            aria-label={t("description")}
             disabled
           />
         )}

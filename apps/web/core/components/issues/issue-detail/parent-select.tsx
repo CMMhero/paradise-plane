@@ -120,11 +120,11 @@ export const IssueParentSelect = observer(function IssueParentSelect(props: TIss
         ) : (
           <button
             type="button"
-            className={cn("grow text-left outline-none", { "cursor-not-allowed": disabled })}
+            className={cn("min-w-0 grow text-left outline-none", { "cursor-not-allowed": disabled })}
             onClick={() => toggleParentIssueModal(issue.id)}
             disabled={disabled}
           >
-            <span className="text-body-xs-medium text-placeholder">{t("issue.add.parent")}</span>
+            <span className="block truncate text-body-xs-medium text-placeholder">{t("issue.add.parent")}</span>
           </button>
         )}
         {!disabled && (

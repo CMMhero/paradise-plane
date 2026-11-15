@@ -26,6 +26,7 @@ import { IconButton } from "@plane/propel/icon-button";
 import { Tooltip } from "@plane/propel/tooltip";
 import { CustomMenu, DropIndicator, DragHandle, ControlLink } from "@plane/ui";
 import { cn } from "@plane/utils";
+import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 // components
 import { DEFAULT_TAB_KEY, getTabUrl } from "@/components/navigation/tab-navigation-utils";
 import { useTabPreferences } from "@/components/navigation/use-tab-preferences";
@@ -89,7 +90,7 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
   const isProjectListOpen = getIsProjectListOpen(projectId);
   const [instruction, setInstruction] = useState<"DRAG_OVER" | "DRAG_BELOW" | undefined>(undefined);
   // refs
-  const actionSectionRef = useRef<HTMLButtonElement | null>(null);
+  const actionSectionRef = useRef<HTMLSpanElement | null>(null);
   const projectRef = useRef<HTMLDivElement | null>(null);
   const dragHandleRef = useRef<HTMLButtonElement | null>(null);
   // router
@@ -357,15 +358,15 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
               <div className="flex items-center gap-1">
                 <CustomMenu
                   customButton={
-                    <IconButton
+                    <MenuTriggerIcon
                       ref={actionSectionRef}
                       variant="ghost"
                       size="sm"
                       icon={MoreHorizontal}
-                      onClick={() => setIsMenuActive(!isMenuActive)}
                       className="text-placeholder"
                     />
                   }
+                  menuButtonOnClick={() => setIsMenuActive(!isMenuActive)}
                   className={cn(
                     "pointer-events-none flex-shrink-0 opacity-0 group-hover/project-item:pointer-events-auto group-hover/project-item:opacity-100",
                     {

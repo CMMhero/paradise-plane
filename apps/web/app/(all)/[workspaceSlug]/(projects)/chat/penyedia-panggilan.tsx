@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
+import { Suspense, createContext, lazy, useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
@@ -17,8 +17,14 @@ import { useUser } from "@/hooks/store/user";
 import { useKehadiranTersambung } from "@/hooks/use-kehadiran";
 import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { usePanggilan, type TKabarPanggilan, type TPanggilan } from "./panggilan";
-import { PanggilanLayar } from "./panggilan-layar";
-import { PanggilanMasuk } from "./panggilan-masuk";
+
+// Layar panggilan dan kartu dering dimuat malas: keduanya hanya tampil saat ada
+// panggilan, tapi penyedia ini terpasang di SETIAP halaman workspace. Penyedia
+// dan hook panggilannya tetap eager supaya dering tidak pernah terlewat.
+const muatLayar = () => import("./panggilan-layar").then((m) => ({ default: m.PanggilanLayar }));
+const muatMasuk = () => import("./panggilan-masuk").then((m) => ({ default: m.PanggilanMasuk }));
+const PanggilanLayar = lazy(muatLayar);
+const PanggilanMasuk = lazy(muatMasuk);
 
 type TNilai = TPanggilan & {
   /** Jalur sinyal DM (soket kehadiran) sedang terbuka. */
@@ -125,37 +131,56 @@ export const PenyediaPanggilan = observer(function PenyediaPanggilan({
     return () => hentikanDering();
   }, [status, mulaiDering, hentikanDering]);
 
+  // Hangatkan potongannya saat peramban menganggur, di luar jalur render awal,
+  // supaya dering pertama tidak menunggu unduhan.
+  useEffect(() => {
+    const hangatkan = () => {
+      void muatMasuk();
+      void muatLayar();
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(hangatkan, { timeout: 5000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(hangatkan, 2000);
+    return () => window.clearTimeout(id);
+  }, []);
+
   const nilai = useMemo<TNilai>(() => ({ ...panggilan, siap }), [panggilan, siap]);
 
   return (
     <KonteksPanggilan.Provider value={nilai}>
       {children}
-      {status === "berdering" ? (
-        <PanggilanMasuk
-          nama={namaOrang(lawan)}
-          avatar={avatarOrang(lawan)}
-          video={pakaiVideo}
-          onAngkat={(video) => void panggilan.angkat(video)}
-          onTolak={panggilan.tutup}
-        />
-      ) : (
-        <PanggilanLayar
-          status={status}
-          koneksi={panggilan.koneksi}
-          judul={konferensi ? konferensi.nama : namaOrang(lawan)}
-          avatarJudul={konferensi ? undefined : avatarOrang(lawan)}
-          cariAvatar={avatarOrang}
-          pakaiVideo={pakaiVideo}
-          mikMati={panggilan.mikMati}
-          kameraMati={panggilan.kameraMati}
-          streamLokal={panggilan.streamLokal}
-          pesertaJauh={panggilan.pesertaJauh}
-          byteMasuk={panggilan.byteMasuk}
-          onAngkat={() => void panggilan.angkat(pakaiVideo)}
-          onTutup={panggilan.tutup}
-          onSetelMik={panggilan.setelMik}
-          onSetelKamera={panggilan.setelKamera}
-        />
+      {status === "diam" ? null : (
+        <Suspense fallback={null}>
+          {status === "berdering" ? (
+            <PanggilanMasuk
+              nama={namaOrang(lawan)}
+              avatar={avatarOrang(lawan)}
+              video={pakaiVideo}
+              onAngkat={(video) => void panggilan.angkat(video)}
+              onTolak={panggilan.tutup}
+            />
+          ) : (
+            <PanggilanLayar
+              status={status}
+              koneksi={panggilan.koneksi}
+              judul={konferensi ? konferensi.nama : namaOrang(lawan)}
+              avatarJudul={konferensi ? undefined : avatarOrang(lawan)}
+              cariAvatar={avatarOrang}
+              pakaiVideo={pakaiVideo}
+              mikMati={panggilan.mikMati}
+              kameraMati={panggilan.kameraMati}
+              streamLokal={panggilan.streamLokal}
+              pesertaJauh={panggilan.pesertaJauh}
+              byteMasuk={panggilan.byteMasuk}
+              onAngkat={() => void panggilan.angkat(pakaiVideo)}
+              onTutup={panggilan.tutup}
+              onSetelMik={panggilan.setelMik}
+              onSetelKamera={panggilan.setelKamera}
+            />
+          )}
+        </Suspense>
       )}
     </KonteksPanggilan.Provider>
   );

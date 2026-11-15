@@ -7,19 +7,25 @@
 
 import { observer } from "mobx-react";
 import { LayoutGrid } from "lucide-react";
+// plane imports
+import { useTranslation } from "@plane/i18n";
 // ui
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 
 export const DivisionDashboardHeader = observer(function DivisionDashboardHeader() {
+  const { t } = useTranslation();
   return (
     <Header>
       <Header.LeftItem>
         <Breadcrumbs>
           <Breadcrumbs.Item
             component={
-              <BreadcrumbLink label="Dashboard Divisi" icon={<LayoutGrid className="h-4 w-4 text-tertiary" />} />
+              <BreadcrumbLink
+                label={t("division_dashboard_ui.title")}
+                icon={<LayoutGrid className="h-4 w-4 text-tertiary" />}
+              />
             }
           />
         </Breadcrumbs>

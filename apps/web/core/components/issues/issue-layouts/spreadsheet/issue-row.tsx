@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 import { ChevronRightIcon } from "@plane/propel/icons";
@@ -172,6 +173,7 @@ interface IssueRowDetailsProps {
 }
 
 const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetailsProps) {
+  const { t } = useTranslation();
   const {
     displayProperties,
     issueId,
@@ -355,8 +357,11 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
                 {subIssuesCount > 0 && !isEpic && (
                   <button
                     type="button"
-                    className="grid size-4 place-items-center rounded-xs text-placeholder hover:text-tertiary"
+                    // size-6 -m-1: sasaran 24px (WCAG 2.5.8) tanpa menggeser tata letak kolom 16px
+                    className="-m-1 grid size-6 place-items-center rounded-xs text-placeholder hover:text-tertiary"
                     onClick={handleToggleExpand}
+                    aria-label={t("common.sub_work_items")}
+                    aria-expanded={isExpanded}
                   >
                     <ChevronRightIcon
                       className={cn("size-4", {

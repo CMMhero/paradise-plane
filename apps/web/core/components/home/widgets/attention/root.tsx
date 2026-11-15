@@ -14,7 +14,9 @@ import Link from "next/link";
 import useSWR from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
+import { Button } from "@plane/propel/button";
 import type { THomeWidgetProps } from "@plane/types";
+import { Loader } from "@plane/ui";
 import { cn, generateWorkItemLink, renderFormattedDate } from "@plane/utils";
 // hooks
 import { useUser } from "@/hooks/store/user";
@@ -28,20 +30,29 @@ const attentionService = new AttentionService();
 const ALERT_GROUPS = new Set<TAttentionGroupKey>(["overdue_mine", "team_overdue", "rejected"]);
 /** Jendela `due_soon` bawaan, untuk server lama yang belum mengirim `lookahead_days`. */
 const DEFAULT_LOOKAHEAD_DAYS = 7;
+/** Tinggi satu kartu kelompok yang penuh: judul 40px + 5 baris (BATAS_ITEM di
+ * server) x ~54px + kaki "View all" 34px. Kerangka setinggi ini, bukan separuhnya,
+ * karena kartu yang penuh adalah kasus biasa; kerangka yang lebih pendek membuat
+ * Quick links dan widget di bawahnya terdorong ~400px saat datanya tiba. */
+const KERANGKA_KARTU = "349px";
 
 export const AttentionWidget = observer(function AttentionWidget(props: THomeWidgetProps) {
   const { workspaceSlug } = props;
   const { t } = useTranslation();
   const { data: currentUser } = useUser();
-  const { data } = useSWR(`HOME_ATTENTION_${workspaceSlug}`, () => attentionService.getAttention(workspaceSlug), {
-    revalidateOnFocus: true,
-    revalidateIfStale: true,
-    dedupingInterval: 30_000,
-  });
+  const { data, error, mutate } = useSWR(
+    `HOME_ATTENTION_${workspaceSlug}`,
+    () => attentionService.getAttention(workspaceSlug),
+    {
+      revalidateOnFocus: true,
+      revalidateIfStale: true,
+      dedupingInterval: 30_000,
+    }
+  );
 
-  // Gagal memuat atau belum ada data: widget diam, Home tetap utuh.
-  if (!data) return null;
-  const groups = data.groups.filter((group) => group.count > 0);
+  // Belum ada data: kerangka setinggi widget supaya Home tidak melompat saat datanya tiba.
+  // Gagal memuat: satu baris pesan dengan tombol coba lagi, bukan widget yang menghilang.
+  const groups = data ? data.groups.filter((group) => group.count > 0) : [];
 
   const viewAllHref = (group: TAttentionGroup): string | null => {
     if (group.key === "decide")
@@ -56,7 +67,25 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
       <h2 id="home-attention-title" className="text-14 font-semibold text-primary">
         {t("attention_ui.title")}
       </h2>
-      {groups.length === 0 ? (
+      {!data ? (
+        error ? (
+          <div
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-subtle px-4 py-3 text-13 text-tertiary"
+          >
+            <span>{t("attention_ui.load_failed")}</span>
+            <Button variant="secondary" size="base" onClick={() => void mutate()}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        ) : (
+          <Loader className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <span className="sr-only">{t("common.loading")}</span>
+            <Loader.Item height={KERANGKA_KARTU} />
+            <Loader.Item height={KERANGKA_KARTU} />
+          </Loader>
+        )
+      ) : groups.length === 0 ? (
         <p className="rounded-card border border-subtle px-4 py-3 text-13 text-tertiary">{t("attention_ui.empty")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -145,11 +174,13 @@ function AttentionRow({
     <li>
       <Link href={href} className="flex items-center justify-between gap-3 px-4 py-2 hover:bg-layer-2">
         <div className="min-w-0">
-          <p className="truncate text-13 text-primary">
+          <p className="truncate text-13 text-primary" title={`${item.identifier} ${item.name}`}>
             <span className="mr-1.5 text-12 text-tertiary">{item.identifier}</span>
             {item.name}
           </p>
-          <p className="truncate text-12 text-tertiary">{note}</p>
+          <p className="truncate text-12 text-tertiary" title={note}>
+            {note}
+          </p>
         </div>
         {item.target_date && (
           <span className={cn("shrink-0 text-12", isLate ? "font-medium text-danger-primary" : "text-tertiary")}>

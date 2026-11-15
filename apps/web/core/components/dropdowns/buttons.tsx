@@ -6,7 +6,7 @@
 
 import React from "react";
 // helpers
-import { Button } from "@plane/propel/button";
+import { getButtonStyling } from "@plane/propel/button";
 import { Tooltip } from "@plane/propel/tooltip";
 import { cn } from "@plane/utils";
 // types
@@ -35,6 +35,11 @@ type ButtonProps = {
   renderToolTipByDefault?: boolean;
 };
 
+/* Tampilan chip tombol ghost, tapi elemennya <span>: DropdownButton selalu dirender DI DALAM tombol pemicu
+   dropdown (`.clickable`), dan tombol di dalam tombol membuat pembaca layar bingung (axe nested-interactive)
+   sekaligus membuat tombol luar tak bernama. */
+const CHIP = getButtonStyling("ghost", "chip");
+
 export function DropdownButton(props: DropdownButtonProps) {
   const {
     children,
@@ -61,6 +66,8 @@ export function DropdownButton(props: DropdownButtonProps) {
       showTooltip={showTooltip}
       renderToolTipByDefault={renderToolTipByDefault}
     >
+      {/* nama untuk tombol pemicu luar; chip yang hanya berisi ikon (prioritas, avatar) tak punya teks sendiri */}
+      <span className="sr-only">{tooltipHeading}</span>
       {children}
     </ButtonToRender>
   );
@@ -78,10 +85,9 @@ function BorderButton(props: ButtonProps) {
       isMobile={isMobile}
       renderByDefault={renderToolTipByDefault}
     >
-      <Button
-        variant="ghost"
-        size="chip"
+      <span
         className={cn(
+          CHIP,
           "flex h-full w-full items-center justify-start gap-1.5 border-[0.5px] border-strong",
           {
             "bg-layer-transparent-active": isActive,
@@ -90,7 +96,7 @@ function BorderButton(props: ButtonProps) {
         )}
       >
         {children}
-      </Button>
+      </span>
     </Tooltip>
   );
 }
@@ -106,16 +112,15 @@ function BackgroundButton(props: ButtonProps) {
       isMobile={isMobile}
       renderByDefault={renderToolTipByDefault}
     >
-      <Button
-        variant="ghost"
-        size="chip"
+      <span
         className={cn(
+          CHIP,
           "flex h-full w-full items-center justify-between gap-1.5 bg-layer-3 hover:bg-layer-1-hover",
           className
         )}
       >
         {children}
-      </Button>
+      </span>
     </Tooltip>
   );
 }
@@ -131,10 +136,9 @@ function TransparentButton(props: ButtonProps) {
       isMobile={isMobile}
       renderByDefault={renderToolTipByDefault}
     >
-      <Button
-        variant="ghost"
-        size="chip"
+      <span
         className={cn(
+          CHIP,
           "flex h-full w-full items-center justify-between gap-1.5",
           {
             "bg-layer-transparent-active": isActive,
@@ -143,7 +147,7 @@ function TransparentButton(props: ButtonProps) {
         )}
       >
         {children}
-      </Button>
+      </span>
     </Tooltip>
   );
 }

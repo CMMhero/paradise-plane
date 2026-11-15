@@ -42,7 +42,7 @@ export const ATRIBUT_KELUAR_BAGAN = "data-kanvas-keluar";
 export function KanvasBagan({
   children,
   judul,
-  kelasTinggi = "h-[calc(100vh-18rem)] min-h-[440px]",
+  kelasTinggi = "h-[calc(100dvh-18rem)] min-h-[440px]",
 }: {
   children: ReactNode;
   judul?: ReactNode;

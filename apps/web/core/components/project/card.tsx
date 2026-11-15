@@ -12,6 +12,7 @@ import { ArchiveRestoreIcon, Settings, UserPlus } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel, IS_FAVORITE_MENU_OPEN } from "@plane/constants";
 import { useLocalStorage } from "@plane/hooks";
+import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { LinkIcon, LockIcon, NewTabIcon, TrashIcon, CheckIcon } from "@plane/propel/icons";
@@ -49,6 +50,7 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
   const projectCardRef = useRef(null);
   // router
   const router = useAppRouter();
+  const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   // store hooks
   const { getUserDetails } = useMember();
@@ -242,6 +244,8 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
             {!isArchived && (
               <div data-prevent-progress className="flex h-full flex-shrink-0 items-center gap-2">
                 <button
+                  type="button"
+                  aria-label={t("copy_link")}
                   className="flex h-6 w-6 items-center justify-center rounded-sm bg-white/10"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -253,7 +257,8 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
                 </button>
                 {shouldRenderFavorite && (
                   <FavoriteStar
-                    buttonClassName="h-6 w-6 bg-white/10 rounded-sm"
+                    ariaLabel={t("favorites")}
+                    buttonClassName="m-0 h-6 w-6 bg-white/10 rounded-sm"
                     iconClassName={cn("h-3 w-3", {
                       "text-on-color": !project.is_favorite,
                     })}
@@ -337,6 +342,7 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
                         e.stopPropagation();
                         setDeleteProjectModal(true);
                       }}
+                      aria-label={t("delete")}
                     >
                       <TrashIcon className="h-3.5 w-3.5" />
                     </button>
@@ -348,7 +354,9 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
                 {isMemberOfProject &&
                   (hasAdminRole || hasMemberRole ? (
                     <Link
-                      className="flex items-center justify-center rounded-sm p-1 text-placeholder hover:bg-layer-1 hover:text-secondary"
+                      // p-[5px]: 24x24 (WCAG 2.5.8); nama dari aria-label karena isinya ikon saja
+                      aria-label={t("settings")}
+                      className="flex items-center justify-center rounded-sm p-[5px] text-placeholder hover:bg-layer-1 hover:text-secondary"
                       onClick={(e) => {
                         e.stopPropagation();
                       }}

@@ -17,7 +17,7 @@ import type { TBadgeVariant } from "@plane/propel/badge";
 import { Button } from "@plane/propel/button";
 import { IconButton } from "@plane/propel/icon-button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { CustomSearchSelect, CustomSelect, Input } from "@plane/ui";
+import { CustomSearchSelect, CustomSelect, Input, Loader } from "@plane/ui";
 // components
 import { TintedIconBox, tintHueFromKey } from "@/components/common/tint";
 import { PageHead } from "@/components/core/page-title";
@@ -146,28 +146,29 @@ function InitiativesPage() {
     (workspaceProjectIds ?? []).filter((pid) => !item.project_ids.includes(pid));
 
   return (
-    <div className="h-full w-full overflow-y-auto px-6 py-5">
-      <PageHead title="Initiatives" />
+    <div className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6">
+      <PageHead title={t("initiatives_ui.title")} />
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1 border-b border-subtle pb-3">
           <div className="flex items-center gap-2">
             <Target className="size-5 text-secondary" />
-            <h2 className="text-16 font-semibold text-primary">Initiatives</h2>
+            <h2 className="text-16 font-semibold text-primary">{t("initiatives_ui.title")}</h2>
           </div>
           <p className="text-13 text-tertiary">{t("initiatives_ui.description")}</p>
         </div>
 
         {isWorkspaceAdmin && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               type="text"
               placeholder={t("initiatives_ui.name_placeholder")}
+              aria-label={t("initiatives_ui.name_label")}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void handleCreate();
               }}
-              className={`${inputClass} w-80`}
+              className={`${inputClass} w-full sm:w-80`}
             />
             <Button variant="primary" size="base" prependIcon={<Plus />} onClick={handleCreate}>
               {t("initiatives_ui.create")}
@@ -176,7 +177,11 @@ function InitiativesPage() {
         )}
 
         {isLoading ? (
-          <p className="text-13 text-tertiary">{t("chat_ui.loading")}</p>
+          <Loader className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <span className="sr-only">{t("common.loading")}</span>
+            <Loader.Item height="116px" />
+            <Loader.Item height="116px" />
+          </Loader>
         ) : initiatives.length === 0 ? (
           <p className="text-13 text-tertiary">{t("initiatives_ui.empty")}</p>
         ) : (
@@ -194,7 +199,9 @@ function InitiativesPage() {
                       <TintedIconBox hue={tintHueFromKey(item.id)}>
                         <Target />
                       </TintedIconBox>
-                      <p className="text-13 font-semibold text-primary">{item.name}</p>
+                      <p className="truncate text-13 font-semibold text-primary" title={item.name}>
+                        {item.name}
+                      </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       {isWorkspaceAdmin ? (

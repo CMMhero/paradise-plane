@@ -43,6 +43,7 @@ export const ProjectSearch = observer(function ProjectSearch() {
     <div className="flex items-center">
       {!isSearchOpen && (
         <IconButton
+          aria-label={t("search")}
           variant="ghost"
           size="lg"
           className="-mr-1"

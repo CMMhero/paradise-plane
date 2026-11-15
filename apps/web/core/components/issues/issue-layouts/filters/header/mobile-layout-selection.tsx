@@ -6,10 +6,11 @@
 
 import { ISSUE_LAYOUTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { Button } from "@plane/propel/button";
+import { getButtonStyling } from "@plane/propel/button";
 import { ChevronDownIcon } from "@plane/propel/icons";
 import type { EIssueLayoutTypes } from "@plane/types";
 import { CustomMenu } from "@plane/ui";
+import { cn } from "@plane/utils";
 import { IssueLayoutIcon } from "../../layout-icon";
 
 export function MobileLayoutSelection({
@@ -28,13 +29,15 @@ export function MobileLayoutSelection({
       maxHeight={"md"}
       className="flex flex-grow justify-center text-13 text-secondary"
       placement="bottom-start"
+      ariaLabel={t("common.layout")}
       customButton={
-        <Button variant="secondary" size="lg" className="relative px-2">
+        // span bergaya tombol: CustomMenu sudah merender <button> pembungkus (axe nested-interactive)
+        <span className={cn(getButtonStyling("secondary", "lg"), "relative px-2")}>
           {activeLayout && (
             <IssueLayoutIcon layout={activeLayout} size={14} strokeWidth={2} className={`h-3.5 w-3.5`} />
           )}
           <ChevronDownIcon className="my-auto size-3 text-secondary" strokeWidth={2} />
-        </Button>
+        </span>
       }
       customButtonClassName="flex flex-grow justify-center text-secondary text-13"
       closeOnSelect

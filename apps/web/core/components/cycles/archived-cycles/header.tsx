@@ -10,6 +10,7 @@ import { useParams } from "next/navigation";
 // icons
 import { ListFilter } from "lucide-react";
 import { useOutsideClickDetector } from "@plane/hooks";
+import { useTranslation } from "@plane/i18n";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
 import { IconButton } from "@plane/propel/icon-button";
 import { Input } from "@plane/ui";
@@ -26,6 +27,7 @@ import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
 import { CycleFiltersSelection } from "../dropdowns";
 
 export const ArchivedCyclesHeader = observer(function ArchivedCyclesHeader() {
+  const { t } = useTranslation();
   // router
   const { projectId } = useParams();
   // refs
@@ -81,6 +83,7 @@ export const ArchivedCyclesHeader = observer(function ArchivedCyclesHeader() {
       <div className="flex h-full items-center gap-3 self-end px-8">
         {!isSearchOpen && (
           <IconButton
+            aria-label={t("search")}
             variant="ghost"
             size="lg"
             className="-mr-5"

@@ -105,6 +105,11 @@ export const UserProfileHeader = observer(function UserProfileHeader(props: TUse
               onClick={() => {
                 toggleProfileSidebar();
               }}
+              aria-label={t(
+                profileSidebarCollapsed
+                  ? "aria_labels.projects_sidebar.expand_sidebar"
+                  : "aria_labels.projects_sidebar.collapse_sidebar"
+              )}
               appendIcon={
                 <PanelRight className={!profileSidebarCollapsed ? "text-accent-primary" : "text-secondary"} />
               }

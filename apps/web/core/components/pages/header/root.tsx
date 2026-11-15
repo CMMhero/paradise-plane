@@ -60,11 +60,13 @@ export const PagesListHeaderRoot = observer(function PagesListHeaderRoot(props: 
 
   return (
     <>
-      <Header variant={EHeaderVariant.SECONDARY}>
-        <Header.LeftItem className="flex-nowrap overflow-x-auto overflow-y-hidden">
+      {/* Paradise: di bawah sm tab dan alat (cari/urut/filter) tidak muat satu baris;
+          "Archived" terpotong jadi "A" dan ditimpa ikon cari. Alat turun ke baris sendiri. */}
+      <Header variant={EHeaderVariant.SECONDARY} className="flex-shrink-0 max-sm:flex-wrap">
+        <Header.LeftItem className="scrollbar-hide h-[52px] flex-nowrap overflow-x-auto overflow-y-hidden max-sm:max-w-full max-sm:basis-full">
           <PageTabNavigation workspaceSlug={workspaceSlug} projectId={projectId} pageType={pageType} />
         </Header.LeftItem>
-        <Header.RightItem className="items-center">
+        <Header.RightItem className="items-center max-sm:w-full max-sm:border-t max-sm:border-subtle max-sm:py-1.5">
           <PageSearchInput
             searchQuery={filters.searchQuery}
             updateSearchQuery={(val) => updateFilters("searchQuery", val)}

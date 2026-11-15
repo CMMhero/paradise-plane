@@ -41,6 +41,8 @@ export const WorkspaceDashboardHeader = observer(function WorkspaceDashboardHead
             variant="secondary"
             size="lg"
             onClick={() => toggleWidgetSettings(true)}
+            // teksnya disembunyikan di layar sempit; nama tetap ada lewat aria-label (sama dengan teks terlihat)
+            aria-label={t("home.manage_widgets")}
             className="my-auto mb-0"
             prependIcon={<Shapes />}
           >

@@ -73,6 +73,7 @@ export const GanttChartHeader = observer(function GanttChartHeader(props: Props)
       )}
 
       <IconButton
+        aria-label={t("common.full_screen")}
         variant="secondary"
         size="sm"
         onClick={toggleFullScreenMode}

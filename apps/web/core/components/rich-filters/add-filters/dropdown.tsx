@@ -7,6 +7,7 @@
 import React from "react";
 import { observer } from "mobx-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import type { IFilterInstance } from "@plane/shared-state";
 import type { TExternalFilter, TFilterProperty, TSupportedOperators } from "@plane/types";
@@ -19,6 +20,7 @@ export type TAddFilterDropdownProps<P extends TFilterProperty, E extends TExtern
     className?: string;
     defaultOpen?: boolean;
     isDisabled?: boolean;
+    iconOnly?: boolean;
   };
   filter: IFilterInstance<P, E>;
   handleFilterSelect: (property: P, operator: TSupportedOperators, isNegation: boolean) => void;
@@ -29,6 +31,7 @@ export const AddFilterDropdown = observer(function AddFilterDropdown<
   E extends TExternalFilter,
 >(props: TAddFilterDropdownProps<P, E>) {
   const { filter, customButton, buttonConfig } = props;
+  const { t } = useTranslation();
   const { className, defaultOpen = false, isDisabled = false } = buttonConfig || {};
 
   // Transform available filter configs to CustomSearchSelect options format
@@ -88,6 +91,8 @@ export const AddFilterDropdown = observer(function AddFilterDropdown<
         disabled={isDisabled}
         customButtonClassName={className}
         customButton={customButton}
+        // tombol ikon saja (tanpa label) butuh nama untuk pembaca layar
+        ariaLabel={buttonConfig?.iconOnly ? t("common.filters") : undefined}
       />
     </div>
   );

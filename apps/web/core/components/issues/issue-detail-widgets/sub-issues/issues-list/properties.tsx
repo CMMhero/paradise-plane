@@ -87,7 +87,8 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
   const minDate = getDate(issue.start_date);
 
   return (
-    <div className="relative flex items-center gap-2">
+    // data-sasaran-chip: area klik chip 20px diperbesar ke 24px (paradise.css bagian 11)
+    <div className="relative flex items-center gap-2" data-sasaran-chip>
       <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="state">
         <div className="h-5 flex-shrink-0">
           <StateDropdown

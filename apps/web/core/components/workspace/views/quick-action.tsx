@@ -9,11 +9,12 @@ import { observer } from "mobx-react";
 import { MoreHorizontal } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { IconButton } from "@plane/propel/icon-button";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IWorkspaceView } from "@plane/types";
 import { ContextMenu, CustomMenu } from "@plane/ui";
 import { copyUrlToClipboard, cn } from "@plane/utils";
+import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 // helpers
 import { useViewMenuItems } from "@/components/common/quick-actions-helper";
 // hooks
@@ -32,6 +33,7 @@ type Props = {
 };
 
 export const WorkspaceViewQuickActions = observer(function WorkspaceViewQuickActions(props: Props) {
+  const { t } = useTranslation();
   const { workspaceSlug, view, parentRef, customClassName } = props;
   // states
   const [updateViewModal, setUpdateViewModal] = useState(false);
@@ -76,7 +78,8 @@ export const WorkspaceViewQuickActions = observer(function WorkspaceViewQuickAct
       <DeleteGlobalViewModal data={view} isOpen={deleteViewModal} onClose={() => setDeleteViewModal(false)} />
       {parentRef && <ContextMenu parentRef={parentRef} items={MENU_ITEMS.items} />}
       <CustomMenu
-        customButton={<IconButton variant="tertiary" size="lg" icon={MoreHorizontal} />}
+        customButton={<MenuTriggerIcon variant="tertiary" size="lg" icon={MoreHorizontal} />}
+        ariaLabel={t("aria_labels.common.more_actions")}
         placement="bottom-end"
         closeOnSelect
         buttonClassName={customClassName}

@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
+import { useTranslation } from "@plane/i18n";
 import { PreferencesIcon } from "@plane/propel/icons";
 import { ScrollArea } from "@plane/propel/scrollarea";
 // components
@@ -28,6 +29,7 @@ type TSidebarWrapperProps = {
 
 export const SidebarWrapper = observer(function SidebarWrapper(props: TSidebarWrapperProps) {
   const { title, children, quickActions } = props;
+  const { t } = useTranslation();
   // state
   const [isCustomizeNavDialogOpen, setIsCustomizeNavDialogOpen] = useState(false);
   // store hooks
@@ -36,14 +38,16 @@ export const SidebarWrapper = observer(function SidebarWrapper(props: TSidebarWr
   // refs
   const ref = useRef<HTMLDivElement>(null);
 
+  // 1024 = ambang sidebar melayang (KUERI_SEMPIT di @plane/hooks). Di bawahnya
+  // sidebar menutupi isi, jadi harus tertutup sendiri saat dibuka di layar sempit.
   useOutsideClickDetector(ref, () => {
-    if (sidebarCollapsed === false && window.innerWidth < 768) {
+    if (sidebarCollapsed === false && window.innerWidth < 1024) {
       toggleSidebar();
     }
   });
 
   useEffect(() => {
-    if (windowSize[0] < 768 && !sidebarCollapsed) toggleSidebar(true);
+    if (windowSize[0] < 1024 && !sidebarCollapsed) toggleSidebar(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowSize]);
 
@@ -62,6 +66,7 @@ export const SidebarWrapper = observer(function SidebarWrapper(props: TSidebarWr
                   size="base"
                   variant="ghost"
                   icon={PreferencesIcon}
+                  aria-label={t("customize_navigation")}
                   onClick={() => setIsCustomizeNavDialogOpen(true)}
                 />
               )}

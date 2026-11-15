@@ -10,7 +10,8 @@ import { useParams } from "next/navigation";
 // plane imports
 import { EIssueFilterType, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { ChevronDownIcon } from "@plane/propel/icons";
+import { ChartNoAxesColumn, SlidersHorizontal } from "lucide-react";
+import { Button } from "@plane/propel/button";
 import type { IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
 import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
 // components
@@ -71,50 +72,47 @@ export const ProjectIssuesMobileHeader = observer(function ProjectIssuesMobileHe
         onClose={() => setAnalyticsModal(false)}
         projectDetails={currentProjectDetails ?? undefined}
       />
-      {/* Baris alat HP: tiap segmen tetap selebar isinya dan barisnya bisa digeser,
-          jadi tak ada tombol yang terpotong di layar 320px. */}
-      <div className="z-[13] scrollbar-hide flex min-h-11 items-stretch justify-evenly overflow-x-auto border-b border-subtle bg-surface-1 py-1.5 md:hidden [&>*]:shrink-0">
+      {/* Paradise: alat HP (tata letak, filter, tampilan, analitik) sekarang menumpang di
+          baris header yang sama dengan tombol tambah (lihat IssuesHeader `mobileToolbar`),
+          bukan baris ketiga sendiri. Barisnya tetap bisa digeser, jadi tak ada tombol
+          yang terpotong di layar 320px. */}
+      <div className="scrollbar-hide flex h-full min-w-0 items-center gap-2 overflow-x-auto md:hidden [&>*]:shrink-0">
         <MobileLayoutSelection
           layouts={[EIssueLayoutTypes.LIST, EIssueLayoutTypes.KANBAN, EIssueLayoutTypes.CALENDAR]}
           onChange={handleLayoutChange}
           activeLayout={activeLayout}
         />
         {/* Paradise: di layar sempit header desktop (yang memuat tombol filter) disembunyikan, jadi tombol filter dipasang di sini. */}
-        <div className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary">
-          <WorkItemFiltersToggle entityType={EIssuesStoreType.PROJECT} entityId={projectId?.toString() ?? ""} />
-        </div>
-        <div className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary">
-          <FiltersDropdown
-            title={t("common.display")}
-            placement="bottom-end"
-            menuButton={
-              <span className="flex items-center px-3 py-2 text-13 text-secondary">
-                {t("common.display")}
-                <ChevronDownIcon className="ml-2 h-4 w-4 text-secondary" />
-              </span>
+        <WorkItemFiltersToggle entityType={EIssuesStoreType.PROJECT} entityId={projectId?.toString() ?? ""} />
+        <FiltersDropdown
+          miniIcon={<SlidersHorizontal className="size-3.5" />}
+          title={t("common.display")}
+          placement="bottom-end"
+        >
+          <DisplayFiltersSelection
+            layoutDisplayFiltersOptions={
+              activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues.layoutOptions[activeLayout] : undefined
             }
-          >
-            <DisplayFiltersSelection
-              layoutDisplayFiltersOptions={
-                activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues.layoutOptions[activeLayout] : undefined
-              }
-              displayFilters={issueFilters?.displayFilters ?? {}}
-              handleDisplayFiltersUpdate={handleDisplayFilters}
-              displayProperties={issueFilters?.displayProperties ?? {}}
-              handleDisplayPropertiesUpdate={handleDisplayProperties}
-              cycleViewDisabled={!currentProjectDetails?.cycle_view}
-              moduleViewDisabled={!currentProjectDetails?.module_view}
-            />
-          </FiltersDropdown>
-        </div>
+            displayFilters={issueFilters?.displayFilters ?? {}}
+            handleDisplayFiltersUpdate={handleDisplayFilters}
+            displayProperties={issueFilters?.displayProperties ?? {}}
+            handleDisplayPropertiesUpdate={handleDisplayProperties}
+            cycleViewDisabled={!currentProjectDetails?.cycle_view}
+            moduleViewDisabled={!currentProjectDetails?.module_view}
+          />
+        </FiltersDropdown>
 
         {isModuleEnabled("analytics") && (
-          <button
+          <Button
+            variant="secondary"
+            size="lg"
+            className="px-2"
             onClick={() => setAnalyticsModal(true)}
-            className="flex flex-grow items-center justify-center border-l border-subtle text-13 text-secondary"
+            aria-label={t("common.analytics")}
+            title={t("common.analytics")}
           >
-            {t("common.analytics")}
-          </button>
+            <ChartNoAxesColumn className="size-3.5" aria-hidden="true" />
+          </Button>
         )}
       </div>
     </>

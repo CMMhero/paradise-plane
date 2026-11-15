@@ -80,10 +80,23 @@ export const SubIssuesActionButton = observer(function SubIssuesActionButton(pro
   ];
 
   // button element
-  const customButtonElement = customButton ? <>{customButton}</> : <PlusIcon className="h-4 w-4" />;
+  // size-6: sasaran 24px untuk tombol ikon bawaan (WCAG 2.5.8)
+  const customButtonElement = customButton ? (
+    <>{customButton}</>
+  ) : (
+    <span className="grid size-6 place-items-center">
+      <PlusIcon className="h-4 w-4" />
+    </span>
+  );
 
   return (
-    <CustomMenu customButton={customButtonElement} placement="bottom-start" disabled={disabled} closeOnSelect>
+    <CustomMenu
+      customButton={customButtonElement}
+      ariaLabel={customButton ? undefined : t("issue.add.sub_issue")}
+      placement="bottom-start"
+      disabled={disabled}
+      closeOnSelect
+    >
       {optionItems.map((item, index) => (
         <CustomMenu.MenuItem
           key={index}

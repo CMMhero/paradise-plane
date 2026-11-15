@@ -10,6 +10,8 @@ import type { MutableRefObject, ReactNode } from "react";
 export type TPopoverButtonDefaultOptions = {
   // button and button styling
   button?: ReactNode;
+  /** Nama aksesibel tombol pemicu; wajib bila `button` hanya berisi ikon. */
+  buttonAriaLabel?: string;
   buttonClassName?: string;
   buttonRefClassName?: string;
   disabled?: boolean;

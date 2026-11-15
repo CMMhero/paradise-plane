@@ -37,7 +37,13 @@ export const SettingsMobileNav = observer(function SettingsMobileNav(props: Prop
             <HamburgerContent className="max-h-100 rounded-lg border border-subtle pb-3" />
           </div>
         )}
-        <IconButton variant="secondary" className="group shrink-0" icon={Menu} onClick={() => toggleSidebar()} />
+        <IconButton
+          aria-label={t("aria_labels.projects_sidebar.expand_sidebar")}
+          variant="secondary"
+          className="group shrink-0"
+          icon={Menu}
+          onClick={() => toggleSidebar()}
+        />
       </div>
       {/* Judul halaman. Dulu diawali ">" tanpa apa-apa di depannya. */}
       <span className="min-w-0 truncate text-14 font-medium text-primary">{t(activePath)}</span>

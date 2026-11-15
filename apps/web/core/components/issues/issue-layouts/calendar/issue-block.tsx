@@ -93,6 +93,9 @@ export const CalendarIssueBlock = observer(
       <Popover delay={100} openOnHover>
         <Popover.Button
           className="w-full"
+          // Dirender sebagai tautan (ControlLink), bukan <button>: tanpa ini Base UI
+          // memperingatkan di console tiap blok kalender.
+          nativeButton={false}
           render={
             <ControlLink
               id={`issue-${issue.id}`}
@@ -129,12 +132,15 @@ export const CalendarIssueBlock = observer(
                       <IssueIdentifier
                         issueId={issue.id}
                         projectId={issue.project_id}
-                        size="xs"
+                        size="md"
                         variant="tertiary"
                         displayProperties={issuesFilter?.issueFilters?.displayProperties}
                       />
                     )}
-                    <div className="truncate text-13 font-medium md:text-11 md:font-regular">{issue.name}</div>
+                    {/* Paradise: minimal 12px; judul lengkap lewat title karena sel sempit memotongnya. */}
+                    <div className="truncate text-13 font-medium md:text-12 md:font-regular" title={issue.name}>
+                      {issue.name}
+                    </div>
                   </div>
                   <div
                     className={cn("size-5 flex-shrink-0", {

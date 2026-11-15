@@ -54,7 +54,7 @@ export const WeekChartView = observer(function WeekChartView(_props: any) {
                     className={cn(
                       "flex flex-shrink-0 justify-between p-1 text-center capitalize outline-[0.25px] outline-subtle-1",
                       {
-                        "bg-accent-primary/20": weekDay.today,
+                        "bg-accent-primary/10": weekDay.today,
                       }
                     )}
                     style={{ width: `${currentViewData?.data.dayWidth}px` }}
@@ -79,7 +79,7 @@ export const WeekChartView = observer(function WeekChartView(_props: any) {
                 <div
                   key={`column-${rootIndex}-${index}`}
                   className={cn("h-full overflow-hidden outline-[0.25px] outline-subtle", {
-                    "bg-accent-primary/20": weekDay.today,
+                    "bg-accent-primary/10": weekDay.today,
                   })}
                   style={{ width: `${currentViewData?.data.dayWidth}px` }}
                 >

@@ -33,43 +33,47 @@ export function BreadcrumbNavigationDropdown(props: TBreadcrumbNavigationDropdow
   // if no selected item, return null
   if (!selectedItem) return null;
 
-  function NavigationButton() {
-    return (
-      <Tooltip tooltipContent={selectedItem?.title} position="bottom" disabled={isOpen}>
-        <button
-          onClick={(e) => {
-            if (!isLast) {
-              e.preventDefault();
-              e.stopPropagation();
-              handleOnClick?.();
-            }
-          }}
-          className={cn(
-            "group flex h-full cursor-pointer items-center gap-2 rounded-sm rounded-r-none px-1.5 py-1 text-13 font-medium text-tertiary",
-            {
-              "hover:bg-layer-1 hover:text-primary": !isLast,
-            }
-          )}
-        >
-          <div className="flex text-tertiary @4xl:hidden">...</div>
-          <div className="hidden items-center gap-2 @4xl:flex">
-            {selectedItemIcon && <Breadcrumbs.Icon>{selectedItemIcon}</Breadcrumbs.Icon>}
-            <Breadcrumbs.Label>{selectedItem?.title}</Breadcrumbs.Label>
-          </div>
-        </button>
-      </Tooltip>
-    );
-  }
+  // Remah terakhir tidak bernavigasi, jadi labelnya cukup <span> di dalam tombol menu. Remah lain adalah tombol
+  // navigasi sendiri dan dirender DI SAMPING tombol menu, bukan di dalamnya (axe nested-interactive).
+  const LabelTag = isLast ? "span" : "button";
+
+  const navigationButton = (
+    <Tooltip tooltipContent={selectedItem?.title} position="bottom" disabled={isOpen}>
+      <LabelTag
+        {...(isLast ? {} : { type: "button" as const })}
+        onClick={(e: React.MouseEvent) => {
+          if (!isLast) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleOnClick?.();
+          }
+        }}
+        className={cn(
+          "group flex h-full cursor-pointer items-center gap-2 rounded-sm rounded-r-none px-1.5 py-1 text-13 font-medium text-tertiary",
+          {
+            "hover:bg-layer-1 hover:text-primary": !isLast,
+          }
+        )}
+      >
+        <div className="flex text-tertiary @4xl:hidden">...</div>
+        <div className="hidden items-center gap-2 @4xl:flex">
+          {selectedItemIcon && <Breadcrumbs.Icon>{selectedItemIcon}</Breadcrumbs.Icon>}
+          <Breadcrumbs.Label>{selectedItem?.title}</Breadcrumbs.Label>
+        </div>
+      </LabelTag>
+    </Tooltip>
+  );
 
   if (navigationDisabled) {
-    return <NavigationButton />;
+    return navigationButton;
   }
 
-  return (
+  const menu = (
     <CustomMenu
+      ariaLabel={isLast ? undefined : selectedItem.title}
       customButton={
         <>
-          <NavigationButton />
+          {isLast && navigationButton}
           <Breadcrumbs.Separator
             className={cn("rounded-r-sm", {
               "bg-layer-1": isOpen && !isLast,
@@ -138,5 +142,13 @@ export function BreadcrumbNavigationDropdown(props: TBreadcrumbNavigationDropdow
         );
       })}
     </CustomMenu>
+  );
+
+  if (isLast) return menu;
+  return (
+    <div className="flex h-full items-center">
+      {navigationButton}
+      {menu}
+    </div>
   );
 }

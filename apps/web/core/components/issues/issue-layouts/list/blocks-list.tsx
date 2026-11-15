@@ -13,6 +13,14 @@ import type { TSelectionHelper } from "@/hooks/use-multiple-select";
 import { IssueBlockRoot } from "./block-root";
 import type { TRenderQuickActions } from "./list-view-types";
 
+/** Kustomisasi Paradise: baris teratas tiap grup digambar langsung, bukan
+ * menunggu IntersectionObserver. Placeholder `RenderIfVisible` setinggi satu
+ * baris desktop (44px, atau 300px di HP), sedangkan di layar < md baris asli
+ * bertumpuk jadi 120-140px. Pertukaran placeholder -> baris di layar pertama
+ * membuat seluruh daftar melompat (layout shift ~0,7 di "Assigned" HP).
+ * 10 baris cukup menutup satu layar HP; baris di bawahnya tetap malas. */
+const BARIS_LANGSUNG = 10;
+
 interface Props {
   issueIds: TGroupedIssues | any;
   issuesMap: TIssueMap;
@@ -63,6 +71,7 @@ export function IssueBlocksList(props: Props) {
             selectionHelpers={selectionHelpers}
             groupId={groupId}
             isLastChild={index === issueIds.length - 1}
+            shouldRenderByDefault={index < BARIS_LANGSUNG}
             isDragAllowed={isDragAllowed}
             canDropOverIssue={canDropOverIssue}
             isEpic={isEpic}

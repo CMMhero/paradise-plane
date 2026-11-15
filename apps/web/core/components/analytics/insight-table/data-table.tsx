@@ -77,6 +77,7 @@ export function DataTable<TData, TValue>({ columns, data, searchPlaceholder, act
           )}
           {!isSearchOpen && (
             <IconButton
+              aria-label={t("search")}
               variant="ghost"
               size="lg"
               className="-mr-5"

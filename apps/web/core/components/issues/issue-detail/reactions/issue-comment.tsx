@@ -128,6 +128,7 @@ export const IssueCommentReaction = observer(function IssueCommentReaction(props
         handleToggle={setIsPickerOpen}
         onChange={handleEmojiSelect}
         disabled={disabled}
+        triggerMode="anchor"
         label={
           <EmojiReactionGroup
             reactions={reactions}

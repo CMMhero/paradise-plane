@@ -206,7 +206,13 @@ export const IssuePeekOverviewHeader = observer(function IssuePeekOverviewHeader
             <IssueSubscription workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
           )}
           <Tooltip tooltipContent={t("common.actions.copy_link")} isMobile={isMobile}>
-            <IconButton variant="secondary" size="lg" onClick={handleCopyText} icon={CopyLinkIcon} />
+            <IconButton
+              aria-label={t("common.actions.copy_link")}
+              variant="secondary"
+              size="lg"
+              onClick={handleCopyText}
+              icon={CopyLinkIcon}
+            />
           </Tooltip>
           {issueDetails && (
             <WorkItemDetailQuickActions

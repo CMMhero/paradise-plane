@@ -6,7 +6,7 @@
  */
 
 import { useTranslation } from "@plane/i18n";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Link, useParams } from "react-router";
 import useSWR from "swr";
 import type { LucideIcon } from "lucide-react";
@@ -288,7 +288,12 @@ type Props = {
   onTelepon?: (video: boolean) => void;
 };
 
-export function Gelembung(props: Props) {
+/**
+ * Dibungkus `memo`: penarikan pesan tiap beberapa detik dan denyut kehadiran
+ * merender ulang halaman, dan tanpa ini setiap gelembung (yang memindai tautan
+ * dan sebutan di isinya) ikut dihitung ulang. Props dari halaman dijaga stabil.
+ */
+export const Gelembung = memo(function Gelembung(props: Props) {
   const { t } = useTranslation();
   const { pesan, dariSaya, awalKelompok, akhirKelompok, sayaId, namaOrang } = props;
   // Menu aksi (klik kanan / tekan lama), pemilih emoji penuh, dan menu "...".
@@ -602,7 +607,7 @@ export function Gelembung(props: Props) {
           urutan dokumen, jadi tergambar di atasnya. Z-index positif dulu (z-[1])
           ikut menimpa menu klik kanan yang positioner-nya tanpa z-index. */}
       {!dihapus && pesan.reaksi.length > 0 ? (
-        <div className={cn("relative -mt-1.5 flex flex-wrap gap-1 px-2", dariSaya && "justify-end")}>
+        <div className={cn("relative -mt-1.5 flex flex-wrap gap-1 px-2 sentuh:gap-2", dariSaya && "justify-end")}>
           {pesan.reaksi.map((r) => {
             const punyaSaya = !!sayaId && r.orang.includes(sayaId);
             return (
@@ -613,6 +618,7 @@ export function Gelembung(props: Props) {
                 onClick={() => beriReaksi(r.emoji)}
                 title={r.orang.map(namaOrang).join(", ")}
                 aria-pressed={punyaSaya}
+                data-sentuh-lega
                 className={cn(
                   "flex items-center gap-1 rounded-control border bg-layer-1 px-1.5 py-px text-12 hover:bg-layer-2",
                   punyaSaya ? "border-accent-strong text-accent-primary" : "border-subtle text-secondary"
@@ -627,4 +633,4 @@ export function Gelembung(props: Props) {
       ) : null}
     </div>
   );
-}
+});

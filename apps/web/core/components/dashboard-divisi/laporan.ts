@@ -33,5 +33,9 @@ export function completedDelta(report: TCompletedReport): number | null {
 /** "2026-11-03" -> Date tengah malam lokal (bukan UTC, supaya tanggalnya tidak bergeser). */
 export const parseDay = (day: string): Date => new Date(`${day}T00:00:00`);
 
-export const formatDay = (day: string, withYear = false): string =>
-  parseDay(day).toLocaleDateString([], { day: "numeric", month: "short", ...(withYear ? { year: "numeric" } : {}) });
+export const formatDay = (day: string, locale: string, withYear = false): string =>
+  parseDay(day).toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+    ...(withYear ? { year: "numeric" } : {}),
+  });

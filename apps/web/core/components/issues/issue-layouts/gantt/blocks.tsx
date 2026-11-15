@@ -63,6 +63,8 @@ export const IssueGanttBlock = observer(function IssueGanttBlock(props: Props) {
     <Popover delay={100} openOnHover>
       <Popover.Button
         className="w-full"
+        // Dirender sebagai <div>, bukan <button>: tanpa ini Base UI memperingatkan di console.
+        nativeButton={false}
         render={
           <div
             id={`issue-${issueId}`}

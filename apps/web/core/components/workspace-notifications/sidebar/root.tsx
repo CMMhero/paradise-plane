@@ -40,7 +40,9 @@ export const NotificationsSidebarRoot = observer(function NotificationsSidebarRo
       className={cn(
         // Paradise: lebar tetap 22/26rem, bukan 3/12. Di layar 1280px 3/12 cuma
         // ~250px, terlalu sempit untuk header (tombol "..." keluar) dan untuk baris.
-        "relative z-[10] h-full flex-shrink-0 border-0 border-subtle bg-surface-1 transition-all max-md:overflow-hidden md:w-[22rem] md:border-r lg:w-[26rem]",
+        // Di bawah lg (ponsel & tablet) daftar selebar layar sampai satu notifikasi
+        // dibuka; panel kanan kosong di tablet hanya memboroskan separuh layar.
+        "relative z-[10] h-full flex-shrink-0 border-0 border-subtle bg-surface-1 transition-all max-lg:overflow-hidden lg:w-[26rem] lg:border-r",
         currentSelectedNotificationId ? "w-0" : "w-full"
       )}
     >

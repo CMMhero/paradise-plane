@@ -15,13 +15,16 @@ import { useParams } from "react-router";
 import useSWR from "swr";
 import { isParadiseFeatureEnabled } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { Button } from "@plane/propel/button";
 import { TabNavigationItem, TabNavigationList } from "@plane/propel/tab-navigation";
+import { Loader } from "@plane/ui";
 // components
 import { PageHead } from "@/components/core/page-title";
 import { SummaryView } from "@/components/dashboard-divisi/tampilan-ringkas";
 import { ReportView } from "@/components/dashboard-divisi/tampilan-laporan";
 import { DetailView } from "@/components/dashboard-divisi/tampilan-rinci";
 // hooks
+import { useUser } from "@/hooks/store/user";
 import useLocalStorage from "@/hooks/use-local-storage";
 // services
 import { WorkspaceDashboardService } from "@/services/workspace_dashboard.service";
@@ -37,15 +40,29 @@ const MODE_LABEL: Record<TMode, string> = {
   laporan: "division_dashboard_ui.mode_report",
 };
 
+/**
+ * Jam pembaruan dalam zona waktu profil pengguna (sama dengan Beranda dan
+ * Profil), bukan zona peramban. Zona yang tidak dikenal Intl jatuh ke peramban.
+ */
+function formatUpdatedAt(iso: string, locale: string, timeZone: string | undefined): string {
+  const options: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "short" };
+  try {
+    return new Date(iso).toLocaleString(locale, { ...options, timeZone });
+  } catch {
+    return new Date(iso).toLocaleString(locale, options);
+  }
+}
+
 function DivisionDashboardPage() {
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
+  const { data: currentUser } = useUser();
   // Jam kerja berasal dari Time Tracking; disembunyikan bersama fiturnya.
   const isTimeTrackingEnabled = isParadiseFeatureEnabled("timeTracking");
   const { workspaceSlug } = useParams();
   const { storedValue, setValue: setMode } = useLocalStorage<TMode>(MODE_STORAGE_KEY, "ringkas");
   const mode: TMode = storedValue && MODES.includes(storedValue) ? storedValue : "ringkas";
   // Gagal memuat -> `data` tetap kosong dan halaman menampilkan pesan gagal.
-  const { data, isLoading } = useSWR(
+  const { data, isLoading, mutate } = useSWR(
     workspaceSlug ? ["DIVISION_DASHBOARD", workspaceSlug] : null,
     workspaceSlug ? () => dashboardService.getDashboard(workspaceSlug) : null,
     { revalidateOnFocus: false }
@@ -53,14 +70,12 @@ function DivisionDashboardPage() {
 
   if (!workspaceSlug) return <></>;
 
-  const updatedAt = data
-    ? new Date(data.generated_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })
-    : "";
+  const updatedAt = data ? formatUpdatedAt(data.generated_at, currentLocale, currentUser?.user_timezone) : "";
 
   return (
-    <div className="h-full w-full overflow-y-auto px-6 py-5">
+    <div className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6">
       <PageHead title={t("division_dashboard_ui.title")} />
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-5">
+      <div className="mx-auto flex max-w-6xl flex-col gap-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-20 font-semibold text-primary">{t("division_dashboard_ui.title")}</h1>
@@ -89,9 +104,18 @@ function DivisionDashboardPage() {
         {mode === "laporan" ? (
           <ReportView workspaceSlug={workspaceSlug} />
         ) : isLoading ? (
-          <p className="text-13 text-tertiary">{t("chat_ui.loading")}</p>
+          <Loader className="flex flex-col gap-4">
+            <span className="sr-only">{t("common.loading")}</span>
+            <Loader.Item height="72px" />
+            <Loader.Item height="200px" />
+          </Loader>
         ) : !data ? (
-          <p className="text-13 text-tertiary">{t("division_dashboard_ui.load_failed")}</p>
+          <div role="alert" className="flex flex-wrap items-center gap-3">
+            <p className="text-13 text-tertiary">{t("division_dashboard_ui.load_failed")}</p>
+            <Button variant="secondary" size="base" onClick={() => void mutate()}>
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : mode === "ringkas" ? (
           <SummaryView workspaceSlug={workspaceSlug} data={data} onShowDetail={() => setMode("rinci")} />
         ) : (

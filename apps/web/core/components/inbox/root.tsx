@@ -35,7 +35,15 @@ export const InboxIssueRoot = observer(function InboxIssueRoot(props: TInboxIssu
   // plane hooks
   const { t } = useTranslation();
   // hooks
-  const { loader, error, currentTab, currentInboxProjectId, handleCurrentTab, fetchInboxIssues } = useProjectInbox();
+  const {
+    loader,
+    error,
+    currentTab,
+    currentInboxProjectId,
+    handleCurrentTab,
+    fetchInboxIssues,
+    filteredInboxIssueIds,
+  } = useProjectInbox();
 
   useEffect(() => {
     if (!inboxAccessible || !workspaceSlug || !projectId) return;
@@ -57,6 +65,9 @@ export const InboxIssueRoot = observer(function InboxIssueRoot(props: TInboxIssu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inboxAccessible, workspaceSlug, projectId]);
 
+  // Bilah pembuka daftar hanya untuk kasus tanpa butir sama sekali (lihat di bawah).
+  const showMobileBar = !inboxIssueId && filteredInboxIssueIds.length === 0;
+
   // loader
   if (loader === "init-loading")
     return (
@@ -76,8 +87,12 @@ export const InboxIssueRoot = observer(function InboxIssueRoot(props: TInboxIssu
 
   return (
     <>
-      {!inboxIssueId && (
-        <div className="flex h-12 w-full items-center border-b border-subtle px-4 lg:hidden">
+      {/* Kustomisasi Paradise: selama daftar berisi, InboxSidebar memilih butir
+          pertama sendiri, jadi bilah ini hanya akan tampil sekejap lalu hilang
+          dan seluruh isi naik 48px (layout shift). Tampilkan hanya kalau memang
+          tidak ada yang akan terpilih. */}
+      {showMobileBar && (
+        <div className="flex h-12 w-full items-center border-b border-subtle px-4 md:hidden">
           <PanelLeft
             onClick={() => setIsMobileSidebar(!isMobileSidebar)}
             className={cn("h-4 w-4", isMobileSidebar ? "text-accent-primary" : "text-secondary")}
@@ -87,8 +102,9 @@ export const InboxIssueRoot = observer(function InboxIssueRoot(props: TInboxIssu
       <div className="flex h-full w-full overflow-hidden bg-surface-1">
         <div
           className={cn(
-            "absolute top-[50px] bottom-0 z-10 w-full flex-shrink-0 bg-surface-1 transition-all lg:!relative lg:!top-0 lg:w-2/6",
-            isMobileSidebar ? "translate-x-0" : "-translate-x-full lg:!translate-x-0"
+            "absolute bottom-0 z-10 w-full flex-shrink-0 bg-surface-1 transition-all md:!relative md:!top-0 md:w-2/6",
+            showMobileBar ? "top-[50px]" : "top-0",
+            isMobileSidebar ? "translate-x-0" : "-translate-x-full md:!translate-x-0"
           )}
         >
           <InboxSidebar
@@ -99,21 +115,26 @@ export const InboxIssueRoot = observer(function InboxIssueRoot(props: TInboxIssu
           />
         </div>
 
-        {inboxIssueId ? (
-          <InboxContentRoot
-            setIsMobileSidebar={setIsMobileSidebar}
-            isMobileSidebar={isMobileSidebar}
-            workspaceSlug={workspaceSlug.toString()}
-            projectId={projectId.toString()}
-            inboxIssueId={inboxIssueId.toString()}
-          />
-        ) : (
-          <EmptyStateCompact
-            assetKey="intake"
-            title={t("project_empty_state.intake_main.title")}
-            assetClassName="size-20"
-          />
-        )}
+        {/* Kustomisasi Paradise: di bawah md, selama daftar terbuka, panel detail
+            (beserta bilah alatnya) disembunyikan supaya tidak menumpuk di atas daftar.
+            Mulai md daftar dan detail tampil berdampingan. */}
+        <div className={cn("flex h-full w-full min-w-0", isMobileSidebar && "hidden md:flex")}>
+          {inboxIssueId ? (
+            <InboxContentRoot
+              setIsMobileSidebar={setIsMobileSidebar}
+              isMobileSidebar={isMobileSidebar}
+              workspaceSlug={workspaceSlug.toString()}
+              projectId={projectId.toString()}
+              inboxIssueId={inboxIssueId.toString()}
+            />
+          ) : (
+            <EmptyStateCompact
+              assetKey="intake"
+              title={t("project_empty_state.intake_main.title")}
+              assetClassName="size-20"
+            />
+          )}
+        </div>
       </div>
     </>
   );

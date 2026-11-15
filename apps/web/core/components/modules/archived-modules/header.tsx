@@ -10,6 +10,7 @@ import { useParams } from "next/navigation";
 // icons
 import { ListFilter } from "lucide-react";
 import { useOutsideClickDetector } from "@plane/hooks";
+import { useTranslation } from "@plane/i18n";
 import { SearchIcon, CloseIcon } from "@plane/propel/icons";
 import { IconButton } from "@plane/propel/icon-button";
 import { Input } from "@plane/ui";
@@ -27,6 +28,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useModuleFilter } from "@/hooks/store/use-module-filter";
 
 export const ArchivedModulesHeader = observer(function ArchivedModulesHeader() {
+  const { t } = useTranslation();
   // router
   const { projectId } = useParams();
   // refs
@@ -91,6 +93,7 @@ export const ArchivedModulesHeader = observer(function ArchivedModulesHeader() {
       <div className="flex h-full items-center gap-3 self-end px-8">
         {!isSearchOpen && (
           <IconButton
+            aria-label={t("search")}
             variant="ghost"
             size="lg"
             className="-mr-5"

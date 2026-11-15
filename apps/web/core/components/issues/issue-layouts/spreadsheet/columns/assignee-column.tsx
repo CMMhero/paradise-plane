@@ -32,7 +32,8 @@ export const SpreadsheetAssigneeColumn = observer(function SpreadsheetAssigneeCo
   // Union dengan assignee yang sudah ada; staf hanya boleh menambah rekan.
   const opsi = useOpsiAssignee(workspaceSlug?.toString(), issue?.project_id, issue?.assignee_ids);
   return (
-    <div className="h-11 border-b-[0.5px] border-subtle">
+    // data-sasaran-avatar: avatar pembuka kartu profil 20px diperbesar ke 24px (paradise.css bagian 11)
+    <div className="h-11 border-b-[0.5px] border-subtle" data-sasaran-avatar>
       <MemberDropdown
         showProfileCard
         value={issue?.assignee_ids ?? []}

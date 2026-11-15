@@ -5,11 +5,10 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "@plane/i18n";
 import { FileText } from "lucide-react";
 import { API_BASE_URL } from "@plane/constants";
-import { ImageFullScreenModal } from "@plane/editor";
 import type { TLampiran } from "@/services/chat.service";
 
 /** Ubah byte jadi angka yang bisa dibaca orang. */
@@ -20,6 +19,10 @@ export const ukuranTerbaca = (byte: number): string => {
 };
 
 type Props = { lampiran: TLampiran[]; terang?: boolean };
+
+/** Penampil layar penuh ada di `@plane/editor`; impor statisnya menarik seluruh
+ * editor (±435 KB gzip) ke bundel halaman chat. Dimuat saat gambar dibuka. */
+const ImageFullScreenModal = lazy(() => import("@plane/editor").then((m) => ({ default: m.ImageFullScreenModal })));
 
 /** Layar sentuh: tombol unduh & tab baru disembunyikan, sama seperti di work item. */
 const layarSentuh = () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -58,15 +61,20 @@ function GambarLampiran({ url, nama }: { url: string; nama: string }) {
           }}
         />
       </button>
-      <ImageFullScreenModal
-        aspectRatio={ukuran.rasio}
-        downloadSrc={url}
-        isFullScreenEnabled={terbuka}
-        isTouchDevice={layarSentuh()}
-        src={url}
-        width={ukuran.lebar ? `${ukuran.lebar}px` : ""}
-        toggleFullScreenMode={setTerbuka}
-      />
+      {/* Penampil merender null saat tertutup, jadi memasangnya hanya saat terbuka tidak mengubah perilaku. */}
+      {terbuka && (
+        <Suspense fallback={null}>
+          <ImageFullScreenModal
+            aspectRatio={ukuran.rasio}
+            downloadSrc={url}
+            isFullScreenEnabled={terbuka}
+            isTouchDevice={layarSentuh()}
+            src={url}
+            width={ukuran.lebar ? `${ukuran.lebar}px` : ""}
+            toggleFullScreenMode={setTerbuka}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

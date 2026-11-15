@@ -148,7 +148,13 @@ export const IssueDetailQuickActions = observer(function IssueDetailQuickActions
           )}
           <div className="flex flex-wrap items-center gap-2 text-tertiary">
             <Tooltip tooltipContent={t("common.actions.copy_link")} isMobile={isMobile}>
-              <IconButton variant="secondary" size="lg" onClick={handleCopyText} icon={CopyLinkIcon} />
+              <IconButton
+                aria-label={t("common.actions.copy_link")}
+                variant="secondary"
+                size="lg"
+                onClick={handleCopyText}
+                icon={CopyLinkIcon}
+              />
             </Tooltip>
             <WorkItemDetailQuickActions
               parentRef={parentRef}

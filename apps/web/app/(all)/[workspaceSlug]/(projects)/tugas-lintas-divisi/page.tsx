@@ -15,7 +15,7 @@ import { Badge } from "@plane/propel/badge";
 import type { TBadgeVariant } from "@plane/propel/badge";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { CustomSearchSelect, CustomSelect, Input, TextArea } from "@plane/ui";
+import { CustomSearchSelect, CustomSelect, Input, Loader, TextArea } from "@plane/ui";
 // components
 import { PageHead } from "@/components/core/page-title";
 // hooks
@@ -263,14 +263,17 @@ function TugasLintasDivisiPage() {
   if (!workspaceSlug) return <></>;
 
   return (
-    <div className="h-full w-full overflow-y-auto px-6 py-5">
+    <div className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6">
       <PageHead title={t("cross_division_ui.title")} />
 
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <p className="text-12 text-tertiary">{t("cross_division_ui.intro")}</p>
 
         {gagalMuat ? (
-          <div className="flex items-start gap-2 rounded-card border border-danger-subtle bg-danger-subtle px-3 py-2 text-12 text-danger-primary">
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-card border border-danger-subtle bg-danger-subtle px-3 py-2 text-12 text-danger-primary"
+          >
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <div className="flex flex-col gap-1">
               <span>{gagalMuat}</span>
@@ -280,7 +283,16 @@ function TugasLintasDivisiPage() {
             </div>
           </div>
         ) : isLoading ? (
-          <p className="text-13 text-tertiary">{t("chat_ui.loading")}</p>
+          <Loader className="flex flex-col gap-6">
+            <span className="sr-only">{t("common.loading")}</span>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Loader.Item height="76px" />
+              <Loader.Item height="76px" />
+              <Loader.Item height="76px" />
+            </div>
+            <Loader.Item height="320px" />
+            <Loader.Item height="160px" />
+          </Loader>
         ) : (
           <>
             {/* 1. Ringkasan saya */}
@@ -339,8 +351,13 @@ function TugasLintasDivisiPage() {
               ) : (
                 <div className="flex flex-col gap-3 rounded-card border border-subtle bg-layer-1 p-4">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.origin")}</span>
+                    <fieldset
+                      aria-labelledby="lintas-divisi-origin"
+                      className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
+                    >
+                      <span id="lintas-divisi-origin" className="text-12 font-medium text-secondary">
+                        {t("cross_division_ui.origin")}
+                      </span>
                       <CustomSelect
                         value={asalId}
                         onChange={(v: string) => setAsalDipilih(v)}
@@ -356,10 +373,15 @@ function TugasLintasDivisiPage() {
                         ))}
                       </CustomSelect>
                       <span className="text-11 text-tertiary">{t("cross_division_ui.origin_hint")}</span>
-                    </div>
+                    </fieldset>
 
-                    <div className="flex flex-col gap-1">
-                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.target")}</span>
+                    <fieldset
+                      aria-labelledby="lintas-divisi-target"
+                      className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
+                    >
+                      <span id="lintas-divisi-target" className="text-12 font-medium text-secondary">
+                        {t("cross_division_ui.target")}
+                      </span>
                       <CustomSearchSelect
                         value={tujuanDipilih}
                         onChange={(v: string) => setTujuanDipilih(v)}
@@ -378,7 +400,7 @@ function TugasLintasDivisiPage() {
                         input
                       />
                       <span className="text-11 text-tertiary">{t("cross_division_ui.target_hint")}</span>
-                    </div>
+                    </fieldset>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
@@ -394,8 +416,11 @@ function TugasLintasDivisiPage() {
                       />
                     </label>
 
-                    <div className="flex flex-col gap-1">
-                      <span className="text-12 font-medium text-secondary">
+                    <fieldset
+                      aria-labelledby="lintas-divisi-priority"
+                      className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
+                    >
+                      <span id="lintas-divisi-priority" className="text-12 font-medium text-secondary">
                         {t("cross_division_ui.priority_label")}
                       </span>
                       <CustomSelect
@@ -412,7 +437,7 @@ function TugasLintasDivisiPage() {
                           </CustomSelect.Option>
                         ))}
                       </CustomSelect>
-                    </div>
+                    </fieldset>
                   </div>
 
                   <label className="flex flex-col gap-1">
@@ -445,7 +470,10 @@ function TugasLintasDivisiPage() {
                   </label>
 
                   {gagalKirim && (
-                    <p className="rounded-item border border-danger-subtle bg-danger-subtle px-2 py-1 text-12 text-danger-primary">
+                    <p
+                      role="alert"
+                      className="rounded-item border border-danger-subtle bg-danger-subtle px-2 py-1 text-12 text-danger-primary"
+                    >
                       {gagalKirim}
                     </p>
                   )}
@@ -472,7 +500,7 @@ function TugasLintasDivisiPage() {
               {permintaan.length === 0 ? (
                 <p className="text-13 text-tertiary">{t("cross_division_ui.no_requests")}</p>
               ) : (
-                <div className="overflow-x-auto rounded-card border border-subtle">
+                <div className="overflow-x-auto rounded-card border border-subtle gulir-berpenanda">
                   <table className="w-full min-w-[720px] text-left text-13">
                     <thead>
                       <tr className="border-b border-subtle bg-layer-2 text-12 text-tertiary">

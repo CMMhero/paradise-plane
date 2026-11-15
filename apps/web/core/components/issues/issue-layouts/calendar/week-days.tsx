@@ -79,12 +79,20 @@ export const CalendarWeekDays = observer(function CalendarWeekDays(props: Props)
 
   const sortedWeekDays = getOrderedDays(Object.values(week), (item) => item.date.getDay(), startOfWeek);
 
+  // Paradise: hari ini jatuh di akhir pekan yang disembunyikan, jadi tak ada sel "hari ini".
+  // Minggu berjalan diberi warna samar supaya posisi sekarang tetap terbaca.
+  const today = new Date();
+  const isTodayHidden = !shouldShowDay(today);
+  const isTodaysWeek =
+    isTodayHidden && Object.values(week).some((day) => day.date.toDateString() === today.toDateString());
+
   return (
     <div
       className={cn("grid divide-subtle-1 md:divide-x-[0.5px]", {
         "grid-cols-7": showWeekends,
         "grid-cols-5": !showWeekends,
         "h-full": calendarLayout !== "month",
+        "md:bg-accent-primary/5": isTodaysWeek,
       })}
     >
       {sortedWeekDays.map((date: ICalendarDate) => {

@@ -58,7 +58,7 @@ export const UserMenuRoot = observer(function UserMenuRoot() {
       className="flex items-center"
       customButton={
         <AppSidebarItem
-          variant="button"
+          variant="static"
           item={{
             icon: (
               <Avatar
@@ -72,6 +72,7 @@ export const UserMenuRoot = observer(function UserMenuRoot() {
           }}
         />
       }
+      ariaLabel={t("aria_labels.projects_sidebar.open_user_menu")}
       menuButtonOnClick={() => !isUserMenuOpen && setIsUserMenuOpen(true)}
       onMenuClose={() => setIsUserMenuOpen(false)}
       placement="bottom-end"

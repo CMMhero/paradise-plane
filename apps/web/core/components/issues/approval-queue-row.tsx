@@ -159,6 +159,7 @@ export const ApprovalQueueRow = observer(function ApprovalQueueRow(props: TAppro
       />
       {catatan && (
         <Row
+          title={catatan}
           className={cn(
             "border-b border-subtle pb-3 text-12 text-tertiary",
             baris.status === "ditolak" ? "line-clamp-2" : "text-warning-primary"
