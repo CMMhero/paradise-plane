@@ -1,0 +1,2358 @@
+{
+  "label": "perf-after",
+  "generatedAt": "2026-11-15T13:47:01.415Z",
+  "base": "http://localhost:4000",
+  "workspace": "pt-paradise-perkasa",
+  "project": "ITDEV",
+  "mode": "production build, HEAD aa9b9fa442 + uncommitted working tree (no perf changes), static gzip server; throttled CPU 4x + Fast 4G, cold cache, median of 3",
+  "throttle": {
+    "cpuSlowdown": 4,
+    "network": "Fast 4G",
+    "offline": false,
+    "latency": 165,
+    "downloadThroughput": 1012500,
+    "uploadThroughput": 168750,
+    "cacheDisabled": true
+  },
+  "runs": 3,
+  "results": [
+    {
+      "route": "login",
+      "path": "/",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "login-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/",
+      "wallMs": 7330,
+      "dcl": 575,
+      "load": 2217,
+      "lcp": 5216,
+      "cls": 0,
+      "tbt": 619,
+      "longTasks": 5,
+      "longestTask": 520,
+      "requests": 103,
+      "transferKB": 932,
+      "jsTransferKB": 832,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Sign up - Space Paradise Perkasa",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": false,
+      "failedRequests": [
+        "401 GET http://localhost:8000/api/users/me/"
+      ],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          7451,
+          7327,
+          7330
+        ],
+        "dcl": [
+          575,
+          568,
+          606
+        ],
+        "load": [
+          2286,
+          2217,
+          2210
+        ],
+        "lcp": [
+          5348,
+          5216,
+          5204
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          697,
+          619,
+          584
+        ],
+        "longTasks": [
+          7,
+          5,
+          5
+        ],
+        "longestTask": [
+          576,
+          520,
+          468
+        ],
+        "requests": [
+          103,
+          103,
+          103
+        ],
+        "transferKB": [
+          932,
+          932,
+          932
+        ],
+        "jsTransferKB": [
+          832,
+          832,
+          832
+        ]
+      }
+    },
+    {
+      "route": "workspace-home",
+      "path": "/pt-paradise-perkasa",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "workspace-home-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa",
+      "wallMs": 17955,
+      "dcl": 595,
+      "load": 2187,
+      "lcp": 12644,
+      "cls": 0,
+      "tbt": 4018,
+      "longTasks": 17,
+      "longestTask": 1014,
+      "requests": 318,
+      "transferKB": 2608,
+      "jsTransferKB": 2111,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "PT Paradise Perkasa - Home",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          18127,
+          17620,
+          17955
+        ],
+        "dcl": [
+          595,
+          618,
+          591
+        ],
+        "load": [
+          2174,
+          2217,
+          2187
+        ],
+        "lcp": [
+          12644,
+          12416,
+          12740
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          4018,
+          3501,
+          4064
+        ],
+        "longTasks": [
+          18,
+          17,
+          15
+        ],
+        "longestTask": [
+          1014,
+          884,
+          1023
+        ],
+        "requests": [
+          318,
+          318,
+          318
+        ],
+        "transferKB": [
+          2608,
+          2608,
+          2608
+        ],
+        "jsTransferKB": [
+          2111,
+          2111,
+          2111
+        ]
+      }
+    },
+    {
+      "route": "projects-list",
+      "path": "/pt-paradise-perkasa/projects",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "projects-list-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects",
+      "wallMs": 32909,
+      "dcl": 574,
+      "load": 2216,
+      "lcp": 14780,
+      "cls": 0,
+      "tbt": 4215,
+      "longTasks": 19,
+      "longestTask": 1016,
+      "requests": 298,
+      "transferKB": 2505,
+      "jsTransferKB": 2010,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "PT Paradise Perkasa - Departments",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          32588,
+          32909,
+          32931
+        ],
+        "dcl": [
+          574,
+          573,
+          588
+        ],
+        "load": [
+          2231,
+          2213,
+          2216
+        ],
+        "lcp": [
+          14636,
+          14852,
+          14780
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          4115,
+          4215,
+          4281
+        ],
+        "longTasks": [
+          19,
+          20,
+          18
+        ],
+        "longestTask": [
+          991,
+          1027,
+          1016
+        ],
+        "requests": [
+          298,
+          298,
+          298
+        ],
+        "transferKB": [
+          2505,
+          2505,
+          2504
+        ],
+        "jsTransferKB": [
+          2010,
+          2010,
+          2010
+        ]
+      }
+    },
+    {
+      "route": "issues-list",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "issues-list-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "wallMs": 23274,
+      "dcl": 597,
+      "load": 2153,
+      "lcp": 19940,
+      "cls": 0.0003,
+      "tbt": 8661,
+      "longTasks": 24,
+      "longestTask": 2109,
+      "requests": 350,
+      "transferKB": 2668,
+      "jsTransferKB": 2144,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Pengembangan Aplikasi - Work items",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          23645,
+          23274,
+          23151
+        ],
+        "dcl": [
+          597,
+          622,
+          587
+        ],
+        "load": [
+          2267,
+          2153,
+          2057
+        ],
+        "lcp": [
+          20096,
+          19940,
+          19652
+        ],
+        "cls": [
+          0.0003,
+          0.0003,
+          0.0003
+        ],
+        "tbt": [
+          9005,
+          8661,
+          8269
+        ],
+        "longTasks": [
+          24,
+          24,
+          27
+        ],
+        "longestTask": [
+          2483,
+          2109,
+          1969
+        ],
+        "requests": [
+          340,
+          350,
+          350
+        ],
+        "transferKB": [
+          2656,
+          2668,
+          2668
+        ],
+        "jsTransferKB": [
+          2144,
+          2144,
+          2144
+        ]
+      }
+    },
+    {
+      "route": "issues-kanban",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "issues-kanban-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "wallMs": 22803,
+      "dcl": 583,
+      "load": 2252,
+      "lcp": 19416,
+      "cls": 0.0003,
+      "tbt": 7835,
+      "longTasks": 24,
+      "longestTask": 1768,
+      "requests": 350,
+      "transferKB": 2668,
+      "jsTransferKB": 2144,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Pengembangan Aplikasi - Work items",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          22803,
+          22574,
+          23148
+        ],
+        "dcl": [
+          595,
+          583,
+          564
+        ],
+        "load": [
+          2220,
+          2256,
+          2252
+        ],
+        "lcp": [
+          19416,
+          19396,
+          19836
+        ],
+        "cls": [
+          0.0003,
+          0.0003,
+          0.0003
+        ],
+        "tbt": [
+          7839,
+          7556,
+          7835
+        ],
+        "longTasks": [
+          24,
+          22,
+          26
+        ],
+        "longestTask": [
+          1694,
+          1772,
+          1768
+        ],
+        "requests": [
+          350,
+          350,
+          350
+        ],
+        "transferKB": [
+          2668,
+          2668,
+          2668
+        ],
+        "jsTransferKB": [
+          2144,
+          2144,
+          2144
+        ]
+      }
+    },
+    {
+      "route": "issues-calendar",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "issues-calendar-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "wallMs": 21125,
+      "dcl": 589,
+      "load": 2226,
+      "lcp": 18168,
+      "cls": 0.0057,
+      "tbt": 5959,
+      "longTasks": 26,
+      "longestTask": 1193,
+      "requests": 349,
+      "transferKB": 2667,
+      "jsTransferKB": 2144,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Pengembangan Aplikasi - Work items",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          21264,
+          21125,
+          20776
+        ],
+        "dcl": [
+          566,
+          589,
+          648
+        ],
+        "load": [
+          2231,
+          2159,
+          2226
+        ],
+        "lcp": [
+          18372,
+          18168,
+          17940
+        ],
+        "cls": [
+          0.0057,
+          0.0057,
+          0.0057
+        ],
+        "tbt": [
+          6402,
+          5873,
+          5959
+        ],
+        "longTasks": [
+          26,
+          22,
+          26
+        ],
+        "longestTask": [
+          1239,
+          1162,
+          1193
+        ],
+        "requests": [
+          349,
+          349,
+          349
+        ],
+        "transferKB": [
+          2667,
+          2667,
+          2667
+        ],
+        "jsTransferKB": [
+          2144,
+          2144,
+          2144
+        ]
+      }
+    },
+    {
+      "route": "work-item-detail",
+      "path": "/pt-paradise-perkasa/browse/ITDEV-16",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "work-item-detail-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/browse/ITDEV-16",
+      "wallMs": 20220,
+      "dcl": 563,
+      "load": 2218,
+      "lcp": 17436,
+      "cls": 0.0019,
+      "tbt": 5869,
+      "longTasks": 21,
+      "longestTask": 1374,
+      "requests": 333,
+      "transferKB": 2606,
+      "jsTransferKB": 2079,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "ITDEV-16 Atur ulang hak akses Pengembangan Aplikasi di sistem",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          20220,
+          20123,
+          20268
+        ],
+        "dcl": [
+          563,
+          583,
+          563
+        ],
+        "load": [
+          2230,
+          2218,
+          2161
+        ],
+        "lcp": [
+          17436,
+          17504,
+          17416
+        ],
+        "cls": [
+          0.0019,
+          0.0019,
+          0.0019
+        ],
+        "tbt": [
+          6000,
+          5440,
+          5869
+        ],
+        "longTasks": [
+          21,
+          21,
+          25
+        ],
+        "longestTask": [
+          1374,
+          1502,
+          1347
+        ],
+        "requests": [
+          333,
+          333,
+          333
+        ],
+        "transferKB": [
+          2606,
+          2607,
+          2606
+        ],
+        "jsTransferKB": [
+          2079,
+          2079,
+          2079
+        ]
+      }
+    },
+    {
+      "route": "approvals",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/persetujuan",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "approvals-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/persetujuan",
+      "wallMs": 18974,
+      "dcl": 610,
+      "load": 2225,
+      "lcp": 16148,
+      "cls": 0,
+      "tbt": 4904,
+      "longTasks": 20,
+      "longestTask": 1426,
+      "requests": 320,
+      "transferKB": 2523,
+      "jsTransferKB": 2005,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Approvals",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          18974,
+          18995,
+          18743
+        ],
+        "dcl": [
+          585,
+          631,
+          610
+        ],
+        "load": [
+          2208,
+          2225,
+          2227
+        ],
+        "lcp": [
+          16140,
+          16148,
+          16176
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          4904,
+          4998,
+          4801
+        ],
+        "longTasks": [
+          23,
+          20,
+          15
+        ],
+        "longestTask": [
+          1553,
+          1232,
+          1426
+        ],
+        "requests": [
+          320,
+          320,
+          310
+        ],
+        "transferKB": [
+          2523,
+          2523,
+          2511
+        ],
+        "jsTransferKB": [
+          2005,
+          2005,
+          2005
+        ]
+      }
+    },
+    {
+      "route": "analytics",
+      "path": "/pt-paradise-perkasa/analytics/overview",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "analytics-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/analytics/overview",
+      "wallMs": 17603,
+      "dcl": 572,
+      "load": 2218,
+      "lcp": 12176,
+      "cls": 0.0671,
+      "tbt": 3888,
+      "longTasks": 18,
+      "longestTask": 1077,
+      "requests": 300,
+      "transferKB": 2529,
+      "jsTransferKB": 2036,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "PT Paradise Perkasa - Analytics",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          17603,
+          18077,
+          17331
+        ],
+        "dcl": [
+          630,
+          568,
+          572
+        ],
+        "load": [
+          2218,
+          2209,
+          2240
+        ],
+        "lcp": [
+          12152,
+          12304,
+          12176
+        ],
+        "cls": [
+          0.0671,
+          0.0671,
+          0.0671
+        ],
+        "tbt": [
+          3888,
+          4320,
+          3682
+        ],
+        "longTasks": [
+          18,
+          18,
+          14
+        ],
+        "longestTask": [
+          1077,
+          1109,
+          1045
+        ],
+        "requests": [
+          300,
+          300,
+          300
+        ],
+        "transferKB": [
+          2529,
+          2529,
+          2529
+        ],
+        "jsTransferKB": [
+          2036,
+          2036,
+          2036
+        ]
+      }
+    },
+    {
+      "route": "dashboard-divisi",
+      "path": "/pt-paradise-perkasa/dashboard-divisi",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "dashboard-divisi-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/dashboard-divisi",
+      "wallMs": 16922,
+      "dcl": 595,
+      "load": 2202,
+      "lcp": 13760,
+      "cls": 0.0006,
+      "tbt": 3558,
+      "longTasks": 17,
+      "longestTask": 976,
+      "requests": 291,
+      "transferKB": 2497,
+      "jsTransferKB": 2004,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Division Dashboard",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          16470,
+          16922,
+          16946
+        ],
+        "dcl": [
+          582,
+          600,
+          595
+        ],
+        "load": [
+          1992,
+          2202,
+          2222
+        ],
+        "lcp": [
+          13264,
+          13760,
+          13784
+        ],
+        "cls": [
+          0.0006,
+          0.0006,
+          0.0006
+        ],
+        "tbt": [
+          3201,
+          3558,
+          3576
+        ],
+        "longTasks": [
+          18,
+          16,
+          17
+        ],
+        "longestTask": [
+          882,
+          976,
+          1052
+        ],
+        "requests": [
+          291,
+          291,
+          291
+        ],
+        "transferKB": [
+          2497,
+          2497,
+          2497
+        ],
+        "jsTransferKB": [
+          2004,
+          2004,
+          2004
+        ]
+      }
+    },
+    {
+      "route": "chat",
+      "path": "/pt-paradise-perkasa/chat",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "chat-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/chat",
+      "wallMs": 20123,
+      "dcl": 684,
+      "load": 2253,
+      "lcp": 11912,
+      "cls": 0,
+      "tbt": 4173,
+      "longTasks": 25,
+      "longestTask": 1059,
+      "requests": 301,
+      "transferKB": 2526,
+      "jsTransferKB": 2028,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Chat",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          20123,
+          19828,
+          20301
+        ],
+        "dcl": [
+          575,
+          702,
+          684
+        ],
+        "load": [
+          2213,
+          2255,
+          2253
+        ],
+        "lcp": [
+          11872,
+          11960,
+          11912
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          4173,
+          3780,
+          4217
+        ],
+        "longTasks": [
+          26,
+          24,
+          25
+        ],
+        "longestTask": [
+          1104,
+          998,
+          1059
+        ],
+        "requests": [
+          301,
+          301,
+          301
+        ],
+        "transferKB": [
+          2526,
+          2526,
+          2525
+        ],
+        "jsTransferKB": [
+          2028,
+          2028,
+          2028
+        ]
+      }
+    },
+    {
+      "route": "notifications",
+      "path": "/pt-paradise-perkasa/notifications",
+      "viewport": "mobile",
+      "theme": "light",
+      "file": "notifications-mobile-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/notifications",
+      "wallMs": 18275,
+      "dcl": 584,
+      "load": 2144,
+      "lcp": 15648,
+      "cls": 0.0008,
+      "tbt": 4571,
+      "longTasks": 17,
+      "longestTask": 1077,
+      "requests": 311,
+      "transferKB": 2593,
+      "jsTransferKB": 2082,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": [
+          {
+            "tag": "div",
+            "cls": "flex max-w-40 items-center mx-auto justify-center",
+            "text": "",
+            "left": 381,
+            "right": 461
+          },
+          {
+            "tag": "svg",
+            "cls": "[object SVGAnimatedString]",
+            "text": "",
+            "left": 381,
+            "right": 461
+          },
+          {
+            "tag": "div",
+            "cls": "flex flex-col gap-4 items-center",
+            "text": "Select a notification to view ",
+            "left": 346,
+            "right": 417
+          },
+          {
+            "tag": "p",
+            "cls": "text-13 leading-5 text-tertiary",
+            "text": "Select a notification to view ",
+            "left": 346,
+            "right": 417
+          }
+        ]
+      },
+      "title": "PT Paradise Perkasa - Inbox",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          17924,
+          18275,
+          18574
+        ],
+        "dcl": [
+          592,
+          584,
+          572
+        ],
+        "load": [
+          2144,
+          2107,
+          2214
+        ],
+        "lcp": [
+          15288,
+          15648,
+          16204
+        ],
+        "cls": [
+          0.0008,
+          0.0008,
+          0.0008
+        ],
+        "tbt": [
+          4236,
+          4571,
+          4805
+        ],
+        "longTasks": [
+          17,
+          20,
+          14
+        ],
+        "longestTask": [
+          1077,
+          1026,
+          1810
+        ],
+        "requests": [
+          311,
+          311,
+          310
+        ],
+        "transferKB": [
+          2593,
+          2593,
+          2592
+        ],
+        "jsTransferKB": [
+          2082,
+          2082,
+          2082
+        ]
+      }
+    },
+    {
+      "route": "login",
+      "path": "/",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "login-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/",
+      "wallMs": 7479,
+      "dcl": 589,
+      "load": 2232,
+      "lcp": 5376,
+      "cls": 0,
+      "tbt": 665,
+      "longTasks": 6,
+      "longestTask": 536,
+      "requests": 103,
+      "transferKB": 932,
+      "jsTransferKB": 832,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Sign up - Space Paradise Perkasa",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": false,
+      "failedRequests": [
+        "401 GET http://localhost:8000/api/users/me/"
+      ],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          7455,
+          7536,
+          7479
+        ],
+        "dcl": [
+          589,
+          577,
+          590
+        ],
+        "load": [
+          2232,
+          2251,
+          2229
+        ],
+        "lcp": [
+          5336,
+          5392,
+          5376
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          635,
+          665,
+          678
+        ],
+        "longTasks": [
+          5,
+          7,
+          6
+        ],
+        "longestTask": [
+          527,
+          543,
+          536
+        ],
+        "requests": [
+          103,
+          103,
+          103
+        ],
+        "transferKB": [
+          932,
+          932,
+          932
+        ],
+        "jsTransferKB": [
+          832,
+          832,
+          832
+        ]
+      }
+    },
+    {
+      "route": "workspace-home",
+      "path": "/pt-paradise-perkasa",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "workspace-home-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa",
+      "wallMs": 18442,
+      "dcl": 567,
+      "load": 2205,
+      "lcp": 15544,
+      "cls": 0.0028,
+      "tbt": 4116,
+      "longTasks": 20,
+      "longestTask": 948,
+      "requests": 318,
+      "transferKB": 2608,
+      "jsTransferKB": 2111,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "PT Paradise Perkasa - Home",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          18442,
+          18696,
+          18162
+        ],
+        "dcl": [
+          550,
+          567,
+          580
+        ],
+        "load": [
+          2216,
+          2205,
+          2180
+        ],
+        "lcp": [
+          15544,
+          16024,
+          15456
+        ],
+        "cls": [
+          0.0028,
+          0.0028,
+          0.0028
+        ],
+        "tbt": [
+          4116,
+          4571,
+          3944
+        ],
+        "longTasks": [
+          20,
+          19,
+          20
+        ],
+        "longestTask": [
+          927,
+          948,
+          959
+        ],
+        "requests": [
+          318,
+          318,
+          318
+        ],
+        "transferKB": [
+          2608,
+          2608,
+          2608
+        ],
+        "jsTransferKB": [
+          2111,
+          2111,
+          2111
+        ]
+      }
+    },
+    {
+      "route": "projects-list",
+      "path": "/pt-paradise-perkasa/projects",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "projects-list-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects",
+      "wallMs": 33068,
+      "dcl": 586,
+      "load": 2196,
+      "lcp": 14828,
+      "cls": 0,
+      "tbt": 4331,
+      "longTasks": 18,
+      "longestTask": 1026,
+      "requests": 298,
+      "transferKB": 2505,
+      "jsTransferKB": 2010,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "PT Paradise Perkasa - Departments",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          33390,
+          33068,
+          32528
+        ],
+        "dcl": [
+          564,
+          590,
+          586
+        ],
+        "load": [
+          2196,
+          2106,
+          2215
+        ],
+        "lcp": [
+          14928,
+          14828,
+          14480
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          4696,
+          4331,
+          3978
+        ],
+        "longTasks": [
+          15,
+          18,
+          18
+        ],
+        "longestTask": [
+          1026,
+          1098,
+          905
+        ],
+        "requests": [
+          298,
+          298,
+          298
+        ],
+        "transferKB": [
+          2505,
+          2505,
+          2505
+        ],
+        "jsTransferKB": [
+          2010,
+          2010,
+          2010
+        ]
+      }
+    },
+    {
+      "route": "issues-list",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "issues-list-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "wallMs": 23741,
+      "dcl": 585,
+      "load": 2214,
+      "lcp": 20460,
+      "cls": 0,
+      "tbt": 8968,
+      "longTasks": 26,
+      "longestTask": 2203,
+      "requests": 350,
+      "transferKB": 2668,
+      "jsTransferKB": 2144,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Pengembangan Aplikasi - Work items",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          24074,
+          23513,
+          23741
+        ],
+        "dcl": [
+          585,
+          616,
+          581
+        ],
+        "load": [
+          2214,
+          2236,
+          2194
+        ],
+        "lcp": [
+          20728,
+          20320,
+          20460
+        ],
+        "cls": [
+          0,
+          0,
+          0.0038
+        ],
+        "tbt": [
+          9289,
+          8750,
+          8968
+        ],
+        "longTasks": [
+          26,
+          26,
+          30
+        ],
+        "longestTask": [
+          2294,
+          2034,
+          2203
+        ],
+        "requests": [
+          350,
+          350,
+          350
+        ],
+        "transferKB": [
+          2668,
+          2668,
+          2668
+        ],
+        "jsTransferKB": [
+          2144,
+          2144,
+          2144
+        ]
+      }
+    },
+    {
+      "route": "issues-kanban",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "issues-kanban-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "wallMs": 22916,
+      "dcl": 578,
+      "load": 2233,
+      "lcp": 19784,
+      "cls": 0,
+      "tbt": 7938,
+      "longTasks": 25,
+      "longestTask": 1654,
+      "requests": 350,
+      "transferKB": 2668,
+      "jsTransferKB": 2144,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Pengembangan Aplikasi - Work items",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          22916,
+          23056,
+          22866
+        ],
+        "dcl": [
+          576,
+          583,
+          578
+        ],
+        "load": [
+          2216,
+          2233,
+          2238
+        ],
+        "lcp": [
+          19892,
+          19548,
+          19784
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          8114,
+          7938,
+          7827
+        ],
+        "longTasks": [
+          25,
+          24,
+          25
+        ],
+        "longestTask": [
+          1654,
+          1692,
+          1614
+        ],
+        "requests": [
+          350,
+          339,
+          350
+        ],
+        "transferKB": [
+          2668,
+          2655,
+          2668
+        ],
+        "jsTransferKB": [
+          2144,
+          2144,
+          2144
+        ]
+      }
+    },
+    {
+      "route": "issues-calendar",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "issues-calendar-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/issues",
+      "wallMs": 21000,
+      "dcl": 566,
+      "load": 2201,
+      "lcp": 16932,
+      "cls": 0,
+      "tbt": 6134,
+      "longTasks": 26,
+      "longestTask": 1127,
+      "requests": 349,
+      "transferKB": 2667,
+      "jsTransferKB": 2144,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Pengembangan Aplikasi - Work items",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          20931,
+          21000,
+          21120
+        ],
+        "dcl": [
+          572,
+          566,
+          562
+        ],
+        "load": [
+          2243,
+          2201,
+          2200
+        ],
+        "lcp": [
+          16932,
+          16700,
+          17096
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          5866,
+          6269,
+          6134
+        ],
+        "longTasks": [
+          26,
+          26,
+          28
+        ],
+        "longestTask": [
+          978,
+          1127,
+          1302
+        ],
+        "requests": [
+          349,
+          349,
+          349
+        ],
+        "transferKB": [
+          2667,
+          2667,
+          2667
+        ],
+        "jsTransferKB": [
+          2144,
+          2144,
+          2144
+        ]
+      }
+    },
+    {
+      "route": "work-item-detail",
+      "path": "/pt-paradise-perkasa/browse/ITDEV-16",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "work-item-detail-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/browse/ITDEV-16",
+      "wallMs": 20485,
+      "dcl": 577,
+      "load": 2209,
+      "lcp": 17656,
+      "cls": 0.0076,
+      "tbt": 5912,
+      "longTasks": 24,
+      "longestTask": 1298,
+      "requests": 333,
+      "transferKB": 2606,
+      "jsTransferKB": 2079,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "ITDEV-16 Atur ulang hak akses Pengembangan Aplikasi di sistem",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          20188,
+          20856,
+          20485
+        ],
+        "dcl": [
+          560,
+          583,
+          577
+        ],
+        "load": [
+          2209,
+          2231,
+          2022
+        ],
+        "lcp": [
+          17656,
+          18100,
+          17608
+        ],
+        "cls": [
+          0.0076,
+          0.0076,
+          0.0076
+        ],
+        "tbt": [
+          5912,
+          6370,
+          5557
+        ],
+        "longTasks": [
+          21,
+          26,
+          24
+        ],
+        "longestTask": [
+          1209,
+          1298,
+          1594
+        ],
+        "requests": [
+          333,
+          333,
+          332
+        ],
+        "transferKB": [
+          2606,
+          2606,
+          2605
+        ],
+        "jsTransferKB": [
+          2079,
+          2079,
+          2079
+        ]
+      }
+    },
+    {
+      "route": "approvals",
+      "path": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/persetujuan",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "approvals-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/projects/02fbed73-1248-41e9-b2e1-26f000222d63/persetujuan",
+      "wallMs": 19217,
+      "dcl": 579,
+      "load": 2190,
+      "lcp": 16436,
+      "cls": 0,
+      "tbt": 5005,
+      "longTasks": 22,
+      "longestTask": 1758,
+      "requests": 320,
+      "transferKB": 2523,
+      "jsTransferKB": 2005,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Approvals",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          19217,
+          18992,
+          19309
+        ],
+        "dcl": [
+          614,
+          579,
+          575
+        ],
+        "load": [
+          2244,
+          2125,
+          2190
+        ],
+        "lcp": [
+          16436,
+          16224,
+          16680
+        ],
+        "cls": [
+          0,
+          0.0038,
+          0
+        ],
+        "tbt": [
+          5005,
+          4803,
+          5211
+        ],
+        "longTasks": [
+          21,
+          22,
+          22
+        ],
+        "longestTask": [
+          1357,
+          1758,
+          1905
+        ],
+        "requests": [
+          320,
+          320,
+          320
+        ],
+        "transferKB": [
+          2523,
+          2523,
+          2523
+        ],
+        "jsTransferKB": [
+          2005,
+          2005,
+          2005
+        ]
+      }
+    },
+    {
+      "route": "analytics",
+      "path": "/pt-paradise-perkasa/analytics/overview",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "analytics-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/analytics/overview",
+      "wallMs": 17430,
+      "dcl": 581,
+      "load": 2228,
+      "lcp": 12200,
+      "cls": 0.0456,
+      "tbt": 3731,
+      "longTasks": 18,
+      "longestTask": 1007,
+      "requests": 300,
+      "transferKB": 2529,
+      "jsTransferKB": 2036,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "PT Paradise Perkasa - Analytics",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          17202,
+          17430,
+          17697
+        ],
+        "dcl": [
+          581,
+          573,
+          603
+        ],
+        "load": [
+          2238,
+          2177,
+          2228
+        ],
+        "lcp": [
+          12076,
+          12200,
+          12520
+        ],
+        "cls": [
+          0.0456,
+          0.0456,
+          0.0494
+        ],
+        "tbt": [
+          3704,
+          3731,
+          3986
+        ],
+        "longTasks": [
+          17,
+          18,
+          18
+        ],
+        "longestTask": [
+          935,
+          1007,
+          1190
+        ],
+        "requests": [
+          300,
+          300,
+          300
+        ],
+        "transferKB": [
+          2529,
+          2529,
+          2529
+        ],
+        "jsTransferKB": [
+          2036,
+          2036,
+          2036
+        ]
+      }
+    },
+    {
+      "route": "dashboard-divisi",
+      "path": "/pt-paradise-perkasa/dashboard-divisi",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "dashboard-divisi-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/dashboard-divisi",
+      "wallMs": 17205,
+      "dcl": 607,
+      "load": 2218,
+      "lcp": 14008,
+      "cls": 0,
+      "tbt": 3662,
+      "longTasks": 17,
+      "longestTask": 909,
+      "requests": 291,
+      "transferKB": 2497,
+      "jsTransferKB": 2004,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Division Dashboard",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          17205,
+          17379,
+          17067
+        ],
+        "dcl": [
+          607,
+          557,
+          607
+        ],
+        "load": [
+          2215,
+          2218,
+          2220
+        ],
+        "lcp": [
+          14008,
+          14180,
+          13836
+        ],
+        "cls": [
+          0.0038,
+          0,
+          0
+        ],
+        "tbt": [
+          3662,
+          3914,
+          3656
+        ],
+        "longTasks": [
+          20,
+          17,
+          17
+        ],
+        "longestTask": [
+          909,
+          886,
+          942
+        ],
+        "requests": [
+          291,
+          291,
+          291
+        ],
+        "transferKB": [
+          2497,
+          2497,
+          2497
+        ],
+        "jsTransferKB": [
+          2004,
+          2004,
+          2004
+        ]
+      }
+    },
+    {
+      "route": "chat",
+      "path": "/pt-paradise-perkasa/chat",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "chat-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/chat",
+      "wallMs": 19940,
+      "dcl": 618,
+      "load": 2222,
+      "lcp": 11944,
+      "cls": 0,
+      "tbt": 4166,
+      "longTasks": 22,
+      "longestTask": 1089,
+      "requests": 301,
+      "transferKB": 2526,
+      "jsTransferKB": 2028,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "Chat",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          17933,
+          19940,
+          20637
+        ],
+        "dcl": [
+          626,
+          618,
+          588
+        ],
+        "load": [
+          2233,
+          2222,
+          2191
+        ],
+        "lcp": [
+          11944,
+          11808,
+          12040
+        ],
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "tbt": [
+          4166,
+          4052,
+          4519
+        ],
+        "longTasks": [
+          22,
+          23,
+          22
+        ],
+        "longestTask": [
+          1089,
+          1032,
+          1132
+        ],
+        "requests": [
+          301,
+          301,
+          301
+        ],
+        "transferKB": [
+          2525,
+          2526,
+          2526
+        ],
+        "jsTransferKB": [
+          2028,
+          2028,
+          2028
+        ]
+      }
+    },
+    {
+      "route": "notifications",
+      "path": "/pt-paradise-perkasa/notifications",
+      "viewport": "desktop",
+      "theme": "light",
+      "file": "notifications-desktop-light.png",
+      "ok": true,
+      "status": 200,
+      "finalUrl": "/pt-paradise-perkasa/notifications",
+      "wallMs": 18784,
+      "dcl": 588,
+      "load": 2245,
+      "lcp": 16112,
+      "cls": 0.0001,
+      "tbt": 4865,
+      "longTasks": 19,
+      "longestTask": 1013,
+      "requests": 311,
+      "transferKB": 2593,
+      "jsTransferKB": 2082,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "overflow": false,
+        "offenders": [],
+        "clippedRight": []
+      },
+      "title": "PT Paradise Perkasa - Inbox",
+      "bounceToLogin": false,
+      "looksLikeError": false,
+      "viteOverlay": false,
+      "consoleErrors": [],
+      "consoleErrorCount": 0,
+      "reactWarningCount": 0,
+      "liveServerRefused": true,
+      "failedRequests": [],
+      "okRuns": 3,
+      "samples": {
+        "wallMs": [
+          18784,
+          18744,
+          19258
+        ],
+        "dcl": [
+          662,
+          588,
+          575
+        ],
+        "load": [
+          2316,
+          2215,
+          2245
+        ],
+        "lcp": [
+          16112,
+          16108,
+          16608
+        ],
+        "cls": [
+          0.0001,
+          0.0001,
+          0.0001
+        ],
+        "tbt": [
+          4865,
+          4742,
+          5166
+        ],
+        "longTasks": [
+          18,
+          21,
+          19
+        ],
+        "longestTask": [
+          1013,
+          970,
+          1214
+        ],
+        "requests": [
+          311,
+          311,
+          311
+        ],
+        "transferKB": [
+          2593,
+          2593,
+          2593
+        ],
+        "jsTransferKB": [
+          2082,
+          2082,
+          2082
+        ]
+      }
+    }
+  ],
+  "screenshots": 0
+}

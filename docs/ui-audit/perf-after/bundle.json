@@ -1,0 +1,994 @@
+{
+  "dir": "apps/web/build/client",
+  "totals": {
+    "js": {
+      "files": 1008,
+      "raw": 16305725,
+      "gzip": 4990506
+    },
+    "css": {
+      "files": 3,
+      "raw": 300936,
+      "gzip": 46588
+    },
+    "other": {
+      "files": 177,
+      "raw": 12668828
+    }
+  },
+  "largestJs": [
+    {
+      "file": "assets/toolbar-Btws_zgD.js",
+      "raw": 1819341,
+      "gzip": 597478,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/use-file-size-B_9eU0Ge.js",
+      "raw": 1661972,
+      "gzip": 445526,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/empty-state-7vcQCaPX.js",
+      "raw": 641017,
+      "gzip": 207211,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/livekit-client.esm-CsSN2D8d.js",
+      "raw": 570778,
+      "gzip": 147420,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/dist-BcQzj-QP.js",
+      "raw": 567811,
+      "gzip": 189401,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/dist-B7BDuQVm.js",
+      "raw": 409735,
+      "gzip": 113255,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/manifest-a63c9483.js",
+      "raw": 358076,
+      "gzip": 25602,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/store-context-CMBjrfg-.js",
+      "raw": 350776,
+      "gzip": 70788,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/generateCategoricalChart-Bh393wAM.js",
+      "raw": 348520,
+      "gzip": 90725,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/api.service-DjNORLKh.js",
+      "raw": 265680,
+      "gzip": 78665,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/icons-Bfn5rwm4.js",
+      "raw": 172745,
+      "gzip": 64573,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/react-dom-Cjy_N9Wu.js",
+      "raw": 132674,
+      "gzip": 42501,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/chunk-4N6VE7H7-DJlbOgeS.js",
+      "raw": 123163,
+      "gzip": 40179,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/tab-navigation-XZkWuwLb.js",
+      "raw": 115343,
+      "gzip": 37774,
+      "ext": ".js"
+    },
+    {
+      "file": "assets/modules-CZI2UF1k.js",
+      "raw": 113890,
+      "gzip": 28274,
+      "ext": ".js"
+    }
+  ],
+  "largestCss": [
+    {
+      "file": "assets/globals-Btt4-nEP.css",
+      "raw": 282942,
+      "gzip": 44436,
+      "ext": ".css"
+    },
+    {
+      "file": "assets/root-DBVKX4YV.css",
+      "raw": 15653,
+      "gzip": 1492,
+      "ext": ".css"
+    },
+    {
+      "file": "assets/AppProgressBar-D_Zs2VgL.css",
+      "raw": 2341,
+      "gzip": 660,
+      "ext": ".css"
+    }
+  ],
+  "initial": {
+    "shell": {
+      "files": 39,
+      "raw": 2218524,
+      "gzip": 593129
+    },
+    "routes": [
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/pages/(detail)/[pageId]/page",
+        "path": ":workspaceSlug/projects/:projectId/pages/:pageId",
+        "files": 248,
+        "raw": 8759870,
+        "gzip": 2572627
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/pages/(detail)/layout",
+        "path": "",
+        "files": 232,
+        "raw": 8467447,
+        "gzip": 2495548
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/modules/(detail)/[moduleId]/page",
+        "path": ":workspaceSlug/projects/:projectId/modules/:moduleId",
+        "files": 255,
+        "raw": 7110606,
+        "gzip": 2028525
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/issues/(list)/page",
+        "path": ":workspaceSlug/projects/:projectId/issues",
+        "files": 254,
+        "raw": 7107664,
+        "gzip": 2027368
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/(detail)/[viewId]/page",
+        "path": ":workspaceSlug/projects/:projectId/views/:viewId",
+        "files": 252,
+        "raw": 7022808,
+        "gzip": 2002840
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/page",
+        "path": ":workspaceSlug",
+        "files": 245,
+        "raw": 7010731,
+        "gzip": 1996419
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/profile/[userId]/[profileViewId]/page",
+        "path": ":workspaceSlug/profile/:userId/:profileViewId",
+        "files": 245,
+        "raw": 6978156,
+        "gzip": 1986483
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/workspace-views/[globalViewId]/page",
+        "path": ":workspaceSlug/workspace-views/:globalViewId",
+        "files": 249,
+        "raw": 6958368,
+        "gzip": 1981370
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/profile/[userId]/calendar/page",
+        "path": ":workspaceSlug/profile/:userId/calendar",
+        "files": 243,
+        "raw": 6947335,
+        "gzip": 1974943
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/issues/(list)/page",
+        "path": ":workspaceSlug/projects/:projectId/archives/issues",
+        "files": 244,
+        "raw": 6933943,
+        "gzip": 1972597
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/notifications/page",
+        "path": ":workspaceSlug/notifications",
+        "files": 238,
+        "raw": 6922958,
+        "gzip": 1967858
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/browse/[workItem]/page",
+        "path": ":workspaceSlug/browse/:workItem",
+        "files": 242,
+        "raw": 6906453,
+        "gzip": 1964472
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/issues/(detail)/[archivedIssueId]/page",
+        "path": ":workspaceSlug/projects/:projectId/archives/issues/:archivedIssueId",
+        "files": 240,
+        "raw": 6900496,
+        "gzip": 1962044
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/intake/page",
+        "path": ":workspaceSlug/projects/:projectId/intake",
+        "files": 239,
+        "raw": 6839806,
+        "gzip": 1950546
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/modules/(detail)/layout",
+        "path": "",
+        "files": 232,
+        "raw": 6717624,
+        "gzip": 1918670
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/issues/(list)/layout",
+        "path": "",
+        "files": 231,
+        "raw": 6715892,
+        "gzip": 1918063
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/chat/page",
+        "path": ":workspaceSlug/chat",
+        "files": 231,
+        "raw": 6706929,
+        "gzip": 1914826
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/analytics/[tabId]/page",
+        "path": ":workspaceSlug/analytics/:tabId",
+        "files": 228,
+        "raw": 6708336,
+        "gzip": 1914682
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/wiki/materi",
+        "path": ":workspaceSlug/wiki/materi/:assetId",
+        "files": 225,
+        "raw": 6708285,
+        "gzip": 1913220
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/stickies/page",
+        "path": ":workspaceSlug/stickies",
+        "files": 228,
+        "raw": 6693427,
+        "gzip": 1911687
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/profile/[userId]/page",
+        "path": ":workspaceSlug/profile/:userId",
+        "files": 231,
+        "raw": 6694655,
+        "gzip": 1909844
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/workspace-views/page",
+        "path": ":workspaceSlug/workspace-views",
+        "files": 234,
+        "raw": 6657044,
+        "gzip": 1903592
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/materials/page",
+        "path": ":workspaceSlug/projects/:projectId/materials",
+        "files": 237,
+        "raw": 6662813,
+        "gzip": 1903580
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/pages/(list)/page",
+        "path": ":workspaceSlug/projects/:projectId/pages",
+        "files": 233,
+        "raw": 6661359,
+        "gzip": 1902993
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/page",
+        "path": ":workspaceSlug/settings/projects/:projectId",
+        "files": 232,
+        "raw": 6655830,
+        "gzip": 1901695
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/wiki/folder",
+        "path": ":workspaceSlug/wiki/:folderId",
+        "files": 232,
+        "raw": 6657329,
+        "gzip": 1901020
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/(list)/page",
+        "path": ":workspaceSlug/projects/:projectId/views",
+        "files": 235,
+        "raw": 6648942,
+        "gzip": 1900628
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/profile/[userId]/activity/page",
+        "path": ":workspaceSlug/profile/:userId/activity",
+        "files": 229,
+        "raw": 6656813,
+        "gzip": 1897319
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/archives/page",
+        "path": ":workspaceSlug/projects/archives",
+        "files": 228,
+        "raw": 6649148,
+        "gzip": 1896759
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(list)/page",
+        "path": ":workspaceSlug/projects",
+        "files": 228,
+        "raw": 6649148,
+        "gzip": 1896759
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/workspace-views/layout",
+        "path": "",
+        "files": 228,
+        "raw": 6641085,
+        "gzip": 1896533
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/wiki/page",
+        "path": ":workspaceSlug/wiki",
+        "files": 228,
+        "raw": 6645211,
+        "gzip": 1896057
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/intake/layout",
+        "path": "",
+        "files": 228,
+        "raw": 6638016,
+        "gzip": 1894983
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/browse/[workItem]/layout",
+        "path": "",
+        "files": 226,
+        "raw": 6648754,
+        "gzip": 1894288
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/quick-links/page",
+        "path": ":workspaceSlug/quick-links",
+        "files": 227,
+        "raw": 6636604,
+        "gzip": 1894163
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/issues/(detail)/layout",
+        "path": "",
+        "files": 225,
+        "raw": 6647366,
+        "gzip": 1893675
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/(detail)/layout",
+        "path": "",
+        "files": 228,
+        "raw": 6630267,
+        "gzip": 1893075
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/(list)/layout",
+        "path": "",
+        "files": 227,
+        "raw": 6630594,
+        "gzip": 1892238
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/(workspace)/page",
+        "path": ":workspaceSlug/settings",
+        "files": 225,
+        "raw": 6629635,
+        "gzip": 1891952
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/drafts/page",
+        "path": ":workspaceSlug/drafts",
+        "files": 226,
+        "raw": 6630581,
+        "gzip": 1891867
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/persetujuan/page",
+        "path": ":workspaceSlug/projects/:projectId/persetujuan",
+        "files": 229,
+        "raw": 6628359,
+        "gzip": 1891741
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/dashboard-divisi/page",
+        "path": ":workspaceSlug/dashboard-divisi",
+        "files": 223,
+        "raw": 6636491,
+        "gzip": 1891632
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/modules/(list)/page",
+        "path": ":workspaceSlug/projects/:projectId/modules",
+        "files": 228,
+        "raw": 6625982,
+        "gzip": 1891179
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/profile/[userId]/layout",
+        "path": "",
+        "files": 224,
+        "raw": 6629858,
+        "gzip": 1890652
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/archives/layout",
+        "path": "",
+        "files": 224,
+        "raw": 6625972,
+        "gzip": 1889171
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(list)/layout",
+        "path": "",
+        "files": 224,
+        "raw": 6625972,
+        "gzip": 1889171
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/modules/(list)/layout",
+        "path": "",
+        "files": 225,
+        "raw": 6622119,
+        "gzip": 1889102
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/pages/(list)/layout",
+        "path": "",
+        "files": 225,
+        "raw": 6621179,
+        "gzip": 1888844
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/wiki/trash",
+        "path": ":workspaceSlug/wiki/trash",
+        "files": 225,
+        "raw": 6620928,
+        "gzip": 1888620
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/materials/layout",
+        "path": "",
+        "files": 225,
+        "raw": 6620412,
+        "gzip": 1888417
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/persetujuan/layout",
+        "path": "",
+        "files": 225,
+        "raw": 6620404,
+        "gzip": 1888407
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/initiatives/page",
+        "path": ":workspaceSlug/initiatives",
+        "files": 224,
+        "raw": 6621442,
+        "gzip": 1888238
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/stickies/layout",
+        "path": "",
+        "files": 223,
+        "raw": 6619715,
+        "gzip": 1887915
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/modules/page",
+        "path": ":workspaceSlug/projects/:projectId/archives/modules",
+        "files": 226,
+        "raw": 6617227,
+        "gzip": 1887554
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/modules/layout",
+        "path": "",
+        "files": 224,
+        "raw": 6616315,
+        "gzip": 1886906
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/archives/issues/(list)/layout",
+        "path": "",
+        "files": 224,
+        "raw": 6616314,
+        "gzip": 1886905
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/wiki/layout",
+        "path": "",
+        "files": 222,
+        "raw": 6616224,
+        "gzip": 1886633
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/issues/(detail)/[issueId]/page",
+        "path": ":workspaceSlug/projects/:projectId/issues/:issueId",
+        "files": 220,
+        "raw": 6616314,
+        "gzip": 1886021
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/drafts/layout",
+        "path": "",
+        "files": 221,
+        "raw": 6614467,
+        "gzip": 1885749
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/quick-links/layout",
+        "path": "",
+        "files": 222,
+        "raw": 6614120,
+        "gzip": 1885687
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/dashboard-divisi/layout",
+        "path": "",
+        "files": 221,
+        "raw": 6613492,
+        "gzip": 1885289
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/analytics/[tabId]/layout",
+        "path": "",
+        "files": 221,
+        "raw": 6613484,
+        "gzip": 1885283
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/initiatives/layout",
+        "path": "",
+        "files": 221,
+        "raw": 6613480,
+        "gzip": 1885280
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/chat/layout",
+        "path": "",
+        "files": 221,
+        "raw": 6613476,
+        "gzip": 1885279
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/notifications/layout",
+        "path": "",
+        "files": 219,
+        "raw": 6614490,
+        "gzip": 1885229
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/layout",
+        "path": "",
+        "files": 218,
+        "raw": 6614039,
+        "gzip": 1884798
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(projects)/layout",
+        "path": "",
+        "files": 216,
+        "raw": 6608901,
+        "gzip": 1882718
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/members/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/members",
+        "files": 229,
+        "raw": 6588458,
+        "gzip": 1881710
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/(workspace)/members/page",
+        "path": ":workspaceSlug/settings/members",
+        "files": 227,
+        "raw": 6585132,
+        "gzip": 1880428
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/estimates/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/estimates",
+        "files": 229,
+        "raw": 6587006,
+        "gzip": 1880314
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/labels/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/labels",
+        "files": 227,
+        "raw": 6577612,
+        "gzip": 1879013
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/states/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/states",
+        "files": 227,
+        "raw": 6578292,
+        "gzip": 1878641
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/(workspace)/webhooks/page",
+        "path": ":workspaceSlug/settings/webhooks",
+        "files": 225,
+        "raw": 6573036,
+        "gzip": 1876807
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/automations",
+        "files": 228,
+        "raw": 6572557,
+        "gzip": 1876772
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/trash/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/trash",
+        "files": 225,
+        "raw": 6570188,
+        "gzip": 1876297
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/(workspace)/webhooks/[webhookId]/page",
+        "path": ":workspaceSlug/settings/webhooks/:webhookId",
+        "files": 224,
+        "raw": 6571311,
+        "gzip": 1876273
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/(workspace)/exports/page",
+        "path": ":workspaceSlug/settings/exports",
+        "files": 226,
+        "raw": 6569915,
+        "gzip": 1875999
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/intake/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/features/intake",
+        "files": 228,
+        "raw": 6564609,
+        "gzip": 1874800
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/views/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/features/views",
+        "files": 228,
+        "raw": 6564509,
+        "gzip": 1874738
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/modules/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/features/modules",
+        "files": 228,
+        "raw": 6564513,
+        "gzip": 1874737
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/pages/page",
+        "path": ":workspaceSlug/settings/projects/:projectId/features/pages",
+        "files": 228,
+        "raw": 6564495,
+        "gzip": 1874736
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/layout",
+        "path": "",
+        "files": 217,
+        "raw": 6554486,
+        "gzip": 1869103
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/layout",
+        "path": "",
+        "files": 216,
+        "raw": 6554095,
+        "gzip": 1868838
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/(workspace)/layout",
+        "path": "",
+        "files": 215,
+        "raw": 6550881,
+        "gzip": 1867663
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/page",
+        "path": ":workspaceSlug/settings/projects",
+        "files": 212,
+        "raw": 6545433,
+        "gzip": 1865002
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/settings/projects/layout",
+        "path": "",
+        "files": 211,
+        "raw": 6544251,
+        "gzip": 1864352
+      },
+      {
+        "id": "(all)/[workspaceSlug]/(settings)/layout",
+        "path": "",
+        "files": 210,
+        "raw": 6543691,
+        "gzip": 1863969
+      },
+      {
+        "id": "(all)/settings/profile/[profileTabId]/page",
+        "path": "settings/profile/:profileTabId",
+        "files": 194,
+        "raw": 6277569,
+        "gzip": 1775253
+      },
+      {
+        "id": "(all)/settings/profile/layout",
+        "path": "",
+        "files": 188,
+        "raw": 6265552,
+        "gzip": 1769786
+      },
+      {
+        "id": "(all)/[workspaceSlug]/layout",
+        "path": "",
+        "files": 149,
+        "raw": 5685569,
+        "gzip": 1622819
+      },
+      {
+        "id": "(all)/onboarding/page",
+        "path": "onboarding",
+        "files": 62,
+        "raw": 2849981,
+        "gzip": 778204
+      },
+      {
+        "id": "(all)/accounts/forgot-password/page",
+        "path": "accounts/forgot-password",
+        "files": 57,
+        "raw": 2742588,
+        "gzip": 747782
+      },
+      {
+        "id": "(all)/create-workspace/page",
+        "path": "create-workspace",
+        "files": 53,
+        "raw": 2744654,
+        "gzip": 747365
+      },
+      {
+        "id": "(home)/page",
+        "path": "",
+        "files": 60,
+        "raw": 2728788,
+        "gzip": 741870
+      },
+      {
+        "id": "(all)/sign-up/page",
+        "path": "sign-up",
+        "files": 60,
+        "raw": 2728632,
+        "gzip": 741797
+      },
+      {
+        "id": "(all)/accounts/reset-password/page",
+        "path": "accounts/reset-password",
+        "files": 58,
+        "raw": 2701880,
+        "gzip": 734124
+      },
+      {
+        "id": "(all)/accounts/set-password/page",
+        "path": "accounts/set-password",
+        "files": 58,
+        "raw": 2701869,
+        "gzip": 734117
+      },
+      {
+        "id": "(all)/invitations/page",
+        "path": "invitations",
+        "files": 52,
+        "raw": 2242757,
+        "gzip": 602797
+      },
+      {
+        "id": "(all)/workspace-invitations/page",
+        "path": "workspace-invitations",
+        "files": 49,
+        "raw": 2241573,
+        "gzip": 601602
+      },
+      {
+        "id": "not-found",
+        "path": "*",
+        "files": 41,
+        "raw": 2220160,
+        "gzip": 594073
+      },
+      {
+        "id": "(all)/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218936,
+        "gzip": 593425
+      },
+      {
+        "id": "(home)/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218897,
+        "gzip": 593415
+      },
+      {
+        "id": "routes/redirects/core/profile-settings",
+        "path": "profile/*",
+        "files": 40,
+        "raw": 2218788,
+        "gzip": 593367
+      },
+      {
+        "id": "routes/redirects/core/workspace-account-settings",
+        "path": ":workspaceSlug/settings/account/*",
+        "files": 40,
+        "raw": 2218788,
+        "gzip": 593367
+      },
+      {
+        "id": "(all)/sign-up/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218796,
+        "gzip": 593366
+      },
+      {
+        "id": "routes/redirects/core/project-settings",
+        "path": ":workspaceSlug/projects/:projectId/settings/*",
+        "files": 40,
+        "raw": 2218778,
+        "gzip": 593359
+      },
+      {
+        "id": "(all)/accounts/reset-password/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218770,
+        "gzip": 593349
+      },
+      {
+        "id": "(all)/accounts/forgot-password/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218764,
+        "gzip": 593345
+      },
+      {
+        "id": "(all)/accounts/set-password/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218764,
+        "gzip": 593345
+      },
+      {
+        "id": "(all)/workspace-invitations/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218746,
+        "gzip": 593329
+      },
+      {
+        "id": "routes/redirects/core/inbox",
+        "path": ":workspaceSlug/projects/:projectId/inbox",
+        "files": 40,
+        "raw": 2218744,
+        "gzip": 593329
+      },
+      {
+        "id": "(all)/create-workspace/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218741,
+        "gzip": 593326
+      },
+      {
+        "id": "routes/redirects/core/analytics",
+        "path": ":workspaceSlug/analytics",
+        "files": 40,
+        "raw": 2218730,
+        "gzip": 593325
+      },
+      {
+        "id": "(all)/onboarding/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218735,
+        "gzip": 593322
+      },
+      {
+        "id": "(all)/invitations/layout",
+        "path": "",
+        "files": 40,
+        "raw": 2218736,
+        "gzip": 593321
+      },
+      {
+        "id": "routes/redirects/core/api-tokens",
+        "path": ":workspaceSlug/settings/api-tokens",
+        "files": 40,
+        "raw": 2218701,
+        "gzip": 593302
+      },
+      {
+        "id": "routes/redirects/core/accounts-signup",
+        "path": "accounts/sign-up",
+        "files": 40,
+        "raw": 2218681,
+        "gzip": 593290
+      },
+      {
+        "id": "routes/redirects/core/register",
+        "path": "register",
+        "files": 40,
+        "raw": 2218681,
+        "gzip": 593290
+      },
+      {
+        "id": "routes/redirects/core/sign-in",
+        "path": "sign-in",
+        "files": 40,
+        "raw": 2218673,
+        "gzip": 593284
+      },
+      {
+        "id": "routes/redirects/core/signin",
+        "path": "signin",
+        "files": 40,
+        "raw": 2218673,
+        "gzip": 593284
+      },
+      {
+        "id": "routes/redirects/core/login",
+        "path": "login",
+        "files": 40,
+        "raw": 2218673,
+        "gzip": 593284
+      },
+      {
+        "id": "root",
+        "path": "",
+        "files": 39,
+        "raw": 2218524,
+        "gzip": 593129
+      }
+    ]
+  }
+}
