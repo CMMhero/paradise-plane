@@ -4,6 +4,7 @@
       "workspace_logo": "Logo spațiu de lucru",
       "open_workspace_switcher": "Deschide comutator spațiu de lucru",
       "open_user_menu": "Deschide meniul utilizatorului",
+      "open_help_menu": "Deschide meniul de ajutor",
       "open_command_palette": "Deschide paleta de comenzi",
       "open_extended_sidebar": "Deschide bara laterală extinsă",
       "close_extended_sidebar": "Închide bara laterală extinsă",
@@ -29,6 +30,9 @@
       "hide_password": "Ascunde parola",
       "close_alert": "Închide alerta",
       "close_popover": "Închide popover-ul"
+    },
+    "common": {
+      "more_actions": "Mai multe acțiuni"
     }
   }
 }

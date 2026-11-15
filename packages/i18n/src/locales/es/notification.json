@@ -26,7 +26,8 @@
     },
     "empty_state": {
       "detail": {
-        "title": "Selecciona para ver detalles."
+        "title": "Selecciona para ver detalles.",
+        "select_notification": "Selecciona una notificación para ver sus detalles."
       },
       "all": {
         "title": "No hay elementos de trabajo asignados",

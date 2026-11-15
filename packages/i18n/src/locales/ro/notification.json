@@ -26,7 +26,8 @@
     },
     "empty_state": {
       "detail": {
-        "title": "Selectează pentru a vedea detalii."
+        "title": "Selectează pentru a vedea detalii.",
+        "select_notification": "Selectează o notificare pentru a vedea detaliile."
       },
       "all": {
         "title": "Nicio activitate atribuită",

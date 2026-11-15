@@ -216,7 +216,7 @@
     }
   },
   "project_module": {
-    "add_module": "Add Module",
+    "add_module": "Add module",
     "update_module": "Update Module",
     "create_module": "Create Module",
     "archive_module": "Archive Module",

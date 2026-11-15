@@ -4,6 +4,7 @@
       "workspace_logo": "Çalışma alanı logosu",
       "open_workspace_switcher": "Çalışma alanı değiştiricisini aç",
       "open_user_menu": "Kullanıcı menüsünü aç",
+      "open_help_menu": "Yardım menüsünü aç",
       "open_command_palette": "Komut paletini aç",
       "open_extended_sidebar": "Genişletilmiş kenar çubuğunu aç",
       "close_extended_sidebar": "Genişletilmiş kenar çubuğunu kapat",
@@ -29,6 +30,9 @@
       "hide_password": "Şifreyi gizle",
       "close_alert": "Uyarıyı kapat",
       "close_popover": "Açılır pencereyi kapat"
+    },
+    "common": {
+      "more_actions": "Diğer işlemler"
     }
   }
 }

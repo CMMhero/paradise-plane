@@ -4,6 +4,7 @@
       "workspace_logo": "Logo không gian làm việc",
       "open_workspace_switcher": "Mở trình chuyển đổi không gian làm việc",
       "open_user_menu": "Mở menu người dùng",
+      "open_help_menu": "Mở menu trợ giúp",
       "open_command_palette": "Mở bảng lệnh",
       "open_extended_sidebar": "Mở thanh bên mở rộng",
       "close_extended_sidebar": "Đóng thanh bên mở rộng",
@@ -29,6 +30,9 @@
       "hide_password": "Ẩn mật khẩu",
       "close_alert": "Đóng cảnh báo",
       "close_popover": "Đóng popover"
+    },
+    "common": {
+      "more_actions": "Thao tác khác"
     }
   }
 }

@@ -4,6 +4,7 @@
       "workspace_logo": "Logo pracovného priestoru",
       "open_workspace_switcher": "Otvoriť prepínač pracovného priestoru",
       "open_user_menu": "Otvoriť používateľské menu",
+      "open_help_menu": "Otvoriť ponuku pomocníka",
       "open_command_palette": "Otvoriť paletu príkazov",
       "open_extended_sidebar": "Otvoriť rozšírený bočný panel",
       "close_extended_sidebar": "Zavrieť rozšírený bočný panel",
@@ -29,6 +30,9 @@
       "hide_password": "Skryť heslo",
       "close_alert": "Zavrieť upozornenie",
       "close_popover": "Zavrieť vyskakovacie okno"
+    },
+    "common": {
+      "more_actions": "Ďalšie akcie"
     }
   }
 }

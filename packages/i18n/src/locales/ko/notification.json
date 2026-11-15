@@ -26,7 +26,8 @@
     },
     "empty_state": {
       "detail": {
-        "title": "세부 정보를 보려면 선택하세요."
+        "title": "세부 정보를 보려면 선택하세요.",
+        "select_notification": "알림을 선택하면 세부 정보가 표시됩니다."
       },
       "all": {
         "title": "할당된 작업 항목 없음",

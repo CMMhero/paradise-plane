@@ -26,7 +26,8 @@
     },
     "empty_state": {
       "detail": {
-        "title": "Vyberte pre podrobnosti."
+        "title": "Vyberte pre podrobnosti.",
+        "select_notification": "Vyberte oznámenie a zobrazia sa jeho podrobnosti."
       },
       "all": {
         "title": "Žiadne priradené položky",

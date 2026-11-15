@@ -474,6 +474,8 @@
       "mic_off": "Turn microphone off",
       "camera_on": "Turn camera on",
       "camera_off": "Turn camera off",
+      "mic_label": "Microphone",
+      "camera_label": "Camera",
       "end": "End call"
     },
     "today": "Today",
@@ -836,7 +838,9 @@
     "delete_named": "Delete {name}",
     "unlink_named": "Unlink {name}",
     "link_placeholder": "link a division…",
-    "link_division": "Link a division"
+    "link_division": "Link a division",
+    "title": "Initiatives",
+    "name_label": "Initiative name"
   },
   "connections_ui": {
     "connected_toast": "Google Calendar connected",
@@ -1142,7 +1146,8 @@
     "group_team_overdue": "Overdue in your team",
     "group_due_soon": "Due in the next {days} days",
     "group_waiting_mine": "Awaiting approval",
-    "group_mentioned": "Recently mentioned"
+    "group_mentioned": "Recently mentioned",
+    "load_failed": "Couldn't load this summary."
   },
   "quick_links_ui": {
     "shared_title": "From your organization",
@@ -1200,6 +1205,7 @@
     "tip_short": "@ people · # channels & work items",
     "section_people": "People",
     "section_outside": "Outside this department",
+    "outside_reason": "Can't be mentioned: outside this department",
     "section_everyone": "Everyone",
     "section_channels": "Channels",
     "section_work_items": "Work items",
