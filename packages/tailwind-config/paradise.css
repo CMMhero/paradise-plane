@@ -420,3 +420,156 @@ th,
    CSS dan JS sepakat soal "hover bisa diandalkan atau tidak". Untuk TATA
    LETAK tetap pakai breakpoint lebar, bukan varian ini. */
 @custom-variant sentuh (@media (pointer: coarse));
+
+/* ==========================================================================
+   9. Kolom isian tidak memicu zoom otomatis di iOS
+   ==========================================================================
+
+   Safari iOS memperbesar halaman tiap kali kolom isian dengan huruf di bawah
+   16px mendapat fokus, lalu tidak mengecilkannya lagi. Chat, formulir
+   permintaan lintas divisi, dan kolom cari memakai 12-13px, jadi layar
+   "melompat" tiap diketuk.
+
+   Cukup satu aturan di perangkat berpenunjuk kasar. Pemakai tetikus tetap
+   memakai ukuran padat aslinya. Editor (contenteditable) sengaja tidak
+   disentuh: mengubah ukurannya mengubah tipografi dokumen. */
+@media (pointer: coarse) {
+  input:not(
+    [type="checkbox"],
+    [type="radio"],
+    [type="range"],
+    [type="color"],
+    [type="file"],
+    [type="button"],
+    [type="submit"]
+  ),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Huruf yang membesar membuat placeholder panjang terpotong mentah ("press
+     Enter to sear"). Titik-titik lebih jujur. */
+  input::placeholder,
+  textarea::placeholder {
+    text-overflow: ellipsis;
+  }
+}
+
+/* ==========================================================================
+   10. Kontras teks di tema biasa (audit axe, 15 Nov 2026)
+   ==========================================================================
+
+   Bagian 7 sengaja membiarkan tema biasa. Sejak permukaan dan layer diberi
+   rona merek (lihat "Permukaan dan layer ikut aksen"), latarnya tidak lagi
+   putih, dan tiga pasangan token yang tadinya lolos ikut jatuh di bawah WCAG
+   AA 4,5:1. Angka di bawah dihitung axe di halaman sungguhan, bukan ditaksir:
+
+     teks placeholder di surface-1     3,39   (judul "Workspace"/"Departemen")
+     teks tersier di layer-3           4,39   (lencana "System")
+     teks aksen di surface-1           4,37   (cap waktu chat, tautan)
+     teks putih di tombol utama gelap  2,98   (semua tombol primer, tema gelap)
+
+   User meminta audit ini sampai NOL temuan serius, jadi tema biasa sekarang
+   ikut digeser. Tetap tanpa warna karangan: nilai baru adalah campuran dua
+   anak tangga yang sudah ada, jadi tema kustom dan skema ikut dengan sendirinya.
+
+   Tersier dan placeholder digeser ke antara 1000 dan 1100. Urutannya tetap
+   (sekunder 1100 < tersier < placeholder < 1000) supaya hierarki teks tidak
+   runtuh jadi satu warna. Placeholder memang ikut gelap: di aplikasi ini
+   `text-placeholder` dipakai di 543 tempat untuk TEKS isi, bukan cuma untuk
+   placeholder kolom ketik. */
+:root:not([data-theme*="contrast"]):not([data-theme*="dark"]) {
+  --txt-tertiary: color-mix(in oklch, var(--neutral-1000) 40%, var(--neutral-1100));
+  --txt-placeholder: color-mix(in oklch, var(--neutral-1000) 75%, var(--neutral-1100));
+  /* Merah merek apa adanya lolos di putih (4,82) tapi tidak di permukaan
+     berona. Teks aksen memakai satu langkah lebih gelap; latar tombol tetap
+     merah merek, jadi warna tombol tidak berubah. */
+  --txt-accent-primary: var(--brand-900);
+}
+
+/* Tema gelap: tombol primer tadinya merah terang (L 0,64) dengan teks terang
+   di atasnya (2,98:1). Latar tombol turun ke langkah 500; teks aksen di atas
+   latar gelap justru dibuat sedikit LEBIH terang. */
+:root[data-theme*="dark"] {
+  /* Merah L 0,64 di layer gelap berona cuma 4,32-4,35:1; teks aksen naik setengah langkah ke arah 700. */
+  --txt-accent-primary: color-mix(in oklch, var(--brand-default), var(--brand-700));
+  --bg-accent-primary: var(--brand-500);
+  --bg-accent-primary-hover: var(--brand-400);
+  --bg-accent-primary-active: var(--brand-300);
+}
+
+/* ==========================================================================
+   11. Sasaran klik chip properti minimal 24px (WCAG 2.2 AA 2.5.8)
+   ==========================================================================
+
+   Chip properti di baris daftar dan kartu kanban sengaja 20px (KEP-64: chip
+   ringkas seperti Plane). Seluruh baris adalah tautan, jadi aturan jarak
+   pengganti 2.5.8 tidak berlaku: sasaran di atas sasaran lain wajib 24px.
+
+   Yang diperbesar hanya kotak TOMBOL pemicunya (2px di keempat sisi dengan
+   margin negatif yang meniadakannya), bukan chip yang terlihat: isi tombol
+   tetap 20px, jadi tampilan dan tata letak baris tidak berubah. Chip ikon
+   saja (prioritas) jadi 24x24.
+
+   Tumpukan avatar penerima (-space-x-1) di chip ini TIDAK lagi ditumpuk:
+   tiap avatar membuka kartu profil orangnya sendiri, dan sasaran yang saling
+   menimpa tidak pernah lolos 24px. Jaraknya 4px, cukup untuk dua sasaran 24px
+   (20px + 2px kiri-kanan) yang bersebelahan. */
+[data-sasaran-chip] .clickable {
+  /* content-box: `h-full`/`max-w-*` tetap mengukur isi (chip 20px), padding
+     ditambahkan di luarnya, margin negatif meniadakan pergeserannya. */
+  box-sizing: content-box;
+  margin: -2px;
+  padding: 2px;
+}
+
+/* Avatar pembuka kartu profil di chip yang sama (20px) diperlakukan serupa.
+   `max-width: none` karena pemicunya ber-`max-w-full` di dalam bingkai avatar
+   20px, yang memotong padding horizontalnya. */
+[data-sasaran-chip] [data-slot="popover-trigger"],
+[data-sasaran-avatar] [data-slot="popover-trigger"] {
+  margin: -2px;
+  padding: 2px;
+  max-width: none;
+}
+
+[data-sasaran-chip] .-space-x-1 > *,
+[data-sasaran-avatar] .-space-x-1 > * {
+  margin-inline: 2px !important;
+}
+
+/* Tombol pemicu yang sudah 24px lebarnya (min-w-6, di samping avatar) tidak
+   perlu melebar ke samping; kalau melebar ia menimpa area avatar. */
+[data-sasaran-chip] .clickable.min-w-6 {
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+/* ==========================================================================
+   12. Teks status (bahaya/berhasil/peringatan) tetap berwarna di tema gelap
+   ==========================================================================
+
+   Palet gelap bawaan Plane membalik tangga warna, lalu `--txt-danger-primary`
+   tetap menunjuk langkah 900. Di gelap langkah itu oklch(0,88 0,06 18): merah
+   muda pucat yang di mata terbaca putih. Akibatnya tanggal lewat tenggat,
+   "Terlambat: n", dan tren buruk berwarna merah di tema terang tapi netral di
+   tema gelap; arti "bahaya" hilang. Hijau dan amber kena hal yang sama (900 =
+   mint dan krem pucat).
+
+   Teks status di gelap turun ke langkah 700: warnanya jelas, dan kontrasnya
+   tetap di atas 4,5:1 (dihitung dari token, permukaan berona merek):
+
+     merah 700   surface-1 5,96   layer-3 4,99   danger-subtle 5,52
+     hijau 700   surface-1 9,67   layer-3 8,10   success-subtle 8,22
+     amber 700   surface-1 9,99   layer-3 8,36   warning-subtle 8,03
+
+   Ikon status ikut, supaya ikon dan teks di baris yang sama satu warna. */
+:root[data-theme*="dark"] {
+  --txt-danger-primary: var(--red-700);
+  --txt-success-primary: var(--green-700);
+  --txt-warning-primary: var(--amber-700);
+  --txt-icon-danger-primary: var(--red-700);
+  --txt-icon-success-primary: var(--green-700);
+  --txt-icon-warning-primary: var(--amber-700);
+}
