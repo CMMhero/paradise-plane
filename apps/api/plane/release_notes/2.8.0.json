@@ -1,0 +1,30 @@
+{
+  "version": "2.8.0",
+  "date": "2026-11-17",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "When you create a work item without choosing anyone, it is now assigned to you, whatever your role."
+    },
+    {
+      "type": "Changed",
+      "text": "Only the assignee, the person who created the work item and the supervisors, managers, secretaries and directors above them can comment or react on it. Everyone else sees it read-only, the same as editing."
+    },
+    {
+      "type": "Changed",
+      "text": "Work items can only be assigned to people who actually belong to that department or division, and only to someone below your own level. Admins and super admins who merely have access no longer appear in the assignee list."
+    },
+    {
+      "type": "Changed",
+      "text": "Several quick edits to the same work item now arrive as one notification in your inbox, one in chat and one email, instead of one for each edit. Comments in a row are counted together."
+    },
+    {
+      "type": "Changed",
+      "text": "You can still mention anyone in a comment or description, but only people in that work item's department or division are notified."
+    },
+    {
+      "type": "Fixed",
+      "text": "New departments and their projects are now always private, so they no longer open to the whole workspace."
+    }
+  ]
+}
