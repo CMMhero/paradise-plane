@@ -364,6 +364,51 @@ class TestKartuKabar:
             )
             assert jawab.status_code == 404
 
+    @pytest.mark.django_db
+    def test_kabar_lebur_menyunting_kartu_yang_sama(self, tugas):
+        """gabung_kabar.py: satu rentetan suntingan = satu kartu yang isinya selalu terkini."""
+        from plane.utils.kartu_obrolan import perbarui_kartu_notifikasi  # noqa: PLC0415
+
+        workspace, admin, staf, project, issue = tugas
+        kartu_id = str(uuid4())
+        notif = _notif(workspace, project, issue, admin, staf, "comment")
+        notif.data = {**notif.data, "kartu_id": kartu_id}
+        notif.save(update_fields=["data"])
+        assert kirim_kartu_notifikasi([notif]) == 1
+        kartu = PesanLangsung.objects.get(pk=kartu_id)
+        assert kartu.jenis == JenisPesan.KOMENTAR
+
+        # Pelaku yang sama lalu mengubah status dan menulis komentar kedua.
+        notif.data = {
+            **notif.data,
+            "gabungan": {
+                "jumlah": 3,
+                "komentar": 2,
+                "perubahan": [{"field": "state", "lama": "Todo", "baru": "Done"}],
+            },
+        }
+        assert perbarui_kartu_notifikasi([notif]) == 1
+        assert PesanLangsung.objects.filter(jenis__in=[JenisPesan.KOMENTAR, JenisPesan.PEMBARUAN]).count() == 1
+        kartu.refresh_from_db()
+        assert kartu.jenis == JenisPesan.PEMBARUAN
+        assert kartu.muatan["detail"]["jumlah_komentar"] == 2
+        assert kartu.muatan["detail"]["perubahan"] == [{"field": "state", "lama": "Todo", "baru": "Done"}]
+
+        # Semua perubahannya batal (A -> B -> A): kartu ditandai, tidak dihapus.
+        assert perbarui_kartu_notifikasi([], [notif]) == 1
+        kartu.refresh_from_db()
+        assert kartu.muatan["detail"]["batal"] is True
+        assert PesanLangsung.objects.filter(pk=kartu_id).exists()
+
+    @pytest.mark.django_db
+    def test_kartu_lama_tanpa_id_dilewati(self, tugas):
+        from plane.utils.kartu_obrolan import perbarui_kartu_notifikasi  # noqa: PLC0415
+
+        workspace, admin, staf, project, issue = tugas
+        notif = _notif(workspace, project, issue, admin, staf, "comment")
+        kirim_kartu_notifikasi([notif])
+        assert perbarui_kartu_notifikasi([notif]) == 0
+
 
 @pytest.mark.unit
 class TestLogPanggilan:

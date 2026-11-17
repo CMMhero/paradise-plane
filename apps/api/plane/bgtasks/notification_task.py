@@ -5,7 +5,6 @@
 # Python imports
 import json
 import uuid
-from uuid import UUID
 from types import SimpleNamespace
 
 
@@ -24,7 +23,9 @@ from plane.db.models import (
     IssueActivity,
     ProjectMember,
 )
+from django.db import transaction
 from django.db.models import Subquery
+from plane.utils.exception_logger import log_exception
 from plane.utils.preferensi_email import saklar_untuk
 
 # Third Party imports
@@ -84,10 +85,13 @@ def get_removed_mentions(requested_instance, current_instance):
 # Adds mentions as subscribers
 def extract_mentions_as_subscribers(project_id, issue_id, mentions):
     # mentions is an array of User IDs representing the FILTERED set of mentioned users
+    # Kustomisasi Paradise: orang di luar jangkauan work item (lihat
+    # utils/jangkauan_sebutan.py) boleh disebut, tapi TIDAK dijadikan subscriber.
+    from plane.utils.jangkauan_sebutan import saring_sebutan  # noqa: PLC0415
 
     bulk_mention_subscribers = []
 
-    for mention_id in mentions:
+    for mention_id in saring_sebutan(project_id, mentions):
         # If the particular mention has not already been subscribed to the issue, he must be sent the mentioned notification # noqa: E501
         if (
             not IssueSubscriber.objects.filter(
@@ -97,7 +101,6 @@ def extract_mentions_as_subscribers(project_id, issue_id, mentions):
                 project_id=project_id, issue_id=issue_id, assignee_id=mention_id
             ).exists()
             and not Issue.objects.filter(project_id=project_id, pk=issue_id, created_by_id=mention_id).exists()
-            and ProjectMember.objects.filter(project_id=project_id, member_id=mention_id, is_active=True).exists()
         ):
             project = Project.objects.get(pk=project_id)
 
@@ -176,13 +179,6 @@ def sebut_semua_baru_di_deskripsi(requested_instance, current_instance) -> bool:
 def sebut_semua_baru_di_komentar(new_value, old_value) -> bool:
     """@all muncul di komentar baru/hasil sunting dan belum ada di versi lamanya."""
     return ada_sebut_semua(new_value) and not ada_sebut_semua(old_value)
-
-
-def _uuid_aman(nilai):
-    try:
-        return UUID(str(nilai))
-    except (TypeError, ValueError, AttributeError):
-        return None
 
 
 def get_new_comment_mentions(new_value, old_value):
@@ -327,9 +323,14 @@ def notifications(
                 "member_id", flat=True
             )
 
+            # Kustomisasi Paradise (2026-11-17): siapa pun boleh disebut, tapi yang
+            # dikabari hanya yang di dalam jangkauan work item ini (anggota project
+            # hidup, atau direktur/sekretaris). Lihat utils/jangkauan_sebutan.py.
+            from plane.utils.jangkauan_sebutan import saring_sebutan  # noqa: PLC0415
+
             # Get new mentions from the newer instance
             new_mentions = get_new_mentions(requested_instance=requested_data, current_instance=current_instance)
-            new_mentions = list(set(new_mentions) & {str(member) for member in project_members})
+            new_mentions = saring_sebutan(project_id, new_mentions)
             removed_mention = get_removed_mentions(requested_instance=requested_data, current_instance=current_instance)
 
             # KEP-91: @all di deskripsi = seluruh anggota aktif project, sebagai
@@ -365,12 +366,7 @@ def notifications(
                     comment_mentions = comment_mentions + new_comment_mentions
                     if sebut_semua_baru_di_komentar(issue_comment_new_value, issue_comment_old_value):
                         comment_mentions = comment_mentions + semua_anggota
-                    anggota_project = set(project_members)
-                    comment_mentions = list(
-                        dict.fromkeys(
-                            mention for mention in comment_mentions if _uuid_aman(mention) in anggota_project
-                        )
-                    )
+                    comment_mentions = saring_sebutan(project_id, comment_mentions)
 
             comment_mention_subscribers = extract_mentions_as_subscribers(
                 project_id=project_id, issue_id=issue_id, mentions=all_comment_mentions
@@ -521,6 +517,14 @@ def notifications(
                                         "issue_comment": str(
                                             issue_comment.comment_stripped if issue_comment is not None else ""
                                         ),
+                                        # Kustomisasi Paradise: dibaca utils/gabung_kabar.py untuk
+                                        # menghitung komentar dan mengurutkan lebur menurut waktu.
+                                        "issue_comment_id": (
+                                            str(issue_activity.get("issue_comment"))
+                                            if issue_activity.get("issue_comment")
+                                            else None
+                                        ),
+                                        "activity_time": issue_activity.get("created_at"),
                                         "old_identifier": (
                                             str(issue_activity.get("old_identifier"))
                                             if issue_activity.get("old_identifier")
@@ -860,27 +864,47 @@ def notifications(
                 new_mentions=sebut_tersurat,
                 removed_mention=removed_mention,
             )
-            # Kustomisasi Paradise: perubahan beruntun atas kolom yang sama
-            # (status, prioritas, tanggal, ...) digabung jadi satu kabar, di
-            # aplikasi, kartu obrolan, dan email. Lihat utils/gabung_kabar.py.
-            from plane.utils.gabung_kabar import gabungkan_email, gabungkan_notifikasi  # noqa: PLC0415
+            # Kustomisasi Paradise: kabar pembaruan beruntun dari pelaku yang sama
+            # atas work item yang sama dilebur jadi SATU baris inbox dan SATU
+            # kartu obrolan (disunting di tempat); email tetap satu per penerima
+            # per jendela (email_antrean). Lihat utils/gabung_kabar.py.
+            from plane.utils.gabung_kabar import (  # noqa: PLC0415
+                SENDER_PEMBARUAN,
+                boleh_dilebur,
+                gabungkan_email,
+                gabungkan_notifikasi_rinci,
+                kunci_gabungan,
+            )
 
-            bulk_notifications = gabungkan_notifikasi(bulk_notifications)
-            bulk_email_logs = gabungkan_email(bulk_email_logs)
-            # Bulk create notifications
-            Notification.objects.bulk_create(bulk_notifications, batch_size=100)
-            EmailNotificationLog.objects.bulk_create(bulk_email_logs, batch_size=100, ignore_conflicts=True)
+            # Satu transaksi, dikunci per (work item, pelaku): tugas kembar yang
+            # berjalan bersamaan menunggu giliran, bukan membuat baris kedua atau
+            # menimpa lebur satu sama lain. Worker mati di tengah = rollback utuh.
+            with transaction.atomic():
+                kunci_gabungan(issue_id, actor_id)
+                hasil = gabungkan_notifikasi_rinci(bulk_notifications)
+                bulk_notifications = hasil.baru
+                bulk_email_logs = gabungkan_email(bulk_email_logs)
+                # Id kartu ditetapkan sekarang, supaya kabar yang dilebur nanti
+                # menyunting kartunya lewat primary key, tanpa pencarian JSON.
+                for baris in bulk_notifications:
+                    if baris.sender in SENDER_PEMBARUAN and boleh_dilebur(baris):
+                        baris.data = {**(baris.data or {}), "kartu_id": str(uuid.uuid4())}
+                # Bulk create notifications
+                Notification.objects.bulk_create(bulk_notifications, batch_size=100)
+                EmailNotificationLog.objects.bulk_create(bulk_email_logs, batch_size=100, ignore_conflicts=True)
             # Kustomisasi Paradise: baris inbox yang sama juga jadi kartu di ruang
-            # "Paradise" obrolan. Menelan galatnya sendiri.
-            from plane.utils.kartu_obrolan import kirim_kartu_notifikasi  # noqa: PLC0415
+            # "Paradise" obrolan; baris yang dilebur menyunting kartunya sendiri.
+            # Keduanya menelan galatnya sendiri.
+            from plane.utils.kartu_obrolan import kirim_kartu_notifikasi, perbarui_kartu_notifikasi  # noqa: PLC0415
 
             kirim_kartu_notifikasi(bulk_notifications)
+            perbarui_kartu_notifikasi(hasil.diperbarui, hasil.dihapus)
             # Lencana dan daftar Pemberitahuan di layar penerima menyegarkan diri
             # tanpa menunggu putaran berikutnya. Menelan galatnya sendiri.
             from plane.utils.sinyal_data import siarkan_notifikasi_baris  # noqa: PLC0415
 
-            siarkan_notifikasi_baris(bulk_notifications)
+            siarkan_notifikasi_baris(bulk_notifications + hasil.diperbarui + hasil.dihapus)
         return
     except Exception as e:
-        print(e)
+        log_exception(e)
         return

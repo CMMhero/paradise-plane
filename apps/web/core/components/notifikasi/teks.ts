@@ -55,9 +55,56 @@ export type TNotifikasiRingkas = {
           | null
           | undefined;
         issue_activity?: TAktivitas | null | undefined;
+        gabungan?: TGabunganRingkas | null | undefined;
       }
     | null
     | undefined;
+};
+
+type TPerubahanRingkas = {
+  field?: string | null | undefined;
+  baru?: string | null | undefined;
+  tambah?: string[] | null | undefined;
+  hapus?: string[] | null | undefined;
+};
+
+/** `data.gabungan` dari plane/utils/gabung_kabar.py: kabar beruntun yang dilebur jadi satu baris. */
+export type TGabunganRingkas = {
+  komentar?: number | null | undefined;
+  perubahan?: TPerubahanRingkas[] | null | undefined;
+};
+
+const satuPerubahan = (p: TPerubahanRingkas) => {
+  const nama = (p.field ?? "").replace(/_/g, " ");
+  if (p.tambah || p.hapus) {
+    const butir = [...(p.tambah ?? []).map((x) => `+${x}`), ...(p.hapus ?? []).map((x) => `-${x}`)];
+    return butir.length > 0 ? `${nama} ${butir.join(" ")}` : nama;
+  }
+  return `${nama} → ${p.baru || "-"}`;
+};
+
+/**
+ * Kalimat untuk kabar lebur, atau null kalau barisnya cukup dibaca sebagai satu
+ * aktivitas biasa (satu kolom saja, atau satu komentar saja). Pada kasus itu
+ * `issue_activity` sudah berisi lama -> baru hasil lebur, jadi kalimat lamanya
+ * tetap benar.
+ */
+export const kalimatGabungan = (g: TGabunganRingkas | null | undefined, t: TTerjemah): string | null => {
+  if (!g) return null;
+  const perubahan = g.perubahan ?? [];
+  const komentar = Number(g.komentar ?? 0);
+  if (perubahan.length + (komentar > 0 ? 1 : 0) < 2 && komentar < 2) return null;
+  const bagian: string[] = [];
+  if (perubahan.length > 0) {
+    bagian.push(
+      t("notification_ui.action.merged_changes", {
+        count: perubahan.length,
+        list: perubahan.map(satuPerubahan).join(", "),
+      })
+    );
+  }
+  if (komentar > 0) bagian.push(t("notification_ui.action.merged_comments", { count: komentar }));
+  return bagian.join("; ");
 };
 
 /** Sebanyak ini isi pemberitahuan dipotong. Windows dan macOS memang memotong
@@ -141,6 +188,9 @@ const kalimat = (n: TNotifikasiRingkas, t: TTerjemah) => {
       ? t("notification_ui.action.mentioned_with_quote", { text: kutipan })
       : t("notification_ui.action.mentioned");
   }
+
+  const lebur = kalimatGabungan(n.data?.gabungan, t);
+  if (lebur) return lebur;
 
   const penyusun = AKSI[field];
   if (penyusun) return penyusun(aktivitas, t);

@@ -30,7 +30,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.app.views.base import BaseAPIView
 from plane.app.permissions import WorkspaceUserPermission
-from plane.db.superadmin import sembunyikan, super_admin_user_ids, terlihat_di_project
+from plane.db.superadmin import super_admin_user_ids, terlihat_di_project
 from plane.db.models import (
     Workspace,
     Project,
@@ -331,52 +331,6 @@ class GlobalSearchEndpoint(BaseAPIView):
 class SearchEndpoint(BaseAPIView):
     permission_classes = (WorkspaceUserPermission,)
 
-    @staticmethod
-    def _anggota_di_luar_project(query, slug, project_id, count):
-        """Anggota workspace yang BUKAN anggota project ini, hanya sebagai penanda.
-
-        Pemilih "@" di work item hanya boleh menyebut anggota project, tapi
-        orang mengetik nama rekan lalu mengira pencariannya rusak ketika tak ada
-        hasil. Daftar ini ditampilkan abu-abu dan tidak bisa dipilih, supaya
-        jelas bahwa orangnya ada tapi di luar departemen. Baru dicari kalau ada
-        kata kunci: tanpa itu seluruh perusahaan memenuhi dropdown.
-        """
-        if not (query or "").strip():
-            return []
-        from plane.db.models import WorkspaceMember  # noqa: PLC0415
-
-        dalam = ProjectMember.objects.filter(project_id=project_id, is_active=True).values("member_id")
-        orang = (
-            sembunyikan(
-                WorkspaceMember.objects.filter(
-                    _q_cari_anggota(query),
-                    is_active=True,
-                    workspace__slug=slug,
-                    member__is_bot=False,
-                ).exclude(member_id__in=dalam),
-                project_id=project_id,
-            )
-            .annotate(
-                member__avatar_url=Case(
-                    When(
-                        member__avatar_asset__isnull=False,
-                        then=Concat(
-                            Value("/api/assets/v2/static/"),
-                            Cast("member__avatar_asset", CharField()),
-                            Value("/"),
-                        ),
-                    ),
-                    When(member__avatar_asset__isnull=True, then="member__avatar"),
-                    default=Value(None),
-                    output_field=CharField(),
-                )
-            )
-            .order_by("member__display_name")
-            .distinct()
-            .values("member__avatar_url", "member__display_name", "member__id")
-        )
-        return list(orang[:count])
-
     def get(self, request, slug):
         query = request.query_params.get("query", False)
         query_types = request.query_params.get("query_type", "user_mention").split(",")
@@ -395,8 +349,12 @@ class SearchEndpoint(BaseAPIView):
                     # project/departemen HARUS bisa. Pemilih menawarkan anggota
                     # project lebih dulu, lalu karyawan workspace lainnya. Yang
                     # di luar project hanya tersebut di teks: server tidak
-                    # mengirim notifikasi ke mereka (mereka tak bisa membuka
-                    # work item itu), lihat bgtasks/notification_task.py.
+                    # mengirim kabar apa pun ke mereka (utils/jangkauan_sebutan.py).
+                    #
+                    # 17 Nov: daftar terpisah `user_mention_di_luar` (12 Nov,
+                    # abu-abu, tak bisa dipilih) dihapus. Sesudah 13 Nov orang
+                    # yang sama muncul dua kali: sekali bisa dipilih, sekali
+                    # ditolak. Penandanya sekarang `anggota_project` per orang.
                     #
                     # Super Admin tetap disembunyikan kecuali terlihat di
                     # project ini: pemilih mengirim display_name langsung ke
@@ -445,10 +403,13 @@ class SearchEndpoint(BaseAPIView):
                         )
                     )
 
-                    response_data["user_mention"] = list(users[:count])
-                    response_data["user_mention_di_luar"] = self._anggota_di_luar_project(
-                        query, slug, project_id, count
-                    )
+                    # `dikabari: false` = boleh disebut, tidak dikabari; pemilih
+                    # menandainya. Aturannya SAMA dengan notification_task.
+                    from plane.utils.jangkauan_sebutan import dalam_jangkauan  # noqa: PLC0415
+
+                    halaman = list(users[:count])
+                    sah = dalam_jangkauan(project_id, [u["member__id"] for u in halaman])
+                    response_data["user_mention"] = [{**u, "dikabari": str(u["member__id"]) in sah} for u in halaman]
 
                 elif query_type == "project":
                     fields = ["name", "identifier"]

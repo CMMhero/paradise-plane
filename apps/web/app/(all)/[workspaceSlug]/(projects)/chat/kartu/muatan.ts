@@ -93,8 +93,32 @@ export type TKartuTugas = {
     tenggat: string;
     assignees: string[];
   } | null;
-  detail: { komentar: string; field: string; verb: string; deskripsi: string };
+  detail: {
+    komentar: string;
+    field: string;
+    verb: string;
+    deskripsi: string;
+    /** Kabar lebur (plane/utils/gabung_kabar.py): komentar baru yang terkumpul. */
+    jumlahKomentar: number;
+    /** Kabar lebur: kolom yang masih berubah, sudah diringkas jadi teks. */
+    perubahan: string[];
+    /** Kabar lebur yang semua perubahannya dibatalkan (A -> B -> A). */
+    batal: boolean;
+  };
   persetujuan: { id: string; projectId: string; status: TStatusPersetujuan; pemohon: string } | null;
+};
+
+/** Satu entri `detail.perubahan` jadi teks pendek: "state → Done", "labels +Bug -Lama". */
+const bacaPerubahan = (v: unknown): string => {
+  const p = objek(v);
+  const nama = teks(p.field).replace(/_/g, " ");
+  if (!nama) return "";
+  if (Array.isArray(p.tambah) || Array.isArray(p.hapus)) {
+    const daftar = (x: unknown) => (Array.isArray(x) ? x.map(teks).filter(Boolean) : []);
+    const butir = [...daftar(p.tambah).map((x) => `+${x}`), ...daftar(p.hapus).map((x) => `-${x}`)];
+    return butir.length > 0 ? `${nama} ${butir.join(" ")}` : nama;
+  }
+  return `${nama} → ${teks(p.baru) || "-"}`;
 };
 
 export const bacaKartuTugas = (muatan: unknown): TKartuTugas => {
@@ -126,6 +150,9 @@ export const bacaKartuTugas = (muatan: unknown): TKartuTugas => {
       field: teks(detail.field),
       verb: teks(detail.verb),
       deskripsi: teks(detail.deskripsi),
+      jumlahKomentar: angka(detail.jumlah_komentar) ?? 0,
+      perubahan: (Array.isArray(detail.perubahan) ? detail.perubahan : []).map(bacaPerubahan).filter(Boolean),
+      batal: detail.batal === true,
     },
     persetujuan: teks(persetujuan.id)
       ? {

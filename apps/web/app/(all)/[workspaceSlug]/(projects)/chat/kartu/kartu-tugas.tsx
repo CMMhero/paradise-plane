@@ -174,7 +174,25 @@ export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang, teran
         ) : (
           <p className={cn("text-13 font-medium", warna.utama)}>{project.nama}</p>
         )}
-        {kartu.detail.komentar ? (
+        {/* Kabar lebur (gabung_kabar.py): kartu ini disunting di tempat tiap kali
+            pelaku yang sama mengubah work item yang sama di dalam satu jendela. */}
+        {kartu.detail.batal ? (
+          <p className={cn("text-12 italic", warna.redup)}>{t("chatkartu_ui.reverted")}</p>
+        ) : kartu.detail.perubahan.length > 0 ? (
+          <ul className={cn("flex flex-col gap-0.5 text-12", warna.sekunder)}>
+            {kartu.detail.perubahan.map((baris) => (
+              <li key={baris} className="truncate">
+                {baris}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {!kartu.detail.batal && kartu.detail.jumlahKomentar > 1 ? (
+          <p className={cn("text-12", warna.redup)}>
+            {t("chatkartu_ui.merged_comments", { count: kartu.detail.jumlahKomentar })}
+          </p>
+        ) : null}
+        {kartu.detail.komentar && !kartu.detail.batal ? (
           <p className={cn("line-clamp-3 border-l-2 pl-2 text-12", warna.garis, warna.sekunder)}>
             {kartu.detail.komentar}
           </p>
