@@ -197,6 +197,7 @@ export const InboxIssueMainContent = observer(function InboxIssueMainContent(pro
               projectId={projectId}
               issueId={issue.id}
               currentUser={currentUser}
+              issue={issue}
             />
           )}
           {isEditable && (
@@ -247,7 +248,13 @@ export const InboxIssueMainContent = observer(function InboxIssueMainContent(pro
       </div>
 
       <div className="pt-4">
-        <IssueActivity workspaceSlug={workspaceSlug} projectId={projectId} issueId={issue.id} isIntakeIssue />
+        <IssueActivity
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          issueId={issue.id}
+          issue={issue}
+          isIntakeIssue
+        />
       </div>
     </>
   );

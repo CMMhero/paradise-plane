@@ -51,6 +51,11 @@ from plane.db.models import (
 __all__ = [
     "gerbang_aktif",
     "adalah_admin_penuh",
+    "ditempatkan_ids",
+    "penerima_sah_ids",
+    "galat_penempatan",
+    "penerima_otomatis",
+    "tugaskan_otomatis",
     "peta_tingkat",
     "tingkat_anggota",
     "divisi_anggota",
@@ -193,6 +198,163 @@ def _tempat_jika_aktif(workspace_id, project_id):
     if project_id is None or not struktur_aktif(workspace_id):
         return None
     return _tempat_project(project_id)
+
+
+def ditempatkan_ids(workspace_id, project_id):
+    """Set id orang yang BENAR-BENAR ditempatkan di departemen/divisi project ini.
+
+    Keputusan user 2026-11-17: assignee hanya orang yang memang duduk di tempat
+    project itu, bukan siapa pun yang sekadar punya akses karena admin workspace
+    atau Super Admin. Satu baris penempatan menjangkau project ini kalau:
+
+    - departemennya memiliki project ini (`DepartemenProject`), jenjang apa pun;
+    - divisinya memiliki project ini dan barisnya manager ke atas (aturan
+      `_tingkat_lokal`: baris divisi hanya berlaku untuk manager);
+    - jenjangnya menjangkau seluruh organisasi (direktur, sekretaris KEP-101).
+
+    None = TIDAK ADA batasan penempatan, pemanggil kembali ke aturan lama
+    (anggota project). Dua keadaan: struktur divisi belum aktif (KEP-29, 88 orang
+    tidak boleh berubah apa-apa sebelum struktur diisi), atau project ini tidak
+    dimiliki departemen mana pun (project pribadi/lama): tanpa tempat, tidak ada
+    yang bisa "ditempatkan", dan menolak semua orang berarti melarang bekerja.
+    """
+    tempat = _tempat_jika_aktif(workspace_id, project_id)
+    if tempat is None:
+        return None
+    deps, divs = tempat
+    if not deps:
+        return None
+    hasil = set()
+    for uid, tingkat, dep, div in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
+        "member_id", "tingkat", "departemen_id", "divisi_id"
+    ):
+        if (
+            menjangkau_seluruh_organisasi(tingkat)
+            or (dep and str(dep) in deps)
+            or (div and tingkat >= TINGKAT_MANAGER and str(div) in divs)
+        ):
+            hasil.add(uid)
+    # Super Admin yang ditandai "anggota asli" project ini (`SuperAdminTerlihatDiProject`)
+    # juga dihitung ditempatkan: penanda itu ada justru supaya tim IT bisa ditugaskan
+    # di project IT sendiri, dan `terlihat_di_project` sudah memperlakukannya begitu.
+    from plane.db.models import SuperAdminTerlihatDiProject  # noqa: PLC0415
+    from plane.db.superadmin import super_admin_user_ids  # noqa: PLC0415
+
+    super_ids = super_admin_user_ids()
+    if super_ids:
+        hasil |= set(
+            SuperAdminTerlihatDiProject.objects.filter(project_id=project_id, member_id__in=super_ids).values_list(
+                "member_id", flat=True
+            )
+        )
+    return hasil
+
+
+def penerima_sah_ids(project_id, kandidat_ids):
+    """Bagian `kandidat_ids` yang sah jadi assignee di project ini.
+
+    Sah = anggota project yang hidup dengan role member/admin (`role >= 15`, saringan
+    upstream yang sama dengan serializer) DAN ditempatkan di tempat project ini
+    (`ditempatkan_ids`). Satu fungsi untuk serializer, auto-assign, dan dropdown,
+    supaya ketiganya tidak pernah berbeda pendapat.
+    """
+    from plane.db.models import Project  # noqa: PLC0415
+
+    kandidat = {k for k in (kandidat_ids or []) if k is not None}
+    if not kandidat:
+        return set()
+    project = Project.objects.filter(pk=project_id, deleted_at__isnull=True).only("workspace_id").first()
+    if project is None:
+        return set()
+    sah = set(
+        ProjectMember.objects.filter(
+            project_id=project_id, role__gte=15, is_active=True, member_id__in=kandidat
+        ).values_list("member_id", flat=True)
+    )
+    tempat = ditempatkan_ids(project.workspace_id, project_id)
+    return sah if tempat is None else sah & tempat
+
+
+def _id_saja(nilai):
+    """Id dari objek User (serializer papan publik) atau id apa adanya (UUID/str)."""
+    return getattr(nilai, "pk", nilai)
+
+
+def galat_penempatan(project_id, assignee_ids, lama=()):
+    """Pesan galat kalau ada penerima BARU yang tidak ditempatkan di project ini.
+
+    `lama` = assignee yang sudah ada di tugas itu. Mereka tidak diperiksa ulang:
+    tugas lama yang ditugaskan sebelum aturan ini tetap bisa disunting tanpa
+    memaksa orang melepas assignee-nya dulu.
+
+    Sengaja TIDAK bergantung pada katup `HIERARKI_GERBANG_TUGAS`: siapa yang
+    boleh jadi assignee adalah soal data organisasi (struktur aktif), bukan
+    soal tangga persetujuan.
+    """
+    lama_set = {str(_id_saja(a)) for a in (lama or [])}
+    baru = {_id_saja(a) for a in (assignee_ids or []) if a is not None and str(_id_saja(a)) not in lama_set}
+    if not baru:
+        return None
+    from plane.db.models import Project  # noqa: PLC0415
+
+    project = Project.objects.filter(pk=project_id, deleted_at__isnull=True).only("workspace_id").first()
+    if project is None:
+        return None
+    tempat = ditempatkan_ids(project.workspace_id, project_id)
+    if tempat is None:
+        return None
+    tempat_str = {str(u) for u in tempat}
+    if any(str(a) not in tempat_str for a in baru):
+        return (
+            "Penerima tugas harus ditempatkan di departemen atau divisi project ini. "
+            "Akses admin saja tidak membuat seseorang bisa ditugaskan di sini."
+        )
+    return None
+
+
+def penerima_otomatis(project_id, actor):
+    """Id `actor` kalau ia sah jadi assignee tugas buatannya sendiri, selain itu None.
+
+    Auto-assign (keputusan user 2026-11-17): siapa pun yang membuat work item
+    tanpa memilih assignee otomatis jadi assignee-nya, staf, atasan, admin
+    workspace, maupun Super Admin. Satu-satunya syarat: ia sah jadi assignee di
+    project itu (`penerima_sah_ids`). Admin yang tidak ditempatkan di departemen
+    itu tidak mendapat auto-assign, dan tugasnya tetap dibuat tanpa galat.
+
+    Sengaja TIDAK bergantung pada katup gerbang: dulu auto-assign hanya hidup di
+    dalam cabang "staf" yang mensyaratkan gerbang menyala dan mengecualikan admin,
+    jadi mematikan katup (atau menjadi admin workspace) diam-diam mematikan
+    auto-assign juga.
+    """
+    if actor is None or getattr(actor, "is_anonymous", False) or getattr(actor, "id", None) is None:
+        return None
+    return actor.id if actor.id in penerima_sah_ids(project_id, [actor.id]) else None
+
+
+def tugaskan_otomatis(issue, actor):
+    """Jadikan `actor` assignee `issue` kalau tugas itu belum punya assignee sama sekali.
+
+    Untuk jalur yang membuat/menerima tugas TANPA serializer `IssueCreateSerializer`
+    (intake API v1, terima intake). Mengembalikan True kalau ada yang ditambahkan.
+    """
+    from plane.db.models import IssueAssignee  # noqa: PLC0415
+
+    if issue is None or issue.issue_assignee.exists():
+        return False
+    uid = penerima_otomatis(issue.project_id, actor)
+    if uid is None:
+        return False
+    IssueAssignee.objects.get_or_create(
+        issue_id=issue.id,
+        assignee_id=uid,
+        defaults={
+            "project_id": issue.project_id,
+            "workspace_id": issue.workspace_id,
+            "created_by_id": uid,
+            "updated_by_id": uid,
+        },
+    )
+    return True
 
 
 def adalah_admin_penuh(user, workspace_id):
@@ -537,7 +699,7 @@ def _pesan_tolak(tingkat, nama_divisi):
     return f"Divisi {nama_divisi} berada di luar divisi yang Anda awasi."
 
 
-def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
+def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, lama=()):
     """Periksa satu penugasan. Kembalikan pesan galat, atau None kalau boleh.
 
     Sengaja mengembalikan pesan, bukan melempar: pemanggilnya serializer DRF (yang
@@ -548,17 +710,33 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
     AKAN terjadi kalau katupnya dinyalakan" tanpa benar-benar menyalakannya untuk 88
     orang. Tanpa ini, census cuma bisa melaporkan "gerbang mati, tidak ada yang terjadi".
 
-    Urutan pemeriksaan penting: gerbang mati diperiksa paling depan, supaya dengan
-    katup tertutup fungsi ini tidak menyentuh database sama sekali.
-    """
-    if not abaikan_katup and not gerbang_aktif():
-        return None
+    Urutan pemeriksaan (2026-11-17): penempatan dulu, lalu katup. Penerima harus
+    ditempatkan di departemen/divisi project ini (`galat_penempatan`), dan itu
+    berlaku untuk SEMUA pelaku termasuk admin workspace dan Super Admin, serta
+    untuk assign diri sendiri. Aturan ini tidak ikut dimatikan katup gerbang;
+    dengan katup tertutup, hanya tangga jenjangnya yang dilepas.
 
+    `lama` = assignee yang sudah ada di tugas itu (jalur ubah). Mereka tidak
+    diperiksa penempatannya lagi supaya tugas lama tetap bisa disunting.
+
+    Admin workspace dan Super Admin dihitung SETARA DIREKTUR untuk aturan "hanya
+    ke bawah": boleh menugaskan siapa pun yang ditempatkan di sini, sama dengan
+    direktur. Alasannya: keduanya mengurus sistem dari luar tangga divisi, dan
+    keputusan user 9 Nov (ca9fff6180) sudah memberi Super Admin wewenang
+    menunjuk assignee di tugas mana pun. Yang baru hanyalah batas penempatan.
+    """
     # Tugas tanpa penerima tidak pernah butuh persetujuan: approval melekat pada
     # PENUGASAN, bukan pada pembuatan tugas (kata user: "hanya bisa assign diri sendiri,
     # dan harus di approve").
-    assignee_ids = [a for a in (assignee_ids or []) if a is not None]
+    assignee_ids = [_id_saja(a) for a in (assignee_ids or []) if a is not None]
     if not assignee_ids:
+        return None
+
+    galat_tempat = galat_penempatan(project_id, assignee_ids, lama=lama)
+    if galat_tempat:
+        return galat_tempat
+
+    if not abaikan_katup and not gerbang_aktif():
         return None
 
     # Aktor tidak diketahui -> gagal ke arah aman (prinsip #3).
@@ -569,8 +747,8 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 
     if is_super_admin(actor):
         # Super Admin mengurus sistem dan sudah punya akses ke seluruh project (B1).
-        # Catatannya: kewenangan ini di luar tangga divisi, jadi ia tidak diperiksa
-        # terhadap divisi apa pun. Pertanyaan #7 menanyakan apakah ini yang diinginkan.
+        # Setara direktur: tidak diperiksa terhadap divisi mana pun, tetapi
+        # penerimanya tetap harus ditempatkan di sini (`galat_penempatan` di atas).
         return None
 
     dari_id = {getattr(actor, "id", None)}
@@ -588,7 +766,8 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False):
 
     workspace_id = project.workspace_id
 
-    # Admin workspace: boleh menugaskan siapa pun di project ini (13 Nov).
+    # Admin workspace: boleh menugaskan siapa pun yang DITEMPATKAN di project ini
+    # (13 Nov; batas penempatan 17 Nov sudah diperiksa di atas).
     if adalah_admin_penuh(actor, workspace_id):
         return None
 
@@ -1212,6 +1391,9 @@ def galat_tambah_rekan(project_id, issue, assignee_ids_baru, actor):
     ditambah = baru - lama
     if not ditambah:
         return None
+    galat_tempat = galat_penempatan(project_id, ditambah)
+    if galat_tempat:
+        return galat_tempat
     return _galat_kolaborasi_staf(actor.id, project.workspace_id, project_id, [actor.id, *ditambah])
 
 

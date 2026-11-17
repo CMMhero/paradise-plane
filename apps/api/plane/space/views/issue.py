@@ -67,7 +67,25 @@ from plane.db.models import (
     CycleIssue,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.utils.task_access import tolak_percakapan
 from plane.utils.issue_filters import issue_filters
+
+
+def _tolak_anggota(request, board, issue_id=None, comment_id=None):
+    """Aturan komentar/reaksi app (17 Nov) untuk ANGGOTA project yang menulis lewat papan publik.
+
+    Papan publik (DeployBoard) sengaja menerima komentar dan reaksi dari orang luar;
+    itu fitur upstream dan tidak diubah. Tetapi anggota project tidak boleh memakai
+    pintu ini untuk melewati aturan yang sama di app (`tolak_percakapan`).
+    """
+    if not ProjectMember.objects.filter(
+        project_id=board.project_id, member_id=getattr(request.user, "id", None), is_active=True
+    ).exists():
+        return None
+    if issue_id is None and comment_id is not None:
+        issue_id = IssueComment.objects.filter(pk=comment_id).values_list("issue_id", flat=True).first()
+    issue = Issue.objects.filter(pk=issue_id, project_id=board.project_id).first() if issue_id else None
+    return tolak_percakapan(request, issue)
 
 
 class ProjectIssuesPublicEndpoint(BaseAPIView):
@@ -262,6 +280,9 @@ class IssueCommentPublicViewSet(BaseViewSet):
                 {"error": "Comments are not enabled for this project"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        tolak = _tolak_anggota(request, project_deploy_board, issue_id=issue_id)
+        if tolak is not None:
+            return tolak
 
         serializer = IssueCommentSerializer(data=request.data)
         if serializer.is_valid():
@@ -302,6 +323,9 @@ class IssueCommentPublicViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         comment = IssueComment.objects.get(pk=pk, actor=request.user)
+        tolak = _tolak_anggota(request, project_deploy_board, issue_id=comment.issue_id)
+        if tolak is not None:
+            return tolak
         serializer = IssueCommentSerializer(comment, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -326,6 +350,9 @@ class IssueCommentPublicViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         comment = IssueComment.objects.get(pk=pk, actor=request.user)
+        tolak = _tolak_anggota(request, project_deploy_board, issue_id=comment.issue_id)
+        if tolak is not None:
+            return tolak
         issue_activity.delay(
             type="comment.activity.deleted",
             requested_data=json.dumps({"comment_id": str(pk)}),
@@ -371,6 +398,9 @@ class IssueReactionPublicViewSet(BaseViewSet):
                 {"error": "Reactions are not enabled for this project board"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        tolak = _tolak_anggota(request, project_deploy_board, issue_id=issue_id)
+        if tolak is not None:
+            return tolak
 
         serializer = IssueReactionSerializer(data=request.data)
         if serializer.is_valid():
@@ -408,6 +438,9 @@ class IssueReactionPublicViewSet(BaseViewSet):
                 {"error": "Reactions are not enabled for this project board"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        tolak = _tolak_anggota(request, project_deploy_board, issue_id=issue_id)
+        if tolak is not None:
+            return tolak
         issue_reaction = IssueReaction.objects.get(
             workspace_id=project_deploy_board.workspace_id,
             issue_id=issue_id,
@@ -456,6 +489,9 @@ class CommentReactionPublicViewSet(BaseViewSet):
                 {"error": "Reactions are not enabled for this board"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        tolak = _tolak_anggota(request, project_deploy_board, comment_id=comment_id)
+        if tolak is not None:
+            return tolak
 
         serializer = CommentReactionSerializer(data=request.data)
         if serializer.is_valid():
@@ -492,6 +528,9 @@ class CommentReactionPublicViewSet(BaseViewSet):
                 {"error": "Reactions are not enabled for this board"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        tolak = _tolak_anggota(request, project_deploy_board, comment_id=comment_id)
+        if tolak is not None:
+            return tolak
 
         comment_reaction = CommentReaction.objects.get(
             project_id=project_deploy_board.project_id,

@@ -152,7 +152,8 @@
             }
           }
         }
-      }
+      },
+      "not_involved": "Only the assignees, the person who assigned this work item, and their supervisors can comment or react here."
     },
     "empty_state": {
       "issue_detail": {

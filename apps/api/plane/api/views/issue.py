@@ -81,7 +81,13 @@ from plane.db.models import (
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan
-from plane.utils.task_access import bisa_ganti_tenggat, bisa_hapus_tugas, pesan_tolak_tenggat, tenggat_diubah
+from plane.utils.task_access import (
+    bisa_ganti_tenggat,
+    bisa_hapus_tugas,
+    pesan_tolak_tenggat,
+    tenggat_diubah,
+    tolak_percakapan,
+)
 from plane.utils.balasan_komentar import hapus_balasan
 from plane.utils.izin_sumber import tolak_izin, tolak_izin_komentar, tolak_izin_project
 from plane.utils.saklar_instance import PERM_COMMENT_DELETE, PERM_COMMENT_EDIT, PERM_PROJECT_WORKFLOW
@@ -1478,6 +1484,10 @@ class IssueCommentListCreateAPIEndpoint(BaseAPIView):
         Add a new comment to a work item with HTML content.
         Supports external ID tracking for integration purposes.
         """
+        # Komentar hanya untuk yang boleh mengubah tugas ini (17 Nov), sama dengan app.
+        tolak = tolak_percakapan(request, Issue.objects.filter(pk=issue_id, project_id=project_id).first())
+        if tolak is not None:
+            return tolak
         # Validation check if the issue already exists
         if (
             request.data.get("external_id")
@@ -1629,7 +1639,9 @@ class IssueCommentDetailAPIEndpoint(BaseAPIView):
         """
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
         # KEP-85: dulu token API bebas mengubah komentar siapa pun; sekarang aturan PERM_COMMENT_EDIT.
-        galat = tolak_izin_komentar(request, PERM_COMMENT_EDIT, issue_comment)
+        galat = tolak_izin_komentar(request, PERM_COMMENT_EDIT, issue_comment) or tolak_percakapan(
+            request, issue_comment.issue
+        )
         if galat is not None:
             return galat
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
@@ -1702,7 +1714,9 @@ class IssueCommentDetailAPIEndpoint(BaseAPIView):
         """
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
         # KEP-85: dulu token API bebas menghapus komentar siapa pun; sekarang aturan PERM_COMMENT_DELETE.
-        galat = tolak_izin_komentar(request, PERM_COMMENT_DELETE, issue_comment)
+        galat = tolak_izin_komentar(request, PERM_COMMENT_DELETE, issue_comment) or tolak_percakapan(
+            request, issue_comment.issue
+        )
         if galat is not None:
             return galat
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)

@@ -26,6 +26,7 @@ from plane.bgtasks.webhook_task import model_activity
 from plane.utils.balasan_komentar import hapus_balasan, induk_balasan
 from plane.utils.izin_sumber import tolak_izin_komentar
 from plane.utils.saklar_instance import PERM_COMMENT_DELETE, PERM_COMMENT_EDIT
+from plane.utils.task_access import tolak_percakapan
 
 
 class IssueCommentViewSet(BaseViewSet):
@@ -82,6 +83,10 @@ class IssueCommentViewSet(BaseViewSet):
                 {"error": "You are not allowed to comment on the issue"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # Komentar & balasan hanya untuk yang boleh mengubah tugas ini (17 Nov).
+        tolak = tolak_percakapan(request, issue)
+        if tolak is not None:
+            return tolak
         # Balasan: induk dicek di server (work item yang sama, naik ke akar utas).
         # Tanpa `parent` di body, ini komentar biasa.
         induk = None
@@ -124,7 +129,9 @@ class IssueCommentViewSet(BaseViewSet):
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, issue_id, pk):
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
-        galat = tolak_izin_komentar(request, PERM_COMMENT_EDIT, issue_comment)
+        galat = tolak_izin_komentar(request, PERM_COMMENT_EDIT, issue_comment) or tolak_percakapan(
+            request, issue_comment.issue
+        )
         if galat is not None:
             return galat
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
@@ -162,7 +169,9 @@ class IssueCommentViewSet(BaseViewSet):
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def destroy(self, request, slug, project_id, issue_id, pk):
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
-        galat = tolak_izin_komentar(request, PERM_COMMENT_DELETE, issue_comment)
+        galat = tolak_izin_komentar(request, PERM_COMMENT_DELETE, issue_comment) or tolak_percakapan(
+            request, issue_comment.issue
+        )
         if galat is not None:
             return galat
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
@@ -203,8 +212,16 @@ class CommentReactionViewSet(BaseViewSet):
             .distinct()
         )
 
+    def _tolak(self, request, project_id, comment_id):
+        """403 kalau pelaku tak boleh bereaksi di tugas pemilik komentar ini (17 Nov)."""
+        komentar = IssueComment.objects.filter(pk=comment_id, project_id=project_id).select_related("issue").first()
+        return tolak_percakapan(request, komentar.issue if komentar is not None else None)
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def create(self, request, slug, project_id, comment_id):
+        tolak = self._tolak(request, project_id, comment_id)
+        if tolak is not None:
+            return tolak
         try:
             serializer = CommentReactionSerializer(data=request.data)
             if serializer.is_valid():
@@ -234,6 +251,9 @@ class CommentReactionViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def destroy(self, request, slug, project_id, comment_id, reaction_code):
+        tolak = self._tolak(request, project_id, comment_id)
+        if tolak is not None:
+            return tolak
         comment_reaction = CommentReaction.objects.get(
             workspace__slug=slug,
             project_id=project_id,

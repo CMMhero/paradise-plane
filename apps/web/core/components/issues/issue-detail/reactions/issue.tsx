@@ -10,13 +10,14 @@ import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
 import { EmojiReactionGroup, EmojiReactionPicker } from "@plane/propel/emoji-reaction";
 import type { EmojiReactionType } from "@plane/propel/emoji-reaction";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { IUser } from "@plane/types";
+import type { IUser, TIssue } from "@plane/types";
 // hooks
 // ui
 import { cn } from "@plane/utils";
 // helpers
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
+import { useBolehPercakapanTugas } from "@/hooks/use-aturan-tugas";
 // types
 
 export type TIssueReaction = {
@@ -26,18 +27,24 @@ export type TIssueReaction = {
   currentUser: IUser;
   disabled?: boolean;
   className?: string;
+  /** Tugas untuk menilai hak reaksi kalau belum ada di store detail (intake). */
+  issue?: Partial<TIssue>;
 };
 
 export const IssueReaction = observer(function IssueReaction(props: TIssueReaction) {
-  const { workspaceSlug, projectId, issueId, currentUser, disabled = false, className = "" } = props;
+  const { workspaceSlug, projectId, issueId, currentUser, disabled: dikunciPemanggil = false, className = "" } = props;
   // state
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   // hooks
   const {
+    issue: { getIssueById },
     reaction: { getReactionsByIssueId, reactionsByUser, getReactionById },
     createReaction,
     removeReaction,
   } = useIssueDetail();
+  // Reaksi mengikuti hak ubah (keputusan 2026-11-17), sama dengan server.
+  const bolehPercakapan = useBolehPercakapanTugas(workspaceSlug, projectId, props.issue ?? getIssueById(issueId));
+  const disabled = dikunciPemanggil || !bolehPercakapan;
   const { getUserDetails } = useMember();
 
   const reactionIds = getReactionsByIssueId(issueId);

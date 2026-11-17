@@ -213,6 +213,7 @@ export const useBisaDitugaskan = (
   tingkat: number | null;
   gerbangAktif: boolean;
   bawahanIds: string[];
+  adminPenuh: boolean;
   aturan: TAturanTugas;
 } => {
   const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
@@ -229,6 +230,7 @@ export const useBisaDitugaskan = (
       tingkat: null,
       gerbangAktif: true,
       bawahanIds: [],
+      adminPenuh: false,
       aturan: gabungAturan(data?.aturan),
     };
   const users = (data.users ?? []).map((u) => u.id);
@@ -241,6 +243,7 @@ export const useBisaDitugaskan = (
     // Server lama yang belum membalas kunci ini: anggap gerbang menyala (aman).
     gerbangAktif: data.gerbang_aktif ?? true,
     bawahanIds: data.bawahan_ids ?? [],
+    adminPenuh: data.admin_penuh ?? false,
     aturan: gabungAturan(data.aturan),
   };
 };
@@ -280,6 +283,7 @@ type TugasKepemilikan = { assignee_ids?: string[] | null; created_by?: string | 
  *     Super Admin                       boleh
  *     pembuat (pemberi tugas)/assignee  boleh
  *     gerbang hierarki mati             boleh (katup darurat, server juga melepas)
+ *     admin workspace                   boleh (`adalah_admin_penuh`, KEP-85)
  *     supervisor+                       boleh kalau SEMUA assignee bawahannya
  *                                       (tanpa assignee: boleh, sama dengan server)
  *     sisanya                           hanya lihat
@@ -294,6 +298,15 @@ export const useBolehUbahTugas = (
   projectId: string | null | undefined,
   issue: TugasKepemilikan | undefined | null
 ): boolean => usePenilaiUbahTugas(workspaceSlug, projectId)(issue);
+
+/**
+ * Bolehkah saya BERKOMENTAR, MEMBALAS, atau MEMBERI REAKSI di tugas ini?
+ *
+ * Keputusan user 2026-11-17: sama persis dengan hak ubah. Server memakai aturan
+ * yang sama (`galat_percakapan_tugas` = `galat_ubah_tugas`), jadi di sini juga
+ * satu penilai, bukan salinan: kalau aturan ubah berubah, keduanya ikut.
+ */
+export const useBolehPercakapanTugas = useBolehUbahTugas;
 
 /**
  * Apakah saya pembuat atau assignee salah satu sub-work item langsung dari
@@ -343,7 +356,7 @@ export const usePenilaiUbahTugas = (
     if (issue.created_by === idSaya || assignees.includes(idSaya)) return true;
     if (issue.project_id && projectId && issue.project_id !== projectId) return false;
     if (wewenang.memuat) return false;
-    if (!wewenang.gerbangAktif) return true;
+    if (!wewenang.gerbangAktif || wewenang.adminPenuh) return true;
     if (wewenang.tingkat == null || wewenang.tingkat < TINGKAT_SUPERVISOR) return false;
     return assignees.every((id) => bawahan.has(id));
   };

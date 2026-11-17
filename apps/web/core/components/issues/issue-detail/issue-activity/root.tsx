@@ -14,13 +14,14 @@ import { useLocalStorage } from "@plane/hooks";
 // i18n
 import { useTranslation } from "@plane/i18n";
 //types
-import type { TFileSignedURLResponse, TIssueComment } from "@plane/types";
+import type { TFileSignedURLResponse, TIssue, TIssueComment } from "@plane/types";
 // components
 import { CommentCreate } from "@/components/comments/comment-create";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useBolehPercakapanTugas } from "@/hooks/use-aturan-tugas";
 // plane web components
 import { ActivityFilterRoot } from "@/plane-web/components/issues/worklog/activity/filter-root";
 import { IssueActivityWorklogCreateButton } from "@/plane-web/components/issues/worklog/activity/worklog-create-button";
@@ -35,6 +36,8 @@ type TIssueActivity = {
   issueId: string;
   disabled?: boolean;
   isIntakeIssue?: boolean;
+  /** Tugas untuk menilai hak komentar kalau belum ada di store detail (intake). */
+  issue?: Partial<TIssue>;
 };
 
 export type TActivityOperations = {
@@ -63,12 +66,17 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   const { getProjectById } = useProject();
   const { data: currentUser } = useUser();
   // derived values
-  const issue = issueId ? getIssueById(issueId) : undefined;
+  const issue = props.issue ?? (issueId ? getIssueById(issueId) : undefined);
   const currentUserProjectRole = getProjectRoleByWorkspaceSlugAndProjectId(workspaceSlug, projectId);
   const isAdmin = currentUserProjectRole === EUserPermissions.ADMIN;
   const isGuest = currentUserProjectRole === EUserPermissions.GUEST;
   const isAssigned = issue?.assignee_ids && currentUser?.id ? issue?.assignee_ids.includes(currentUser?.id) : false;
   const isWorklogButtonEnabled = !isIntakeIssue && !isGuest && (isAdmin || isAssigned);
+  // Komentar, balasan, dan reaksi mengikuti hak ubah (keputusan 2026-11-17).
+  // Server tetap penegaknya (`galat_percakapan_tugas`); ini hanya menyembunyikan
+  // kontrol yang pasti ditolak.
+  const bolehPercakapan = useBolehPercakapanTugas(workspaceSlug, projectId, issue);
+  const percakapanTerkunci = disabled || !bolehPercakapan;
   // toggle filter
   const toggleFilter = (filter: TActivityFilters) => {
     if (!selectedFilters) return;
@@ -95,18 +103,23 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
 
   const project = getProjectById(projectId);
   const renderCommentCreationBox = useMemo(
-    () => (
-      <CommentCreate
-        workspaceSlug={workspaceSlug}
-        entityId={issueId}
-        activityOperations={activityOperations}
-        showToolbarInitially
-        projectId={projectId}
-        attachFiles={attachFiles}
-        attachmentStatus={<StatusLampiranTempel {...statusLampiran} />}
-      />
-    ),
-    [workspaceSlug, issueId, activityOperations, projectId, attachFiles, statusLampiran]
+    () =>
+      !bolehPercakapan ? (
+        <p className="rounded-md border border-subtle bg-surface-1 px-3 py-2 text-body-sm-regular text-secondary">
+          {t("issue.comments.not_involved")}
+        </p>
+      ) : (
+        <CommentCreate
+          workspaceSlug={workspaceSlug}
+          entityId={issueId}
+          activityOperations={activityOperations}
+          showToolbarInitially
+          projectId={projectId}
+          attachFiles={attachFiles}
+          attachmentStatus={<StatusLampiranTempel {...statusLampiran} />}
+        />
+      ),
+    [workspaceSlug, issueId, activityOperations, projectId, attachFiles, statusLampiran, bolehPercakapan, t]
   );
   if (!project) return <></>;
 
@@ -147,7 +160,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
               selectedFilters={selectedFilters || defaultActivityFilters}
               activityOperations={activityOperations}
               showAccessSpecifier={!!project.anchor}
-              disabled={disabled}
+              disabled={percakapanTerkunci}
               sortOrder={sortOrder || E_SORT_ORDER.ASC}
             />
             {!disabled && sortOrder === E_SORT_ORDER.ASC && renderCommentCreationBox}

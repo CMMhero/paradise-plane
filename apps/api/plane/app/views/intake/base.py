@@ -468,7 +468,9 @@ class IntakeIssueViewSet(BaseViewSet):
 
         if (project_member and project_member.role > ROLE.MEMBER.value) or is_workspace_admin:
             intake_current_instance = json.dumps(IntakeIssueSerializer(intake_issue).data, cls=DjangoJSONEncoder)
-            intake_serializer = IntakeIssueSerializer(intake_issue, data=request.data, partial=True)
+            intake_serializer = IntakeIssueSerializer(
+                intake_issue, data=request.data, partial=True, context={"actor": request.user}
+            )
 
             if not intake_serializer.is_valid():
                 return Response(intake_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
