@@ -28,6 +28,8 @@ export type TUserSearchResponse = {
   member__avatar_url: IUser["avatar_url"];
   member__display_name: IUser["display_name"];
   member__id: IUser["id"];
+  /** Paradise: false = boleh disebut, tapi tidak dikabari (di luar departemen work item ini). */
+  dikabari?: boolean;
 };
 
 export type TProjectSearchResponse = {
@@ -82,8 +84,6 @@ export type TSearchResponse = {
   page?: TPageSearchResponse[];
   project?: TProjectSearchResponse[];
   user_mention?: TUserSearchResponse[];
-  // Paradise: anggota workspace di luar project, hanya penanda (tidak bisa disebut).
-  user_mention_di_luar?: TUserSearchResponse[];
 };
 
 export type TSearchEntityRequestPayload = {

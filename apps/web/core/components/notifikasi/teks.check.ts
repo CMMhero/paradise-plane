@@ -135,6 +135,53 @@ const tugas = { name: "Printer lantai 2 macet", identifier: "IT", sequence_id: 4
   assert.equal(hariIni.isi, "Jatuh tempo hari ini");
 }
 
+// --- kabar lebur (plane/utils/gabung_kabar.py) -------------------------------
+
+{
+  // Beberapa kolom dan komentar dari satu pelaku: satu kalimat ringkasan.
+  const r = ringkasNotifikasi({
+    triggered_by_details: pemicu,
+    data: {
+      issue: tugas,
+      issue_activity: { field: "comment", new_value: "<p>oke</p>", verb: "created" },
+      gabungan: {
+        komentar: 2,
+        perubahan: [
+          { field: "state", baru: "Done" },
+          { field: "labels", tambah: ["Bug"], hapus: [] },
+        ],
+      },
+    },
+  });
+  assert.equal(r.isi, "andri membuat 2 perubahan: state → Done, labels +Bug; menambah 2 komentar");
+}
+
+{
+  // Hanya komentar beruntun: "menambah N komentar".
+  const r = ringkasNotifikasi({
+    triggered_by_details: pemicu,
+    data: {
+      issue: tugas,
+      issue_activity: { field: "comment", new_value: "<p>tiga</p>", verb: "created" },
+      gabungan: { komentar: 3, perubahan: [] },
+    },
+  });
+  assert.equal(r.isi, "andri menambah 3 komentar");
+}
+
+{
+  // Satu kolom saja (A -> B -> C): kalimat biasa dari issue_activity.
+  const r = ringkasNotifikasi({
+    triggered_by_details: pemicu,
+    data: {
+      issue: tugas,
+      issue_activity: { field: "state", new_value: "Done", verb: "updated" },
+      gabungan: { komentar: 0, perubahan: [{ field: "state", baru: "Done" }] },
+    },
+  });
+  assert.equal(r.isi, "andri memindahkan statusnya ke Done");
+}
+
 // --- obrolan ----------------------------------------------------------------
 
 const namaOrang = (id: string) => ({ "u-1": "Siti", "u-2": "Rendi" })[id];

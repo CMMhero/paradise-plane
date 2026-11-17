@@ -202,9 +202,15 @@ def boleh_tinggalkan(ruang) -> bool:
     return not ruang.sistem
 
 
-def kirim_pesan_sistem(ruang, jenis, muatan, isi, pengirim_id=None, penerima_id=None):
-    """Tulis satu pesan kartu ke ruang, geser urutan, siarkan ke soket."""
+def kirim_pesan_sistem(ruang, jenis, muatan, isi, pengirim_id=None, penerima_id=None, pesan_id=None):
+    """Tulis satu pesan kartu ke ruang, geser urutan, siarkan ke soket.
+
+    `pesan_id`: id yang sudah ditetapkan pemanggil (kartu kabar yang nanti
+    disunting di tempat, lihat `kartu_obrolan.perbarui_kartu_notifikasi`).
+    """
+    ekstra = {"id": pesan_id} if pesan_id else {}
     pesan = PesanLangsung.objects.create(
+        **ekstra,
         workspace_id=ruang.workspace_id,
         ruang=ruang,
         pengirim_id=pengirim_id,

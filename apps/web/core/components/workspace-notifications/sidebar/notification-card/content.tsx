@@ -16,6 +16,7 @@ import {
 } from "@plane/utils";
 // components
 import { LiteTextEditor } from "@/components/editor/lite-text";
+import { kalimatGabungan } from "@/components/notifikasi/teks";
 import {
   ADDITIONAL_NOTIFICATION_CONTENT_MAP,
   renderAdditionalAction,
@@ -189,6 +190,7 @@ export function NotificationContent({
   projectId: string;
   renderCommentBox?: boolean;
 }) {
+  const { t } = useTranslation();
   const { data, triggered_by_details: triggeredBy } = notification;
   const notificationField = data?.issue_activity.field;
   const newValue = data?.issue_activity.new_value;
@@ -237,6 +239,20 @@ export function NotificationContent({
         <span className="text-tertiary">
           <ChatNotificationAction count={data?.chat?.jumlah ?? 1} />
         </span>
+      </>
+    );
+  }
+
+  // Kustomisasi Paradise: kabar lebur (plane/utils/gabung_kabar.py). Beberapa
+  // perubahan dan komentar dari satu pelaku atas satu work item jadi satu baris.
+  // Satu kolom saja tetap dirender seperti biasa di bawah.
+  const lebur = kalimatGabungan(data?.gabungan, t);
+  if (lebur) {
+    return (
+      <>
+        {renderTriggerName()}
+        <span className="text-tertiary">{lebur}</span>
+        {"."}
       </>
     );
   }

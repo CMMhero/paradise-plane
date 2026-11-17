@@ -27,6 +27,24 @@ export type TNotificationIssueLite = {
   state_group: string | undefined;
 };
 
+/** Satu kolom yang berubah di kabar lebur: lama -> baru, atau butir yang ditambah/dihapus. */
+export type TNotificationPerubahan = {
+  field: string;
+  lama?: string;
+  baru?: string;
+  tambah?: string[];
+  hapus?: string[];
+};
+
+export type TNotificationGabungan = {
+  /** Jumlah aktivitas yang dilebur ke baris ini. */
+  jumlah: number;
+  /** Komentar baru yang masih ada. */
+  komentar: number;
+  /** Kolom yang masih berubah sesudah pembatalan (A -> B -> A hilang). */
+  perubahan: TNotificationPerubahan[];
+};
+
 export type TNotificationData = {
   issue: TNotificationIssueLite | undefined;
   issue_activity: {
@@ -38,6 +56,8 @@ export type TNotificationData = {
     new_value: string | undefined;
     old_value: string | undefined;
   };
+  /** Kustomisasi Paradise: kabar pembaruan yang dilebur (plane/utils/gabung_kabar.py). */
+  gabungan?: TNotificationGabungan;
   /** Kustomisasi Paradise: baris DM di inbox (`entity_name: "chat"`, plane/utils/inbox_chat.py). */
   chat?: {
     ruang_id: string;
