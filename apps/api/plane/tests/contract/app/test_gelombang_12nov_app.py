@@ -212,6 +212,22 @@ class TestPrivatSejakLahir:
         assert project.network == 0
 
     @pytest.mark.django_db
+    def test_project_departemen_baru_privat_walau_bawaan_god_mode_public(self, org, create_user):
+        """Bawaan God Mode yang dulu tersimpan Public tidak boleh membuka departemen baru."""
+        from plane.utils import bawaan_project  # noqa: PLC0415
+
+        bawaan_project.simpan_bawaan({**bawaan_project.PABRIK, "network": 2})
+        dep = Departemen.objects.create(workspace=org.ws, divisi=org.sales, kode="BUKA", nama="Departemen Buka")
+        project = _adopsi_atau_buat_project(dep, create_user, org.ws)
+        assert project.network == 0
+
+    @pytest.mark.django_db
+    def test_kolom_network_bawaan_model_privat(self):
+        from plane.db.models import Project  # noqa: PLC0415
+
+        assert Project._meta.get_field("network").default == 0
+
+    @pytest.mark.django_db
     def test_bawaan_pabrik_privat(self, db):
         from plane.utils import bawaan_project  # noqa: PLC0415
 

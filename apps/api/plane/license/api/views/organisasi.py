@@ -64,6 +64,8 @@ from plane.utils.wiki_access import WIKI_IDENTIFIER
 
 # Sama dengan batas Project.identifier (12): kode departemen jadi identifier project-nya.
 BATAS_KODE = 12
+# Project.network: 0 = Secret (privat), 2 = Public.
+PROJECT_PRIVAT = 0
 POLA_KODE = re.compile(r"^[A-Z0-9-]+$")
 
 
@@ -197,6 +199,11 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
             "identifier": ident,
             "description": f"Ruang kerja {dep.kode} {dep.nama} (dibuat otomatis dari departemen).",
             "created_by": str(actor.id),
+            # Departemen baru SELALU privat (keputusan user 2026-11-17). Dikirim
+            # eksplisit, bukan lewat bawaan God Mode: bawaan yang dulu tersimpan
+            # "Public" mengalahkan bawaan pabrik, dan itu yang membuat departemen
+            # baru terbuka untuk semua anggota workspace tanpa ada yang memilihnya.
+            "network": PROJECT_PRIVAT,
         },
         context={"workspace_id": str(workspace.id)},
     )
