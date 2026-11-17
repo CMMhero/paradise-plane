@@ -74,6 +74,11 @@ def jenis_dari_notifikasi(notif) -> str:
         return JenisPesan.PERSETUJUAN
     if (notif.sender or "").endswith(":mentioned"):
         return JenisPesan.MENTION
+    # Kabar lebur (utils/gabung_kabar.py): ada perubahan kolom = kartu pembaruan,
+    # hanya komentar = kartu komentar.
+    gabungan = data.get("gabungan") or {}
+    if gabungan.get("perubahan") and notif.entity_name == "issue":
+        return JenisPesan.PEMBARUAN
     if field == "comment":
         return JenisPesan.KOMENTAR
     if field == "assignees" and str(aktivitas.get("new_identifier")) == str(notif.receiver_id):
@@ -139,15 +144,41 @@ def _peta_ruang_kabar(workspace_id, user_ids) -> dict:
     return {str(u): ada.get(str(u)) or ruang_kabar(workspace_id, u) for u in user_ids}
 
 
+BATAS_PERUBAHAN = 6
+
+
+def _ringkas_gabungan(notif) -> dict:
+    """Bagian `detail` kartu untuk kabar lebur: jumlah komentar dan daftar perubahan."""
+    gabungan = (notif.data or {}).get("gabungan") or {}
+    if not gabungan:
+        return {}
+    perubahan = []
+    for p in (gabungan.get("perubahan") or [])[:BATAS_PERUBAHAN]:
+        if "tambah" in p or "hapus" in p:
+            perubahan.append(
+                {
+                    "field": p.get("field") or "",
+                    "tambah": [_cuplikan(x) for x in (p.get("tambah") or [])][:BATAS_ASSIGNEE],
+                    "hapus": [_cuplikan(x) for x in (p.get("hapus") or [])][:BATAS_ASSIGNEE],
+                }
+            )
+        else:
+            perubahan.append(
+                {"field": p.get("field") or "", "lama": _cuplikan(p.get("lama")), "baru": _cuplikan(p.get("baru"))}
+            )
+    return {"jumlah_komentar": int(gabungan.get("komentar") or 0), "perubahan": perubahan}
+
+
 def _detail(jenis, notif) -> dict:
     aktivitas = (notif.data or {}).get("issue_activity") or {}
     if jenis == JenisPesan.KOMENTAR:
-        return {"komentar": _cuplikan(aktivitas.get("new_value"))}
+        return {"komentar": _cuplikan(aktivitas.get("new_value")), **_ringkas_gabungan(notif)}
     if jenis == JenisPesan.PEMBARUAN:
         return {
             "field": aktivitas.get("field") or "",
             "lama": _cuplikan(aktivitas.get("old_value")),
             "baru": _cuplikan(aktivitas.get("new_value")),
+            **_ringkas_gabungan(notif),
         }
     if jenis == JenisPesan.PERSETUJUAN:
         return {"verb": aktivitas.get("verb") or ""}
@@ -215,18 +246,12 @@ def _kirim(notifs, persetujuan) -> int:
         issue = issues.get(str(n.entity_identifier))
         if issue is None:
             continue
-        muatan = {
-            "aksi": jenis,
-            "aktor": str(n.triggered_by_id) if n.triggered_by_id else None,
-            # Siapa yang diberi kabar. Pembaca kartu perlu tahu ini untuk
-            # kalimat penugasan ("Anda menugaskan X" vs "X menugaskan Anda").
-            "penerima": str(n.receiver_id),
-            "workspace_slug": issue.project.workspace.slug,
-            **data_tugas(issue, assignees.get(str(issue.id))),
-            "detail": _detail(jenis, n),
-        }
+        muatan = _muatan(jenis, n, issue, assignees)
         if jenis == JenisPesan.PERSETUJUAN and persetujuan:
             muatan["persetujuan"] = {k: (str(v) if v is not None else None) for k, v in persetujuan.items()}
+        # Id kartu yang ditetapkan notification_task: kabar yang dilebur ke baris
+        # ini nanti menyunting kartu yang sama (`perbarui_kartu_notifikasi`).
+        kartu_id = (n.data or {}).get("kartu_id")
         if id(n) in lewat_dm:
             # KEP-90: kartu masuk DM pelaku <-> orang yang terdampak, pelaku
             # sebagai pengirim. Tiap penerima notifikasi dapat DM-nya sendiri.
@@ -238,10 +263,74 @@ def _kirim(notifs, persetujuan) -> int:
                 ringkasan(jenis, muatan),
                 pengirim_id=n.triggered_by_id,
                 penerima_id=n.receiver_id,
+                pesan_id=kartu_id,
             )
         else:
             tujuan = ruang[str(n.workspace_id)][str(n.receiver_id)]
-            kirim_pesan_sistem(tujuan, jenis, muatan, ringkasan(jenis, muatan))
+            kirim_pesan_sistem(tujuan, jenis, muatan, ringkasan(jenis, muatan), pesan_id=kartu_id)
+        jumlah += 1
+    return jumlah
+
+
+def _muatan(jenis, n, issue, assignees) -> dict:
+    return {
+        "aksi": jenis,
+        "aktor": str(n.triggered_by_id) if n.triggered_by_id else None,
+        # Siapa yang diberi kabar. Pembaca kartu perlu tahu ini untuk
+        # kalimat penugasan ("Anda menugaskan X" vs "X menugaskan Anda").
+        "penerima": str(n.receiver_id),
+        "workspace_slug": issue.project.workspace.slug,
+        **data_tugas(issue, assignees.get(str(issue.id))),
+        "detail": _detail(jenis, n),
+    }
+
+
+def perbarui_kartu_notifikasi(diperbarui, dihapus=()) -> int:
+    """Sunting di tempat kartu milik baris Notification yang baru dilebur.
+
+    Satu rentetan suntingan = satu kartu yang isinya selalu terkini, bukan satu
+    kartu per aktivitas. Baris yang semua perubahannya batal (A -> B -> A)
+    kartunya diberi tanda `batal` alih-alih dihapus: menghapus meninggalkan
+    batu nisan "pesan dihapus" yang lebih membingungkan daripada kabarnya.
+    Kartu yang tidak ditemukan (dikirim sebelum fitur ini, atau tidak pernah
+    dikirim karena saklar) dilewati. Menelan galatnya sendiri.
+    """
+    try:
+        return _perbarui(list(diperbarui or []), list(dihapus or []))
+    except Exception:  # noqa: BLE001
+        logger.exception("kartu-obrolan: gagal menyunting kartu dari %s notifikasi", len(list(diperbarui or [])))
+        return 0
+
+
+def _perbarui(diperbarui, dihapus) -> int:
+    peta = {str((n.data or {}).get("kartu_id")): (n, False) for n in diperbarui if (n.data or {}).get("kartu_id")}
+    peta.update({str((n.data or {}).get("kartu_id")): (n, True) for n in dihapus if (n.data or {}).get("kartu_id")})
+    if not peta:
+        return 0
+    kartu = {
+        str(p.id): p
+        for p in PesanLangsung.objects.filter(pk__in=list(peta), jenis__in=[JenisPesan.PEMBARUAN, JenisPesan.KOMENTAR])
+    }
+    if not kartu:
+        return 0
+    issues, assignees = _muat_tugas({peta[k][0].entity_identifier for k in kartu})
+    jumlah = 0
+    for kunci, pesan in kartu.items():
+        n, batal = peta[kunci]
+        muatan = dict(pesan.muatan or {})
+        if batal:
+            muatan["detail"] = {**(muatan.get("detail") or {}), "batal": True}
+        else:
+            issue = issues.get(str(n.entity_identifier))
+            jenis = jenis_dari_notifikasi(n)
+            if issue is None or jenis not in (JenisPesan.PEMBARUAN, JenisPesan.KOMENTAR):
+                continue
+            muatan = _muatan(jenis, n, issue, assignees)
+            pesan.jenis = jenis
+        pesan.muatan = muatan
+        pesan.isi = ringkasan(pesan.jenis, muatan)
+        pesan.save(update_fields=["muatan", "jenis", "isi", "updated_at"])
+        siarkan(pesan.ruang_id, "sunting", None)
         jumlah += 1
     return jumlah
 
