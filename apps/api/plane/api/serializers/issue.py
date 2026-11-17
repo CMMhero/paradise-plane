@@ -115,10 +115,25 @@ class IssueSerializer(BaseSerializer):
         # Gerbang hierarki. MATI secara default (HIERARKI_GERBANG_TUGAS=0). Ini jalur
         # Public API v1 -- jalur tulis KEDUA ke tabel yang sama, jadi ia wajib memakai
         # keputusan yang sama dengan serializer app (prinsip #1 Jebakan & Pelajaran).
-        from plane.utils.hierarki import aktor_dari_context, galat_penugasan  # noqa: PLC0415
+        from plane.utils.hierarki import aktor_dari_context, galat_penugasan, penerima_otomatis  # noqa: PLC0415
+
+        # Auto-assign (17 Nov): pembuat tanpa assignee jadi assignee-nya sendiri kalau
+        # ia sah di project ini. Sama dengan serializer app; dulu jalur ini tidak
+        # punya auto-assign sama sekali.
+        if self.instance is None and not data.get("assignees") and self.context.get("project_id"):
+            diri = penerima_otomatis(self.context.get("project_id"), aktor_dari_context(self.context))
+            if diri is not None:
+                data["assignees"] = [diri]
 
         galat = galat_penugasan(
-            self.context.get("project_id"), data.get("assignees"), actor=aktor_dari_context(self.context)
+            self.context.get("project_id"),
+            data.get("assignees"),
+            actor=aktor_dari_context(self.context),
+            lama=(
+                list(self.instance.issue_assignee.values_list("assignee_id", flat=True))
+                if self.instance is not None and data.get("assignees")
+                else ()
+            ),
         )
         if galat:
             raise serializers.ValidationError({"assignees": galat})
@@ -201,6 +216,9 @@ class IssueSerializer(BaseSerializer):
         else:
             try:
                 # Then assign it to default assignee, if it is a valid assignee
+                # Gerbang yang sama dengan jalur app: default ini tidak lewat validate().
+                from plane.utils.hierarki import aktor_dari_context, galat_penugasan  # noqa: PLC0415
+
                 if (
                     default_assignee_id is not None
                     and ProjectMember.objects.filter(
@@ -209,6 +227,7 @@ class IssueSerializer(BaseSerializer):
                         role__gte=15,
                         is_active=True,
                     ).exists()
+                    and not galat_penugasan(project_id, [default_assignee_id], actor=aktor_dari_context(self.context))
                 ):
                     IssueAssignee.objects.create(
                         assignee_id=default_assignee_id,

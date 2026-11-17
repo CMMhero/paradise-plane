@@ -202,6 +202,11 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
             state_id=triage_state.id,
         )
 
+        # Auto-assign (17 Nov): pengirim jadi assignee kalau ia sah di project ini.
+        from plane.utils.hierarki import tugaskan_otomatis  # noqa: PLC0415
+
+        tugaskan_otomatis(issue, request.user)
+
         # create an intake issue
         intake_issue = IntakeIssue.objects.create(
             intake_id=intake.id,
@@ -439,6 +444,12 @@ class IntakeIssueDetailAPIEndpoint(BaseAPIView):
         if intake_serializer:
             current_instance = json.dumps(IntakeIssueSerializer(intake_issue).data, cls=DjangoJSONEncoder)
             intake_serializer.save()
+            # Diterima tanpa assignee: penerimanya jadi assignee kalau sah (17 Nov),
+            # sama dengan jalur app (`IntakeIssueSerializer.update`).
+            if intake_serializer.validated_data.get("status") == 1:
+                from plane.utils.hierarki import tugaskan_otomatis  # noqa: PLC0415
+
+                tugaskan_otomatis(Issue.objects.filter(pk=intake_issue.issue_id).first(), request.user)
 
             # create a activity for status change
             issue_activity.delay(

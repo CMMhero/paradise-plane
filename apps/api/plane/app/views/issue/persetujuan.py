@@ -254,6 +254,12 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
     lebih rendah di divisi yang dia awasi). Direktur/Super Admin → seluruh
     anggota project. Server pemegang keputusan; UI hanya menampilkan daftar ini
     supaya tidak ada pilihan yang pasti ditolak.
+
+    Sejak 17 Nov setiap daftar disaring `ditempatkan_ids`: hanya orang yang
+    ditempatkan di departemen/divisi project ini (plus direktur/sekretaris) yang
+    muncul, termasuk diri sendiri. Admin workspace atau Super Admin yang hanya
+    punya akses tidak pernah muncul sebagai pilihan. Saringannya sama dengan
+    `galat_penempatan` di server, jadi dropdown tidak menawarkan yang pasti ditolak.
     """
 
     permission_classes = [ProjectEntityPermission]
@@ -263,6 +269,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         from plane.utils.hierarki import (  # noqa: PLC0415
             _bawahan_ids,
             _di_bawah_direktur,
+            ditempatkan_ids,
             gerbang_aktif,
             tingkat_anggota,
         )
@@ -276,16 +283,21 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         saya = request.user.id
         from plane.utils.hierarki import adalah_admin_penuh  # noqa: PLC0415
 
-        if (
-            not gerbang_aktif()
-            or is_super_admin(request.user)
-            or adalah_admin_penuh(request.user, project.workspace_id)
-        ):
-            anggota = list(
-                ProjectMember.objects.filter(project_id=project_id, is_active=True).values_list(
+        # None = tanpa batas penempatan (struktur belum aktif / project tanpa departemen).
+        tempat = ditempatkan_ids(project.workspace_id, project_id)
+
+        def anggota_sah():
+            """Anggota project yang sah jadi assignee: role member/admin, ditempatkan di sini."""
+            ids = set(
+                ProjectMember.objects.filter(project_id=project_id, is_active=True, role__gte=15).values_list(
                     "member_id", flat=True
                 )
             )
+            return ids if tempat is None else ids & tempat
+
+        admin_penuh = is_super_admin(request.user) or adalah_admin_penuh(request.user, project.workspace_id)
+        if not gerbang_aktif() or admin_penuh:
+            anggota = anggota_sah()
             return Response(
                 {
                     "mode": "semua",
@@ -294,6 +306,9 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     # Klien memakai dua kunci ini untuk mencerminkan `galat_ubah_tugas`:
                     # gerbang mati = tidak ada kunci edit; Super Admin dibaca klien sendiri.
                     "gerbang_aktif": gerbang_aktif(),
+                    # Admin workspace/Super Admin lolos `galat_ubah_tugas` (hak ubah,
+                    # komentar, reaksi), walau tidak boleh DITUGASKAN tanpa penempatan.
+                    "admin_penuh": admin_penuh,
                     "aturan": _aturan_tugas(),
                     "bawahan_ids": [],
                 }
@@ -301,16 +316,13 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
 
         tingkat = tingkat_anggota(saya, project.workspace_id, project.id)
         if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
-            anggota = list(
-                ProjectMember.objects.filter(project_id=project_id, is_active=True).values_list(
-                    "member_id", flat=True
-                )
-            )
+            anggota = anggota_sah()
             return Response(
                 {
                     "mode": "semua",
                     "tingkat_saya": tingkat,
                     "user_ids": [str(u) for u in anggota],
+                    "admin_penuh": False,
                     "gerbang_aktif": True,
                     "aturan": _aturan_tugas(),
                     # Hak UBAH direktur tetap "assignee-nya bawahan saya" (`galat_ubah_tugas`),
@@ -340,6 +352,9 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 if str(project_id) in {str(p) for p in divisi_diawasi(saya, project.workspace_id)}:
                     boleh |= anggota
             boleh &= anggota
+            # Hanya yang ditempatkan di project ini (17 Nov), termasuk diri sendiri.
+            if tempat is not None:
+                boleh &= tempat
             # Sekretaris (KEP-101) tidak pernah boleh menugaskan direktur, walau saklar
             # ASSIGN_DOWN_ONLY mati: samakan daftar dengan `galat_penugasan`.
             if _di_bawah_direktur(tingkat):
@@ -353,6 +368,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "mode": "bawahan",
                     "tingkat_saya": tingkat,
                     "gerbang_aktif": True,
+                    "admin_penuh": False,
                     "aturan": _aturan_tugas(),
                     # Tanpa saringan anggota project: sama persis dengan yang dibaca `galat_ubah_tugas`.
                     "bawahan_ids": [str(u) for u in bawahan],
@@ -369,6 +385,10 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         from plane.utils.hierarki import rekan_staf_ids  # noqa: PLC0415
 
         boleh = {saya} | rekan_staf_ids(saya, project.workspace_id, project.id)
+        if tempat is not None:
+            # Staf yang tidak ditempatkan di sini (anggota eksplisit) tidak bisa
+            # menugaskan siapa pun di project ini, termasuk dirinya sendiri.
+            boleh &= tempat
         users = {u.id: u for u in User.objects.filter(id__in=boleh)}
         return Response(
             {
@@ -376,6 +396,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 "mode": "rekan" if len(boleh) > 1 else "diri-sendiri",
                 "tingkat_saya": tingkat,
                 "gerbang_aktif": True,
+                "admin_penuh": False,
                 "aturan": _aturan_tugas(),
                 # Rekan boleh DIAJAK, bukan disunting tugasnya: staf hanya mengubah tugas yang melibatkan dirinya.
                 "bawahan_ids": [],

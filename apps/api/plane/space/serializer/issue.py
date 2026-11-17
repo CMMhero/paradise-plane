@@ -307,8 +307,17 @@ class IssueCreateSerializer(BaseSerializer):
         # jalur app begitu gerbangnya dinyalakan (prinsip #1 Jebakan & Pelajaran).
         from plane.utils.hierarki import aktor_dari_context, galat_penugasan  # noqa: PLC0415
 
+        # Penempatan penerima (17 Nov) ikut diperiksa di dalam `galat_penugasan`;
+        # assignee yang sudah ada tidak diperiksa ulang.
         galat = galat_penugasan(
-            self.context.get("project_id"), data.get("assignees"), actor=aktor_dari_context(self.context)
+            self.context.get("project_id"),
+            data.get("assignees"),
+            actor=aktor_dari_context(self.context),
+            lama=(
+                list(self.instance.issue_assignee.values_list("assignee_id", flat=True))
+                if self.instance is not None and data.get("assignees")
+                else ()
+            ),
         )
         if galat:
             raise serializers.ValidationError({"assignees": galat})

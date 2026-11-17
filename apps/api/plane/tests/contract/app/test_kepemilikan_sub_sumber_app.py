@@ -131,14 +131,16 @@ class TestPintuSamping:
         tugas.refresh_from_db()
         assert tugas.name == "Asli"
 
-    def test_komentar_TETAP_terbuka(self, workspace, staf_a, staf_a2, divisi_a, jenjang, gerbang_nyala):
+    def test_komentar_ikut_aturan_ubah(self, workspace, staf_a, staf_a2, divisi_a, jenjang, gerbang_nyala):
+        """Keputusan user 2026-11-17 (menggantikan "komentar bebas"): staf yang tidak
+        terlibat tidak bisa berkomentar di tugas rekannya, sama seperti mengubahnya."""
         tugas = _tugas(divisi_a, staf_a, staf_a)
         response = _klien(staf_a2).post(
             _url(URL_KOMENTAR, workspace, divisi_a, tugas),
             {"comment_html": "<p>Boleh tanya?</p>"},
             format="json",
         )
-        assert response.status_code == status.HTTP_201_CREATED, getattr(response, "data", None)
+        assert response.status_code == status.HTTP_403_FORBIDDEN, getattr(response, "data", None)
 
     def test_gerbang_mati_tidak_mengunci(self, workspace, staf_a, staf_a2, divisi_a, jenjang, monkeypatch):
         monkeypatch.setenv(FLAG_GERBANG, "0")

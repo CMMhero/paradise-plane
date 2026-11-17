@@ -385,12 +385,13 @@ class TestKatupMati:
         assert periksa_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a) is None
 
     @pytest.mark.django_db
-    def test_dengan_katup_mati_tidak_menyentuh_database(
-        self, workspace, staf_a, staf_a2, divisi_a, monkeypatch, django_assert_num_queries
+    def test_dengan_katup_mati_hanya_memeriksa_penempatan(
+        self, workspace, staf_a, staf_a2, divisi_a, monkeypatch, django_assert_max_num_queries
     ):
-        """Katup tertutup harus benar-benar gratis, bukan 'lolos setelah memeriksa'."""
+        """Katup tertutup melepas tangga jenjang. Sejak 17 Nov penempatan penerima
+        tetap diperiksa (project + struktur aktif), jadi biayanya dua kueri, bukan nol."""
         monkeypatch.setenv(FLAG_GERBANG, "0")
-        with django_assert_num_queries(0):
+        with django_assert_max_num_queries(2):
             assert galat_penugasan(divisi_a.id, [staf_a2.id], actor=staf_a) is None
 
 

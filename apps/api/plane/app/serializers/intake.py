@@ -80,6 +80,12 @@ class IntakeIssueSerializer(BaseSerializer):
                 if default_state:
                     issue.state = default_state
                     issue.save()
+            # Auto-assign saat diterima (17 Nov): tugas intake yang masuk papan tanpa
+            # assignee (mis. kiriman lintas divisi, `created_by` kosong) dipegang
+            # penerimanya, kalau ia sah jadi assignee di project ini.
+            from plane.utils.hierarki import aktor_dari_context, tugaskan_otomatis  # noqa: PLC0415
+
+            tugaskan_otomatis(instance.issue, aktor_dari_context(self.context))
 
         return instance
 

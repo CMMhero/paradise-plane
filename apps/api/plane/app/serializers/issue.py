@@ -170,20 +170,26 @@ class IssueCreateSerializer(BaseSerializer):
         # pernah berbeda pendapat (prinsip #1 Jebakan & Pelajaran).
         #
         # Dua aturan tambahan (keputusan user):
-        # 1. AUTO-ASSIGN: staf yang create TANPA assignee langsung jadi assignee-nya
-        #    sendiri (tidak perlu memilih — memang cuma dirinya yang bisa dipilih).
+        # 1. AUTO-ASSIGN: SIAPA PUN yang create TANPA assignee langsung jadi
+        #    assignee-nya sendiri, termasuk admin workspace dan Super Admin
+        #    (keputusan 2026-11-17). Syaratnya hanya satu: ia sah jadi assignee di
+        #    project ini (`penerima_otomatis`: anggota dan ditempatkan di
+        #    departemennya). Tidak sah = tugas dibuat tanpa auto-assign, tanpa galat.
         # 2. KUNCI: staf tidak bisa mengubah assignee SAMA SEKALI — bahkan miliknya
         #    sendiri. `assignee_ids` di payload update dari staf ditolak, supaya
         #    tugas yang menunggu persetujuan tidak dipindahkan diam-diam.
         #
-        # MATI secara default (HIERARKI_GERBANG_TUGAS=0): dengan flag mati, fungsi ini
-        # langsung balik None tanpa menyentuh database, jadi perilaku 88 user tidak
-        # berubah. Rancangan + keputusan yang belum diambil: plane/utils/hierarki.py.
+        # Akar masalah auto-assign yang dulu tidak jalan: aturan 1 tinggal di dalam
+        # `_staf`, yang mensyaratkan katup gerbang menyala DAN mengecualikan admin
+        # workspace/Super Admin. Mematikan katup di God Mode, atau sekadar menjadi
+        # admin workspace, diam-diam mematikan auto-assign. Sekarang auto-assign
+        # berdiri sendiri; `_staf` hanya dipakai untuk aturan 2.
         from plane.utils.hierarki import (  # noqa: PLC0415
             aktor_dari_context,
             galat_penugasan,
             adalah_admin_penuh,
             gerbang_aktif,
+            penerima_otomatis,
             tingkat_anggota,
         )
         from plane.db.models import Project as _ProjectHierarki  # noqa: PLC0415
@@ -201,9 +207,11 @@ class IssueCreateSerializer(BaseSerializer):
             and not (_actor is not None and _project is not None and adalah_admin_penuh(_actor, _project.workspace_id))
         )
 
-        if _staf and self.instance is None and not attrs.get("assignee_ids"):
-            # Create tanpa assignee oleh staf -> isi dirinya sendiri.
-            attrs["assignee_ids"] = [_actor.id]
+        if self.instance is None and not attrs.get("assignee_ids") and _project is not None:
+            # Create tanpa assignee -> isi pembuatnya sendiri kalau ia sah.
+            _diri = penerima_otomatis(_project.id, _actor)
+            if _diri is not None:
+                attrs["assignee_ids"] = [_diri]
 
         # Staf boleh MENAMBAH rekan setingkat sedepartemen ke tugas yang sudah ada,
         # tidak boleh melepas siapa pun (keputusan user 2026-10-26).
@@ -247,11 +255,20 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Penambahan rekan oleh staf sudah diperiksa `galat_tambah_rekan`; memeriksa
         # SELURUH himpunan lagi akan menolak assignee lama yang ditunjuk atasan.
+        # `lama`: assignee yang sudah ada tidak diperiksa ulang penempatannya, jadi
+        # tugas lama (mis. ditugaskan ke admin sebelum 17 Nov) tetap bisa diubah.
         galat = (
             None
             if self._staf_tambah_rekan
             else galat_penugasan(
-                self.context.get("project_id"), attrs.get("assignee_ids"), actor=aktor_dari_context(self.context)
+                self.context.get("project_id"),
+                attrs.get("assignee_ids"),
+                actor=aktor_dari_context(self.context),
+                lama=(
+                    list(self.instance.issue_assignee.values_list("assignee_id", flat=True))
+                    if self.instance is not None and attrs.get("assignee_ids")
+                    else ()
+                ),
             )
         )
         if galat:
@@ -379,6 +396,8 @@ class IssueCreateSerializer(BaseSerializer):
             # pemeriksaan di sini staf bisa mendapat penugasan ke orang lain
             # (default_assignee project) tanpa gerbang. Pemeriksaannya sama —
             # `galat_penugasan(project, [default], actor)` — hanya beda letak.
+            # Sejak auto-assign berlaku untuk semua (17 Nov), cabang ini hanya
+            # tercapai kalau pembuatnya tidak sah jadi assignee di project ini.
             if (
                 default_assignee_id is not None
                 and ProjectMember.objects.filter(
