@@ -6,6 +6,48 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-17
+
+### Versi 2.8.0
+
+- **Naik 2.7.1 ke 2.8.0, minor.** Aturan siapa boleh menugaskan, berkomentar,
+  dan diberi kabar berubah (perubahan izin), plus satu migrasi tanpa DDL (0176).
+  Tidak ada data yang dibentuk ulang dan tidak ada variabel env baru. Langkah
+  operator: cek bawaan visibilitas project di God Mode; departemen baru kini
+  selalu privat apa pun isinya.
+- **Pembuat tugas otomatis jadi assignee.** Siapa pun yang membuat work item
+  tanpa memilih assignee menjadi assignee-nya, termasuk admin dan Super Admin,
+  dan tidak lagi bergantung pada saklar gerbang persetujuan. Berlaku di web,
+  quick-add, sub-work item, draft, intake, dan API v1. Pembuat yang tidak
+  ditempatkan di departemen itu tidak mendapat assignee dan tidak ada galat.
+- **Komentar dan reaksi mengikuti hak ubah.** Hanya assignee, pembuat, dan
+  supervisor, manager, sekretaris, direktur di atasnya (serta admin) yang boleh
+  berkomentar, membalas, atau bereaksi di work item orang lain. Aturannya satu
+  fungsi dengan aturan ubah (`galat_percakapan_tugas`), jadi keduanya tidak
+  bisa berbeda. Di web kotak komentar dan tombol reaksi disembunyikan.
+- **Assignee hanya orang yang benar-benar ditempatkan di departemen itu.**
+  Admin atau Super Admin yang sekadar punya akses tidak bisa ditugaskan.
+  Staf sampai direktur bisa, dan penugasan hanya ke jenjang di bawah
+  penugasnya. Dicek di server (`galat_penugasan`, `galat_tambah_rekan`) dan di
+  daftar pemilih assignee. Assignee lama di tugas yang sudah ada tidak diperiksa ulang.
+- **Kabar pembaruan digabung satu per jendela.** Perubahan beruntun oleh orang
+  yang sama di work item yang sama kini jadi satu baris inbox, satu kartu
+  obrolan, dan satu email per jendela `EMAIL_BATCH_DELAY_MINUTES`, bukan hanya
+  untuk kolom bernilai tunggal. Komentar beruntun menjadi "N komentar baru".
+  Tetap langsung: @sebutan, penugasan ke penerima, tugas baru, balasan, dan
+  persetujuan. Kode: `utils/gabung_kabar.py`.
+- **Sebutan boleh siapa saja, kabar hanya untuk yang berkepentingan.** Semua
+  orang bisa di-@ di komentar dan deskripsi, tetapi hanya anggota aktif project
+  itu (dan direktur atau sekretaris) yang menerima notifikasi, email, kartu
+  obrolan, atau otomatis berlangganan. Pemilih @ memberi petunjuk "tidak akan
+  diberi kabar". Kode: `utils/jangkauan_sebutan.py`.
+- **Departemen dan project baru selalu privat.** Project yang dibuat dari
+  departemen mengirim privat secara eksplisit, jadi bawaan God Mode yang dulu
+  tersimpan Public tidak lagi membukanya. Bawaan kolom model dan formulir web
+  juga privat. Project yang sudah ada tidak berubah.
+- **Belum diuji.** Suite pytest tidak dapat dijalankan di mesin pembuat
+  (tanpa Docker/Django). Jalankan suite penuh sebelum rilis.
+
 ## 2026-11-15
 
 ### Versi 2.7.1
