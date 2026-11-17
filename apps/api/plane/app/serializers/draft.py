@@ -106,17 +106,17 @@ class DraftIssueCreateSerializer(BaseSerializer):
         # project (draft pribadi tanpa divisi tidak ada yang bisa diperiksa).
         #
         # Dua aturan yang sama juga berlaku di sini (KEP-25):
-        # 1. AUTO-ASSIGN saat create tanpa assignee oleh staf.
+        # 1. AUTO-ASSIGN saat create tanpa assignee, untuk SIAPA PUN yang sah jadi
+        #    assignee di project itu (17 Nov, sama dengan IssueCreateSerializer;
+        #    tidak lagi bergantung pada katup gerbang atau status admin).
         # 2. KUNCI saat update oleh staf — assignee draft tidak bisa diubah.
-        #
-        # MATI secara default (HIERARKI_GERBANG_TUGAS=0): dengan flag mati fungsi
-        # ini langsung balik None tanpa menyentuh database.
         if self.context.get("project_id"):
             from plane.utils.hierarki import (  # noqa: PLC0415
                 aktor_dari_context,
                 galat_penugasan,
                 adalah_admin_penuh,
                 gerbang_aktif,
+                penerima_otomatis,
                 tingkat_anggota,
             )
             from plane.db.models import Project as _ProjectHierarki  # noqa: PLC0415
@@ -134,8 +134,10 @@ class DraftIssueCreateSerializer(BaseSerializer):
             and not (_actor is not None and _project is not None and adalah_admin_penuh(_actor, _project.workspace_id))
         )
 
-            if _staf and self.instance is None and not attrs.get("assignee_ids"):
-                attrs["assignee_ids"] = [_actor.id]
+            if self.instance is None and not attrs.get("assignee_ids") and _project is not None:
+                _diri = penerima_otomatis(_project.id, _actor)
+                if _diri is not None:
+                    attrs["assignee_ids"] = [_diri]
 
             if _staf and self.instance is not None and "assignee_ids" in attrs:
                 raise serializers.ValidationError(
@@ -143,7 +145,14 @@ class DraftIssueCreateSerializer(BaseSerializer):
                 )
 
             galat = galat_penugasan(
-                self.context.get("project_id"), attrs.get("assignee_ids"), actor=aktor_dari_context(self.context)
+                self.context.get("project_id"),
+                attrs.get("assignee_ids"),
+                actor=aktor_dari_context(self.context),
+                lama=(
+                    list(self.instance.draft_issue_assignee.values_list("assignee_id", flat=True))
+                    if self.instance is not None and attrs.get("assignee_ids")
+                    else ()
+                ),
             )
             if galat:
                 raise serializers.ValidationError({"assignee_ids": galat})

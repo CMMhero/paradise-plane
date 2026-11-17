@@ -16,7 +16,9 @@ dan datang dari pemilik instance:
     ubah apa pun       gerbang hierarki aktif: pembuat/assignee, atasan dari
                        assignee-nya, atau Super Admin (KEP-25). Berlaku juga
                        di sub-sumber lewat `KepemilikanTugasMixin` di bawah.
-    komentar           bebas untuk semua anggota
+    komentar, reaksi   SAMA PERSIS dengan hak UBAH (keputusan user 2026-11-17):
+                       `galat_percakapan_tugas` di bawah memanggil aturan yang
+                       sama, jadi keduanya tidak bisa berbeda pendapat.
 
 Dua baris pertama dan baris ketiga sengaja BERBEDA, dan itu bukan
 ketidakkonsistenan. Menghapus tugas adalah urusan beres-beres papan, jadi kepala
@@ -119,6 +121,49 @@ def _boleh_ubah(user, issue, project_id, aturan=None):
     if not _aturan(user, aturan).gerbang:
         return True
     return galat_ubah_tugas(project_id, issue, actor=user) is None
+
+
+PESAN_TOLAK_PERCAKAPAN = (
+    "Anda tidak terlibat di tugas ini, jadi tidak dapat berkomentar atau memberi reaksi. "
+    "Hanya assignee, pemberi tugas, dan atasan mereka yang bisa."
+)
+
+
+def galat_percakapan_tugas(issue, actor):
+    """Bolehkah actor berkomentar/membalas/bereaksi di tugas ini. Pesan galat atau None.
+
+    Keputusan user 2026-11-17: "kalau bukan assignee, pemberi tugas, atau
+    spv/mgr/sekretaris/direktur-nya, tidak bisa komentar atau react, sama seperti
+    edit". Jadi aturannya BUKAN aturan baru: ini `_boleh_ubah` (gerbang menyala =
+    `galat_ubah_tugas`, mati = setiap anggota), hanya pesannya yang berbeda.
+    Pembuat tugas (`created_by`) adalah pemberi tugasnya; repo ini tidak mencatat
+    "siapa yang menambahkan assignee" secara terpisah.
+
+    Yang ikut lolos lewat aturan ubah: Super Admin, admin workspace (KEP-85),
+    atasan yang semua assignee-nya bawahannya, termasuk penyetuju di alur
+    persetujuan. Tamu project tetap melewati pemeriksaan tamu upstream lebih dulu.
+    """
+    if issue is None:
+        return None
+    if actor is None or getattr(actor, "is_anonymous", True):
+        return PESAN_TOLAK_PERCAKAPAN
+    if _boleh_ubah(actor, issue, issue.project_id):
+        return None
+    return PESAN_TOLAK_PERCAKAPAN
+
+
+def tolak_percakapan(request, issue):
+    """`Response` 403 kalau `request.user` tak boleh berkomentar/bereaksi di `issue`, selain itu None.
+
+    Kunci `error`, sama dengan galat 403 lain di app ini (toast klien membacanya).
+    """
+    galat = galat_percakapan_tugas(issue, getattr(request, "user", None))
+    if galat is None:
+        return None
+    from rest_framework import status  # noqa: PLC0415
+    from rest_framework.response import Response  # noqa: PLC0415
+
+    return Response({"error": galat}, status=status.HTTP_403_FORBIDDEN)
 
 
 def bisa_hapus_tugas(user, issue, slug, project_id, aturan=None):
@@ -259,8 +304,10 @@ def tenggat_diubah(issue, data):
 
 _METODE_TULIS = ("POST", "PUT", "PATCH", "DELETE")
 
-# Segmen URL yang TETAP terbuka untuk semua anggota:
-# - percakapan (komentar, reaksi, langganan): melihat boleh, bertanya juga boleh;
+# Segmen URL yang dilewati penjaga ini:
+# - percakapan (komentar, reaksi, langganan): komentar dan reaksi punya penjaga
+#   sendiri di view-nya (`tolak_percakapan`, aturan yang sama dengan UBAH tapi
+#   dengan pesan yang menyebut komentar); langganan tetap terbuka;
 # - antrean persetujuan: atasan memutuskan lewat jalurnya sendiri;
 # - intake: triage punya aturannya sendiri (KEP-36, serializer intake);
 # - hapus/arsip massal: sudah MENYARING per baris lalu mengaku berapa yang

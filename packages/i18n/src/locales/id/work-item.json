@@ -152,7 +152,8 @@
             }
           }
         }
-      }
+      },
+      "not_involved": "Hanya assignee, pemberi tugas, dan atasan mereka yang bisa berkomentar atau memberi reaksi di sini."
     },
     "empty_state": {
       "issue_detail": {

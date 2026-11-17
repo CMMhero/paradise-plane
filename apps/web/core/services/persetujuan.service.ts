@@ -103,6 +103,8 @@ export type TBisaDitugaskan = {
   gerbang_aktif?: boolean;
   /** Bawahan yang tugasnya boleh saya UBAH (cermin `_bawahan_ids` server). Staf: kosong. */
   bawahan_ids?: string[];
+  /** Admin workspace atau Super Admin: lolos `galat_ubah_tugas` (ubah, komentar, reaksi). Server lama: tidak ada. */
+  admin_penuh?: boolean;
 };
 
 export class PersetujuanService extends APIService {

@@ -17,9 +17,10 @@ from rest_framework import status
 from .. import BaseViewSet
 from plane.app.serializers import IssueReactionSerializer
 from plane.app.permissions import allow_permission, ROLE
-from plane.db.models import IssueReaction
+from plane.db.models import Issue, IssueReaction
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.host import base_host
+from plane.utils.task_access import tolak_percakapan
 
 
 class IssueReactionViewSet(BaseViewSet):
@@ -42,8 +43,15 @@ class IssueReactionViewSet(BaseViewSet):
             .distinct()
         )
 
+    def _tolak(self, request, project_id, issue_id):
+        """403 kalau pelaku tak boleh bereaksi di tugas ini: aturan UBAH (17 Nov)."""
+        return tolak_percakapan(request, Issue.objects.filter(pk=issue_id, project_id=project_id).first())
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def create(self, request, slug, project_id, issue_id):
+        tolak = self._tolak(request, project_id, issue_id)
+        if tolak is not None:
+            return tolak
         serializer = IssueReactionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(issue_id=issue_id, project_id=project_id, actor=request.user)
@@ -63,6 +71,9 @@ class IssueReactionViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def destroy(self, request, slug, project_id, issue_id, reaction_code):
+        tolak = self._tolak(request, project_id, issue_id)
+        if tolak is not None:
+            return tolak
         issue_reaction = IssueReaction.objects.get(
             workspace__slug=slug,
             project_id=project_id,

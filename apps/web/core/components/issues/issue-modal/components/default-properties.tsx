@@ -80,6 +80,10 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   const daftarBoleh = useBisaDitugaskan(workspaceSlug, projectId);
   const stafSaja = hanyaStaf(tingkatSaya, daftarBoleh.aturan.persetujuan_di_bawah) && daftarBoleh.mode !== "semua";
   const opsiAssignee = daftarBoleh.memuat ? undefined : daftarBoleh.userIds;
+  // Server mengisi pembuat sebagai assignee hanya kalau ia sah di project ini
+  // (ditempatkan di departemennya). Yang tidak sah tidak ada di daftar, jadi
+  // tampilan tidak boleh berpura-pura "ditugaskan ke saya".
+  const sayaSah = !!idSaya && (opsiAssignee ?? []).includes(idSaya);
   const projectDetails = getProjectById(projectId);
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
@@ -139,11 +143,11 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
             <MemberDropdown
               projectId={projectId ?? undefined}
               memberIds={opsiAssignee}
-              value={stafSaja ? (value?.length > 0 ? value : idSaya ? [idSaya] : value) : value}
+              value={stafSaja ? (value?.length > 0 ? value : sayaSah && idSaya ? [idSaya] : value) : value}
               onChange={(assigneeIds) => {
                 // Staf: dirinya wajib tetap ada; rekan setingkat boleh ditambah
                 // (daftar sudah disaring server). Tanpa rekan = kunci ke diri sendiri.
-                onChange(stafSaja && idSaya ? Array.from(new Set([idSaya, ...assigneeIds])) : assigneeIds);
+                onChange(stafSaja && sayaSah && idSaya ? Array.from(new Set([idSaya, ...assigneeIds])) : assigneeIds);
                 handleFormChange();
               }}
               buttonVariant={value?.length > 0 ? "transparent-without-text" : "border-with-text"}
