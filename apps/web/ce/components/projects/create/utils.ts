@@ -28,7 +28,7 @@ export const getProjectFormValues = (config?: IInstanceConfig): Partial<IProject
     },
     identifier: "",
     name: "",
-    network: bawaan?.network ?? 2,
+    network: bawaan?.network ?? 0,
     project_lead: null,
     ...(bawaan && {
       timezone: bawaan.timezone,

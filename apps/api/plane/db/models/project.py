@@ -71,7 +71,7 @@ class Project(BaseModel):
     description = models.TextField(verbose_name="Project Description", blank=True)
     description_text = models.JSONField(verbose_name="Project Description RT", blank=True, null=True)
     description_html = models.JSONField(verbose_name="Project Description HTML", blank=True, null=True)
-    network = models.PositiveSmallIntegerField(default=2, choices=NETWORK_CHOICES)
+    network = models.PositiveSmallIntegerField(default=0, choices=NETWORK_CHOICES)
     workspace = models.ForeignKey("db.WorkSpace", on_delete=models.CASCADE, related_name="workspace_project")
     identifier = models.CharField(max_length=12, verbose_name="Project Identifier", db_index=True)
     default_assignee = models.ForeignKey(
