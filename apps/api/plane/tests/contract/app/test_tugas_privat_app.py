@@ -46,6 +46,7 @@ from plane.db.models import (
     Project,
     ProjectMember,
     TINGKAT_DIREKTUR,
+    TINGKAT_LEADER,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_SUPERVISOR,
@@ -187,6 +188,40 @@ class TestLihatPerPeran:
     def test_sub_sumber_ikut_404(self, o, peran):
         respon = _klien(o.user[peran]).get(URL_KOMENTAR.format(slug=o.ws.slug, project_id=o.p1.id, issue_id=o.tugas.id))
         assert respon.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.contract
+class TestLeaderMelihatStafnya:
+    """Leader adalah atasan langsung Staf departemennya: daftar, detail, dan pencarian sepakat."""
+
+    @pytest.fixture
+    def leader(self, o):
+        leader = _user("leader", o.ws)
+        _tempatkan(o, leader, TINGKAT_LEADER, departemen=o.smt1)
+        _anggota(o, leader, o.p1, 15)
+        lain = _user("leader-lain", o.ws)
+        _tempatkan(o, lain, TINGKAT_LEADER, departemen=o.ops1)
+        _anggota(o, lain, o.p1, 15)
+        return leader, lain
+
+    def test_leader_departemen_melihat_di_daftar_detail_dan_pencarian(self, o, leader):
+        klien = _klien(leader[0])
+        assert _ada(klien.get(URL_ISSUES.format(slug=o.ws.slug, project_id=o.p1.id)), o.tugas)
+        detail = klien.get(URL_DETAIL.format(slug=o.ws.slug, project_id=o.p1.id, issue_id=o.tugas.id))
+        assert detail.status_code == status.HTTP_200_OK
+        cari = klien.get(URL_CARI.format(slug=o.ws.slug), {"search": o.nama, "entities": "issue"})
+        assert _ada(cari, o.tugas)
+
+    def test_leader_departemen_lain_tidak_melihat(self, o, leader):
+        klien = _klien(leader[1])
+        assert not _ada(klien.get(URL_ISSUES.format(slug=o.ws.slug, project_id=o.p1.id)), o.tugas)
+        detail = klien.get(URL_DETAIL.format(slug=o.ws.slug, project_id=o.p1.id, issue_id=o.tugas.id))
+        assert detail.status_code == status.HTTP_404_NOT_FOUND
+        cari = klien.get(URL_CARI.format(slug=o.ws.slug), {"search": o.nama, "entities": "issue"})
+        assert not _ada(cari, o.tugas)
+
+    def test_rekan_staf_tetap_tidak_melihat(self, o, leader):
+        assert not _ada(_klien(o.user["rekan"]).get(URL_ISSUES.format(slug=o.ws.slug, project_id=o.p1.id)), o.tugas)
 
 
 @pytest.mark.contract

@@ -48,8 +48,8 @@ def _assignee_di(user_ids, issue_ref="pk"):
 
 
 def _bawahan_per_project(user):
-    """{project_id: {bawahan}} untuk project yang punya tugas privat dan diawasi user."""
-    from plane.utils.hierarki import _bawahan_ids, divisi_diawasi  # noqa: PLC0415
+    """{project_id: {bawahan}} untuk project yang punya tugas privat dan user punya bawahan di sana."""
+    from plane.utils.hierarki import TINGKAT_LEADER, _bawahan_ids, penempatan_semua  # noqa: PLC0415
 
     privat = Issue.all_objects.filter(is_private=True, deleted_at__isnull=True)
     per_workspace = {}
@@ -58,10 +58,11 @@ def _bawahan_per_project(user):
 
     hasil = {}
     for ws_id, pids in per_workspace.items():
-        diawasi = {str(p) for p in divisi_diawasi(user.id, ws_id)}
+        # Leader sampai Direktur punya bawahan; `_bawahan_ids` sendiri yang menentukan
+        # cakupannya per project, sama dengan `boleh_lihat_tugas`.
+        if max((t for t, _, _ in penempatan_semua(user.id, ws_id)), default=0) < TINGKAT_LEADER:
+            continue
         for pid in pids:
-            if str(pid) not in diawasi:
-                continue
             bawahan = _bawahan_ids(user.id, ws_id, pid)
             if bawahan:
                 hasil[pid] = bawahan
