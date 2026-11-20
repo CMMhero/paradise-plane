@@ -79,7 +79,9 @@ class TestMemberPreferensiGodMode:
         lain = _buat_user("lain")
         assert _get(lain, staf.id).status_code == status.HTTP_403_FORBIDDEN
         assert _patch(lain, staf.id, {"profile": {"language": "id"}}).status_code == status.HTTP_403_FORBIDDEN
-        assert not Profile.objects.filter(user=staf).exists(), "ditolak = tidak ada yang ditulis, termasuk baris Profile"
+        assert not Profile.objects.filter(user=staf).exists(), (
+            "ditolak = tidak ada yang ditulis, termasuk baris Profile"
+        )
 
     @pytest.mark.django_db
     def test_tanpa_login_ditolak(self, super_admin, staf):
@@ -155,7 +157,13 @@ class TestMemberPreferensiGodMode:
     @pytest.mark.django_db
     @pytest.mark.parametrize(
         "badan",
-        [{"volume_suara": 101}, {"volume_suara": -1}, {"volume_suara": True}, {"volume_suara": "50"}, {"suara_bisu": 1}],
+        [
+            {"volume_suara": 101},
+            {"volume_suara": -1},
+            {"volume_suara": True},
+            {"volume_suara": "50"},
+            {"suara_bisu": 1},
+        ],
     )
     def test_volume_suara_tak_sah_ditolak(self, super_admin, staf, badan):
         Profile.objects.create(user=staf, theme={"theme": "light"})

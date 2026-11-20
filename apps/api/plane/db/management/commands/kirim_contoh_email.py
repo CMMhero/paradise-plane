@@ -279,7 +279,9 @@ class Command(BaseCommand):
         def uji(b):
             t = kamus("uji", b)
             html, polos = render_email(
-                "emails/test_email.html", {"t": t, "judul": t["subjek"], "pratajuk": t["intro"], "email_penerima": ke}, b
+                "emails/test_email.html",
+                {"t": t, "judul": t["subjek"], "pratajuk": t["intro"], "email_penerima": ke},
+                b,
             )
             return t["subjek"], html, polos, [], []
 
@@ -385,7 +387,10 @@ class Command(BaseCommand):
 
         def obrolan(b):
             g = []
-            r = [(budi, 3, "Pak, stok rak C sudah saya cek ulang, hasilnya di lampiran."), (sari, 1, "Rapat jam 2 jadi?")]
+            r = [
+                (budi, 3, "Pak, stok rak C sudah saya cek ulang, hasilnya di lampiran."),
+                (sari, 1, "Rapat jam 2 jadi?"),
+            ]
             s, polos, html = susun_email_pesan(andi, SLUG, r, b, g)
             return s, html, polos, g, []
 
@@ -394,7 +399,12 @@ class Command(BaseCommand):
             return s, html, polos, [], []
 
         def retensi(b):
-            k = {"akan_dibuang": 1240, "retensi_hari": 90, "ambang_peringatan_hari": 7, "tertua": h - timedelta(days=88)}
+            k = {
+                "akan_dibuang": 1240,
+                "retensi_hari": 90,
+                "ambang_peringatan_hari": 7,
+                "tertua": h - timedelta(days=88),
+            }
             s, polos, html = susun_peringatan_retensi(k, b, ke)
             return s, html, polos, [], []
 
@@ -402,14 +412,35 @@ class Command(BaseCommand):
             ("01-kode-masuk", templat(susun_magic_link, ke, "482913")),
             ("02-kode-ganti-email", lambda b: (*susun_magic_link(ke, "715204", b, grup="ganti_email"), [], [])),
             ("03-lupa-sandi", templat(susun_lupa_sandi, ke, f"{URL}/accounts/reset-password/?token=contoh")),
-            ("04-undangan-workspace", lewat_user(susun_undangan_workspace, ke, "Budi Santoso", "PT Paradise Perkasa", undangan)),
+            (
+                "04-undangan-workspace",
+                lewat_user(susun_undangan_workspace, ke, "Budi Santoso", "PT Paradise Perkasa", undangan),
+            ),
             ("05-undangan-project", lewat_user(susun_undangan_project, ke, "Budi Santoso", "Gudang", undangan)),
-            ("06-ditambahkan-project", lewat_user(susun_tambah_project, ke, "Budi Santoso", "Gudang", "PT Paradise Perkasa", f"{URL}/{SLUG}/projects/x/issues")),
+            (
+                "06-ditambahkan-project",
+                lewat_user(
+                    susun_tambah_project,
+                    ke,
+                    "Budi Santoso",
+                    "Gudang",
+                    "PT Paradise Perkasa",
+                    f"{URL}/{SLUG}/projects/x/issues",
+                ),
+            ),
             ("07-email-diganti", templat(susun_email_diubah, ke)),
             ("08-akun-aktif", templat(susun_aktivasi, ke, f"{URL}/profile")),
             ("09-akun-nonaktif", templat(susun_deaktivasi, ke, f"{URL}/login")),
             ("10-ekspor-analitik", ekspor),
-            ("11-webhook-mati", templat(susun_webhook_nonaktif, ke, "https://hooks.contoh.com/paradise", f"{URL}/{SLUG}/settings/webhooks/x")),
+            (
+                "11-webhook-mati",
+                templat(
+                    susun_webhook_nonaktif,
+                    ke,
+                    "https://hooks.contoh.com/paradise",
+                    f"{URL}/{SLUG}/settings/webhooks/x",
+                ),
+            ),
             ("12-email-uji", uji),
             ("13-pembaruan-tugas", pembaruan),
             ("14-persetujuan-diajukan", persetujuan("submitted", andi)),
