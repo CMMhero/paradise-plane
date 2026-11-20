@@ -757,7 +757,7 @@ function ChatPage() {
     if (!ruangSaatIni) return undefined;
     return lupakanKonferensi;
   }, [ruangSaatIni, lupakanKonferensi]);
-  // Kanal sistem yang hanya dibaca (Announcements, Changelog) tidak
+  // Kanal sistem yang hanya dibaca (Announcements) tidak
   // bisa ditelepon; kanal divisi/departemen bisa, karena isinya orang sungguhan.
   const kanalTanpaPanggilan = !!kanalAktif?.sistem && !/^(divisi|departemen):/.test(kanalAktif.kunci_sistem ?? "");
   const kanalDiikuti = (() => {
@@ -1442,7 +1442,7 @@ function ChatPage() {
               </div>
             ) : null}
 
-            {/* Kanal sistem yang hanya bisa dibaca: Changelog, dan Announcements
+            {/* Kanal sistem yang hanya bisa dibaca: Announcements
                 bagi yang bukan admin atau penulis yang diizinkan. Server tetap
                 menolak 403; kolom tulis cuma disembunyikan supaya tidak menipu. */}
             {kanalAktif?.boleh_kirim === false ? (

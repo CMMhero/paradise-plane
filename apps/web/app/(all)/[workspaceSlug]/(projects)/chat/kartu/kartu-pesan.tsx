@@ -12,51 +12,10 @@ import { cn } from "@plane/utils";
 import type { TPesan } from "@/services/chat.service";
 import { KartuTugas } from "./kartu-tugas";
 import { warnaKartu } from "./warna";
-import { URUTAN_ENTRI, bacaCatatanRilis, bacaLogPanggilan, formatDurasi } from "./muatan";
-import type { TJenisEntri } from "./muatan";
+import { bacaLogPanggilan, formatDurasi } from "./muatan";
 
 /** Pesan kartu? `jenis` kosong (respons server lama) dihitung teks biasa. */
 export const adalahKartu = (pesan: TPesan): boolean => !!pesan.jenis && pesan.jenis !== "teks";
-
-const GAYA_ENTRI: Record<TJenisEntri, string> = {
-  Added: "bg-success-subtle text-success-primary",
-  Changed: "bg-accent-subtle text-accent-primary",
-  Fixed: "bg-warning-subtle text-warning-primary",
-};
-
-const KUNCI_ENTRI: Record<TJenisEntri, string> = {
-  Added: "chatkartu_ui.type_added",
-  Changed: "chatkartu_ui.type_changed",
-  Fixed: "chatkartu_ui.type_fixed",
-};
-
-function KartuChangelog({ pesan }: { pesan: TPesan }) {
-  const { t } = useTranslation();
-  const catatan = bacaCatatanRilis(pesan.muatan);
-  // Dikelompokkan per jenis supaya "apa yang baru" terbaca dulu, apa pun
-  // urutan penulisannya di berkas catatan rilis.
-  const urut = URUTAN_ENTRI.flatMap((jenis) => catatan.entri.filter((e) => e.type === jenis));
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-3 border-b border-subtle pb-1.5">
-        <p className="text-13 font-semibold text-primary">{t("chatkartu_ui.release", { version: catatan.versi })}</p>
-        {catatan.tanggal ? <p className="shrink-0 text-12 text-tertiary">{catatan.tanggal}</p> : null}
-      </div>
-      <ul className="flex flex-col gap-1.5">
-        {urut.map((e) => (
-          <li key={`${e.type}-${e.text}`} className="flex items-start gap-2 text-13 text-secondary">
-            <span
-              className={`mt-px w-auto min-w-16 shrink-0 rounded-control px-1.5 py-px text-center text-11 font-medium whitespace-nowrap ${GAYA_ENTRI[e.type]}`}
-            >
-              {t(KUNCI_ENTRI[e.type])}
-            </span>
-            <span className="min-w-0 [overflow-wrap:anywhere]">{e.text}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 function KartuPanggilan({
   pesan,
@@ -130,8 +89,6 @@ type Props = {
  * ini jatuh ke `isi` biasa, jadi server boleh menambah jenis lebih dulu. */
 export function KartuPesan({ pesan, namaOrang, onTelepon, terang = false, sayaId }: Props) {
   switch (pesan.jenis) {
-    case "changelog":
-      return <KartuChangelog pesan={pesan} />;
     case "panggilan":
       return <KartuPanggilan pesan={pesan} namaOrang={namaOrang} onTelepon={onTelepon} terang={terang} />;
     case "mention":

@@ -114,6 +114,11 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/chat", "./(all)/[workspaceSlug]/(projects)/chat/page.tsx"),
         ]),
 
+        // Pengumuman (Paradise): muka lain kanal sistem Announcements.
+        layout("./(all)/[workspaceSlug]/(projects)/pengumuman/layout.tsx", [
+          route(":workspaceSlug/pengumuman", "./(all)/[workspaceSlug]/(projects)/pengumuman/page.tsx"),
+        ]),
+
         // Wiki (Paradise).
         //
         // Punya layout sendiri, dan itu bukan soal rapi-rapian: selama Wiki

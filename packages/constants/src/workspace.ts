@@ -33,6 +33,7 @@ export const RESTRICTED_URLS: string[] = [
   "disco",
   "silo",
   "chat",
+  "pengumuman",
   "calendar",
   "drive",
   "channels",
@@ -273,6 +274,14 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
+  // Pengumuman (Paradise): daftar kanal sistem Announcements.
+  pengumuman: {
+    key: "pengumuman",
+    labelTranslationKey: "pengumuman_ui.nav",
+    href: `/pengumuman/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
   // Wiki perusahaan (Paradise). href SENGAJA statis `/wiki/`, halaman itu
   // meresolusi project ber-identifier WIKI lalu redirect. Jangan menaruh UUID
   // project di sini: UUID-nya berbeda di tiap instance, jadi akan salah di server
@@ -306,6 +315,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebar
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["persetujuan"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["tugas_lintas_divisi"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["chat"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["pengumuman"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["wiki"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
 ];
