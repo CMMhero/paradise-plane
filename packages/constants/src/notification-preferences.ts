@@ -17,6 +17,7 @@ import type {
  * Profil > Notifikasi, God Mode (preferensi per member) dan God Mode (bawaan jabatan)
  * menggambar dari daftar yang sama, jadi ketiganya tidak bisa tidak sinkron.
  * Cermin `SAKLAR_EMAIL` + `SAKLAR_INBOX` di apps/api/plane/utils/preferensi_email.py.
+ * Email tanpa pasangan inbox (`pengumuman`, ringkasan harian) tidak masuk daftar ini.
  *
  * `key` = nama jenis kabar, dipakai sebagai kunci label i18n.
  */
@@ -51,6 +52,7 @@ export const NOTIFICATION_DIGEST_SECTIONS: readonly TNotificationDigestKey[] = [
 /** Semua kunci satu baris preferensi. Cermin `SAKLAR_NOTIFIKASI`. */
 export const NOTIFICATION_PREFERENCE_KEYS: readonly TNotificationPreferenceKey[] = [
   ...NOTIFICATION_EVENTS.flatMap((e) => [e.inbox, e.email]),
+  "pengumuman",
   "daily_digest",
   "daily_digest_sore",
   ...NOTIFICATION_DIGEST_SECTIONS,

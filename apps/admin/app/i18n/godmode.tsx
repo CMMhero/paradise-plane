@@ -262,6 +262,7 @@ const en = {
       digest_tim: "Their team (supervisor, manager)",
       daily_digest: "Send the start-of-day summary (08:30 WIB)",
       daily_digest_sore: "Send the end-of-day summary (17:30 WIB)",
+      pengumuman: "Email each new post in Announcements",
       ikut_bawaan_jabatan: "Follow role defaults",
       ikut_bawaan_jabatan_note:
         "The staff, leader (supervisor, manager), and director defaults are set in the New member defaults menu. Changing any switch here stops this person following them.",

@@ -1237,5 +1237,26 @@
     "label": "Yenile",
     "tooltip": "İçeriği yenile",
     "busy": "Yenileniyor"
+  },
+  "obrolan_p29": {
+    "announcements_restricted": "Only admins and the departments they allow can post here.",
+    "writers_title": "Who can post",
+    "writers_hint": "Admins can always post. Every post is also emailed to all members.",
+    "writers_empty": "Only admins can post right now.",
+    "writers_add_placeholder": "Add a department or person",
+    "writers_add": "Add",
+    "writers_department": "Department",
+    "writers_person": "Person",
+    "writers_no_match": "No matching department or person",
+    "writers_remove_named": "Remove {name}",
+    "writers_confirm_remove_title": "Remove posting rights?",
+    "writers_confirm_remove_body": "{name} will no longer be able to post in Announcements.",
+    "writers_remove": "Remove",
+    "writers_removing": "Removing",
+    "writers_add_failed": "Could not add",
+    "writers_remove_failed": "Could not remove",
+    "announcement_email_section": "Announcements",
+    "announcement_email_title": "Announcement emails",
+    "announcement_email_description": "Email me each new post in the Announcements channel."
   }
 }

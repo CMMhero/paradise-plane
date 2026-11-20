@@ -101,8 +101,9 @@ class TestKanalSistem:
         assert Langganan.objects.filter(ruang=ruang, user=staf).exists()
 
     @pytest.mark.django_db
-    def test_pengumuman_hanya_admin_changelog_tidak_siapa_pun(self, kantor):
+    def test_pengumuman_hanya_admin_changelog_tidak_siapa_pun(self, kantor, monkeypatch):
         workspace, admin, staf, *_ = kantor
+        monkeypatch.setattr("plane.app.views.chat.kirim_email_pengumuman.delay", lambda pesan_id: None)
         ikutkan_ke_kanal_sistem(workspace.id)
         pengumuman = _kanal(workspace, KUNCI_PENGUMUMAN)
         changelog = _kanal(workspace, KUNCI_CHANGELOG)
@@ -299,15 +300,16 @@ class TestKartuKabar:
         }
 
     @pytest.mark.django_db
-    def test_saklar_mati_semua_kartu_kembali_ke_ruang_kabar(self, tugas, monkeypatch):
+    def test_saklar_mati_tidak_ada_kartu(self, tugas, monkeypatch):
         workspace, admin, staf, project, issue = tugas
         monkeypatch.setattr("plane.utils.kartu_obrolan._tugas_ke_dm_aktif", lambda: False)
-        assert kirim_kartu_notifikasi([_notif(workspace, project, issue, admin, staf, "comment")]) == 1
-        assert Ruang.objects.filter(kunci_sistem=f"kabar:{staf.id}").exists()
-        assert not Ruang.objects.filter(tipe=Ruang.Tipe.DM).exists()
+        assert kirim_kartu_notifikasi([_notif(workspace, project, issue, admin, staf, "comment")]) == 0
+        assert not PesanLangsung.objects.exists()
+        assert not Ruang.objects.exists()
 
     @pytest.mark.django_db
-    def test_kartu_tanpa_pelaku_manusia_masuk_ruang_kabar_pribadi(self, tugas):
+    def test_kartu_tanpa_pelaku_manusia_tidak_dikirim(self, tugas):
+        """Dulu masuk ruang kabar "Paradise". Ruang itu dihapus; kabarnya tetap di inbox."""
         workspace, admin, staf, project, issue = tugas
         bot = User.objects.create(
             id=uuid4(), username="bot-impor", email="bot-impor@x.test", display_name="Bot", is_bot=True
@@ -316,27 +318,11 @@ class TestKartuKabar:
             _notif(workspace, project, issue, None, staf, "comment"),
             _notif(workspace, project, issue, bot, staf, "state"),
             _notif(workspace, project, issue, None, staf, "description", sender="in_app:issue_activities:mentioned"),
+            _notif(workspace, project, issue, staf, staf, "comment"),
         ]
-        assert kirim_kartu_notifikasi(notifs) == 3
-        assert not Ruang.objects.filter(tipe=Ruang.Tipe.DM).exists()
-
-        ruang = Ruang.objects.get(workspace=workspace, kunci_sistem=f"kabar:{staf.id}")
-        assert ruang.tipe == Ruang.Tipe.PRIVAT and ruang.sistem
-        assert list(Langganan.objects.filter(ruang=ruang).values_list("user_id", flat=True)) == [staf.id]
-        jenis = sorted(PesanLangsung.objects.filter(ruang=ruang).values_list("jenis", flat=True))
-        assert jenis == sorted([JenisPesan.KOMENTAR, JenisPesan.PEMBARUAN, JenisPesan.MENTION])
-        kartu = PesanLangsung.objects.filter(ruang=ruang).first()
-        assert kartu.pengirim_id is None
-        assert kartu.muatan["tugas"]["nomor"] == f"GDG-{issue.sequence_id}"
-        assert kartu.muatan["workspace_slug"] == workspace.slug
-        assert kartu.muatan["penerima"] == str(staf.id)
-
-        # Orang lain tidak bisa membaca ruang kabar staf.
-        jawab = _klien(admin).get(f"/api/workspaces/{workspace.slug}/chat/ruang/{ruang.id}/")
-        assert jawab.status_code == 404
-        dibaca = _klien(staf).get(f"/api/workspaces/{workspace.slug}/chat/ruang/{ruang.id}/").json()
-        assert {p["jenis"] for p in dibaca} == set(jenis)
-        assert all(p["pengirim"] is None for p in dibaca)
+        assert kirim_kartu_notifikasi(notifs) == 0
+        assert not PesanLangsung.objects.exists()
+        assert not Ruang.objects.exists()
 
     @pytest.mark.django_db
     def test_kartu_persetujuan_kehilangan_tombol_sesudah_diputuskan(self, tugas):

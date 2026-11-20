@@ -47,7 +47,6 @@ import smtplib
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
-from bs4 import BeautifulSoup
 from celery import shared_task
 from django.db import transaction
 from django.db.models import Min
@@ -74,6 +73,7 @@ from plane.utils.exception_logger import log_exception
 from plane.utils.notifikasi_persetujuan import ENTITY_EMAIL_APPROVAL
 from plane.utils.penerima_aktif import aktif_sejak, batas_aktif
 from plane.utils.saklar_instance import EMAIL_BATCH_DELAY_MINUTES, setelan_angka
+from plane.utils.teks_html import teks_polos
 
 logger = logging.getLogger("plane.worker")
 
@@ -165,7 +165,7 @@ def kelompokkan(daftar) -> tuple[list, dict]:
 
 
 def _teks_html(html, batas=PANJANG_KOMENTAR) -> str:
-    teks = " ".join(BeautifulSoup(str(html or ""), "html.parser").get_text(" ").split())
+    teks = " ".join(teks_polos(html).split())
     return teks if len(teks) <= batas else teks[: batas - 3].rstrip() + "..."
 
 

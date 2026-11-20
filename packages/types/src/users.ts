@@ -232,7 +232,8 @@ export type TNotificationEmailKey =
   | "daily_digest_sore"
   | "deadline_reminder"
   | "assigned"
-  | "chat";
+  | "chat"
+  | "pengumuman";
 
 /** Saklar INBOX di dalam aplikasi per jenis kabar (`SAKLAR_INBOX`). */
 export type TNotificationInboxKey =

@@ -79,8 +79,13 @@ class TestBawaanJabatan:
     @pytest.mark.parametrize("tingkat", [TINGKAT_SUPERVISOR, TINGKAT_MANAGER])
     def test_pimpinan_hanya_ringkasan_harian(self, workspace, tingkat):
         assert saklar_untuk(_orang(workspace, "pimpinan", tingkat).id) == BAWAAN_PIMPINAN
-        # Email pimpinan: ringkasan pagi + sore + obrolan; inbox & bagian ringkasan hidup semua.
-        assert [k for k in SAKLAR_EMAIL if BAWAAN_PIMPINAN[k]] == ["daily_digest", "daily_digest_sore", "chat"]
+        # Email pimpinan: ringkasan pagi + sore + obrolan + pengumuman; inbox & bagian ringkasan hidup semua.
+        assert [k for k in SAKLAR_EMAIL if BAWAAN_PIMPINAN[k]] == [
+            "daily_digest",
+            "daily_digest_sore",
+            "chat",
+            "pengumuman",
+        ]
         assert all(BAWAAN_PIMPINAN[k] for k in SAKLAR_INBOX + SAKLAR_RINGKASAN)
 
     @pytest.mark.django_db

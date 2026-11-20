@@ -16,12 +16,10 @@ from .base import BaseModel
 # (app/views/chat.py membacanya); angka ini tinggal sebagai bawaannya yang lama.
 BATAS_ISI = 5000
 
-# Kanal sistem (3 Nov 2026). Dua kanal per workspace yang diikuti SEMUA anggota,
-# plus satu ruang kabar "Paradise" per orang untuk kartu aktivitas. Kunci kabar
-# memuat id pemiliknya: `kabar:<user_id>`.
+# Kanal sistem (3 Nov 2026). Dua kanal per workspace yang diikuti SEMUA anggota.
+# Ruang kabar pribadi "Paradise" (`kabar:<user_id>`) dihapus di migrasi 0181.
 KUNCI_PENGUMUMAN = "pengumuman"
 KUNCI_CHANGELOG = "changelog"
-AWALAN_KABAR = "kabar:"
 
 
 class JenisPesan(models.TextChoices):
@@ -79,7 +77,7 @@ class Ruang(BaseModel):
 
     # Ruang milik sistem: tidak bisa ditinggalkan, dihapus, atau diganti nama oleh
     # orang biasa. `kunci_sistem` membedakan perannya (pengumuman, changelog,
-    # kabar:<user_id>) dan unik per workspace, jadi pembuatan ulang yang berjalan
+    # divisi:<id>, departemen:<id>) dan unik per workspace, jadi pembuatan ulang yang berjalan
     # bersamaan tidak bisa menghasilkan dua kanal Changelog.
     sistem = models.BooleanField(default=False)
     kunci_sistem = models.CharField(max_length=64, null=True, blank=True)
@@ -186,9 +184,9 @@ class PesanLangsung(BaseModel):
     ruang = models.ForeignKey(
         "db.Ruang", related_name="pesan", on_delete=models.CASCADE, null=True, blank=True
     )
-    # Kosong = dikirim sistem ("Paradise"): catatan rilis dan kartu kabar. Bukan
-    # akun bot sungguhan, karena akun bot ikut muncul di daftar anggota, dan
-    # penyaringan akun bot di setiap daftar adalah tempat yang mudah terlewat.
+    # Kosong = dikirim sistem: catatan rilis. Bukan akun bot sungguhan, karena
+    # akun bot ikut muncul di daftar anggota, dan penyaringan akun bot di setiap
+    # daftar adalah tempat yang mudah terlewat.
     pengirim = models.ForeignKey(
         "db.User", related_name="pesan_terkirim", on_delete=models.CASCADE, null=True, blank=True
     )
@@ -299,3 +297,49 @@ class ReaksiPesan(BaseModel):
 
     def __str__(self):
         return f"{self.user_id} {self.emoji} {self.pesan_id}"
+
+
+class PenulisKanal(BaseModel):
+    """Izin menulis di kanal Announcements di luar admin workspace.
+
+    Satu baris = satu departemen ATAU satu orang, tidak pernah keduanya. Orang
+    yang ditempatkan di departemen itu (`JabatanOrganisasi.departemen`, jenjang
+    apa pun) boleh menulis. Admin workspace dan Super Admin selalu boleh, tanpa
+    baris. Mencabut izin menghapus barisnya permanen: tidak ada riwayat yang
+    perlu dibaca dari izin yang sudah dicabut.
+    """
+
+    workspace = models.ForeignKey("db.Workspace", related_name="penulis_kanal", on_delete=models.CASCADE)
+    ruang = models.ForeignKey("db.Ruang", related_name="penulis", on_delete=models.CASCADE)
+    departemen = models.ForeignKey(
+        "db.Departemen", related_name="penulis_kanal", null=True, blank=True, on_delete=models.CASCADE
+    )
+    user = models.ForeignKey("db.User", related_name="penulis_kanal", null=True, blank=True, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = "Penulis Kanal"
+        verbose_name_plural = "Penulis Kanal"
+        db_table = "chat_channel_writers"
+        ordering = ("created_at",)
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(departemen__isnull=False, user__isnull=True)
+                    | models.Q(departemen__isnull=True, user__isnull=False)
+                ),
+                name="penulis_kanal_satu_sasaran",
+            ),
+            models.UniqueConstraint(
+                fields=["ruang", "departemen"],
+                condition=models.Q(departemen__isnull=False),
+                name="penulis_kanal_departemen_unik",
+            ),
+            models.UniqueConstraint(
+                fields=["ruang", "user"],
+                condition=models.Q(user__isnull=False),
+                name="penulis_kanal_user_unik",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.ruang_id} <- {self.departemen_id or self.user_id}"

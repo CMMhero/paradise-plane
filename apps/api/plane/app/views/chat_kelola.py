@@ -29,8 +29,9 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
-from plane.db.models import Langganan, Ruang, WorkspaceMember
+from plane.db.models import KUNCI_PENGUMUMAN, Langganan, Ruang, WorkspaceMember
 from plane.db.superadmin import is_super_admin
+from plane.utils.kanal_sistem import adalah_admin_workspace
 from plane.utils.obrolan_siaran import siarkan
 
 from .base import BaseAPIView
@@ -87,7 +88,12 @@ def _bentuk_detail(ruang, user, anggota: bool):
         "jumlah_anggota": Langganan.objects.filter(ruang=ruang).count(),
         "ikut": anggota,
         "sistem": _ruang_sistem(ruang),
+        "kunci_sistem": ruang.kunci_sistem,
         "boleh_kelola": boleh_kelola(user, ruang, anggota) and not _ruang_sistem(ruang),
+        # Announcements: admin mengatur siapa lagi yang boleh menulis (chat_penulis.py).
+        "boleh_atur_penulis": (
+            ruang.kunci_sistem == KUNCI_PENGUMUMAN and adalah_admin_workspace(user, ruang.workspace_id)
+        ),
     }
 
 
@@ -137,7 +143,6 @@ class ChatKelolaRuangEndpoint(BaseAPIView):
                 Ruang.objects.filter(workspace_id=ruang.workspace_id, nama__iexact=nama)
                 .exclude(tipe=Ruang.Tipe.DM)
                 .exclude(id=ruang.id)
-                .exclude(kunci_sistem__startswith="kabar:")
                 .exists()
             )
             if kembar:

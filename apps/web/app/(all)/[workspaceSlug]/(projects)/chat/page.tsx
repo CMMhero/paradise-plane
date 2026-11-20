@@ -716,7 +716,7 @@ function ChatPage() {
     if (!ruangSaatIni) return undefined;
     return lupakanKonferensi;
   }, [ruangSaatIni, lupakanKonferensi]);
-  // Kanal sistem yang hanya dibaca (Announcements, Changelog, Paradise) tidak
+  // Kanal sistem yang hanya dibaca (Announcements, Changelog) tidak
   // bisa ditelepon; kanal divisi/departemen bisa, karena isinya orang sungguhan.
   const kanalTanpaPanggilan = !!kanalAktif?.sistem && !/^(divisi|departemen):/.test(kanalAktif.kunci_sistem ?? "");
   const kanalDiikuti = (() => {
@@ -1396,13 +1396,13 @@ function ChatPage() {
               </div>
             ) : null}
 
-            {/* Kanal sistem yang hanya bisa dibaca: Changelog, ruang kabar
-                "Paradise", dan Announcements bagi yang bukan admin. Server tetap
+            {/* Kanal sistem yang hanya bisa dibaca: Changelog, dan Announcements
+                bagi yang bukan admin atau penulis yang diizinkan. Server tetap
                 menolak 403; kolom tulis cuma disembunyikan supaya tidak menipu. */}
             {kanalAktif?.boleh_kirim === false ? (
               <p className="border-t border-subtle p-3 text-center text-12 text-tertiary">
                 {kanalAktif.kunci_sistem === "pengumuman"
-                  ? t("chatkartu_ui.announcements_admin_only")
+                  ? t("obrolan_p29.announcements_restricted")
                   : t("chatkartu_ui.read_only")}
               </p>
             ) : null}

@@ -30,10 +30,10 @@ export type TRuang = {
   jumlah_anggota?: number;
   /** Kanal sistem: tidak bisa ditinggalkan atau diubah, berlencana "System". */
   sistem?: boolean;
-  /** `pengumuman` | `changelog` | `kabar:<user_id>` (ruang kabar "Paradise"). */
+  /** `pengumuman` | `changelog` | `divisi:<id>` | `departemen:<id>`. */
   kunci_sistem?: string | null;
-  /** False = kolom tulis disembunyikan (Changelog, ruang kabar, Announcements
-   * untuk yang bukan admin). Server tetap menolak 403. */
+  /** False = kolom tulis disembunyikan (Changelog, Announcements untuk yang
+   * bukan admin atau penulis yang diizinkan). Server tetap menolak 403. */
   boleh_kirim?: boolean;
 };
 
@@ -63,6 +63,22 @@ export type TDetailRuang = {
   sistem: boolean;
   /** Pembuat, admin workspace, atau Super Admin yang juga anggota kanal. */
   boleh_kelola: boolean;
+  kunci_sistem?: string | null;
+  /** Announcements, dan pemanggilnya admin: boleh mengatur penulis (`TPenulisKanal`). */
+  boleh_atur_penulis?: boolean;
+};
+
+/** Satu izin menulis di Announcements: satu departemen ATAU satu orang. */
+export type TPenulisKanal = {
+  id: string;
+  departemen: { id: string; kode: string; nama: string } | null;
+  user: string | null;
+};
+
+export type TDaftarPenulisKanal = {
+  penulis: TPenulisKanal[];
+  /** Semua departemen workspace, untuk pemilih. */
+  departemen: { id: string; kode: string; nama: string; divisi: string }[];
 };
 
 export type TPercakapan = TRuang & {
@@ -86,7 +102,7 @@ export type TKutipan = { id: string; pengirim: string; isi: string; dihapus?: bo
 
 export type TPesan = {
   id: string;
-  /** null = dikirim sistem ("Paradise"): catatan rilis dan kartu kabar. */
+  /** null = dikirim sistem: catatan rilis. */
   pengirim: string | null;
   isi: string;
   /** Tidak ada di respons server lama; anggap "teks". */
@@ -453,6 +469,34 @@ export class ChatService extends APIService {
     data: Partial<Pick<TDetailRuang, "nama" | "topik">>
   ): Promise<TDetailRuang> {
     return this.patch(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/kelola/`, data)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async getPenulisKanal(workspaceSlug: string, ruangId: string): Promise<TDaftarPenulisKanal> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/penulis/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async tambahPenulisKanal(
+    workspaceSlug: string,
+    ruangId: string,
+    data: { departemen_id: string } | { user_id: string }
+  ): Promise<TPenulisKanal> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/penulis/`, data)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async cabutPenulisKanal(workspaceSlug: string, ruangId: string, penulisId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/penulis/${penulisId}/`)
       .then((res) => res?.data)
       .catch((e) => {
         throw e?.response?.data;

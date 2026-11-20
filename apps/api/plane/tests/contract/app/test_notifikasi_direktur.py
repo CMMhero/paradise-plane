@@ -41,6 +41,7 @@ URL = "/api/users/me/notification-preferences/"
 BOLEH_DIREKTUR = {
     "mention",
     "chat",
+    "pengumuman",
     "inbox_mention",
     "inbox_chat",
     "daily_digest",

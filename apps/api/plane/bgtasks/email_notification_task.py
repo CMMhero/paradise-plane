@@ -6,8 +6,6 @@ import logging
 import re
 from datetime import datetime
 
-from bs4 import BeautifulSoup
-
 # Third party imports
 from celery import shared_task
 from django.core.mail import get_connection
@@ -24,6 +22,7 @@ from plane.utils.email_pembaruan import susun_email_pembaruan
 from plane.utils.email_utas import utas_untuk
 from plane.utils.exception_logger import log_exception
 from plane.utils.penerima_aktif import penerima_aktif
+from plane.utils.teks_html import ganti_sebutan
 
 
 def remove_unwanted_characters(input_text):
@@ -154,53 +153,6 @@ def create_payload(notification_data):
     return data
 
 
-def _teks_sebutan(mention) -> str:
-    """Teks pengganti satu mention-component di email.
-
-    Kustomisasi Paradise (KEP-91): selain orang, editor kini bisa menyebut @all,
-    #kanal, dan #work item. Versi lama memanggil `User.objects.get` untuk SEMUA
-    mention, jadi satu sebutan non-orang menggagalkan seluruh email. Nama kanal
-    privat tidak pernah ditulis: email bisa diteruskan ke siapa saja.
-    """
-    from plane.db.models import Ruang  # noqa: PLC0415
-    from plane.utils.rujukan_obrolan import NAMA_PRIVAT, urai_uuid  # noqa: PLC0415
-
-    jenis = mention.get("entity_name") or "user_mention"
-    sah = urai_uuid([mention.get("entity_identifier")], 1)
-    ident = sah[0] if sah else None
-
-    if jenis == "everyone_mention":
-        return "@all"
-    if jenis == "channel_mention":
-        ruang = Ruang.objects.filter(pk=ident).only("nama", "tipe").first() if ident else None
-        if ruang is not None and ruang.tipe == Ruang.Tipe.KANAL and ruang.nama:
-            return f"#{ruang.nama}"
-        return f"#{NAMA_PRIVAT}"
-    if jenis == "issue_mention":
-        issue = Issue.objects.filter(pk=ident).select_related("project").first() if ident else None
-        return f"{issue.project.identifier}-{issue.sequence_id}" if issue is not None else "#work-item"
-    user = User.objects.filter(pk=ident).only("display_name").first() if ident else None
-    return f"@{user.display_name}" if user is not None else "@unknown"
-
-
-def process_mention(mention_component):
-    soup = BeautifulSoup(mention_component, "html.parser")
-    mentions = soup.find_all("mention-component")
-    for mention in mentions:
-        mention.replace_with(_teks_sebutan(mention))
-    return str(soup)
-
-
-def process_html_content(content):
-    if content is None:
-        return None
-    processed_content_list = []
-    for html_content in content:
-        processed_content = process_mention(html_content)
-        processed_content_list.append(processed_content)
-    return processed_content_list
-
-
 def aktor_dari_data(notification_data) -> list:
     """{actor_id: [data baris log]} -> blok aktor untuk `susun_email_pembaruan`.
 
@@ -215,10 +167,9 @@ def aktor_dari_data(notification_data) -> list:
         comment = changes.pop("comment", False)
         mention = changes.pop("mention", False)
         komentar = []
-        if comment:
-            komentar += [k for k in comment.get("new_value") or [] if k]
-        if mention:
-            komentar += [k for k in process_html_content(mention.get("new_value")) or [] if k]
+        for bagian in (comment, mention):
+            if bagian:
+                komentar += [ganti_sebutan(k) for k in bagian.get("new_value") or [] if k]
         activity_time = changes.pop("activity_time")
         waktu = datetime.strptime(activity_time, "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
         aktor.append({"user": actor, "waktu": waktu, "changes": changes, "komentar": komentar})

@@ -373,6 +373,7 @@ CELERY_IMPORTS = (
     "plane.bgtasks.google_calendar_sync",
     "plane.bgtasks.chat_notification_task",
     "plane.bgtasks.tugas_ke_dm_task",
+    "plane.bgtasks.pengumuman_email_task",
     "plane.bgtasks.penugasan_email",
     "plane.bgtasks.quick_link_task",
     "plane.bgtasks.wiki_indeks_task",

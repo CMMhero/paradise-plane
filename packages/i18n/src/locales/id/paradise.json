@@ -1237,5 +1237,26 @@
     "label": "Segarkan",
     "tooltip": "Segarkan isi halaman",
     "busy": "Menyegarkan"
+  },
+  "obrolan_p29": {
+    "announcements_restricted": "Hanya admin dan departemen yang diizinkan admin yang bisa menulis di sini.",
+    "writers_title": "Siapa yang bisa menulis",
+    "writers_hint": "Admin selalu bisa menulis. Setiap pengumuman juga dikirim ke email semua anggota.",
+    "writers_empty": "Saat ini hanya admin yang bisa menulis.",
+    "writers_add_placeholder": "Tambah departemen atau orang",
+    "writers_add": "Tambah",
+    "writers_department": "Departemen",
+    "writers_person": "Orang",
+    "writers_no_match": "Tidak ada departemen atau orang yang cocok",
+    "writers_remove_named": "Hapus {name}",
+    "writers_confirm_remove_title": "Cabut izin menulis?",
+    "writers_confirm_remove_body": "{name} tidak bisa lagi menulis di Announcements.",
+    "writers_remove": "Cabut",
+    "writers_removing": "Mencabut",
+    "writers_add_failed": "Gagal menambahkan",
+    "writers_remove_failed": "Gagal mencabut",
+    "announcement_email_section": "Pengumuman",
+    "announcement_email_title": "Email pengumuman",
+    "announcement_email_description": "Kirimi saya email untuk setiap pengumuman baru di kanal Announcements."
   }
 }
