@@ -197,6 +197,7 @@ class TestProfilAnggota:
                 "tingkat": TINGKAT_MEMBER,
                 "departemen": {"id": str(org.smt1.id), "kode": "SMT1", "nama": "Sales Team 1"},
                 "divisi": {"id": str(org.sales.id), "kode": "SALES", "nama": "Sales"},
+                "cabang": None,
             }
         ]
 

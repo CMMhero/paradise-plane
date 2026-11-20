@@ -72,6 +72,7 @@ from plane.utils.kanal_organisasi import kunci_cabang
 URL_ISSUES = "/api/workspaces/{slug}/projects/{project_id}/issues/"
 URL_BISA = "/api/workspaces/{slug}/projects/{project_id}/persetujuan-penugasan/bisa-ditugaskan/"
 URL_ANTREAN = "/api/workspaces/{slug}/persetujuan/"
+URL_DASHBOARD = "/api/workspaces/{slug}/divisi-dashboard/"
 URL_KPI = "/api/workspaces/{slug}/kinerja/"
 URL_KPI_LINGKUP = "/api/workspaces/{slug}/kinerja/lingkup/"
 
@@ -214,6 +215,14 @@ class TestJangkauanCabang:
         assert _klien(org.bd).get(URL_ISSUES.format(slug=org.ws.slug, project_id=org.p_eng.id)).status_code == 200
         assert _klien(org.bd).get(URL_ISSUES.format(slug=org.ws.slug, project_id=org.p_ho.id)).status_code != 200
         assert _klien(org.mgr_ho).get(URL_ISSUES.format(slug=org.ws.slug, project_id=org.p_eng.id)).status_code != 200
+
+    @pytest.mark.django_db
+    def test_dashboard_divisi_hanya_cabangnya(self, org):
+        data = _klien(org.bd).get(URL_DASHBOARD.format(slug=org.ws.slug)).json()
+        assert {p["identifier"] for p in data["projects"]} == {"ENG", "HRC"}
+        assert data["leader_created_only"] is False
+        kantor = _klien(org.mgr_ho).get(URL_DASHBOARD.format(slug=org.ws.slug)).json()
+        assert {p["identifier"] for p in kantor["projects"]} == {"SMT"}
 
     @pytest.mark.django_db
     def test_divisi_baru_di_cabang_ikut_terjangkau(self, org):
@@ -400,6 +409,19 @@ class TestPenempatanCabang:
         setel_penempatan(org.ws, org.bd, TINGKAT_CABANG, set(), set(), cabang_ids=set())
         assert self._tempat(org.bd, org.ws) == {(TINGKAT_MEMBER, None, None, None)}
         assert not _aktif(org.bd, org.p_eng)
+
+    @pytest.mark.django_db
+    def test_profil_menyebut_cabang(self, org):
+        res = _klien(org.staf_ho).get(f"/api/workspaces/{org.ws.slug}/member-profile/{org.bd.id}/")
+        assert res.status_code == status.HTTP_200_OK, res.data
+        assert res.data["penempatan"] == [
+            {
+                "tingkat": TINGKAT_CABANG,
+                "departemen": None,
+                "divisi": None,
+                "cabang": {"id": str(org.clg.id), "kode": "CLG", "nama": "Plant Cilegon"},
+            }
+        ]
 
     @pytest.mark.django_db
     def test_kanal_cabang(self, org):
