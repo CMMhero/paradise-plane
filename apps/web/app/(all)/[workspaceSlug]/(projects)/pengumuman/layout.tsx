@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: Dashboard Divisi
+ * Kustomisasi Paradise Task Tracker: halaman Pengumuman
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -10,12 +10,12 @@ import { Outlet } from "react-router";
 import { AppHeader } from "@/components/core/app-header";
 import { ContentWrapper } from "@/components/core/content-wrapper";
 // local imports
-import { DivisionDashboardHeader } from "./header";
+import { PengumumanHeader } from "./header";
 
-export default function DivisionDashboardLayout() {
+export default function PengumumanLayout() {
   return (
     <>
-      <AppHeader header={<DivisionDashboardHeader />} />
+      <AppHeader header={<PengumumanHeader />} />
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>

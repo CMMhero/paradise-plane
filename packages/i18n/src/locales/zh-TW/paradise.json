@@ -363,6 +363,21 @@
     "org_division": "事業部",
     "org_department": "部門"
   },
+  "changelog_ui": {
+    "title": "新功能",
+    "empty": "尚無版本說明。",
+    "show_more": "顯示較早的版本",
+    "show_less": "收合"
+  },
+  "pengumuman_ui": {
+    "nav": "公告",
+    "empty": "尚無公告。",
+    "placeholder": "撰寫公告",
+    "send": "發布",
+    "send_failed": "無法發布公告。",
+    "load_failed": "無法載入公告。",
+    "open_in_chat": "在聊天中討論"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",
@@ -1327,6 +1342,10 @@
   "kinerja": {
     "nav": "KPI",
     "title": "KPI",
+    "tabs_label": "KPI sections",
+    "tab_kpi": "KPI",
+    "tab_analytics": "Analytics",
+    "tab_dashboards": "Dashboards",
     "go_to": "Go to KPI",
     "heading": "KPI: {name}",
     "load_failed": "Failed to load this KPI. You may not have access to it.",

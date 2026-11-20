@@ -1,20 +1,19 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: Dashboard Divisi
+ * Kustomisasi Paradise Task Tracker: halaman Pengumuman
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
 
 import { observer } from "mobx-react";
-import { LayoutGrid } from "lucide-react";
+import { Megaphone } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-// ui
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 
-export const DivisionDashboardHeader = observer(function DivisionDashboardHeader() {
+export const PengumumanHeader = observer(function PengumumanHeader() {
   const { t } = useTranslation();
   return (
     <Header>
@@ -22,10 +21,7 @@ export const DivisionDashboardHeader = observer(function DivisionDashboardHeader
         <Breadcrumbs>
           <Breadcrumbs.Item
             component={
-              <BreadcrumbLink
-                label={t("division_dashboard_ui.title")}
-                icon={<LayoutGrid className="h-4 w-4 text-tertiary" />}
-              />
+              <BreadcrumbLink label={t("pengumuman_ui.title")} icon={<Megaphone className="h-4 w-4 text-tertiary" />} />
             }
           />
         </Breadcrumbs>

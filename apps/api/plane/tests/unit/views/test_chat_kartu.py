@@ -72,14 +72,17 @@ class TestKanalSistem:
     @pytest.mark.django_db
     def test_anggota_layak_ikut_dan_idempoten(self, kantor):
         workspace, admin, staf, nonaktif, terhapus = kantor
-        assert ikutkan_ke_kanal_sistem(workspace.id) == 4  # 2 orang x 2 kanal
+        # Hanya Announcements yang diikuti; Changelog pindah ke widget Home.
+        assert ikutkan_ke_kanal_sistem(workspace.id) == 2  # 2 orang x 1 kanal
         assert ikutkan_ke_kanal_sistem(workspace.id) == 0
-        for kunci in (KUNCI_PENGUMUMAN, KUNCI_CHANGELOG):
-            ruang = _kanal(workspace, kunci)
-            assert ruang.sistem
-            anggota = set(Langganan.objects.filter(ruang=ruang).values_list("user_id", flat=True))
-            # Akun nonaktif dan akun terhapus (KEP-50) tidak ikut.
-            assert anggota == {admin.id, staf.id}
+        ruang = _kanal(workspace, KUNCI_PENGUMUMAN)
+        assert ruang.sistem
+        anggota = set(Langganan.objects.filter(ruang=ruang).values_list("user_id", flat=True))
+        # Akun nonaktif dan akun terhapus (KEP-50) tidak ikut.
+        assert anggota == {admin.id, staf.id}
+        # Ruang Changelog tetap ada sebagai penyimpan kartu, tanpa pengikut.
+        assert _kanal(workspace, KUNCI_CHANGELOG).sistem
+        assert not Langganan.objects.filter(ruang=_kanal(workspace, KUNCI_CHANGELOG)).exists()
         assert Ruang.objects.filter(workspace=workspace, sistem=True).count() == 2
 
     @pytest.mark.django_db
@@ -87,7 +90,7 @@ class TestKanalSistem:
         workspace, _admin, staf, *_ = kantor
         hasil = _klien(staf).get(f"/api/workspaces/{workspace.slug}/chat/").json()
         sistem = {r["kunci_sistem"] for r in hasil if r["sistem"]}
-        assert sistem == {KUNCI_PENGUMUMAN, KUNCI_CHANGELOG}
+        assert sistem == {KUNCI_PENGUMUMAN}
         # Langganan baru lahir terbaca.
         assert all(r["belum_dibaca"] == 0 for r in hasil)
 
@@ -111,7 +114,8 @@ class TestKanalSistem:
 
         assert _klien(staf).post(url % pengumuman.id, {"isi": "halo"}, format="json").status_code == 403
         assert _klien(admin).post(url % pengumuman.id, {"isi": "Libur besok"}, format="json").status_code == 201
-        assert _klien(admin).post(url % changelog.id, {"isi": "x"}, format="json").status_code == 403
+        # Changelog tidak lagi bagian dari Obrolan: ruangnya tidak bisa dibuka lewat jalur chat.
+        assert _klien(admin).post(url % changelog.id, {"isi": "x"}, format="json").status_code == 404
 
         # Semua orang boleh bereaksi pada pengumuman (kanal tanpa penerima).
         pesan = PesanLangsung.objects.get(ruang=pengumuman)
@@ -122,9 +126,51 @@ class TestKanalSistem:
 
         daftar = _klien(staf).get(f"/api/workspaces/{workspace.slug}/chat/").json()
         hak = {r["kunci_sistem"]: r["boleh_kirim"] for r in daftar if r["sistem"]}
-        assert hak == {KUNCI_PENGUMUMAN: False, KUNCI_CHANGELOG: False}
+        assert hak == {KUNCI_PENGUMUMAN: False}
         daftar_admin = _klien(admin).get(f"/api/workspaces/{workspace.slug}/chat/").json()
         assert {r["kunci_sistem"]: r["boleh_kirim"] for r in daftar_admin if r["sistem"]}[KUNCI_PENGUMUMAN]
+
+
+@pytest.mark.unit
+class TestChangelogDiluarObrolan:
+    @pytest.mark.django_db
+    def test_langganan_lama_disembunyikan_tapi_tidak_dihapus(self, kantor):
+        workspace, _admin, staf, *_ = kantor
+        ikutkan_ke_kanal_sistem(workspace.id)
+        changelog = _kanal(workspace, KUNCI_CHANGELOG)
+        Langganan.objects.create(ruang=changelog, user=staf)
+        kirim_pesan_sistem(
+            changelog, JenisPesan.CHANGELOG, {"versi": "2.9.0", "tanggal": "2026-11-20", "entri": []}, "Paradise 2.9.0"
+        )
+        base = f"/api/workspaces/{workspace.slug}"
+        assert KUNCI_CHANGELOG not in {r["kunci_sistem"] for r in _klien(staf).get(f"{base}/chat/").json()}
+        assert KUNCI_CHANGELOG not in {r["kunci_sistem"] for r in _klien(staf).get(f"{base}/chat/ruang/").json()}
+        assert _klien(staf).get(f"{base}/chat/ruang/{changelog.id}/").status_code == 404
+        # Lencana tidak menghitung kartu rilis yang belum dibaca.
+        assert _klien(staf).get(f"{base}/chat/belum-dibaca/").json()["jumlah"] == 0
+        assert not _klien(staf).get(f"{base}/chat/cari/", {"q": "Paradise"}).json()
+        # Data tidak disentuh.
+        assert Langganan.objects.filter(ruang=changelog, user=staf).exists()
+        assert PesanLangsung.objects.filter(ruang=changelog).count() == 1
+
+    @pytest.mark.django_db
+    def test_endpoint_changelog_urut_versi_dan_menyaring_entri(self, kantor):
+        workspace, _admin, staf, *_ = kantor
+        changelog = pastikan_kanal_sistem(workspace.id)[KUNCI_CHANGELOG]
+        for versi in ("2.8.0", "2.10.0", "2.9.0"):
+            muatan = {"versi": versi, "tanggal": "2026-11-20", "entri": [{"type": "Added", "text": f"fitur {versi}"}]}
+            kirim_pesan_sistem(changelog, JenisPesan.CHANGELOG, muatan, f"Paradise {versi}")
+        kirim_pesan_sistem(changelog, JenisPesan.CHANGELOG, {"versi": "2.7.0", "entri": []}, "kosong")
+        hasil = _klien(staf).get(f"/api/workspaces/{workspace.slug}/changelog/").json()
+        assert [c["versi"] for c in hasil] == ["2.10.0", "2.9.0", "2.8.0"]
+        assert hasil[0]["entri"] == [{"type": "Added", "text": "fitur 2.10.0"}]
+        assert len(_klien(staf).get(f"/api/workspaces/{workspace.slug}/changelog/", {"batas": 2}).json()) == 2
+
+    @pytest.mark.django_db
+    def test_endpoint_changelog_menolak_orang_luar(self, kantor):
+        workspace, *_ = kantor
+        luar = _orang("luar")
+        assert _klien(luar).get(f"/api/workspaces/{workspace.slug}/changelog/").status_code in (401, 403)
 
 
 @pytest.mark.unit

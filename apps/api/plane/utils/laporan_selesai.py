@@ -17,9 +17,10 @@ anggotai.
   Dibatalkan bukan selesai.
 - **Hari = hari kantor (WIB)**, sama dengan ringkasan harian (KEP-58). Server
   berjalan di UTC; tugas yang selesai 06.30 WIB tercatat 23.30 UTC kemarin.
-- **Tepat waktu** = punya tenggat dan tanggal selesai (WIB) <= tenggat.
-  **Terlambat** = punya tenggat dan selesai sesudahnya. Tanpa tenggat dihitung
-  terpisah, tidak masuk penyebut persentase.
+- **Tepat waktu** = punya tenggat dan tanggal selesai (WIB) <= tenggat efektif,
+  yaitu max(tenggat, hari tugas dicatat). **Terlambat** = selesai sesudahnya.
+  Aturannya di `utils/ketepatan_waktu.py`. Tanpa tenggat dihitung terpisah,
+  tidak masuk penyebut persentase.
 - **Periode pembanding** = jendela sepanjang periode itu tepat sebelumnya
   (bulan lalu untuk "bulan ini" dan dua bulan lalu untuk "bulan lalu").
 
@@ -31,13 +32,21 @@ dihitung dari semua tugas, dan CSV memuat semuanya.
 from datetime import date, datetime, time, timedelta
 
 # Django imports
-from django.db.models import Count, F, Q
-from django.db.models.functions import TruncDate
+from django.db.models import Count, Q
 from django.utils import timezone
 
 # Module imports
 from plane.utils.akses_privat import saring_tugas_privat
 from plane.db.models import Issue, IssueAssignee, Workspace
+from plane.utils.ketepatan_waktu import (
+    TANPA_TENGGAT,
+    TEPAT_WAKTU,
+    TERLAMBAT,
+    anotasi_ketepatan,
+    ketepatan,
+    q_tepat_waktu,
+    q_terlambat,
+)
 from plane.utils.ringkasan_divisi import _peta_departemen, project_terjangkau
 from plane.utils.setelan_instance import zona_kantor
 from plane.utils.statistik_pimpinan import cakupan_angka
@@ -51,9 +60,8 @@ PERIODE_BULAN_LALU = "last_month"
 PERIODE_SAH = (PERIODE_7_HARI, PERIODE_30_HARI, PERIODE_BULAN_INI, PERIODE_BULAN_LALU)
 PERIODE_BAWAAN = PERIODE_7_HARI
 
-TEPAT_WAKTU = "on_time"
-TERLAMBAT = "late"
-TANPA_TENGGAT = "no_due_date"
+# TEPAT_WAKTU, TERLAMBAT, TANPA_TENGGAT, dan `ketepatan` tinggal di
+# `utils/ketepatan_waktu.py`; tetap bisa diimpor dari sini untuk pemanggil lama.
 
 BATAS_DAFTAR = 500
 
@@ -96,12 +104,6 @@ def _ke_waktu(hari):
     return datetime.combine(hari, time.min, tzinfo=zona_kantor())
 
 
-def ketepatan(tanggal_selesai, tenggat):
-    if tenggat is None:
-        return TANPA_TENGGAT
-    return TEPAT_WAKTU if tanggal_selesai <= tenggat else TERLAMBAT
-
-
 def _selesai_di(project_ids, awal, akhir, cakupan):
     return Issue.issue_objects.filter(
         cakupan,
@@ -109,13 +111,13 @@ def _selesai_di(project_ids, awal, akhir, cakupan):
         state__group=_SELESAI,
         completed_at__gte=_ke_waktu(awal),
         completed_at__lt=_ke_waktu(akhir),
-    ).annotate(tanggal_selesai=TruncDate("completed_at", tzinfo=zona_kantor()))
+    ).annotate(**anotasi_ketepatan())
 
 
 _ANGKA = {
     "completed": Count("id"),
-    "on_time": Count("id", filter=Q(target_date__isnull=False, tanggal_selesai__lte=F("target_date"))),
-    "late": Count("id", filter=Q(target_date__isnull=False, tanggal_selesai__gt=F("target_date"))),
+    "on_time": Count("id", filter=q_tepat_waktu()),
+    "late": Count("id", filter=q_terlambat()),
     "no_due_date": Count("id", filter=Q(target_date__isnull=True)),
 }
 
@@ -194,7 +196,7 @@ def _baris_tugas(issue, nama):
         "completed_at": issue.completed_at,
         "completed_date": issue.tanggal_selesai,
         "target_date": issue.target_date,
-        "timing": ketepatan(issue.tanggal_selesai, issue.target_date),
+        "timing": ketepatan(issue.tanggal_selesai, issue.target_date, issue.created_at),
         "assignees": nama.get(issue.id, []),
     }
 

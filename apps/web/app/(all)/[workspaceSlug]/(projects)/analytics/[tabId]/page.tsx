@@ -53,7 +53,7 @@ function AnalyticsPage({ params }: Route.ComponentProps) {
   // Handle tab change
   const handleTabChange = (value: string) => {
     setSelectedTab(value);
-    router.push(`/${currentWorkspace?.slug}/analytics/${value}`);
+    router.push(`/${currentWorkspace?.slug}/kinerja/analitik/${value}`);
   };
 
   return (

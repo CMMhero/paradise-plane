@@ -24,7 +24,7 @@ export function AuthBase({ authType }: AuthBaseProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="relative z-10 flex h-screen w-screen overflow-y-auto bg-canvas lg:p-8">
+    <div className="relative z-10 flex h-dvh w-screen overflow-y-auto bg-canvas lg:p-8">
       <div className="m-auto grid min-h-full w-full max-w-[1180px] bg-surface-1 lg:min-h-[min(720px,100%)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-4 lg:rounded-overlay lg:border lg:border-subtle lg:p-4 lg:shadow-overlay-200">
         <AuthShowcase
           className="hidden lg:flex"

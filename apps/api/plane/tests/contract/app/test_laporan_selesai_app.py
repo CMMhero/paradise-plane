@@ -69,7 +69,7 @@ def _project(workspace, nama, identifier, anggota):
     return project, states
 
 
-def _tugas(project, state, nama=None, tenggat=None, selesai_pada=None, penanggung_jawab=()):
+def _tugas(project, state, nama=None, tenggat=None, selesai_pada=None, penanggung_jawab=(), dibuat_pada=None):
     issue = Issue(
         name=nama or f"Tugas {uuid4().hex[:6]}",
         workspace=project.workspace,
@@ -79,7 +79,13 @@ def _tugas(project, state, nama=None, tenggat=None, selesai_pada=None, penanggun
     )
     issue.save()
     # update(), bukan save(): save() mengisi tenggat otomatis dan completed_at = sekarang.
-    Issue.objects.filter(pk=issue.pk).update(completed_at=selesai_pada, target_date=tenggat)
+    # Dibuat sebulan lalu kecuali disebut: tugas selalu dicatat sebelum selesai, dan
+    # tenggat efektif = max(tenggat, hari dicatat) (`utils/ketepatan_waktu.py`).
+    Issue.objects.filter(pk=issue.pk).update(
+        completed_at=selesai_pada,
+        target_date=tenggat,
+        created_at=dibuat_pada or datetime.now(WIB) - timedelta(days=30),
+    )
     for user in penanggung_jawab:
         IssueAssignee.objects.create(issue=issue, assignee=user, project=project, workspace=project.workspace)
     return issue
@@ -88,9 +94,7 @@ def _tugas(project, state, nama=None, tenggat=None, selesai_pada=None, penanggun
 @pytest.fixture
 def direktur(db, workspace):
     unik = uuid4().hex[:8]
-    user = User.objects.create(
-        email=f"dir-{unik}@plane.so", username=f"dir_{unik}", display_name=f"Direktur {unik}"
-    )
+    user = User.objects.create(email=f"dir-{unik}@plane.so", username=f"dir_{unik}", display_name=f"Direktur {unik}")
     WorkspaceMember.objects.create(workspace=workspace, member=user, role=20)
     return user
 

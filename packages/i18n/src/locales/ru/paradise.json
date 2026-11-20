@@ -363,6 +363,21 @@
     "org_division": "Дивизион",
     "org_department": "Отдел"
   },
+  "changelog_ui": {
+    "title": "Что нового",
+    "empty": "Заметок о выпусках пока нет.",
+    "show_more": "Показать предыдущие версии",
+    "show_less": "Показать меньше"
+  },
+  "pengumuman_ui": {
+    "nav": "Объявления",
+    "empty": "Объявлений пока нет.",
+    "placeholder": "Напишите объявление",
+    "send": "Опубликовать",
+    "send_failed": "Не удалось опубликовать объявление.",
+    "load_failed": "Не удалось загрузить объявления.",
+    "open_in_chat": "Обсудить в чате"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",
@@ -1327,6 +1342,10 @@
   "kinerja": {
     "nav": "KPI",
     "title": "KPI",
+    "tabs_label": "KPI sections",
+    "tab_kpi": "KPI",
+    "tab_analytics": "Analytics",
+    "tab_dashboards": "Dashboards",
     "go_to": "Go to KPI",
     "heading": "KPI: {name}",
     "load_failed": "Failed to load this KPI. You may not have access to it.",

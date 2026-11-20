@@ -22,7 +22,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { HomePageHeader } from "@/plane-web/components/home/header";
 // local imports
 import { StickiesWidget } from "../stickies/widget";
-import { AttentionWidget, HomeLoader, NoProjectsEmptyState, RecentActivityWidget } from "./widgets";
+import { AttentionWidget, ChangelogWidget, HomeLoader, NoProjectsEmptyState, RecentActivityWidget } from "./widgets";
 import { DashboardQuickLinks } from "./widgets/links";
 import { ManageWidgetsModal } from "./widgets/manage";
 
@@ -118,6 +118,8 @@ export const DashboardWidgets = observer(function DashboardWidgets() {
           />
         </div>
       )}
+      {/* Paling bawah, di luar daftar widget: catatan rilis tidak bisa diatur lewat Manage widgets. */}
+      <ChangelogWidget workspaceSlug={workspaceSlug.toString()} />
     </div>
   );
 });

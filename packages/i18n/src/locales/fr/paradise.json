@@ -363,6 +363,21 @@
     "org_division": "Division",
     "org_department": "Service"
   },
+  "changelog_ui": {
+    "title": "Nouveautés",
+    "empty": "Aucune note de version pour l'instant.",
+    "show_more": "Afficher les versions précédentes",
+    "show_less": "Afficher moins"
+  },
+  "pengumuman_ui": {
+    "nav": "Annonces",
+    "empty": "Aucune annonce pour l'instant.",
+    "placeholder": "Rédiger une annonce",
+    "send": "Publier",
+    "send_failed": "Impossible de publier l'annonce.",
+    "load_failed": "Impossible de charger les annonces.",
+    "open_in_chat": "En discuter dans le chat"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",
@@ -1327,6 +1342,10 @@
   "kinerja": {
     "nav": "KPI",
     "title": "KPI",
+    "tabs_label": "KPI sections",
+    "tab_kpi": "KPI",
+    "tab_analytics": "Analytics",
+    "tab_dashboards": "Dashboards",
     "go_to": "Go to KPI",
     "heading": "KPI: {name}",
     "load_failed": "Failed to load this KPI. You may not have access to it.",

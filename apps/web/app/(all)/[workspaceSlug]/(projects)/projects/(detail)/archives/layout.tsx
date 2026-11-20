@@ -4,15 +4,22 @@
  * See the LICENSE file for details.
  */
 
+import { observer } from "mobx-react";
 // components
-import { Outlet } from "react-router";
+import { Navigate, Outlet, useParams } from "react-router";
 import { AppHeader } from "@/components/core/app-header";
 import { ContentWrapper } from "@/components/core/content-wrapper";
+// hooks
+import { useIsDirektur } from "@/hooks/use-is-direktur";
 // local components
 import { ProjectsListHeader } from "@/plane-web/components/projects/header";
 import { ProjectsListMobileHeader } from "@/plane-web/components/projects/mobile-header";
 
-export default function ProjectListLayout() {
+function ProjectListLayout() {
+  const { workspaceSlug } = useParams();
+  const { isDirektur } = useIsDirektur(workspaceSlug);
+  // Arsip disembunyikan untuk Direktur: arahkan ke beranda, sama seperti halaman lain yang tertutup.
+  if (isDirektur) return <Navigate to={`/${workspaceSlug}/`} replace />;
   return (
     <>
       <AppHeader header={<ProjectsListHeader />} mobileHeader={<ProjectsListMobileHeader />} />
@@ -22,3 +29,5 @@ export default function ProjectListLayout() {
     </>
   );
 }
+
+export default observer(ProjectListLayout);

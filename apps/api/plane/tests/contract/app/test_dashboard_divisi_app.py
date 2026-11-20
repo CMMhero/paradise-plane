@@ -232,8 +232,14 @@ class TestTepatWaktuHariKantor:
         telat = _tugas(project, states["completed"], tenggat)
         # 23.30 WIB di hari tenggat = 16.30 UTC (tanggal sama); 00.30 WIB sehari
         # sesudahnya = 17.30 UTC di hari tenggat, yang dulu salah dihitung tepat waktu.
-        Issue.objects.filter(pk=tepat.pk).update(completed_at=datetime(2026, 11, 2, 23, 30, tzinfo=zona))
-        Issue.objects.filter(pk=telat.pk).update(completed_at=datetime(2026, 11, 3, 0, 30, tzinfo=zona))
+        # Dicatat sebelum tenggat, supaya tenggat efektif = tenggat (`utils/ketepatan_waktu.py`).
+        dibuat = datetime(2026, 10, 20, 9, 0, tzinfo=zona)
+        Issue.objects.filter(pk=tepat.pk).update(
+            completed_at=datetime(2026, 11, 2, 23, 30, tzinfo=zona), created_at=dibuat
+        )
+        Issue.objects.filter(pk=telat.pk).update(
+            completed_at=datetime(2026, 11, 3, 0, 30, tzinfo=zona), created_at=dibuat
+        )
 
         sekarang = datetime(2026, 11, 4, 12, 0, tzinfo=zona)
         totals = hitung_ringkasan(direktur, workspace.slug, sekarang=sekarang)["totals"]

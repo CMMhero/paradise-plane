@@ -23,30 +23,6 @@ const objek = (v: unknown): TObjek => (v && typeof v === "object" && !Array.isAr
 const teks = (v: unknown): string => (typeof v === "string" ? v : "");
 const angka = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
-export type TJenisEntri = "Added" | "Changed" | "Fixed";
-
-export type TCatatanRilis = {
-  versi: string;
-  tanggal: string;
-  entri: { type: TJenisEntri; text: string }[];
-};
-
-export const bacaCatatanRilis = (muatan: unknown): TCatatanRilis => {
-  const m = objek(muatan);
-  const entri = Array.isArray(m.entri) ? m.entri : [];
-  return {
-    versi: teks(m.versi),
-    tanggal: teks(m.tanggal),
-    entri: entri
-      .map((e) => objek(e))
-      .filter((e) => ["Added", "Changed", "Fixed"].includes(teks(e.type)) && teks(e.text))
-      .map((e) => ({ type: teks(e.type) as TJenisEntri, text: teks(e.text) })),
-  };
-};
-
-/** Urutan tampil: yang baru dulu, lalu perubahan, lalu perbaikan. */
-export const URUTAN_ENTRI: TJenisEntri[] = ["Added", "Changed", "Fixed"];
-
 export type TStatusPanggilan = "berlangsung" | "selesai" | "tak_terjawab";
 
 export type TLogPanggilan = {

@@ -363,6 +363,21 @@
     "org_division": "Divize",
     "org_department": "Oddělení"
   },
+  "changelog_ui": {
+    "title": "Novinky",
+    "empty": "Zatím žádné poznámky k verzím.",
+    "show_more": "Zobrazit starší verze",
+    "show_less": "Zobrazit méně"
+  },
+  "pengumuman_ui": {
+    "nav": "Oznámení",
+    "empty": "Zatím žádná oznámení.",
+    "placeholder": "Napsat oznámení",
+    "send": "Zveřejnit",
+    "send_failed": "Oznámení se nepodařilo zveřejnit.",
+    "load_failed": "Oznámení se nepodařilo načíst.",
+    "open_in_chat": "Probrat v chatu"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",
@@ -1327,6 +1342,10 @@
   "kinerja": {
     "nav": "KPI",
     "title": "KPI",
+    "tabs_label": "KPI sections",
+    "tab_kpi": "KPI",
+    "tab_analytics": "Analytics",
+    "tab_dashboards": "Dashboards",
     "go_to": "Go to KPI",
     "heading": "KPI: {name}",
     "load_failed": "Failed to load this KPI. You may not have access to it.",

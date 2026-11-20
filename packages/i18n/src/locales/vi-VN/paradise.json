@@ -363,6 +363,21 @@
     "org_division": "Khối",
     "org_department": "Phòng ban"
   },
+  "changelog_ui": {
+    "title": "Có gì mới",
+    "empty": "Chưa có ghi chú phát hành.",
+    "show_more": "Hiện các bản phát hành trước",
+    "show_less": "Thu gọn"
+  },
+  "pengumuman_ui": {
+    "nav": "Thông báo",
+    "empty": "Chưa có thông báo nào.",
+    "placeholder": "Viết thông báo",
+    "send": "Đăng",
+    "send_failed": "Không thể đăng thông báo.",
+    "load_failed": "Không thể tải thông báo.",
+    "open_in_chat": "Thảo luận trong Trò chuyện"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",
@@ -1327,6 +1342,10 @@
   "kinerja": {
     "nav": "KPI",
     "title": "KPI",
+    "tabs_label": "KPI sections",
+    "tab_kpi": "KPI",
+    "tab_analytics": "Analytics",
+    "tab_dashboards": "Dashboards",
     "go_to": "Go to KPI",
     "heading": "KPI: {name}",
     "load_failed": "Failed to load this KPI. You may not have access to it.",

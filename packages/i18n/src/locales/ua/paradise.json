@@ -363,6 +363,21 @@
     "org_division": "Дивізіон",
     "org_department": "Відділ"
   },
+  "changelog_ui": {
+    "title": "Що нового",
+    "empty": "Приміток до випусків поки немає.",
+    "show_more": "Показати попередні версії",
+    "show_less": "Показати менше"
+  },
+  "pengumuman_ui": {
+    "nav": "Оголошення",
+    "empty": "Оголошень поки немає.",
+    "placeholder": "Напишіть оголошення",
+    "send": "Опублікувати",
+    "send_failed": "Не вдалося опублікувати оголошення.",
+    "load_failed": "Не вдалося завантажити оголошення.",
+    "open_in_chat": "Обговорити в чаті"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",
@@ -1327,6 +1342,10 @@
   "kinerja": {
     "nav": "KPI",
     "title": "KPI",
+    "tabs_label": "KPI sections",
+    "tab_kpi": "KPI",
+    "tab_analytics": "Analytics",
+    "tab_dashboards": "Dashboards",
     "go_to": "Go to KPI",
     "heading": "KPI: {name}",
     "load_failed": "Failed to load this KPI. You may not have access to it.",

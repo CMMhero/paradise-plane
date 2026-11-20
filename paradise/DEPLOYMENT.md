@@ -27,6 +27,28 @@ Docker Compose sudah cukup. K8s hanya perlu kalau butuh HA/autoscale + tim ops.
    Cek dengan `paradise/bin/healthcheck.sh`.
 5. **HTTPS:** set `SITE_ADDRESS=domain-kamu` + `CERT_EMAIL` → Caddy urus sertifikat
    otomatis. Untuk LAN tanpa domain, tetap HTTP di port 80.
+6. **Alamat publik dan alamat LAN sekaligus.** Kalau server dibuka lewat domain
+   dan juga lewat IP, isi di `apps/api/.env` (yang dibaca container `api`) dan
+   di `.env` root:
+
+   ```
+   WEB_URL=https://domain-kamu
+   APP_BASE_URL=https://domain-kamu
+   ADMIN_BASE_URL=https://domain-kamu
+   SPACE_BASE_URL=https://domain-kamu
+   CORS_ALLOWED_ORIGINS=https://domain-kamu,http://IP-server
+   SITE_ADDRESS=domain-kamu, http://IP-server
+   ```
+
+   `ADMIN_BASE_URL` dan `SPACE_BASE_URL` berisi asal saja, tanpa `/god-mode`
+   atau `/spaces`. Jangan isi dengan IP: login god-mode dari domain akan
+   dialihkan ke IP, tempat cookie sesinya tidak ada. Api sekarang
+   mengarahkan login god-mode dan space balik ke alamat yang sedang dipakai
+   peramban, asalkan alamat itu terdaftar di salah satu variabel di atas, jadi
+   IP tetap jalan dari LAN. `deploy.sh` memperingatkan kalau
+   `ADMIN_BASE_URL`/`SPACE_BASE_URL` berbeda asal dengan `WEB_URL`. Perubahan
+   env baru terbaca sesudah container `api` dibuat ulang
+   (`docker compose up -d api`).
 
 ## CI/CD
 

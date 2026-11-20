@@ -33,6 +33,7 @@ export const RESTRICTED_URLS: string[] = [
   "disco",
   "silo",
   "chat",
+  "pengumuman",
   "calendar",
   "drive",
   "channels",
@@ -207,21 +208,9 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
-  analytics: {
-    key: "analytics",
-    labelTranslationKey: "analytics",
-    href: `/analytics/`,
-    access: [EUserWorkspaceRoles.ADMIN],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  dashboard_divisi: {
-    key: "dashboard_divisi",
-    labelTranslationKey: "workspace_dashboards",
-    href: `/dashboard-divisi/`,
-    access: [EUserWorkspaceRoles.ADMIN],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
   // KPI (Paradise 2.9): semua orang punya, isinya dibatasi server menurut jenjang.
+  // Analitik dan Dasbor Divisi tidak lagi punya menu sendiri: keduanya tab di halaman ini
+  // (/kinerja/analitik, /kinerja/dasbor), tampil bagi admin non-direktur.
   kinerja: {
     key: "kinerja",
     labelTranslationKey: "kinerja.nav",
@@ -273,6 +262,14 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
+  // Pengumuman (Paradise): daftar kanal sistem Announcements.
+  pengumuman: {
+    key: "pengumuman",
+    labelTranslationKey: "pengumuman_ui.nav",
+    href: `/pengumuman/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
   // Wiki perusahaan (Paradise). href SENGAJA statis `/wiki/`, halaman itu
   // meresolusi project ber-identifier WIKI lalu redirect. Jangan menaruh UUID
   // project di sini: UUID-nya berbeda di tiap instance, jadi akan salah di server
@@ -298,14 +295,13 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
 
 export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebarNavigationItem[] = [
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["views"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["dashboard_divisi"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["kinerja"],
   // Dinyalakan/dimatikan di God Mode > Features (lihat apps/web/core/lib/paradise-modules.ts).
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["persetujuan"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["tugas_lintas_divisi"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["chat"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["pengumuman"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["wiki"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
 ];
