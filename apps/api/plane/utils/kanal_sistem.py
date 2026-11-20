@@ -49,6 +49,12 @@ KANAL_SISTEM = (
     (KUNCI_CHANGELOG, "Changelogs", "What changed in each Paradise release."),
 )
 
+# Kanal sistem yang DIIKUTI anggota dan tampil di Obrolan. Changelog sengaja
+# tidak ada di sini: catatan rilis kini tampil sebagai widget di Home
+# (`ChangelogEndpoint`), dan ruangnya hanya menjadi penyimpan kartu. Langganan
+# lama ke ruang itu dibiarkan di database, hanya disembunyikan dari Obrolan.
+KUNCI_KANAL_DIIKUTI = (KUNCI_PENGUMUMAN,)
+
 
 def _ambil_atau_buat(workspace_id, kunci, nama, topik, tipe):
     """Ruang sistem `kunci` di workspace ini, dibuat kalau belum ada.
@@ -112,7 +118,7 @@ def ikutkan_ke_kanal_sistem(workspace_id, user_ids=None) -> int:
     orang = anggota_layak(workspace_id, user_ids)
     if not orang:
         return 0
-    ruang_ids = [r.id for r in kanal.values()]
+    ruang_ids = [r.id for kunci, r in kanal.items() if kunci in KUNCI_KANAL_DIIKUTI]
     sudah = set(Langganan.objects.filter(ruang_id__in=ruang_ids, user_id__in=orang).values_list("ruang_id", "user_id"))
     # Orang yang baru masuk tidak perlu menerima riwayat sebagai "belum dibaca":
     # puluhan catatan rilis lama yang menyala merah di hari pertama hanya
@@ -141,9 +147,9 @@ def ikutkan_jika_belum(workspace_id, user_id) -> None:
         jumlah = Langganan.objects.filter(
             user_id=user_id,
             ruang__workspace_id=workspace_id,
-            ruang__kunci_sistem__in=[KUNCI_PENGUMUMAN, KUNCI_CHANGELOG],
+            ruang__kunci_sistem__in=KUNCI_KANAL_DIIKUTI,
         ).count()
-        if jumlah < len(KANAL_SISTEM):
+        if jumlah < len(KUNCI_KANAL_DIIKUTI):
             ikutkan_ke_kanal_sistem(workspace_id, [user_id])
     except Exception:  # noqa: BLE001
         logger.exception("kanal-sistem: pemeriksaan malas gagal untuk %s", user_id)

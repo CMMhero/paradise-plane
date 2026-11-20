@@ -5,6 +5,7 @@
  */
 
 export * from "./attention";
+export * from "./changelog";
 export * from "./empty-states";
 export * from "./loaders";
 export * from "./recents";

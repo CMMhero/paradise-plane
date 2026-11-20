@@ -363,6 +363,21 @@
     "org_division": "Divisi",
     "org_department": "Departemen"
   },
+  "changelog_ui": {
+    "title": "Yang baru",
+    "empty": "Belum ada catatan rilis.",
+    "show_more": "Lihat rilis sebelumnya",
+    "show_less": "Sembunyikan"
+  },
+  "pengumuman_ui": {
+    "nav": "Pengumuman",
+    "empty": "Belum ada pengumuman.",
+    "placeholder": "Tulis pengumuman",
+    "send": "Terbitkan",
+    "send_failed": "Pengumuman gagal diterbitkan.",
+    "load_failed": "Pengumuman gagal dimuat.",
+    "open_in_chat": "Diskusikan di Obrolan"
+  },
   "chat_ui": {
     "try_again_shortly": "Coba lagi sebentar.",
     "upload_failed_all": "Berkas gagal diunggah",

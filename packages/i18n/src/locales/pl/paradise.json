@@ -363,6 +363,21 @@
     "org_division": "Dywizja",
     "org_department": "Dział"
   },
+  "changelog_ui": {
+    "title": "Co nowego",
+    "empty": "Brak informacji o wydaniach.",
+    "show_more": "Pokaż wcześniejsze wersje",
+    "show_less": "Pokaż mniej"
+  },
+  "pengumuman_ui": {
+    "nav": "Ogłoszenia",
+    "empty": "Brak ogłoszeń.",
+    "placeholder": "Napisz ogłoszenie",
+    "send": "Opublikuj",
+    "send_failed": "Nie udało się opublikować ogłoszenia.",
+    "load_failed": "Nie udało się wczytać ogłoszeń.",
+    "open_in_chat": "Omów na czacie"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",

@@ -23,6 +23,7 @@ from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAn
 from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
 from plane.app.views.chat_penulis import ChatPenulisKanalEndpoint
 from plane.app.views.chat import ChatRuangBacaEndpoint, ChatRuangSematanEndpoint, ChatSematanEndpoint
+from plane.app.views.changelog import ChangelogEndpoint
 from plane.app.views.chat_rujukan import ChatRujukanEndpoint, ChatRujukanInfoEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
 from plane.app.views.wiki import (
@@ -119,6 +120,11 @@ urlpatterns = [
         "workspaces/<str:slug>/initiatives/<uuid:pk>/projects/<uuid:project_id>/",
         InitiativeViewSet.as_view({"delete": "unlink_project"}),
         name="initiative-projects",
+    ),
+    path(
+        "workspaces/<str:slug>/changelog/",
+        ChangelogEndpoint.as_view(),
+        name="changelog",
     ),
     path(
         "workspaces/<str:slug>/chat/",

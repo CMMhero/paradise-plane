@@ -363,6 +363,21 @@
     "org_division": "División",
     "org_department": "Departamento"
   },
+  "changelog_ui": {
+    "title": "Novedades",
+    "empty": "Aún no hay notas de versión.",
+    "show_more": "Mostrar versiones anteriores",
+    "show_less": "Mostrar menos"
+  },
+  "pengumuman_ui": {
+    "nav": "Anuncios",
+    "empty": "Aún no hay anuncios.",
+    "placeholder": "Escribe un anuncio",
+    "send": "Publicar",
+    "send_failed": "No se pudo publicar el anuncio.",
+    "load_failed": "No se pudieron cargar los anuncios.",
+    "open_in_chat": "Comentar en el chat"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",

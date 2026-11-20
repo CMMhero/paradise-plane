@@ -39,6 +39,7 @@ const PARADISE_ALWAYS_VISIBLE_ITEMS = [
   "persetujuan",
   "tugas_lintas_divisi",
   "chat",
+  "pengumuman",
 ];
 
 /**

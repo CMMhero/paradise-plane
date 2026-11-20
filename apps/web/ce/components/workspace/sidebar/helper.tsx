@@ -4,7 +4,17 @@
  * See the LICENSE file for details.
  */
 
-import { ArrowLeftRight, BookText, Gauge, LayoutDashboard, Link2, MessageSquare, Stamp, Target } from "lucide-react";
+import {
+  ArrowLeftRight,
+  BookText,
+  Gauge,
+  LayoutDashboard,
+  Link2,
+  Megaphone,
+  MessageSquare,
+  Stamp,
+  Target,
+} from "lucide-react";
 import {
   AnalyticsIcon,
   ArchiveIcon,
@@ -43,6 +53,7 @@ const NAV_ICON_HUE: Record<string, TTintHue> = {
   persetujuan: "orange",
   tugas_lintas_divisi: "purple",
   chat: "indigo",
+  pengumuman: "orange",
   quick_links: "emerald",
 };
 
@@ -87,6 +98,8 @@ export const getSidebarNavigationItemIcon = (key: string, extraClassName: string
       return <ArrowLeftRight className={cn("size-4 flex-shrink-0", className)} />;
     case "chat":
       return <MessageSquare className={cn("size-4 flex-shrink-0", className)} />;
+    case "pengumuman":
+      return <Megaphone className={cn("size-4 flex-shrink-0", className)} />;
     case "quick_links":
       return <Link2 className={cn("size-4 flex-shrink-0", className)} />;
   }

@@ -30,9 +30,9 @@ export type TRuang = {
   jumlah_anggota?: number;
   /** Kanal sistem: tidak bisa ditinggalkan atau diubah, berlencana "System". */
   sistem?: boolean;
-  /** `pengumuman` | `changelog` | `cabang:<id>` | `divisi:<id>` | `departemen:<id>`. */
+  /** `pengumuman` | `cabang:<id>` | `divisi:<id>` | `departemen:<id>`. */
   kunci_sistem?: string | null;
-  /** False = kolom tulis disembunyikan (Changelog, Announcements untuk yang
+  /** False = kolom tulis disembunyikan (Announcements untuk yang
    * bukan admin atau penulis yang diizinkan). Server tetap menolak 403. */
   boleh_kirim?: boolean;
 };
@@ -41,6 +41,7 @@ export type TRuang = {
 export type TJenisPesan =
   | "teks"
   | "panggilan"
+  /** Kartu lama; catatan rilis kini di widget Home, bukan Obrolan. */
   | "changelog"
   | "tugas"
   | "project"
