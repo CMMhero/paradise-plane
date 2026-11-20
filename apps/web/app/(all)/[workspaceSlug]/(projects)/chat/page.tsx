@@ -828,7 +828,7 @@ function ChatPage() {
   if (!slug) return <></>;
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full min-h-0 w-full">
       <PageHead title={t("chat_nav")} />
 
       {/* Daftar orang */}
@@ -1085,7 +1085,10 @@ function ChatPage() {
           dibuka. Keadaan kosong "Pilih orang di sebelah kiri" tidak masuk akal
           di HP, karena di situ tidak ada "sebelah kiri". */}
       <section
-        className={cn("relative flex min-w-0 flex-1 flex-col", !adaPercakapanTerbuka && "hidden lg:flex")}
+        className={cn(
+          "relative flex min-h-0 min-w-0 flex-1 flex-col overflow-clip",
+          !adaPercakapanTerbuka && "hidden lg:flex"
+        )}
         {...(adaPercakapanTerbuka ? aturSeret : {})}
       >
         {/* Area lepas: muncul hanya saat berkas diseret di atas percakapan. */}
@@ -1259,7 +1262,7 @@ function ChatPage() {
             />
 
             <div className="relative flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 overflow-y-auto px-4 py-3" onScroll={saatGulir}>
+              <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3" onScroll={saatGulir}>
                 {/* Tombol riwayat hanya muncul kalau memang ada kemungkinan ada
                   yang lebih lama, dan menghilang setelah server bilang habis. */}
                 {barisPesan.length > 0 && !habis ? (
