@@ -14,6 +14,9 @@
  * seluruh percakapan.
  */
 
+import { teksDariHtml } from "./teks-html";
+import type { TLabelSebutan } from "./teks-html";
+
 type TObjek = Record<string, unknown>;
 
 const objek = (v: unknown): TObjek => (v && typeof v === "object" && !Array.isArray(v) ? (v as TObjek) : {});
@@ -109,19 +112,21 @@ export type TKartuTugas = {
 };
 
 /** Satu entri `detail.perubahan` jadi teks pendek: "state → Done", "labels +Bug -Lama". */
-const bacaPerubahan = (v: unknown): string => {
+const bacaPerubahan = (v: unknown, label: TLabelSebutan): string => {
   const p = objek(v);
   const nama = teks(p.field).replace(/_/g, " ");
   if (!nama) return "";
+  const satuBaris = (x: unknown) => teksDariHtml(teks(x), label).replace(/\n/g, " ");
   if (Array.isArray(p.tambah) || Array.isArray(p.hapus)) {
-    const daftar = (x: unknown) => (Array.isArray(x) ? x.map(teks).filter(Boolean) : []);
+    const daftar = (x: unknown) => (Array.isArray(x) ? x.map(satuBaris).filter(Boolean) : []);
     const butir = [...daftar(p.tambah).map((x) => `+${x}`), ...daftar(p.hapus).map((x) => `-${x}`)];
     return butir.length > 0 ? `${nama} ${butir.join(" ")}` : nama;
   }
-  return `${nama} → ${teks(p.baru) || "-"}`;
+  return `${nama} → ${satuBaris(p.baru) || "-"}`;
 };
 
-export const bacaKartuTugas = (muatan: unknown): TKartuTugas => {
+/** `label` mengganti sebutan di HTML kartu lama (lihat teks-html.ts). */
+export const bacaKartuTugas = (muatan: unknown, label: TLabelSebutan): TKartuTugas => {
   const m = objek(muatan);
   const project = objek(m.project);
   const tugas = objek(m.tugas);
@@ -146,12 +151,14 @@ export const bacaKartuTugas = (muatan: unknown): TKartuTugas => {
         }
       : null,
     detail: {
-      komentar: teks(detail.komentar),
+      komentar: teksDariHtml(teks(detail.komentar), label),
       field: teks(detail.field),
       verb: teks(detail.verb),
-      deskripsi: teks(detail.deskripsi),
+      deskripsi: teksDariHtml(teks(detail.deskripsi), label),
       jumlahKomentar: angka(detail.jumlah_komentar) ?? 0,
-      perubahan: (Array.isArray(detail.perubahan) ? detail.perubahan : []).map(bacaPerubahan).filter(Boolean),
+      perubahan: (Array.isArray(detail.perubahan) ? detail.perubahan : [])
+        .map((p) => bacaPerubahan(p, label))
+        .filter(Boolean),
       batal: detail.batal === true,
     },
     persetujuan: teks(persetujuan.id)

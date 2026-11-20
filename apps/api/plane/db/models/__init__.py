@@ -93,12 +93,12 @@ from .deadline_reminder import PengingatTenggat
 from .jadwal_kantor import JadwalTerlaksana
 from .google_calendar import AcaraKalender, KalenderGoogle, SCOPE_KALENDER
 from .chat import (
-    AWALAN_KABAR,
     BATAS_ISI,
     KUNCI_CHANGELOG,
     KUNCI_PENGUMUMAN,
     JenisPesan,
     Langganan,
+    PenulisKanal,
     PesanLangsung,
     ReaksiPesan,
     Ruang,

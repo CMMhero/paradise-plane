@@ -39,12 +39,6 @@ def project_add_user_email(current_site, project_member_id, invitor_id):
         project_member = ProjectMember.objects.select_related("project", "workspace", "member").get(
             pk=project_member_id
         )
-        # Kustomisasi Paradise: kartu "ditambahkan ke project" di ruang "Paradise"
-        # obrolan, sebelum email (yang bisa gagal karena konfigurasi SMTP).
-        # Menelan galatnya sendiri.
-        from plane.utils.kartu_obrolan import kartu_ditambahkan_ke_project  # noqa: PLC0415
-
-        kartu_ditambahkan_ke_project(project_member, invitor_id)
         member = project_member.member
         project_url = f"{current_site}/{project_member.workspace.slug}/projects/{project_member.project_id}/issues"
         gambar = []

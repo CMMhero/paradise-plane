@@ -10,7 +10,8 @@
  * Yang boleh mengubah ditentukan SERVER (`boleh_kelola` di `chat_kelola.py`):
  * pembuat, admin workspace, atau Super Admin yang juga anggota. UI hanya
  * menyembunyikan tombol yang pasti ditolak; penjagaannya tetap di API.
- * Kanal sistem (`sistem`) tidak bisa diubah maupun ditinggalkan.
+ * Kanal sistem (`sistem`) tidak bisa diubah maupun ditinggalkan. Untuk
+ * Announcements, admin mengatur siapa lagi yang boleh menulis di sini.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -34,6 +35,7 @@ import { useUser } from "@/hooks/store/user";
 import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 // services
 import { ChatService } from "@/services/chat.service";
+import { PenulisPengumuman } from "./penulis-pengumuman";
 
 const chatService = new ChatService();
 const BATAS_NAMA = 80;
@@ -276,6 +278,10 @@ export const DialogSetelanKanal = observer(function DialogSetelanKanal({
                 )}
               </div>
             )}
+
+            {detail?.boleh_atur_penulis && ruangId ? (
+              <PenulisPengumuman slug={slug} ruangId={ruangId} minta={minta} />
+            ) : null}
 
             {/* Undang */}
             {bolehUndang ? (

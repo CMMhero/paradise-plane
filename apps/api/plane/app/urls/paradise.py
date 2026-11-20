@@ -20,6 +20,7 @@ from plane.app.views.workspace.izin_saya import IzinSayaEndpoint
 from plane.app.views.workspace.perhatian import PerhatianEndpoint
 from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAnggotaEndpoint
 from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
+from plane.app.views.chat_penulis import ChatPenulisKanalEndpoint
 from plane.app.views.chat import ChatRuangSematanEndpoint, ChatSematanEndpoint
 from plane.app.views.chat_rujukan import ChatRujukanEndpoint, ChatRujukanInfoEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
@@ -205,6 +206,16 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/kelola/",
         ChatKelolaRuangEndpoint.as_view(),
         name="chat-ruang-kelola",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/penulis/",
+        ChatPenulisKanalEndpoint.as_view(),
+        name="chat-ruang-penulis",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/penulis/<uuid:penulis_id>/",
+        ChatPenulisKanalEndpoint.as_view(),
+        name="chat-ruang-penulis-cabut",
     ),
     # KEP-91: saran dan keterangan rujukan #kanal / #work item, dipakai juga
     # oleh editor deskripsi dan komentar.

@@ -8,8 +8,8 @@
 Satu tempat untuk tiga pertanyaan:
 
 1. Kanal mana yang boleh dirujuk seseorang (`kanal_terlihat`). Kanal publik
-   terlihat semua anggota workspace, kanal privat hanya oleh anggotanya. DM dan
-   ruang kabar pribadi ("Paradise") tidak pernah bisa dirujuk.
+   terlihat semua anggota workspace, kanal privat hanya oleh anggotanya. DM
+   tidak pernah bisa dirujuk.
 2. Work item mana yang boleh dirujuk (`tugas_terlihat`): hanya dari project yang
    orang itu anggota aktifnya.
 3. Apa yang boleh DIBACA penonton (`samarkan`). Pengirim boleh merujuk kanal
@@ -29,7 +29,7 @@ import uuid
 from django.db.models import Q
 
 from plane.utils.akses_privat import saring_tugas_privat
-from plane.db.models import AWALAN_KABAR, Issue, Langganan, ProjectMember, Ruang
+from plane.db.models import Issue, Langganan, ProjectMember, Ruang
 
 # Berapa rujukan per jenis yang disimpan di satu pesan. Lebih dari ini bukan
 # rujukan lagi, cuma daftar.
@@ -66,13 +66,8 @@ def kanal_terlihat_q(user_id) -> Q:
 
 
 def kanal_terlihat(user_id, workspace_id):
-    """Kanal di workspace ini yang boleh dirujuk `user_id`, tanpa DM dan ruang kabar."""
-    return (
-        Ruang.objects.filter(workspace_id=workspace_id)
-        .exclude(tipe=Ruang.Tipe.DM)
-        .exclude(kunci_sistem__startswith=AWALAN_KABAR)
-        .filter(kanal_terlihat_q(user_id))
-    )
+    """Kanal di workspace ini yang boleh dirujuk `user_id`, tanpa DM."""
+    return Ruang.objects.filter(workspace_id=workspace_id).exclude(tipe=Ruang.Tipe.DM).filter(kanal_terlihat_q(user_id))
 
 
 def tugas_terlihat(user, workspace_id):

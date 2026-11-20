@@ -29,7 +29,6 @@ from plane.db.models import (
     Workspace,
     WorkspaceMember,
 )
-from plane.utils.kanal_sistem import kunci_kabar, ruang_kabar
 from plane.utils.rujukan_obrolan import NAMA_PRIVAT, samarkan, samarkan_teks
 
 
@@ -141,17 +140,14 @@ class TestSaranRujukan:
         assert [r["nama"] for r in _klien(k["cici"]).get(_url(k, "rujukan/"), {"q": "umu"}).json()["kanal"]] == ["umum"]
 
     @pytest.mark.django_db
-    def test_dm_dan_ruang_kabar_tidak_pernah_disarankan(self, kantor):
+    def test_dm_tidak_pernah_disarankan(self, kantor):
         k = kantor
-        kabar = ruang_kabar(k["ws"].id, k["ani"].id)
-        assert kabar.kunci_sistem == kunci_kabar(k["ani"].id)
         _klien(k["ani"]).post(_url(k, f"{k['budi'].id}/"), {"isi": "hai"}, format="json")
+        dm = Ruang.objects.get(kunci_dm=Ruang.buat_kunci_dm(k["ani"].id, k["budi"].id))
         semua = _klien(k["ani"]).get(_url(k, "rujukan/"), {"count": 20}).json()["kanal"]
-        ids = {r["id"] for r in semua}
-        assert str(kabar.id) not in ids
         assert all(r["tipe"] != Ruang.Tipe.DM for r in semua)
-        info = _klien(k["ani"]).get(_url(k, "rujukan/info/"), {"kanal": str(kabar.id)}).json()
-        assert info["kanal"][str(kabar.id)] == {"id": str(kabar.id), "boleh": False}
+        info = _klien(k["ani"]).get(_url(k, "rujukan/info/"), {"kanal": str(dm.id)}).json()
+        assert info["kanal"][str(dm.id)] == {"id": str(dm.id), "boleh": False}
 
     @pytest.mark.django_db
     def test_tugas_hanya_dari_project_yang_diikuti(self, kantor):
@@ -208,14 +204,10 @@ class TestSaranRujukan:
 # ---------------------------------------------------------------- pengiriman
 
 
-def _kartu(user):
-    return PesanLangsung.objects.filter(ruang__kunci_sistem=kunci_kabar(user.id), jenis=JenisPesan.MENTION)
-
-
 @pytest.mark.unit
 class TestKirimRujukan:
     @pytest.mark.django_db
-    def test_muatan_disaring_dan_all_mengirim_kartu_ke_semua_kecuali_pengirim(self, kantor):
+    def test_muatan_disaring_tanpa_kartu_sebutan(self, kantor):
         k = kantor
         jawab = _klien(k["ani"]).post(
             _url(k, f"ruang/{k['umum'].id}/"),
@@ -250,28 +242,9 @@ class TestKirimRujukan:
         # Pengirim melihat semuanya, dengan `boleh`.
         assert all(e["boleh"] for e in jawab.json()["muatan"]["kanal"])
 
-        # @all: budi & cici dapat kartu tepat satu, ani tidak sama sekali.
-        assert _kartu(k["budi"]).count() == 1
-        assert _kartu(k["cici"]).count() == 1
-        assert not _kartu(k["ani"]).exists()
-        # Cuplikan kartu disamarkan per penerima.
-        assert "#rahasia" in _kartu(k["budi"]).first().isi
-        isi_cici = _kartu(k["cici"]).first()
-        assert "rahasia" not in isi_cici.isi and f"#{NAMA_PRIVAT}" in isi_cici.isi
-        assert "rahasia" not in isi_cici.muatan["detail"]["komentar"]
-
-    @pytest.mark.django_db
-    def test_sebut_diri_sendiri_tanpa_kartu(self, kantor):
-        k = kantor
-        jawab = _klien(k["ani"]).post(
-            _url(k, f"ruang/{k['umum'].id}/"),
-            {"isi": "@ani @budi catatan", "sebut": [str(k["ani"].id), str(k["budi"].id)]},
-            format="json",
-        )
-        assert jawab.json()["muatan"] == {"sebut": [str(k["ani"].id), str(k["budi"].id)]}
-        assert not _kartu(k["ani"]).exists()
-        assert _kartu(k["budi"]).count() == 1
-        assert not _kartu(k["cici"]).exists()
+        # Sebutan dan @all di kanal tidak lagi dikirim sebagai kartu ke ruang kabar
+        # "Paradise" (dihapus, migrasi 0181): pesannya sendiri sudah di kanal.
+        assert not PesanLangsung.objects.filter(jenis=JenisPesan.MENTION).exists()
 
     @pytest.mark.django_db
     def test_all_diabaikan_di_dm(self, kantor):
@@ -328,8 +301,8 @@ def _mention(nama, ident):
 @pytest.mark.unit
 class TestSebutanTeksKaya:
     @pytest.mark.django_db
-    def test_process_mention_semua_jenis_tanpa_galat(self, kantor):
-        from plane.bgtasks.email_notification_task import process_mention
+    def test_ganti_sebutan_semua_jenis_tanpa_galat(self, kantor):
+        from plane.utils.teks_html import ganti_sebutan
 
         k = kantor
         html = " ".join(
@@ -344,7 +317,7 @@ class TestSebutanTeksKaya:
                 _mention("issue_mention", uuid4()),
             ]
         )
-        hasil = process_mention(f"<p>{html}</p>")
+        hasil = ganti_sebutan(f"<p>{html}</p>")
         assert hasil == (
             f"<p>@budi @unknown @all #umum #{NAMA_PRIVAT} #{NAMA_PRIVAT} GDG-{k['gdg'].sequence_id} #work-item</p>"
         )

@@ -26,7 +26,6 @@ from plane.db.models import (
 )
 from plane.db.models.hierarki import TINGKAT_MANAGER, TINGKAT_MEMBER
 from plane.utils.kanal_organisasi import kunci_departemen, kunci_divisi, sinkronkan_kanal_organisasi
-from plane.utils.kanal_sistem import kunci_kabar
 
 
 def _orang(nama):
@@ -131,7 +130,7 @@ class TestKanalOrganisasi:
 @pytest.mark.unit
 class TestSebutan:
     @pytest.mark.django_db
-    def test_sebutan_disaring_ke_anggota_dan_mengirim_kartu(self, org):
+    def test_sebutan_disaring_ke_anggota_tanpa_kartu(self, org):
         ws, ani, manager, luar = org["ws"], org["ani"], org["manager"], org["luar"]
         ruang = Ruang.objects.get(workspace=ws, kunci_sistem=kunci_departemen(org["smt1"].id))
         jawab = _klien(ani).post(
@@ -141,17 +140,11 @@ class TestSebutan:
         )
         assert jawab.status_code == 201
         # Orang luar ruang dibuang, sampah diabaikan. Diri sendiri (@yourself,
-        # KEP-91) tetap tersimpan untuk disorot, tapi tidak dikirimi kartu.
+        # KEP-91) tetap tersimpan untuk disorot.
         assert jawab.json()["muatan"] == {"sebut": [str(manager.id), str(ani.id)]}
-        kartu_diri = PesanLangsung.objects.filter(ruang__kunci_sistem=kunci_kabar(ani.id), jenis=JenisPesan.MENTION)
-        assert not kartu_diri.exists()
-
-        kartu = PesanLangsung.objects.filter(ruang__kunci_sistem=kunci_kabar(manager.id), jenis=JenisPesan.MENTION)
-        assert kartu.count() == 1
-        muatan = kartu.first().muatan
-        assert muatan["obrolan"]["ruang_id"] == str(ruang.id)
-        assert muatan["aktor"] == str(ani.id)
-        assert not PesanLangsung.objects.filter(ruang__kunci_sistem=kunci_kabar(luar.id)).exists()
+        # Sebutan di kanal tidak lagi jadi kartu di ruang kabar "Paradise" (dihapus, 0181).
+        assert not PesanLangsung.objects.filter(jenis=JenisPesan.MENTION).exists()
+        assert not Ruang.objects.filter(kunci_sistem__startswith="kabar:").exists()
 
     @pytest.mark.django_db
     def test_sebutan_di_dm_tanpa_kartu(self, org):

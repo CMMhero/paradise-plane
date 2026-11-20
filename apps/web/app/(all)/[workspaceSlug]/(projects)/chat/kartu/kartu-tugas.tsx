@@ -13,6 +13,7 @@ import { Button, getButtonStyling } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar, TextArea } from "@plane/ui";
 import { cn, getFileURL, renderFormattedDate } from "@plane/utils";
+import { getRujukanLabel } from "@/hooks/editor/rujukan-label-cache";
 import { useMember } from "@/hooks/store/use-member";
 import { PersetujuanService } from "@/services/persetujuan.service";
 import type { TPesan } from "@/services/chat.service";
@@ -32,7 +33,6 @@ const judulKartu = (jenis: TPesan["jenis"], kartu: TKartuTugas): string => {
   }
   const peta: Record<string, string> = {
     tugas: "chatkartu_ui.assigned",
-    project: "chatkartu_ui.added_to_project",
     mention: "chatkartu_ui.mentioned",
     komentar: "chatkartu_ui.commented",
     pembaruan: "chatkartu_ui.updated",
@@ -69,7 +69,13 @@ export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang, teran
   const {
     workspace: { getWorkspaceMemberDetails },
   } = useMember();
-  const kartu = bacaKartuTugas(pesan.muatan);
+  const labelSebutan = (jenis: string, id: string) => {
+    if (jenis === "everyone_mention") return "@all";
+    if (jenis === "user_mention")
+      return `@${getWorkspaceMemberDetails(id)?.member?.display_name ?? t("chatkartu_ui.someone")}`;
+    return `#${getRujukanLabel(jenis, id) ?? (jenis === "channel_mention" ? "channel" : "work-item")}`;
+  };
+  const kartu = bacaKartuTugas(pesan.muatan, labelSebutan);
   const warna = warnaKartu(terang);
   // Status lokal sesudah tombol ditekan; server juga memperbarui kartu ini
   // untuk semua penyetuju lain (tandai_persetujuan_diputuskan).
@@ -193,7 +199,7 @@ export const KartuTugas = observer(function KartuTugas({ pesan, namaOrang, teran
           </p>
         ) : null}
         {kartu.detail.komentar && !kartu.detail.batal ? (
-          <p className={cn("line-clamp-3 border-l-2 pl-2 text-12", warna.garis, warna.sekunder)}>
+          <p className={cn("line-clamp-3 border-l-2 pl-2 text-12 whitespace-pre-line", warna.garis, warna.sekunder)}>
             {kartu.detail.komentar}
           </p>
         ) : null}

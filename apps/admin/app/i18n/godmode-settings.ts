@@ -375,7 +375,7 @@ export const settingsStrings = {
     },
     ENABLE_TUGAS_KE_DM: {
       name: "Assignments to DM",
-      help: "New work item details are posted in the direct message between assigner and assignee.",
+      help: "Work item cards (new assignments, comments, updates, approvals) are posted in the direct message between the person who acted and the person affected. Off: no work item cards in chat.",
     },
     DEADLINE_REMINDER_EMAIL_DAYS: {
       name: "Reminder email days",

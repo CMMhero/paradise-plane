@@ -54,6 +54,10 @@ SAKLAR_EMAIL = (
     # Email "ada pesan belum dibaca" (chat_notification_task). Saklar instance
     # ENABLE_CHAT_EMAIL tetap rem utamanya; ini pilihan per orang di bawahnya.
     "chat",
+    # Email tiap pesan baru di kanal Announcements (pengumuman_email_task).
+    # Tidak bergantung ENABLE_CHAT_EMAIL: pengumuman memang dimaksudkan sampai
+    # ke email semua orang.
+    "pengumuman",
 )
 
 # Saklar INBOX di dalam aplikasi, satu per jenis kabar (keputusan user 2026-11-02).
@@ -94,19 +98,20 @@ SAKLAR_NOTIFIKASI = SAKLAR_EMAIL + SAKLAR_INBOX + SAKLAR_RINGKASAN
 # itu perilaku sebelum saklarnya ada.
 BAWAAN_PIMPINAN = (
     {kunci: False for kunci in SAKLAR_EMAIL}
-    | {"daily_digest": True, "daily_digest_sore": True, "chat": True}
+    | {"daily_digest": True, "daily_digest_sore": True, "chat": True, "pengumuman": True}
     | {kunci: True for kunci in SAKLAR_INBOX + SAKLAR_RINGKASAN}
 )
 # Direktur (keputusan user 2026-11-02): tidak pernah menerima kabar kerja harian,
-# hanya penyebutan, obrolan, dan ringkasan. Persetujuan, perubahan properti/status,
-# tugas selesai, tugas baru, komentar, dan pengingat tenggat mati di inbox DAN email.
+# hanya penyebutan, obrolan, pengumuman perusahaan, dan ringkasan. Persetujuan,
+# perubahan properti/status, tugas selesai, tugas baru, komentar, dan pengingat
+# tenggat mati di inbox DAN email.
 # Baris ini juga BATAS ATAS (lihat `saklar_efektif`).
 KABAR_DIREKTUR = ("mention", "chat")
 BAWAAN_DIREKTUR = (
     {kunci: False for kunci in SAKLAR_EMAIL + SAKLAR_INBOX}
     | {kunci: True for kunci in KABAR_DIREKTUR}
     | {"inbox_" + kunci: True for kunci in KABAR_DIREKTUR}
-    | {"daily_digest": True, "daily_digest_sore": True}
+    | {"daily_digest": True, "daily_digest_sore": True, "pengumuman": True}
     | {kunci: True for kunci in SAKLAR_RINGKASAN}
 )
 BAWAAN_STAF = {

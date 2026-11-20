@@ -159,6 +159,26 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
         )}
       </section>
 
+      <section className="flex flex-col gap-y-1" aria-labelledby="notif-pengumuman-judul">
+        <h3 id="notif-pengumuman-judul" className="text-14 font-medium text-primary">
+          {t("obrolan_p29.announcement_email_section")}
+        </h3>
+        <SettingsControlItem
+          title={t("obrolan_p29.announcement_email_title")}
+          description={[t("obrolan_p29.announcement_email_description"), catatanKunci("pengumuman")]
+            .filter(Boolean)
+            .join(" ")}
+          control={
+            <ToggleSwitch
+              value={hidup("pengumuman")}
+              onChange={(v) => void ubah("pengumuman", v)}
+              disabled={dikunci.has("pengumuman")}
+              size={ukuranSaklar}
+            />
+          }
+        />
+      </section>
+
       <section className="flex flex-col gap-y-1" aria-labelledby="notif-ringkasan-judul">
         <h3 id="notif-ringkasan-judul" className="text-14 font-medium text-primary">
           {t("notif_prefs_ui.digest_title")}
