@@ -9,7 +9,7 @@
  */
 
 import type { ReactNode } from "react";
-import { Building2, Network, User, Users } from "lucide-react";
+import { Building2, Factory, Network, User, Users } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { Avatar, CustomSearchSelect } from "@plane/ui";
 import { cn, getFileURL } from "@plane/utils";
@@ -49,6 +49,9 @@ export function ScopePicker({ scope, options, currentName, onChange }: TScopePic
         ...(options.organisation
           ? [option({ kind: "organisasi" }, t("kinerja.scope.organisation"), "", <Building2 className={iconClass} />)]
           : []),
+        ...(options.branches ?? []).map((c) =>
+          option({ kind: "cabang", id: c.id }, c.name, t("cabang.kpi_scope"), <Factory className={iconClass} />)
+        ),
         ...options.divisions.map((d) =>
           option({ kind: "divisi", id: d.id }, d.name, t("kinerja.scope.division"), <Network className={iconClass} />)
         ),

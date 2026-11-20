@@ -1119,6 +1119,7 @@
     "level_12": "Leader",
     "level_20": "Supervisor",
     "level_30": "Manager",
+    "level_33": "Branch Director",
     "level_35": "Secretar/ă",
     "level_40": "Director",
     "deactivated": "Deactivated",
@@ -1491,5 +1492,9 @@
     "decline_reason": "Reason: {reason}",
     "power_k_title": "Go to approvals",
     "requests_intro": "Need something done by a department you're not in? Send it here. The request lands in that department's Intake, and its supervisor or manager accepts or declines it. Only an accepted request becomes a work item. You won't see inside their department, and they won't see inside yours."
+  },
+  "cabang": {
+    "kpi_scope": "Branch",
+    "org_branch": "Branch"
   }
 }

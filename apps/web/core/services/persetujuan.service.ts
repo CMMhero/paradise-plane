@@ -69,6 +69,8 @@ type TBarisAntreanDasar = {
   project: { id: string; identifier: string; name: string };
   departemen: TTempatRingkas | null;
   divisi: TTempatRingkas | null;
+  /** P29: cabang divisi itu; null = kantor pusat. */
+  cabang?: TTempatRingkas | null;
   tugas: {
     id: string;
     nomor: string;
