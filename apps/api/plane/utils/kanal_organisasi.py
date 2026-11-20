@@ -11,6 +11,9 @@
   (staf, supervisor) + manager divisi induknya.
 * Kanal divisi (`divisi:<id>`): semua yang ditempatkan di departemen mana pun di
   divisi itu + manager divisi itu.
+* Kanal cabang (`cabang:<id>`, P29): semua orang di kanal divisi-divisi cabang
+  itu + Direktur Cabangnya. Direktur Cabang tidak otomatis masuk kanal divisi dan
+  departemen di cabangnya, dengan alasan yang sama dengan direktur di bawah.
 * Direktur (tanpa penempatan) tidak diikutkan otomatis: ia menjangkau semua unit,
   dan dua puluh kanal yang menyala sekaligus untuk satu orang hanya mengajarinya
   membisukan semuanya.
@@ -44,18 +47,25 @@ import logging
 
 from django.utils import timezone
 
-from plane.db.models import Departemen, Divisi, JabatanOrganisasi, Langganan, Ruang
+from plane.db.models import Cabang, Departemen, Divisi, JabatanOrganisasi, Langganan, Ruang
 from plane.db.models.hierarki import TINGKAT_MANAGER
 from plane.utils.kanal_sistem import _ambil_atau_buat, anggota_layak
 from plane.utils.obrolan_siaran import siarkan
 
 logger = logging.getLogger("plane.api")
 
+AWALAN_CABANG = "cabang:"
 AWALAN_DIVISI = "divisi:"
 AWALAN_DEPARTEMEN = "departemen:"
+AWALAN_ORGANISASI = (AWALAN_CABANG, AWALAN_DIVISI, AWALAN_DEPARTEMEN)
+TOPIK_CABANG = "Branch chat. Members follow the organization chart in God Mode."
 TOPIK_DIVISI = "Division chat. Members follow the organization chart in God Mode."
 TOPIK_DEPARTEMEN = "Department chat. Members follow the organization chart in God Mode."
 BATAS_NAMA = 80
+
+
+def kunci_cabang(cabang_id) -> str:
+    return f"{AWALAN_CABANG}{cabang_id}"
 
 
 def kunci_divisi(divisi_id) -> str:
@@ -67,18 +77,19 @@ def kunci_departemen(departemen_id) -> str:
 
 
 def adalah_kanal_organisasi(ruang) -> bool:
-    kunci = ruang.kunci_sistem or ""
-    return kunci.startswith(AWALAN_DIVISI) or kunci.startswith(AWALAN_DEPARTEMEN)
+    return (ruang.kunci_sistem or "").startswith(AWALAN_ORGANISASI)
 
 
 def _anggota_per_unit(workspace_id) -> tuple:
-    """({divisi_id: set(user)}, {departemen_id: set(user)}) dari penempatan aktif."""
+    """({cabang_id: set(user)}, {divisi_id: set(user)}, {departemen_id: set(user)}) dari penempatan aktif."""
     induk = dict(Departemen.objects.filter(workspace_id=workspace_id).values_list("id", "divisi_id"))
-    per_divisi, per_dept = {}, {}
+    per_cabang, per_divisi, per_dept = {}, {}, {}
     manager = {}
-    for user_id, tingkat, dept_id, divisi_id in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
-        "member_id", "tingkat", "departemen_id", "divisi_id"
-    ):
+    for user_id, tingkat, dept_id, divisi_id, cabang_id in JabatanOrganisasi.objects.filter(
+        workspace_id=workspace_id
+    ).values_list("member_id", "tingkat", "departemen_id", "divisi_id", "cabang_id"):
+        if cabang_id:
+            per_cabang.setdefault(cabang_id, set()).add(user_id)
         if dept_id and dept_id in induk:
             per_dept.setdefault(dept_id, set()).add(user_id)
             per_divisi.setdefault(induk[dept_id], set()).add(user_id)
@@ -89,7 +100,11 @@ def _anggota_per_unit(workspace_id) -> tuple:
     for dept_id, divisi_id in induk.items():
         if manager.get(divisi_id):
             per_dept.setdefault(dept_id, set()).update(manager[divisi_id])
-    return per_divisi, per_dept
+    for divisi_id, cabang_id in Divisi.objects.filter(workspace_id=workspace_id, cabang__isnull=False).values_list(
+        "id", "cabang_id"
+    ):
+        per_cabang.setdefault(cabang_id, set()).update(per_divisi.get(divisi_id, set()))
+    return per_cabang, per_divisi, per_dept
 
 
 def _pastikan_ruang(workspace_id, kunci, nama, topik):
@@ -131,6 +146,7 @@ def _samakan_anggota(ruang, ingin: set, hanya_user=None) -> int:
 
 
 def _sinkron(workspace_id, hanya_user=None) -> int:
+    cabang = list(Cabang.objects.filter(workspace_id=workspace_id).values_list("id", "nama"))
     divisi = list(Divisi.objects.filter(workspace_id=workspace_id).values_list("id", "nama"))
     departemen = list(Departemen.objects.filter(workspace_id=workspace_id).values_list("id", "nama"))
     if (
@@ -139,12 +155,16 @@ def _sinkron(workspace_id, hanya_user=None) -> int:
     ):
         return 0
 
-    per_divisi, per_dept = _anggota_per_unit(workspace_id)
-    semua = set().union(*per_divisi.values(), *per_dept.values()) if (per_divisi or per_dept) else set()
+    per_cabang, per_divisi, per_dept = _anggota_per_unit(workspace_id)
+    semua = set().union(*per_cabang.values(), *per_divisi.values(), *per_dept.values())
     layak = anggota_layak(workspace_id, semua) if semua else set()
 
     berubah = 0
     hidup = set()
+    for cab_id, nama in cabang:
+        ruang = _pastikan_ruang(workspace_id, kunci_cabang(cab_id), nama, TOPIK_CABANG)
+        hidup.add(ruang.id)
+        berubah += _samakan_anggota(ruang, per_cabang.get(cab_id, set()) & layak, hanya_user)
     for div_id, nama in divisi:
         ruang = _pastikan_ruang(workspace_id, kunci_divisi(div_id), nama, TOPIK_DIVISI)
         hidup.add(ruang.id)

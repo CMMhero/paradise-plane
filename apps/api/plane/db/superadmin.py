@@ -94,6 +94,7 @@ def _q_penempatan_di_project(project_ref):
 
         penempatan departemen -> project milik departemen itu
         penempatan divisi     -> project di semua departemen divisi itu
+        penempatan cabang     -> project di semua divisi cabang itu
 
     Direktur (baris tanpa departemen & divisi) sengaja TIDAK dihitung. Ia
     mengawasi semua project, tapi tidak "berada di" departemen mana pun, jadi
@@ -116,7 +117,14 @@ def _q_penempatan_di_project(project_ref):
         divisi__departemen__project_departemen__deleted_at__isnull=True,
         divisi__departemen__project_departemen__project_id=project_ref,
     )
-    return lewat_departemen | lewat_divisi
+    lewat_cabang = Q(
+        cabang__deleted_at__isnull=True,
+        cabang__divisi__deleted_at__isnull=True,
+        cabang__divisi__departemen__deleted_at__isnull=True,
+        cabang__divisi__departemen__project_departemen__deleted_at__isnull=True,
+        cabang__divisi__departemen__project_departemen__project_id=project_ref,
+    )
+    return lewat_departemen | lewat_divisi | lewat_cabang
 
 
 def terlihat_di_project(project_id, ids=None):

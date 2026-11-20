@@ -51,9 +51,11 @@ from plane.db.models import (
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_SEKRETARIS,
+    TINGKAT_CABANG,
     TINGKAT_LEADER,
     TINGKAT_SUPERVISOR,
     menjangkau_seluruh_organisasi,
+    Cabang,
     Departemen,
     Divisi,
     Issue,
@@ -78,6 +80,7 @@ NAMA_PERAN = {
     TINGKAT_LEADER: "Leader",
     TINGKAT_SUPERVISOR: "Supervisor",
     TINGKAT_MANAGER: "Manager",
+    TINGKAT_CABANG: "Direktur Cabang",
     TINGKAT_SEKRETARIS: "Sekretaris",
     TINGKAT_DIREKTUR: "Direktur",
 }
@@ -161,7 +164,14 @@ def _cakupan(user_id, workspace_id, tingkat, jumlah_project):
     """(cakupan, judul_tim) untuk baris peran dan judul bagian tim."""
     if menjangkau_seluruh_organisasi(tingkat):
         return "Seluruh divisi", "Seluruh divisi"
-    if tingkat >= TINGKAT_MANAGER:
+    if tingkat == TINGKAT_CABANG:
+        nama = list(
+            Cabang.objects.filter(penempatan_direktur__member_id=user_id, workspace_id=workspace_id).values_list(
+                "nama", flat=True
+            )
+        )
+        judul = "Cabang Anda"
+    elif tingkat >= TINGKAT_MANAGER:
         nama = list(Divisi.objects.filter(id__in=semua_divisi_ids(user_id, workspace_id)).values_list("nama", flat=True))  # noqa: E501
         judul = "Divisi Anda"
     else:

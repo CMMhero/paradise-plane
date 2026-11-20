@@ -982,11 +982,13 @@ function ChatPage() {
                         <span className="shrink-0 rounded-control bg-layer-3 px-1.5 py-px text-11 font-medium text-tertiary">
                           {/* Kanal divisi/departemen diberi label unitnya, bukan "System":
                               isinya obrolan orang, cuma anggotanya yang diatur God Mode. */}
-                          {r.kunci_sistem?.startsWith("divisi:")
-                            ? t("chatkartu_ui.org_division")
-                            : r.kunci_sistem?.startsWith("departemen:")
-                              ? t("chatkartu_ui.org_department")
-                              : t("chatkartu_ui.system_badge")}
+                          {r.kunci_sistem?.startsWith("cabang:")
+                            ? t("cabang.org_branch")
+                            : r.kunci_sistem?.startsWith("divisi:")
+                              ? t("chatkartu_ui.org_division")
+                              : r.kunci_sistem?.startsWith("departemen:")
+                                ? t("chatkartu_ui.org_department")
+                                : t("chatkartu_ui.system_badge")}
                         </span>
                       ) : null}
                       {adaBaru ? (

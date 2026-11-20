@@ -28,6 +28,7 @@
  */
 
 import {
+  TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
   TINGKAT_LEADER,
   TINGKAT_MANAGER,
@@ -48,6 +49,7 @@ export const LAJUR_JENJANG = [
   TINGKAT_LEADER,
   TINGKAT_SUPERVISOR,
   TINGKAT_MANAGER,
+  TINGKAT_CABANG,
   TINGKAT_SEKRETARIS,
   TINGKAT_DIREKTUR,
 ] as const;
@@ -481,16 +483,23 @@ export const namaJenjang = (t: number, s: TGodmodeStrings): string =>
     ? s.members.level_director
     : t >= TINGKAT_SEKRETARIS
       ? s.members.level_secretary
-      : t >= TINGKAT_MANAGER
-        ? s.members.level_manager
-        : t >= TINGKAT_SUPERVISOR
-          ? s.members.level_supervisor
-          : t >= TINGKAT_LEADER
-            ? s.members.level_leader
-            : s.members.level_staff;
+      : t >= TINGKAT_CABANG
+        ? s.members.level_branch_director
+        : t >= TINGKAT_MANAGER
+          ? s.members.level_manager
+          : t >= TINGKAT_SUPERVISOR
+            ? s.members.level_supervisor
+            : t >= TINGKAT_LEADER
+              ? s.members.level_leader
+              : s.members.level_staff;
 
 /** Orang tanpa departemen dan tanpa divisi (di bawah Direktur). */
 export const belumDitempatkan = (o: TAnggotaHierarki): boolean => {
   const p = posisiDari(o);
-  return !menjangkauSeluruhOrganisasi(p.tingkat) && p.departemen_ids.length === 0 && p.divisi_ids.length === 0;
+  return (
+    !menjangkauSeluruhOrganisasi(p.tingkat) &&
+    p.departemen_ids.length === 0 &&
+    p.divisi_ids.length === 0 &&
+    (o.cabang_ids ?? []).length === 0
+  );
 };

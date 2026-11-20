@@ -41,7 +41,7 @@ def perlu_pilih_departemen(user, workspace_id):
     baris = list(JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member=user))
     if not baris:
         return True
-    if any(b.departemen_id or b.divisi_id for b in baris):
+    if any(b.departemen_id or b.divisi_id or b.cabang_id for b in baris):
         return False
     # Hanya baris tanpa tempat: direktur memang begitu, staf tidak.
     return max(b.tingkat for b in baris) < TINGKAT_SUPERVISOR

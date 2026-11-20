@@ -30,7 +30,7 @@ export type TRuang = {
   jumlah_anggota?: number;
   /** Kanal sistem: tidak bisa ditinggalkan atau diubah, berlencana "System". */
   sistem?: boolean;
-  /** `pengumuman` | `changelog` | `divisi:<id>` | `departemen:<id>`. */
+  /** `pengumuman` | `changelog` | `cabang:<id>` | `divisi:<id>` | `departemen:<id>`. */
   kunci_sistem?: string | null;
   /** False = kolom tulis disembunyikan (Changelog, Announcements untuk yang
    * bukan admin atau penulis yang diizinkan). Server tetap menolak 403. */

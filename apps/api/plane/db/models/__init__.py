@@ -115,6 +115,7 @@ from .persetujuan_penugasan import (
 from .hierarki import (
     JabatanOrganisasi,
     PengawasanDivisi,
+    TINGKAT_CABANG,
     TINGKAT_CHOICES,
     TINGKAT_DIREKTUR,
     TINGKAT_LEADER,
@@ -125,7 +126,7 @@ from .hierarki import (
     TINGKAT_SUPERVISOR,
     menjangkau_seluruh_organisasi,
 )
-from .organisasi import AksesHierarki, Departemen, DepartemenProject, Divisi
+from .organisasi import AksesHierarki, Cabang, Departemen, DepartemenProject, Divisi
 from .quick_link_bersama import QuickLinkBersama, CAKUPAN_SEMUA as CAKUPAN_QUICK_LINK_SEMUA, CAKUPAN_ORGANISASI as CAKUPAN_QUICK_LINK_ORGANISASI  # noqa: E501
 
 from .recent_visit import UserRecentVisit

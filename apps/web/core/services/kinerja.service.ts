@@ -10,7 +10,7 @@ import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "@/services/api.service";
 
 /** Cermin `LINGKUP_SAH` di apps/api/plane/utils/kinerja.py. */
-export type TKpiScopeKind = "saya" | "orang" | "departemen" | "divisi" | "organisasi";
+export type TKpiScopeKind = "saya" | "orang" | "departemen" | "divisi" | "cabang" | "organisasi";
 export type TKpiScope = { kind: TKpiScopeKind; id?: string };
 
 /** Cermin `PERIODE_SAH` di server. */
@@ -77,6 +77,8 @@ export type TKpiReport = {
 export type TKpiScopeOptions = {
   self: { id: string; display_name: string };
   organisation: boolean;
+  /** P29: cabang yang boleh dibuka (Direktur Cabang, direktur, sekretaris). Server lama: tidak ada. */
+  branches?: { id: string; code: string; name: string }[];
   divisions: { id: string; code: string; name: string }[];
   departments: { id: string; code: string; name: string; division_id: string }[];
   people: TKpiPerson[];

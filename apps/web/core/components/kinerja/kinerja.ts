@@ -12,7 +12,14 @@ import { KPI_PERIODS } from "@/services/kinerja.service";
 
 export type TKpiTone = "good" | "bad" | "neutral";
 
-const SCOPE_KINDS = new Set<string>(["saya", "orang", "departemen", "divisi", "organisasi"] satisfies TKpiScopeKind[]);
+const SCOPE_KINDS = new Set<string>([
+  "saya",
+  "orang",
+  "departemen",
+  "divisi",
+  "cabang",
+  "organisasi",
+] satisfies TKpiScopeKind[]);
 
 /** Lingkup dari query string; apa pun yang tidak dikenal jatuh ke "saya". */
 export function scopeFromParams(params: URLSearchParams): TKpiScope {

@@ -45,12 +45,16 @@ type TKelompokDivisi = TKelompok & { departemen: TKelompok[] };
 /** Urut nama; kelompok tanpa id (belum masuk struktur) paling akhir. */
 const urut = (a: TKelompok, b: TKelompok) => Number(a.id === "") - Number(b.id === "") || a.nama.localeCompare(b.nama);
 
+/** Nama divisi; divisi cabang diawali nama cabangnya, jadi satu cabang berkelompok saat diurutkan. */
+const namaDivisi = (b: TBarisAntreanWorkspace): string =>
+  b.divisi && b.cabang ? `${b.cabang.nama} · ${b.divisi.nama}` : (b.divisi?.nama ?? "");
+
 /** Divisi > departemen. */
 const kelompokkan = (baris: TBarisAntreanWorkspace[]): TKelompokDivisi[] => {
   const divisi = new Map<string, TKelompokDivisi>();
   for (const b of baris) {
     const kunciDivisi = b.divisi?.id ?? "";
-    const d = divisi.get(kunciDivisi) ?? { id: kunciDivisi, nama: b.divisi?.nama ?? "", baris: [], departemen: [] };
+    const d = divisi.get(kunciDivisi) ?? { id: kunciDivisi, nama: namaDivisi(b), baris: [], departemen: [] };
     divisi.set(kunciDivisi, d);
     d.baris.push(b);
     const kunciDepartemen = b.departemen?.id ?? b.project.id;

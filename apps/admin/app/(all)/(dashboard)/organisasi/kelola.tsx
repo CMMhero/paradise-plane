@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Satu tempat untuk semua modal kelola: buat/ubah/hapus divisi & departemen,
- * tambah manager atau anggota, pindah departemen + ganti project. Papan dan menu
+ * Satu tempat untuk semua modal kelola: buat/ubah/hapus cabang, divisi & departemen,
+ * tambah Direktur Cabang, manager atau anggota, pindah divisi ke cabang, pindah
+ * departemen + ganti project. Papan dan menu
  * "..." hanya mengirim `TPerintahKelola`; aturan penempatan tetap di
  * `aksi` halaman, jadi tidak ada salinan kedua.
  */
@@ -23,6 +24,7 @@ import { BadgeJabatan } from "../members/jabatan";
 import {
   asalOrang,
   calonAnggota,
+  calonDirekturCabang,
   calonManager,
   cariDepartemen,
   galatKode,
@@ -330,6 +332,84 @@ function ModalSetelanDepartemen({
 }
 
 // ---------------------------------------------------------------------------
+// Pindah divisi ke cabang (atau kantor pusat)
+// ---------------------------------------------------------------------------
+
+/** Nilai pilihan untuk kantor pusat (cabang_id null). */
+const KANTOR_PUSAT = "";
+
+function ModalPindahDivisi({
+  judul,
+  cabangAwal,
+  semuaCabang,
+  onSimpan,
+  onTutup,
+}: {
+  judul: string;
+  cabangAwal: string;
+  semuaCabang: { id: string; nama: string; kode: string }[];
+  onSimpan: (cabangId: string | null) => Promise<boolean>;
+  onTutup: () => void;
+}) {
+  const { s } = useGodmodeStrings();
+  const [cabang, setCabang] = useState(cabangAwal);
+  const [sibuk, setSibuk] = useState(false);
+  const berubah = cabang !== cabangAwal;
+  const pilihan = [{ id: KANTOR_PUSAT, nama: s.org.branch.head_office, kode: "" }, ...semuaCabang];
+
+  const simpan = async () => {
+    if (!berubah) return;
+    setSibuk(true);
+    try {
+      if (await onSimpan(cabang || null)) onTutup();
+    } finally {
+      setSibuk(false);
+    }
+  };
+
+  return (
+    <ParadiseModal
+      isOpen
+      onClose={onTutup}
+      width={EModalWidth.MD}
+      title={judul}
+      closeLabel={s.editor.close}
+      footerNote={berubah ? s.org.branch.move_note : s.org.nothing_changed}
+      footer={
+        <>
+          <Button variant="secondary" size="base" onClick={onTutup}>
+            {s.org.cancel}
+          </Button>
+          <Button variant="primary" size="base" loading={sibuk} disabled={!berubah || sibuk} onClick={simpan}>
+            {s.org.save}
+          </Button>
+        </>
+      }
+    >
+      <Field label={s.org.branch.belongs_to}>
+        <CustomSelect
+          value={cabang}
+          label={pilihan.find((c) => c.id === cabang)?.nama ?? ""}
+          onChange={(v: string) => setCabang(v)}
+          buttonClassName="w-full"
+          className="w-full"
+          input
+        >
+          {pilihan.map((c) => (
+            <CustomSelect.Option key={c.id || "pusat"} value={c.id}>
+              <span className="flex w-full items-center justify-between gap-2">
+                <span>{c.nama}</span>
+                <span className="text-11 text-tertiary">{c.kode}</span>
+              </span>
+            </CustomSelect.Option>
+          ))}
+        </CustomSelect>
+      </Field>
+    </ParadiseModal>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Konfirmasi hapus
 // ---------------------------------------------------------------------------
 
@@ -391,23 +471,91 @@ export function KelolaOrganisasi({
   const namaDepartemen = Object.fromEntries(pohon.divisi.flatMap((v) => v.departemen.map((d) => [d.id, d.nama])));
   const keterangan = (o: TAnggotaHierarki) => asalOrang(o, namaDepartemen, namaDivisi, s, fill);
   const semuaDivisi = pohon.divisi.map((v) => ({ id: v.id, nama: v.nama, kode: v.kode }));
+  const semuaCabang = pohon.cabang.map((c) => ({ id: c.id, nama: c.nama, kode: c.kode }));
   const kodeDepartemen = pohon.divisi.flatMap((v) => v.departemen.map((d) => d.kode));
   // Kunci ikut perintah: isian modal mulai bersih tiap perintah baru.
   const kunci = JSON.stringify(perintah);
 
   switch (perintah.jenis) {
-    case "buat-divisi":
+    case "buat-cabang":
       return (
         <ModalKodeNama
           key={kunci}
           isOpen
-          judul={s.org.new_division_title}
+          judul={s.org.branch.new}
+          kodeTerpakai={semuaCabang.map((c) => c.kode)}
+          labelSimpan={s.org.create}
+          onTutup={onTutup}
+          onSimpan={aksi.buatCabang}
+        />
+      );
+    case "ubah-cabang":
+    case "hapus-cabang":
+    case "tambah-direktur-cabang": {
+      const c = pohon.cabang.find((x) => x.id === perintah.id);
+      if (!c) return null;
+      if (perintah.jenis === "ubah-cabang")
+        return (
+          <ModalKodeNama
+            key={kunci}
+            isOpen
+            judul={s.org.branch.edit}
+            kodeAwal={c.kode}
+            namaAwal={c.nama}
+            labelSimpan={s.org.save}
+            onTutup={onTutup}
+            onSimpan={(kode, nama) => aksi.ubahCabang(c.id, kode, nama)}
+          />
+        );
+      if (perintah.jenis === "hapus-cabang")
+        return (
+          <ModalHapus
+            key={kunci}
+            judul={fill(s.org.branch.delete_title, { name: c.nama })}
+            onHapus={() => aksi.hapusCabang(c.id)}
+            onTutup={onTutup}
+          />
+        );
+      return (
+        <ModalTambahOrang
+          key={kunci}
+          judul={fill(s.org.branch.add_director_title, { name: c.nama })}
+          catatan={s.org.branch.directors_note}
+          calon={calonDirekturCabang(orang, c)}
+          keterangan={keterangan}
+          onTambah={(o) => aksi.tempatkan(o, { cabang_id: c.id })}
+          onTutup={onTutup}
+        />
+      );
+    }
+    case "buat-divisi": {
+      const cabang = pohon.cabang.find((c) => c.id === perintah.cabangId);
+      return (
+        <ModalKodeNama
+          key={kunci}
+          isOpen
+          judul={cabang ? fill(s.org.branch.new_division_title, { name: cabang.nama }) : s.org.new_division_title}
           kodeTerpakai={semuaDivisi.map((v) => v.kode)}
           labelSimpan={s.org.create}
           onTutup={onTutup}
-          onSimpan={aksi.buatDivisi}
+          onSimpan={(kode, nama) => aksi.buatDivisi(kode, nama, cabang?.id)}
         />
       );
+    }
+    case "pindah-divisi": {
+      const v = pohon.divisi.find((x) => x.id === perintah.id);
+      if (!v) return null;
+      return (
+        <ModalPindahDivisi
+          key={kunci}
+          judul={fill(s.org.branch.move_division_title, { name: v.nama })}
+          cabangAwal={v.cabang_id ?? KANTOR_PUSAT}
+          semuaCabang={semuaCabang}
+          onSimpan={(cabangId) => aksi.pindahDivisi(v.id, cabangId)}
+          onTutup={onTutup}
+        />
+      );
+    }
     case "buat-departemen": {
       const v = pohon.divisi.find((x) => x.id === perintah.divisiId);
       if (!v) return null;

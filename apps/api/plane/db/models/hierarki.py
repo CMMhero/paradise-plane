@@ -52,6 +52,9 @@ TINGKAT_MEMBER = 10
 TINGKAT_LEADER = 12
 TINGKAT_SUPERVISOR = 20
 TINGKAT_MANAGER = 30
+# Direktur Cabang (P29): memimpin semua divisi satu cabang, di atas manager, di bawah
+# sekretaris. Jangkauannya hanya cabangnya; kantor pusat dan cabang lain tidak.
+TINGKAT_CABANG = 33
 # Sekretaris (KEP-101): jangkauannya SAMA dengan direktur (seluruh organisasi, tanpa
 # tempat), tapi kedudukannya satu anak tangga di bawah direktur. Angka 35 menyisakan
 # 30 dan 40 apa adanya, jadi semua baris yang sudah tersimpan tidak berubah arti.
@@ -63,6 +66,7 @@ TINGKAT_CHOICES = (
     (TINGKAT_LEADER, "Leader"),
     (TINGKAT_SUPERVISOR, "Supervisor"),
     (TINGKAT_MANAGER, "Manager"),
+    (TINGKAT_CABANG, "Direktur Cabang"),
     (TINGKAT_SEKRETARIS, "Sekretaris"),
     (TINGKAT_DIREKTUR, "Direktur"),
 )
@@ -113,12 +117,15 @@ class JabatanOrganisasi(BaseModel):
     # Penempatan (KEP-29), satu sumber kebenaran jangkauan:
     #   staf/supervisor -> `departemen` (boleh BANYAK baris untuk supervisor) .
     #   manager -> `divisi` (ditetapkan eksplisit, TIDAK ditebak dari keanggotaan
-    #   departemen) · direktur -> keduanya kosong.
+    #   departemen) · direktur cabang -> `cabang` · direktur -> ketiganya kosong.
     departemen = models.ForeignKey(
         "db.Departemen", related_name="penempatan", null=True, blank=True, on_delete=models.SET_NULL
     )
     divisi = models.ForeignKey(
         "db.Divisi", related_name="penempatan_manager", null=True, blank=True, on_delete=models.SET_NULL
+    )
+    cabang = models.ForeignKey(
+        "db.Cabang", related_name="penempatan_direktur", null=True, blank=True, on_delete=models.SET_NULL
     )
 
     class Meta:
@@ -140,12 +147,19 @@ class JabatanOrganisasi(BaseModel):
                 condition=Q(deleted_at__isnull=True),
                 name="jabatan_organisasi_unique_divisi_aktif",
             ),
+            # Satu baris per (orang, cabang): direktur cabang.
+            models.UniqueConstraint(
+                fields=["workspace", "member", "cabang"],
+                condition=Q(deleted_at__isnull=True),
+                name="jabatan_organisasi_unique_cabang_aktif",
+            ),
             # Tanpa tempat (direktur): tetap satu baris per orang.
             models.UniqueConstraint(
                 fields=["workspace", "member"],
                 condition=Q(deleted_at__isnull=True)
                 & Q(departemen__isnull=True)
-                & Q(divisi__isnull=True),
+                & Q(divisi__isnull=True)
+                & Q(cabang__isnull=True),
                 name="jabatan_organisasi_unique_tanpa_tempat_aktif",
             ),
         ]

@@ -10,6 +10,7 @@ Semua orang punya halaman ini. Yang berbeda hanya LINGKUP yang boleh dibuka:
     staf                 -> dirinya sendiri
     leader / supervisor  -> + departemennya dan tiap bawahannya di sana
     manager              -> + divisinya, departemen di dalamnya, orang-orangnya
+    direktur cabang      -> + cabangnya, semua divisi dan departemen di dalamnya
     sekretaris, direktur,
     admin workspace      -> seluruh organisasi
 
@@ -65,6 +66,7 @@ from django.utils import timezone
 
 # Module imports
 from plane.db.models import (
+    Cabang,
     Departemen,
     Divisi,
     Issue,
@@ -74,6 +76,7 @@ from plane.db.models import (
     PersetujuanPenugasan,
     STATUS_PERSETUJUAN_DISETUJUI,
     STATUS_PERSETUJUAN_DITOLAK,
+    TINGKAT_CABANG,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     User,
@@ -91,8 +94,16 @@ LINGKUP_SAYA = "saya"
 LINGKUP_ORANG = "orang"
 LINGKUP_DEPARTEMEN = "departemen"
 LINGKUP_DIVISI = "divisi"
+LINGKUP_CABANG = "cabang"
 LINGKUP_ORGANISASI = "organisasi"
-LINGKUP_SAH = (LINGKUP_SAYA, LINGKUP_ORANG, LINGKUP_DEPARTEMEN, LINGKUP_DIVISI, LINGKUP_ORGANISASI)
+LINGKUP_SAH = (
+    LINGKUP_SAYA,
+    LINGKUP_ORANG,
+    LINGKUP_DEPARTEMEN,
+    LINGKUP_DIVISI,
+    LINGKUP_CABANG,
+    LINGKUP_ORGANISASI,
+)
 
 PERIODE_PEKAN_INI = "this_week"
 PERIODE_BULAN_INI = "this_month"
@@ -252,19 +263,26 @@ class Lingkup:
     departemen: dict
     # divisi_id -> orang di semua departemennya + manager divisi itu.
     divisi: dict
+    # cabang_id -> orang di semua divisinya + Direktur Cabang itu.
+    cabang: dict
     # Seluruh anggota aktif workspace; hanya terisi kalau `seluruh`.
     semua_orang: frozenset
     info_departemen: dict
     info_divisi: dict
+    info_cabang: dict
 
 
 def lingkup_untuk(user, workspace_id):
     """Jangkauan KPI `user` dari penempatannya (KEP-29, KEP-93)."""
     saya = str(user.id)
+
+    def _s(nilai):
+        return str(nilai) if nilai else None
+
     baris = [
-        (str(m), t, str(dep) if dep else None, str(div) if div else None)
-        for m, t, dep, div in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
-            "member_id", "tingkat", "departemen_id", "divisi_id"
+        (str(m), t, _s(dep), _s(div), _s(cab))
+        for m, t, dep, div, cab in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
+            "member_id", "tingkat", "departemen_id", "divisi_id", "cabang_id"
         )
     ]
     info_departemen = {
@@ -274,24 +292,34 @@ def lingkup_untuk(user, workspace_id):
         )
     }
     info_divisi = {
-        str(d["id"]): {"id": str(d["id"]), "code": d["kode"], "name": d["nama"]}
-        for d in Divisi.objects.filter(workspace_id=workspace_id).values("id", "kode", "nama")
+        str(d["id"]): {"id": str(d["id"]), "code": d["kode"], "name": d["nama"], "branch_id": _s(d["cabang_id"])}
+        for d in Divisi.objects.filter(workspace_id=workspace_id).values("id", "kode", "nama", "cabang_id")
+    }
+    info_cabang = {
+        str(c["id"]): {"id": str(c["id"]), "code": c["kode"], "name": c["nama"]}
+        for c in Cabang.objects.filter(workspace_id=workspace_id).values("id", "kode", "nama")
     }
 
     jenjang = {}
     anggota_dep = {dep: set() for dep in info_departemen}
     anggota_div = {div: set() for div in info_divisi}
+    anggota_cab = {cab: set() for cab in info_cabang}
     peran_dep = {}
-    for m, t, dep, div in baris:
+    for m, t, dep, div, _ in baris:
         jenjang[m] = max(t, jenjang.get(m, t))
         if dep in anggota_dep:
             anggota_dep[dep].add(m)
             peran_dep[(m, dep)] = t
             anggota_div[info_departemen[dep]["division_id"]].add(m)
     # Baris divisi hanya berlaku untuk manager ke atas (`project_penempatan`).
-    for m, t, _, div in baris:
+    for m, t, _, div, cab in baris:
         if div in anggota_div and t >= TINGKAT_MANAGER:
             anggota_div[div].add(m)
+        if cab in anggota_cab:
+            anggota_cab[cab].add(m)
+    for div, info in info_divisi.items():
+        if info["branch_id"] in anggota_cab:
+            anggota_cab[info["branch_id"]] |= anggota_div[div]
 
     seluruh = adalah_admin_penuh(user, workspace_id) or menjangkau_seluruh_organisasi(jenjang.get(saya))
     if seluruh:
@@ -301,20 +329,42 @@ def lingkup_untuk(user, workspace_id):
                 workspace_id=workspace_id, is_active=True, member__is_bot=False
             ).values_list("member_id", flat=True)
         )
-        return Lingkup(saya, True, semua | {saya}, anggota_dep, anggota_div, semua, info_departemen, info_divisi)
+        return Lingkup(
+            saya,
+            True,
+            semua | {saya},
+            anggota_dep,
+            anggota_div,
+            anggota_cab,
+            semua,
+            info_departemen,
+            info_divisi,
+            info_cabang,
+        )
 
     orang = {saya}
     departemen = {}
     divisi = {}
+    cabang = {}
     jenjang_saya = jenjang.get(saya)
-    for m, _, dep, div in baris:
+
+    def buka_divisi(div):
+        divisi[div] = anggota_div[div]
+        for dep_id, info in info_departemen.items():
+            if info["division_id"] == div:
+                departemen[dep_id] = anggota_dep[dep_id]
+
+    for m, _, dep, div, cab in baris:
         if m != saya:
             continue
+        if cab in anggota_cab and jenjang_saya >= TINGKAT_CABANG:
+            cabang[cab] = anggota_cab[cab]
+            for div_id, info in info_divisi.items():
+                if info["branch_id"] == cab:
+                    buka_divisi(div_id)
+            orang |= {m2 for m2 in anggota_cab[cab] if jenjang[m2] < jenjang_saya}
         if div in anggota_div and jenjang_saya >= TINGKAT_MANAGER:
-            divisi[div] = anggota_div[div]
-            for dep_id, info in info_departemen.items():
-                if info["division_id"] == div:
-                    departemen[dep_id] = anggota_dep[dep_id]
+            buka_divisi(div)
             orang |= {m2 for m2 in anggota_div[div] if jenjang[m2] < jenjang_saya}
         # Di atas Staf di departemen ini (leader, supervisor): bawahannya adalah
         # yang perannya di departemen yang sama lebih rendah.
@@ -328,7 +378,18 @@ def lingkup_untuk(user, workspace_id):
         for project_id in divisi_diawasi(user.id, workspace_id):
             orang |= {str(m) for m in _bawahan_ids(user.id, workspace_id, project_id)}
 
-    return Lingkup(saya, False, frozenset(orang), departemen, divisi, frozenset(), info_departemen, info_divisi)
+    return Lingkup(
+        saya,
+        False,
+        frozenset(orang),
+        departemen,
+        divisi,
+        cabang,
+        frozenset(),
+        info_departemen,
+        info_divisi,
+        info_cabang,
+    )
 
 
 def _orang_ringkas(ids):
@@ -342,6 +403,7 @@ def pilihan_lingkup(user, workspace_id):
     return {
         "self": {"id": lingkup.user_id, "display_name": user.display_name or user.email},
         "organisation": lingkup.seluruh,
+        "branches": sorted((lingkup.info_cabang[c] for c in lingkup.cabang), key=lambda c: c["name"].lower()),
         "divisions": sorted((lingkup.info_divisi[d] for d in lingkup.divisi), key=lambda d: d["name"].lower()),
         "departments": sorted(
             (lingkup.info_departemen[d] for d in lingkup.departemen), key=lambda d: d["name"].lower()
@@ -390,6 +452,14 @@ def sasaran_dari(lingkup, user, jenis, id_):
             raise LingkupDitolak
         anggota = frozenset(lingkup.departemen[id_])
         return Sasaran(jenis, id_, lingkup.info_departemen[id_]["name"], anggota, anggota & lingkup.orang)
+    if jenis == LINGKUP_CABANG:
+        if id_ not in lingkup.cabang:
+            raise LingkupDitolak
+        anggota = frozenset(lingkup.cabang[id_])
+        divisi = {div: lingkup.divisi[div] for div, info in lingkup.info_divisi.items() if info["branch_id"] == id_}
+        return Sasaran(
+            jenis, id_, lingkup.info_cabang[id_]["name"], anggota, anggota & lingkup.orang, (LINGKUP_DIVISI, divisi)
+        )
     if id_ not in lingkup.divisi:
         raise LingkupDitolak
     anggota = frozenset(lingkup.divisi[id_])

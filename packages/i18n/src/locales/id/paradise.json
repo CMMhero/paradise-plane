@@ -1119,6 +1119,7 @@
     "level_12": "Leader",
     "level_20": "Supervisor",
     "level_30": "Manager",
+    "level_33": "Direktur Cabang",
     "level_35": "Sekretaris",
     "level_40": "Direktur",
     "deactivated": "Nonaktif",
@@ -1491,5 +1492,9 @@
     "decline_reason": "Alasan: {reason}",
     "power_k_title": "Buka persetujuan",
     "requests_intro": "Butuh sesuatu dikerjakan departemen lain? Kirim dari sini. Permintaan masuk ke Intake departemen itu, lalu supervisor atau manager-nya menerima atau menolak. Hanya permintaan yang diterima yang menjadi work item. Anda tidak melihat isi departemen mereka, dan mereka tidak melihat isi departemen Anda."
+  },
+  "cabang": {
+    "kpi_scope": "Cabang",
+    "org_branch": "Cabang"
   }
 }

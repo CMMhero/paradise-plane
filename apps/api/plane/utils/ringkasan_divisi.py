@@ -213,7 +213,7 @@ def _peta_departemen(project_ids):
         project_id__in=project_ids,
         departemen__deleted_at__isnull=True,
         departemen__divisi__deleted_at__isnull=True,
-    ).select_related("departemen__divisi")
+    ).select_related("departemen__divisi__cabang")
     return {b.project_id: b for b in baris}
 
 
