@@ -10,6 +10,7 @@ from django.http import HttpRequest
 from rest_framework.request import Request
 
 # Module imports
+from plane.utils.host import resolve_base_host
 from plane.utils.ip_address import get_client_ip
 
 
@@ -19,48 +20,13 @@ def base_host(
     is_space: bool = False,
     is_app: bool = False,
 ) -> str:
-    """Utility function to return host / origin from the request"""
-    # Calculate the base origin from request
+    """Utility function to return host / origin from the request.
+
+    Same rules as `plane.utils.host.base_host`, except that an unset
+    WEB_URL / APP_BASE_URL does not raise here.
+    """
     base_origin = settings.WEB_URL or settings.APP_BASE_URL
-
-    # Admin redirection
-    if is_admin:
-        admin_base_path = getattr(settings, "ADMIN_BASE_PATH", None)
-        if not isinstance(admin_base_path, str):
-            admin_base_path = "/god-mode/"
-        if not admin_base_path.startswith("/"):
-            admin_base_path = "/" + admin_base_path
-        if not admin_base_path.endswith("/"):
-            admin_base_path += "/"
-
-        if settings.ADMIN_BASE_URL:
-            return settings.ADMIN_BASE_URL + admin_base_path
-        else:
-            return base_origin + admin_base_path
-
-    # Space redirection
-    if is_space:
-        space_base_path = getattr(settings, "SPACE_BASE_PATH", None)
-        if not isinstance(space_base_path, str):
-            space_base_path = "/spaces/"
-        if not space_base_path.startswith("/"):
-            space_base_path = "/" + space_base_path
-        if not space_base_path.endswith("/"):
-            space_base_path += "/"
-
-        if settings.SPACE_BASE_URL:
-            return settings.SPACE_BASE_URL + space_base_path
-        else:
-            return base_origin + space_base_path
-
-    # App Redirection
-    if is_app:
-        if settings.APP_BASE_URL:
-            return settings.APP_BASE_URL
-        else:
-            return base_origin
-
-    return base_origin
+    return resolve_base_host(request, base_origin, is_admin=is_admin, is_space=is_space, is_app=is_app)
 
 
 def user_ip(request: Request | HttpRequest) -> str:
