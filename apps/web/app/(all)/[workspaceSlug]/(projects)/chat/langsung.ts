@@ -10,7 +10,18 @@ import { LIVE_BASE_PATH, LIVE_BASE_URL } from "@plane/constants";
 
 /** Kejadian yang disiarkan Django lewat Redis. */
 export type TKejadian = {
-  tipe: "siap" | "pesan" | "sunting" | "hapus" | "reaksi" | "sematan" | "sinyal" | "pergi" | "ruang" | "anggota";
+  tipe:
+    | "siap"
+    | "pesan"
+    | "sunting"
+    | "hapus"
+    | "reaksi"
+    | "sematan"
+    | "sinyal"
+    | "pergi"
+    | "ruang"
+    | "anggota"
+    | "baca";
   ruang?: string;
   saya?: string;
   oleh?: string | null;

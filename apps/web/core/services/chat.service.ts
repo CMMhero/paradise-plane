@@ -342,8 +342,9 @@ export class ChatService extends APIService {
       });
   }
 
-  async getPesan(workspaceSlug: string, userId: string): Promise<TPesan[]> {
-    return this.get(`/api/workspaces/${workspaceSlug}/chat/${userId}/`)
+  /** `tandai: false` menarik isi tanpa membaca (tab tersembunyi). */
+  async getPesan(workspaceSlug: string, userId: string, tandai = true): Promise<TPesan[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, tandai ? undefined : { params: { tandai: 0 } })
       .then((res) => res?.data)
       .catch((e) => {
         throw e?.response?.data;
@@ -519,12 +520,22 @@ export class ChatService extends APIService {
       });
   }
 
-  async getPesanRuang(workspaceSlug: string, ruangId: string): Promise<TPesan[]> {
-    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`)
+  async getPesanRuang(workspaceSlug: string, ruangId: string, tandai = true): Promise<TPesan[]> {
+    return this.get(
+      `/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`,
+      tandai ? undefined : { params: { tandai: 0 } }
+    )
       .then((res) => res?.data)
       .catch((e) => {
         throw e?.response?.data;
       });
+  }
+
+  /** Geser penanda baca ruang tanpa memuat isinya. */
+  async tandaiTerbaca(workspaceSlug: string, ruangId: string): Promise<void> {
+    await this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/baca/`).catch((e) => {
+      throw e?.response?.data;
+    });
   }
 
   async getPesanLamaRuang(workspaceSlug: string, ruangId: string, sebelum: string): Promise<TPesan[]> {
