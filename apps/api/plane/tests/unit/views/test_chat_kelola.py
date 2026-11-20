@@ -129,7 +129,10 @@ def test_super_admin_anggota_boleh_kelola(kantor):
     workspace, _, _, _, luar = kantor
     ruang = _kanal(kantor)
     instance = Instance.objects.create(
-        instance_name="uji", instance_id=f"uji-kelola-{uuid4().hex[:8]}", current_version="uji", last_checked_at=timezone.now()
+        instance_name="uji",
+        instance_id=f"uji-kelola-{uuid4().hex[:8]}",
+        current_version="uji",
+        last_checked_at=timezone.now(),
     )
     angkat_super_admin(instance, luar)
     client = _klien(luar)

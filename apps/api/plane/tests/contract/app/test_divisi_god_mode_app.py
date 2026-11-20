@@ -163,7 +163,9 @@ class TestDivisiAnggotaGodMode:
 
     @pytest.mark.django_db
     def test_project_asing_ditolak(self, workspace, instance_god_mode, super_admin, staf_a):
-        response = _post(super_admin, {"member_id": str(staf_a.id), "divisi": [{"project_id": str(uuid4()), "role": 15}]})
+        response = _post(
+            super_admin, {"member_id": str(staf_a.id), "divisi": [{"project_id": str(uuid4()), "role": 15}]}
+        )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.django_db

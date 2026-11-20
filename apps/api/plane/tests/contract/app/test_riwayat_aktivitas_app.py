@@ -58,7 +58,9 @@ def test_riwayat_tidak_ganda_walau_ada_keanggotaan_lama(session_client, workspac
         ]
     )
 
-    response = session_client.get(URL.format(slug=workspace.slug, project_id=project.id, issue_id=issue.id), {"activity_type": "issue-property"})
+    response = session_client.get(
+        URL.format(slug=workspace.slug, project_id=project.id, issue_id=issue.id), {"activity_type": "issue-property"}
+    )
 
     assert response.status_code == status.HTTP_200_OK
     ids = [str(item["id"]) for item in response.data]
@@ -72,7 +74,9 @@ def test_riwayat_kosong_untuk_non_anggota(session_client, workspace, create_user
     _tulis_aktivitas(project, issue, create_user)
     ProjectMember.objects.filter(project=project, member=create_user).update(is_active=False)
 
-    response = session_client.get(URL.format(slug=workspace.slug, project_id=project.id, issue_id=issue.id), {"activity_type": "issue-property"})
+    response = session_client.get(
+        URL.format(slug=workspace.slug, project_id=project.id, issue_id=issue.id), {"activity_type": "issue-property"}
+    )
 
     assert response.status_code in (status.HTTP_200_OK, status.HTTP_403_FORBIDDEN)
     if response.status_code == status.HTTP_200_OK:

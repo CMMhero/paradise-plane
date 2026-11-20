@@ -129,7 +129,12 @@ def _ajukan(staf, workspace, divisi, monkeypatch):
             project=divisi,
             workspace=workspace,
             name=d["name"],
-            defaults={"color": d["color"], "sequence": d["sequence"], "group": d["group"], "default": d.get("default", False)},
+            defaults={
+                "color": d["color"],
+                "sequence": d["sequence"],
+                "group": d["group"],
+                "default": d.get("default", False),
+            },
         )
         if st.group == "completed" and selesai is None:
             selesai = st

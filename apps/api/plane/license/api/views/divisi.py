@@ -92,7 +92,9 @@ class InstanceDivisiAnggotaEndpoint(BaseAPIView):
 
         diminta = request.data.get("divisi")
         if not isinstance(diminta, list):
-            return Response({"error": "divisi must be a list of {project_id, role}."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "divisi must be a list of {project_id, role}."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         projects = {p.id: p.identifier for p in Project.objects.filter(workspace=workspace, deleted_at__isnull=True)}
         # Peta uuid→identifier untuk balasan. (Identifier→uuid tak perlu di sini:
@@ -127,7 +129,9 @@ class InstanceDivisiAnggotaEndpoint(BaseAPIView):
         tingkat = tingkat_anggota(user.id, workspace.id)
         peran_wajar = 20 if (tingkat is not None and tingkat >= TINGKAT_SUPERVISOR) else 15
         peringatan = sorted(
-            f"{ke_identifier[q]} was given role {r}, expected {peran_wajar}" for q, r in ingin.items() if r != peran_wajar
+            f"{ke_identifier[q]} was given role {r}, expected {peran_wajar}"
+            for q, r in ingin.items()
+            if r != peran_wajar
         )
 
         # Baris yang ADA (aktif maupun nonaktif — `is_active=False` TIDAK
