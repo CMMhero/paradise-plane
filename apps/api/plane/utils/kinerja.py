@@ -80,6 +80,7 @@ from plane.db.models import (
     WorkspaceMember,
     menjangkau_seluruh_organisasi,
 )
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.hierarki import _bawahan_ids, adalah_admin_penuh, divisi_diawasi
 from plane.utils.laporan_selesai import ketepatan
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
@@ -594,15 +595,18 @@ def _tren(qs, jendela, hari_ini):
 
 
 def _tugas_terlihat(penonton, qs):
-    """Hanya tugas yang boleh dilihat `penonton`: project yang ia anggotai.
+    """Hanya tugas yang boleh dilihat `penonton`: project yang ia anggotai, tanpa privat orang lain.
 
-    Satu-satunya tempat judul tugas keluar dari modul ini. Aturan lihat tambahan
-    (mis. tugas privat) cukup disaring di sini; angka tidak ikut berubah.
+    Satu-satunya tempat judul tugas keluar dari modul ini, jadi angka tidak ikut
+    berubah: tugas privat tetap dihitung (keputusan P29 #8).
     """
-    return qs.filter(
-        project__project_projectmember__member=penonton,
-        project__project_projectmember__is_active=True,
-        project__project_projectmember__deleted_at__isnull=True,
+    return saring_tugas_privat(
+        qs.filter(
+            project__project_projectmember__member=penonton,
+            project__project_projectmember__is_active=True,
+            project__project_projectmember__deleted_at__isnull=True,
+        ),
+        penonton,
     )
 
 

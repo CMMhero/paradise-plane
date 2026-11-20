@@ -29,6 +29,7 @@ from rest_framework.test import APIClient
 
 from plane.db.models import (
     Departemen,
+    DepartemenProject,
     Divisi,
     Issue,
     IssueAssignee,
@@ -332,6 +333,38 @@ class TestLingkup:
         assert data["values"]["completed"] == 4
         assert data["values"]["overdue"] == 1
         assert data["items"] == {"overdue": [], "completed": []}
+
+    def test_tugas_privat_dihitung_tapi_judulnya_hanya_untuk_yang_boleh_melihat(self, org, workspace, create_user):
+        states = {s.group: s for s in State.objects.filter(project=org["project"])}
+        rahasia = _tugas(
+            org["project"],
+            states,
+            SELESAI,
+            [org["staf_a"]],
+            "Rahasia",
+            date(2026, 11, 16),
+            _wib(11, 16),
+            dibuat=_wib(11, 15),
+        )
+        Issue.objects.filter(pk=rahasia.pk).update(is_private=True)
+        # Atasan langsung dinilai lewat departemen pemilik project, seperti di produksi.
+        DepartemenProject.objects.create(workspace=workspace, departemen=org["gudang"], project=org["project"])
+        # Admin workspace yang ikut anggota project tetap bukan penonton tugas privat.
+        ProjectMember.objects.create(project=org["project"], member=create_user, workspace=workspace, role=20)
+
+        def judul(user):
+            data = _ambil(user, workspace.slug, lingkup="orang", id=str(org["staf_a"].id)).data
+            return data["values"]["completed"], [t["name"] for t in data["items"]["completed"]]
+
+        departemen = _ambil(org["spv"], workspace.slug, lingkup="departemen", id=str(org["gudang"].id)).data
+        assert departemen["values"]["completed"] == 6
+
+        jumlah, daftar = judul(org["staf_a"])
+        assert (jumlah, "Rahasia" in daftar) == (5, True)
+        jumlah, daftar = judul(org["spv"])
+        assert (jumlah, "Rahasia" in daftar) == (5, True)
+        jumlah, daftar = judul(create_user)
+        assert (jumlah, "Rahasia" in daftar, "Tepat" in daftar) == (5, False, True)
 
     def test_pilihan_lingkup_per_jenjang(self, org, workspace):
         def pilihan(user):
