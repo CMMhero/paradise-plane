@@ -21,8 +21,11 @@
  * Tiga jaga-jaga yang disengaja:
  * - Rentetan sinyal digabung (jeda `JEDA_GABUNG_MS`, batas tunggu `BATAS_TUNGGU_MS`),
  *   jadi 30 kejadian beruntun menjadi SATU putaran penarikan.
- * - Tab tersembunyi tidak menarik apa pun; kerja yang tertunda dikejar saat tab
- *   terlihat lagi.
+ * - Tab tersembunyi tidak menarik apa pun. Sinyal yang datang saat tersembunyi
+ *   disimpan dan, saat tab kembali, hanya kunci yang disebutnya yang ditarik.
+ *   Penarikan menyeluruh hanya bila tab tersembunyi sangat lama (`AMBANG_KETINGGALAN_MS`)
+ *   atau soket sempat putus. Berpindah tab/jendela sebentar tidak menarik apa pun,
+ *   dan semua penarikan otomatis berjalan senyap (tanpa kerangka, tanpa gulir loncat).
  * - Saat orang sedang mengetik, penarikan kunci SWR ditunda sampai fokus lepas,
  *   supaya isian yang belum disimpan tidak tertimpa data baru.
  */
@@ -61,10 +64,16 @@ const JEDA_GABUNG_MS = 600;
 const BATAS_TUNGGU_MS = 3000;
 /** Jeda sesudah fokus lepas dari kolom isian sebelum tarikan tertunda jalan. */
 const JEDA_SESUDAH_MENGETIK_MS = 1500;
-/** Tab yang tersembunyi selama ini dianggap ketinggalan dan disegarkan sekali saat kembali. */
-const AMBANG_KETINGGALAN_MS = 20_000;
+/** Tab yang tersembunyi selama ini dianggap mungkin ketinggalan dan disegarkan senyap sekali saat
+ * kembali. 5 menit: peramban mulai membatasi timer tab latar sekitar menit ke-5 dan membekukannya
+ * kemudian, jadi sebelum itu soket dan sinyal masih bisa dipercaya. */
+export const AMBANG_KETINGGALAN_MS = 5 * 60_000;
+/** Soket yang putus sependek ini dianggap tidak melewatkan sinyal; lebih lama dari ini, kejar senyap. */
+export const AMBANG_PUTUS_MS = 10_000;
 /** Jam cadangan saat soket live putus: kabar tidak bisa dipercaya sampai tersambung lagi. */
-export const SELANG_CADANGAN_MS = 45_000;
+export const SELANG_CADANGAN_MS = 120_000;
+/** Penarikan menyeluruh otomatis tidak diulang lebih rapat dari ini (pemicu yang bersamaan menyatu). */
+const JEDA_MINIMAL_OTOMATIS_MS = 30_000;
 
 const penyegar = new Map<symbol, TPenyegar>();
 const pendengar = new Set<() => void>();
@@ -76,6 +85,18 @@ let waktuGabung: ReturnType<typeof setTimeout> | null = null;
 let mulaiMenunggu = 0;
 let swrTertunda: TSinyalData[] = [];
 let tersembunyiSejak: number | null = null;
+/** Sinyal yang tiba saat tab tersembunyi, satu per (jenis, proyek, tugas). */
+const sinyalSaatTersembunyi = new Map<string, TSinyalData>();
+/** Soket tersambung ulang saat tab tersembunyi: kejar sekali begitu tab terlihat. */
+let perluKejarMenyeluruh = false;
+let otomatisBerjalan: Promise<void> | null = null;
+let otomatisTerakhir = 0;
+
+const kunciSinyal = (s: TSinyalData) => `${s.jenis}:${s.proyek ?? ""}:${s.tugas ?? ""}`;
+
+/** Jendela sedang dilihat dan berfokus. Hanya saat itu penarikan otomatis boleh jalan. */
+export const jendelaAktif = (): boolean =>
+  typeof document !== "undefined" && document.visibilityState === "visible" && document.hasFocus();
 
 const kabari = () => pendengar.forEach((f) => f());
 
@@ -141,6 +162,7 @@ function kunciCocok(kunci: unknown, sinyal: TSinyalData[]): boolean {
   return sinyal.some((s) => {
     if (s.proyek && teks.includes(s.proyek)) return true;
     if (s.tugas && teks.includes(s.tugas)) return true;
+    if (huruf.includes("attention")) return s.jenis === JENIS_TUGAS || s.jenis === JENIS_NOTIFIKASI;
     if (s.jenis === JENIS_NOTIFIKASI) return huruf.includes("notification") || huruf.includes("inbox");
     if (s.jenis === JENIS_ANGGOTA_PROJECT) return huruf.includes("member") || huruf.includes("project");
     return false;
@@ -205,8 +227,8 @@ function lepasGabungan() {
   tertunda = new Map();
   if (kumpulan.length === 0) return;
   if (typeof document !== "undefined" && document.visibilityState === "hidden") {
-    // Disimpan sebagai "ketinggalan"; dikejar oleh `saatTerlihat`.
-    tersembunyiSejak ??= Date.now() - AMBANG_KETINGGALAN_MS;
+    // Disimpan; saat tab terlihat lagi hanya kunci yang disebut sinyal yang ditarik.
+    kumpulan.forEach((s) => sinyalSaatTersembunyi.set(kunciSinyal(s), s));
     return;
   }
   void putaran(kumpulan, true);
@@ -215,7 +237,7 @@ function lepasGabungan() {
 /** Terima satu sinyal dari server. Dipanggil lapisan soket. */
 export function terimaSinyalData(sinyal: TSinyalData): void {
   if (!sinyal || typeof sinyal.jenis !== "string") return;
-  const kunci = `${sinyal.jenis}:${sinyal.proyek ?? ""}:${sinyal.tugas ?? ""}`;
+  const kunci = kunciSinyal(sinyal);
   const daftar = tertunda.get(kunci) ?? [];
   daftar.push(sinyal);
   tertunda.set(kunci, daftar);
@@ -231,22 +253,51 @@ export function segarkanSemua(): Promise<void> {
   return putaran(null, true);
 }
 
-/** Kejar kabar yang terlewat saat tab tersembunyi atau soket putus. */
-export function segarkanJikaTertinggal(): void {
-  if (typeof document === "undefined" || document.visibilityState !== "visible") return;
-  if (tersembunyiSejak !== null && Date.now() - tersembunyiSejak >= AMBANG_KETINGGALAN_MS) {
-    tersembunyiSejak = null;
-    void segarkanSemua();
+/**
+ * Penarikan menyeluruh OTOMATIS (tab lama tersembunyi, soket putus, jam cadangan).
+ * Pemicu yang datang bersamaan menyatu ke satu putaran, dan putaran berikutnya
+ * baru boleh jalan setelah `JEDA_MINIMAL_OTOMATIS_MS`. Tombol segarkan tidak lewat sini.
+ */
+export function segarkanSenyap(): Promise<void> {
+  if (otomatisBerjalan) return otomatisBerjalan;
+  if (Date.now() - otomatisTerakhir < JEDA_MINIMAL_OTOMATIS_MS) return Promise.resolve();
+  otomatisTerakhir = Date.now();
+  otomatisBerjalan = segarkanSemua().finally(() => {
+    otomatisBerjalan = null;
+  });
+  return otomatisBerjalan;
+}
+
+/** Soket tersambung ulang sesudah putus `terputusMs`. Sinyal selama itu hilang, jadi kejar senyap. */
+export function saatSoketTersambungUlang(terputusMs: number): void {
+  if (terputusMs < AMBANG_PUTUS_MS) return;
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+    perluKejarMenyeluruh = true;
     return;
   }
+  void segarkanSenyap();
+}
+
+/** Tab terlihat lagi: tarik apa yang memang perlu, senyap, dan tidak lebih. */
+function kejarSaatTerlihat(): void {
+  const lama = tersembunyiSejak === null ? 0 : Date.now() - tersembunyiSejak;
   tersembunyiSejak = null;
+  const menyeluruh = perluKejarMenyeluruh || lama >= AMBANG_KETINGGALAN_MS;
+  perluKejarMenyeluruh = false;
+  const sinyal = [...sinyalSaatTersembunyi.values()];
+  sinyalSaatTersembunyi.clear();
+  if (menyeluruh) {
+    void segarkanSenyap();
+  } else if (sinyal.length > 0) {
+    void putaran(sinyal, true);
+  }
 }
 
 function saatVisibilitas() {
   if (document.visibilityState === "hidden") {
     tersembunyiSejak ??= Date.now();
   } else {
-    segarkanJikaTertinggal();
+    kejarSaatTerlihat();
   }
 }
 
