@@ -45,6 +45,7 @@ import { TransferHopInfo } from "@/plane-web/components/issues/issue-details/sid
 import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/property";
 import { ApprovalSidebarInfo } from "@/plane-web/components/issues/issue-details/sidebar/approval-info";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+import { PrivateProperty } from "@/components/issues/privat/private-property";
 import { AssigneeProperty } from "./assignee-property";
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
@@ -124,6 +125,12 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
             {/* Kustomisasi Paradise: indikator "belum disetujui" + tombol putusan
             atasan. Tugas tetap muncul; baris persetujuan itulah indikatornya. */}
             <ApprovalSidebarInfo workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
+
+            <PrivateProperty
+              value={!!issue.is_private}
+              onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { is_private: val })}
+              disabled={!isEditable}
+            />
 
             <SidebarPropertyListItem icon={PriorityPropertyIcon} label={t("common.priority")}>
               <PriorityDropdown

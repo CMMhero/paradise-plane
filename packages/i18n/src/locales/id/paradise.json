@@ -1237,5 +1237,16 @@
     "label": "Segarkan",
     "tooltip": "Segarkan isi halaman",
     "busy": "Menyegarkan"
+  },
+  "privat": {
+    "label": "Privat",
+    "tooltip": "Privat: hanya assignee, pembuat, atasan langsung assignee, dan Super Admin yang bisa melihat work item ini",
+    "description": "Work item privat hanya terlihat oleh assignee, pembuat, atasan langsung assignee, dan Super Admin.",
+    "on": "Hanya orang yang terlibat",
+    "off": "Terlihat oleh project",
+    "activity": {
+      "on": "menjadikan work item ini privat",
+      "off": "membuka work item ini untuk seluruh project"
+    }
   }
 }

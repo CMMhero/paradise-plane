@@ -25,6 +25,7 @@ import { ModuleDropdown } from "@/components/dropdowns/module/dropdown";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { ParentIssuesListModal } from "@/components/issues/parent-issues-list-modal";
+import { PrivateToggleButton } from "@/components/issues/privat/private-toggle-button";
 import { IssueLabelSelect } from "@/components/issues/select";
 // helpers
 // hooks
@@ -278,6 +279,23 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
                 buttonVariant="border-with-text"
                 tabIndex={getIndex("estimate_point")}
                 placeholder={t("estimate")}
+              />
+            </div>
+          )}
+        />
+      )}
+      {!isDraft && (
+        <Controller
+          control={control}
+          name="is_private"
+          render={({ field: { value, onChange } }) => (
+            <div className="h-7 sentuh:h-10">
+              <PrivateToggleButton
+                value={!!value}
+                onChange={(isPrivate) => {
+                  onChange(isPrivate);
+                  handleFormChange();
+                }}
               />
             </div>
           )}

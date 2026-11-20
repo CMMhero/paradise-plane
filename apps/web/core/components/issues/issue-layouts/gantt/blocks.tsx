@@ -13,6 +13,7 @@ import { ControlLink } from "@plane/ui";
 import { findTotalDaysInRange, generateWorkItemLink } from "@plane/utils";
 // components
 import { SIDEBAR_WIDTH } from "@/components/gantt-chart/constants";
+import { PrivateBadge } from "@/components/issues/privat/private-badge";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
@@ -161,6 +162,7 @@ export const IssueGanttSidebarBlock = observer(function IssueGanttSidebarBlock(p
             displayProperties={issuesFilter?.issueFilters?.displayProperties}
           />
         )}
+        <PrivateBadge isPrivate={issueDetails?.is_private} variant="icon" />
         <Tooltip tooltipContent={issueDetails?.name} isMobile={isMobile}>
           <span className="flex-grow truncate text-13 font-medium">{issueDetails?.name}</span>
         </Tooltip>

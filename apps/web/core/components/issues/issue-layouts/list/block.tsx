@@ -22,6 +22,7 @@ import { Spinner, ControlLink, Row } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
+import { PrivateBadge } from "@/components/issues/privat/private-badge";
 import { ApprovalCardBadge, getVisibleApprovalStatus } from "@/components/issues/approval-card-badge";
 import { IssueProperties } from "@/components/issues/issue-layouts/properties";
 // helpers
@@ -306,6 +307,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
             >
               <p className="cursor-pointer truncate text-body-xs-medium text-primary">{issue.name}</p>
             </Tooltip>
+            <PrivateBadge isPrivate={issue.is_private} />
             {/* Kustomisasi Paradise: chip persetujuan ikut Display properties & modul Approvals. */}
             {displayProperties && (
               <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="approval_status">

@@ -1237,5 +1237,16 @@
     "label": "Actualiser",
     "tooltip": "Actualiser le contenu",
     "busy": "Actualisation"
+  },
+  "privat": {
+    "label": "Private",
+    "tooltip": "Private: only the assignees, the creator, the assignees' direct superiors and Super Admin can see this work item",
+    "description": "Only the assignees, the creator, the assignees' direct superiors and Super Admin can see a private work item.",
+    "on": "Only the people involved",
+    "off": "Visible to the project",
+    "activity": {
+      "on": "made this work item private",
+      "off": "made this work item visible to the project"
+    }
   }
 }

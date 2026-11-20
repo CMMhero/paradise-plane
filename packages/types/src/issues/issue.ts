@@ -75,6 +75,8 @@ export type TBaseIssue = {
   updated_by: string;
 
   is_draft: boolean;
+  /** Tugas privat (P29): hanya assignee, pembuat, atasan langsung assignee, dan Super Admin yang melihatnya. */
+  is_private?: boolean;
   is_epic?: boolean;
   is_intake?: boolean;
   /** Status persetujuan staf (KEP-25/26): menunggu/disetujui/ditolak/null. */

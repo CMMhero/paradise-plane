@@ -32,6 +32,7 @@ import {
   IssueAttachmentActivity,
   IssueArchivedAtActivity,
   IssueInboxActivity,
+  IssuePrivateActivity,
 } from "./actions";
 
 type TIssueActivityItem = {
@@ -94,6 +95,8 @@ export const IssueActivityItem = observer(function IssueActivityItem(props: TIss
       return <IssueInboxActivity {...componentDefaultProps} />;
     case "type":
       return <IssueTypeActivity {...componentDefaultProps} />;
+    case "is_private":
+      return <IssuePrivateActivity {...componentDefaultProps} />;
     default:
       return <AdditionalActivityRoot {...componentDefaultProps} field={activityField} />;
   }

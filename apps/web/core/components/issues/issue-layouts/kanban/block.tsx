@@ -35,6 +35,7 @@ import { useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 import { ApprovalCardBadge, getVisibleApprovalStatus } from "@/components/issues/approval-card-badge";
+import { PrivateBadge } from "@/components/issues/privat/private-badge";
 import { IssueStats } from "@/plane-web/components/issues/issue-layouts/issue-stats";
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { IssueProperties } from "../properties/all-properties";
@@ -131,6 +132,7 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
           <span>{issue.name}</span>
         </div>
       </Tooltip>
+      <PrivateBadge isPrivate={issue.is_private} />
       {/* Kustomisasi Paradise: chip persetujuan ikut Display properties & modul Approvals. */}
       {displayProperties && (
         <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="approval_status">
