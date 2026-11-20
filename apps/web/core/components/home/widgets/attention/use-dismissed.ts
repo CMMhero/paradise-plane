@@ -47,17 +47,15 @@ export const useAttentionDismissed = (workspaceSlug: string, userId: string | un
 
   const dismiss = useCallback(
     (group: TAttentionGroupKey, item: TAttentionItem) => {
-      setPeta((lama) => {
-        const baru = { ...lama, [kunciKartu(group, item)]: { sig: tandaTangan(item), at: Date.now() } };
-        try {
-          window.localStorage.setItem(kunci, JSON.stringify(baru));
-        } catch {
-          // Penyimpanan penuh atau diblokir: kartu tetap tersembunyi sampai muat ulang.
-        }
-        return baru;
-      });
+      const baru = { ...peta, [kunciKartu(group, item)]: { sig: tandaTangan(item), at: Date.now() } };
+      setPeta(baru);
+      try {
+        window.localStorage.setItem(kunci, JSON.stringify(baru));
+      } catch {
+        // Penyimpanan penuh atau diblokir: kartu tetap tersembunyi sampai muat ulang.
+      }
     },
-    [kunci]
+    [kunci, peta]
   );
 
   return { isDismissed, dismiss };

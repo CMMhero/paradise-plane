@@ -33,7 +33,8 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
     project: { projectMemberIds, getProjectMemberDetails },
   } = useMember();
 
-  const options = (memberIds ? projectMemberIds?.filter((userId) => memberIds.includes(userId)) : projectMemberIds)
+  const izinkan = memberIds ? new Set(memberIds) : null;
+  const options = (izinkan ? projectMemberIds?.filter((userId) => izinkan.has(userId)) : projectMemberIds)
     ?.map((userId) => {
       const memberDetails = projectId ? getProjectMemberDetails(userId, projectId.toString()) : null;
 
@@ -81,7 +82,6 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
       }
       buttonClassName="!px-3 !py-2 bg-surface-1"
       options={
-        options &&
         options && [
           ...options,
           {
