@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
+import Link from "next/link";
 import { useParams } from "react-router";
 import { AlertTriangle, ArrowLeftRight, Clock, Inbox, ListTodo, Send } from "lucide-react";
 // plane imports
@@ -264,10 +265,10 @@ function TugasLintasDivisiPage() {
 
   return (
     <div className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6">
-      <PageHead title={t("cross_division_ui.title")} />
+      <PageHead title={t("persetujuan_p29.nav_requests")} />
 
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <p className="text-12 text-tertiary">{t("cross_division_ui.intro")}</p>
+        <p className="text-12 text-tertiary">{t("persetujuan_p29.requests_intro")}</p>
 
         {gagalMuat ? (
           <div
@@ -526,13 +527,29 @@ function TugasLintasDivisiPage() {
                             <Badge variant={VARIAN_STATUS_PERMINTAAN[baris.status_permintaan] ?? "neutral"}>
                               {labelStatusPermintaan(baris.status_permintaan, t)}
                             </Badge>
+                            {baris.alasan_tolak && (
+                              <p className="mt-1 text-11 text-tertiary">
+                                {t("persetujuan_p29.decline_reason", { reason: baris.alasan_tolak })}
+                              </p>
+                            )}
                           </td>
                           <td className="px-3 py-2">
                             <Badge variant={VARIAN_STATUS_TUGAS[baris.status_tugas] ?? "neutral"}>
                               {labelStatusTugas(baris.status_tugas, t)}
                             </Badge>
                           </td>
-                          <td className="px-3 py-2 text-secondary">{baris.nomor_tugas_tujuan ?? "—"}</td>
+                          <td className="px-3 py-2 text-secondary">
+                            {baris.boleh_dibuka && baris.nomor_tugas_tujuan ? (
+                              <Link
+                                href={`/${workspaceSlug}/browse/${baris.nomor_tugas_tujuan}/`}
+                                className="text-accent-primary hover:underline"
+                              >
+                                {baris.nomor_tugas_tujuan}
+                              </Link>
+                            ) : (
+                              (baris.nomor_tugas_tujuan ?? "—")
+                            )}
+                          </td>
                           <td className="px-3 py-2 text-secondary">
                             {formatTanggal(baris.dibuat_pada, currentLocale)}
                           </td>

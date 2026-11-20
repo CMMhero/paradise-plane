@@ -91,15 +91,19 @@ def nomor_tugas(intake_issue, tujuan_project):
     return f"{tujuan_project.identifier}-{sequence}"
 
 
-def serialize_permintaan(p):
+def serialize_permintaan(p, boleh_buka_tujuan):
     """Satu baris permintaan, bentuk yang dilihat PEMINTA.
 
     `judul` dan `catatan` ditulis peminta sendiri. `nomor_tugas`,
-    `status_permintaan`, dan `status_tugas` adalah satu-satunya hal yang
-    menyeberang dari project tujuan, dan ketiganya sengaja kasar.
+    `status_permintaan`, `status_tugas`, dan alasan tolak adalah satu-satunya hal
+    yang menyeberang dari project tujuan, dan semuanya sengaja kasar.
+
+    `boleh_buka_tujuan`: peminta anggota project tujuan (mis. sudah pindah ke
+    sana), jadi tautan ke work item-nya tidak membuka apa pun yang baru.
     """
     intake_issue = p.intake_issue
     tujuan = p.tujuan_project
+    nomor = nomor_tugas(intake_issue, tujuan)
     return {
         "id": str(p.id),
         "dibuat_pada": p.created_at,
@@ -115,7 +119,14 @@ def serialize_permintaan(p):
             "name": tujuan.name,
         },
         "judul": getattr(getattr(intake_issue, "issue", None), "name", None),
-        "nomor_tugas_tujuan": nomor_tugas(intake_issue, tujuan),
+        "nomor_tugas_tujuan": nomor,
         "status_permintaan": status_permintaan(intake_issue),
         "status_tugas": status_tugas(intake_issue),
+        # Ditulis `utils/permintaan_lintas_divisi.catat_keputusan` saat ditolak.
+        "alasan_tolak": (
+            ((intake_issue.extra or {}).get("crossdiv") or {}).get("alasan_tolak") or ""
+            if intake_issue is not None and intake_issue.status == -1
+            else ""
+        ),
+        "boleh_dibuka": bool(nomor) and boleh_buka_tujuan,
     }

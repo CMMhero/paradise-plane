@@ -34,7 +34,14 @@ export type TPermintaanLintasDivisi = {
   nomor_tugas_tujuan: string | null;
   status_permintaan: TStatusPermintaan;
   status_tugas: TStatusTugas;
+  /** Diisi departemen tujuan saat menolak. Server lama: tidak ada. */
+  alasan_tolak?: string;
+  /** Peminta anggota departemen tujuan, jadi `nomor_tugas_tujuan` boleh ditautkan. */
+  boleh_dibuka?: boolean;
 };
+
+/** Status `IntakeIssue`: 1 diterima, -1 ditolak. */
+export type TKeputusanPermintaan = 1 | -1;
 
 export type TRingkasanDivisi = {
   masuk_menunggu: number;
@@ -88,6 +95,27 @@ export class CrossDivisionService extends APIService {
   async listRingkasan(workspaceSlug: string): Promise<TRingkasanLintasDivisi> {
     return this.get(`${this.root(workspaceSlug)}/ringkasan/`)
       .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  /**
+   * Terima/tolak lewat jalur Intake bawaan (`IntakeIssueViewSet.partial_update`),
+   * jadi wewenangnya sama dengan tombol di halaman Intake. `issueId` = id work item.
+   */
+  async putuskanPermintaan(
+    workspaceSlug: string,
+    projectId: string,
+    issueId: string,
+    status: TKeputusanPermintaan,
+    alasan = ""
+  ): Promise<void> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/intake-issues/${issueId}/`, {
+      status,
+      alasan,
+    })
+      .then(() => undefined)
       .catch((e) => {
         throw e?.response?.data;
       });

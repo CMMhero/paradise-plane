@@ -18,6 +18,7 @@ from plane.app.views.penempatan_saya import PenempatanSayaEndpoint
 from plane.app.views.workspace.boleh_buat_project import BolehBuatProjectEndpoint
 from plane.app.views.workspace.izin_saya import IzinSayaEndpoint
 from plane.app.views.workspace.perhatian import PerhatianEndpoint
+from plane.app.views.workspace.persetujuan import AntreanPersetujuanWorkspaceEndpoint
 from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAnggotaEndpoint
 from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
 from plane.app.views.chat_penulis import ChatPenulisKanalEndpoint
@@ -242,6 +243,12 @@ urlpatterns = [
         "workspaces/<str:slug>/paradise/attention/",
         PerhatianEndpoint.as_view(),
         name="perhatian",
+    ),
+    # Semua yang menunggu keputusan saya di seluruh departemen (keputusan user 2026-11-20).
+    path(
+        "workspaces/<str:slug>/persetujuan/",
+        AntreanPersetujuanWorkspaceEndpoint.as_view(),
+        name="persetujuan-workspace",
     ),
     path(
         "workspaces/<str:slug>/divisi-dashboard/",

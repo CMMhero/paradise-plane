@@ -617,6 +617,8 @@ const en = {
       dashboard_divisi: "Division dashboard",
       kinerja: "KPI",
       initiatives: "Initiatives",
+      persetujuan: "Approvals",
+      tugas_lintas_divisi: "Department requests",
       chat: "Chat",
       wiki: "Wiki",
       archives: "Archives",

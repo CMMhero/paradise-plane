@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { BookText, Gauge, LayoutDashboard, Link2, MessageSquare, Target } from "lucide-react";
+import { ArrowLeftRight, BookText, Gauge, LayoutDashboard, Link2, MessageSquare, Stamp, Target } from "lucide-react";
 import {
   AnalyticsIcon,
   ArchiveIcon,
@@ -40,6 +40,8 @@ const NAV_ICON_HUE: Record<string, TTintHue> = {
   dashboard_divisi: "emerald",
   kinerja: "orange",
   initiatives: "pink",
+  persetujuan: "orange",
+  tugas_lintas_divisi: "purple",
   chat: "indigo",
   quick_links: "emerald",
 };
@@ -79,8 +81,10 @@ export const getSidebarNavigationItemIcon = (key: string, extraClassName: string
       return <Gauge className={cn("size-4 flex-shrink-0", className)} />;
     case "initiatives":
       return <Target className={cn("size-4 flex-shrink-0", className)} />;
-    // "tugas_lintas_divisi" tidak ada: nav-nya dibuang (keputusan user), jadi
-    // ikonnya ikut dibuang. Route + halamannya tetap hidup sebagai deep-link.
+    case "persetujuan":
+      return <Stamp className={cn("size-4 flex-shrink-0", className)} />;
+    case "tugas_lintas_divisi":
+      return <ArrowLeftRight className={cn("size-4 flex-shrink-0", className)} />;
     case "chat":
       return <MessageSquare className={cn("size-4 flex-shrink-0", className)} />;
     case "quick_links":

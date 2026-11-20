@@ -243,15 +243,26 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
-  // "tugas_lintas_divisi" DIHAPUS dari sidebar (keputusan user): lintas divisi
-  // dikerjakan dari daftar project — direktur melihat semua divisi dan membuat
-  // work item langsung di project tujuan. Route + endpoint + halamannya tetap
-  // hidup (deep-link), hanya entri nav-nya yang dibuang. Jangan daftarkan
-  // ulang tanpa keputusan user.
-  // "persetujuan" DIHAPUS dari sidebar workspace (keputusan user 2026-10-16):
-  // antrean pindah ke tab per divisi (`/projects/:id/persetujuan`, label
-  // `sidebar.persetujuan` di navigation.json). Jangan daftarkan ulang tanpa
-  // keputusan user.
+  // Keputusan user 2026-11-20 membalik dua penghapusan lama:
+  // - "persetujuan": atasan memutuskan semua departemen dari satu halaman, tidak
+  //   lagi membuka tab tiap departemen (tab per project tetap ada). Hanya tampil
+  //   bagi yang punya wewenang memutuskan (sidebar-item.tsx).
+  // - "tugas_lintas_divisi": siapa pun boleh meminta pekerjaan dari departemen
+  //   yang bukan miliknya; permintaan masuk Intake departemen tujuan.
+  persetujuan: {
+    key: "persetujuan",
+    labelTranslationKey: "persetujuan_p29.nav",
+    href: `/persetujuan/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
+  tugas_lintas_divisi: {
+    key: "tugas_lintas_divisi",
+    labelTranslationKey: "persetujuan_p29.nav_requests",
+    href: `/tugas-lintas-divisi/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
   // Obrolan antar-karyawan (Paradise). "chat_nav", BUKAN
   // "chat", mengikuti alasan wiki_nav di bawah: kunci daun bernama "chat" akan
   // bentrok dengan sync:check begitu ada namespace chat.* di kemudian hari.
@@ -292,6 +303,8 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebar
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["kinerja"],
   // Dinyalakan/dimatikan di God Mode > Features (lihat apps/web/core/lib/paradise-modules.ts).
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["persetujuan"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["tugas_lintas_divisi"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["chat"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["wiki"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],

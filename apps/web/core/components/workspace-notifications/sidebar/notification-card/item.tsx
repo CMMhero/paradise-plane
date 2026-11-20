@@ -68,6 +68,8 @@ export const NotificationItem = observer(function NotificationItem({
   const triggeredBy = notification.triggered_by_details || undefined;
   // Kustomisasi Paradise: baris DM (tanpa project) dan baris tenggat (tanpa pemicu).
   const isChat = notificationField === "chat";
+  // Peminta bukan anggota departemen tujuan: barisnya membuka daftar permintaannya, bukan work item.
+  const isCrossDivision = notificationField === "cross_division";
   const isDeadline = notificationField === "deadline";
   const chatSenderId = notification?.data?.chat?.pengirim_id;
   const isUnread = !notification.read_at;
@@ -94,26 +96,29 @@ export const NotificationItem = observer(function NotificationItem({
     }
   };
 
-  const chatHref = `/${workspaceSlug}/chat/${chatSenderId ? `?dengan=${chatSenderId}` : ""}`;
+  const directHref = isCrossDivision
+    ? `/${workspaceSlug}/tugas-lintas-divisi/`
+    : `/${workspaceSlug}/chat/${chatSenderId ? `?dengan=${chatSenderId}` : ""}`;
   const fullViewHref = `/${workspaceSlug}/notifications/`;
   // Intake (is_inbox_issue) tidak punya halaman /browse; ia hanya terbuka di tampilan penuh.
-  const opensInFullView = !isChat && (notification?.is_inbox_issue === true || !workItemKey);
-  const popoverHref = isChat
-    ? chatHref
-    : opensInFullView
-      ? fullViewHref
-      : generateWorkItemLink({
-          workspaceSlug,
-          projectId,
-          issueId,
-          projectIdentifier: issue?.identifier,
-          sequenceId: issue?.sequence_id,
-        });
+  const opensInFullView = !isChat && !isCrossDivision && (notification?.is_inbox_issue === true || !workItemKey);
+  const popoverHref =
+    isChat || isCrossDivision
+      ? directHref
+      : opensInFullView
+        ? fullViewHref
+        : generateWorkItemLink({
+            workspaceSlug,
+            projectId,
+            issueId,
+            projectIdentifier: issue?.identifier,
+            sequenceId: issue?.sequence_id,
+          });
 
   const handleSplitClick = async () => {
-    if (isChat) {
+    if (isChat || isCrossDivision) {
       await markAsRead();
-      router.push(chatHref);
+      router.push(directHref);
       return;
     }
     selectInSplitView();

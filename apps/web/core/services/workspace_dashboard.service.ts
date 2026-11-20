@@ -58,6 +58,8 @@ export type TDivisionDashboard = {
   thresholds: { attention: number; critical: number };
   /** Jendela `on_time_rate` dalam hari (God Mode DASHBOARD_ON_TIME_WINDOW_DAYS). Tidak ada = server lama, 30. */
   on_time_window_days?: number;
+  /** Direktur/sekretaris: angka tugas hanya dari buatan Supervisor ke atas. Tidak ada = server lama. */
+  leader_created_only?: boolean;
   totals: TDashboardFigures & {
     projects: number;
     /** Persen tugas bertenggat yang selesai tepat waktu, `on_time_window_days` hari terakhir. */

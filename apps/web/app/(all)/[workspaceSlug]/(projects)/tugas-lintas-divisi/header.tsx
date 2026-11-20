@@ -23,7 +23,7 @@ export const TugasLintasDivisiHeader = observer(function TugasLintasDivisiHeader
           <Breadcrumbs.Item
             component={
               <BreadcrumbLink
-                label={t("cross_division_ui.title")}
+                label={t("persetujuan_p29.nav_requests")}
                 icon={<ArrowLeftRight className="h-4 w-4 text-tertiary" />}
               />
             }

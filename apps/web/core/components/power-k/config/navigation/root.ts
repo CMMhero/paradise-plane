@@ -50,6 +50,7 @@ export const usePowerKNavigationCommands = (): TPowerKCommandConfig[] => {
     optionsList["nav_workspace_analytics"],
     paradiseList["nav_dashboard_divisi"],
     paradiseList["nav_kinerja"],
+    paradiseList["nav_workspace_approvals"],
     paradiseList["nav_initiatives"],
     optionsList["nav_workspace_settings"],
     optionsList["nav_workspace_drafts"],

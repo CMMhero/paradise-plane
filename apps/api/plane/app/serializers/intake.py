@@ -66,6 +66,7 @@ class IntakeIssueSerializer(BaseSerializer):
         return attrs
 
     def update(self, instance, validated_data):
+        status_lama = instance.status
         # Update the intake issue
         instance = super().update(instance, validated_data)
 
@@ -86,6 +87,15 @@ class IntakeIssueSerializer(BaseSerializer):
             from plane.utils.hierarki import aktor_dari_context, tugaskan_otomatis  # noqa: PLC0415
 
             tugaskan_otomatis(instance.issue, aktor_dari_context(self.context))
+
+        if instance.status != status_lama:
+            # Paradise: peminta lintas departemen diberi tahu diterima/ditolak. `alasan`
+            # bukan kolom IntakeIssue, jadi dibaca dari isian mentah.
+            from plane.utils.hierarki import aktor_dari_context  # noqa: PLC0415
+            from plane.utils.permintaan_lintas_divisi import catat_keputusan  # noqa: PLC0415
+
+            alasan = getattr(self, "initial_data", {}).get("alasan", "")
+            catat_keputusan(instance, aktor_dari_context(self.context), alasan if isinstance(alasan, str) else "")
 
         return instance
 

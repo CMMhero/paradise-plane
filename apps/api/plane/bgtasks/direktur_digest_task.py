@@ -57,6 +57,7 @@ from plane.utils.hierarki import divisi_diawasi
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.saklar_instance import STUCK_AFTER_DAYS, setelan_angka
 from plane.utils.setelan_instance import DIGEST_WEEKDAYS, setelan_hari_kerja
+from plane.utils.statistik_pimpinan import q_dibuat_pimpinan
 
 logger = logging.getLogger("plane")
 
@@ -102,7 +103,10 @@ class DataWorkspace:
         self.hari_ini = hari_ini
         self.hari_macet = setelan_angka(STUCK_AFTER_DAYS) if hari_macet is None else hari_macet
         self.hari_ke_depan = hari_ke_depan_pagi() if hari_ke_depan is None else hari_ke_depan
-        dasar = Issue.issue_objects.filter(workspace_id=workspace_id, project__deleted_at__isnull=True)
+        # Penerima laporan ini hanya direktur dan sekretaris: tugas buatan staf tidak dihitung.
+        dasar = Issue.issue_objects.filter(
+            q_dibuat_pimpinan(), workspace_id=workspace_id, project__deleted_at__isnull=True
+        )
         # KEP-84: yang menunggu persetujuan selesai tidak terbuka bagi staf: tidak
         # terlambat, tidak macet, tidak jatuh tempo.
         terbuka = Q(target_date__isnull=False) & ~Q(state__group__in=GRUP_SELESAI) & q_bisa_terlambat()

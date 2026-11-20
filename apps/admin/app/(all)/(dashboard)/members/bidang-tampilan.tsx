@@ -29,6 +29,8 @@ const NAV_WORKSPACE: TNavItemKey[] = [
   "dashboard_divisi",
   "kinerja",
   "initiatives",
+  "persetujuan",
+  "tugas_lintas_divisi",
   "chat",
   "wiki",
   "archives",

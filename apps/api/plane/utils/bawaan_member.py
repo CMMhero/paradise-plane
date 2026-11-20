@@ -141,7 +141,18 @@ TINGKAT_BAWAAN_SAH = frozenset({None, 10, 20, 30})
 # ada di `WorkspaceUserPreference.UserPreferenceKeys`, kalau tidak barisnya tak
 # pernah dibuat dan saklar semat di web tidak berbuat apa-apa.
 NAV_PRIBADI = ("your_work", "stickies", "drafts", "quick_links")
-NAV_WORKSPACE = ("views", "analytics", "dashboard_divisi", "kinerja", "initiatives", "chat", "wiki", "archives")
+NAV_WORKSPACE = (
+    "views",
+    "analytics",
+    "dashboard_divisi",
+    "kinerja",
+    "initiatives",
+    "persetujuan",
+    "tugas_lintas_divisi",
+    "chat",
+    "wiki",
+    "archives",
+)
 NAV_KUNCI = NAV_PRIBADI + NAV_WORKSPACE
 MODE_NAVIGASI_SAH = frozenset({"ACCORDION", "TABBED"})
 # 0 = tampilkan semua project. Batas atas sekadar penjaga salah ketik.

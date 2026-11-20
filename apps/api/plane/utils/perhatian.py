@@ -52,6 +52,7 @@ from plane.utils.ringkasan_divisi import project_terjangkau
 from plane.utils.tanggal_otomatis import batas_terlambat
 from plane.utils.saklar_instance import DIGEST_LOOKAHEAD_DAYS, setelan_angka
 from plane.utils.setelan_instance import hari_ini_kantor
+from plane.utils.statistik_pimpinan import cakupan_angka
 # Jendela "rejected" dan "mentioned" dari God Mode (KEP-83); bawaan 14 dan 7 hari.
 from plane.utils.saklar_instance import ATTENTION_MENTION_DAYS, ATTENTION_REJECTED_DAYS
 
@@ -330,8 +331,12 @@ def susun_perhatian(user, slug):
             top_project_id=str(terbanyak) if terbanyak else None,
         )
         # Tim = project yang saya awasi. Tugas saya sendiri sudah ada di `overdue_mine`.
+        # Direktur dan sekretaris hanya menghitung tugas buatan atasan (statistik_pimpinan).
         tim = saring_tugas_privat(
-            _tugas_aktif(list(diawasi)).filter(target_date__lt=batas).filter(bisa_terlambat).exclude(_ditugaskan_ke(user)),
+            _tugas_aktif(list(diawasi))
+            .filter(cakupan_angka(user, workspace_id), target_date__lt=batas)
+            .filter(bisa_terlambat)
+            .exclude(_ditugaskan_ke(user)),
             user,
         )
         simpan("team_overdue", _kelompok(tim.values(*_KOLOM_TUGAS), ("target_date", "sequence_id")))
