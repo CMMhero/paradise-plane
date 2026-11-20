@@ -14,7 +14,7 @@ web. Semuanya dikerjakan sekali per panggilan, bukan per baris.
 import re
 
 from bs4 import BeautifulSoup
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 
 from plane.db.models import IssueAssignee, IssueComment, Notification, User
 from plane.utils.akses_privat import saring_tugas_privat
@@ -24,11 +24,35 @@ _PENGIRIM_SEBUTAN = "in_app:issue_activities:mentioned"
 _ID_PENGGUNA = re.compile(r'entity_identifier="([0-9a-f-]{36})"')
 
 
-def sebutan_komentar(user, project_ids, sejak, kecuali_grup):
+def sebutan_terbaca(user, project_ids, sejak):
+    """(id komentar, id tugas) dari sebutan yang notifikasinya sudah dibaca `user`.
+
+    Id tugas hanya dari sebutan di deskripsi; sebutan di komentar dikenali lewat id komentarnya.
+    """
+    komentar, deskripsi = set(), set()
+    for issue_id, data in Notification.objects.filter(
+        receiver=user,
+        project_id__in=project_ids,
+        sender=_PENGIRIM_SEBUTAN,
+        read_at__isnull=False,
+        created_at__gte=sejak,
+    ).values_list("entity_identifier", "data"):
+        aktivitas = (data or {}).get("issue_activity") or {}
+        if aktivitas.get("field") == "comment":
+            komentar.add(str(aktivitas.get("new_identifier")))
+        else:
+            deskripsi.add(issue_id)
+    return komentar, deskripsi
+
+
+def sebutan_komentar(user, project_ids, sejak, kecuali_grup, terbaca):
     """Komentar hidup di tugas aktif yang menyebut `user` secara langsung (bukan @all), bukan tulisannya sendiri.
 
     Tugas privat yang tak boleh ia lihat tidak ikut, walau komentarnya menyebut dia.
+    Sebutan yang sudah dibalas `user` (komentar dengan `parent` = komentar ini) atau
+    yang notifikasinya sudah dibaca tidak ikut: kartunya selesai.
     """
+    balasan = IssueComment.objects.filter(parent_id=OuterRef("pk"), actor=user)
     return saring_tugas_privat(
         IssueComment.objects.filter(
             project_id__in=project_ids,
@@ -39,7 +63,9 @@ def sebutan_komentar(user, project_ids, sejak, kecuali_grup):
             issue__archived_at__isnull=True,
         )
         .exclude(issue__state__group__in=kecuali_grup)
-        .exclude(actor=user),
+        .exclude(actor=user)
+        .exclude(Exists(balasan))
+        .exclude(id__in=terbaca),
         user,
         prefix="issue__",
     )

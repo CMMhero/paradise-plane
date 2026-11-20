@@ -46,7 +46,7 @@ from plane.db.models import (
     Workspace,
 )
 from plane.utils.hierarki import divisi_diawasi, pengajuan_boleh_diputuskan
-from plane.utils.perhatian_sebutan import lengkapi_baris, sebutan_komentar
+from plane.utils.perhatian_sebutan import lengkapi_baris, sebutan_komentar, sebutan_terbaca
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.ringkasan_divisi import project_terjangkau
 from plane.utils.tanggal_otomatis import batas_terlambat
@@ -234,6 +234,11 @@ def susun_perhatian(user, slug):
     # (`IssueMention`) atau di komentar (satu kartu per komentar, KEP-103: balasan
     # cepat menempel ke komentar itu).
     jendela_sebutan = sekarang - timedelta(days=setelan_angka(ATTENTION_MENTION_DAYS))
+    komentar_terbaca, deskripsi_terbaca = sebutan_terbaca(user, project_ids, jendela_sebutan)
+    # Kartu selesai kalau notifikasinya sudah dibaca atau saya sudah berkomentar di tugasnya sesudah disebut.
+    sudah_menanggapi = IssueComment.objects.filter(
+        issue_id=OuterRef("issue_id"), actor=user, created_at__gt=OuterRef("created_at")
+    )
     sebutan = saring_tugas_privat(
         IssueMention.objects.filter(
             mention=user,
@@ -244,6 +249,8 @@ def susun_perhatian(user, slug):
             issue__archived_at__isnull=True,
         )
         .exclude(issue__state__group__in=_TUNTAS)
+        .exclude(issue_id__in=deskripsi_terbaca)
+        .exclude(Exists(sudah_menanggapi))
         .values(*_KOLOM_VIA_ISSUE, "created_at"),
         user,
         prefix="issue__",
@@ -254,7 +261,7 @@ def susun_perhatian(user, slug):
         lambda b: _item_via_issue(b, mentioned_at=b["created_at"], comment_id=None, snippet=None, mentioned_by=None),
     )
     jumlah_komentar, baris_komentar = _kelompok(
-        sebutan_komentar(user, project_ids, jendela_sebutan, _TUNTAS).values(
+        sebutan_komentar(user, project_ids, jendela_sebutan, _TUNTAS, komentar_terbaca).values(
             "id", *_KOLOM_VIA_ISSUE, "created_at", "comment_html", "actor__display_name"
         ),
         ("-created_at",),

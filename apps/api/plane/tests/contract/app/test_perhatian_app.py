@@ -287,6 +287,89 @@ class TestKartuAksi:
         assert item["snippet"] is None
         assert item["notification_id"] is None
 
+    def _sebut_komentar(self, org, nama="Dibahas"):
+        tugas = _tugas(org.p1, org.s["unstarted"], nama, None, org.rekan)
+        komentar = IssueComment.objects.create(
+            issue=tugas,
+            project=org.p1,
+            workspace=org.ws,
+            actor=org.rekan,
+            comment_html=(
+                f'<p><mention-component entity_identifier="{org.staf.id}" entity_name="user_mention">'
+                "</mention-component></p>"
+            ),
+        )
+        notif = Notification.objects.create(
+            workspace=org.ws,
+            project=org.p1,
+            receiver=org.staf,
+            triggered_by=org.rekan,
+            sender="in_app:issue_activities:mentioned",
+            entity_identifier=tugas.id,
+            entity_name="issue",
+            title="x",
+            data={"issue_activity": {"field": "comment", "new_identifier": str(komentar.id)}},
+        )
+        return tugas, komentar, notif
+
+    def _sebutan(self, org):
+        return _kunci(_klien(org.staf).get(URL.format(slug=org.ws.slug)).json())["mentioned"]
+
+    @pytest.mark.django_db
+    def test_sebutan_komentar_yang_sudah_dibalas_hilang(self, org):
+        tugas, komentar, _ = self._sebut_komentar(org)
+        assert self._sebutan(org)["count"] == 1
+        balasan = IssueComment.objects.create(
+            issue=tugas, project=org.p1, workspace=org.ws, actor=org.staf, parent=komentar, comment_html="<p>ok</p>"
+        )
+        g = self._sebutan(org)
+        assert (g["count"], g["items"]) == (0, [])
+        balasan.delete()
+        assert self._sebutan(org)["count"] == 1
+
+    @pytest.mark.django_db
+    def test_balasan_orang_lain_tidak_menutup_sebutan(self, org):
+        tugas, komentar, _ = self._sebut_komentar(org)
+        IssueComment.objects.create(
+            issue=tugas, project=org.p1, workspace=org.ws, actor=org.rekan, parent=komentar, comment_html="<p>ok</p>"
+        )
+        assert self._sebutan(org)["count"] == 1
+
+    @pytest.mark.django_db
+    def test_sebutan_komentar_yang_notifikasinya_sudah_dibaca_hilang(self, org):
+        _, _, notif = self._sebut_komentar(org)
+        _, _, lain = self._sebut_komentar(org, "Masih baru")
+        assert self._sebutan(org)["count"] == 2
+        Notification.objects.filter(pk=notif.pk).update(read_at=timezone.now())
+        g = self._sebutan(org)
+        assert (g["count"], [i["name"] for i in g["items"]]) == (1, ["Masih baru"])
+        assert g["items"][0]["notification_id"] == str(lain.id)
+
+    @pytest.mark.django_db
+    def test_sebutan_deskripsi_hilang_setelah_dibaca_atau_dikomentari(self, org):
+        dibaca = _tugas(org.p1, org.s["unstarted"], "Dibaca", None, org.rekan)
+        dikomentari = _tugas(org.p1, org.s["unstarted"], "Dikomentari", None, org.rekan)
+        baru = _tugas(org.p1, org.s["unstarted"], "Belum disentuh", None, org.rekan)
+        for tugas in (dibaca, dikomentari, baru):
+            IssueMention.objects.create(issue=tugas, mention=org.staf, project=org.p1, workspace=org.ws)
+        assert self._sebutan(org)["count"] == 3
+        Notification.objects.create(
+            workspace=org.ws,
+            project=org.p1,
+            receiver=org.staf,
+            sender="in_app:issue_activities:mentioned",
+            entity_identifier=dibaca.id,
+            entity_name="issue",
+            title="x",
+            read_at=timezone.now(),
+            data={"issue_activity": {"field": "description"}},
+        )
+        IssueComment.objects.create(
+            issue=dikomentari, project=org.p1, workspace=org.ws, actor=org.staf, comment_html="<p>siap</p>"
+        )
+        g = self._sebutan(org)
+        assert (g["count"], [i["name"] for i in g["items"]]) == (1, ["Belum disentuh"])
+
     @pytest.mark.django_db
     def test_sebutan_di_tugas_privat_hanya_untuk_yang_boleh_melihat(self, org):
         def sebut(user):
