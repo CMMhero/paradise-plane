@@ -64,7 +64,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useAturanTugas } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useKunciSelesai } from "@/hooks/use-aturan-tugas";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
@@ -124,6 +124,9 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
 
   // derived values
   const stateDetails = getStateById(issue.state_id);
+  // P29: tugas selesai hanya bisa dibuka kembali, oleh atasan assignee atau admin.
+  const kunciSelesai = useKunciSelesai(workspaceSlug?.toString(), issue.project_id, issue);
+  const statusTerkunci = kunciSelesai.selesai && !issue.archived_at ? !kunciSelesai.bolehBuka : isReadOnly;
   const subIssueCount = issue?.sub_issues_count ?? 0;
 
   const issueOperations = useMemo(
@@ -264,7 +267,8 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             value={issue.state_id}
             onChange={handleState}
             projectId={issue.project_id}
-            disabled={isReadOnly}
+            disabled={statusTerkunci}
+            stateIds={kunciSelesai.stateIds}
             buttonVariant="border-with-text"
             renderByDefault={isMobile}
             showTooltip

@@ -9,11 +9,13 @@ import { useContext } from "react";
 import { useParams } from "next/navigation";
 import useSWR, { type SWRConfiguration } from "swr";
 import { EUserPermissionsLevel } from "@plane/constants";
+import { TINGKAT_LEADER, TINGKAT_SUPERVISOR } from "@plane/services";
 import type { TIssue, TIssueServiceType } from "@plane/types";
 import { EUserProjectRoles } from "@plane/types";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { StoreContext } from "@/lib/store-context";
 // services
@@ -46,9 +48,6 @@ const userService = new UserService();
 const issueService = new IssueService();
 const persetujuanService = new PersetujuanService();
 
-/** Batas supervisor di tangga jenjang (10 member · 20 supervisor · 30 manager · 35 sekretaris · 40 direktur). */
-export const TINGKAT_SUPERVISOR = 20;
-
 /**
  * Aturan kepemilikan tugas + jenjang saya, sisi tampilan.
  *
@@ -72,49 +71,22 @@ export const TINGKAT_SUPERVISOR = 20;
  * diubah adalah YANG DI SINI. Server tetap pemegang keputusan.
  */
 
-/** Satu kunci + satu fetcher untuk `bisa-ditugaskan/`: dipakai bersama `useTingkatSaya` dan `useBisaDitugaskan`. */
+/** Satu kunci + satu fetcher untuk `bisa-ditugaskan/`, dipakai semua hook di berkas ini. */
 const kunciBisaDitugaskan = (workspaceSlug: string | undefined, projectId: string | null | undefined) =>
   workspaceSlug && projectId ? `BISA_DITUGASKAN:${workspaceSlug}:${projectId}` : null;
 const ambilBisaDitugaskan = (workspaceSlug: string, projectId: string): Promise<TBisaDitugaskan | null> =>
   persetujuanService.bisaDitugaskan(workspaceSlug, projectId).catch(() => null);
 
-/**
- * Jenjang saya di sebuah divisi (10/20/30/40 · null = belum dimuat · -1 = belum diisi).
- *
- * Dibaca dari `GET bisa-ditugaskan/` (kunci SWR yang SAMA dengan
- * `useBisaDitugaskan`, jadi satu request per project untuk keduanya). Dulu
- * dari `GET persetujuan-penugasan/` tanpa saringan: seluruh antrean
- * persetujuan project ikut terambil hanya untuk membaca satu angka.
- *
- * Tiga keadaan sengaja dibedakan: null (belum tahu — tampilkan loading/tertutup
- * sementara), -1 (sudah tahu: jenjang belum diisi — perlakukan sebagai staf),
- * dan angka (jenjang nyata). Menyamakan "belum dimuat" dengan "staf" membuat
- * dropdown berkedip tiap buka layar; menyamakannya dengan "bebas" membuka
- * celah saat request lambat.
- */
-export const BELUM_DIMUAT = null;
-export const BELUM_DIISI = -1;
-export const useTingkatSaya = (workspaceSlug: string | undefined, projectId: string | null | undefined) => {
-  const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
-  const { data, isLoading } = useSWR(
-    kunci,
-    () => ambilBisaDitugaskan(workspaceSlug as string, projectId as string),
-    OPSI_HAK_AKSES
-  );
-  if (!kunci || isLoading) return null;
-  return data?.tingkat_saya ?? BELUM_DIISI;
-};
-
 /** Bentuk minimum yang cukup untuk menilai "apakah saya pembuatnya". */
 type PembuatTugas = { created_by?: string | null; assignee_ids?: string[] | null; project_id?: string | null };
 
 /**
- * True kalau pembuka layar dipastikan staf (termasuk jenjang belum diisi).
- * null = belum dimuat — pemanggil memilih: kunci sementara (form create) atau
- * terbuka dulu (detail baca, server yang menolak).
+ * True kalau server memberlakukan aturan penugasan staf untuk saya di project
+ * ini: diri sendiri wajib ada, rekan hanya yang setingkat. Dibaca dari `mode`
+ * `bisa-ditugaskan/`, bukan dari angka jenjang, karena admin yang ditempatkan
+ * sebagai Staf juga terikat di departemennya (P29) dan Leader tidak.
  */
-export const stafSaja = (tingkat: number | null, ambang: number = TINGKAT_SUPERVISOR): boolean =>
-  tingkat != null && tingkat < ambang;
+export const modeStaf = (mode: string | null): boolean => mode === "rekan" || mode === "diri-sendiri";
 
 /** Nilai pilihan `ganti_tenggat` / `hapus_tugas`; cermin konstanta `saklar_instance.py`. */
 const ATURAN_TENGGAT_PLUS_ADMIN_PROJECT = 1;
@@ -274,7 +246,12 @@ export const useAturanInstance = (workspaceSlug?: string, projectId?: string | n
 };
 
 /** Bentuk minimum tugas untuk menilai hak ubah/hapus. */
-type TugasKepemilikan = { assignee_ids?: string[] | null; created_by?: string | null; approval_status?: string | null };
+type TugasKepemilikan = {
+  assignee_ids?: string[] | null;
+  created_by?: string | null;
+  approval_status?: string | null;
+  state_id?: string | null;
+};
 
 /**
  * Bolehkah saya MENGUBAH tugas ini? Cerminan PERSIS `galat_ubah_tugas()` server
@@ -284,7 +261,8 @@ type TugasKepemilikan = { assignee_ids?: string[] | null; created_by?: string | 
  *     pembuat (pemberi tugas)/assignee  boleh
  *     gerbang hierarki mati             boleh (katup darurat, server juga melepas)
  *     admin workspace                   boleh (`adalah_admin_penuh`, KEP-85)
- *     supervisor+                       boleh kalau SEMUA assignee bawahannya
+ *     Leader/supervisor+                boleh kalau SEMUA assignee bawahannya
+ *                                       (bawahan Leader = Staf departemennya)
  *                                       (tanpa assignee: boleh, sama dengan server)
  *     sisanya                           hanya lihat
  *
@@ -339,6 +317,23 @@ export const usePenilaiUbahTugas = (
   workspaceSlug: string | undefined,
   projectId: string | null | undefined
 ): ((issue: (TugasKepemilikan & { project_id?: string | null }) | undefined | null) => boolean) => {
+  const selesai = useTugasSelesai();
+  const milik = usePenilaiKepemilikan(workspaceSlug, projectId);
+  // P29: tugas selesai hanya-lihat untuk semua orang; membuka kembali lewat `useKunciSelesai`.
+  return (issue) => !selesai(issue) && milik(issue);
+};
+
+/** True kalau status tugas ini di grup `completed` (cermin `tugas_selesai` server). */
+export const useTugasSelesai = (): ((issue: TugasKepemilikan | undefined | null) => boolean) => {
+  const { getStateById } = useProjectState();
+  return (issue) => !!issue?.state_id && getStateById(issue.state_id)?.group === "completed";
+};
+
+/** Aturan milik `galat_ubah_tugas` tanpa kunci selesai: dipakai hak hapus/arsip, yang tetap seperti dulu. */
+const usePenilaiKepemilikan = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined
+): ((issue: (TugasKepemilikan & { project_id?: string | null }) | undefined | null) => boolean) => {
   const { data: currentUser } = useUser();
   const { data: statusAdmin } = useSWR(
     currentUser?.id ? "STATUS_SUPER_ADMIN" : null,
@@ -357,9 +352,44 @@ export const usePenilaiUbahTugas = (
     if (issue.project_id && projectId && issue.project_id !== projectId) return false;
     if (wewenang.memuat) return false;
     if (!wewenang.gerbangAktif || wewenang.adminPenuh) return true;
-    if (wewenang.tingkat == null || wewenang.tingkat < TINGKAT_SUPERVISOR) return false;
+    if (wewenang.tingkat == null || wewenang.tingkat < TINGKAT_LEADER) return false;
     return assignees.every((id) => bawahan.has(id));
   };
+};
+
+/**
+ * Kunci tugas selesai (P29), cermin `kunci_selesai.py` server. Untuk dropdown status:
+ *
+ *     selesai     tugasnya di grup `completed`, semua kontrol lain hanya-lihat
+ *     bolehBuka   Super Admin, admin workspace, atau Supervisor+ yang semua
+ *                 assignee-nya bawahannya (Leader tidak)
+ *     stateIds    pilihan status saat membuka kembali: semua kecuali grup selesai
+ */
+export const useKunciSelesai = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined,
+  issue: TugasKepemilikan | undefined | null
+): { selesai: boolean; bolehBuka: boolean; stateIds: string[] | undefined } => {
+  const { data: currentUser } = useUser();
+  const { data: statusAdmin } = useSWR(
+    currentUser?.id ? "STATUS_SUPER_ADMIN" : null,
+    () => userService.currentUserInstanceAdminStatus(),
+    OPSI_HAK_AKSES
+  );
+  const { getProjectStates } = useProjectState();
+  const wewenang = useBisaDitugaskan(workspaceSlug, projectId);
+  const selesai = useTugasSelesai()(issue);
+  if (!selesai) return { selesai, bolehBuka: false, stateIds: undefined };
+  const bawahan = new Set(wewenang.bawahanIds);
+  const bolehBuka =
+    !!statusAdmin?.is_instance_admin ||
+    (!wewenang.memuat &&
+      (wewenang.adminPenuh ||
+        (wewenang.tingkat != null &&
+          wewenang.tingkat >= TINGKAT_SUPERVISOR &&
+          (issue?.assignee_ids ?? []).every((id) => bawahan.has(id)))));
+  const stateIds = (getProjectStates(projectId) ?? []).filter((s) => s.group !== "completed").map((s) => s.id);
+  return { selesai, bolehBuka, stateIds };
 };
 
 /**
@@ -376,10 +406,8 @@ export const useOpsiAssignee = (
   assigneeIds: string[] | null | undefined
 ): { memberIds: string[] | undefined; rapikan: (val: string[]) => string[] } => {
   const daftar = useBisaDitugaskan(workspaceSlug, projectId);
-  const tingkat = useTingkatSaya(workspaceSlug, projectId);
-  // Mode "semua" = server mengizinkan siapa pun (Super Admin, direktur, gerbang mati):
-  // berjenjang staf pun tidak dibatasi, jadi assignee lama boleh dilepas.
-  const staf = stafSaja(tingkat, daftar.aturan.persetujuan_di_bawah) && daftar.mode !== "semua";
+  // Hanya mode staf yang terkunci menambah; "semua" dan "bawahan" boleh melepas assignee lama.
+  const staf = modeStaf(daftar.mode);
   const lama = assigneeIds ?? [];
   return {
     memberIds: daftar.memuat ? undefined : Array.from(new Set([...daftar.userIds, ...lama])),
@@ -493,7 +521,8 @@ export const useBolehHapus = (
     () => userService.currentUserInstanceAdminStatus(),
     OPSI_HAK_AKSES
   );
-  const bolehUbah = useBolehUbahTugas(workspaceSlug, projectId, issue);
+  // Hapus/arsip tidak ikut kunci selesai (P29): arsip justru mensyaratkan selesai.
+  const bolehUbah = usePenilaiKepemilikan(workspaceSlug, projectId)(issue);
   const { memuat, gerbangAktif, aturan } = useBisaDitugaskan(workspaceSlug, projectId);
   if (!issue) return { boleh: false, terkunci: false };
   const adalahPembuat = !!currentUser?.id && issue.created_by === currentUser.id;

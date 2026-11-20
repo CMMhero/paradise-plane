@@ -31,7 +31,7 @@ import { IssueLabelSelect } from "@/components/issues/select";
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
-import { stafSaja as hanyaStaf, useAturanTugas, useBisaDitugaskan, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { modeStaf, useAturanTugas, useBisaDitugaskan } from "@/hooks/use-aturan-tugas";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
@@ -73,12 +73,12 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   const { isMobile } = usePlatformOS();
   const { allowPermissions } = useUserPermissions();
   // Dropdown assignee = tepat isi `bisa-ditugaskan/`: staf → [diri sendiri]
-  // (otomatis terisi + terkunci), atasan → diri + bawahan, direktur → semua.
+  // (otomatis terisi + terkunci), Leader/atasan → diri + bawahan, direktur → semua.
+  // Admin yang ditempatkan sebagai Staf di departemen ini ikut mode staf (P29).
   // `memberIds` eksplisit mengalahkan fallback anggota-project di dropdown.
-  const tingkatSaya = useTingkatSaya(workspaceSlug, projectId);
   const { idSaya } = useAturanTugas();
   const daftarBoleh = useBisaDitugaskan(workspaceSlug, projectId);
-  const stafSaja = hanyaStaf(tingkatSaya, daftarBoleh.aturan.persetujuan_di_bawah) && daftarBoleh.mode !== "semua";
+  const stafSaja = modeStaf(daftarBoleh.mode);
   const opsiAssignee = daftarBoleh.memuat ? undefined : daftarBoleh.userIds;
   // Server mengisi pembuat sebagai assignee hanya kalau ia sah di project ini
   // (ditempatkan di departemennya). Yang tidak sah tidak ada di daftar, jadi

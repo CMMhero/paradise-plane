@@ -35,7 +35,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
-import { useAturanTugas, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 // plane web components
 // components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
@@ -74,6 +74,8 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
   const issue = getIssueById(issueId);
   // Pilihan assignee: diri + rekan/bawahan menurut server (staf bisa menambah rekan).
   const opsiAssignee = useOpsiAssignee(workspaceSlug, projectId, issue?.assignee_ids);
+  // P29: tugas selesai hanya-lihat; dropdown status tetap hidup untuk yang boleh membukanya kembali.
+  const kunciSelesai = useKunciSelesai(workspaceSlug, projectId, issue);
   if (!issue) return <></>;
 
   const createdByDetails = getUserDetails(issue.created_by);
@@ -99,7 +101,8 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 value={issue?.state_id}
                 onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { state_id: val })}
                 projectId={projectId?.toString() ?? ""}
-                disabled={!isEditable}
+                disabled={kunciSelesai.selesai ? !kunciSelesai.bolehBuka : !isEditable}
+                stateIds={kunciSelesai.stateIds}
                 buttonVariant="transparent-with-text"
                 className="group w-full grow"
                 buttonContainerClassName="w-full text-left h-7.5"
@@ -108,6 +111,11 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
               />
             </SidebarPropertyListItem>
+            {kunciSelesai.selesai && (
+              <p className="text-caption-sm-regular text-tertiary">
+                {t(kunciSelesai.bolehBuka ? "jenjang_p29.done_locked_reopen" : "jenjang_p29.done_locked")}
+              </p>
+            )}
 
             <SidebarPropertyListItem icon={MembersPropertyIcon} label={t("common.assignees")}>
               <AssigneeProperty
