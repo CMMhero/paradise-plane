@@ -294,6 +294,17 @@ class TestUbahPrivat:
         o.induk.refresh_from_db()
         assert o.induk.is_private is False
 
+    @pytest.mark.parametrize("url", [URL_DETAIL, URL_V1_DETAIL])
+    @pytest.mark.parametrize("peran", ["pembuat", "sa"])
+    def test_tugas_selesai_terkunci_untuk_privat_juga(self, o, peran, url):
+        Issue.objects.filter(pk=o.induk.pk).update(state=o.states["completed"])
+        respon = _klien(o.user[peran]).patch(
+            url.format(slug=o.ws.slug, project_id=o.p1.id, issue_id=o.induk.id), {"is_private": True}, format="json"
+        )
+        assert respon.status_code == status.HTTP_403_FORBIDDEN, respon.content[:300]
+        o.induk.refresh_from_db()
+        assert o.induk.is_private is False
+
     def test_tugas_privat_tak_terlihat_tidak_bisa_dibuka(self, o):
         assert self._patch(o, "rekan", o.tugas, False).status_code == status.HTTP_404_NOT_FOUND
         o.tugas.refresh_from_db()
