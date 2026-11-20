@@ -27,8 +27,7 @@ lebih kecil dipakai sebagai "perhatian": tertukar adalah salah ketik, bukan niat
 from datetime import datetime, time, timedelta
 
 # Django imports
-from django.db.models import Count, F, Min, Q, Sum
-from django.db.models.functions import TruncDate
+from django.db.models import Count, Min, Q, Sum
 from django.utils import timezone
 
 # Module imports
@@ -43,6 +42,7 @@ from plane.db.models import (
     Workspace,
 )
 from plane.utils.hierarki import pengajuan_boleh_diputuskan
+from plane.utils.ketepatan_waktu import anotasi_ketepatan, q_tepat_waktu
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.saklar_instance import (
     DASHBOARD_KRITIS_PERSEN,
@@ -125,14 +125,14 @@ def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu, cakupan):
     terlambat = Q(target_date__lt=batas_terlambat(hari_ini)) & belum_tuntas & bisa_terlambat
     selesai = Q(state__group=_SELESAI)
     selesai_bertenggat = selesai & Q(completed_at__gte=awal_jendela, target_date__isnull=False)
-    # Tepat waktu = tanggal selesai (hari kantor, BUKAN hari UTC) <= tenggat, aturan
-    # yang sama dengan laporan selesai (`utils/laporan_selesai.py`).
-    tepat_waktu = selesai_bertenggat & Q(tanggal_selesai__lte=F("target_date"))
+    # Tepat waktu = tanggal selesai (hari kantor, BUKAN hari UTC) <= tenggat
+    # efektif, aturan bersama di `utils/ketepatan_waktu.py`.
+    tepat_waktu = selesai_bertenggat & q_tepat_waktu()
     awal_sepekan_lalu = datetime.combine(sepekan_lalu, time.min, tzinfo=zona_kantor())
 
     baris = (
         Issue.issue_objects.filter(cakupan, project_id__in=project_ids)
-        .annotate(tanggal_selesai=TruncDate("completed_at", tzinfo=zona_kantor()))
+        .annotate(**anotasi_ketepatan())
         .values("project_id")
         .annotate(
             total=Count("id"),
