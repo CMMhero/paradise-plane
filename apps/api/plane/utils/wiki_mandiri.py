@@ -11,6 +11,7 @@ Matriks hak (KEP-51 dibawa utuh, sumbernya kini penempatan organisasi):
     unggah ke folder    admin Wiki, atau orang yang ditempatkan di unit folder itu
     ubah/hapus materi   pengunggahnya, pengelola folder, admin Wiki, atau aturan God Mode (KEP-85)
     struktur folder     admin Wiki; pengelola folder di dalam wilayahnya (KEP-95)
+    folder terbatas     hanya editor folder dan admin Wiki yang menulis (lihat di bawah)
 
 "Unit folder" = folder terdekat ke atas yang punya `departemen`, `divisi`, atau
 `umum`. Folder tanpa unit di jalurnya (sisa lama) hanya bisa diisi admin.
@@ -28,7 +29,17 @@ mengikuti God Mode, folder tingkat atas tetap urusan admin.
 Direktur (KEP-95, diperluas 6 Nov 2026; sekretaris ikut, KEP-101) mengelola SEMUA folder divisi dan
 departemen beserta isinya, dengan kuasa yang sama dengan manager divisi, di
 mana saja. General dan folder tanpa unit tetap urusan admin.
+
+Folder terbatas: folder yang punya baris `WikiFolderEditor`, atau yang induk
+terdekatnya punya. Yang menentukan adalah folder terbatas TERDEKAT ke atas;
+daftar editor tidak digabung ke atas. Di folder terbatas hanya editornya dan
+admin Wiki yang boleh menulis (unggah, sub-topik, ubah, pindah, arsip, hapus).
+Hak unit, hak pengunggah, hak kelola wilayah, dan aturan God Mode tidak
+memberi hak tulis di sana, termasuk pengunggah berkas lama. Membaca tidak
+berubah. Tanpa editor sama sekali, aturan di atas berlaku seperti biasa.
 """
+
+from collections import defaultdict
 
 from django.db.models import Q
 
@@ -109,6 +120,16 @@ class PenilaiWiki:
                 "id", "parent_id", "divisi_id", "departemen_id", "umum"
             )
         }
+        # {folder_id: {user_id}} untuk folder yang punya editor. Satu query;
+        # folder terbatas turunannya dicari dengan menelusuri `_jalur`.
+        from plane.db.models import WikiFolderEditor  # noqa: PLC0415
+
+        self.editor = defaultdict(set)
+        for folder_id, user_id in WikiFolderEditor.objects.filter(workspace_id=workspace_id).values_list(
+            "folder_id", "user_id"
+        ):
+            self.editor[str(folder_id)].add(str(user_id))
+        self.editor_di_mana_saja = (not self.anonim) and any(str(user.id) in orang for orang in self.editor.values())
 
     @property
     def direktur(self):
@@ -118,7 +139,7 @@ class PenilaiWiki:
     @property
     def punya_wilayah(self):
         """Mengelola setidaknya satu folder di luar hak admin."""
-        return self.direktur or bool(self.divisi_pimpin or self.departemen_awasi)
+        return self.direktur or bool(self.divisi_pimpin or self.departemen_awasi or self.editor_di_mana_saja)
 
     def kenali(self, folder):
         """Masukkan folder yang baru dibuat di permintaan ini ke peta induk."""
@@ -140,6 +161,22 @@ class PenilaiWiki:
             sekarang = self._folder.get(str(induk)) if induk else None
             langkah += 1
 
+    def terbatas_oleh(self, folder_id):
+        """Id folder terbatas terdekat (folder ini atau induknya), atau None."""
+        if not folder_id:
+            return None
+        for simpul in self._jalur(folder_id):
+            if self.editor.get(str(simpul["id"])):
+                return str(simpul["id"])
+        return None
+
+    def _tulis_terbatas(self, folder_id):
+        """None bila folder tidak terbatas; selain itu boleh-tidaknya orang ini menulis."""
+        pembatas = self.terbatas_oleh(folder_id)
+        if pembatas is None:
+            return None
+        return self.admin or str(self.user.id) in self.editor[pembatas]
+
     def di_bawah(self, folder_id, akar_id):
         """Folder ini sama dengan `akar_id` atau ada di bawahnya (folder di sampah ikut)."""
         akar = str(akar_id)
@@ -153,6 +190,9 @@ class PenilaiWiki:
             return False
         if self.admin:
             return True
+        terbatas = self._tulis_terbatas(folder_id)
+        if terbatas is not None:
+            return terbatas
         if not self.punya_wilayah:
             return False
         for simpul in self._jalur(folder_id):
@@ -191,6 +231,9 @@ class PenilaiWiki:
     def boleh_unggah(self, folder_id):
         if self.anonim:
             return False
+        terbatas = self._tulis_terbatas(folder_id)
+        if terbatas is not None:
+            return terbatas
         if self.admin or self.mengelola(folder_id):
             return True
         unit = self.unit(folder_id)
@@ -217,6 +260,9 @@ class PenilaiWiki:
 
         if self.anonim:
             return False
+        terbatas = self._tulis_terbatas(materi.folder_id)
+        if terbatas is not None:
+            return terbatas
         if materi.created_by_id and materi.created_by_id == self.user.id:
             return True
         if self.admin or self.mengelola(materi.folder_id):

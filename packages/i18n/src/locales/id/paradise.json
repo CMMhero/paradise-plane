@@ -1298,5 +1298,25 @@
     "confirm_integration_title": "Copot integrasi?",
     "confirm_integration_body": "{name} akan diputus dari workspace ini.",
     "confirm_integration_button": "Copot"
+  },
+  "wiki_editor": {
+    "section_title": "Editor",
+    "section_note": "Hanya orang ini yang bisa menambah atau mengubah isi di sini. Yang lain hanya bisa melihat.",
+    "inherited_note": "Editor diwarisi dari {name}. Menambah seseorang di sini menggantikan daftar itu untuk folder ini.",
+    "empty": "Belum ada editor. Siapa pun yang berhak lewat departemen atau divisinya bisa menambah isi di sini.",
+    "add_label": "Tambah editor",
+    "add_placeholder": "Pilih orang",
+    "added_title": "Editor ditambahkan",
+    "removed_title": "Editor dihapus",
+    "add_failed": "Editor gagal ditambahkan.",
+    "remove_failed": "Editor gagal dihapus.",
+    "remove_confirm_title": "Hapus editor ini?",
+    "remove_confirm": "{name} tidak bisa lagi menambah atau mengubah isi {folder}. Ia tetap bisa melihatnya.",
+    "remove_last_confirm": "{name} adalah editor terakhir {folder}. Jika dihapus, folder kembali memakai aturan departemen dan divisi biasa.",
+    "remove_button": "Hapus",
+    "removing": "Menghapus",
+    "badge": "Hanya {names} yang bisa mengubah",
+    "badge_more": "{names} dan {count} lainnya",
+    "badge_tooltip": "Editor: {names}. Yang lain hanya bisa melihat."
   }
 }

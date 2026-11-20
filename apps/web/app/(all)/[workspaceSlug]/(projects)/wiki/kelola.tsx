@@ -18,7 +18,8 @@ import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 // services
 import type { TWikiFolder, TWikiFolderUpdate } from "@/services/wiki.service";
 // local imports
-import { adalahUnit, layananWiki } from "./data";
+import { adalahUnit, folderDenganId, folderPembatas, layananWiki, usePohonWiki } from "./data";
+import { EditorFolder } from "./editor-folder";
 
 type TProps = {
   workspaceSlug: string;
@@ -41,7 +42,8 @@ type TProps = {
  * Folder unit (divisi atau departemen) mengikuti struktur organisasi God Mode:
  * namanya tidak bisa diganti dan folder itu tidak bisa diarsipkan atau dihapus
  * dari sini. Yang tetap bisa diubah admin hanya ikon dan keterangannya. Siapa
- * yang boleh mengunggah diturunkan server dari penempatan di God Mode.
+ * yang boleh mengunggah diturunkan server dari penempatan di God Mode, kecuali
+ * folder yang dibatasi editor: admin mengatur daftarnya di bagian Editor.
  */
 export function KelolaFolder({ workspaceSlug, folder, isOpen, onClose, onBerubah, onTerhapus }: TProps) {
   const { t } = useTranslation();
@@ -53,9 +55,17 @@ export function KelolaFolder({ workspaceSlug, folder, isOpen, onClose, onBerubah
   const [sedangSimpan, setSedangSimpan] = useState(false);
   const [ikonTerbuka, setIkonTerbuka] = useState(false);
 
+  const { folder: semuaFolder, adalahAdmin, muatUlang: muatUlangPohon } = usePohonWiki(workspaceSlug);
+  // Daftar editor ikut segar sesudah ditambah atau dihapus, tanpa menutup formulir.
+  const hidup = folderDenganId(semuaFolder ?? [], folder.id) ?? folder;
+
   const unit = adalahUnit(folder);
+  // Folder tingkat atas bebas unit hanya bisa diganti nama, diarsipkan, dan
+  // dihapus admin; editornya cukup mengisinya.
+  const urusanAdmin = !unit && !folder.parent_id;
+  const bolehBongkar = !urusanAdmin || adalahAdmin;
   // `umum` hanya berlaku untuk folder tingkat atas yang bukan unit.
-  const bisaUmum = !unit && !folder.parent_id;
+  const bisaUmum = urusanAdmin && adalahAdmin;
 
   const galat = (error: unknown, cadangan: string) =>
     setToast({
@@ -69,7 +79,7 @@ export function KelolaFolder({ workspaceSlug, folder, isOpen, onClose, onBerubah
 
   // Hanya yang benar-benar berubah yang dikirim.
   const perubahan: TWikiFolderUpdate = {};
-  if (!unit && namaBersih !== folder.nama) perubahan.nama = namaBersih;
+  if (!unit && bolehBongkar && namaBersih !== folder.nama) perubahan.nama = namaBersih;
   if (keteranganBersih !== (folder.keterangan ?? "").trim()) perubahan.keterangan = keteranganBersih;
   if (logo !== (folder.logo_props ?? null)) perubahan.logo_props = logo ?? undefined;
   if (bisaUmum && umum !== folder.umum) perubahan.umum = umum;
@@ -155,7 +165,7 @@ export function KelolaFolder({ workspaceSlug, folder, isOpen, onClose, onBerubah
                 id="wiki-nama-folder"
                 type="text"
                 value={nama}
-                disabled={unit}
+                disabled={unit || !bolehBongkar}
                 onChange={(e) => setNama(e.target.value)}
                 className="flex-1 border border-subtle text-primary focus:border-accent-strong"
               />
@@ -184,9 +194,21 @@ export function KelolaFolder({ workspaceSlug, folder, isOpen, onClose, onBerubah
             </label>
           )}
 
+          {adalahAdmin && (
+            <EditorFolder
+              workspaceSlug={workspaceSlug}
+              folder={hidup}
+              pembatas={folderPembatas(semuaFolder ?? [], hidup)}
+              onBerubah={async () => {
+                await muatUlangPohon();
+                await onBerubah();
+              }}
+            />
+          )}
+
           {/* Satu baris: Hapus di kiri, Batal dan Simpan di kanan. */}
           <div className="flex items-center justify-between gap-2 border-t border-subtle pt-4">
-            {unit ? (
+            {unit || !bolehBongkar ? (
               <span />
             ) : (
               <Button

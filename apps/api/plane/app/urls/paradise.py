@@ -27,6 +27,8 @@ from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, Pe
 from plane.app.views.wiki import (
     WikiAkarEndpoint,
     WikiFolderArsipEndpoint,
+    WikiFolderEditorEndpoint,
+    WikiFolderEditorListEndpoint,
     WikiFolderEndpoint,
     WikiFolderListEndpoint,
     WikiFolderPulihkanEndpoint,
@@ -349,6 +351,16 @@ urlpatterns = [
         "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/",
         WikiFolderEndpoint.as_view(),
         name="wiki-folder",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/editors/",
+        WikiFolderEditorListEndpoint.as_view(),
+        name="wiki-folder-editors",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/editors/<uuid:user_id>/",
+        WikiFolderEditorEndpoint.as_view(),
+        name="wiki-folder-editor",
     ),
     path(
         "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/archive/",
