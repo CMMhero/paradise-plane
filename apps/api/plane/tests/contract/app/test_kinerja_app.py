@@ -44,6 +44,7 @@ from plane.db.models import (
     STATUS_PERSETUJUAN_DITOLAK,
     STATUS_PERSETUJUAN_MENUNGGU,
     TINGKAT_DIREKTUR,
+    TINGKAT_LEADER,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_SUPERVISOR,
@@ -389,6 +390,21 @@ class TestLingkup:
         seluruh, divisi, departemen, orang = pilihan(org["direktur"])
         assert (seluruh, divisi, departemen) == (True, ["FIN", "OPS"], ["AKT", "GUD", "KRM"])
         assert {"staf-a", "staf-fin", "manager-ops"} <= orang
+
+    def test_leader_departemennya_dan_stafnya(self, org, workspace):
+        leader = _orang(workspace, "leader-gudang", TINGKAT_LEADER, org["gudang"])
+        departemen = _ambil(leader, workspace.slug, lingkup="departemen", id=str(org["gudang"].id))
+        assert departemen.status_code == status.HTTP_200_OK
+        assert departemen.data["values"]["completed"] == 5
+        assert (
+            _ambil(leader, workspace.slug, lingkup="orang", id=str(org["staf_a"].id)).status_code == status.HTTP_200_OK
+        )
+        for params in (
+            {"lingkup": "orang", "id": str(org["spv"].id)},
+            {"lingkup": "departemen", "id": str(org["kirim"].id)},
+            {"lingkup": "divisi", "id": str(org["ops"].id)},
+        ):
+            assert _ambil(leader, workspace.slug, **params).status_code == status.HTTP_403_FORBIDDEN, params
 
 
 @pytest.mark.contract
