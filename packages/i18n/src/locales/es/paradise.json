@@ -1297,7 +1297,8 @@
     "confirm_worklog_body": "The logged time of {duration} will be deleted.",
     "confirm_integration_title": "Uninstall integration?",
     "confirm_integration_body": "{name} will be disconnected from this workspace.",
-    "confirm_integration_button": "Uninstall"
+    "confirm_integration_button": "Uninstall",
+    "assigned_to_me_pending": "Assigned to me (can add colleagues), pending your supervisor's approval"
   },
   "wiki_editor": {
     "section_title": "Editors",

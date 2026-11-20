@@ -1297,7 +1297,8 @@
     "confirm_worklog_body": "Catatan waktu {duration} akan dihapus.",
     "confirm_integration_title": "Copot integrasi?",
     "confirm_integration_body": "{name} akan diputus dari workspace ini.",
-    "confirm_integration_button": "Copot"
+    "confirm_integration_button": "Copot",
+    "assigned_to_me_pending": "Ditugaskan ke saya (bisa ajak rekan), menunggu persetujuan atasan"
   },
   "wiki_editor": {
     "section_title": "Editor",

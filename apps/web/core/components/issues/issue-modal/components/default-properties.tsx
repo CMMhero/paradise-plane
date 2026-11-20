@@ -153,9 +153,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
               }}
               buttonVariant={value?.length > 0 ? "transparent-without-text" : "border-with-text"}
               buttonClassName={value?.length > 0 ? "hover:bg-transparent" : ""}
-              placeholder={
-                stafSaja ? "Ditugaskan ke saya (bisa ajak rekan) — menunggu persetujuan atasan" : t("assignees")
-              }
+              placeholder={stafSaja ? t("ui_fixes.assigned_to_me_pending") : t("assignees")}
               multiple
               tabIndex={getIndex("assignee_ids")}
               hanyaDiriSendiri={stafSaja && daftarBoleh.mode !== "rekan" ? idSaya : null}
