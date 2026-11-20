@@ -132,8 +132,10 @@ class TestSematan:
         assert _klien(budi).get(_url_daftar(workspace, pengumuman)).json()["boleh_sematkan"] is False
         assert _klien(admin).post(_url_sematkan(workspace, di_pengumuman)).status_code == 200
 
-        assert _klien(admin).post(_url_sematkan(workspace, di_changelog)).status_code == 403
-        assert _klien(budi).post(_url_sematkan(workspace, di_changelog)).status_code == 403
+        # Kanal Changelog disembunyikan dari obrolan (2.10.0), jadi siapa pun, admin
+        # sekalipun, mendapat 404 dan tidak bisa menyematkan di sana.
+        assert _klien(admin).post(_url_sematkan(workspace, di_changelog)).status_code == 404
+        assert _klien(budi).post(_url_sematkan(workspace, di_changelog)).status_code == 404
 
     @pytest.mark.django_db
     def test_pesan_dihapus_hilang_dari_daftar_sematan(self, kantor):
