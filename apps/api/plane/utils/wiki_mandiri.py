@@ -71,7 +71,12 @@ class PenilaiWiki:
 
     def __init__(self, user, workspace_id):
         from plane.db.models import Departemen, WikiFolder  # noqa: PLC0415
-        from plane.db.penempatan import peran_departemen_sekarang, penempatan_sekarang  # noqa: PLC0415
+        from plane.db.penempatan import (  # noqa: PLC0415
+            cabang_sekarang,
+            divisi_dalam_cabang,
+            peran_departemen_sekarang,
+            penempatan_sekarang,
+        )
 
         self.user = user
         self.workspace_id = workspace_id
@@ -84,6 +89,9 @@ class PenilaiWiki:
         else:
             self.tingkat, self.departemen, self.divisi = penempatan_sekarang(workspace_id, user.id)
             peran = peran_departemen_sekarang(workspace_id, user.id)
+            # Direktur Cabang memimpin semua divisi cabangnya (P29).
+            divisi_cabang = divisi_dalam_cabang(cabang_sekarang(workspace_id, user.id))
+            self.divisi |= divisi_cabang
         # Wilayah kelola (KEP-95). Baris divisi ditulis `setel_penempatan` hanya
         # untuk manager ke atas, tapi jenjangnya tetap diperiksa di sini supaya
         # baris lama sebelum KEP-76 tidak diam-diam memberi hak kelola.
@@ -100,7 +108,7 @@ class PenilaiWiki:
                     divisi_id__isnull=False,
                     tingkat__gte=TINGKAT_MANAGER,
                 ).values_list("divisi_id", flat=True)
-            }
+            } | divisi_cabang
         self.departemen_awasi = {d for d, t in peran.items() if t is not None and t >= TINGKAT_SUPERVISOR}
         # Departemen yang dijangkau lewat divisi yang ia pimpin.
         self.departemen_jangkau = set(self.departemen) | {
@@ -304,7 +312,10 @@ def pengawas_halaman_privat(user, project_id):
     if not divisi_id:
         return False
     return JabatanOrganisasi.objects.filter(
-        workspace_id=workspace_id, member_id=user.id, divisi_id=divisi_id, tingkat__gte=TINGKAT_MANAGER
+        Q(divisi_id=divisi_id) | Q(cabang__divisi__id=divisi_id),
+        workspace_id=workspace_id,
+        member_id=user.id,
+        tingkat__gte=TINGKAT_MANAGER,
     ).exists()
 
 

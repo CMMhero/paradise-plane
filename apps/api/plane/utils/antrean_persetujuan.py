@@ -42,19 +42,21 @@ JENIS_PERMINTAAN = "permintaan"
 _INTAKE_BELUM_DIJAWAB = (-2, 0)
 
 
+def _unit(record):
+    return {"id": str(record.id), "kode": record.kode, "nama": record.nama} if record else None
+
+
 def _tempat(dp):
+    """(departemen, divisi, cabang) project ini; cabang None = kantor pusat."""
     if dp is None:
-        return None, None
+        return None, None, None
     dep = dp.departemen
-    return (
-        {"id": str(dep.id), "kode": dep.kode, "nama": dep.nama},
-        {"id": str(dep.divisi_id), "kode": dep.divisi.kode, "nama": dep.divisi.nama},
-    )
+    return _unit(dep), _unit(dep.divisi), _unit(dep.divisi.cabang)
 
 
 def _item(jenis, id_, issue, pemohon, diminta_pada, peta, assignees, **tambahan):
     project = issue.project
-    departemen, divisi = _tempat(peta.get(project.id))
+    departemen, divisi, cabang = _tempat(peta.get(project.id))
     state = issue.state
     return {
         "jenis": jenis,
@@ -62,6 +64,7 @@ def _item(jenis, id_, issue, pemohon, diminta_pada, peta, assignees, **tambahan)
         "project": {"id": str(project.id), "identifier": project.identifier, "name": project.name},
         "departemen": departemen,
         "divisi": divisi,
+        "cabang": cabang,
         "tugas": {
             "id": str(issue.id),
             "nomor": f"{project.identifier}-{issue.sequence_id}",

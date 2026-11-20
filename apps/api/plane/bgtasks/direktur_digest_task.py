@@ -144,7 +144,7 @@ class DataWorkspace:
         self.tempat = {}  # project_id -> (divisi, departemen)
         for dp in DepartemenProject.objects.filter(
             workspace_id=workspace_id, departemen__deleted_at__isnull=True, project__deleted_at__isnull=True
-        ).select_related("departemen", "departemen__divisi"):
+        ).select_related("departemen", "departemen__divisi__cabang"):
             self.tempat[dp.project_id] = (dp.departemen.divisi, dp.departemen)
 
         self.manager, self.supervisor = defaultdict(list), defaultdict(list)
@@ -162,14 +162,17 @@ class DataWorkspace:
 def susun_laporan(data, pids, jendela):
     """Laporan untuk satu direktur, dibatasi `pids` (project yang ia awasi)."""
     per_divisi = {}
+    cabang_dari = {}
     for pid in pids:
         if pid not in data.nama_project:
             continue
         divisi, dept = data.tempat.get(pid, (None, None))
         kunci = divisi.id if divisi else TANPA_DIVISI
         if kunci not in per_divisi:
+            cabang = divisi.cabang if divisi else None
+            cabang_dari[kunci] = cabang.nama if cabang else ""
             per_divisi[kunci] = DivisiLaporan(
-                nama=divisi.nama if divisi else TANPA_DIVISI,
+                nama=f"{cabang.nama} · {divisi.nama}" if cabang else divisi.nama if divisi else TANPA_DIVISI,
                 pimpinan=sorted(data.manager.get(divisi.id, [])) if divisi else [],
             )
         per_divisi[kunci].unit.append(
@@ -181,8 +184,15 @@ def susun_laporan(data, pids, jendela):
         )
     for d in per_divisi.values():
         d.unit.sort(key=lambda u: (-u.angka.lewat, u.nama))
-    # Yang paling butuh perhatian di atas; "Tanpa divisi" selalu paling bawah.
-    urut = sorted(per_divisi.values(), key=lambda d: (d.nama == TANPA_DIVISI, -d.angka.lewat, d.nama))
+    # Kantor pusat dulu, lalu tiap cabang berkelompok (namanya berawalan nama cabang);
+    # di dalamnya yang paling butuh perhatian di atas. "Tanpa divisi" selalu paling bawah.
+    urut = [
+        per_divisi[k]
+        for k in sorted(
+            per_divisi,
+            key=lambda k: (k == TANPA_DIVISI, cabang_dari[k], -per_divisi[k].angka.lewat, per_divisi[k].nama),
+        )
+    ]
     return Laporan(divisi=urut, jendela=jendela, hari_macet=data.hari_macet, hari_ke_depan=data.hari_ke_depan)
 
 

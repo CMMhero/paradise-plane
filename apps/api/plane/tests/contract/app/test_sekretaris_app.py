@@ -98,6 +98,7 @@ class TestTangga:
             12: "Leader",
             20: "Supervisor",
             30: "Manager",
+            33: "Direktur Cabang",
             35: "Sekretaris",
             40: "Direktur",
         }

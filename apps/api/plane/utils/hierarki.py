@@ -31,6 +31,7 @@ aktornya `None`, dan gerbangnya **menolak** (gagal ke arah aman, prinsip #3).
 from django.utils import timezone
 
 # Module imports
+from plane.utils.cabang import baris_penempatan
 from plane.utils.kunci_selesai import galat_tugas_selesai, tugas_selesai
 from plane.utils.saklar_instance import (
     APPROVAL_REQUIRED_BELOW_LEVEL,
@@ -228,9 +229,7 @@ def ditempatkan_ids(workspace_id, project_id):
     if not deps:
         return None
     hasil = set()
-    for uid, tingkat, dep, div in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
-        "member_id", "tingkat", "departemen_id", "divisi_id"
-    ):
+    for uid, tingkat, dep, div in baris_penempatan(workspace_id):
         if (
             menjangkau_seluruh_organisasi(tingkat)
             or (dep and str(dep) in deps)
@@ -406,9 +405,7 @@ def peta_tingkat(workspace_id, project_id=None):
                 peta[uid] = tingkat
         return peta
     baris = {}
-    for uid, tingkat, dep, div in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
-        "member_id", "tingkat", "departemen_id", "divisi_id"
-    ):
+    for uid, tingkat, dep, div in baris_penempatan(workspace_id):
         baris.setdefault(uid, []).append((tingkat, dep, div))
     return {uid: _tingkat_lokal(b, tempat) for uid, b in baris.items()}
 
@@ -495,13 +492,13 @@ def penempatan_semua(user_id, workspace_id):
 
     Supervisor multi-departemen punya satu baris per departemen (keputusan user
     2026-10-23: tidak ada lagi "utama" vs "tambahan"). Kosong = jenjang belum diisi.
+    Baris Direktur Cabang sudah diurai jadi divisi-divisi cabangnya (`utils/cabang.py`).
     """
     if user_id is None:
         return []
-    return list(
-        JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
-        .order_by("-tingkat", "departemen_id", "divisi_id")
-        .values_list("tingkat", "departemen_id", "divisi_id")
+    return sorted(
+        ((t, dep, div) for _, t, dep, div in baris_penempatan(workspace_id, user_id)),
+        key=lambda b: (-b[0], b[1] is None, str(b[1]), b[2] is None, str(b[2])),
     )
 
 
@@ -578,6 +575,7 @@ def jangkauan_hierarki(user_id, workspace_id):
     Ini sisi LIHAT, bukan sisi wewenang (itu `divisi_diawasi`):
 
         direktur   -> semua project, role 20
+        dir. cabang-> semua project di divisi-divisi cabangnya, role 20
         manager    -> semua project di divisinya + departemennya, role 20
         supervisor -> project SEMUA departemennya, role 20
         staf       -> project SEMUA departemennya, role 15 (lihat semua, edit hanya
