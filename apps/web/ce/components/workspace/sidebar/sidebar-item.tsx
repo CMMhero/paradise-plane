@@ -28,7 +28,7 @@ type Props = {
 // "tugas_lintas_divisi" SENGAJA tidak ada: keputusan user — lintas divisi
 // dikerjakan dari daftar project (direktur melihat semua divisi), bukan dari
 // menu sendiri. Endpoint + halamannya tetap hidup, hanya tidak dipin di sini.
-const PARADISE_ALWAYS_VISIBLE_ITEMS = ["wiki", "dashboard_divisi", "initiatives", "chat"];
+const PARADISE_ALWAYS_VISIBLE_ITEMS = ["wiki", "dashboard_divisi", "kinerja", "initiatives", "chat"];
 
 // `additionalRender` adalah titik ekstensi yang memang sudah disediakan
 // SidebarItemBase untuk menempelkan sesuatu di kanan label, dan itu yang dipakai

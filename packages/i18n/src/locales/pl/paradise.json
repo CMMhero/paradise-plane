@@ -1237,5 +1237,110 @@
     "label": "Odśwież",
     "tooltip": "Odśwież zawartość",
     "busy": "Odświeżanie"
+  },
+  "kinerja": {
+    "nav": "KPI",
+    "title": "KPI",
+    "go_to": "Go to KPI",
+    "heading": "KPI: {name}",
+    "load_failed": "Failed to load this KPI. You may not have access to it.",
+    "back_to_mine": "Back to my KPI",
+    "people_count": "{count, plural, one{# person} other{# people}}",
+    "people_hint": "Select a name to open that person's KPI",
+    "open_kpi_of": "Open KPI for {name}",
+    "help": "Days follow the office time zone. A work item with several assignees counts in full for each of them, and once in department, division, and organization totals. A group's numbers are the work of the people placed in it, in any department. The lists show only work items you can open; the numbers count all of them.",
+    "metric": {
+      "completed": "Completed",
+      "on_time_rate": "Done on time",
+      "completed_late": "Completed late",
+      "completed_no_due_date": "Completed without a due date",
+      "overdue": "Overdue now",
+      "open": "Open work items",
+      "cycle_avg_days": "Average cycle time",
+      "cycle_median_days": "Median cycle time",
+      "approvals_approved": "Completions approved",
+      "approvals_rejected": "Completions rejected",
+      "worklog_hours": "Hours logged"
+    },
+    "unit": {
+      "days": "{value} d",
+      "hours": "{value} h",
+      "points": "{value} pts"
+    },
+    "delta": {
+      "vs_prev": "{delta} vs the previous period",
+      "same_prev": "Same as the previous period",
+      "vs_start": "{delta} since the period started",
+      "same_start": "Same as when the period started"
+    },
+    "scope": {
+      "label": "Whose KPI",
+      "self": "Me",
+      "person": "Person",
+      "department": "Department",
+      "division": "Division",
+      "organisation": "Whole organization",
+      "no_results": "No match"
+    },
+    "period": {
+      "label": "Period",
+      "this_week": "This week",
+      "this_month": "This month",
+      "30d": "Last 30 days",
+      "this_quarter": "This quarter",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "range": "{start} - {end}"
+    },
+    "section": {
+      "trend": "Trend",
+      "workload": "Open workload",
+      "people": "People",
+      "breakdown_departemen": "By department",
+      "breakdown_divisi": "By division",
+      "overdue_items": "Overdue work items",
+      "completed_items": "Completed in this period"
+    },
+    "trend": {
+      "completed": "Completed",
+      "on_time": "Done on time",
+      "became_overdue": "Became overdue",
+      "per_day": "Per day",
+      "per_week": "Per week",
+      "bucket_day": "Day",
+      "bucket_week": "Week starting",
+      "empty": "Nothing was completed or became overdue in this period."
+    },
+    "workload": {
+      "hint": "Right now, regardless of period",
+      "by_state": "By state",
+      "by_priority": "By priority",
+      "empty": "No open work items."
+    },
+    "state_group": {
+      "backlog": "Backlog",
+      "unstarted": "To do",
+      "started": "In progress"
+    },
+    "priority": {
+      "urgent": "Urgent",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "none": "None"
+    },
+    "timing": {
+      "on_time": "On time",
+      "late": "Late",
+      "no_due_date": "No due date"
+    },
+    "items": {
+      "due": "Due {date}",
+      "no_overdue": "Nothing is overdue.",
+      "no_completed": "Nothing completed in this period.",
+      "none_visible": "These work items are in departments you cannot open, so they are not listed.",
+      "more": "{count, plural, one{# more is not listed} other{# more are not listed}}"
+    }
   }
 }

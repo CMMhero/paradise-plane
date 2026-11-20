@@ -1237,5 +1237,110 @@
     "label": "Segarkan",
     "tooltip": "Segarkan isi halaman",
     "busy": "Menyegarkan"
+  },
+  "kinerja": {
+    "nav": "KPI",
+    "title": "KPI",
+    "go_to": "Buka KPI",
+    "heading": "KPI: {name}",
+    "load_failed": "Gagal memuat KPI ini. Mungkin Anda tidak punya akses.",
+    "back_to_mine": "Kembali ke KPI saya",
+    "people_count": "{count} orang",
+    "people_hint": "Pilih nama untuk membuka KPI orang itu",
+    "open_kpi_of": "Buka KPI {name}",
+    "help": "Hari mengikuti zona waktu kantor. Tugas dengan beberapa penanggung jawab dihitung penuh untuk tiap orang, dan sekali di angka departemen, divisi, dan organisasi. Angka kelompok adalah pekerjaan orang yang ditempatkan di sana, di departemen mana pun. Daftar hanya menampilkan tugas yang bisa Anda buka; angkanya menghitung semuanya.",
+    "metric": {
+      "completed": "Selesai",
+      "on_time_rate": "Selesai tepat waktu",
+      "completed_late": "Selesai terlambat",
+      "completed_no_due_date": "Selesai tanpa tenggat",
+      "overdue": "Terlambat sekarang",
+      "open": "Tugas terbuka",
+      "cycle_avg_days": "Rata-rata waktu pengerjaan",
+      "cycle_median_days": "Median waktu pengerjaan",
+      "approvals_approved": "Penyelesaian disetujui",
+      "approvals_rejected": "Penyelesaian ditolak",
+      "worklog_hours": "Jam kerja tercatat"
+    },
+    "unit": {
+      "days": "{value} hari",
+      "hours": "{value} jam",
+      "points": "{value} poin"
+    },
+    "delta": {
+      "vs_prev": "{delta} dibanding periode sebelumnya",
+      "same_prev": "Sama dengan periode sebelumnya",
+      "vs_start": "{delta} sejak awal periode",
+      "same_start": "Sama dengan awal periode"
+    },
+    "scope": {
+      "label": "KPI siapa",
+      "self": "Saya",
+      "person": "Orang",
+      "department": "Departemen",
+      "division": "Divisi",
+      "organisation": "Seluruh organisasi",
+      "no_results": "Tidak ada yang cocok"
+    },
+    "period": {
+      "label": "Periode",
+      "this_week": "Minggu ini",
+      "this_month": "Bulan ini",
+      "30d": "30 hari terakhir",
+      "this_quarter": "Kuartal ini",
+      "custom": "Atur sendiri",
+      "from": "Dari",
+      "to": "Sampai",
+      "range": "{start} - {end}"
+    },
+    "section": {
+      "trend": "Tren",
+      "workload": "Beban kerja terbuka",
+      "people": "Orang",
+      "breakdown_departemen": "Per departemen",
+      "breakdown_divisi": "Per divisi",
+      "overdue_items": "Tugas terlambat",
+      "completed_items": "Selesai dalam periode ini"
+    },
+    "trend": {
+      "completed": "Selesai",
+      "on_time": "Selesai tepat waktu",
+      "became_overdue": "Mulai terlambat",
+      "per_day": "Per hari",
+      "per_week": "Per minggu",
+      "bucket_day": "Hari",
+      "bucket_week": "Minggu mulai",
+      "empty": "Tidak ada yang selesai atau mulai terlambat dalam periode ini."
+    },
+    "workload": {
+      "hint": "Saat ini, tidak mengikuti periode",
+      "by_state": "Per status",
+      "by_priority": "Per prioritas",
+      "empty": "Tidak ada tugas terbuka."
+    },
+    "state_group": {
+      "backlog": "Backlog",
+      "unstarted": "Belum dikerjakan",
+      "started": "Sedang dikerjakan"
+    },
+    "priority": {
+      "urgent": "Mendesak",
+      "high": "Tinggi",
+      "medium": "Sedang",
+      "low": "Rendah",
+      "none": "Tanpa prioritas"
+    },
+    "timing": {
+      "on_time": "Tepat waktu",
+      "late": "Terlambat",
+      "no_due_date": "Tanpa tenggat"
+    },
+    "items": {
+      "due": "Tenggat {date}",
+      "no_overdue": "Tidak ada yang terlambat.",
+      "no_completed": "Tidak ada yang selesai dalam periode ini.",
+      "none_visible": "Tugas ini ada di departemen yang tidak bisa Anda buka, jadi tidak ditampilkan.",
+      "more": "{count} lagi tidak ditampilkan"
+    }
   }
 }

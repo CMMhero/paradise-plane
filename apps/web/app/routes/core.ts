@@ -81,6 +81,11 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/analytics/:tabId", "./(all)/[workspaceSlug]/(projects)/analytics/[tabId]/page.tsx"),
         ]),
 
+        // KPI (Paradise)
+        layout("./(all)/[workspaceSlug]/(projects)/kinerja/layout.tsx", [
+          route(":workspaceSlug/kinerja", "./(all)/[workspaceSlug]/(projects)/kinerja/page.tsx"),
+        ]),
+
         // Dashboard Divisi (Paradise)
         layout("./(all)/[workspaceSlug]/(projects)/dashboard-divisi/layout.tsx", [
           route(":workspaceSlug/dashboard-divisi", "./(all)/[workspaceSlug]/(projects)/dashboard-divisi/page.tsx"),
