@@ -186,25 +186,18 @@ class IssueCreateSerializer(BaseSerializer):
         # berdiri sendiri; `_staf` hanya dipakai untuk aturan 2.
         from plane.utils.hierarki import (  # noqa: PLC0415
             aktor_dari_context,
+            aturan_staf_berlaku,
             galat_penugasan,
-            adalah_admin_penuh,
             gerbang_aktif,
             penerima_otomatis,
-            tingkat_anggota,
         )
         from plane.db.models import Project as _ProjectHierarki  # noqa: PLC0415
 
         _actor = aktor_dari_context(self.context)
         _project = _ProjectHierarki.objects.filter(pk=self.context.get("project_id")).first()
-        _tingkat = (
-            tingkat_anggota(_actor.id, _project.workspace_id, _project.id)
-            if (_actor is not None and _project is not None)
-            else None
-        )
+        # Staf di bawah Leader; admin hanya di departemen tempat ia ditempatkan sebagai Staf (P29).
         _staf = (
-            gerbang_aktif()
-            and (_tingkat is None or _tingkat < 20)
-            and not (_actor is not None and _project is not None and adalah_admin_penuh(_actor, _project.workspace_id))
+            _project is not None and gerbang_aktif() and aturan_staf_berlaku(_actor, _project.workspace_id, _project.id)
         )
 
         if self.instance is None and not attrs.get("assignee_ids") and _project is not None:
@@ -215,18 +208,8 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Staf boleh MENAMBAH rekan setingkat sedepartemen ke tugas yang sudah ada,
         # tidak boleh melepas siapa pun (keputusan user 2026-10-26).
-        # Super Admin lolos: ia boleh menugaskan siapa pun walau penempatannya
-        # berjenjang staf (sama dengan `galat_penugasan` dan `galat_ubah_tugas`).
-        # Tanpa ini ia ditolak "Staf hanya boleh mengajak rekan" di tugas mana pun.
-        from plane.db.superadmin import is_super_admin  # noqa: PLC0415
-
         self._staf_tambah_rekan = False
-        if (
-            _staf
-            and self.instance is not None
-            and "assignee_ids" in attrs
-            and not (_actor is not None and is_super_admin(_actor))
-        ):
+        if _staf and self.instance is not None and "assignee_ids" in attrs:
             from plane.utils.hierarki import galat_tambah_rekan  # noqa: PLC0415
 
             galat_rekan = galat_tambah_rekan(self.context.get("project_id"), self.instance, attrs["assignee_ids"], _actor)  # noqa: E501

@@ -431,7 +431,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     nilai = None
                 if nilai not in PERAN_DEPARTEMEN_SAH:  # tidak ada manager departemen
                     return Response(
-                        {"error": "A department role is Staff (10) or Supervisor (20), never Manager."},
+                        {"error": "A department role is Staff (10), Leader (12) or Supervisor (20), never Manager."},
                         status=400,
                     )
                 peran_departemen[str(dep_id)] = nilai

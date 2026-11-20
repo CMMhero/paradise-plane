@@ -81,6 +81,7 @@ from plane.db.models import (
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan
+from plane.utils.kunci_selesai import galat_induk_selesai, galat_tugas_selesai
 from plane.utils.task_access import (
     bisa_ganti_tenggat,
     bisa_hapus_tugas,
@@ -650,7 +651,10 @@ class IssueDetailAPIEndpoint(BaseAPIView):
                 )
 
                 # Kustomisasi Paradise: upsert lewat external_id adalah PATCH juga,
-                # jadi aturan tenggat yang sama berlaku (dulu pintu ini terlewat).
+                # jadi aturan tenggat dan kunci selesai (P29) yang sama berlaku.
+                galat_selesai = galat_tugas_selesai(issue, request.user, request.data)
+                if galat_selesai:
+                    return Response({"error": galat_selesai}, status=status.HTTP_403_FORBIDDEN)
                 if tenggat_diubah(issue, request.data) and not bisa_ganti_tenggat(request.user, issue):
                     return Response({"error": pesan_tolak_tenggat()}, status=status.HTTP_403_FORBIDDEN)
 
@@ -794,6 +798,13 @@ class IssueDetailAPIEndpoint(BaseAPIView):
         Supports external ID validation to prevent conflicts.
         """
         issue = Issue.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+
+        # P29: tugas selesai terkunci untuk API token juga, kecuali pembukaan kembali yang sah.
+        galat_selesai = galat_tugas_selesai(issue, request.user, request.data) or (
+            galat_induk_selesai([issue.parent_id]) if "parent" in request.data else None
+        )
+        if galat_selesai:
+            return Response({"error": galat_selesai}, status=status.HTTP_403_FORBIDDEN)
 
         # Kustomisasi Paradise: aturan tenggat berlaku di
         # SINI juga. API token adalah pintu yang sama ke data yang sama, dan

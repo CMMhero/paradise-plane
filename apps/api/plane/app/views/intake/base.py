@@ -54,6 +54,7 @@ from plane.utils.timezone_converter import user_timezone_converter
 from plane.utils.global_paginator import paginate
 from plane.utils.host import base_host
 from plane.db.models.intake import SourceType
+from plane.utils.kunci_selesai import galat_tugas_selesai
 from plane.utils.task_access import bisa_ganti_tenggat_intake, tenggat_diubah
 
 
@@ -448,6 +449,10 @@ class IntakeIssueViewSet(BaseViewSet):
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
+
+            galat_selesai = galat_tugas_selesai(issue, request.user, issue_data)
+            if galat_selesai:
+                return Response({"error": galat_selesai}, status=status.HTTP_403_FORBIDDEN)
 
             issue_current_instance = json.dumps(IssueDetailSerializer(issue).data, cls=DjangoJSONEncoder)
             issue_requested_data = json.dumps(issue_data, cls=DjangoJSONEncoder)

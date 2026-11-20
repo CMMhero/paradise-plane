@@ -43,6 +43,7 @@ from uuid import UUID
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.db.models.hierarki import TINGKAT_SUPERVISOR
 from plane.utils.saklar_instance import (
     IZIN_ISI,
     IZIN_PEMILIK_SAJA,
@@ -54,7 +55,6 @@ from plane.utils.saklar_instance import (
 
 _ROLE_ANGGOTA = 15
 _ROLE_ADMIN = 20
-TINGKAT_SUPERVISOR = 20
 
 
 def _s(nilai) -> str | None:

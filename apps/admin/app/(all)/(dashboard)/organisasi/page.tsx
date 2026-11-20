@@ -27,6 +27,7 @@ import {
   InstanceHierarkiService,
   InstanceOrganisasiService,
   TINGKAT_DIREKTUR,
+  TINGKAT_LEADER,
   TINGKAT_MANAGER,
   TINGKAT_SEKRETARIS,
   TINGKAT_SUPERVISOR,
@@ -46,7 +47,7 @@ import { BaganOrganisasi, type TBukaDiPapan } from "./bagan";
 import { KanvasBagan } from "./kanvas-bagan";
 import { KelolaOrganisasi } from "./kelola";
 import { idDepartemen, idDivisi, PapanOrganisasi } from "./papan";
-import { akunTerhapus } from "./papan-logika";
+import { akunTerhapus, namaJenjang } from "./papan-logika";
 import { usePenempatanOptimis } from "./use-penempatan";
 import { pesanGagalSimpan, type TAksiOrganisasi, type TPerintahKelola } from "./util";
 
@@ -169,19 +170,9 @@ export default function OrganisasiPage() {
         const hasil = await hierarkiService.setel({ member_id: orang.id, tingkat });
         await muatUlangSemua();
         const akhir = hasil.member.tingkat ?? tingkat;
-        const namaJenjang =
-          akhir >= TINGKAT_DIREKTUR
-            ? s.members.level_director
-            : akhir >= TINGKAT_SEKRETARIS
-              ? s.members.level_secretary
-              : akhir >= TINGKAT_MANAGER
-                ? s.members.level_manager
-                : akhir >= TINGKAT_SUPERVISOR
-                  ? s.members.level_supervisor
-                  : s.members.level_staff;
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: fill(s.org.level_saved, { name: orang.display_name, level: namaJenjang }),
+          title: fill(s.org.level_saved, { name: orang.display_name, level: namaJenjang(akhir, s) }),
           message: hasil.member.divisi_dilepas.length > 0 ? s.org.level_saved_divisions_released : undefined,
         });
       } catch (err) {
@@ -248,7 +239,10 @@ export default function OrganisasiPage() {
   const supervisor = orang.filter(
     (o) => o.tingkat !== null && o.tingkat >= TINGKAT_SUPERVISOR && o.tingkat < TINGKAT_MANAGER
   );
-  const staf = orang.filter((o) => o.tingkat === null || o.tingkat < TINGKAT_SUPERVISOR);
+  const leader = orang.filter(
+    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_LEADER && o.tingkat < TINGKAT_SUPERVISOR
+  );
+  const staf = orang.filter((o) => o.tingkat === null || o.tingkat < TINGKAT_LEADER);
   const belum = orang.filter((o) => !menjangkauSeluruhOrganisasi(o.tingkat) && !o.departemen_id && !o.divisi_id);
   const totalDepartemen = data.divisi.reduce((n, v) => n + v.departemen.length, 0);
 
@@ -256,7 +250,7 @@ export default function OrganisasiPage() {
     <PageWrapper header={header}>
       <MenuTabs menu="people" />
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-9">
           <StatCard label={s.org.stat_division} value={data.divisi.length} />
           <StatCard label={s.org.stat_department} value={totalDepartemen} />
           <StatCard label={s.org.stat_project} value={semuaProject.length} />
@@ -264,6 +258,7 @@ export default function OrganisasiPage() {
           <StatCard label={s.org.stat_secretary} value={sekretaris.length} />
           <StatCard label={s.org.stat_manager} value={manager.length} />
           <StatCard label={s.org.stat_supervisor} value={supervisor.length} />
+          <StatCard label={s.org.stat_leader} value={leader.length} />
           <StatCard
             label={s.org.stat_staff}
             value={staf.length}

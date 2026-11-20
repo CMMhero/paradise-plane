@@ -12,6 +12,8 @@ import { APIService } from "../api.service";
 
 /** Tangga jenjang, sama dengan TINGKAT_* di `plane/db/models/hierarki.py`. */
 export const TINGKAT_MEMBER = 10;
+/** Leader (P29): memimpin Staf satu departemen, tidak menyetujui. */
+export const TINGKAT_LEADER = 12;
 export const TINGKAT_SUPERVISOR = 20;
 export const TINGKAT_MANAGER = 30;
 /** Sekretaris (KEP-101): menjangkau seluruh organisasi seperti direktur, tapi satu anak tangga di bawahnya. */
@@ -20,6 +22,7 @@ export const TINGKAT_DIREKTUR = 40;
 
 export type TTingkat =
   | typeof TINGKAT_MEMBER
+  | typeof TINGKAT_LEADER
   | typeof TINGKAT_SUPERVISOR
   | typeof TINGKAT_MANAGER
   | typeof TINGKAT_SEKRETARIS

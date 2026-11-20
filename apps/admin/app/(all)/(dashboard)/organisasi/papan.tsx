@@ -30,6 +30,7 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
+  TINGKAT_LEADER,
   TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
   menjangkauSeluruhOrganisasi,
@@ -276,9 +277,10 @@ function KartuDepartemen({
   const mode = useTujuanLepas(ref, { jenis: "departemen", id: dep.id }, false);
   const anggota = tampilOrang(dep.anggota);
   // KEP-93: tidak ada "manager departemen". Tingkat di sini = peran orang itu DI
-  // departemen ini (Staf/Supervisor); baris lama yang masih Manager ikut Supervisor.
+  // departemen ini (Staf/Leader/Supervisor); baris lama yang masih Manager ikut Supervisor.
   const supervisor = anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR);
-  const staf = anggota.filter((a) => a.tingkat < TINGKAT_SUPERVISOR);
+  const leader = anggota.filter((a) => a.tingkat >= TINGKAT_LEADER && a.tingkat < TINGKAT_SUPERVISOR);
+  const staf = anggota.filter((a) => a.tingkat < TINGKAT_LEADER);
 
   return (
     <div
@@ -305,6 +307,7 @@ function KartuDepartemen({
         </div>
       )}
       <LajurDepartemen dep={dep} tingkat={TINGKAT_SUPERVISOR} judul={s.org.supervisors} orang={supervisor} />
+      <LajurDepartemen dep={dep} tingkat={TINGKAT_LEADER} judul={s.org.leaders} orang={leader} />
       <LajurDepartemen dep={dep} tingkat={TINGKAT_MEMBER} judul={s.org.staff} orang={staf} />
       <div className="flex justify-end pt-1">
         <PemilihOrang
@@ -631,7 +634,7 @@ export function PapanOrganisasi({
               <span className="text-11 font-semibold text-tertiary">{s.org.board.levels}</span>
               <span className="text-11 text-tertiary">{s.org.board.levels_hint}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
               {LAJUR_JENJANG.map((t) => (
                 <LajurJenjang key={t} tingkat={t} orang={orangJenjang(t)} />
               ))}

@@ -13,12 +13,12 @@
 import { useState } from "react";
 // plane imports
 import { Button } from "@plane/propel/button";
-import { TINGKAT_MEMBER, TINGKAT_SUPERVISOR } from "@plane/services";
+import { TINGKAT_LEADER, TINGKAT_SUPERVISOR } from "@plane/services";
 import { cn } from "@plane/utils";
 // local
 import { EModalWidth, ParadiseModal } from "@/components/common/paradise-ui";
 import { useGodmodeStrings } from "@/app/i18n/godmode";
-import { namaJenjang } from "./papan-logika";
+import { PERAN_DEPARTEMEN, namaJenjang } from "./papan-logika";
 
 export type TTawaranPeran = {
   nama: string;
@@ -27,8 +27,6 @@ export type TTawaranPeran = {
   bawaan: number;
   kirim: (peran: number) => Promise<unknown>;
 };
-
-const PILIHAN = [TINGKAT_SUPERVISOR, TINGKAT_MEMBER] as const;
 
 export function DialogPeran({ tawaran, onTutup }: { tawaran: TTawaranPeran | null; onTutup: () => void }) {
   return tawaran ? (
@@ -74,7 +72,7 @@ function IsiDialogPeran({ tawaran, onTutup }: { tawaran: TTawaranPeran; onTutup:
       <p className="text-13 text-secondary">{fill(s.org.board.role_message, isi)}</p>
       <fieldset className="mt-3 grid gap-2">
         <legend className="sr-only">{fill(s.org.board.role_label, isi)}</legend>
-        {PILIHAN.map((t) => {
+        {PERAN_DEPARTEMEN.map((t) => {
           const aktif = t === peran;
           return (
             <label
@@ -96,7 +94,11 @@ function IsiDialogPeran({ tawaran, onTutup }: { tawaran: TTawaranPeran; onTutup:
               <span>
                 <span className="block text-13 font-medium text-primary">{namaJenjang(t, s)}</span>
                 <span className="block text-11 text-tertiary">
-                  {t === TINGKAT_SUPERVISOR ? s.org.board.role_supervisor_hint : s.org.board.role_staff_hint}
+                  {t === TINGKAT_SUPERVISOR
+                    ? s.org.board.role_supervisor_hint
+                    : t === TINGKAT_LEADER
+                      ? s.org.board.role_leader_hint
+                      : s.org.board.role_staff_hint}
                 </span>
               </span>
             </label>

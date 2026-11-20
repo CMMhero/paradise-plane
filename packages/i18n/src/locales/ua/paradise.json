@@ -1117,6 +1117,7 @@
     "more_placements": "ще {count}",
     "no_placement": "Not placed in a department yet",
     "level_10": "Staff",
+    "level_12": "Leader",
     "level_20": "Supervisor",
     "level_30": "Manager",
     "level_35": "Секретар",
@@ -1237,5 +1238,9 @@
     "label": "Оновити",
     "tooltip": "Оновити вміст",
     "busy": "Оновлення"
+  },
+  "jenjang_p29": {
+    "done_locked": "Done items are read-only.",
+    "done_locked_reopen": "Done items are read-only. Move it out of Done to edit it."
   }
 }

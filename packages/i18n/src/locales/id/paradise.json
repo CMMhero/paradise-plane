@@ -1117,6 +1117,7 @@
     "more_placements": "+{count} lagi",
     "no_placement": "Belum ditempatkan di departemen",
     "level_10": "Staf",
+    "level_12": "Leader",
     "level_20": "Supervisor",
     "level_30": "Manager",
     "level_35": "Sekretaris",
@@ -1237,5 +1238,9 @@
     "label": "Segarkan",
     "tooltip": "Segarkan isi halaman",
     "busy": "Menyegarkan"
+  },
+  "jenjang_p29": {
+    "done_locked": "Item yang sudah selesai hanya bisa dilihat.",
+    "done_locked_reopen": "Item yang sudah selesai hanya bisa dilihat. Pindahkan statusnya keluar dari Done untuk mengubahnya."
   }
 }

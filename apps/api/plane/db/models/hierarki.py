@@ -46,6 +46,10 @@ from .base import BaseModel
 # tidak pernah tertukar: angka 20 muncul di dua tempat dengan arti berbeda, dan
 # pemanggilnya wajib menyebut nama konstantanya, tidak boleh angka.
 TINGKAT_MEMBER = 10
+# Leader (P29): memimpin Staf satu departemen (menugaskan dan mengubah tugas mereka),
+# tapi tidak menyetujui apa pun dan penyelesaiannya sendiri tetap menunggu atasan.
+# 12, bukan 15: 15 adalah ROLE project (Member) dan ditolak `_SALAH_KAPAL`.
+TINGKAT_LEADER = 12
 TINGKAT_SUPERVISOR = 20
 TINGKAT_MANAGER = 30
 # Sekretaris (KEP-101): jangkauannya SAMA dengan direktur (seluruh organisasi, tanpa
@@ -56,6 +60,7 @@ TINGKAT_DIREKTUR = 40
 
 TINGKAT_CHOICES = (
     (TINGKAT_MEMBER, "Member"),
+    (TINGKAT_LEADER, "Leader"),
     (TINGKAT_SUPERVISOR, "Supervisor"),
     (TINGKAT_MANAGER, "Manager"),
     (TINGKAT_SEKRETARIS, "Sekretaris"),

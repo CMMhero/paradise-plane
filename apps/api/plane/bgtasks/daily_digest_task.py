@@ -51,6 +51,7 @@ from plane.db.models import (
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_SEKRETARIS,
+    TINGKAT_LEADER,
     TINGKAT_SUPERVISOR,
     menjangkau_seluruh_organisasi,
     Departemen,
@@ -74,6 +75,7 @@ from plane.utils.setelan_instance import DIGEST_WEEKDAYS, setelan_hari_kerja, zo
 logger = logging.getLogger("plane")
 
 NAMA_PERAN = {
+    TINGKAT_LEADER: "Leader",
     TINGKAT_SUPERVISOR: "Supervisor",
     TINGKAT_MANAGER: "Manager",
     TINGKAT_SEKRETARIS: "Sekretaris",

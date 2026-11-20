@@ -95,6 +95,7 @@ class TestTangga:
     def test_nama_jenjang_lama_tidak_berubah(self):
         assert TINGKAT_NAMA == {
             10: "Member",
+            12: "Leader",
             20: "Supervisor",
             30: "Manager",
             35: "Sekretaris",

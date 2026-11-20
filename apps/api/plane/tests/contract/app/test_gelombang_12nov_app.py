@@ -351,7 +351,7 @@ class TestDepartemenMengikuti:
 
 
 # --------------------------------------------------------------------------
-# 6. Super Admin berjenjang staf tidak dibatasi aturan "staf hanya ajak rekan"
+# 6. Super Admin berjenjang staf: aturan staf berlaku di departemennya (P29)
 # --------------------------------------------------------------------------
 
 
@@ -369,7 +369,8 @@ class TestSuperAdminBerjenjangStaf:
         return super_admin
 
     @pytest.mark.django_db
-    def test_super_admin_staf_bisa_menambah_assignee_jenjang_lain(self, org, super_admin, monkeypatch):
+    def test_super_admin_staf_terikat_aturan_staf_di_departemennya(self, org, super_admin, monkeypatch):
+        """P29 keputusan 7 membalik aturan 12 Nov: di departemen tempat ia Staf, aturan staf berlaku."""
         monkeypatch.setenv(FLAG_GERBANG, "1")
         sa = self._super_staf(org, super_admin)
         tugas = _tugas(org, org.manager, "Tugas dengan induk", parent=_tugas(org, org.manager, "Induk"))
@@ -378,8 +379,8 @@ class TestSuperAdminBerjenjangStaf:
             {"assignee_ids": [str(org.manager.id)]},
             format="json",
         )
-        assert respon.status_code == status.HTTP_200_OK, getattr(respon, "data", None)
-        assert IssueAssignee.objects.filter(issue=tugas, assignee=org.manager).exists()
+        assert respon.status_code == status.HTTP_400_BAD_REQUEST, getattr(respon, "data", None)
+        assert not IssueAssignee.objects.filter(issue=tugas, assignee=org.manager).exists()
 
     @pytest.mark.django_db
     def test_staf_biasa_tetap_hanya_boleh_ajak_rekan(self, org, monkeypatch):

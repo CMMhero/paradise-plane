@@ -269,12 +269,13 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         from plane.utils.hierarki import (  # noqa: PLC0415
             _bawahan_ids,
             _di_bawah_direktur,
+            aturan_staf_berlaku,
             ditempatkan_ids,
             gerbang_aktif,
             tingkat_anggota,
         )
         from plane.db.superadmin import is_super_admin  # noqa: PLC0415
-        from plane.db.models import TINGKAT_DIREKTUR, TINGKAT_SUPERVISOR  # noqa: PLC0415
+        from plane.db.models import TINGKAT_DIREKTUR, TINGKAT_LEADER  # noqa: PLC0415
 
         project = Project.objects.filter(pk=project_id).first()
         if project is None:
@@ -296,7 +297,11 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             return ids if tempat is None else ids & tempat
 
         admin_penuh = is_super_admin(request.user) or adalah_admin_penuh(request.user, project.workspace_id)
-        if not gerbang_aktif() or admin_penuh:
+        # Admin yang ditempatkan sebagai Staf di departemen project ini memakai daftar
+        # staf (keputusan 7, P29), sama dengan `galat_penugasan`; hak ubahnya tetap admin.
+        if not gerbang_aktif() or (
+            admin_penuh and not aturan_staf_berlaku(request.user, project.workspace_id, project.id)
+        ):
             anggota = anggota_sah()
             return Response(
                 {
@@ -310,7 +315,11 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     # komentar, reaksi), walau tidak boleh DITUGASKAN tanpa penempatan.
                     "admin_penuh": admin_penuh,
                     "aturan": _aturan_tugas(),
-                    "bawahan_ids": [],
+                    # Katup mati tidak melepas kunci tugas selesai (P29): klien tetap
+                    # butuh bawahan untuk tahu siapa yang boleh membukanya kembali.
+                    "bawahan_ids": (
+                        [] if admin_penuh else [str(u) for u in _bawahan_ids(saya, project.workspace_id, project_id)]
+                    ),
                 }
             )
 
@@ -330,7 +339,8 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "bawahan_ids": [str(u) for u in _bawahan_ids(saya, project.workspace_id, project_id)],
                 }
             )
-        if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
+        # Leader (P29) memakai mode yang sama: bawahannya Staf di departemen yang ia pimpin.
+        if tingkat is not None and tingkat >= TINGKAT_LEADER:
             bawahan = _bawahan_ids(saya, project.workspace_id, project_id)
             # `_bawahan_ids` sudah hanya memuat anggota project ini, dan baris
             # `boleh &= anggota` di bawah menyaring sekali lagi. Pemeriksaan
@@ -396,7 +406,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 "mode": "rekan" if len(boleh) > 1 else "diri-sendiri",
                 "tingkat_saya": tingkat,
                 "gerbang_aktif": True,
-                "admin_penuh": False,
+                "admin_penuh": admin_penuh,
                 "aturan": _aturan_tugas(),
                 # Rekan boleh DIAJAK, bukan disunting tugasnya: staf hanya mengubah tugas yang melibatkan dirinya.
                 "bawahan_ids": [],

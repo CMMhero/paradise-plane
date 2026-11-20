@@ -119,7 +119,8 @@ BAWAAN_STAF = {
 }
 
 
-# Kelompok tabel bawaan. "pimpinan" = leader (supervisor dan manager); namanya
+# Kelompok tabel bawaan. "pimpinan" = supervisor dan manager (jenjang Leader P29 ikut
+# "staf": ia tidak mengawasi persetujuan); namanya
 # dipertahankan karena sudah tersimpan di God Mode dan di potret `bawaan_email`.
 # Super Admin TIDAK punya baris sendiri (keputusan user 2026-11-06): ia mengikuti
 # jabatannya seperti orang lain. Email yang hanya diterima Super Admin diatur di
