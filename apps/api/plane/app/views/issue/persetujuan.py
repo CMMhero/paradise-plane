@@ -261,15 +261,18 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
     muncul, termasuk diri sendiri. Admin workspace atau Super Admin yang hanya
     punya akses tidak pernah muncul sebagai pilihan. Saringannya sama dengan
     `galat_penempatan` di server, jadi dropdown tidak menawarkan yang pasti ditolak.
+
+    Setiap mode juga membuang atasan saya (`atasan_di_antara`, sama dengan
+    `galat_atasan`), apa pun setelan katup dan ASSIGN_DOWN_ONLY.
     """
 
     permission_classes = [ProjectEntityPermission]
 
     def get(self, request, slug, project_id):
         from plane.db.models import ProjectMember, User  # noqa: PLC0415
+        from plane.utils.atasan import atasan_di_antara  # noqa: PLC0415
         from plane.utils.hierarki import (  # noqa: PLC0415
             _bawahan_ids,
-            _di_bawah_direktur,
             aturan_staf_berlaku,
             ditempatkan_ids,
             gerbang_aktif,
@@ -288,14 +291,17 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         # None = tanpa batas penempatan (struktur belum aktif / project tanpa departemen).
         tempat = ditempatkan_ids(project.workspace_id, project_id)
 
+        def tanpa_atasan(ids):
+            return ids - atasan_di_antara(request.user, project.workspace_id, project_id, ids)
+
         def anggota_sah():
-            """Anggota project yang sah jadi assignee: role member/admin, ditempatkan di sini."""
+            """Anggota project yang sah jadi assignee: role member/admin, ditempatkan di sini, bukan atasan saya."""
             ids = set(
                 ProjectMember.objects.filter(project_id=project_id, is_active=True, role__gte=15).values_list(
                     "member_id", flat=True
                 )
             )
-            return ids if tempat is None else ids & tempat
+            return tanpa_atasan(ids if tempat is None else ids & tempat)
 
         admin_penuh = is_super_admin(request.user) or adalah_admin_penuh(request.user, project.workspace_id)
         # Admin yang ditempatkan sebagai Staf di departemen project ini memakai daftar
@@ -366,13 +372,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             # Hanya yang ditempatkan di project ini (17 Nov), termasuk diri sendiri.
             if tempat is not None:
                 boleh &= tempat
-            # Sekretaris (KEP-101) tidak pernah boleh menugaskan direktur, walau saklar
-            # ASSIGN_DOWN_ONLY mati: samakan daftar dengan `galat_penugasan`.
-            if _di_bawah_direktur(tingkat):
-                from plane.utils.hierarki import peta_tingkat  # noqa: PLC0415
-
-                peta = peta_tingkat(project.workspace_id, project_id)
-                boleh = {u for u in boleh if u == saya or peta.get(u, 0) < TINGKAT_DIREKTUR}
+            boleh = tanpa_atasan(boleh)
             users = {u.id: u for u in User.objects.filter(id__in=boleh)}
             return Response(
                 {
@@ -400,6 +400,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             # Staf yang tidak ditempatkan di sini (anggota eksplisit) tidak bisa
             # menugaskan siapa pun di project ini, termasuk dirinya sendiri.
             boleh &= tempat
+        boleh = tanpa_atasan(boleh)
         users = {u.id: u for u in User.objects.filter(id__in=boleh)}
         return Response(
             {

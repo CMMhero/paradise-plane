@@ -85,20 +85,20 @@ class TestAssigneeAnakNaik:
         induk = _tugas(org, org.manager, "Induk", parent=kakek)
         anak = _tugas(org, org.manager, "Anak", assignee=org.staf, parent=induk)
 
-        assert naikkan_assignee(anak.id) == (2, 0)
+        assert naikkan_assignee(anak.id, org.manager) == (2, 0)
         for atas in (induk, kakek):
             assert IssueAssignee.objects.filter(issue=atas, assignee=org.staf).exists()
         # Assignee lama induk tetap ada, dan tidak ada yang digandakan.
         assert IssueAssignee.objects.filter(issue=kakek).count() == 2
-        assert naikkan_assignee(anak.id) == (0, 0)
+        assert naikkan_assignee(anak.id, org.manager) == (0, 0)
 
     @pytest.mark.django_db
     def test_melepas_assignee_anak_tidak_mencabut_dari_induk(self, org):
         induk = _tugas(org, org.manager, "Induk")
         anak = _tugas(org, org.manager, "Anak", assignee=org.staf, parent=induk)
-        naikkan_assignee(anak.id)
+        naikkan_assignee(anak.id, org.manager)
         IssueAssignee.objects.filter(issue=anak).delete()
-        naikkan_assignee(anak.id)
+        naikkan_assignee(anak.id, org.manager)
         assert IssueAssignee.objects.filter(issue=induk, assignee=org.staf).exists()
 
     @pytest.mark.django_db
@@ -110,7 +110,7 @@ class TestAssigneeAnakNaik:
         ModuleIssue.objects.create(module=modul_anak, issue=anak, project=org.p1, workspace=org.ws)
         ModuleIssue.objects.create(module=modul_induk, issue=induk, project=org.p1, workspace=org.ws)
 
-        assert naikkan_assignee(anak.id) == (1, 2)
+        assert naikkan_assignee(anak.id, org.manager) == (1, 2)
         for modul in (modul_anak, modul_induk):
             assert ModuleMember.objects.filter(module=modul, member=org.staf).exists()
 

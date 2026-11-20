@@ -354,8 +354,14 @@ class IssueCreateSerializer(BaseSerializer):
                 batch_size=10,
             )
         else:
-            # Then assign it to default assignee
-            if default_assignee_id is not None:
+            # Default assignee mengikuti gerbang yang sama dengan assignee kiriman.
+            # Pelaku papan publik anonim dihitung Staf (`atasan_di_antara`), jadi
+            # default di atas Staf tidak pernah dipasang dari jalur ini.
+            from plane.utils.hierarki import aktor_dari_context, galat_penugasan  # noqa: PLC0415
+
+            if default_assignee_id is not None and not galat_penugasan(
+                project_id, [default_assignee_id], actor=aktor_dari_context(self.context)
+            ):
                 IssueAssignee.objects.create(
                     assignee_id=default_assignee_id,
                     issue=issue,

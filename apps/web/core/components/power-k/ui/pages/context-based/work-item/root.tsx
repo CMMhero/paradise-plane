@@ -12,7 +12,7 @@ import { EIssueServiceType } from "@plane/types";
 import type { TPowerKPageType } from "@/components/power-k/core/types";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
-import { useMember } from "@/hooks/store/use-member";
+import { useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 // local imports
 import { PowerKMembersMenu } from "../../../../menus/members";
 import { PowerKWorkItemEstimatesMenu } from "./estimates-menu";
@@ -29,18 +29,19 @@ type Props = {
 export const PowerKWorkItemContextBasedPages = observer(function PowerKWorkItemContextBasedPages(props: Props) {
   const { activePage, handleSelection } = props;
   // navigation
-  const { workItem: entityIdentifier } = useParams();
+  const { workspaceSlug, workItem: entityIdentifier } = useParams();
   // store hooks
   const {
     issue: { getIssueById, getIssueIdByIdentifier },
   } = useIssueDetail(EIssueServiceType.ISSUES);
-  const {
-    project: { getProjectMemberIds },
-  } = useMember();
   // derived values
   const entityId = entityIdentifier ? getIssueIdByIdentifier(entityIdentifier.toString()) : null;
   const entityDetails = entityId ? getIssueById(entityId) : null;
-  const projectMemberIds = entityDetails?.project_id ? getProjectMemberIds(entityDetails.project_id, false) : [];
+  const opsiAssignee = useOpsiAssignee(
+    workspaceSlug?.toString(),
+    entityDetails?.project_id,
+    entityDetails?.assignee_ids
+  );
 
   if (!entityDetails) return null;
 
@@ -58,7 +59,7 @@ export const PowerKWorkItemContextBasedPages = observer(function PowerKWorkItemC
       {activePage === "update-work-item-assignee" && (
         <PowerKMembersMenu
           handleSelect={handleSelection}
-          userIds={projectMemberIds ?? undefined}
+          userIds={opsiAssignee.memberIds}
           value={entityDetails.assignee_ids}
         />
       )}

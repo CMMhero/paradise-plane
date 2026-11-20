@@ -46,6 +46,7 @@ from plane.tests.contract.app.test_organisasi_app import (  # noqa: F401 (fixtur
 )
 from plane.license.models import InstanceConfiguration
 from plane.utils import saklar_instance as si
+from plane.utils.atasan import PESAN_ATASAN
 from plane.utils.hierarki import (
     FLAG_GERBANG,
     calon_penyetuju,
@@ -193,7 +194,7 @@ class TestPenugasan:
     @pytest.mark.django_db
     def test_sekretaris_tidak_boleh_menugaskan_direktur(self, org, puncak):
         galat = galat_penugasan(org.p1.id, [puncak.dir.id], actor=puncak.sek, abaikan_katup=True)
-        assert galat and "jenjang yang sama" in galat
+        assert galat == PESAN_ATASAN
 
     @pytest.mark.django_db
     def test_sekretaris_tidak_boleh_menugaskan_direktur_walau_saklar_mati(self, org, puncak):

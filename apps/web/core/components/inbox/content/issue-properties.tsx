@@ -28,7 +28,7 @@ import { IssueLabel } from "@/components/issues/issue-detail/label";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useAturanTugas } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 
 type Props = {
   workspaceSlug: string;
@@ -52,6 +52,7 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
   // di antrean triage): penanggung jawab intake ikut boleh. Server menegakkannya;
   // kontrol di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
   const { bisaGantiTenggatIntake } = useAturanTugas();
+  const opsiAssignee = useOpsiAssignee(workspaceSlug, projectId, issue?.assignee_ids);
 
   const minDate = issue.start_date ? getDate(issue.start_date) : null;
   minDate?.setDate(minDate.getDate());
@@ -103,9 +104,13 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
                 showProfileCard
                 value={issue?.assignee_ids ?? []}
                 onChange={(val) =>
-                  issue?.id && issueOperations.update(workspaceSlug, projectId, issue?.id, { assignee_ids: val })
+                  issue?.id &&
+                  issueOperations.update(workspaceSlug, projectId, issue?.id, {
+                    assignee_ids: opsiAssignee.rapikan(val),
+                  })
                 }
                 disabled={!isEditable}
+                memberIds={opsiAssignee.memberIds}
                 projectId={projectId?.toString() ?? ""}
                 placeholder="Add assignees"
                 multiple

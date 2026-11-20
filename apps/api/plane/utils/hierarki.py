@@ -722,11 +722,14 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
     `lama` = assignee yang sudah ada di tugas itu (jalur ubah). Mereka tidak
     diperiksa penempatannya lagi supaya tugas lama tetap bisa disunting.
 
-    Admin workspace dan Super Admin dihitung SETARA DIREKTUR untuk aturan "hanya
-    ke bawah": boleh menugaskan siapa pun yang ditempatkan di sini, sama dengan
-    direktur. Alasannya: keduanya mengurus sistem dari luar tangga divisi, dan
-    keputusan user 9 Nov (ca9fff6180) sudah memberi Super Admin wewenang
-    menunjuk assignee di tugas mana pun. Yang baru hanyalah batas penempatan.
+    Sesudah penempatan, larangan menugaskan atasan (`galat_atasan`, P29 putaran 2),
+    juga sebelum katup: tidak ada yang bisa menugaskan orang yang jenjangnya di atas
+    jenjangnya sendiri, admin workspace yang berjenjang termasuk.
+
+    Super Admin dan admin workspace yang lolos dua pemeriksaan itu dihitung SETARA
+    DIREKTUR untuk aturan "hanya ke bawah": keduanya mengurus sistem dari luar
+    tangga divisi, dan keputusan user 9 Nov (ca9fff6180) sudah memberi Super Admin
+    wewenang menunjuk assignee di tugas mana pun.
     """
     # Tugas tanpa penerima tidak pernah butuh persetujuan: approval melekat pada
     # PENUGASAN, bukan pada pembuatan tugas (kata user: "hanya bisa assign diri sendiri,
@@ -738,6 +741,12 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
     galat_tempat = galat_penempatan(project_id, assignee_ids, lama=lama)
     if galat_tempat:
         return galat_tempat
+
+    from plane.utils.atasan import galat_atasan  # noqa: PLC0415
+
+    galat_ke_atas = galat_atasan(actor, project_id, assignee_ids, lama=lama)
+    if galat_ke_atas:
+        return galat_ke_atas
 
     if not abaikan_katup and not gerbang_aktif():
         return None
@@ -767,7 +776,8 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
         return _galat_kolaborasi_staf(actor.id, workspace_id, project_id, assignee_ids)
 
     # Super Admin (B1) dan admin workspace (13 Nov) setara direktur: boleh menugaskan
-    # siapa pun yang DITEMPATKAN di project ini (batas 17 Nov sudah diperiksa di atas).
+    # siapa pun yang DITEMPATKAN di project ini dan tidak di atas jenjangnya (keduanya
+    # sudah diperiksa di atas).
     if adalah_admin_penuh(actor, workspace_id):
         return None
 
@@ -790,13 +800,12 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
         # "direktur bisa create task cross divisi manapun karena tingkat teratas".
         # Sengaja `>= TINGKAT_DIREKTUR`, bukan `menjangkau_seluruh_organisasi`: sekretaris
         # (KEP-101) mengawasi semua project tetapi BUKAN puncak tangga, jadi ia jatuh ke
-        # cabang `divisi_diawasi` di bawah: direktur selalu ditolak sebagai penerima
-        # (`_di_bawah_direktur`), sesama sekretaris ditolak oleh ASSIGN_DOWN_ONLY.
+        # cabang `divisi_diawasi` di bawah: direktur sudah ditolak `galat_atasan`,
+        # sesama sekretaris ditolak oleh ASSIGN_DOWN_ONLY.
         return None
 
     if project_id in divisi_diawasi(actor.id, workspace_id):
-        ke_bawah = periksa_tingkat_penerima()
-        if ke_bawah or _di_bawah_direktur(tingkat):
+        if periksa_tingkat_penerima():
             peta = peta_tingkat(workspace_id, project_id)
             for uid in assignee_ids:
                 if uid in dari_id:
@@ -804,9 +813,7 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
                 lain = peta.get(uid)
                 if lain is None:
                     continue
-                if (ke_bawah and lain >= (tingkat or TINGKAT_MEMBER)) or (
-                    _di_bawah_direktur(tingkat) and lain >= TINGKAT_DIREKTUR
-                ):
+                if lain >= (tingkat or TINGKAT_MEMBER):
                     return (
                         "Penerima tugas berada pada jenjang yang sama atau lebih tinggi "
                         "dari Anda, jadi ia bukan bawahan yang dapat Anda tugaskan."
@@ -814,15 +821,6 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
         return None
 
     return _pesan_tolak(tingkat, project.identifier)
-
-
-def _di_bawah_direktur(tingkat):
-    """True untuk sekretaris (KEP-101): menjangkau seluruh organisasi tapi bukan puncak.
-
-    Direktur tidak pernah ditugaskan oleh sekretaris, apa pun nilai saklar
-    ASSIGN_DOWN_ONLY: itu aturan kedudukan, bukan pilihan yang bisa dimatikan.
-    """
-    return menjangkau_seluruh_organisasi(tingkat) and tingkat < TINGKAT_DIREKTUR
 
 
 def _adalah_staf(user_id, workspace_id, project_id=None):

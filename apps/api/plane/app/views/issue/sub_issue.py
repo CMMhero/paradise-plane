@@ -225,7 +225,7 @@ class SubIssuesEndpoint(BaseAPIView):
         from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
 
         for sub_issue in sub_issues:
-            naikkan_assignee(sub_issue.id)
+            naikkan_assignee(sub_issue.id, request.user)
 
         updated_sub_issues = Issue.issue_objects.filter(id__in=sub_issue_ids).annotate(state_group=F("state__group"))
 
