@@ -1,0 +1,82 @@
+{
+  "version": "2.9.0",
+  "date": "2026-11-20",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Everyone has a KPI page with completed work, on-time rate, overdue items, open workload and cycle time. Leaders and supervisors also see their department, managers their division, and directors the whole company."
+    },
+    {
+      "type": "Added",
+      "text": "Supervisors, managers and directors have one Approvals page for every completion and department request they need to decide, across all the departments they oversee."
+    },
+    {
+      "type": "Added",
+      "text": "You can request work from another department. Its supervisor or manager accepts it, and only then does it become a work item. You can follow your requests and see why one was declined."
+    },
+    {
+      "type": "Added",
+      "text": "Work items can be made private. Only the assignees, the person who created it, their direct superiors and super admins can see it."
+    },
+    {
+      "type": "Added",
+      "text": "New Leader level between Staff and Supervisor. Leaders can assign and edit the work of the staff in their department."
+    },
+    {
+      "type": "Added",
+      "text": "Branches. Plant Cilegon has its own divisions and departments under a Branch Director, who sits between Manager and Secretary and looks after that branch only."
+    },
+    {
+      "type": "Added",
+      "text": "Admins can choose which departments may post in Announcements, and every announcement is also emailed. You can switch these emails off in your notification settings."
+    },
+    {
+      "type": "Added",
+      "text": "Wiki folders can have an editor list. Only those people can add or change material there, and everyone else can still read it."
+    },
+    {
+      "type": "Added",
+      "text": "The Needs attention cards on Home let you approve, reject, change state, reply and mark as read without leaving the page."
+    },
+    {
+      "type": "Changed",
+      "text": "A finished work item can no longer be edited by anyone. Superiors and admins can reopen it first."
+    },
+    {
+      "type": "Changed",
+      "text": "Nobody can assign work to their own superiors. Assignee lists only show people you are allowed to assign."
+    },
+    {
+      "type": "Changed",
+      "text": "The activity timeline shows the newest first. You can change this in your preferences."
+    },
+    {
+      "type": "Changed",
+      "text": "Directors' overdue counts and stats only include work created by supervisors and above."
+    },
+    {
+      "type": "Changed",
+      "text": "The personal Paradise chat room has been removed. Notifications still reach your inbox and email."
+    },
+    {
+      "type": "Changed",
+      "text": "Deleting comments, links, sub-items, relations and quick links now asks for confirmation."
+    },
+    {
+      "type": "Fixed",
+      "text": "Switching to another tab or window no longer refreshes the page."
+    },
+    {
+      "type": "Fixed",
+      "text": "Opening a chat marks it read straight away, and the sender sees the read tick within a second."
+    },
+    {
+      "type": "Fixed",
+      "text": "Chat cards for comments and mentions show the text instead of raw formatting code."
+    },
+    {
+      "type": "Fixed",
+      "text": "The chat message list no longer scrolls underneath the message box."
+    }
+  ]
+}
