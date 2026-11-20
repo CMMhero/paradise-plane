@@ -24,7 +24,7 @@ tidak punya daftar kedua yang bisa melenceng.
 
 - **Hari = hari kantor** (`zona_kantor`), sama dengan laporan selesai (KEP-62).
 - **Selesai, tepat waktu, terlambat, tanpa tenggat**: aturan `ketepatan` di
-  `utils/laporan_selesai.py`.
+  `utils/ketepatan_waktu.py` (tenggat efektif = max(Due date, hari dicatat)).
 - **Terlambat sekarang**: aturan `_angka_tugas` di `utils/ringkasan_divisi.py`
   (tenggang `OVERDUE_GRACE_DAYS`, yang menunggu persetujuan tidak dihitung).
 - **Waktu siklus** = `completed_at` dikurangi Start date (awal hari kantor), atau
@@ -61,7 +61,7 @@ from django.db.models import (
     Sum,
     Value,
 )
-from django.db.models.functions import Coalesce, Extract, Greatest, TruncDate
+from django.db.models.functions import Coalesce, Extract, Greatest
 from django.utils import timezone
 
 # Module imports
@@ -85,7 +85,7 @@ from plane.db.models import (
 )
 from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.hierarki import _bawahan_ids, adalah_admin_penuh, divisi_diawasi
-from plane.utils.laporan_selesai import ketepatan
+from plane.utils.ketepatan_waktu import anotasi_ketepatan, ketepatan, q_tepat_waktu, q_terlambat
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.setelan_instance import hari_ini_kantor, zona_kantor
 from plane.utils.tanggal_otomatis import batas_terlambat
@@ -495,7 +495,7 @@ def _tugas(workspace_id):
     mulai = Coalesce(_AwalHariKantor(Value(zona.key), F("start_date")), F("created_at"))
     lama = ExpressionWrapper(F("completed_at") - mulai, output_field=DurationField())
     return Issue.issue_objects.filter(workspace_id=workspace_id).annotate(
-        tanggal_selesai=TruncDate("completed_at", tzinfo=zona),
+        **anotasi_ketepatan(),
         hari_siklus=Greatest(
             ExpressionWrapper(Extract(lama, "epoch") / Value(86400.0), output_field=FloatField()), Value(0.0)
         ),
@@ -542,8 +542,8 @@ def _agregat_tugas(jendela, jendela_lalu, hari_ini, dengan_siklus):
         selesai = _q_selesai(awal, akhir)
         bertenggat = selesai & Q(target_date__isnull=False)
         agregat[f"completed{akhiran}"] = hitung(selesai)
-        agregat[f"on_time{akhiran}"] = hitung(bertenggat & Q(tanggal_selesai__lte=F("target_date")))
-        agregat[f"late{akhiran}"] = hitung(bertenggat & Q(tanggal_selesai__gt=F("target_date")))
+        agregat[f"on_time{akhiran}"] = hitung(bertenggat & q_tepat_waktu())
+        agregat[f"late{akhiran}"] = hitung(bertenggat & q_terlambat())
         agregat[f"no_due_date{akhiran}"] = hitung(selesai & Q(target_date__isnull=True))
         if dengan_siklus:
             agregat[f"cycle_avg{akhiran}"] = Avg("hari_siklus", filter=selesai)
@@ -633,7 +633,7 @@ def _tren(qs, jendela, hari_ini):
         .values("tanggal_selesai")
         .annotate(
             completed=Count("id"),
-            on_time=Count("id", filter=Q(target_date__isnull=False, tanggal_selesai__lte=F("target_date"))),
+            on_time=Count("id", filter=q_tepat_waktu()),
         )
     ):
         t = titik[ember(b["tanggal_selesai"])]
@@ -641,17 +641,18 @@ def _tren(qs, jendela, hari_ini):
         t["on_time"] += b["on_time"]
 
     # Tugas bertenggat T mulai terlambat pada hari T + tenggang + 1, yaitu hari
-    # pertama `T < batas_terlambat(hari)`.
+    # pertama `T < batas_terlambat(hari)`. T = tenggat efektif: tugas yang dicatat
+    # sesudah Due date-nya tidak mungkin sudah terlambat sebelum ia ada.
     geser = hari_ini - batas_terlambat(hari_ini) + timedelta(days=1)
     terakhir = min(akhir, hari_ini + timedelta(days=1))
     for b in (
-        qs.filter(target_date__gte=awal - geser, target_date__lt=terakhir - geser)
+        qs.filter(tenggat_efektif__gte=awal - geser, tenggat_efektif__lt=terakhir - geser)
         .filter(~Q(state__group=_BATAL) & q_bisa_terlambat())
-        .filter(Q(completed_at__isnull=True) | Q(tanggal_selesai__gte=F("target_date") + geser))
-        .values("target_date")
+        .filter(Q(completed_at__isnull=True) | Q(tanggal_selesai__gte=F("tenggat_efektif") + geser))
+        .values("tenggat_efektif")
         .annotate(n=Count("id"))
     ):
-        titik[ember(b["target_date"] + geser)]["became_overdue"] += b["n"]
+        titik[ember(b["tenggat_efektif"] + geser)]["became_overdue"] += b["n"]
 
     return {
         "bucket": "day" if harian else "week",
@@ -690,7 +691,9 @@ def _baris_tugas(issue):
         "priority": issue.priority,
         "target_date": issue.target_date,
         "completed_date": issue.tanggal_selesai,
-        "timing": ketepatan(issue.tanggal_selesai, issue.target_date) if issue.tanggal_selesai else None,
+        "timing": (
+            ketepatan(issue.tanggal_selesai, issue.target_date, issue.created_at) if issue.tanggal_selesai else None
+        ),
     }
 
 
