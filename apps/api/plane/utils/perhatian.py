@@ -37,6 +37,7 @@ from django.utils import timezone
 from plane.db.models import (
     IssueAssignee,
     Issue,
+    IssueComment,
     IssueMention,
     PersetujuanPenugasan,
     STATUS_PERSETUJUAN_DITOLAK,
@@ -44,6 +45,7 @@ from plane.db.models import (
     Workspace,
 )
 from plane.utils.hierarki import divisi_diawasi, pengajuan_boleh_diputuskan
+from plane.utils.perhatian_sebutan import lengkapi_baris, sebutan_komentar
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.ringkasan_divisi import project_terjangkau
 from plane.utils.tanggal_otomatis import batas_terlambat
@@ -63,7 +65,19 @@ _BATAL = ("cancelled",)
 # Urutan di layar: yang menunggu keputusan saya paling atas.
 URUTAN = ("decide", "overdue_mine", "rejected", "team_overdue", "due_soon", "waiting_mine", "mentioned")
 
-_KOLOM_TUGAS = ("id", "sequence_id", "name", "project_id", "project__identifier", "project__name", "target_date")
+_KOLOM_TUGAS = (
+    "id",
+    "sequence_id",
+    "name",
+    "project_id",
+    "project__identifier",
+    "project__name",
+    "target_date",
+    "state_id",
+    "state__name",
+    "state__group",
+    "created_by_id",
+)
 # Kolom yang sama bila barisnya adalah persetujuan/sebutan (tugas lewat `issue`).
 _KOLOM_VIA_ISSUE = (
     "issue_id",
@@ -73,12 +87,22 @@ _KOLOM_VIA_ISSUE = (
     "project__identifier",
     "project__name",
     "issue__target_date",
+    "issue__state_id",
+    "issue__state__name",
+    "issue__state__group",
+    "issue__created_by_id",
 )
 
 
 def _item(baris, **tambahan):
-    """Daftar-putih bentuk baris: nomor, judul, tenggat, project. Tidak ada isi lain."""
+    """Daftar-putih bentuk baris: nomor, judul, tenggat, project, status. Tidak ada isi lain.
+
+    `key` membedakan kartu di layar: satu tugas bisa muncul dua kali di
+    kelompok yang sama (dua komentar yang menyebut saya), jadi `id` tugas saja
+    tidak cukup. `assignee_ids` diisi `lengkapi_baris` dengan satu kueri.
+    """
     return {
+        "key": str(baris["id"]),
         "id": str(baris["id"]),
         "sequence_id": baris["sequence_id"],
         "identifier": f"{baris['project__identifier']}-{baris['sequence_id']}",
@@ -86,6 +110,10 @@ def _item(baris, **tambahan):
         "project_id": str(baris["project_id"]),
         "project_name": baris["project__name"],
         "target_date": baris["target_date"],
+        "state_id": str(baris["state_id"]) if baris["state_id"] else None,
+        "state_name": baris["state__name"],
+        "state_group": baris["state__group"],
+        "created_by": str(baris["created_by_id"]) if baris["created_by_id"] else None,
         **tambahan,
     }
 
@@ -100,6 +128,10 @@ def _item_via_issue(baris, **tambahan):
             "project_id": baris["project_id"],
             "project__name": baris["project__name"],
             "target_date": baris["issue__target_date"],
+            "state_id": baris["issue__state_id"],
+            "state__name": baris["issue__state__name"],
+            "state__group": baris["issue__state__group"],
+            "created_by_id": baris["issue__created_by_id"],
         },
         **tambahan,
     )
@@ -196,12 +228,15 @@ def susun_perhatian(user, slug):
         _kelompok(menunggu, ("created_at",), lambda b: _item_via_issue(b, requested_at=b["created_at"])),
     )
 
-    # Disebut dalam tugas yang masih aktif, seminggu terakhir.
+    # Disebut dalam tugas yang masih aktif, seminggu terakhir: di deskripsi
+    # (`IssueMention`) atau di komentar (satu kartu per komentar, KEP-103: balasan
+    # cepat menempel ke komentar itu).
+    jendela_sebutan = sekarang - timedelta(days=setelan_angka(ATTENTION_MENTION_DAYS))
     sebutan = (
         IssueMention.objects.filter(
             mention=user,
             project_id__in=project_ids,
-            created_at__gte=sekarang - timedelta(days=setelan_angka(ATTENTION_MENTION_DAYS)),
+            created_at__gte=jendela_sebutan,
             issue__deleted_at__isnull=True,
             issue__is_draft=False,
             issue__archived_at__isnull=True,
@@ -209,10 +244,27 @@ def susun_perhatian(user, slug):
         .exclude(issue__state__group__in=_TUNTAS)
         .values(*_KOLOM_VIA_ISSUE, "created_at")
     )
-    simpan(
-        "mentioned",
-        _kelompok(sebutan, ("-created_at",), lambda b: _item_via_issue(b, mentioned_at=b["created_at"])),
+    jumlah_deskripsi, baris_deskripsi = _kelompok(
+        sebutan,
+        ("-created_at",),
+        lambda b: _item_via_issue(b, mentioned_at=b["created_at"], comment_id=None, snippet=None, mentioned_by=None),
     )
+    jumlah_komentar, baris_komentar = _kelompok(
+        sebutan_komentar(user, project_ids, jendela_sebutan, _TUNTAS).values(
+            "id", *_KOLOM_VIA_ISSUE, "created_at", "comment_html", "actor__display_name"
+        ),
+        ("-created_at",),
+        lambda b: _item_via_issue(
+            b,
+            key=str(b["id"]),
+            mentioned_at=b["created_at"],
+            comment_id=str(b["id"]),
+            _html=b["comment_html"],
+            mentioned_by=b["actor__display_name"],
+        ),
+    )
+    gabungan = sorted(baris_deskripsi + baris_komentar, key=lambda i: i["mentioned_at"], reverse=True)[:BATAS_ITEM]
+    simpan("mentioned", (jumlah_deskripsi + jumlah_komentar, gabungan))
 
     # Bagian atasan. Aturannya dipinjam utuh dari hierarki, tidak dihitung ulang:
     # wewenang dinilai per (project, pemohon), sama dengan POST setuju/tolak, jadi
@@ -254,7 +306,7 @@ def susun_perhatian(user, slug):
             _persetujuan(list(boleh), _BATAL, status=STATUS_PERSETUJUAN_MENUNGGU)
             .filter(hanya_sah)
             .exclude(pemohon=user)
-            .values(*_KOLOM_VIA_ISSUE, "created_at", "pemohon__display_name")
+            .values("id", *_KOLOM_VIA_ISSUE, "created_at", "pemohon__display_name")
         )
         terbanyak = max(boleh, key=lambda p: jumlah_sah[p], default=None)
         simpan(
@@ -262,7 +314,13 @@ def susun_perhatian(user, slug):
             _kelompok(
                 keputusan,
                 ("created_at",),
-                lambda b: _item_via_issue(b, requested_at=b["created_at"], requester=b["pemohon__display_name"]),
+                lambda b: _item_via_issue(
+                    b,
+                    key=str(b["id"]),
+                    approval_id=str(b["id"]),
+                    requested_at=b["created_at"],
+                    requester=b["pemohon__display_name"],
+                ),
             ),
             top_project_id=str(terbanyak) if terbanyak else None,
         )
@@ -276,6 +334,7 @@ def susun_perhatian(user, slug):
         simpan("team_overdue", _kelompok(tim.values(*_KOLOM_TUGAS), ("target_date", "sequence_id")))
 
     urut = [{"key": k, **kelompok[k]} for k in URUTAN if k in kelompok]
+    lengkapi_baris(user, workspace_id, [i for g in urut for i in g["items"]])
     return {
         "generated_at": sekarang,
         "is_supervisor": is_supervisor,

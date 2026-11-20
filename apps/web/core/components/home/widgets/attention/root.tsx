@@ -5,8 +5,10 @@
  * See the LICENSE file for details.
  *
  * Ringkasan singkat pekerjaan yang perlu perhatian: per kelompok jumlah dan
- * paling banyak lima tugas teratas. Kelompok kosong tidak tampil; kalau semuanya
- * kosong, satu kalimat tenang. Satu panggilan server (lihat `plane/utils/perhatian.py`).
+ * paling banyak lima tugas teratas, tiap tugas satu kartu dengan aksi satu klik
+ * sesuai kelompoknya (`card.tsx`, `actions.tsx`). Kelompok kosong tidak tampil;
+ * kalau semuanya kosong, satu kalimat tenang. Satu panggilan server (lihat
+ * `plane/utils/perhatian.py`).
  */
 
 import { observer } from "mobx-react";
@@ -17,24 +19,27 @@ import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import type { THomeWidgetProps } from "@plane/types";
 import { Loader } from "@plane/ui";
-import { cn, generateWorkItemLink, renderFormattedDate } from "@plane/utils";
+import { cn } from "@plane/utils";
 // hooks
 import { useUser } from "@/hooks/store/user";
 // services
 import { AttentionService } from "@/services/attention.service";
-import type { TAttentionGroup, TAttentionGroupKey, TAttentionItem } from "@/services/attention.service";
+import type { TAttention, TAttentionGroup } from "@/services/attention.service";
+// local
+import type { TOnAct } from "./actions";
+import { AttentionCard, ALERT_GROUPS } from "./card";
+import type { TAttentionPatch } from "./data";
+import { useAttentionDismissed } from "./use-dismissed";
 
 const attentionService = new AttentionService();
 
-/** Kelompok yang memberi alasan merah (terlambat/ditolak). */
-const ALERT_GROUPS = new Set<TAttentionGroupKey>(["overdue_mine", "team_overdue", "rejected"]);
 /** Jendela `due_soon` bawaan, untuk server lama yang belum mengirim `lookahead_days`. */
 const DEFAULT_LOOKAHEAD_DAYS = 7;
-/** Tinggi satu kartu kelompok yang penuh: judul 40px + 5 baris (BATAS_ITEM di
- * server) x ~54px + kaki "View all" 34px. Kerangka setinggi ini, bukan separuhnya,
+/** Tinggi satu kartu kelompok yang penuh: judul 40px + 5 kartu (BATAS_ITEM di
+ * server) x ~100px (judul, alasan, baris tombol) + kaki "View all" 34px. Kerangka setinggi ini, bukan separuhnya,
  * karena kartu yang penuh adalah kasus biasa; kerangka yang lebih pendek membuat
  * Quick links dan widget di bawahnya terdorong ~400px saat datanya tiba. */
-const KERANGKA_KARTU = "349px";
+const KERANGKA_KARTU = "574px";
 
 export const AttentionWidget = observer(function AttentionWidget(props: THomeWidgetProps) {
   const { workspaceSlug } = props;
@@ -52,7 +57,38 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
 
   // Belum ada data: kerangka setinggi widget supaya Home tidak melompat saat datanya tiba.
   // Gagal memuat: satu baris pesan dengan tombol coba lagi, bukan widget yang menghilang.
-  const groups = data ? data.groups.filter((group) => group.count > 0) : [];
+  const { isDismissed, dismiss } = useAttentionDismissed(workspaceSlug, currentUser?.id);
+  // Kartu yang saya sembunyikan keluar dari daftar dan dari jumlahnya; yang
+  // tidak terkirim (lewat batas lima) tetap dihitung server.
+  const groups = (data?.groups ?? []).flatMap((group) => {
+    const items = group.items.filter((item) => !isDismissed(group.key, item));
+    const count = group.count - (group.items.length - items.length);
+    return count > 0 ? [Object.assign({}, group, { items, count })] : [];
+  });
+
+  // Jalankan aksi dengan pembaruan optimistis: kartu berubah dulu, balasan server
+  // menimpanya, dan gagal berarti kembali ke keadaan semula (galat sudah di-toast).
+  const handleAct: TOnAct = async (patch, run) => {
+    let berhasil = false;
+    try {
+      await mutate(
+        async () => {
+          berhasil = await run();
+          if (!berhasil) throw new Error("aksi gagal");
+          return undefined;
+        },
+        {
+          optimisticData: patch && data ? (patch as TAttentionPatch)(data as TAttention) : undefined,
+          rollbackOnError: true,
+          populateCache: false,
+          revalidate: true,
+        }
+      );
+    } catch {
+      // `run` sudah menampilkan pesan galatnya.
+    }
+    return berhasil;
+  };
 
   const viewAllHref = (group: TAttentionGroup): string | null => {
     if (group.key === "decide")
@@ -95,7 +131,9 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
               group={group}
               workspaceSlug={workspaceSlug}
               viewAllHref={viewAllHref(group)}
-              lookaheadDays={data.lookahead_days ?? DEFAULT_LOOKAHEAD_DAYS}
+              lookaheadDays={data?.lookahead_days ?? DEFAULT_LOOKAHEAD_DAYS}
+              onAct={handleAct}
+              onDismiss={dismiss}
             />
           ))}
         </div>
@@ -109,9 +147,11 @@ type TGroupProps = {
   workspaceSlug: string;
   viewAllHref: string | null;
   lookaheadDays: number;
+  onAct: TOnAct;
+  onDismiss: ReturnType<typeof useAttentionDismissed>["dismiss"];
 };
 
-function AttentionGroup({ group, workspaceSlug, viewAllHref, lookaheadDays }: TGroupProps) {
+function AttentionGroup({ group, workspaceSlug, viewAllHref, lookaheadDays, onAct, onDismiss }: TGroupProps) {
   const { t } = useTranslation();
   const isAlert = ALERT_GROUPS.has(group.key);
   const hidden = group.count - group.items.length;
@@ -128,7 +168,14 @@ function AttentionGroup({ group, workspaceSlug, viewAllHref, lookaheadDays }: TG
       </div>
       <ul className="divide-y divide-subtle border-t border-subtle">
         {group.items.map((item) => (
-          <AttentionRow key={item.id} item={item} workspaceSlug={workspaceSlug} groupKey={group.key} />
+          <AttentionCard
+            key={item.key}
+            item={item}
+            workspaceSlug={workspaceSlug}
+            groupKey={group.key}
+            onAct={onAct}
+            onDismiss={() => onDismiss(group.key, item)}
+          />
         ))}
       </ul>
       {(viewAllHref || hidden > 0) && (
@@ -142,52 +189,5 @@ function AttentionGroup({ group, workspaceSlug, viewAllHref, lookaheadDays }: TG
         </div>
       )}
     </div>
-  );
-}
-
-function AttentionRow({
-  item,
-  workspaceSlug,
-  groupKey,
-}: {
-  item: TAttentionItem;
-  workspaceSlug: string;
-  groupKey: TAttentionGroupKey;
-}) {
-  const { t } = useTranslation();
-  const href = generateWorkItemLink({
-    workspaceSlug,
-    projectId: item.project_id,
-    issueId: item.id,
-    projectIdentifier: item.identifier.slice(0, item.identifier.lastIndexOf("-")),
-    sequenceId: item.sequence_id,
-  });
-  const note =
-    groupKey === "rejected" && item.reason
-      ? item.reason
-      : groupKey === "decide" && item.requester
-        ? t("attention_ui.requested_by", { name: item.requester })
-        : item.project_name;
-  const isLate = item.target_date !== null && ALERT_GROUPS.has(groupKey) && groupKey !== "rejected";
-
-  return (
-    <li>
-      <Link href={href} className="flex items-center justify-between gap-3 px-4 py-2 hover:bg-layer-2">
-        <div className="min-w-0">
-          <p className="truncate text-13 text-primary" title={`${item.identifier} ${item.name}`}>
-            <span className="mr-1.5 text-12 text-tertiary">{item.identifier}</span>
-            {item.name}
-          </p>
-          <p className="truncate text-12 text-tertiary" title={note}>
-            {note}
-          </p>
-        </div>
-        {item.target_date && (
-          <span className={cn("shrink-0 text-12", isLate ? "font-medium text-danger-primary" : "text-tertiary")}>
-            {renderFormattedDate(item.target_date)}
-          </span>
-        )}
-      </Link>
-    </li>
   );
 }

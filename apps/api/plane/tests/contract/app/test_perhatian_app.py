@@ -30,11 +30,13 @@ from plane.db.models import (
     Divisi,
     Issue,
     IssueAssignee,
+    IssueComment,
     IssueMention,
     JabatanOrganisasi,
     PersetujuanPenugasan,
     Project,
     ProjectMember,
+    Notification,
     State,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
@@ -201,3 +203,86 @@ class TestPerhatian:
         data = _klien(org.staf).get(URL.format(slug=org.ws.slug)).json()
         assert data["total"] == 0
         assert all(g["count"] == 0 and g["items"] == [] for g in data["groups"])
+
+
+@pytest.mark.contract
+class TestKartuAksi:
+    @pytest.mark.django_db
+    def test_decide_memuat_id_persetujuan_untuk_atasan_saja(self, org):
+        diajukan = _tugas(org.p1, org.s["completed"], "Diajukan rekan", None, org.rekan)
+        baris = PersetujuanPenugasan.objects.create(
+            workspace=org.ws, project=org.p1, issue=diajukan, pemohon=org.rekan, penerima=org.rekan, status="menunggu"
+        )
+        url = URL.format(slug=org.ws.slug)
+
+        item = _kunci(_klien(org.manager).get(url).json())["decide"]["items"][0]
+        assert item["approval_id"] == str(baris.id)
+        assert item["key"] == str(baris.id)
+        assert item["id"] == str(diajukan.id)
+        assert item["project_id"] == str(org.p1.id)
+        assert item["requester"] == org.rekan.display_name
+        assert item["assignee_ids"] == [str(org.rekan.id)]
+
+        assert "decide" not in _kunci(_klien(org.staf).get(url).json())
+
+    @pytest.mark.django_db
+    def test_baris_tugas_memuat_status_untuk_pemilih_status(self, org):
+        hari = hari_ini_kantor()
+        lewat = _tugas(org.p1, org.s["started"], "Lewat", hari - timedelta(days=1), org.staf)
+        item = _kunci(_klien(org.staf).get(URL.format(slug=org.ws.slug)).json())["overdue_mine"]["items"][0]
+        assert item["state_id"] == str(org.s["started"].id)
+        assert item["state_group"] == "started"
+        assert item["assignee_ids"] == [str(org.staf.id)]
+        assert item["id"] == str(lewat.id)
+
+    @pytest.mark.django_db
+    def test_sebutan_di_komentar_memuat_id_komentar_dan_teks_polos(self, org):
+        tugas = _tugas(org.p1, org.s["unstarted"], "Dibahas", None, org.rekan)
+        html = (
+            '<p class="editor-paragraph-block">Tolong cek '
+            f'<mention-component entity_identifier="{org.staf.id}" entity_name="user_mention"></mention-component>'
+            " <b>hari ini</b></p>"
+        )
+        komentar = IssueComment.objects.create(
+            issue=tugas, project=org.p1, workspace=org.ws, actor=org.rekan, comment_html=html
+        )
+        IssueComment.objects.create(
+            issue=tugas,
+            project=org.p1,
+            workspace=org.ws,
+            actor=org.rekan,
+            comment_html=(
+                f'<p><mention-component entity_identifier="{org.rekan.id}" entity_name="user_mention">'
+                "</mention-component></p>"
+            ),
+        )
+        notif = Notification.objects.create(
+            workspace=org.ws,
+            project=org.p1,
+            receiver=org.staf,
+            triggered_by=org.rekan,
+            sender="in_app:issue_activities:mentioned",
+            entity_identifier=tugas.id,
+            entity_name="issue",
+            title="x",
+            data={"issue_activity": {"field": "comment", "new_identifier": str(komentar.id)}},
+        )
+
+        g = _kunci(_klien(org.staf).get(URL.format(slug=org.ws.slug)).json())["mentioned"]
+        assert g["count"] == 1
+        item = g["items"][0]
+        assert item["comment_id"] == str(komentar.id)
+        assert item["key"] == str(komentar.id)
+        assert item["snippet"] == f"Tolong cek @{org.staf.display_name} hari ini"
+        assert item["mentioned_by"] == org.rekan.display_name
+        assert item["notification_id"] == str(notif.id)
+        assert "<" not in item["snippet"]
+
+    @pytest.mark.django_db
+    def test_sebutan_di_deskripsi_tanpa_komentar(self, org):
+        disebut = _tugas(org.p1, org.s["unstarted"], "Disebut", None, org.rekan)
+        IssueMention.objects.create(issue=disebut, mention=org.staf, project=org.p1, workspace=org.ws)
+        item = _kunci(_klien(org.staf).get(URL.format(slug=org.ws.slug)).json())["mentioned"]["items"][0]
+        assert item["comment_id"] is None
+        assert item["snippet"] is None
+        assert item["notification_id"] is None
