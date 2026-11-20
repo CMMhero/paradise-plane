@@ -113,7 +113,7 @@ class ProjectTrashEndpoint(BaseAPIView):
         return Response(
             {
                 "retention_days": setelan_angka(TRASH_RETENTION_DAYS),
-                "results": kumpulkan(project_id=project_id, tipe=request.GET.get("type")),
+                "results": kumpulkan(project_id=project_id, tipe=request.GET.get("type"), user=request.user),
             },
             status=status.HTTP_200_OK,
         )

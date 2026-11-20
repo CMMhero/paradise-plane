@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from drf_spectacular.utils import OpenApiResponse, OpenApiRequest
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.api.serializers import (
     IssueSerializer,
     ModuleIssueSerializer,
@@ -644,7 +645,10 @@ class ModuleIssueListCreateAPIEndpoint(BaseAPIView):
         """
         order_by = sanitize_order_by(request.GET.get("order_by", "created_at"), ISSUE_ORDER_BY_ALLOWLIST, "created_at")
         issues = (
-            Issue.issue_objects.filter(issue_module__module_id=module_id, issue_module__deleted_at__isnull=True)
+            saring_tugas_privat(
+                Issue.issue_objects.filter(issue_module__module_id=module_id, issue_module__deleted_at__isnull=True),
+                request.user,
+            )
             .annotate(
                 sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
                 .order_by()

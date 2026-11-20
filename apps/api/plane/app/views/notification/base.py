@@ -10,6 +10,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.utils.akses_privat import saring_kabar_privat
 from plane.app.serializers import (
     NotificationSerializer,
     UserNotificationPreferenceSerializer,
@@ -65,7 +66,9 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         )
 
         notifications = (
-            Notification.objects.filter(workspace__slug=slug, receiver_id=request.user.id)
+            saring_kabar_privat(
+                Notification.objects.filter(workspace__slug=slug, receiver_id=request.user.id), request.user
+            )
             # Kustomisasi Paradise: baris DM (plane/utils/inbox_chat.py) ikut tampil.
             .filter(entity_name__in=["issue", ENTITY_CHAT])
             .annotate(is_inbox_issue=Exists(intake_issue))
@@ -212,28 +215,24 @@ class UnreadNotificationEndpoint(BaseAPIView):
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
     def get(self, request, slug):
         # Watching Issues Count
-        unread_notifications_count = (
+        unread = saring_kabar_privat(
             Notification.objects.filter(
                 workspace__slug=slug,
                 receiver_id=request.user.id,
                 read_at__isnull=True,
                 archived_at__isnull=True,
                 snoozed_till__isnull=True,
-            )
-            .exclude(sender__icontains="mentioned")
+            ),
+            request.user,
+        )
+        unread_notifications_count = (
+            unread.exclude(sender__icontains="mentioned")
             # Obrolan punya lencana, pop-up, dan bunyi sendiri; dihitung di sini = bunyi dua kali.
             .exclude(entity_name=ENTITY_CHAT)
             .count()
         )
 
-        mention_notifications_count = Notification.objects.filter(
-            workspace__slug=slug,
-            receiver_id=request.user.id,
-            read_at__isnull=True,
-            archived_at__isnull=True,
-            snoozed_till__isnull=True,
-            sender__icontains="mentioned",
-        ).count()
+        mention_notifications_count = unread.filter(sender__icontains="mentioned").count()
 
         return Response(
             {

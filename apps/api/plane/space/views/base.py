@@ -40,6 +40,23 @@ class TimezoneMixin:
             timezone.activate(zoneinfo.ZoneInfo(request.user.user_timezone))
         else:
             timezone.deactivate()
+        tolak_tugas_privat_publik(kwargs)
+
+
+def tolak_tugas_privat_publik(kwargs):
+    """Papan publik tidak pernah menampilkan tugas privat (P29), untuk siapa pun.
+
+    Tugasnya dari `issue_id` di URL atau tugas pemilik `comment_id`. 404, bukan 403.
+    """
+    from plane.db.models import Issue, IssueComment  # noqa: PLC0415
+
+    issue_id = kwargs.get("issue_id")
+    if issue_id is None and kwargs.get("comment_id") is not None:
+        issue_id = IssueComment.all_objects.filter(pk=kwargs["comment_id"]).values_list("issue_id", flat=True).first()
+    if issue_id is not None and Issue.all_objects.filter(pk=issue_id, is_private=True).exists():
+        from rest_framework.exceptions import NotFound  # noqa: PLC0415
+
+        raise NotFound({"error": "Work item not found"})
 
 
 class BaseViewSet(TimezoneMixin, ModelViewSet, BasePaginator):

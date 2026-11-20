@@ -20,6 +20,7 @@ import type { IIssueDisplayProperties, TIssue } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 // ui
 import { ControlLink, Row } from "@plane/ui";
+import { PrivateBadge } from "@/components/issues/privat/private-badge";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { getVisibleApprovalStatus } from "@/components/issues/approval-card-badge";
@@ -374,6 +375,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
               </div>
 
               <div className="my-auto flex h-full w-full items-center justify-between gap-2 truncate">
+                <PrivateBadge isPrivate={issueDetail.is_private} variant="icon" />
                 <div className="line-clamp-1 w-full text-14 text-primary">
                   <div className="w-full overflow-hidden">
                     <Tooltip tooltipContent={issueDetail.name} isMobile={isMobile}>

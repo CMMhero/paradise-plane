@@ -20,6 +20,7 @@ from rest_framework.response import Response
 
 # Module imports
 from ..base import BaseViewSet
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.izin_sumber import tolak_izin_project
 from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
 from plane.app.permissions import allow_permission, ROLE
@@ -205,7 +206,11 @@ class IntakeIssueViewSet(BaseViewSet):
         project = Project.objects.get(pk=project_id)
         filters = issue_filters(request.GET, "GET", "issue__")
         intake_issue = (
-            IntakeIssue.objects.filter(intake_id=intake.id, project_id=project_id, **filters)
+            saring_tugas_privat(
+                IntakeIssue.objects.filter(intake_id=intake.id, project_id=project_id, **filters),
+                request.user,
+                prefix="issue__",
+            )
             .select_related("issue")
             .prefetch_related("issue__labels")
             .annotate(

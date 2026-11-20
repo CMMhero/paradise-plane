@@ -19,6 +19,7 @@ from rest_framework import status
 
 # Module imports
 from .. import BaseViewSet
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.serializers import IssueRelationSerializer, RelatedIssueSerializer
 from plane.app.permissions import ProjectEntityPermission
 from plane.db.models import (
@@ -100,7 +101,7 @@ class IssueRelationViewSet(BaseViewSet):
         )
 
         queryset = (
-            Issue.issue_objects.filter(workspace__slug=slug)
+            saring_tugas_privat(Issue.issue_objects.filter(workspace__slug=slug), request.user)
             .select_related("workspace", "project", "state", "parent")
             .prefetch_related("assignees", "labels", "issue_module__module")
             .annotate(

@@ -28,6 +28,7 @@ import uuid
 
 from django.db.models import Q
 
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.db.models import AWALAN_KABAR, Issue, Langganan, ProjectMember, Ruang
 
 # Berapa rujukan per jenis yang disimpan di satu pesan. Lebih dari ini bukan
@@ -74,12 +75,12 @@ def kanal_terlihat(user_id, workspace_id):
     )
 
 
-def tugas_terlihat(user_id, workspace_id):
-    """Work item di workspace ini dari project yang `user_id` anggota aktifnya."""
-    project_saya = ProjectMember.objects.filter(workspace_id=workspace_id, member_id=user_id, is_active=True).values(
+def tugas_terlihat(user, workspace_id):
+    """Work item di workspace ini dari project yang `user` anggota aktifnya, tanpa privat orang lain."""
+    project_saya = ProjectMember.objects.filter(workspace_id=workspace_id, member_id=user.id, is_active=True).values(
         "project_id"
     )
-    return Issue.issue_objects.filter(workspace_id=workspace_id, project_id__in=project_saya)
+    return saring_tugas_privat(Issue.issue_objects.filter(workspace_id=workspace_id, project_id__in=project_saya), user)
 
 
 def nomor_tugas(issue) -> str:
@@ -105,7 +106,7 @@ def saring_tugas(user, workspace_id, ids) -> list:
     calon = urai_uuid(ids)
     if not calon:
         return []
-    peta = {i.id: i for i in tugas_terlihat(user.id, workspace_id).filter(id__in=calon).select_related("project")}
+    peta = {i.id: i for i in tugas_terlihat(user, workspace_id).filter(id__in=calon).select_related("project")}
     return [
         {"id": str(u), "nomor": nomor_tugas(peta[u]), "project_id": str(peta[u].project_id)} for u in calon if u in peta
     ]

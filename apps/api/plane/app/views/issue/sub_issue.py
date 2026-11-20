@@ -20,6 +20,7 @@ from rest_framework import status
 
 # Module imports
 from .. import BaseAPIView
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.serializers import IssueSerializer
 from plane.app.permissions import ProjectEntityPermission
 from plane.db.models import Issue, IssueLink, FileAsset, CycleIssue, IssueLabel, IssueAssignee, ModuleIssue
@@ -36,7 +37,7 @@ class SubIssuesEndpoint(BaseAPIView):
     @method_decorator(gzip_page)
     def get(self, request, slug, project_id, issue_id):
         sub_issues = (
-            Issue.issue_objects.filter(parent_id=issue_id, workspace__slug=slug)
+            saring_tugas_privat(Issue.issue_objects.filter(parent_id=issue_id, workspace__slug=slug), request.user)
             .annotate(
                 cycle_id=Subquery(
                     CycleIssue.objects.filter(issue=OuterRef("id"), deleted_at__isnull=True).values("cycle_id")[:1]
@@ -163,6 +164,7 @@ class SubIssuesEndpoint(BaseAPIView):
                 "attachment_count",
                 "link_count",
                 "is_draft",
+                "is_private",
                 "archived_at",
                 "state_group",
             )

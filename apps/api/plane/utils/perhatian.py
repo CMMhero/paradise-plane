@@ -34,6 +34,7 @@ from operator import or_
 from django.db.models import Count, Exists, OuterRef, Q, Window
 from django.utils import timezone
 
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.db.models import (
     IssueAssignee,
     Issue,
@@ -197,7 +198,7 @@ def susun_perhatian(user, slug):
     )
 
     # Disebut dalam tugas yang masih aktif, seminggu terakhir.
-    sebutan = (
+    sebutan = saring_tugas_privat(
         IssueMention.objects.filter(
             mention=user,
             project_id__in=project_ids,
@@ -207,7 +208,9 @@ def susun_perhatian(user, slug):
             issue__archived_at__isnull=True,
         )
         .exclude(issue__state__group__in=_TUNTAS)
-        .values(*_KOLOM_VIA_ISSUE, "created_at")
+        .values(*_KOLOM_VIA_ISSUE, "created_at"),
+        user,
+        prefix="issue__",
     )
     simpan(
         "mentioned",
@@ -250,11 +253,13 @@ def susun_perhatian(user, slug):
             ),
             Q(pk__in=[]),
         )
-        keputusan = (
+        keputusan = saring_tugas_privat(
             _persetujuan(list(boleh), _BATAL, status=STATUS_PERSETUJUAN_MENUNGGU)
             .filter(hanya_sah)
             .exclude(pemohon=user)
-            .values(*_KOLOM_VIA_ISSUE, "created_at", "pemohon__display_name")
+            .values(*_KOLOM_VIA_ISSUE, "created_at", "pemohon__display_name"),
+            user,
+            prefix="issue__",
         )
         terbanyak = max(boleh, key=lambda p: jumlah_sah[p], default=None)
         simpan(
@@ -267,11 +272,9 @@ def susun_perhatian(user, slug):
             top_project_id=str(terbanyak) if terbanyak else None,
         )
         # Tim = project yang saya awasi. Tugas saya sendiri sudah ada di `overdue_mine`.
-        tim = (
-            _tugas_aktif(list(diawasi))
-            .filter(target_date__lt=batas)
-            .filter(bisa_terlambat)
-            .exclude(_ditugaskan_ke(user))
+        tim = saring_tugas_privat(
+            _tugas_aktif(list(diawasi)).filter(target_date__lt=batas).filter(bisa_terlambat).exclude(_ditugaskan_ke(user)),
+            user,
         )
         simpan("team_overdue", _kelompok(tim.values(*_KOLOM_TUGAS), ("target_date", "sequence_id")))
 

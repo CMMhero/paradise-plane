@@ -114,7 +114,7 @@ class ChatRujukanEndpoint(BaseAPIView):
         n = _jumlah(request)
 
         kanal = kanal_terlihat(request.user.id, workspace.id)
-        tugas = tugas_terlihat(request.user.id, workspace.id).select_related("project", "state")
+        tugas = tugas_terlihat(request.user, workspace.id).select_related("project", "state")
         if q:
             kanal = kanal.filter(nama__icontains=q).annotate(
                 awal=Case(When(nama__istartswith=q, then=Value(0)), default=Value(1), output_field=IntegerField())
@@ -177,7 +177,7 @@ class ChatRujukanInfoEndpoint(BaseAPIView):
         tugas = (
             {
                 str(i.id): i
-                for i in tugas_terlihat(request.user.id, workspace.id)
+                for i in tugas_terlihat(request.user, workspace.id)
                 .filter(id__in=tugas_ids)
                 .select_related("project", "state")
             }

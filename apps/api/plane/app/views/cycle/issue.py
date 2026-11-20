@@ -20,6 +20,7 @@ from rest_framework.response import Response
 
 # Module imports
 from .. import BaseViewSet
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.serializers import CycleIssueSerializer
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import Cycle, CycleIssue, Issue, FileAsset, IssueLink
@@ -109,10 +110,11 @@ class CycleIssueViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def list(self, request, slug, project_id, cycle_id):
         filters = issue_filters(request.query_params, "GET")
-        issue_queryset = (
+        issue_queryset = saring_tugas_privat(
             Issue.issue_objects.filter(issue_cycle__cycle_id=cycle_id, issue_cycle__deleted_at__isnull=True)
             .filter(project_id=project_id)
-            .filter(workspace__slug=slug)
+            .filter(workspace__slug=slug),
+            request.user,
         )
 
         # Apply filtering from filterset

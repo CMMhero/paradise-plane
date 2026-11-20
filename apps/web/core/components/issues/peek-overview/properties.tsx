@@ -32,6 +32,7 @@ import { AssigneeProperty } from "../issue-detail/assignee-property";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+import { PrivateProperty } from "@/components/issues/privat/private-property";
 // helpers
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -126,6 +127,12 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             Peek adalah tampilan detail yang paling sering dibuka, jadi wajib sama
             dengan sidebar halaman penuh. */}
         <ApprovalSidebarInfo workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
+
+        <PrivateProperty
+          value={!!issue.is_private}
+          onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { is_private: val })}
+          disabled={disabled}
+        />
 
         <SidebarPropertyListItem icon={PriorityPropertyIcon} label={t("common.priority")}>
           <PriorityDropdown

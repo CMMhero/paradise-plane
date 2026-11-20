@@ -50,6 +50,7 @@ from plane.app.serializers import (
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.sinyal_data import siarkan_tugas
 from plane.utils.kunci_selesai import galat_induk_selesai, galat_tugas_selesai
+from plane.utils.akses_privat import boleh_lihat_tugas, galat_ubah_privat, saring_tugas_privat
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity
@@ -100,7 +101,9 @@ class IssueListEndpoint(BaseAPIView):
         issue_ids = [issue_id for issue_id in issue_ids.split(",") if issue_id != ""]
 
         # Base queryset with basic filters
-        queryset = Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id, pk__in=issue_ids)
+        queryset = saring_tugas_privat(
+            Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id, pk__in=issue_ids), request.user
+        )
 
         # Restrict guests without full feature access to issues they created,
         # mirroring IssueViewSet.list.
@@ -206,6 +209,7 @@ class IssueListEndpoint(BaseAPIView):
                 "attachment_count",
                 "link_count",
                 "is_draft",
+                "is_private",
                 "archived_at",
                 "deleted_at",
             )
@@ -251,7 +255,7 @@ class IssueViewSet(BaseViewSet):
             workspace__slug=self.kwargs.get("slug"),
         ).distinct()
 
-        return issues
+        return saring_tugas_privat(issues, self.request.user)
 
     def apply_annotations(self, issues):
         issues = (
@@ -495,6 +499,7 @@ class IssueViewSet(BaseViewSet):
                     "attachment_count",
                     "link_count",
                     "is_draft",
+                    "is_private",
                     "archived_at",
                     "deleted_at",
                 )
@@ -736,6 +741,9 @@ class IssueViewSet(BaseViewSet):
                 {"error": pesan_tolak_tenggat()},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        galat_privat = galat_ubah_privat(issue, request.user, request.data)
+        if galat_privat:
+            return Response({"error": galat_privat}, status=status.HTTP_403_FORBIDDEN)
 
         # Kustomisasi Paradise: staf hanya boleh mengubah
         # tugas yang di-assign ke dirinya; atasan boleh mengubah tugas bawahannya
@@ -957,7 +965,9 @@ class IssuePaginatedViewSet(BaseViewSet):
         workspace_slug = self.kwargs.get("slug")
         project_id = self.kwargs.get("project_id")
 
-        issue_queryset = Issue.issue_objects.filter(workspace__slug=workspace_slug, project_id=project_id)
+        issue_queryset = saring_tugas_privat(
+            Issue.issue_objects.filter(workspace__slug=workspace_slug, project_id=project_id), self.request.user
+        )
 
         return (
             issue_queryset.select_related("state")
@@ -1027,6 +1037,7 @@ class IssuePaginatedViewSet(BaseViewSet):
             "created_by",
             "updated_by",
             "is_draft",
+            "is_private",
             "archived_at",
             "module_ids",
             "label_ids",
@@ -1040,7 +1051,9 @@ class IssuePaginatedViewSet(BaseViewSet):
             required_fields.append("description_html")
 
         # querying issues
-        base_queryset = Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id)
+        base_queryset = saring_tugas_privat(
+            Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id), request.user
+        )
 
         base_queryset = base_queryset.order_by("updated_at")
         queryset = self.get_queryset().order_by("updated_at")
@@ -1194,8 +1207,9 @@ class IssueDetailEndpoint(BaseAPIView):
             .values("id")
         )
         # Main issue query
-        issue = Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id).filter(
-            Exists(permission_subquery)
+        issue = saring_tugas_privat(
+            Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id).filter(Exists(permission_subquery)),
+            request.user,
         )
 
         # Add additional prefetch based on expand parameter
@@ -1475,7 +1489,7 @@ class IssueDetailIdentifierEndpoint(BaseAPIView):
         ).first()
 
         # Check if the issue exists
-        if not issue:
+        if not issue or not boleh_lihat_tugas(issue, request.user):
             return Response(
                 {"error": "The required object does not exist."},
                 status=status.HTTP_404_NOT_FOUND,

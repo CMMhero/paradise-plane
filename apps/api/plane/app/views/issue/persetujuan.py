@@ -41,6 +41,7 @@ from rest_framework.response import Response
 
 # Module imports
 from .. import BaseAPIView
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.permissions import ProjectEntityPermission
 from plane.db.models import (
     PersetujuanPenugasan,
@@ -472,10 +473,9 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         if project is None:
             return Response({"error": "Project tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
-        dasar = (
-            PersetujuanPenugasan.objects.filter(project_id=project_id)
-            .select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
-        )
+        dasar = saring_tugas_privat(
+            PersetujuanPenugasan.objects.filter(project_id=project_id), request.user, prefix="issue__"
+        ).select_related("issue", "issue__project", "pemohon", "diputuskan_oleh")
         # `?tugas=<issue_id>`: dipakai indikator di sidebar work item. Tanpa ini,
         # komponen itu harus mengunduh SELURUH antrean project hanya untuk menjawab
         # "tugas yang sedang saya buka ini statusnya apa".

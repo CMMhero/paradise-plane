@@ -36,6 +36,7 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.db.models import Issue, IssueAssignee
 from plane.utils.ringkasan_divisi import _peta_departemen, project_terjangkau
 from plane.utils.setelan_instance import zona_kantor
@@ -192,9 +193,16 @@ def _baris_tugas(issue, nama):
     }
 
 
-def daftar_selesai(project_ids, awal, akhir, batas=None):
-    """Tugas selesai dalam periode, terbaru dulu, lengkap dengan penanggung jawab."""
-    qs = _selesai_di(project_ids, awal, akhir).select_related("project").order_by("-completed_at", "-sequence_id")
+def daftar_selesai(user, project_ids, awal, akhir, batas=None):
+    """Tugas selesai dalam periode, terbaru dulu, lengkap dengan penanggung jawab.
+
+    Tugas privat yang tak boleh dilihat `user` tidak didaftar, tapi tetap dihitung di angka (P29).
+    """
+    qs = (
+        saring_tugas_privat(_selesai_di(project_ids, awal, akhir), user)
+        .select_related("project")
+        .order_by("-completed_at", "-sequence_id")
+    )
     tugas = list(qs[:batas] if batas else qs)
     nama = _penanggung_jawab([t.id for t in tugas])
     return [_baris_tugas(t, nama) for t in tugas]
@@ -220,7 +228,7 @@ def susun_laporan(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
         project_id__in=ids, created_at__gte=_ke_waktu(awal), created_at__lt=_ke_waktu(akhir)
     ).count()
 
-    items = daftar_selesai(ids, awal, akhir, batas=BATAS_DAFTAR)
+    items = daftar_selesai(user, ids, awal, akhir, batas=BATAS_DAFTAR)
     return {
         "generated_at": sekarang,
         "period": {
@@ -246,7 +254,7 @@ def baris_csv(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
     ids = list(project_terjangkau(user, slug).values_list("id", flat=True))
     peta = {str(pid): dp for pid, dp in _peta_departemen(ids).items()}
     yield ["Divisi", "Departemen", "Project", "Nomor", "Judul", "Penanggung jawab", "Selesai", "Tenggat", "Ketepatan"]
-    for t in daftar_selesai(ids, awal, akhir):
+    for t in daftar_selesai(user, ids, awal, akhir):
         dp = peta.get(t["project_id"])
         yield [
             dp.departemen.divisi.nama if dp else "",

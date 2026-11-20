@@ -67,6 +67,7 @@ class IssueFlatSerializer(BaseSerializer):
             "sequence_id",
             "sort_order",
             "is_draft",
+            "is_private",
         ]
 
 
@@ -1047,6 +1048,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "attachment_count",
             "link_count",
             "is_draft",
+            "is_private",
             "archived_at",
             "approval_status",
         ]
@@ -1098,6 +1100,7 @@ class IssueListDetailSerializer(serializers.Serializer):
             "created_by": instance.created_by_id,
             "updated_by": instance.updated_by_id,
             "is_draft": instance.is_draft,
+            "is_private": instance.is_private,
             "archived_at": instance.archived_at,
             # Computed fields
             "cycle_id": instance.cycle_id,

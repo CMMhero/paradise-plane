@@ -166,6 +166,9 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
     completed_at = models.DateTimeField(null=True)
     archived_at = models.DateField(null=True)
     is_draft = models.BooleanField(default=False)
+    # Tugas privat (P29): hanya assignee, pembuat, atasan langsung assignee, dan
+    # Super Admin yang melihatnya. Saringannya di `plane.utils.akses_privat`.
+    is_private = models.BooleanField(default=False)
     external_source = models.CharField(max_length=255, null=True, blank=True)
     external_id = models.CharField(max_length=255, blank=True, null=True)
     type = models.ForeignKey(
@@ -183,6 +186,13 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         verbose_name_plural = "Issues"
         db_table = "issues"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(
+                fields=["workspace", "project"],
+                condition=models.Q(is_private=True),
+                name="issue_privat_idx",
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         self._ensure_default_state()

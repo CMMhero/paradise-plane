@@ -6,6 +6,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.utils.akses_privat import tugas_privat_tersembunyi
 from plane.db.models import UserRecentVisit
 from plane.app.serializers import WorkspaceRecentVisitSerializer
 
@@ -31,6 +32,9 @@ class UserRecentVisitViewSet(BaseViewSet):
             user_recent_visits = user_recent_visits.filter(entity_name=entity_name)
 
         user_recent_visits = user_recent_visits.filter(entity_name__in=["issue", "page", "project"])
+        tersembunyi = tugas_privat_tersembunyi(request.user)
+        if tersembunyi is not None:
+            user_recent_visits = user_recent_visits.exclude(entity_name="issue", entity_identifier__in=tersembunyi)
 
         serializer = WorkspaceRecentVisitSerializer(user_recent_visits[:20], many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -23,6 +23,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.permissions import allow_permission, ROLE
 from plane.app.serializers import IssueViewSerializer, ViewIssueListSerializer
 from plane.app.serializers.view import lampirkan_status_persetujuan
@@ -288,7 +289,9 @@ class WorkspaceViewIssuesViewSet(BaseViewSet):
         )
 
     def get_queryset(self):
-        return Issue.issue_objects.filter(workspace__slug=self.kwargs.get("slug"))
+        return saring_tugas_privat(
+            Issue.issue_objects.filter(workspace__slug=self.kwargs.get("slug")), self.request.user
+        )
 
     @method_decorator(gzip_page)
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")

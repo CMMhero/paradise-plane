@@ -33,6 +33,7 @@ import { WorkItemVersionService } from "@/services/issue";
 import { IssueDetailWidgets } from "../issue-detail-widgets";
 import { NameDescriptionUpdateStatus } from "../issue-update-status";
 import { PeekOverviewProperties } from "../peek-overview/properties";
+import { PrivateBadge } from "@/components/issues/privat/private-badge";
 import { IssueTitleInput } from "../title-input";
 import { IssueActivity } from "./issue-activity";
 import { IssueParentDetail } from "./parent";
@@ -110,7 +111,10 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
         )}
 
         <div className="mb-2.5 flex items-center justify-between gap-4">
-          <IssueTypeSwitcher issueId={issueId} disabled={isArchived || !isEditable} />
+          <div className="flex items-center gap-2">
+            <IssueTypeSwitcher issueId={issueId} disabled={isArchived || !isEditable} />
+            <PrivateBadge isPrivate={issue.is_private} />
+          </div>
           <div className="flex items-center gap-3">
             <NameDescriptionUpdateStatus isSubmitting={isSubmitting} />
             {duplicateIssues?.length > 0 && (

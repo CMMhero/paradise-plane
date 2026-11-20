@@ -50,6 +50,7 @@ from plane.db.models import (
     Ruang,
     User,
 )
+from plane.utils.akses_privat import penonton_tugas_ids
 from plane.utils.chat_ruang import ruang_dm
 from plane.utils.kanal_sistem import kirim_pesan_sistem, kunci_kabar, ruang_kabar
 from plane.utils.obrolan_siaran import siarkan
@@ -245,6 +246,9 @@ def _kirim(notifs, persetujuan) -> int:
     for jenis, n in pilihan:
         issue = issues.get(str(n.entity_identifier))
         if issue is None:
+            continue
+        # P29: kartu tugas privat hanya untuk yang boleh melihatnya, apa pun asal barisnya.
+        if issue.is_private and not penonton_tugas_ids(issue, [n.receiver_id]):
             continue
         muatan = _muatan(jenis, n, issue, assignees)
         if jenis == JenisPesan.PERSETUJUAN and persetujuan:
