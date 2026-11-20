@@ -363,6 +363,21 @@
     "org_division": "事业部",
     "org_department": "部门"
   },
+  "changelog_ui": {
+    "title": "新功能",
+    "empty": "暂无发布说明。",
+    "show_more": "显示更早的版本",
+    "show_less": "收起"
+  },
+  "pengumuman_ui": {
+    "nav": "公告",
+    "empty": "暂无公告。",
+    "placeholder": "撰写公告",
+    "send": "发布",
+    "send_failed": "无法发布公告。",
+    "load_failed": "无法加载公告。",
+    "open_in_chat": "在聊天中讨论"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",

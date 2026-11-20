@@ -363,6 +363,21 @@
     "org_division": "Divizie",
     "org_department": "Departament"
   },
+  "changelog_ui": {
+    "title": "Noutăți",
+    "empty": "Încă nu există note de versiune.",
+    "show_more": "Arată versiunile anterioare",
+    "show_less": "Arată mai puține"
+  },
+  "pengumuman_ui": {
+    "nav": "Anunțuri",
+    "empty": "Încă nu există anunțuri.",
+    "placeholder": "Scrie un anunț",
+    "send": "Publică",
+    "send_failed": "Anunțul nu a putut fi publicat.",
+    "load_failed": "Anunțurile nu au putut fi încărcate.",
+    "open_in_chat": "Discută în chat"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",

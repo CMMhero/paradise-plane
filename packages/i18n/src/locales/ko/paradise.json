@@ -363,6 +363,21 @@
     "org_division": "본부",
     "org_department": "부서"
   },
+  "changelog_ui": {
+    "title": "새로운 소식",
+    "empty": "아직 릴리스 노트가 없습니다.",
+    "show_more": "이전 릴리스 보기",
+    "show_less": "접기"
+  },
+  "pengumuman_ui": {
+    "nav": "공지사항",
+    "empty": "아직 공지사항이 없습니다.",
+    "placeholder": "공지사항 작성",
+    "send": "게시",
+    "send_failed": "공지사항을 게시하지 못했습니다.",
+    "load_failed": "공지사항을 불러오지 못했습니다.",
+    "open_in_chat": "채팅에서 논의하기"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",

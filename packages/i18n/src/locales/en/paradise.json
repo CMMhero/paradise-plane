@@ -363,6 +363,21 @@
     "org_division": "Division",
     "org_department": "Department"
   },
+  "changelog_ui": {
+    "title": "What's new",
+    "empty": "No release notes yet.",
+    "show_more": "Show earlier releases",
+    "show_less": "Show fewer"
+  },
+  "pengumuman_ui": {
+    "nav": "Announcements",
+    "empty": "No announcements yet.",
+    "placeholder": "Write an announcement",
+    "send": "Publish",
+    "send_failed": "Could not publish the announcement.",
+    "load_failed": "Could not load announcements.",
+    "open_in_chat": "Discuss in Chat"
+  },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
     "upload_failed_all": "File upload failed",

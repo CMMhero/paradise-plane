@@ -50,7 +50,7 @@ from plane.utils.saklar_instance import (
     CHAT_MESSAGE_MAX_LENGTH,
     setelan_angka,
 )
-from plane.db.models import KUNCI_PENGUMUMAN
+from plane.db.models import KUNCI_CHANGELOG, KUNCI_PENGUMUMAN
 
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
@@ -392,6 +392,7 @@ class ChatConversationsEndpoint(BaseAPIView):
 
         daftar = list(
             Langganan.objects.filter(ruang__workspace__slug=slug, user=request.user)
+            .exclude(ruang__kunci_sistem=KUNCI_CHANGELOG)
             .select_related("ruang")
             .order_by("-ruang__pesan_terakhir_pada")
         )
@@ -459,9 +460,11 @@ class ChatCariEndpoint(BaseAPIView):
         # satu-satunya penanda hak baca yang dipakai endpoint lain. Menyatukan
         # keduanya berarti tidak ada dua definisi "boleh lihat" yang bisa
         # melenceng satu sama lain.
-        ruang_saya = Langganan.objects.filter(
-            ruang__workspace__slug=slug, user=request.user
-        ).values_list("ruang_id", flat=True)
+        ruang_saya = (
+            Langganan.objects.filter(ruang__workspace__slug=slug, user=request.user)
+            .exclude(ruang__kunci_sistem=KUNCI_CHANGELOG)
+            .values_list("ruang_id", flat=True)
+        )
 
         hasil = list(
             PesanLangsung.objects.filter(ruang_id__in=ruang_saya)
@@ -515,7 +518,11 @@ class ChatUnreadEndpoint(BaseAPIView):
     permission_classes = [WorkspaceEntityPermission]
 
     def get(self, request, slug):
-        daftar = list(Langganan.objects.filter(ruang__workspace__slug=slug, user=request.user))
+        daftar = list(
+            Langganan.objects.filter(ruang__workspace__slug=slug, user=request.user).exclude(
+                ruang__kunci_sistem=KUNCI_CHANGELOG
+            )
+        )
         jumlah = sum(_peta_belum_dibaca(daftar).values())
         return Response({"jumlah": jumlah}, status=status.HTTP_200_OK)
 
@@ -1147,6 +1154,7 @@ class ChatRuangEndpoint(BaseAPIView):
         ruang = (
             Ruang.objects.filter(workspace__slug=slug)
             .exclude(tipe=Ruang.Tipe.DM)
+            .exclude(kunci_sistem=KUNCI_CHANGELOG)
             .filter(Q(tipe=Ruang.Tipe.KANAL) | Q(id__in=milik_saya))
             .order_by("nama")
         )
@@ -1238,7 +1246,7 @@ class ChatRuangThreadEndpoint(BaseAPIView):
         publik. Menambahkan pengecualian "publik boleh dibaca tanpa gabung"
         berarti dua definisi hak baca yang harus dijaga sinkron selamanya.
         """
-        ruang = Ruang.objects.filter(id=ruang_id, workspace__slug=slug).first()
+        ruang = Ruang.objects.filter(id=ruang_id, workspace__slug=slug).exclude(kunci_sistem=KUNCI_CHANGELOG).first()
         if ruang is None:
             return None, None
         return ruang, _langganan(request.user.id, ruang)
