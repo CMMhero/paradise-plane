@@ -20,6 +20,9 @@ export type TAttentionGroupKey =
   | "mentioned";
 
 export type TAttentionItem = {
+  /** Kunci kartu, unik di dalam kelompok: id persetujuan, id komentar, atau id tugas. */
+  key: string;
+  /** Id tugas. */
   id: string;
   sequence_id: number;
   /** Nomor tugas, mis. WH-12. */
@@ -28,10 +31,30 @@ export type TAttentionItem = {
   project_id: string;
   project_name: string;
   target_date: string | null;
+  state_id: string | null;
+  state_name: string | null;
+  state_group: string | null;
+  created_by: string | null;
+  /** Untuk aturan hak ubah di web (`useBolehUbahTugas`). */
+  assignee_ids: string[];
   /** Hanya kelompok `rejected`. */
   reason?: string;
+  decided_at?: string;
+  /** `decide` dan `waiting_mine`. */
+  requested_at?: string;
   /** Hanya kelompok `decide`. */
   requester?: string | null;
+  /** Hanya `decide`: id baris persetujuan untuk setujui/tolak. */
+  approval_id?: string;
+  /** Hanya `mentioned`. */
+  mentioned_at?: string;
+  /** Id komentar yang menyebut saya; null = sebutan di deskripsi. */
+  comment_id?: string | null;
+  /** Teks polos komentar dengan `@Nama`, tanpa HTML. */
+  snippet?: string | null;
+  mentioned_by?: string | null;
+  /** Notifikasi inbox yang belum dibaca untuk sebutan ini, kalau ada. */
+  notification_id?: string | null;
 };
 
 export type TAttentionGroup = {

@@ -1423,5 +1423,35 @@
       "none_visible": "Tugas ini ada di departemen yang tidak bisa Anda buka, jadi tidak ditampilkan.",
       "more": "{count} lagi tidak ditampilkan"
     }
+  },
+  "perhatian_aksi": {
+    "approve": "Setujui",
+    "reject": "Tolak",
+    "reject_reason": "Alasan menolak",
+    "reject_reason_optional": "Alasan (opsional)",
+    "reject_confirm": "Konfirmasi tolak",
+    "cancel": "Batal",
+    "change_state": "Ubah status",
+    "state_label": "Status baru untuk {number}",
+    "states_loading": "Memuat status…",
+    "states_failed": "Status tidak bisa dimuat.",
+    "state_changed_title": "Status diubah",
+    "state_changed_message": "{number} dipindah ke {state}.",
+    "reply": "Balas cepat",
+    "reply_label": "Balas {name}",
+    "reply_placeholder": "Tulis balasan singkat",
+    "reply_send": "Kirim",
+    "reply_sent_title": "Balasan terkirim",
+    "reply_sent_message": "Balasan Anda terkirim di {number}.",
+    "open": "Buka",
+    "mark_read": "Tandai dibaca",
+    "dismiss": "Sembunyikan",
+    "requested_by_on": "Diajukan {name} · {date}",
+    "rejected_on": "Ditolak · {date}",
+    "waiting_since": "Menunggu sejak {date}",
+    "mentioned_by_on": "{name} menyebut Anda · {date}",
+    "mentioned_in_description": "Anda disebut di deskripsi · {date}",
+    "actions_for": "Aksi untuk {number}",
+    "failed": "Aksi gagal dijalankan."
   }
 }
