@@ -207,21 +207,9 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
-  analytics: {
-    key: "analytics",
-    labelTranslationKey: "analytics",
-    href: `/analytics/`,
-    access: [EUserWorkspaceRoles.ADMIN],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  dashboard_divisi: {
-    key: "dashboard_divisi",
-    labelTranslationKey: "workspace_dashboards",
-    href: `/dashboard-divisi/`,
-    access: [EUserWorkspaceRoles.ADMIN],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
   // KPI (Paradise 2.9): semua orang punya, isinya dibatasi server menurut jenjang.
+  // Analitik dan Dasbor Divisi tidak lagi punya menu sendiri: keduanya tab di halaman ini
+  // (/kinerja/analitik, /kinerja/dasbor), tampil bagi admin non-direktur.
   kinerja: {
     key: "kinerja",
     labelTranslationKey: "kinerja.nav",
@@ -298,8 +286,6 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
 
 export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebarNavigationItem[] = [
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["views"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["dashboard_divisi"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["kinerja"],
   // Dinyalakan/dimatikan di God Mode > Features (lihat apps/web/core/lib/paradise-modules.ts).
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],

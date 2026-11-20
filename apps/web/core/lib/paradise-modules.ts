@@ -46,6 +46,8 @@ const MODUL_PER_PATH: [RegExp, TParadiseModule][] = [
   [pola("drafts"), "drafts"],
   [pola("quick-links"), "quick_links"],
   // Menu workspace
+  // Tab Analitik di halaman KPI mengikuti modul Analytics, bukan Dashboards.
+  [pola("kinerja/analitik"), "analytics"],
   [pola("(dashboard-divisi|dashboards|kinerja)"), "dashboards"],
   [pola("initiatives"), "initiatives"],
   [pola("workspace-views"), "views"],

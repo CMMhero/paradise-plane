@@ -76,19 +76,15 @@ export const coreRoutes: RouteConfigEntry[] = [
         // tidak terdaftar di sidebar, tapi tanpa membuang route-nya halaman itu
         // masih bisa dibuka dengan mengetik URL.
 
-        // Analytics
-        layout("./(all)/[workspaceSlug]/(projects)/analytics/[tabId]/layout.tsx", [
-          route(":workspaceSlug/analytics/:tabId", "./(all)/[workspaceSlug]/(projects)/analytics/[tabId]/page.tsx"),
-        ]),
-
-        // KPI (Paradise)
+        // KPI (Paradise): satu menu dengan tiga tab. Analitik dan Dasbor Divisi memakai
+        // halaman lamanya sebagai isi tab; URL lamanya dialihkan di bagian REDIRECT ROUTES.
         layout("./(all)/[workspaceSlug]/(projects)/kinerja/layout.tsx", [
           route(":workspaceSlug/kinerja", "./(all)/[workspaceSlug]/(projects)/kinerja/page.tsx"),
-        ]),
-
-        // Dashboard Divisi (Paradise)
-        layout("./(all)/[workspaceSlug]/(projects)/dashboard-divisi/layout.tsx", [
-          route(":workspaceSlug/dashboard-divisi", "./(all)/[workspaceSlug]/(projects)/dashboard-divisi/page.tsx"),
+          route(
+            ":workspaceSlug/kinerja/analitik/:tabId",
+            "./(all)/[workspaceSlug]/(projects)/analytics/[tabId]/page.tsx"
+          ),
+          route(":workspaceSlug/kinerja/dasbor", "./(all)/[workspaceSlug]/(projects)/dashboard-divisi/page.tsx"),
         ]),
 
         // Initiatives (Paradise). Selalu terdaftar; dinyalakan/dimatikan Super Admin
@@ -434,8 +430,13 @@ export const coreRoutes: RouteConfigEntry[] = [
   // → /:workspaceSlug/settings/projects/:projectId/:path*
   route(":workspaceSlug/projects/:projectId/settings/*", "routes/redirects/core/project-settings.tsx"),
 
-  // Analytics redirect: /:workspaceSlug/analytics → /:workspaceSlug/analytics/overview
+  // Analytics, Dashboard Divisi, dan Dashboards sekarang tab di halaman KPI (/kinerja).
+  // /:workspaceSlug/analytics[/:tabId] → /:workspaceSlug/kinerja/analitik/:tabId
   route(":workspaceSlug/analytics", "routes/redirects/core/analytics.tsx"),
+  route(":workspaceSlug/analytics/:tabId", "routes/redirects/core/analytics-tab.tsx"),
+  // /:workspaceSlug/dashboard-divisi, /:workspaceSlug/dashboards → /:workspaceSlug/kinerja/dasbor
+  route(":workspaceSlug/dashboard-divisi", "routes/redirects/core/dashboard-divisi.tsx"),
+  route(":workspaceSlug/dashboards", "routes/redirects/core/dashboards.tsx"),
 
   // API tokens redirect: /:workspaceSlug/settings/api-tokens
   // → /settings/profile/api-tokens
