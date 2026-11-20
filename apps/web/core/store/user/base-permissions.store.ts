@@ -236,7 +236,9 @@ export abstract class BaseUserPermissionStore implements IBaseUserPermissionStor
    */
   fetchUserWorkspaceInfo = async (workspaceSlug: string): Promise<IWorkspaceMemberMe> => {
     try {
-      this.loader = true;
+      // The workspace wrapper swaps the whole page for a spinner while `loader` is set, so only a
+      // cold load may raise it; a background revalidation must not unmount the page.
+      if (!this.workspaceUserInfo[workspaceSlug]) this.loader = true;
       const response = await workspaceService.workspaceMemberMe(workspaceSlug);
       if (response) {
         runInAction(() => {
