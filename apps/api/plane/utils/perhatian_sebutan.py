@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 from django.db.models import Q
 
 from plane.db.models import IssueAssignee, IssueComment, Notification, User
+from plane.utils.akses_privat import saring_tugas_privat
 
 BATAS_CUPLIKAN = 200
 _PENGIRIM_SEBUTAN = "in_app:issue_activities:mentioned"
@@ -24,8 +25,11 @@ _ID_PENGGUNA = re.compile(r'entity_identifier="([0-9a-f-]{36})"')
 
 
 def sebutan_komentar(user, project_ids, sejak, kecuali_grup):
-    """Komentar hidup di tugas aktif yang menyebut `user` secara langsung (bukan @all), bukan tulisannya sendiri."""
-    return (
+    """Komentar hidup di tugas aktif yang menyebut `user` secara langsung (bukan @all), bukan tulisannya sendiri.
+
+    Tugas privat yang tak boleh ia lihat tidak ikut, walau komentarnya menyebut dia.
+    """
+    return saring_tugas_privat(
         IssueComment.objects.filter(
             project_id__in=project_ids,
             created_at__gte=sejak,
@@ -35,7 +39,9 @@ def sebutan_komentar(user, project_ids, sejak, kecuali_grup):
             issue__archived_at__isnull=True,
         )
         .exclude(issue__state__group__in=kecuali_grup)
-        .exclude(actor=user)
+        .exclude(actor=user),
+        user,
+        prefix="issue__",
     )
 
 

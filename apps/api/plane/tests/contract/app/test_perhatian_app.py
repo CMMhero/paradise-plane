@@ -286,3 +286,28 @@ class TestKartuAksi:
         assert item["comment_id"] is None
         assert item["snippet"] is None
         assert item["notification_id"] is None
+
+    @pytest.mark.django_db
+    def test_sebutan_di_tugas_privat_hanya_untuk_yang_boleh_melihat(self, org):
+        def sebut(user):
+            return (
+                f'<p><mention-component entity_identifier="{user.id}" entity_name="user_mention">'
+                "</mention-component></p>"
+            )
+
+        terbuka = _tugas(org.p1, org.s["unstarted"], "Terbuka", None, org.rekan)
+        rahasia = _tugas(org.p1, org.s["unstarted"], "Rahasia", None, org.rekan)
+        Issue.objects.filter(pk=rahasia.pk).update(is_private=True, created_by=org.rekan)
+        for tugas in (terbuka, rahasia):
+            IssueComment.objects.create(
+                issue=tugas, project=org.p1, workspace=org.ws, actor=org.rekan, comment_html=sebut(org.staf)
+            )
+        IssueMention.objects.create(issue=rahasia, mention=org.staf, project=org.p1, workspace=org.ws)
+
+        g = _kunci(_klien(org.staf).get(URL.format(slug=org.ws.slug)).json())["mentioned"]
+        assert (g["count"], [i["name"] for i in g["items"]]) == (1, ["Terbuka"])
+
+        IssueAssignee.objects.create(issue=rahasia, assignee=org.staf, project=org.p1, workspace=org.ws)
+        g = _kunci(_klien(org.staf).get(URL.format(slug=org.ws.slug)).json())["mentioned"]
+        assert g["count"] == 3
+        assert {i["name"] for i in g["items"]} == {"Terbuka", "Rahasia"}
