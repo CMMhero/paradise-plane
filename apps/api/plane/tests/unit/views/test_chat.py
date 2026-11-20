@@ -542,7 +542,10 @@ class TestBacaSeketika:
         client.force_authenticate(user=aku)
         url = f"/api/workspaces/{workspace.slug}/chat/ruang/{pesan.ruang_id}/"
 
-        with mock.patch("plane.app.views.chat.siarkan"), mock.patch("plane.app.views.chat.siarkan_notifikasi") as sinyal:
+        with (
+            mock.patch("plane.app.views.chat.siarkan"),
+            mock.patch("plane.app.views.chat.siarkan_notifikasi") as sinyal,
+        ):
             client.get(url)
             sinyal.assert_called_once_with(workspace.id, [aku.id])
             sinyal.reset_mock()
