@@ -5,6 +5,7 @@
 
 # Python imports
 import csv
+from datetime import date
 
 # Django imports
 from django.http import HttpResponse
@@ -17,7 +18,15 @@ from rest_framework import status
 # Module imports
 from .. import BaseAPIView
 from plane.app.permissions import WorkspaceEntityPermission
-from plane.db.models import IssueWorkLog
+from plane.db.models import IssueWorkLog, Workspace
+from plane.utils.kinerja import (
+    LINGKUP_SAYA,
+    LingkupDitolak,
+    PermintaanSalah,
+    hitung_kinerja,
+    pilihan_lingkup,
+)
+from plane.utils.kinerja import PERIODE_BAWAAN as PERIODE_KINERJA_BAWAAN
 from plane.utils.laporan_selesai import PERIODE_BAWAAN, PERIODE_SAH, baris_csv, susun_laporan
 from plane.utils.ringkasan_divisi import hitung_ringkasan, project_terjangkau
 
@@ -97,3 +106,50 @@ class WorkLogExportEndpoint(BaseAPIView):
                 ]
             )
         return response
+
+
+def _tanggal(teks):
+    if not teks:
+        return None
+    try:
+        return date.fromisoformat(teks)
+    except ValueError as galat:
+        raise PermintaanSalah("Dates must be YYYY-MM-DD.") from galat
+
+
+class KinerjaEndpoint(BaseAPIView):
+    """KPI satu lingkup: diri sendiri, satu orang, departemen, divisi, atau organisasi.
+
+    Lingkup di luar jangkauan pemanggil = 403. Angkanya dihitung di `plane/utils/kinerja.py`.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug):
+        workspace = Workspace.objects.get(slug=slug)
+        q = request.query_params
+        try:
+            hasil = hitung_kinerja(
+                request.user,
+                workspace.id,
+                q.get("lingkup", LINGKUP_SAYA),
+                q.get("id"),
+                q.get("periode", PERIODE_KINERJA_BAWAAN),
+                _tanggal(q.get("mulai")),
+                _tanggal(q.get("sampai")),
+            )
+        except PermintaanSalah as galat:
+            return Response({"error": str(galat)}, status=status.HTTP_400_BAD_REQUEST)
+        except LingkupDitolak:
+            return Response({"error": "This scope is outside your reach."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(hasil, status=status.HTTP_200_OK)
+
+
+class KinerjaLingkupEndpoint(BaseAPIView):
+    """Lingkup yang boleh dipilih pemanggil di halaman KPI."""
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug):
+        workspace = Workspace.objects.get(slug=slug)
+        return Response(pilihan_lingkup(request.user, workspace.id), status=status.HTTP_200_OK)
