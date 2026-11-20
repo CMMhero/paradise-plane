@@ -29,6 +29,7 @@
 
 import {
   TINGKAT_DIREKTUR,
+  TINGKAT_LEADER,
   TINGKAT_MANAGER,
   TINGKAT_MEMBER,
   TINGKAT_SEKRETARIS,
@@ -44,11 +45,16 @@ import type { TGodmodeStrings } from "@/app/i18n/godmode";
 
 export const LAJUR_JENJANG = [
   TINGKAT_MEMBER,
+  TINGKAT_LEADER,
   TINGKAT_SUPERVISOR,
   TINGKAT_MANAGER,
   TINGKAT_SEKRETARIS,
   TINGKAT_DIREKTUR,
 ] as const;
+
+/** Peran yang bisa dipegang di satu departemen, dari yang tertinggi (cermin `PERAN_DEPARTEMEN_SAH`). */
+export const PERAN_DEPARTEMEN = [TINGKAT_SUPERVISOR, TINGKAT_LEADER, TINGKAT_MEMBER] as const;
+const peranDepartemen = (t: number | undefined): number | undefined => PERAN_DEPARTEMEN.find((p) => p === t);
 
 /** Akun terhapus (KEP-50) tidak boleh muncul atau diseret. */
 export const akunTerhapus = (email: string): boolean => email.toLowerCase().endsWith("@deleted.local");
@@ -86,7 +92,7 @@ export type TPosisi = {
   tingkat: number;
   departemen_ids: string[];
   divisi_ids: string[];
-  /** KEP-93: peran per departemen (Staf/Supervisor). Di bawah Manager = jenjangnya. */
+  /** KEP-93: peran per departemen (Staf/Leader/Supervisor). Di bawah Manager = jenjangnya. */
   peran_departemen: Record<string, number>;
 };
 
@@ -94,7 +100,7 @@ export type TPosisi = {
 /**
  * Peran per departemen, cermin `setel_penempatan` (KEP-93): yang diminta, lalu
  * (jenjang dipilih eksplisit di bawah Manager = `seragam`) jenjangnya, lalu peran
- * lama, lalu jenjangnya. Selalu Staf atau Supervisor, tidak pernah Manager.
+ * lama, lalu jenjangnya. Selalu Staf, Leader, atau Supervisor, tidak pernah Manager.
  */
 const susunPeran = (
   tingkat: number,
@@ -201,11 +207,10 @@ export function rencanakan(
     return rencanaManagerKeDepartemen(awal, asal, tujuan, mode, divisiDari);
 
   if (tujuan.jenis === "departemen") {
-    // KEP-93: lajur Supervisor/Staf = peran orang itu DI departemen ini saja,
+    // KEP-93: lajur Supervisor/Leader/Staf = peran orang itu DI departemen ini saja,
     // bukan jenjangnya di mana-mana. Jenjangnya mengikuti peran tertinggi.
     const deps = dengan(mode === "pindah" ? tanpa(awal.departemen_ids, asal?.id) : awal.departemen_ids, tujuan.id);
-    const lajur =
-      tujuan.tingkat === TINGKAT_MEMBER || tujuan.tingkat === TINGKAT_SUPERVISOR ? tujuan.tingkat : undefined;
+    const lajur = peranDepartemen(tujuan.tingkat);
     const peranLama = awal.peran_departemen[tujuan.id];
     const gantiPeran = lajur !== undefined && lajur !== peranLama;
     const tempatSama = deps.length === awal.departemen_ids.length && deps.every((d) => awal.departemen_ids.includes(d));
@@ -263,7 +268,7 @@ function rencanaManagerKeDepartemen(
   divisiDari: TDivisiDari
 ): TRencana {
   const induk = divisiDari(tujuan.id);
-  const lajur = tujuan.tingkat === TINGKAT_MEMBER || tujuan.tingkat === TINGKAT_SUPERVISOR ? tujuan.tingkat : undefined;
+  const lajur = peranDepartemen(tujuan.tingkat);
   if (induk && awal.divisi_ids.includes(induk)) {
     // Dari People (atau Ctrl = tambah): dikunci, tidak ada manager departemen.
     // Dari struktur (pindah): sengaja diturunkan ke departemen divisinya (5 Nov 2026).
@@ -315,7 +320,7 @@ function rencanaTurunDirektur(
       sesudah: { tingkat: TINGKAT_MANAGER, departemen_ids: [], divisi_ids: [tujuan.id], peran_departemen: {} },
     };
   }
-  const peran = tujuan.tingkat === TINGKAT_MEMBER ? TINGKAT_MEMBER : TINGKAT_SUPERVISOR;
+  const peran = peranDepartemen(tujuan.tingkat) ?? TINGKAT_SUPERVISOR;
   return {
     hasil: "kirim",
     mode: "tambah",
@@ -368,10 +373,10 @@ function rencanaTurunKeDepartemen(
 
 /**
  * Jenjang sesudah tempat dicabut, cermin `plane/db/penempatan.tingkat_sesudah_cabut`:
- * supervisor/manager tanpa satu tempat pun tersisa jatuh ke Staf; direktur tidak.
+ * leader/supervisor/manager tanpa satu tempat pun tersisa jatuh ke Staf; direktur tidak.
  */
 export const tingkatSesudahCabut = (tingkat: number, sisa: Pick<TPosisi, "departemen_ids" | "divisi_ids">): number =>
-  tingkat >= TINGKAT_SUPERVISOR &&
+  tingkat >= TINGKAT_LEADER &&
   !menjangkauSeluruhOrganisasi(tingkat) &&
   sisa.departemen_ids.length === 0 &&
   sisa.divisi_ids.length === 0
@@ -480,7 +485,9 @@ export const namaJenjang = (t: number, s: TGodmodeStrings): string =>
         ? s.members.level_manager
         : t >= TINGKAT_SUPERVISOR
           ? s.members.level_supervisor
-          : s.members.level_staff;
+          : t >= TINGKAT_LEADER
+            ? s.members.level_leader
+            : s.members.level_staff;
 
 /** Orang tanpa departemen dan tanpa divisi (di bawah Direktur). */
 export const belumDitempatkan = (o: TAnggotaHierarki): boolean => {

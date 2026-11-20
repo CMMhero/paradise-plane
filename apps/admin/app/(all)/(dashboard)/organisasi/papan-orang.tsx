@@ -45,6 +45,7 @@ import {
   dataTujuan,
   modeLepas,
   namaJenjang,
+  PERAN_DEPARTEMEN,
   tombolSalin,
   type TAsal,
   type TTujuan,
@@ -135,19 +136,16 @@ function MenuOrang({ orangId, nama, asal, tingkat }: { orangId: string; nama: st
       )}
       {/* KEP-93: peran melekat pada tempat. Di departemen: ganti peran di sana saja.
           Jenjang umum hanya Sekretaris dan Direktur (jenjang tanpa tempat). */}
-      {asal?.jenis === "departemen" && !menjangkauSeluruhOrganisasi(tingkat) && (
-        <CustomMenu.MenuItem
-          onClick={() => {
-            const lain = tingkat >= TINGKAT_SUPERVISOR ? TINGKAT_MEMBER : TINGKAT_SUPERVISOR;
-            void eksekusi(orangId, asal, { jenis: "departemen", id: asal.id, tingkat: lain }, false);
-          }}
-        >
-          {fill(s.org.board.menu_role_here, {
-            role: namaJenjang(tingkat >= TINGKAT_SUPERVISOR ? TINGKAT_MEMBER : TINGKAT_SUPERVISOR, s),
-            place: namaTempat(asal),
-          })}
-        </CustomMenu.MenuItem>
-      )}
+      {asal?.jenis === "departemen" &&
+        !menjangkauSeluruhOrganisasi(tingkat) &&
+        PERAN_DEPARTEMEN.filter((peran) => peran !== Math.min(tingkat, TINGKAT_SUPERVISOR)).map((peran) => (
+          <CustomMenu.MenuItem
+            key={peran}
+            onClick={() => void eksekusi(orangId, asal, { jenis: "departemen", id: asal.id, tingkat: peran }, false)}
+          >
+            {fill(s.org.board.menu_role_here, { role: namaJenjang(peran, s), place: namaTempat(asal) })}
+          </CustomMenu.MenuItem>
+        ))}
       {[TINGKAT_SEKRETARIS, TINGKAT_DIREKTUR]
         .filter((t) => t !== tingkat)
         .map((t) => (

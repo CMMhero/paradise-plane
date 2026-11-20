@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import {
   TINGKAT_DIREKTUR,
+  TINGKAT_LEADER,
   TINGKAT_MANAGER,
   TINGKAT_SEKRETARIS,
   TINGKAT_SUPERVISOR,
@@ -37,7 +38,7 @@ import {
 import type { TFilterField, TViewState } from "@/components/common/data-view";
 import type { TGodmodeStrings } from "@/app/i18n/godmode";
 
-export type TLevel = "director" | "secretary" | "manager" | "supervisor" | "staff" | "unset" | "outside";
+export type TLevel = "director" | "secretary" | "manager" | "supervisor" | "leader" | "staff" | "unset" | "outside";
 export type TSesi = "in_use" | "signed_in" | "signed_out";
 
 export type TBarisMember = TInstanceMember & {
@@ -56,6 +57,7 @@ export const levelDari = (h: TAnggotaHierarki | undefined): TLevel => {
   if (h.tingkat >= TINGKAT_SEKRETARIS) return "secretary";
   if (h.tingkat >= TINGKAT_MANAGER) return "manager";
   if (h.tingkat >= TINGKAT_SUPERVISOR) return "supervisor";
+  if (h.tingkat >= TINGKAT_LEADER) return "leader";
   return "staff";
 };
 
@@ -65,9 +67,10 @@ export const URUTAN_LEVEL: Record<TLevel, number> = {
   secretary: 1,
   manager: 2,
   supervisor: 3,
-  staff: 4,
-  unset: 5,
-  outside: 6,
+  leader: 4,
+  staff: 5,
+  unset: 6,
+  outside: 7,
 };
 
 const URUTAN_SESI: Record<TSesi, number> = { in_use: 0, signed_in: 1, signed_out: 2 };
@@ -119,6 +122,7 @@ export const labelLevel = (level: TLevel, s: TGodmodeStrings): string =>
     secretary: s.members.level_secretary,
     manager: s.members.level_manager,
     supervisor: s.members.level_supervisor,
+    leader: s.members.level_leader,
     staff: s.members.level_staff,
     unset: s.members.level_unset,
     outside: s.members.not_in_workspace,
