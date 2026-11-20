@@ -10,6 +10,7 @@ import { ThemeSwitcher } from "@/plane-web/components/preferences/theme-switcher
 // local
 import { PreferensiSuara } from "./suara";
 import { PreferensiTampilan } from "./tampilan";
+import { PreferensiUrutanAktivitas } from "./urutan-aktivitas";
 
 export const ProfileSettingsDefaultPreferencesList = observer(function ProfileSettingsDefaultPreferencesList() {
   return (
@@ -23,6 +24,7 @@ export const ProfileSettingsDefaultPreferencesList = observer(function ProfileSe
       />
       {/* Paradise (KEP-64): glow, gaya tombol, animasi. */}
       <PreferensiTampilan />
+      <PreferensiUrutanAktivitas />
       {/* Paradise: volume & bisu suara pemberitahuan (per akun). */}
       <PreferensiSuara />
     </div>

@@ -82,6 +82,7 @@ export type TUserProfile = {
     /** Paradise: volume suara pemberitahuan 0..100 dan bisu. */
     volume_suara?: number;
     suara_bisu?: boolean;
+    urutan_aktivitas?: "asc" | "desc";
   };
   onboarding_step: TOnboardingSteps;
   is_onboarded: boolean;
@@ -127,6 +128,8 @@ export interface IUserTheme {
   /** Paradise: volume suara pemberitahuan 0..100 (kosong = 80) dan bisu (kosong = tidak). */
   volume_suara?: number;
   suara_bisu?: boolean;
+  /** Paradise: urutan linimasa aktivitas work item. Kosong = "desc" (terbaru di atas). */
+  urutan_aktivitas?: "asc" | "desc";
 }
 
 /** Font antarmuka. "jakarta" = Plus Jakarta Sans (bawaan). */
