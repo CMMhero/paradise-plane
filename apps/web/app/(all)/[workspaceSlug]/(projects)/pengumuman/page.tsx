@@ -89,14 +89,12 @@ function PengumumanPage() {
     { revalidateOnFocus: true }
   );
 
-  // Terbaru dulu; pesan yang sudah dihapus tidak punya isi untuk dibaca.
-  const daftar = useMemo(
-    () =>
-      [...(pesan ?? []), ...lebihLama]
-        .filter((p) => !p.dihapus)
-        .toSorted((a, b) => b.created_at.localeCompare(a.created_at)),
-    [pesan, lebihLama]
-  );
+  // Server mengirim urut waktu naik, dan halaman lebih lama dipasang di depan,
+  // jadi daftar ini naik; ditampilkan terbaru dulu dengan membacanya dari belakang.
+  const daftar = useMemo(() => {
+    const naik = [...lebihLama, ...(pesan ?? [])].filter((p) => !p.dihapus);
+    return naik.map((_, i) => naik[naik.length - 1 - i]);
+  }, [pesan, lebihLama]);
   const adaLagi = !habis && (pesan?.length ?? 0) >= UKURAN_HALAMAN;
 
   const nama = (id: string | null) =>
@@ -104,12 +102,12 @@ function PengumumanPage() {
 
   const muatLebihLama = async () => {
     if (!slug || !kanal || memuatLama) return;
-    const tertua = [...(pesan ?? []), ...lebihLama].map((p) => p.created_at).toSorted()[0];
+    const tertua = (lebihLama[0] ?? pesan?.[0])?.created_at;
     if (!tertua) return;
     setMemuatLama(true);
     try {
       const halaman = await chatService.getPesanLamaRuang(slug, kanal.id, tertua);
-      setLebihLama((lama) => [...lama, ...halaman]);
+      setLebihLama((lama) => [...halaman, ...lama]);
       if (halaman.length < UKURAN_HALAMAN) setHabis(true);
     } catch {
       setToast({ type: TOAST_TYPE.ERROR, title: t("pengumuman_ui.load_failed") });
