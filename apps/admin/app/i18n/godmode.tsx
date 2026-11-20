@@ -609,6 +609,8 @@ const en = {
       analytics: "Analytics",
       dashboard_divisi: "Division dashboard",
       initiatives: "Initiatives",
+      persetujuan: "Approvals",
+      tugas_lintas_divisi: "Department requests",
       chat: "Chat",
       wiki: "Wiki",
       archives: "Archives",
