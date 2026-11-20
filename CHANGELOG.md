@@ -8,6 +8,58 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ## 2026-11-20
 
+### Versi 2.10.0
+
+- **Naik 2.9.0 ke 2.10.0, minor.** Halaman baru (Pengumuman), menu KPI yang
+  menggabungkan tiga menu, perubahan siapa melihat apa (Direktur), dan aturan
+  terlambat yang berubah. Tidak ada migrasi dan tidak ada langkah wajib di
+  database. Satu langkah operator di server, lihat poin God Mode.
+- **God Mode bisa dibuka dari mana saja.** Setelah masuk lewat
+  `space.paradiseperkasa.com/god-mode/`, peramban dulu dilempar ke alamat IP
+  lokal karena `ADMIN_BASE_URL` di server berisi IP. Pengalihan kini kembali
+  ke alamat yang sedang dipakai peramban (dari header `Origin`, lalu host
+  permintaan), dan hanya bila alamat itu sudah terdaftar di `WEB_URL`,
+  `APP_BASE_URL`, `ADMIN_BASE_URL`, `SPACE_BASE_URL`, atau
+  `CORS_ALLOWED_ORIGINS`, jadi tidak bisa jadi open redirect. Masuk lewat IP di
+  LAN tetap mendarat di IP. Tenant baru tidak lagi dialihkan ke
+  `/god-mode/god-mode/`. `deploy.sh` kini memberi peringatan bila
+  `ADMIN_BASE_URL` atau `SPACE_BASE_URL` berbeda dari `WEB_URL`. Langkah
+  operator, disarankan: di `~/paradise-app/apps/api/.env` dan
+  `~/paradise-app/.env` ubah `ADMIN_BASE_URL` dan `SPACE_BASE_URL` menjadi
+  `https://space.paradiseperkasa.com`, lalu buat ulang container `api`.
+  Biarkan `CORS_ALLOWED_ORIGINS` dan `SITE_ADDRESS`. Kode:
+  `plane/utils/host.py`.
+- **Satu menu KPI.** Analytics, Dashboards, dan KPI digabung menjadi satu menu
+  KPI dengan tab KPI, Analitik, dan Dasbor. Tab Analitik dan Dasbor hanya
+  tampil untuk admin yang bukan Direktur. Alamat lama `/analytics`,
+  `/dashboard-divisi`, dan `/dashboards` dialihkan ke tab yang sesuai.
+- **Direktur tidak lagi melihat Pekerjaan Anda dan Arsip.** Direktur (tingkat 40) tidak melihat "Your work" dan "Archives", dan membukanya lewat alamat
+  langsung dialihkan ke beranda. Tingkat lain tidak berubah. Kode:
+  `use-is-direktur.ts`, `isDirektur()` di `hierarki.service.ts`.
+- **Changelog pindah ke Beranda, Pengumuman punya halaman sendiri.** Changelog
+  menjadi widget di bagian paling bawah Beranda dan tidak muncul lagi di
+  Obrolan: anggota tidak lagi otomatis berlangganan kanal Changelog, dan
+  kanalnya disembunyikan dari daftar, pencarian, dan lencana. Kartu lama tetap
+  ada di database dan dibaca widget lewat
+  `GET /api/workspaces/<slug>/changelog/`. Halaman baru `/<slug>/pengumuman`
+  menampilkan pengumuman, dengan kotak tulis bagi yang boleh menyiarkan.
+  Aturan penulis dan email Pengumuman tidak berubah.
+- **Terlambat dihitung dari kapan tugas dicatat.** Tugas yang baru dibuat hari
+  ini dengan tenggat minggu lalu, lalu langsung diajukan persetujuan hari ini,
+  dulu dihitung terlambat. Aturan baru: tenggat efektif adalah yang lebih
+  akhir antara tenggat dan tanggal kantor saat tugas dicatat; terlambat bila
+  selesai sesudah tenggat efektif itu. Tugas yang dicatat sebelum tenggatnya
+  tidak berubah. Satu fungsi, `utils/ketepatan_waktu.py`, dipakai laporan
+  selesai, KPI, dan Dashboard Divisi. Tidak ada kolom baru. Pertanyaan yang
+  belum diputuskan: tugas yang dicatat Jumat malam lalu diajukan Senin tetap
+  terlambat tiga hari; kalau perlu masa tenggang, ubah di satu tempat itu.
+- **Scroll.** `h-screen` diganti `h-dvh` di sekitar 13 kerangka layar penuh
+  supaya bagian bawah tidak tertutup bilah peramban di HP. Halaman setelan
+  tidak lagi terpotong di bawah navigasi di layar kecil. Popover dan menu klik
+  kanan dibatasi tingginya dan bisa di-scroll. Pemuat dan galat panel peek
+  memakai `h-full`. Belum diuji di peramban sungguhan; periksa setelan, filter
+  tinggi, dan menu klik kanan di HP setelah rilis.
+
 ### Versi 2.9.0
 
 - **Naik 2.8.0 ke 2.9.0, minor.** Banyak fitur baru (KPI, halaman

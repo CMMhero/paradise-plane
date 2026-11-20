@@ -1,0 +1,34 @@
+{
+  "version": "2.10.0",
+  "date": "2026-11-20",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Announcements now have their own page in the sidebar. Everyone can read them, and those allowed to post can write from the same page."
+    },
+    {
+      "type": "Added",
+      "text": "The changelog now sits at the very bottom of Home, with the latest release on top and earlier releases one click away. It no longer appears in Chat."
+    },
+    {
+      "type": "Changed",
+      "text": "Analytics, Dashboards and KPI are now one KPI menu with three tabs. Old links still open the right tab."
+    },
+    {
+      "type": "Changed",
+      "text": "Directors no longer see Your work and Archives in the sidebar."
+    },
+    {
+      "type": "Changed",
+      "text": "Work you enter late no longer counts as late for the days before you entered it. If you create an item today with last week's due date and request approval today, it counts as done on time."
+    },
+    {
+      "type": "Fixed",
+      "text": "God Mode can be opened from anywhere through the public address. Signing in no longer sends you to a local IP address."
+    },
+    {
+      "type": "Fixed",
+      "text": "Scrolling now works on phones and short screens: settings pages are no longer cut off at the bottom, and tall menus and popovers scroll instead of running off the screen."
+    }
+  ]
+}
