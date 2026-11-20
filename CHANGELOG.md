@@ -85,9 +85,9 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 - **Kartu Perlu Perhatian di Home bisa ditindaklanjuti.** Setujui atau tolak,
   ganti status, balas cepat sebutan, buka, dan tandai dibaca.
 - **Obrolan:** daftar pesan tidak lagi bisa digulir ke bawah kotak tulis.
-- **Teruji.** Suite pytest penuh: 2.400-an lulus, 44 gagal yang sama persis
-  dengan `main` sebelum perubahan. Skenario langsung (desktop dan HP) dijalankan
-  di browser dengan tangkapan layar.
+- **Teruji.** Suite pytest penuh: 2448 lulus (187 lebih banyak dari `main`),
+  44 gagal yang sama persis dengan `main` sebelum perubahan. 44 skenario
+  langsung (desktop dan HP) dijalankan di browser dengan tangkapan layar.
 
 ## 2026-11-17
 
