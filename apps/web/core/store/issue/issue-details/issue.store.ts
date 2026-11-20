@@ -173,6 +173,8 @@ export class IssueStore implements IIssueStore {
       // Kustomisasi Paradise: tanpa field ini kunci persetujuan (KEP-28) dan menu
       // Setujui/Tolak tidak pernah aktif di halaman detail maupun peek.
       approval_status: issue?.approval_status,
+      // Tanpa field ini item privat yang dibuka lewat URL langsung tampak publik.
+      is_private: issue?.is_private,
     };
 
     this.rootIssueDetailStore.rootIssueStore.issues.addIssue([issuePayload]);
