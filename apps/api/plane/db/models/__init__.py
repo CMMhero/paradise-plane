@@ -117,6 +117,7 @@ from .hierarki import (
     PengawasanDivisi,
     TINGKAT_CHOICES,
     TINGKAT_DIREKTUR,
+    TINGKAT_LEADER,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_NAMA,

@@ -49,6 +49,7 @@ from plane.app.serializers import (
 )
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.sinyal_data import siarkan_tugas
+from plane.utils.kunci_selesai import galat_induk_selesai, galat_tugas_selesai
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity
@@ -713,6 +714,14 @@ class IssueViewSet(BaseViewSet):
         if not issue:
             return Response({"error": "Issue not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # P29: tugas selesai terkunci, kecuali pembukaan kembali yang sah. Induk
+        # yang selesai juga tidak boleh kehilangan sub-item lewat PATCH anaknya.
+        galat_selesai = galat_tugas_selesai(issue, request.user, request.data) or (
+            galat_induk_selesai([issue.parent_id]) if "parent_id" in request.data else None
+        )
+        if galat_selesai:
+            return Response({"error": galat_selesai}, status=status.HTTP_403_FORBIDDEN)
+
         # Kustomisasi Paradise: tenggat adalah janji yang
         # dibuat seseorang, jadi yang boleh menggesernya hanya pembuat tugas
         # atau Super Admin. Sisanya, termasuk status, prioritas, label,
@@ -739,6 +748,7 @@ class IssueViewSet(BaseViewSet):
             issue,
             actor=request.user,
             mengubah_assignee="assignee_ids" in request.data,
+            perubahan=request.data,
         )
         if galat_akses:
             return Response({"error": galat_akses}, status=status.HTTP_403_FORBIDDEN)

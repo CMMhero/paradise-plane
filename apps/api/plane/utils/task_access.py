@@ -31,6 +31,7 @@ tempat cepat atau lambat jadi tiga aturan.
 """
 
 from plane.db.superadmin import is_super_admin
+from plane.utils.kunci_selesai import PESAN_TERKUNCI, tugas_selesai
 from plane.utils.saklar_instance import (
     DUE_DATE_CHANGE_RULE,
     HAPUS_PEMBUAT_SAJA,
@@ -110,17 +111,20 @@ def _aturan(user, aturan):
     return aturan if aturan is not None and aturan.user == user else AturanTugas(user)
 
 
-def _boleh_ubah(user, issue, project_id, aturan=None):
+def _boleh_ubah(user, issue, project_id, aturan=None, kunci_selesai=True):
     """Hak UBAH tugas: gerbang hierarki menyala = `galat_ubah_tugas`; mati = setiap anggota.
 
     Gerbang mati berarti tidak ada kunci edit per tugas: izin project di view
-    (anggota, bukan tamu) yang sudah menjaga pintunya.
+    (anggota, bukan tamu) yang sudah menjaga pintunya. Tugas selesai tetap
+    terkunci apa pun katupnya (P29).
     """
     from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
 
+    if kunci_selesai and tugas_selesai(issue):
+        return False
     if not _aturan(user, aturan).gerbang:
         return True
-    return galat_ubah_tugas(project_id, issue, actor=user) is None
+    return galat_ubah_tugas(project_id, issue, actor=user, kunci_selesai=kunci_selesai) is None
 
 
 PESAN_TOLAK_PERCAKAPAN = (
@@ -145,6 +149,8 @@ def galat_percakapan_tugas(issue, actor):
     """
     if issue is None:
         return None
+    if tugas_selesai(issue):
+        return PESAN_TERKUNCI
     if actor is None or getattr(actor, "is_anonymous", True):
         return PESAN_TOLAK_PERCAKAPAN
     if _boleh_ubah(actor, issue, issue.project_id):
@@ -186,7 +192,7 @@ def bisa_hapus_tugas(user, issue, slug, project_id, aturan=None):
     if aturan.hapus == HAPUS_PEMBUAT_SAJA:
         return issue.created_by_id == user.id
     if aturan.hapus == HAPUS_YANG_BOLEH_UBAH:
-        return _boleh_ubah(user, issue, project_id, aturan)
+        return _boleh_ubah(user, issue, project_id, aturan, kunci_selesai=False)
 
     # HAPUS_ATURAN_HARI_INI (bawaan). Gerbang hierarki aktif: hapus/arsip ikut aturan UBAH (`galat_ubah_tugas`),
     # yaitu pembuat/assignee tugas itu sendiri, atau atasannya. Admin project
@@ -195,7 +201,7 @@ def bisa_hapus_tugas(user, issue, slug, project_id, aturan=None):
     from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
 
     if aturan.gerbang:
-        return galat_ubah_tugas(project_id, issue, actor=user) is None
+        return galat_ubah_tugas(project_id, issue, actor=user, kunci_selesai=False) is None
 
     if issue.created_by_id == user.id:
         return True
@@ -325,7 +331,10 @@ _JALUR_BEBAS = (
     "bulk-archive-issues",
 )
 # Kunci body yang membawa id tugas lain yang ikut disentuh.
-_KUNCI_ISI = ("issues", "issue_ids", "sub_issue_ids")
+_KUNCI_ISI = ("issues", "issue_ids", "sub_issue_ids", "related_issue")
+# Induk yang dituju body (buat atau pindahkan sub-item): hanya kunci selesai (P29)
+# yang diperiksa di sana, bukan hak ubah induk.
+_KUNCI_INDUK = ("parent_id", "parent")
 
 
 def _uuid_saja(nilai):
@@ -389,17 +398,23 @@ def galat_ubah_tugas_ids(issue_ids, actor):
     """Pesan galat pertama kalau actor tak boleh mengubah salah satu tugas, atau None."""
     from plane.utils.hierarki import galat_ubah_tugas, gerbang_aktif  # noqa: PLC0415
 
-    if not issue_ids or not gerbang_aktif():
-        return None
-    if actor is None:
-        return "Pelaku perubahan tidak diketahui, jadi perubahan ini tidak dapat diverifikasi."
-    if is_super_admin(actor):
+    if not issue_ids:
         return None
 
     from plane.db.models import Issue  # noqa: PLC0415
 
     # Tugas yang tidak ada dibiarkan: endpoint-nya sendiri yang menjawab 404.
-    for issue in Issue.objects.filter(id__in=issue_ids):
+    issues = list(Issue.objects.filter(id__in=issue_ids).select_related("state"))
+    # Tugas selesai terkunci untuk semua orang, katup mati maupun Super Admin (P29).
+    if any(tugas_selesai(issue) for issue in issues):
+        return PESAN_TERKUNCI
+    if not gerbang_aktif():
+        return None
+    if actor is None:
+        return "Pelaku perubahan tidak diketahui, jadi perubahan ini tidak dapat diverifikasi."
+    if is_super_admin(actor):
+        return None
+    for issue in issues:
         galat = galat_ubah_tugas(issue.project_id, issue, actor=actor)
         if galat:
             return galat
@@ -415,20 +430,30 @@ class KepemilikanTugasMixin:
             return
         if any(seg in request.path for seg in _JALUR_BEBAS):
             return
+        from rest_framework.exceptions import PermissionDenied  # noqa: PLC0415
+
+        from plane.utils.kunci_selesai import galat_induk_selesai  # noqa: PLC0415
+
+        data = getattr(request, "data", None)
+        induk = _induk_tambah_anak(request, kwargs)
+        if hasattr(data, "get"):
+            induk_body = [i for k in _KUNCI_INDUK if k in data for i in _uuid_saja(data.get(k))]
+        else:
+            induk_body = []
+        galat = galat_induk_selesai([*induk, *induk_body])
+        if galat:
+            raise PermissionDenied({"error": galat})
         ids = tugas_disentuh_request(request, kwargs)
         if not ids:
             return
         actor = request.user if getattr(request.user, "is_authenticated", False) else None
         # Menambah anak: induknya cukup "saya terlibat di salah satu anaknya".
         # Tugas yang ikut dipindah jadi anak (isi body) tetap dinilai penuh.
-        induk = _induk_tambah_anak(request, kwargs)
         if induk and actor is not None and any(terlibat_di_anak(i, actor) for i in induk):
             ids = [i for i in ids if i not in induk]
             if not ids:
                 return
         galat = galat_ubah_tugas_ids(ids, actor)
         if galat:
-            from rest_framework.exceptions import PermissionDenied  # noqa: PLC0415
-
             # Kunci `error`, sama dengan galat 403 lain di app ini (toast klien membacanya).
             raise PermissionDenied({"error": galat})
