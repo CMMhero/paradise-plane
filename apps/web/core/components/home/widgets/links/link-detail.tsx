@@ -18,6 +18,7 @@ import { copyTextToClipboard } from "@plane/utils";
 import { usePratinjauTautan } from "@/components/pratinjau-tautan/kartu";
 // hooks
 import { useHome } from "@/hooks/store/use-home";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 // types
 import { getQuickLinkIcon, getQuickLinkImage, getQuickLinkTitle } from "./quick-link-display";
 import { renderLogo } from "./quick-link-logo";
@@ -36,6 +37,7 @@ export const ProjectLinkDetail = observer(function ProjectLinkDetail(props: TPro
     quickLinks: { getLinkById, toggleLinkModal, setLinkData },
   } = useHome();
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
   // derived values
   const linkDetail = getLinkById(linkId);
   const linkUrl = linkDetail?.url;
@@ -88,8 +90,14 @@ export const ProjectLinkDetail = observer(function ProjectLinkDetail(props: TPro
   }, [linkUrl]);
 
   const handleDelete = useCallback(() => {
-    linkOperations.remove(linkId);
-  }, [linkId, linkOperations]);
+    minta(
+      {
+        judul: t("ui_fixes.confirm_link_title"),
+        isi: t("ui_fixes.confirm_link_body", { name: linkDetail ? getQuickLinkTitle(linkDetail) : "" }),
+      },
+      () => linkOperations.remove(linkId)
+    );
+  }, [linkId, linkOperations, linkDetail, minta, t]);
 
   // derived values
   const menuItems = useMemo<TContextMenuItem[]>(
@@ -138,6 +146,7 @@ export const ProjectLinkDetail = observer(function ProjectLinkDetail(props: TPro
         menuItems={menuItems}
         onClick={handleOpenInNewTab}
       />
+      {dialog}
     </div>
   );
 });

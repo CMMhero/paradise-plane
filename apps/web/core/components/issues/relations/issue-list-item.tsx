@@ -17,6 +17,7 @@ import { generateWorkItemLink } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web imports
@@ -54,6 +55,7 @@ export const RelationIssueListItem = observer(function RelationIssueListItem(pro
   } = props;
 
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
 
   // store hooks
   const {
@@ -116,11 +118,20 @@ export const RelationIssueListItem = observer(function RelationIssueListItem(pro
   const handleRemoveRelation = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-    removeRelation(workspaceSlug, projectId, issueId, relationKey, relationIssueId);
+    minta(
+      {
+        judul: t("ui_fixes.confirm_relation_title"),
+        isi: t("ui_fixes.confirm_relation_body", { name: issue.name }),
+        tombol: t("remove"),
+        tombolProses: t("removing"),
+      },
+      () => removeRelation(workspaceSlug, projectId, issueId, relationKey, relationIssueId)
+    );
   };
 
   return (
     <div key={relationIssueId}>
+      {dialog}
       <ControlLink
         id={`issue-${issue.id}`}
         href={workItemLink}

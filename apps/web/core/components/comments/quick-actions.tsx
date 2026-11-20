@@ -20,6 +20,7 @@ import { MenuTriggerIcon } from "@/components/common/menu-trigger-icon";
 // hooks
 import { useUser } from "@/hooks/store/user";
 import { useIzinSumber } from "@/hooks/use-izin-sumber";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 
 type TCommentCard = {
   activityOperations: TCommentsOperations;
@@ -42,6 +43,7 @@ export const CommentQuickActions = observer(function CommentQuickActions(props: 
   const canDelete = isAuthor || izin.boleh("PERM_COMMENT_DELETE", { pemilikId: comment.actor });
   // translation
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
 
   const MENU_ITEMS = useMemo(
     function MENU_ITEMS(): TContextMenuItem[] {
@@ -78,52 +80,62 @@ export const CommentQuickActions = observer(function CommentQuickActions(props: 
         },
         {
           key: "delete",
-          action: () => activityOperations.removeComment(comment.id),
+          action: () =>
+            minta(
+              {
+                judul: t(comment.parent ? "ui_fixes.confirm_reply_title" : "ui_fixes.confirm_comment_title"),
+                isi: t(comment.parent ? "ui_fixes.confirm_reply_body" : "ui_fixes.confirm_comment_body"),
+              },
+              () => activityOperations.removeComment(comment.id)
+            ),
           title: t("common.actions.delete"),
           icon: TrashIcon,
           shouldRender: canDelete,
         },
       ].filter((item) => item.shouldRender !== false);
     },
-    [t, setEditMode, canEdit, showCopyLinkOption, activityOperations, comment, showAccessSpecifier, canDelete]
+    [t, setEditMode, canEdit, showCopyLinkOption, activityOperations, comment, showAccessSpecifier, canDelete, minta]
   );
 
   if (MENU_ITEMS.length === 0) return null;
 
   return (
-    <CustomMenu
-      customButton={<MenuTriggerIcon icon={MoreHorizontal} variant="ghost" size="sm" />}
-      ariaLabel={t("aria_labels.common.more_actions")}
-      closeOnSelect
-    >
-      {MENU_ITEMS.map((item) => (
-        <CustomMenu.MenuItem
-          key={item.key}
-          onClick={() => item.action()}
-          className={cn(
-            "flex items-center gap-2",
-            {
-              "text-placeholder": item.disabled,
-            },
-            item.className
-          )}
-          disabled={item.disabled}
-        >
-          {item.icon && <item.icon className={cn("size-3 shrink-0", item.iconClassName)} />}
-          <div>
-            <h5>{item.title}</h5>
-            {item.description && (
-              <p
-                className={cn("whitespace-pre-line text-tertiary", {
-                  "text-placeholder": item.disabled,
-                })}
-              >
-                {item.description}
-              </p>
+    <>
+      <CustomMenu
+        customButton={<MenuTriggerIcon icon={MoreHorizontal} variant="ghost" size="sm" />}
+        ariaLabel={t("aria_labels.common.more_actions")}
+        closeOnSelect
+      >
+        {MENU_ITEMS.map((item) => (
+          <CustomMenu.MenuItem
+            key={item.key}
+            onClick={() => item.action()}
+            className={cn(
+              "flex items-center gap-2",
+              {
+                "text-placeholder": item.disabled,
+              },
+              item.className
             )}
-          </div>
-        </CustomMenu.MenuItem>
-      ))}
-    </CustomMenu>
+            disabled={item.disabled}
+          >
+            {item.icon && <item.icon className={cn("size-3 shrink-0", item.iconClassName)} />}
+            <div>
+              <h5>{item.title}</h5>
+              {item.description && (
+                <p
+                  className={cn("whitespace-pre-line text-tertiary", {
+                    "text-placeholder": item.disabled,
+                  })}
+                >
+                  {item.description}
+                </p>
+              )}
+            </div>
+          </CustomMenu.MenuItem>
+        ))}
+      </CustomMenu>
+      {dialog}
+    </>
   );
 });

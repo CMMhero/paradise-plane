@@ -21,6 +21,7 @@ import { WorkspaceImageUploadModal } from "@/components/core/modals/workspace-im
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 // plane web components
 import { DeleteWorkspaceSection } from "@/plane-web/components/workspace/delete-workspace-section";
 
@@ -39,6 +40,7 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
   const { currentWorkspace, updateWorkspace } = useWorkspace();
   const { allowPermissions } = useUserPermissions();
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
 
   // form info
   const {
@@ -126,6 +128,7 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
 
   return (
     <>
+      {dialog}
       <Controller
         control={control}
         name="logo_url"
@@ -133,7 +136,12 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
           <WorkspaceImageUploadModal
             isOpen={isImageUploadModalOpen}
             onClose={() => setIsImageUploadModalOpen(false)}
-            handleRemove={handleRemoveLogo}
+            handleRemove={async () =>
+              minta(
+                { judul: t("ui_fixes.confirm_logo_title"), isi: t("ui_fixes.confirm_logo_body"), tombol: t("remove") },
+                handleRemoveLogo
+              )
+            }
             onSuccess={(imageUrl) => {
               onChange(imageUrl);
               setIsImageUploadModalOpen(false);
