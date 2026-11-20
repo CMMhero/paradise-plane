@@ -615,6 +615,7 @@ const en = {
       views: "Views",
       analytics: "Analytics",
       dashboard_divisi: "Division dashboard",
+      kinerja: "KPI",
       initiatives: "Initiatives",
       chat: "Chat",
       wiki: "Wiki",

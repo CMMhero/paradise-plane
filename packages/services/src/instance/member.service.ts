@@ -115,6 +115,7 @@ export type TNavItemKey =
   | "views"
   | "analytics"
   | "dashboard_divisi"
+  | "kinerja"
   | "initiatives"
   | "chat"
   | "wiki"

@@ -221,6 +221,14 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
+  // KPI (Paradise 2.9): semua orang punya, isinya dibatasi server menurut jenjang.
+  kinerja: {
+    key: "kinerja",
+    labelTranslationKey: "kinerja.nav",
+    href: `/kinerja/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
   initiatives: {
     key: "initiatives",
     // `common.initiatives`, BUKAN `initiatives` polos. Kunci ini HANYA ada di
@@ -281,6 +289,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebar
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["views"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["dashboard_divisi"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["kinerja"],
   // Dinyalakan/dimatikan di God Mode > Features (lihat apps/web/core/lib/paradise-modules.ts).
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["chat"],

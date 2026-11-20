@@ -65,6 +65,8 @@ from plane.app.views import (
     ChatUnreadEndpoint,
     CompletedReportEndpoint,
     DivisionDashboardEndpoint,
+    KinerjaEndpoint,
+    KinerjaLingkupEndpoint,
     WorkLogExportEndpoint,
     GoogleCalendarCallbackEndpoint,
     GoogleCalendarConnectEndpoint,
@@ -251,6 +253,8 @@ urlpatterns = [
         CompletedReportEndpoint.as_view(),
         name="divisi-dashboard-laporan",
     ),
+    path("workspaces/<str:slug>/kinerja/", KinerjaEndpoint.as_view(), name="kinerja"),
+    path("workspaces/<str:slug>/kinerja/lingkup/", KinerjaLingkupEndpoint.as_view(), name="kinerja-lingkup"),
     # Permintaan tugas lintas divisi. "tujuan" dan "ringkasan" ditaruh sebelum
     # "permintaan" (yang tidak punya segmen variabel) supaya niatnya terbaca;
     # tidak akan bentrok karena ketiganya literal.

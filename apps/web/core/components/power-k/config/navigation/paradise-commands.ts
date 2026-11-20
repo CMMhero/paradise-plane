@@ -5,7 +5,17 @@
  * See the LICENSE file for details.
  */
 
-import { BookText, CalendarDays, LayoutDashboard, Link2, MessageSquare, Stamp, Target, UserCog } from "lucide-react";
+import {
+  BookText,
+  CalendarDays,
+  Gauge,
+  LayoutDashboard,
+  Link2,
+  MessageSquare,
+  Stamp,
+  Target,
+  UserCog,
+} from "lucide-react";
 // plane imports
 import { EUserPermissionsLevel } from "@plane/constants";
 import { MultipleStickyIcon } from "@plane/propel/icons";
@@ -22,6 +32,7 @@ export type TPowerKParadiseNavigationCommandKeys =
   | "nav_chat"
   | "nav_wiki"
   | "nav_dashboard_divisi"
+  | "nav_kinerja"
   | "nav_initiatives"
   | "nav_stickies"
   | "nav_quick_links"
@@ -95,6 +106,10 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
       (ctx) => hasWorkspaceRole(ctx, [EUserWorkspaceRoles.ADMIN]),
       "gb"
     ),
+    nav_kinerja: {
+      ...workspacePage("nav_kinerja", Gauge, () => ["kinerja"], isWorkspaceMember),
+      i18n_title: "kinerja.go_to",
+    },
     nav_initiatives: workspacePage("nav_initiatives", Target, () => ["initiatives"], isWorkspaceMember),
     nav_stickies: workspacePage("nav_stickies", MultipleStickyIcon, () => ["stickies"], isAnyWorkspaceRole, "gt"),
     nav_quick_links: workspacePage("nav_quick_links", Link2, () => ["quick-links"], isAnyWorkspaceRole, "gl"),

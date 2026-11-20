@@ -24,6 +24,7 @@ export const WIKI_MATERIALS_NAV_KEY = "wiki_materials";
 
 const MODUL_PER_KUNCI_MENU: Record<string, TParadiseGate> = {
   dashboard_divisi: "dashboards",
+  kinerja: "dashboards",
   persetujuan: "approvals",
   [WIKI_MATERIALS_NAV_KEY]: "wiki",
   // Dicabut (KEP-53): menunya tak pernah tampil lagi.
@@ -43,7 +44,7 @@ const MODUL_PER_PATH: [RegExp, TParadiseModule][] = [
   [pola("drafts"), "drafts"],
   [pola("quick-links"), "quick_links"],
   // Menu workspace
-  [pola("(dashboard-divisi|dashboards)"), "dashboards"],
+  [pola("(dashboard-divisi|dashboards|kinerja)"), "dashboards"],
   [pola("initiatives"), "initiatives"],
   [pola("workspace-views"), "views"],
   [pola("analytics"), "analytics"],

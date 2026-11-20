@@ -53,6 +53,7 @@ const MODUL_PER_PERINTAH: Record<string, TParadiseGate> = {
   nav_chat: "chat",
   nav_wiki: "wiki",
   nav_dashboard_divisi: "dashboards",
+  nav_kinerja: "dashboards",
   nav_initiatives: "initiatives",
   nav_stickies: "stickies",
   nav_quick_links: "quick_links",
