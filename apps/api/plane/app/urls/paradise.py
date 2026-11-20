@@ -22,7 +22,7 @@ from plane.app.views.workspace.persetujuan import AntreanPersetujuanWorkspaceEnd
 from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAnggotaEndpoint
 from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
 from plane.app.views.chat_penulis import ChatPenulisKanalEndpoint
-from plane.app.views.chat import ChatRuangSematanEndpoint, ChatSematanEndpoint
+from plane.app.views.chat import ChatRuangBacaEndpoint, ChatRuangSematanEndpoint, ChatSematanEndpoint
 from plane.app.views.chat_rujukan import ChatRujukanEndpoint, ChatRujukanInfoEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
 from plane.app.views.wiki import (
@@ -176,6 +176,11 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/",
         ChatRuangThreadEndpoint.as_view(),
         name="chat-ruang-isi",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/baca/",
+        ChatRuangBacaEndpoint.as_view(),
+        name="chat-ruang-baca",
     ),
     path(
         "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/panggilan/",

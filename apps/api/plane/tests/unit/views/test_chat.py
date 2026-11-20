@@ -13,6 +13,8 @@ tapi salah orang, yang kedua baru terlihat setelah ada yang mencobanya.
 from datetime import timedelta
 from uuid import uuid4
 
+from unittest import mock
+
 import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -473,3 +475,76 @@ class TestChat:
 
         assert res.status_code == 400
         assert PesanLangsung.objects.count() == 0
+
+
+@pytest.mark.unit
+class TestBacaSeketika:
+    """Membuka percakapan = terbaca saat itu juga, dan pengirim diberi tahu."""
+
+    @pytest.mark.django_db
+    def test_membaca_menyiarkan_satu_kejadian_baca_lalu_diam(self, kantor):
+        workspace, aku, budi, _ = kantor
+        pesan = _pesan(workspace, budi, aku, "halo", menit_lalu=2)
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        url = f"/api/workspaces/{workspace.slug}/chat/{budi.id}/"
+
+        with mock.patch("plane.app.views.chat.siarkan") as siarkan:
+            assert client.get(url).status_code == 200
+            siarkan.assert_called_once_with(pesan.ruang_id, "baca", aku.id)
+
+        # Tarikan berkala berikutnya tidak menggeser apa pun: tidak ada siaran.
+        with mock.patch("plane.app.views.chat.siarkan") as siarkan:
+            assert client.get(url).status_code == 200
+            siarkan.assert_not_called()
+
+    @pytest.mark.django_db
+    def test_pengirim_melihat_tanda_baca_dan_hitungan_turun_ke_nol(self, kantor):
+        workspace, aku, budi, _ = kantor
+        pesan = _pesan(workspace, budi, aku, "halo", menit_lalu=2)
+        saya = APIClient()
+        saya.force_authenticate(user=aku)
+        dia = APIClient()
+        dia.force_authenticate(user=budi)
+        dasar = f"/api/workspaces/{workspace.slug}/chat"
+
+        assert saya.get(f"{dasar}/belum-dibaca/").data["jumlah"] == 1
+        with mock.patch("plane.app.views.chat.siarkan"):
+            saya.get(f"{dasar}/ruang/{pesan.ruang_id}/")
+        assert saya.get(f"{dasar}/belum-dibaca/").data["jumlah"] == 0
+        baris = [p for p in saya.get(f"{dasar}/").data if p["lawan_bicara"] == str(budi.id)]
+        assert baris[0]["belum_dibaca"] == 0
+        assert dia.get(f"{dasar}/{aku.id}/").data[-1]["sudah_dibaca"] is True
+
+    @pytest.mark.django_db
+    def test_tab_tersembunyi_menarik_isi_tanpa_membaca(self, kantor):
+        workspace, aku, budi, _ = kantor
+        pesan = _pesan(workspace, budi, aku, "halo", menit_lalu=2)
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        dasar = f"/api/workspaces/{workspace.slug}/chat"
+
+        with mock.patch("plane.app.views.chat.siarkan") as siarkan:
+            assert client.get(f"{dasar}/ruang/{pesan.ruang_id}/?tandai=0").status_code == 200
+            siarkan.assert_not_called()
+        assert client.get(f"{dasar}/belum-dibaca/").data["jumlah"] == 1
+
+        with mock.patch("plane.app.views.chat.siarkan") as siarkan:
+            assert client.post(f"{dasar}/ruang/{pesan.ruang_id}/baca/").status_code == 204
+            siarkan.assert_called_once_with(pesan.ruang_id, "baca", aku.id)
+        assert client.get(f"{dasar}/belum-dibaca/").data["jumlah"] == 0
+
+    @pytest.mark.django_db
+    def test_membaca_memberi_sinyal_ke_tab_lain_pembaca(self, kantor):
+        workspace, aku, budi, _ = kantor
+        pesan = _pesan(workspace, budi, aku, "halo", menit_lalu=2)
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        url = f"/api/workspaces/{workspace.slug}/chat/ruang/{pesan.ruang_id}/"
+
+        with mock.patch("plane.app.views.chat.siarkan"), mock.patch("plane.app.views.chat.siarkan_notifikasi") as sinyal:
+            client.get(url)
+            sinyal.assert_called_once_with(workspace.id, [aku.id])
+            sinyal.reset_mock()
+            client.get(url)
+            sinyal.assert_not_called()

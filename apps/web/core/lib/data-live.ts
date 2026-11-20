@@ -163,7 +163,15 @@ function kunciCocok(kunci: unknown, sinyal: TSinyalData[]): boolean {
     if (s.proyek && teks.includes(s.proyek)) return true;
     if (s.tugas && teks.includes(s.tugas)) return true;
     if (huruf.includes("attention")) return s.jenis === JENIS_TUGAS || s.jenis === JENIS_NOTIFIKASI;
-    if (s.jenis === JENIS_NOTIFIKASI) return huruf.includes("notification") || huruf.includes("inbox");
+    // Membaca obrolan di satu tab menurunkan lencana dan baris daftar di tab lain.
+    if (s.jenis === JENIS_NOTIFIKASI)
+      return (
+        huruf.includes("notification") ||
+        huruf.includes("inbox") ||
+        huruf.startsWith("chat_belum_dibaca") ||
+        huruf.startsWith("chat_percakapan_") ||
+        huruf.startsWith("chat_kanal_")
+      );
     if (s.jenis === JENIS_ANGGOTA_PROJECT) return huruf.includes("member") || huruf.includes("project");
     return false;
   });
