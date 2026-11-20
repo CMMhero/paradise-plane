@@ -20,6 +20,7 @@ from rest_framework.response import Response
 
 # Module imports
 from ..base import BaseViewSet
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.izin_sumber import tolak_izin_project
 from plane.utils.saklar_instance import PERM_PROJECT_WORKFLOW
 from plane.app.permissions import allow_permission, ROLE
@@ -54,6 +55,7 @@ from plane.utils.timezone_converter import user_timezone_converter
 from plane.utils.global_paginator import paginate
 from plane.utils.host import base_host
 from plane.db.models.intake import SourceType
+from plane.utils.kunci_selesai import galat_tugas_selesai
 from plane.utils.task_access import bisa_ganti_tenggat_intake, tenggat_diubah
 
 
@@ -204,7 +206,11 @@ class IntakeIssueViewSet(BaseViewSet):
         project = Project.objects.get(pk=project_id)
         filters = issue_filters(request.GET, "GET", "issue__")
         intake_issue = (
-            IntakeIssue.objects.filter(intake_id=intake.id, project_id=project_id, **filters)
+            saring_tugas_privat(
+                IntakeIssue.objects.filter(intake_id=intake.id, project_id=project_id, **filters),
+                request.user,
+                prefix="issue__",
+            )
             .select_related("issue")
             .prefetch_related("issue__labels")
             .annotate(
@@ -448,6 +454,10 @@ class IntakeIssueViewSet(BaseViewSet):
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
+
+            galat_selesai = galat_tugas_selesai(issue, request.user, issue_data)
+            if galat_selesai:
+                return Response({"error": galat_selesai}, status=status.HTTP_403_FORBIDDEN)
 
             issue_current_instance = json.dumps(IssueDetailSerializer(issue).data, cls=DjangoJSONEncoder)
             issue_requested_data = json.dumps(issue_data, cls=DjangoJSONEncoder)

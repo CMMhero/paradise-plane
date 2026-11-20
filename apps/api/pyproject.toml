@@ -65,7 +65,7 @@ classmethod-decorators = ["classmethod", "validator", "root_validator"]
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore specific rules for tests
-"tests/*" = ["E402", "F401", "F811"]
+"**/tests/**" = ["E402", "F401", "F811"]
 # Ignore imported but unused in __init__.py files
 "__init__.py" = ["F401"]
 

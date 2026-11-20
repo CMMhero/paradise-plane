@@ -233,9 +233,10 @@ ATTENTION_MENTION_DAYS = "ATTENTION_MENTION_DAYS"
 #
 # APPROVAL_REQUIRED_BELOW_LEVEL: pemegang jenjang DI BAWAH angka ini yang
 # menyelesaikan tugasnya sendiri harus menunggu persetujuan atasan. Angkanya
-# jenjang di db/models/hierarki.py (10 member, 20 supervisor, 30 manager,
-# 40 direktur); jenjang kosong selalu dihitung staf.
-#   20 = hanya staf (member) - perilaku hari ini (`_adalah_staf` di utils/hierarki.py)
+# jenjang di db/models/hierarki.py (10 member, 12 leader, 20 supervisor,
+# 30 manager, 33 direktur cabang, 35 sekretaris, 40 direktur); jenjang kosong
+# selalu dihitung staf.
+#   20 = staf dan leader - perilaku hari ini
 #   30 = staf dan supervisor
 #   40 = semua kecuali direktur
 APPROVAL_REQUIRED_BELOW_LEVEL = "APPROVAL_REQUIRED_BELOW_LEVEL"

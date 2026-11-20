@@ -19,6 +19,7 @@ from rest_framework.response import Response
 from drf_spectacular.utils import OpenApiResponse, OpenApiRequest
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.api.serializers import (
     IntakeIssueSerializer,
     IssueSerializer,
@@ -74,11 +75,15 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
             return IntakeIssue.objects.none()
 
         return (
-            IntakeIssue.objects.filter(
-                Q(snoozed_till__gte=timezone.now()) | Q(snoozed_till__isnull=True),
-                workspace__slug=self.kwargs.get("slug"),
-                project_id=self.kwargs.get("project_id"),
-                intake_id=intake.id,
+            saring_tugas_privat(
+                IntakeIssue.objects.filter(
+                    Q(snoozed_till__gte=timezone.now()) | Q(snoozed_till__isnull=True),
+                    workspace__slug=self.kwargs.get("slug"),
+                    project_id=self.kwargs.get("project_id"),
+                    intake_id=intake.id,
+                ),
+                self.request.user,
+                prefix="issue__",
             )
             .select_related("issue", "workspace", "project")
             .order_by(self.kwargs.get("order_by", "-created_at"))
@@ -253,11 +258,15 @@ class IntakeIssueDetailAPIEndpoint(BaseAPIView):
             return IntakeIssue.objects.none()
 
         return (
-            IntakeIssue.objects.filter(
-                Q(snoozed_till__gte=timezone.now()) | Q(snoozed_till__isnull=True),
-                workspace__slug=self.kwargs.get("slug"),
-                project_id=self.kwargs.get("project_id"),
-                intake_id=intake.id,
+            saring_tugas_privat(
+                IntakeIssue.objects.filter(
+                    Q(snoozed_till__gte=timezone.now()) | Q(snoozed_till__isnull=True),
+                    workspace__slug=self.kwargs.get("slug"),
+                    project_id=self.kwargs.get("project_id"),
+                    intake_id=intake.id,
+                ),
+                self.request.user,
+                prefix="issue__",
             )
             .select_related("issue", "workspace", "project")
             .order_by(self.kwargs.get("order_by", "-created_at"))

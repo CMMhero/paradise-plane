@@ -4,20 +4,22 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Bagan atas-ke-bawah (direktur > divisi + manager > departemen) dengan garis
+ * Bagan atas-ke-bawah (direktur > [cabang + Direktur Cabang] > divisi + manager >
+ * departemen) dengan garis
  * penghubung dari border, dipasang di dalam KanvasBagan (geser/zoom). Tampil di
  * atas papan: klik kotak = buka divisinya di papan lalu gulir ke sana, menu "..."
  * mengirim perintah ke modal kelola yang sama dengan papan.
  */
 
 import type { ReactNode } from "react";
-import { Building2, Crown, Plus } from "lucide-react";
+import { Building2, Crown, Factory, Plus } from "lucide-react";
 // plane imports
 import {
   TINGKAT_DIREKTUR,
   TINGKAT_SUPERVISOR,
   menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
+  type TCabangOrganisasi,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
   type TPohonOrganisasi,
@@ -28,7 +30,7 @@ import { PersonAvatar } from "@/components/common/paradise-ui";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { ATRIBUT_KELUAR_BAGAN } from "./kanvas-bagan";
-import { MenuDepartemen, MenuDivisi } from "./menu-node";
+import { MenuCabang, MenuDepartemen, MenuDivisi } from "./menu-node";
 import type { TKelola } from "./util";
 
 /** Buka divisi di papan; `departemenId` = kartu yang disorot sesudah digulir. */
@@ -190,6 +192,62 @@ function KolomDivisi({ v, onBuka, onKelola }: { v: TDivisiOrganisasi; onBuka: TB
   );
 }
 
+/** Kolom satu cabang: kotak cabang dengan Direktur Cabangnya, lalu divisi-divisinya berjajar. */
+function KolomCabang({
+  c,
+  divisi,
+  onBuka,
+  onKelola,
+}: {
+  c: TCabangOrganisasi;
+  divisi: TDivisiOrganisasi[];
+  onBuka: TBukaDiPapan;
+  onKelola: TKelola;
+}) {
+  const { s } = useGodmodeStrings();
+  return (
+    <div className="relative shrink-0 px-2.5 pt-6 before:absolute before:top-0 before:right-0 before:left-0 before:border-t before:border-strong first:before:left-1/2 last:before:right-1/2 only:before:hidden">
+      <div className="absolute top-0 left-1/2 h-6 w-0 border-l border-strong" aria-hidden />
+      <div className="mx-auto w-64">
+        <KotakBagan
+          tone="accent"
+          menu={<MenuCabang id={c.id} nama={c.nama} onKelola={onKelola} />}
+          judul={
+            <>
+              <Factory className="size-4 shrink-0 text-accent-primary" aria-hidden />
+              <span className="truncate text-13 font-semibold text-primary">{c.nama}</span>
+              <span className="ml-auto shrink-0 text-11 text-placeholder">{c.kode}</span>
+            </>
+          }
+        >
+          <div className="mt-2 space-y-1">
+            {c.direktur.length === 0 ? (
+              <span className="text-11 text-danger-primary">{s.org.branch.no_director_short}</span>
+            ) : (
+              c.direktur.map((d) => (
+                <div key={d.id} className="flex items-center gap-1.5 text-12 text-secondary" title={d.email}>
+                  <PersonAvatar name={d.nama} size="sm" />
+                  <span className="truncate">{d.nama}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </KotakBagan>
+      </div>
+      {divisi.length > 0 && (
+        <>
+          <GarisTegak />
+          <div className="flex justify-center">
+            {divisi.map((v) => (
+              <KolomDivisi key={v.id} v={v} onBuka={onBuka} onKelola={onKelola} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function BaganOrganisasi({
   pohon,
   anggota,
@@ -241,12 +299,23 @@ export function BaganOrganisasi({
         </KotakBagan>
       </div>
 
-      {pohon.divisi.length > 0 && (
+      {(pohon.divisi.length > 0 || pohon.cabang.length > 0) && (
         <>
           <GarisTegak />
-          <div className="flex justify-center">
-            {pohon.divisi.map((v) => (
-              <KolomDivisi key={v.id} v={v} onBuka={onBuka} onKelola={onKelola} />
+          <div className="flex items-start justify-center">
+            {pohon.divisi
+              .filter((v) => !v.cabang_id)
+              .map((v) => (
+                <KolomDivisi key={v.id} v={v} onBuka={onBuka} onKelola={onKelola} />
+              ))}
+            {pohon.cabang.map((c) => (
+              <KolomCabang
+                key={c.id}
+                c={c}
+                divisi={pohon.divisi.filter((v) => v.cabang_id === c.id)}
+                onBuka={onBuka}
+                onKelola={onKelola}
+              />
             ))}
           </div>
         </>

@@ -217,7 +217,9 @@ def _teks(penerima, laporan, hari_ini, tautan, bahasa="id"):
     baris += [s["per_divisi_teks"].format(d=durasi_hari(laporan.hari_ke_depan, bahasa)), ""]
     for d in laporan.divisi:
         x = d.angka
-        baris.append(f"{d.nama} - {_orang(d.pimpinan, 'Manager', bahasa)}: {x.selesai} / {x.lewat} / {x.hari} / {x.depan}")
+        baris.append(
+            f"{d.nama} - {_orang(d.pimpinan, 'Manager', bahasa)}: {x.selesai} / {x.lewat} / {x.hari} / {x.depan}"
+        )
         for u in d.unit:
             y = u.angka
             baris.append(

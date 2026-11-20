@@ -28,7 +28,9 @@ import {
   InstanceHierarkiService,
   InstanceMemberService,
   InstanceWorkspaceService,
+  TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
+  TINGKAT_LEADER,
   TINGKAT_MANAGER,
   TINGKAT_SEKRETARIS,
   TINGKAT_MEMBER,
@@ -36,6 +38,7 @@ import {
   menjangkauSeluruhOrganisasi,
   type TInstanceMember,
   type TMemberUpdate,
+  type TPilihanCabang,
   type TPilihanDepartemen,
   type TPilihanDivisi,
 } from "@plane/services";
@@ -45,6 +48,7 @@ import { EModalWidth, Field, Panel, ParadiseModal, PersonAvatar } from "@/compon
 import { UnsavedIndicator, useUnsavedChanges } from "@/components/common/unsaved-changes";
 // local
 import { cocokKonfirmasiGrant, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
+import { namaJenjang } from "../organisasi/papan-logika";
 import { PERAN_DEFAULT } from "./constants";
 import { PreferensiMember, useMemberPreferences } from "./preferensi";
 
@@ -55,8 +59,10 @@ const workspaceService = new InstanceWorkspaceService();
 /** Nilai dikirim ke backend. Tanpa "belum diisi": jabatan kosong = staf. */
 const pilihanTingkat = (s: TGodmodeStrings): { value: string; label: string }[] => [
   { value: String(TINGKAT_MEMBER), label: s.editor.position_member },
+  { value: String(TINGKAT_LEADER), label: s.editor.position_leader },
   { value: String(TINGKAT_SUPERVISOR), label: s.editor.position_supervisor },
   { value: String(TINGKAT_MANAGER), label: s.editor.position_manager },
+  { value: String(TINGKAT_CABANG), label: s.editor.position_branch_director },
   { value: String(TINGKAT_SEKRETARIS), label: s.editor.position_secretary },
   { value: String(TINGKAT_DIREKTUR), label: s.editor.position_director },
 ];
@@ -82,6 +88,8 @@ type Props = {
         divisi_id?: string | null;
         departemen_ids?: string[];
         divisi_ids?: string[];
+        /** P29: cabang yang ia pimpin sebagai Direktur Cabang. */
+        cabang_ids?: string[];
         /** KEP-93: peran per departemen (Staf/Supervisor). */
         peran_departemen?: Record<string, number>;
       }
@@ -89,6 +97,7 @@ type Props = {
   /** Pilihan penempatan KEP-29. Kosong = workspace belum memakai struktur divisi/departemen. */
   pilihanDepartemen?: TPilihanDepartemen[];
   pilihanDivisi?: TPilihanDivisi[];
+  pilihanCabang?: TPilihanCabang[];
   onSelesai: () => Promise<unknown>;
   onTutup: () => void;
   /** Cabut Super Admin (PATCH false). Grant ditangani internal (butuh konfirmasi ketik). */
@@ -98,12 +107,14 @@ type Props = {
 
 const DEPARTEMEN_KOSONG: TPilihanDepartemen[] = [];
 const DIVISI_KOSONG: TPilihanDivisi[] = [];
+const CABANG_KOSONG: TPilihanCabang[] = [];
 
 export function MemberEditor({
   member,
   hierarki,
   pilihanDepartemen = DEPARTEMEN_KOSONG,
   pilihanDivisi = DIVISI_KOSONG,
+  pilihanCabang = CABANG_KOSONG,
   onSelesai,
   onTutup,
   onCabutSuperAdmin,
@@ -126,6 +137,10 @@ export function MemberEditor({
   // hanya menampilkannya. "Other project access" dan "Supervised divisions"
   // dibuang: akses datang dari penempatan, direktur/Super Admin dari aturannya.
   const [tingkat, setTingkat] = useState<string>(String(hierarki?.tingkat ?? TINGKAT_MEMBER));
+  // Direktur Cabang memimpin satu cabang; dipilih di sini karena papan tidak punya lajurnya.
+  const cabangAwal = hierarki?.cabang_ids?.[0] ?? "";
+  const [cabang, setCabang] = useState(cabangAwal);
+  const direkturCabang = Number(tingkat) === TINGKAT_CABANG;
   const [sibuk, setSibuk] = useState(false);
   const [frasa, setFrasa] = useState("");
   const [sibukGrant, setSibukGrant] = useState(false);
@@ -194,7 +209,13 @@ export function MemberEditor({
       if (prefBerubah) await memberService.ubahPreferensi(member.id, prefBerubah);
       if (hierarki !== undefined) {
         const tingkatBaru = Number(tingkat);
-        if (tingkatBaru !== hierarki.tingkat)
+        if (direkturCabang && (tingkatBaru !== hierarki.tingkat || cabang !== cabangAwal))
+          await hierarkiService.setel({
+            member_id: member.id,
+            tingkat: tingkatBaru,
+            cabang_ids: cabang ? [cabang] : [],
+          });
+        else if (tingkatBaru !== hierarki.tingkat)
           await hierarkiService.setel({ member_id: member.id, tingkat: tingkatBaru });
       }
       await onSelesai();
@@ -242,7 +263,8 @@ export function MemberEditor({
     wsSlug !== (member.workspace_slug ?? "") ||
     password !== "" ||
     pref.perubahan() !== null ||
-    (hierarki !== undefined && Number(tingkat) !== (hierarki.tingkat ?? TINGKAT_MEMBER));
+    (hierarki !== undefined && Number(tingkat) !== (hierarki.tingkat ?? TINGKAT_MEMBER)) ||
+    (direkturCabang && cabang !== cabangAwal);
   useUnsavedChanges({
     isDirty,
     isSaving: sibuk,
@@ -367,12 +389,32 @@ export function MemberEditor({
                 </CustomSelect>
               </Field>
 
+              {direkturCabang && pilihanCabang.length > 0 && (
+                <Field label={s.editor.branch} hint={s.editor.branch_hint}>
+                  <CustomSelect
+                    value={cabang}
+                    label={pilihanCabang.find((c) => c.id === cabang)?.nama ?? s.editor.branch_pick}
+                    onChange={(v: string) => setCabang(v)}
+                    buttonClassName="w-full"
+                    className="w-full"
+                    input
+                  >
+                    {pilihanCabang.map((c) => (
+                      <CustomSelect.Option key={c.id} value={c.id}>
+                        {c.nama}
+                      </CustomSelect.Option>
+                    ))}
+                  </CustomSelect>
+                </Field>
+              )}
+
               {strukturAktif && (
                 <PenempatanBaca
                   tingkat={Number(tingkat)}
                   hierarki={hierarki}
                   pilihanDepartemen={pilihanDepartemen}
                   pilihanDivisi={pilihanDivisi}
+                  pilihanCabang={pilihanCabang}
                 />
               )}
             </div>
@@ -465,11 +507,13 @@ function PenempatanBaca({
   hierarki,
   pilihanDepartemen,
   pilihanDivisi,
+  pilihanCabang,
 }: {
   tingkat: number;
   hierarki: NonNullable<Props["hierarki"]>;
   pilihanDepartemen: TPilihanDepartemen[];
   pilihanDivisi: TPilihanDivisi[];
+  pilihanCabang: TPilihanCabang[];
 }) {
   const { s, fill } = useGodmodeStrings();
   // Sekretaris dan direktur menjangkau seluruh perusahaan: tidak ditempatkan.
@@ -482,7 +526,14 @@ function PenempatanBaca({
       ? (hierarki.divisi_ids ?? (hierarki.divisi_id ? [hierarki.divisi_id] : []))
       : [];
   const peran = hierarki.peran_departemen ?? {};
+  const namaCabang = Object.fromEntries(pilihanCabang.map((c) => [c.id, c.nama]));
   const baris = [
+    ...(hierarki.cabang_ids ?? []).map((id) => ({
+      id: `cab:${id}`,
+      tempat: namaCabang[id] ?? "",
+      induk: undefined as string | undefined,
+      peran: s.editor.position_branch_director,
+    })),
     ...divs.map((id) => ({
       id: `div:${id}`,
       tempat: fill(s.org.div_of, { div: namaDivisi[id] ?? "" }),
@@ -493,10 +544,7 @@ function PenempatanBaca({
       id: `dep:${id}`,
       tempat: depById[id]?.nama ?? "",
       induk: namaDivisi[depById[id]?.divisi_id ?? ""],
-      peran:
-        (peran[id] ?? Math.min(hierarki.tingkat ?? TINGKAT_MEMBER, TINGKAT_SUPERVISOR)) >= TINGKAT_SUPERVISOR
-          ? s.editor.position_supervisor
-          : s.editor.position_member,
+      peran: namaJenjang(peran[id] ?? Math.min(hierarki.tingkat ?? TINGKAT_MEMBER, TINGKAT_SUPERVISOR), s),
     })),
   ];
   return (

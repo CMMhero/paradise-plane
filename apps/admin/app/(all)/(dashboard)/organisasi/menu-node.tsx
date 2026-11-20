@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Satu menu "..." di kepala divisi, kartu departemen papan, dan kotak bagan: ubah, hapus,
+ * Satu menu "..." di kepala cabang, kepala divisi, kartu departemen papan, dan kotak bagan: ubah, hapus,
  * tambah orang, pindah departemen / ganti project. Isi menu hanya mengirim
  * perintah; modalnya ada di kelola.tsx.
  *
@@ -14,7 +14,7 @@
  */
 
 import type { ReactNode } from "react";
-import { ArrowRightLeft, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { ArrowRightLeft, Factory, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 // plane imports
 import { CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
@@ -54,6 +54,38 @@ function MenuAksi({ nama, items, className }: { nama: string; items: TItem[]; cl
 
 type TMenuProps = { id: string; nama: string; onKelola: TKelola; className?: string };
 
+export function MenuCabang({ id, nama, onKelola, className }: TMenuProps) {
+  const { s } = useGodmodeStrings();
+  const items: TItem[] = [
+    {
+      kunci: "ubah",
+      label: s.org.edit_name_code,
+      icon: <Pencil />,
+      onClick: () => onKelola({ jenis: "ubah-cabang", id }),
+    },
+    {
+      kunci: "div",
+      label: s.org.new_division,
+      icon: <Plus />,
+      onClick: () => onKelola({ jenis: "buat-divisi", cabangId: id }),
+    },
+    {
+      kunci: "dir",
+      label: s.org.branch.add_director,
+      icon: <UserPlus />,
+      onClick: () => onKelola({ jenis: "tambah-direktur-cabang", id }),
+    },
+    {
+      kunci: "hapus",
+      label: s.org.delete,
+      icon: <Trash2 />,
+      bahaya: true,
+      onClick: () => onKelola({ jenis: "hapus-cabang", id }),
+    },
+  ];
+  return <MenuAksi nama={nama} items={items} className={className} />;
+}
+
 export function MenuDivisi({ id, nama, onKelola, className }: TMenuProps) {
   const { s } = useGodmodeStrings();
   const items: TItem[] = [
@@ -74,6 +106,12 @@ export function MenuDivisi({ id, nama, onKelola, className }: TMenuProps) {
       label: s.org.add_manager,
       icon: <UserPlus />,
       onClick: () => onKelola({ jenis: "tambah-manager", id }),
+    },
+    {
+      kunci: "cabang",
+      label: s.org.branch.move_division,
+      icon: <Factory />,
+      onClick: () => onKelola({ jenis: "pindah-divisi", id }),
     },
     {
       kunci: "hapus",

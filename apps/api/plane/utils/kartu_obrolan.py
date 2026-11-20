@@ -3,37 +3,35 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-"""Kabar aktivitas yang relevan untuk seseorang, sebagai kartu di ruang "Paradise".
+"""Kabar aktivitas yang relevan untuk seseorang, sebagai kartu di DM obrolan.
 
 ## Ke mana kartunya dikirim
 
-KEP-90 (5 Nov 2026, permintaan user, membalik aturan lama): kalau aksinya punya
-pelaku manusia yang bukan penerimanya sendiri, kartu masuk DM antara PELAKU dan
-ORANG YANG TERDAMPAK, dengan pelaku sebagai pengirim. "Siapa yang terdampak" =
-penerima baris Notification (assignee, penyetuju, pembuat, yang disebut), jadi
-tiap orang dapat DM-nya sendiri. Pelaku melihat kartu itu di DM-nya sebagai
-pesan keluar.
+KEP-90 (5 Nov 2026): kalau aksinya punya pelaku manusia yang bukan penerimanya
+sendiri, kartu masuk DM antara PELAKU dan ORANG YANG TERDAMPAK, dengan pelaku
+sebagai pengirim. "Siapa yang terdampak" = penerima baris Notification
+(assignee, penyetuju, pembuat, yang disebut), jadi tiap orang dapat DM-nya
+sendiri. Pelaku melihat kartu itu di DM-nya sebagai pesan keluar.
 
-Ruang kabar pribadi (`kabar:<user_id>`, nama "Paradise") tetap dipakai untuk
-yang tak punya lawan bicara: aksi sistem/otomasi (tanpa pelaku), pelaku bot,
-dan aksi atas tugas sendiri.
+Yang tidak punya lawan bicara (aksi sistem/otomasi, pelaku bot, aksi atas tugas
+sendiri) TIDAK dijadikan kartu. Dulu kartu itu masuk ruang kabar pribadi
+"Paradise"; ruang itu dihapus atas permintaan user (migrasi 0181). Kabarnya
+tetap sampai lewat inbox dan email.
 
-Satu saklar untuk keduanya: `ENABLE_TUGAS_KE_DM`. Mati = semua kartu kembali ke
-ruang kabar. Penugasan tetap lewat `tugas_ke_dm_task` (kartu dengan rincian
-lengkap), jadi di sini dilewati selama saklar menyala supaya tidak dobel.
+`ENABLE_TUGAS_KE_DM` mati = tidak ada kartu sama sekali. Penugasan tetap lewat
+`tugas_ke_dm_task` (kartu dengan rincian lengkap), jadi di sini dilewati selama
+saklar menyala supaya tidak dobel.
 
 ## Pemicunya
 
 Baris `Notification` yang sudah lolos aturan bisnis dan saklar inbox penerima
-(`notification_task`, `notifikasi_persetujuan`), plus undangan project
-(`project_add_user_email`). Modul ini TIDAK memutuskan siapa yang berhak dikabari;
-yang tidak menerima baris inbox tidak menerima kartu.
+(`notification_task`, `notifikasi_persetujuan`). Modul ini TIDAK memutuskan
+siapa yang berhak dikabari; yang tidak menerima baris inbox tidak menerima kartu.
 
 ## Biaya
 
 Satu putaran notifikasi = satu kueri tugas (+project, state), satu kueri
-assignee, satu kueri ruang kabar yang sudah ada, lalu satu INSERT per kartu.
-Tidak ada kueri per baris.
+assignee, satu kueri bot, lalu satu DM dan satu INSERT per kartu.
 
 Semua fungsi publik menelan galatnya sendiri: kartu obrolan tidak boleh
 menggagalkan notifikasi aslinya.
@@ -41,28 +39,37 @@ menggagalkan notifikasi aslinya.
 
 import logging
 
-from plane.db.models import (
-    AWALAN_KABAR,
-    Issue,
-    IssueAssignee,
-    JenisPesan,
-    PesanLangsung,
-    Ruang,
-    User,
-)
+from plane.db.models import Issue, IssueAssignee, JenisPesan, PesanLangsung, User
+from plane.utils.akses_privat import penonton_tugas_ids
 from plane.utils.chat_ruang import ruang_dm
-from plane.utils.kanal_sistem import kirim_pesan_sistem, kunci_kabar, ruang_kabar
+from plane.utils.kanal_sistem import kirim_pesan_sistem
 from plane.utils.obrolan_siaran import siarkan
+from plane.utils.teks_html import teks_polos
 
 logger = logging.getLogger("plane.worker")
 
 BATAS_CUPLIKAN = 200
 BATAS_ASSIGNEE = 5
+# Kolom aktivitas yang nilainya HTML editor, bukan teks biasa. Kabar lebur
+# (`gabungan.perubahan`) tidak pernah memuat keduanya: komentar hanya dihitung
+# dan deskripsi tidak dilebur (gabung_kabar.KOLOM_LANGSUNG).
+KOLOM_HTML = frozenset({"comment", "description"})
+
+
+def _potong(teks) -> str:
+    return teks if len(teks) <= BATAS_CUPLIKAN else teks[: BATAS_CUPLIKAN - 1] + "…"
 
 
 def _cuplikan(teks) -> str:
-    rapi = " ".join(str(teks or "").split())
-    return rapi if len(rapi) <= BATAS_CUPLIKAN else rapi[: BATAS_CUPLIKAN - 1] + "…"
+    return _potong(" ".join(str(teks or "").split()))
+
+
+def _cuplikan_kolom(field, nilai) -> str:
+    """Cuplikan nilai satu kolom. HTML editor jadi teks dengan `@Nama` dan baris
+    per paragraf; nilai lain (nama state, label) cukup dirapikan spasinya."""
+    if field in KOLOM_HTML:
+        return _potong(teks_polos(nilai))
+    return _cuplikan(nilai)
 
 
 def jenis_dari_notifikasi(notif) -> str:
@@ -135,15 +142,6 @@ def _muat_tugas(issue_ids) -> tuple:
     return issues, assignees
 
 
-def _peta_ruang_kabar(workspace_id, user_ids) -> dict:
-    """Ruang kabar yang sudah ada, satu kueri; yang belum ada dibuat satu per satu."""
-    ada = {
-        r.kunci_sistem[len(AWALAN_KABAR) :]: r
-        for r in Ruang.objects.filter(workspace_id=workspace_id, kunci_sistem__in=[kunci_kabar(u) for u in user_ids])
-    }
-    return {str(u): ada.get(str(u)) or ruang_kabar(workspace_id, u) for u in user_ids}
-
-
 BATAS_PERUBAHAN = 6
 
 
@@ -172,12 +170,16 @@ def _ringkas_gabungan(notif) -> dict:
 def _detail(jenis, notif) -> dict:
     aktivitas = (notif.data or {}).get("issue_activity") or {}
     if jenis == JenisPesan.KOMENTAR:
-        return {"komentar": _cuplikan(aktivitas.get("new_value")), **_ringkas_gabungan(notif)}
+        return {"komentar": _cuplikan_kolom("comment", aktivitas.get("new_value")), **_ringkas_gabungan(notif)}
+    if jenis == JenisPesan.MENTION:
+        # Sebutan di komentar membawa HTML komentarnya, di deskripsi HTML deskripsinya.
+        return {"komentar": _cuplikan_kolom(aktivitas.get("field"), aktivitas.get("new_value"))}
     if jenis == JenisPesan.PEMBARUAN:
+        field = aktivitas.get("field") or ""
         return {
-            "field": aktivitas.get("field") or "",
-            "lama": _cuplikan(aktivitas.get("old_value")),
-            "baru": _cuplikan(aktivitas.get("new_value")),
+            "field": field,
+            "lama": _cuplikan_kolom(field, aktivitas.get("old_value")),
+            "baru": _cuplikan_kolom(field, aktivitas.get("new_value")),
             **_ringkas_gabungan(notif),
         }
     if jenis == JenisPesan.PERSETUJUAN:
@@ -195,10 +197,7 @@ def ringkasan(jenis, muatan) -> str:
         JenisPesan.KOMENTAR: "New comment",
         JenisPesan.PEMBARUAN: "Work item updated",
         JenisPesan.PERSETUJUAN: "Approval",
-        JenisPesan.PROJECT: "Added to project",
     }.get(jenis, "Update")
-    if jenis == JenisPesan.PROJECT:
-        return f"{label}: {(muatan.get('project') or {}).get('nama', '')}"
     return f"{label}: {judul}"
 
 
@@ -216,58 +215,46 @@ def kirim_kartu_notifikasi(notifs, persetujuan=None) -> int:
 
 
 def _kirim(notifs, persetujuan) -> int:
-    tugas_dm = None
+    if not _tugas_ke_dm_aktif():
+        return 0
     pilihan = []
     for n in notifs:
         jenis = jenis_dari_notifikasi(n)
         if not jenis or n.receiver_id is None or n.entity_identifier is None:
             continue
-        # Penugasan sudah jadi kartu di DM pemberi tugas; jangan dobel.
-        if jenis == JenisPesan.TUGAS and str(n.triggered_by_id) != str(n.receiver_id):
-            tugas_dm = _tugas_ke_dm_aktif() if tugas_dm is None else tugas_dm
-            if tugas_dm:
-                continue
+        # Penugasan sudah jadi kartu di DM pemberi tugas (`tugas_ke_dm_task`); jangan dobel.
+        if jenis == JenisPesan.TUGAS:
+            continue
         pilihan.append((jenis, n))
+    bot = _id_bot({n.triggered_by_id for _, n in pilihan if n.triggered_by_id})
+    pilihan = [(jenis, n) for jenis, n in pilihan if _pelaku_manusia_lain(n, bot)]
     if not pilihan:
         return 0
 
     issues, assignees = _muat_tugas({n.entity_identifier for _, n in pilihan})
-    dm = _tugas_ke_dm_aktif() if tugas_dm is None else tugas_dm
-    bot = _id_bot({n.triggered_by_id for _, n in pilihan if n.triggered_by_id}) if dm else set()
-    lewat_dm = {id(n) for _, n in pilihan if dm and _pelaku_manusia_lain(n, bot)}
-    per_ws = {}
-    for _, n in pilihan:
-        if id(n) not in lewat_dm:
-            per_ws.setdefault(str(n.workspace_id), set()).add(str(n.receiver_id))
-    ruang = {ws: _peta_ruang_kabar(ws, ids) for ws, ids in per_ws.items()}
-
     jumlah = 0
     for jenis, n in pilihan:
         issue = issues.get(str(n.entity_identifier))
         if issue is None:
             continue
+        # P29: kartu tugas privat hanya untuk yang boleh melihatnya, apa pun asal barisnya.
+        if issue.is_private and not penonton_tugas_ids(issue, [n.receiver_id]):
+            continue
         muatan = _muatan(jenis, n, issue, assignees)
         if jenis == JenisPesan.PERSETUJUAN and persetujuan:
             muatan["persetujuan"] = {k: (str(v) if v is not None else None) for k, v in persetujuan.items()}
-        # Id kartu yang ditetapkan notification_task: kabar yang dilebur ke baris
-        # ini nanti menyunting kartu yang sama (`perbarui_kartu_notifikasi`).
-        kartu_id = (n.data or {}).get("kartu_id")
-        if id(n) in lewat_dm:
-            # KEP-90: kartu masuk DM pelaku <-> orang yang terdampak, pelaku
-            # sebagai pengirim. Tiap penerima notifikasi dapat DM-nya sendiri.
-            tujuan = ruang_dm(n.workspace_id, n.triggered_by_id, n.receiver_id)
-            kirim_pesan_sistem(
-                tujuan,
-                jenis,
-                muatan,
-                ringkasan(jenis, muatan),
-                pengirim_id=n.triggered_by_id,
-                penerima_id=n.receiver_id,
-                pesan_id=kartu_id,
-            )
-        else:
-            tujuan = ruang[str(n.workspace_id)][str(n.receiver_id)]
-            kirim_pesan_sistem(tujuan, jenis, muatan, ringkasan(jenis, muatan), pesan_id=kartu_id)
+        # KEP-90: kartu masuk DM pelaku <-> orang yang terdampak, pelaku sebagai
+        # pengirim. Id kartu yang ditetapkan notification_task: kabar yang dilebur
+        # ke baris ini nanti menyunting kartu yang sama (`perbarui_kartu_notifikasi`).
+        kirim_pesan_sistem(
+            ruang_dm(n.workspace_id, n.triggered_by_id, n.receiver_id),
+            jenis,
+            muatan,
+            ringkasan(jenis, muatan),
+            pengirim_id=n.triggered_by_id,
+            penerima_id=n.receiver_id,
+            pesan_id=(n.data or {}).get("kartu_id"),
+        )
         jumlah += 1
     return jumlah
 
@@ -336,8 +323,8 @@ def _perbarui(diperbarui, dihapus) -> int:
 
 
 def _id_bot(user_ids) -> set:
-    """Id pelaku yang bot (impor, integrasi). Kartunya tetap ke ruang kabar:
-    DM dengan bot adalah percakapan yang tidak bisa dibalas siapa pun."""
+    """Id pelaku yang bot (impor, integrasi). Kartunya tidak dikirim: DM dengan
+    bot adalah percakapan yang tidak bisa dibalas siapa pun."""
     if not user_ids:
         return set()
     return {str(u) for u in User.objects.filter(id__in=user_ids, is_bot=True).values_list("id", flat=True)}
@@ -347,73 +334,6 @@ def _pelaku_manusia_lain(notif, bot_ids) -> bool:
     """Kartu ini punya pelaku manusia yang BUKAN penerimanya sendiri."""
     pelaku = notif.triggered_by_id
     return bool(pelaku) and str(pelaku) != str(notif.receiver_id) and str(pelaku) not in bot_ids
-
-
-def kartu_ditambahkan_ke_project(project_member, pengundang_id) -> None:
-    """Kartu "ditambahkan ke project" untuk anggota baru project."""
-    try:
-        from plane.utils.preferensi_email import boleh  # noqa: PLC0415
-
-        penerima_id = project_member.member_id
-        if str(penerima_id) == str(pengundang_id) or not boleh(penerima_id, "inbox_assigned"):
-            return
-        project = project_member.project
-        muatan = {
-            "aksi": JenisPesan.PROJECT,
-            "aktor": str(pengundang_id) if pengundang_id else None,
-            "workspace_slug": project.workspace.slug,
-            "project": {"id": str(project.id), "nama": project.name, "identifier": project.identifier},
-            "peran": project_member.role,
-        }
-        ruang = ruang_kabar(project.workspace_id, penerima_id)
-        kirim_pesan_sistem(ruang, JenisPesan.PROJECT, muatan, ringkasan(JenisPesan.PROJECT, muatan))
-    except Exception:  # noqa: BLE001
-        logger.exception("kartu-obrolan: gagal mengirim kartu project untuk %s", getattr(project_member, "id", "?"))
-
-
-def kartu_disebut_di_obrolan(pesan, ruang, penerima_ids) -> int:
-    """Kartu "X menyebutmu di #kanal" ke ruang kabar tiap orang yang disebut.
-
-    Hanya untuk kanal. Di DM orangnya sudah menerima pesannya sendiri, jadi kartu
-    kedua cuma gema. Saklar `inbox_mention` dihormati, sama dengan sebutan di
-    komentar work item.
-    """
-    try:
-        from plane.utils.preferensi_email import penyaring  # noqa: PLC0415
-
-        # Id dibiarkan bertipe UUID: `penyaring` mencocokkan preferensi lewat
-        # kunci UUID, dan string membuatnya diam-diam jatuh ke bawaan.
-        tujuan = penyaring({u for u in penerima_ids if str(u) != str(pesan.pengirim_id)}, "inbox_mention")
-        if not tujuan:
-            return 0
-        from plane.utils.rujukan_obrolan import kanal_privat_milik, samarkan  # noqa: PLC0415
-
-        urut = sorted(tujuan, key=str)
-        peta = _peta_ruang_kabar(ruang.workspace_id, urut)
-        # KEP-91: cuplikan disamarkan PER PENERIMA. Rujukan #kanal-privat di
-        # pesan tidak boleh terbaca lewat kartu oleh yang bukan anggotanya.
-        # Satu kueri keanggotaan untuk semua penerima.
-        privat = kanal_privat_milik(urut, [pesan.muatan])
-        for uid in urut:
-            teks, _ = samarkan(pesan.isi, pesan.muatan, uid, boleh=privat.get(str(uid), set()))
-            muatan = {
-                "aksi": JenisPesan.MENTION,
-                "aktor": str(pesan.pengirim_id) if pesan.pengirim_id else None,
-                "workspace_slug": ruang.workspace.slug,
-                "obrolan": {
-                    "ruang_id": str(ruang.id),
-                    "nama": ruang.nama or "",
-                    "tipe": ruang.tipe,
-                    "pesan_id": str(pesan.id),
-                },
-                "detail": {"komentar": _cuplikan(teks)},
-            }
-            isi = f"You were mentioned in #{ruang.nama or ''}: {_cuplikan(teks)}"
-            kirim_pesan_sistem(peta[str(uid)], JenisPesan.MENTION, muatan, isi)
-        return len(tujuan)
-    except Exception:  # noqa: BLE001
-        logger.exception("kartu-obrolan: gagal mengirim kartu sebutan untuk pesan %s", getattr(pesan, "id", "?"))
-        return 0
 
 
 def tandai_persetujuan_diputuskan(persetujuan_id, status) -> int:

@@ -347,7 +347,11 @@ class TestEntriBeatBasi:
         for nama, task, terakhir in (
             ("ringkasan-harian", "plane.bgtasks.daily_digest_task.kirim_ringkasan_harian", _utc(RABU, 1, 30)),
             ("ringkasan-direktur", "plane.bgtasks.direktur_digest_task.kirim_ringkasan_direktur", None),
-            ("ringkasan-sore", "plane.bgtasks.daily_digest_task.kirim_ringkasan_sore", _utc(RABU, 10, 30) - timedelta(days=1)),
+            (
+                "ringkasan-sore",
+                "plane.bgtasks.daily_digest_task.kirim_ringkasan_sore",
+                _utc(RABU, 10, 30) - timedelta(days=1),
+            ),
             ("pengingat-tenggat", "plane.bgtasks.deadline_reminder_task.kirim_pengingat_tenggat", _utc(RABU, 1, 0)),
         ):
             PeriodicTask.objects.create(name=nama, task=task, crontab=cron, last_run_at=terakhir)

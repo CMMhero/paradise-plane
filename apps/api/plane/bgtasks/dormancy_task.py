@@ -81,7 +81,10 @@ TEKS_TIDUR = {
 
 def susun_peringatan_tidur(nama, slug, hari, sisa, bahasa="id", email=""):
     """(subjek, teks, html). Murni: dipakai pengirim dan `kirim_contoh_email`."""
-    s = {k: v.format(nama=nama, slug=slug, hari=hari, sisa=sisa) for k, v in TEKS_TIDUR.get(bahasa, TEKS_TIDUR["id"]).items()}
+    s = {
+        k: v.format(nama=nama, slug=slug, hari=hari, sisa=sisa)
+        for k, v in TEKS_TIDUR.get(bahasa, TEKS_TIDUR["id"]).items()
+    }
     dasar = base_url()
     isi = (
         judul_html(s["judul"])

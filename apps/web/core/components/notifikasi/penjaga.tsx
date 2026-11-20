@@ -46,6 +46,11 @@ const SELANG_CADANGAN_TERSAMBUNG = 90000;
 
 const KUNCI_JUMLAH_NOTIF = "WORKSPACE_UNREAD_NOTIFICATION_COUNT";
 
+/** Polling lain berhenti saat jendela kehilangan fokus. Yang ini tidak: kartu
+ * peramban dari penjaga ini justru untuk orang yang sedang di aplikasi lain
+ * (permintaan 3 Nov 2026). Yang ditarik cuma dua angka, dan tab tersembunyi tetap berhenti. */
+const TETAP_TARIK_SAAT_TIDAK_FOKUS = () => document.visibilityState !== "hidden";
+
 /** Sebanyak ini kartu boleh menumpuk sekaligus. Lebih dari itu bukan lagi
  * pemberitahuan melainkan dinding. Yang tergeser tidak hilang: angkanya tetap di
  * lencana dan isinya tetap di panel Pemberitahuan. */
@@ -131,13 +136,13 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
   const { data: statusObrolan } = useSWR(
     pantauObrolan ? KUNCI_BELUM_DIBACA : null,
     pantauObrolan ? () => chatService.getStatus(workspaceSlug) : null,
-    { refreshInterval: tersambung ? SELANG_CADANGAN_TERSAMBUNG : SELANG }
+    { refreshInterval: tersambung ? SELANG_CADANGAN_TERSAMBUNG : SELANG, isVisible: TETAP_TARIK_SAAT_TIDAK_FOKUS }
   );
 
   const { data: statusNotif } = useSWR(
     pantauNotif ? KUNCI_JUMLAH_NOTIF : null,
     pantauNotif ? () => getUnreadNotificationsCount(workspaceSlug) : null,
-    { refreshInterval: tersambung ? SELANG_CADANGAN_TERSAMBUNG : SELANG }
+    { refreshInterval: tersambung ? SELANG_CADANGAN_TERSAMBUNG : SELANG, isVisible: TETAP_TARIK_SAAT_TIDAK_FOKUS }
   );
 
   const jumlahObrolan = statusObrolan?.jumlah ?? null;

@@ -128,6 +128,9 @@ class UserNotificationPreference(BaseModel):
     assigned = models.BooleanField(default=True)
     # Kustomisasi Paradise: email pesan obrolan yang belum dibaca (chat_notification_task).
     chat = models.BooleanField(default=True)
+    # Kustomisasi Paradise: email tiap pesan baru di kanal Announcements
+    # (pengumuman_email_task). Hidup untuk semua jabatan, direktur juga.
+    pengumuman = models.BooleanField(default=True)
     # Kustomisasi Paradise: saklar INBOX per jenis kabar (keputusan user 2026-11-02).
     # Hidup semua = perilaku lama (inbox selalu ditulis).
     inbox_assigned = models.BooleanField(default=True)

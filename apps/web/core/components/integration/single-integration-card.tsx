@@ -25,6 +25,7 @@ import { WORKSPACE_INTEGRATIONS } from "@plane/constants";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import useIntegrationPopup from "@/hooks/use-integration-popup";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
@@ -52,6 +53,7 @@ const integrationService = new IntegrationService();
 
 export const SingleIntegrationCard = observer(function SingleIntegrationCard({ integration }: Props) {
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
   // states
   const [deletingIntegration, setDeletingIntegration] = useState(false);
   // router
@@ -115,6 +117,7 @@ export const SingleIntegrationCard = observer(function SingleIntegrationCard({ i
 
   return (
     <div className="flex items-center justify-between gap-2 border-b border-subtle bg-surface-1 px-4 py-6">
+      {dialog}
       <div className="flex items-start gap-4">
         <div className="h-10 w-10 flex-shrink-0">
           <img
@@ -152,7 +155,14 @@ export const SingleIntegrationCard = observer(function SingleIntegrationCard({ i
               variant="error-fill"
               onClick={() => {
                 if (!isUserAdmin) return;
-                handleRemoveIntegration();
+                minta(
+                  {
+                    judul: t("ui_fixes.confirm_integration_title"),
+                    isi: t("ui_fixes.confirm_integration_body", { name: integration.title }),
+                    tombol: t("ui_fixes.confirm_integration_button"),
+                  },
+                  handleRemoveIntegration
+                );
               }}
               disabled={!isUserAdmin}
               loading={deletingIntegration}

@@ -29,6 +29,17 @@ const InstanceWrapper = lazy(function InstanceWrapper() {
   return import("@/lib/wrappers/instance-wrapper");
 });
 
+/**
+ * Jendela dianggap "terlihat" hanya saat tab tampak DAN jendelanya berfokus.
+ * SWR memakai ini untuk menunda `refreshInterval`, jadi polling berhenti saat
+ * orang beralih ke aplikasi lain, bukan hanya saat tab tersembunyi. Tinggal di
+ * sini, bukan di `@plane/constants`, karena paket itu tidak memuat tipe DOM.
+ */
+const SWR_CONFIG = {
+  ...WEB_SWR_CONFIG,
+  isVisible: () => document.visibilityState !== "hidden" && document.hasFocus(),
+};
+
 export interface IAppProvider {
   children: React.ReactNode;
 }
@@ -47,7 +58,7 @@ export function AppProvider(props: IAppProvider) {
           <StoreWrapper>
             <InstanceWrapper>
               <Suspense>
-                <SWRConfig value={WEB_SWR_CONFIG}>{children}</SWRConfig>
+                <SWRConfig value={SWR_CONFIG}>{children}</SWRConfig>
               </Suspense>
             </InstanceWrapper>
           </StoreWrapper>

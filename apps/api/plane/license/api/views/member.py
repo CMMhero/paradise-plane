@@ -361,7 +361,8 @@ class InstanceMemberEndpoint(BaseAPIView):
         (`on_delete=CASCADE`) — data milik orang lain ikut hilang. Di sini yang
         terjadi: nonaktif + email/nama digosok + sesi diakhiri + status Super
         Admin dicabut + keanggotaan workspace dinonaktifkan. FK dan riwayat
-        (audit, worklog, work item) tetap utuh, pemiliknya tampil "Deleted account", dan identitas aslinya disimpan di `AkunTerhapus` supaya bisa dipulihkan dari Trash.
+        (audit, worklog, work item) tetap utuh, pemiliknya tampil "Deleted account", dan
+        identitas aslinya disimpan di `AkunTerhapus` supaya bisa dipulihkan dari Trash.
 
         Gerbang (gagal-tertutup semua):
         - `konfirmasi` harus persis display_name akun (ketik-ulang ala hapus
@@ -496,7 +497,9 @@ class InstanceMemberEndpoint(BaseAPIView):
             if not email or "@" not in email:
                 return Response({"error": "Invalid email."}, status=status.HTTP_400_BAD_REQUEST)
             if User.objects.filter(email=email).exclude(pk=u.pk).exists():
-                return Response({"error": "Email is already used by another account."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Email is already used by another account."}, status=status.HTTP_400_BAD_REQUEST
+                )
             username_baru = _uname(email)
             # `username` juga unik. Tanpa pemeriksaan ini, dua email berbeda yang
             # memetakan ke username sama (titik vs garis bawah) menabrak
@@ -560,7 +563,9 @@ class InstanceMemberEndpoint(BaseAPIView):
             # Bukan `Workspace.objects.first()`: itu yang TERBARU (lihat `_workspace_utama`).
             ws_slug = ws_slug or (sekarang[1] if sekarang else "")
             ws = (
-                Workspace.objects.filter(slug=ws_slug, deleted_at__isnull=True).first() if ws_slug else _workspace_utama()
+                Workspace.objects.filter(slug=ws_slug, deleted_at__isnull=True).first()
+                if ws_slug
+                else _workspace_utama()
             )
             if not ws:
                 return Response({"error": "Workspace not found."}, status=status.HTTP_400_BAD_REQUEST)
@@ -647,7 +652,10 @@ def _bentuk_preferensi(u, profil, notif):
             "theme": tema.get("theme") or "system",
             "start_of_the_week": profil.start_of_the_week,
             # Nilai efektif: kosong = pabrik, sama dengan cara apps/web membacanya.
-            **{kunci: tema.get(kunci) if tema.get(kunci) in GAYA_SAH[kunci] else GAYA_PABRIK[kunci] for kunci in GAYA_SAH},
+            **{
+                kunci: tema.get(kunci) if tema.get(kunci) in GAYA_SAH[kunci] else GAYA_PABRIK[kunci]
+                for kunci in GAYA_SAH
+            },
             **suara_efektif(tema),
         },
         "notifications": {**saklar_efektif(notif), "ikut_bawaan_jabatan": notif.ikut_bawaan_jabatan},

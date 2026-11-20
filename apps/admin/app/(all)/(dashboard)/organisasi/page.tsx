@@ -18,7 +18,7 @@
  */
 
 import { useState } from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Factory, Plus } from "lucide-react";
 import useSWR, { useSWRConfig } from "swr";
 // plane imports
 import { Button } from "@plane/propel/button";
@@ -26,7 +26,9 @@ import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
   InstanceHierarkiService,
   InstanceOrganisasiService,
+  TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
+  TINGKAT_LEADER,
   TINGKAT_MANAGER,
   TINGKAT_SEKRETARIS,
   TINGKAT_SUPERVISOR,
@@ -46,7 +48,7 @@ import { BaganOrganisasi, type TBukaDiPapan } from "./bagan";
 import { KanvasBagan } from "./kanvas-bagan";
 import { KelolaOrganisasi } from "./kelola";
 import { idDepartemen, idDivisi, PapanOrganisasi } from "./papan";
-import { akunTerhapus } from "./papan-logika";
+import { akunTerhapus, namaJenjang } from "./papan-logika";
 import { usePenempatanOptimis } from "./use-penempatan";
 import { pesanGagalSimpan, type TAksiOrganisasi, type TPerintahKelola } from "./util";
 
@@ -132,10 +134,20 @@ export default function OrganisasiPage() {
   };
 
   const aksi: TAksiOrganisasi = {
-    buatDivisi: (kode, nama) =>
-      jalankan(() => layanan.buatDivisi({ kode, nama }), fill(s.org.division_created, { kode })),
+    buatCabang: (kode, nama) =>
+      jalankan(() => layanan.buatCabang({ kode, nama }), fill(s.org.branch.created, { kode })),
+    ubahCabang: (id, kode, nama) =>
+      jalankan(() => layanan.ubahCabang(id, { kode, nama }), fill(s.org.branch.saved, { kode })),
+    hapusCabang: (id) => jalankan(() => layanan.hapusCabang(id), s.org.branch.deleted),
+    buatDivisi: (kode, nama, cabangId) =>
+      jalankan(
+        () => layanan.buatDivisi({ kode, nama, ...(cabangId ? { cabang_id: cabangId } : {}) }),
+        fill(s.org.division_created, { kode })
+      ),
     ubahDivisi: (id, kode, nama) =>
       jalankan(() => layanan.ubahDivisi(id, { kode, nama }), fill(s.org.division_saved, { kode })),
+    pindahDivisi: (id, cabangId) =>
+      jalankan(() => layanan.ubahDivisi(id, { cabang_id: cabangId }), s.org.branch.division_moved),
     hapusDivisi: (id) => jalankan(() => layanan.hapusDivisi(id), s.org.division_deleted),
     buatDepartemen: (divisiId, kode, nama) =>
       jalankan(
@@ -154,7 +166,7 @@ export default function OrganisasiPage() {
       try {
         await hierarkiService.setel({ member_id: orang.id, ...tujuan });
         await muatUlangSemua();
-        const keluar = tujuan.departemen_id === null || tujuan.divisi_id === null;
+        const keluar = tujuan.departemen_id === null || tujuan.divisi_id === null || tujuan.cabang_id === null;
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: fill(keluar ? s.org.person_removed : s.org.person_placed, { name: orang.display_name }),
@@ -169,19 +181,9 @@ export default function OrganisasiPage() {
         const hasil = await hierarkiService.setel({ member_id: orang.id, tingkat });
         await muatUlangSemua();
         const akhir = hasil.member.tingkat ?? tingkat;
-        const namaJenjang =
-          akhir >= TINGKAT_DIREKTUR
-            ? s.members.level_director
-            : akhir >= TINGKAT_SEKRETARIS
-              ? s.members.level_secretary
-              : akhir >= TINGKAT_MANAGER
-                ? s.members.level_manager
-                : akhir >= TINGKAT_SUPERVISOR
-                  ? s.members.level_supervisor
-                  : s.members.level_staff;
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: fill(s.org.level_saved, { name: orang.display_name, level: namaJenjang }),
+          title: fill(s.org.level_saved, { name: orang.display_name, level: namaJenjang(akhir, s) }),
           message: hasil.member.divisi_dilepas.length > 0 ? s.org.level_saved_divisions_released : undefined,
         });
       } catch (err) {
@@ -193,6 +195,19 @@ export default function OrganisasiPage() {
         await hierarkiService.setel({ member_id: orangId, departemen_ids: departemenIds });
         await muatUlangSemua();
         setToast({ type: TOAST_TYPE.SUCCESS, title: s.org.department_saved });
+      } catch (err) {
+        setToast({ type: TOAST_TYPE.ERROR, title: s.org.failed, message: pesanGagal(err, s.org.save_failed_message) });
+      }
+    },
+    setelCabang: async (orang: TAnggotaHierarki, cabangIds: string[]) => {
+      try {
+        await hierarkiService.setel({ member_id: orang.id, cabang_ids: cabangIds });
+        await muatUlangSemua();
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: fill(cabangIds.length ? s.org.person_placed : s.org.person_removed, { name: orang.display_name }),
+          message: s.org.placed_message,
+        });
       } catch (err) {
         setToast({ type: TOAST_TYPE.ERROR, title: s.org.failed, message: pesanGagal(err, s.org.save_failed_message) });
       }
@@ -212,9 +227,24 @@ export default function OrganisasiPage() {
     title: s.settings.tabs.people_organization.title,
     description: s.org.description,
     actions: (
-      <Button variant="primary" size="lg" prependIcon={<Plus />} onClick={() => setPerintah({ jenis: "buat-divisi" })}>
-        {s.org.new_division}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          size="lg"
+          prependIcon={<Factory />}
+          onClick={() => setPerintah({ jenis: "buat-cabang" })}
+        >
+          {s.org.branch.new}
+        </Button>
+        <Button
+          variant="primary"
+          size="lg"
+          prependIcon={<Plus />}
+          onClick={() => setPerintah({ jenis: "buat-divisi" })}
+        >
+          {s.org.new_division}
+        </Button>
+      </div>
     ),
   };
 
@@ -242,28 +272,37 @@ export default function OrganisasiPage() {
   const sekretaris = orang.filter(
     (o) => o.tingkat !== null && o.tingkat >= TINGKAT_SEKRETARIS && o.tingkat < TINGKAT_DIREKTUR
   );
-  const manager = orang.filter(
-    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_MANAGER && o.tingkat < TINGKAT_SEKRETARIS
+  const direkturCabang = orang.filter(
+    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_CABANG && o.tingkat < TINGKAT_SEKRETARIS
   );
+  const manager = orang.filter((o) => o.tingkat !== null && o.tingkat >= TINGKAT_MANAGER && o.tingkat < TINGKAT_CABANG);
   const supervisor = orang.filter(
     (o) => o.tingkat !== null && o.tingkat >= TINGKAT_SUPERVISOR && o.tingkat < TINGKAT_MANAGER
   );
-  const staf = orang.filter((o) => o.tingkat === null || o.tingkat < TINGKAT_SUPERVISOR);
-  const belum = orang.filter((o) => !menjangkauSeluruhOrganisasi(o.tingkat) && !o.departemen_id && !o.divisi_id);
+  const leader = orang.filter(
+    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_LEADER && o.tingkat < TINGKAT_SUPERVISOR
+  );
+  const staf = orang.filter((o) => o.tingkat === null || o.tingkat < TINGKAT_LEADER);
+  const belum = orang.filter(
+    (o) => !menjangkauSeluruhOrganisasi(o.tingkat) && !o.departemen_id && !o.divisi_id && !o.cabang_ids?.length
+  );
   const totalDepartemen = data.divisi.reduce((n, v) => n + v.departemen.length, 0);
 
   return (
     <PageWrapper header={header}>
       <MenuTabs menu="people" />
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-11">
+          <StatCard label={s.org.branch.stat} value={data.cabang.length} />
           <StatCard label={s.org.stat_division} value={data.divisi.length} />
           <StatCard label={s.org.stat_department} value={totalDepartemen} />
           <StatCard label={s.org.stat_project} value={semuaProject.length} />
           <StatCard label={s.org.stat_director} value={direktur.length} />
           <StatCard label={s.org.stat_secretary} value={sekretaris.length} />
+          <StatCard label={s.org.stat_branch_director} value={direkturCabang.length} />
           <StatCard label={s.org.stat_manager} value={manager.length} />
           <StatCard label={s.org.stat_supervisor} value={supervisor.length} />
+          <StatCard label={s.org.stat_leader} value={leader.length} />
           <StatCard
             label={s.org.stat_staff}
             value={staf.length}

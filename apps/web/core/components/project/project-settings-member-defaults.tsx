@@ -20,6 +20,7 @@ import { PROJECT_DETAILS } from "@plane/constants";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useBisaDitugaskan } from "@/hooks/use-aturan-tugas";
 // local imports
 import { MemberSelect } from "./member-select";
 
@@ -61,6 +62,9 @@ export const ProjectSettingsMemberDefaults = observer(function ProjectSettingsMe
   const { allowPermissions } = useUserPermissions();
 
   const { currentProjectDetails, fetchProjectDetails, updateProject } = useProject();
+  // Default assignee = orang yang nanti ditugaskan atas nama saya: pilihannya sama
+  // dengan dropdown assignee saya, jadi atasan tidak pernah ditawarkan.
+  const bolehDitugaskan = useBisaDitugaskan(workspaceSlug, projectId).userIds;
   // derived values
   const isAdmin = allowPermissions(
     [EUserPermissions.ADMIN],
@@ -170,6 +174,7 @@ export const ProjectSettingsMemberDefaults = observer(function ProjectSettingsMe
             render={({ field: { value } }) => (
               <MemberSelect
                 value={value}
+                memberIds={bolehDitugaskan}
                 onChange={(val: string) => {
                   submitChanges({ default_assignee: val });
                 }}

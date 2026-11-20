@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-"""Kanal sistem: Announcements, Changelog, dan ruang kabar "Paradise" per orang.
+"""Kanal sistem: Announcements dan Changelog.
 
 Satu tempat untuk tiga aturan yang harus sama di setiap jalur:
 
@@ -13,7 +13,7 @@ Satu tempat untuk tiga aturan yang harus sama di setiap jalur:
   terakhir itu jaring untuk jalur `bulk_create` (terima undangan) yang tidak
   memancarkan signal.
 * Siapa yang boleh menulis: Changelog hanya sistem, Announcements hanya Super
-  Admin dan admin workspace, ruang kabar hanya sistem.
+  Admin, admin workspace, dan penulis yang mereka izinkan (`PenulisKanal`).
 * Pesan sistem ditulis lewat `kirim_pesan_sistem`, yang juga menggeser
   `pesan_terakhir_pada` dan menyiarkan ke soket, sama seperti jalur kirim biasa.
 
@@ -27,7 +27,6 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from plane.db.models import (
-    AWALAN_KABAR,
     KUNCI_CHANGELOG,
     KUNCI_PENGUMUMAN,
     Langganan,
@@ -37,6 +36,7 @@ from plane.db.models import (
 )
 from plane.db.models.akun_terhapus import DOMAIN_AKUN_TERHAPUS
 from plane.utils.obrolan_siaran import siarkan
+from plane.utils.penulis_kanal import penulis_diizinkan
 
 logger = logging.getLogger("plane.api")
 
@@ -48,15 +48,6 @@ KANAL_SISTEM = (
     (KUNCI_PENGUMUMAN, "Announcements", "Company announcements from admins."),
     (KUNCI_CHANGELOG, "Changelogs", "What changed in each Paradise release."),
 )
-NAMA_KABAR = "Paradise"
-
-
-def kunci_kabar(user_id) -> str:
-    return f"{AWALAN_KABAR}{user_id}"
-
-
-def adalah_kabar(ruang) -> bool:
-    return bool(ruang.kunci_sistem and ruang.kunci_sistem.startswith(AWALAN_KABAR))
 
 
 def _ambil_atau_buat(workspace_id, kunci, nama, topik, tipe):
@@ -158,19 +149,6 @@ def ikutkan_jika_belum(workspace_id, user_id) -> None:
         logger.exception("kanal-sistem: pemeriksaan malas gagal untuk %s", user_id)
 
 
-def ruang_kabar(workspace_id, user_id):
-    """Ruang kabar "Paradise" milik satu orang, dibuat kalau belum ada.
-
-    Tipe privat dengan satu pelanggan: hanya pemiliknya yang melihatnya, dan
-    semua jalur baca yang sudah ada (daftar kanal, isi ruang, pencarian)
-    melayaninya tanpa cabang kode baru.
-    """
-    ruang, dibuat = _ambil_atau_buat(workspace_id, kunci_kabar(user_id), NAMA_KABAR, "", Ruang.Tipe.PRIVAT)
-    if dibuat or not Langganan.objects.filter(ruang=ruang, user_id=user_id).exists():
-        Langganan.objects.get_or_create(ruang=ruang, user_id=user_id)
-    return ruang
-
-
 def adalah_admin_workspace(user, workspace_id) -> bool:
     from plane.db.superadmin import is_super_admin  # noqa: PLC0415
 
@@ -187,13 +165,15 @@ def boleh_kirim(ruang, user, admin=None) -> bool:
     if not ruang.sistem:
         return True
     if ruang.kunci_sistem == KUNCI_PENGUMUMAN:
-        return adalah_admin_workspace(user, ruang.workspace_id) if admin is None else admin
+        if admin is None:
+            admin = adalah_admin_workspace(user, ruang.workspace_id)
+        return admin or penulis_diizinkan(user.id, ruang)
     # Kanal divisi/departemen: obrolan biasa antar anggotanya. Yang dikunci cuma
     # keanggotaannya (ikut God Mode), bukan hak menulisnya.
     kunci = ruang.kunci_sistem or ""
     if kunci.startswith(("divisi:", "departemen:")):
         return True
-    # Changelog dan ruang kabar: hanya sistem.
+    # Changelog: hanya sistem.
     return False
 
 
@@ -205,8 +185,8 @@ def boleh_tinggalkan(ruang) -> bool:
 def kirim_pesan_sistem(ruang, jenis, muatan, isi, pengirim_id=None, penerima_id=None, pesan_id=None):
     """Tulis satu pesan kartu ke ruang, geser urutan, siarkan ke soket.
 
-    `pesan_id`: id yang sudah ditetapkan pemanggil (kartu kabar yang nanti
-    disunting di tempat, lihat `kartu_obrolan.perbarui_kartu_notifikasi`).
+    `pesan_id`: id yang sudah ditetapkan pemanggil (kartu yang nanti disunting
+    di tempat, lihat `kartu_obrolan.perbarui_kartu_notifikasi`).
     """
     ekstra = {"id": pesan_id} if pesan_id else {}
     pesan = PesanLangsung.objects.create(

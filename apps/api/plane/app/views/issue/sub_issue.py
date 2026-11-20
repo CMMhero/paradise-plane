@@ -7,7 +7,7 @@ import json
 
 # Django imports
 from django.utils import timezone
-from django.db.models import OuterRef, Func, F, Q, Value, UUIDField, Subquery, Count, IntegerField
+from django.db.models import OuterRef, F, Value, UUIDField, Subquery, Count, IntegerField
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -20,6 +20,7 @@ from rest_framework import status
 
 # Module imports
 from .. import BaseAPIView
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.serializers import IssueSerializer
 from plane.app.permissions import ProjectEntityPermission
 from plane.db.models import Issue, IssueLink, FileAsset, CycleIssue, IssueLabel, IssueAssignee, ModuleIssue
@@ -36,7 +37,7 @@ class SubIssuesEndpoint(BaseAPIView):
     @method_decorator(gzip_page)
     def get(self, request, slug, project_id, issue_id):
         sub_issues = (
-            Issue.issue_objects.filter(parent_id=issue_id, workspace__slug=slug)
+            saring_tugas_privat(Issue.issue_objects.filter(parent_id=issue_id, workspace__slug=slug), request.user)
             .annotate(
                 cycle_id=Subquery(
                     CycleIssue.objects.filter(issue=OuterRef("id"), deleted_at__isnull=True).values("cycle_id")[:1]
@@ -163,6 +164,7 @@ class SubIssuesEndpoint(BaseAPIView):
                 "attachment_count",
                 "link_count",
                 "is_draft",
+                "is_private",
                 "archived_at",
                 "state_group",
             )
@@ -223,7 +225,7 @@ class SubIssuesEndpoint(BaseAPIView):
         from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
 
         for sub_issue in sub_issues:
-            naikkan_assignee(sub_issue.id)
+            naikkan_assignee(sub_issue.id, request.user)
 
         updated_sub_issues = Issue.issue_objects.filter(id__in=sub_issue_ids).annotate(state_group=F("state__group"))
 

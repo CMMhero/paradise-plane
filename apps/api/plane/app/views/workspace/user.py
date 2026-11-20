@@ -29,6 +29,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.permissions import WorkspaceEntityPermission, WorkspaceViewerPermission
 
 # Module imports
@@ -136,14 +137,17 @@ class WorkspaceUserProfileIssuesEndpoint(BaseAPIView):
         filters = issue_filters(request.query_params, "GET")
 
         order_by_param = request.GET.get("order_by", "-created_at")
-        issue_queryset = Issue.issue_objects.filter(
-            id__in=Issue.issue_objects.filter(
-                Q(assignees__in=[user_id]) | Q(created_by_id=user_id) | Q(issue_subscribers__subscriber_id=user_id),
+        issue_queryset = saring_tugas_privat(
+            Issue.issue_objects.filter(
+                id__in=Issue.issue_objects.filter(
+                    Q(assignees__in=[user_id]) | Q(created_by_id=user_id) | Q(issue_subscribers__subscriber_id=user_id),
+                    workspace__slug=slug,
+                ).values_list("id", flat=True),
                 workspace__slug=slug,
-            ).values_list("id", flat=True),
-            workspace__slug=slug,
-            project__project_projectmember__member=request.user,
-            project__project_projectmember__is_active=True,
+                project__project_projectmember__member=request.user,
+                project__project_projectmember__is_active=True,
+            ),
+            request.user,
         )
 
         # Apply filtering from filterset
@@ -386,6 +390,7 @@ class WorkspaceUserActivityEndpoint(BaseAPIView):
             project__archived_at__isnull=True,
             actor=user_id,
         ).select_related("actor", "workspace", "issue", "project")
+        queryset = saring_tugas_privat(queryset, request.user, prefix="issue__")
 
         if projects:
             queryset = queryset.filter(project__in=projects)

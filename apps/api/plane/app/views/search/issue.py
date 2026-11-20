@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 # Module imports
 from .base import BaseAPIView
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.db.models import Issue, ProjectMember, IssueRelation
 from plane.utils.issue_search import search_issues
 
@@ -117,11 +118,14 @@ class IssueSearchEndpoint(BaseAPIView):
         target_date = request.query_params.get("target_date", True)
         issue_id = request.query_params.get("issue_id", False)
 
-        issues = Issue.issue_objects.filter(
-            workspace__slug=slug,
-            project__project_projectmember__member=self.request.user,
-            project__project_projectmember__is_active=True,
-            project__archived_at__isnull=True,
+        issues = saring_tugas_privat(
+            Issue.issue_objects.filter(
+                workspace__slug=slug,
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+            ),
+            self.request.user,
         )
 
         if workspace_search == "false":

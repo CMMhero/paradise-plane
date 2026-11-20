@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 
 # Module imports
+from plane.utils.akses_privat import penonton_tugas_ids
 from plane.db.models import (
     IssueMention,
     IssueSubscriber,
@@ -394,6 +395,20 @@ def notifications(
               then also we have to send the "mention_in_comment" notification
             """
 
+            issue = Issue.objects.filter(pk=issue_id).first()
+            # P29: tugas privat hanya dikabarkan kepada yang boleh melihatnya.
+            penonton = None
+            if issue.is_private:
+                semua = [*new_mentions, *comment_mentions, *penerima_balasan, *project_members]
+                penonton = {str(uid) for uid in penonton_tugas_ids(issue, semua)}
+                new_mentions = [uid for uid in new_mentions if str(uid) in penonton]
+                comment_mentions = [uid for uid in comment_mentions if str(uid) in penonton]
+                penerima_balasan = {uid: isi for uid, isi in penerima_balasan.items() if str(uid) in penonton}
+                mention_subscribers = [s for s in mention_subscribers if str(s.subscriber_id) in penonton]
+                comment_mention_subscribers = [
+                    s for s in comment_mention_subscribers if str(s.subscriber_id) in penonton
+                ]
+
             # ---------------------------------------------------------------------------------------------------------
             issue_subscribers = list(
                 IssueSubscriber.objects.filter(
@@ -404,8 +419,8 @@ def notifications(
                 .exclude(subscriber_id__in=list(new_mentions + comment_mentions + [actor_id] + list(penerima_balasan)))
                 .values_list("subscriber", flat=True)
             )
-
-            issue = Issue.objects.filter(pk=issue_id).first()
+            if penonton is not None:
+                issue_subscribers = [uid for uid in issue_subscribers if str(uid) in penonton]
 
             if subscriber:
                 # add the user to issue subscriber

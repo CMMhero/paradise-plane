@@ -27,7 +27,7 @@ const memberService = new InstanceMemberService();
 type TEmailDefaults = TMemberDefaults["email"];
 type TGroup = keyof TEmailDefaults;
 
-// Staff, leaders (supervisor and manager), directors (secretaries share this column). The director column is also the cap.
+// Staff and leaders, supervisors and managers, directors (secretaries share this column). The director column is also the cap.
 const GROUPS: readonly TGroup[] = ["staf", "pimpinan", "direktur"];
 
 const isSame = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);

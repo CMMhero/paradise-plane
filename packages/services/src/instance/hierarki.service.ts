@@ -12,16 +12,22 @@ import { APIService } from "../api.service";
 
 /** Tangga jenjang, sama dengan TINGKAT_* di `plane/db/models/hierarki.py`. */
 export const TINGKAT_MEMBER = 10;
+/** Leader (P29): memimpin Staf satu departemen, tidak menyetujui. */
+export const TINGKAT_LEADER = 12;
 export const TINGKAT_SUPERVISOR = 20;
 export const TINGKAT_MANAGER = 30;
+/** Direktur Cabang (P29): memimpin semua divisi satu cabang, di bawah sekretaris. */
+export const TINGKAT_CABANG = 33;
 /** Sekretaris (KEP-101): menjangkau seluruh organisasi seperti direktur, tapi satu anak tangga di bawahnya. */
 export const TINGKAT_SEKRETARIS = 35;
 export const TINGKAT_DIREKTUR = 40;
 
 export type TTingkat =
   | typeof TINGKAT_MEMBER
+  | typeof TINGKAT_LEADER
   | typeof TINGKAT_SUPERVISOR
   | typeof TINGKAT_MANAGER
+  | typeof TINGKAT_CABANG
   | typeof TINGKAT_SEKRETARIS
   | typeof TINGKAT_DIREKTUR;
 
@@ -60,6 +66,8 @@ export type TAnggotaHierarki = {
   departemen_ids?: string[];
   /** KEP-76: SEMUA divisi yang ia pimpin (manager ke atas). */
   divisi_ids?: string[];
+  /** P29: cabang yang ia pimpin sebagai Direktur Cabang. */
+  cabang_ids?: string[];
   /** KEP-93: peran orang ini DI tiap departemennya (10 Staf / 20 Supervisor). */
   peran_departemen?: Record<string, number>;
 };
@@ -72,7 +80,9 @@ export type TPilihanDepartemen = {
   /** Identifier project departemen ini (KEP-76). Boleh tidak ada di server lama. */
   projects?: string[];
 };
-export type TPilihanDivisi = { id: string; kode: string; nama: string };
+/** `cabang_id` null = kantor pusat. */
+export type TPilihanDivisi = { id: string; kode: string; nama: string; cabang_id?: string | null };
+export type TPilihanCabang = { id: string; kode: string; nama: string };
 
 /** Badan POST /api/instances/hierarki/. Kunci tidak dikirim = jangan sentuh; null = kosongkan. */
 export type TSetJabatan = {
@@ -89,6 +99,10 @@ export type TSetJabatan = {
   departemen_ids?: string[];
   /** MENGGANTI seluruh divisi yang dipimpin (tidak dikirim = jangan sentuh). */
   divisi_ids?: string[];
+  /** P29 singkatan: TAMBAH satu cabang (jadi Direktur Cabang); null = cabut semua cabang. */
+  cabang_id?: string | null;
+  /** P29: MENGGANTI seluruh cabang yang dipimpin. */
+  cabang_ids?: string[];
   /** KEP-93: peran per departemen, 10 (Staf) atau 20 (Supervisor). */
   peran_departemen?: Record<string, number>;
   /** KEP-93: `tingkat` tidak menyeragamkan peran departemen yang lain. */
@@ -102,6 +116,7 @@ export type THasilSetJabatan = {
     pengawasan: string[];
     departemen_ids: string[];
     divisi_ids: string[];
+    cabang_ids?: string[];
     /** Divisi yang dicabut otomatis karena jenjang turun di bawah Manager. */
     divisi_dilepas: string[];
     /** KEP-93: departemen yang tertelan divisi yang kini ia pimpin. */
@@ -133,10 +148,18 @@ export type TDivisiOrganisasi = {
   id: string;
   kode: string;
   nama: string;
+  /** P29: null = kantor pusat. */
+  cabang_id: string | null;
   manager: TOrangOrganisasi[];
   departemen: TDepartemenOrganisasi[];
 };
-export type TPohonOrganisasi = { divisi: TDivisiOrganisasi[]; tanpa_departemen: TProjectOrganisasi[] };
+/** P29: cabang dengan Direktur Cabangnya. Divisinya ada di `divisi` dengan `cabang_id` ini. */
+export type TCabangOrganisasi = { id: string; kode: string; nama: string; direktur: TOrangOrganisasi[] };
+export type TPohonOrganisasi = {
+  cabang: TCabangOrganisasi[];
+  divisi: TDivisiOrganisasi[];
+  tanpa_departemen: TProjectOrganisasi[];
+};
 /** Anggota aktif project lama, untuk impor jadi departemen. */
 export type TAnggotaProjectLama = {
   id: string;
@@ -174,6 +197,7 @@ export type THierarkiResponse = {
   project_names?: Record<string, string>;
   departemen_pilihan?: TPilihanDepartemen[];
   divisi_pilihan?: TPilihanDivisi[];
+  cabang_pilihan?: TPilihanCabang[];
   anggota: TAnggotaHierarki[];
 };
 
@@ -229,11 +253,24 @@ export class InstanceOrganisasiService extends APIService {
     return this.kirim(this.get("/api/instances/organisasi/"));
   }
 
-  buatDivisi(data: { kode: string; nama: string }): Promise<TPohonOrganisasi> {
+  buatCabang(data: { kode: string; nama: string }): Promise<TPohonOrganisasi> {
+    return this.kirim(this.post("/api/instances/organisasi/cabang/", data));
+  }
+
+  ubahCabang(id: string, data: { kode?: string; nama?: string }): Promise<TPohonOrganisasi> {
+    return this.kirim(this.patch(`/api/instances/organisasi/cabang/${id}/`, data));
+  }
+
+  hapusCabang(id: string): Promise<TPohonOrganisasi> {
+    return this.kirim(this.delete(`/api/instances/organisasi/cabang/${id}/`));
+  }
+
+  buatDivisi(data: { kode: string; nama: string; cabang_id?: string | null }): Promise<TPohonOrganisasi> {
     return this.kirim(this.post("/api/instances/organisasi/divisi/", data));
   }
 
-  ubahDivisi(id: string, data: { kode?: string; nama?: string }): Promise<TPohonOrganisasi> {
+  /** `cabang_id: null` = pindah ke kantor pusat; tidak dikirim = jangan sentuh. */
+  ubahDivisi(id: string, data: { kode?: string; nama?: string; cabang_id?: string | null }): Promise<TPohonOrganisasi> {
     return this.kirim(this.patch(`/api/instances/organisasi/divisi/${id}/`, data));
   }
 

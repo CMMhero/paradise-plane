@@ -5,7 +5,18 @@
  * See the LICENSE file for details.
  */
 
-import { BookText, CalendarDays, LayoutDashboard, Link2, MessageSquare, Stamp, Target, UserCog } from "lucide-react";
+import { useParams } from "next/navigation";
+import {
+  BookText,
+  CalendarDays,
+  Gauge,
+  LayoutDashboard,
+  Link2,
+  MessageSquare,
+  Stamp,
+  Target,
+  UserCog,
+} from "lucide-react";
 // plane imports
 import { EUserPermissionsLevel } from "@plane/constants";
 import { MultipleStickyIcon } from "@plane/propel/icons";
@@ -17,16 +28,19 @@ import { handlePowerKNavigate } from "@/components/power-k/utils/navigation";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useUser } from "@/hooks/store/user";
+import { useNavPersetujuanTerlihat } from "@/plane-web/components/workspace/sidebar/sidebar-item";
 
 export type TPowerKParadiseNavigationCommandKeys =
   | "nav_chat"
   | "nav_wiki"
   | "nav_dashboard_divisi"
+  | "nav_kinerja"
   | "nav_initiatives"
   | "nav_stickies"
   | "nav_quick_links"
   | "nav_your_work_calendar"
   | "nav_project_approvals"
+  | "nav_workspace_approvals"
   | "open_account_setting";
 
 const slugOf = (ctx: TPowerKContext) => ctx.params.workspaceSlug?.toString();
@@ -49,6 +63,9 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
     permission: { allowPermissions },
   } = useUser();
   const { toggleProfileSettingsModal } = useCommandPalette();
+  const { workspaceSlug } = useParams();
+  // Sama dengan menu sidebar: hanya yang punya wewenang memutuskan.
+  const persetujuanTerlihat = useNavPersetujuanTerlihat(workspaceSlug?.toString());
 
   const hasWorkspaceRole = (ctx: TPowerKContext, roles: EUserWorkspaceRoles[]) =>
     inWorkspace(ctx) && allowPermissions(roles, EUserPermissionsLevel.WORKSPACE, slugOf(ctx));
@@ -95,6 +112,10 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
       (ctx) => hasWorkspaceRole(ctx, [EUserWorkspaceRoles.ADMIN]),
       "gb"
     ),
+    nav_kinerja: {
+      ...workspacePage("nav_kinerja", Gauge, () => ["kinerja"], isWorkspaceMember),
+      i18n_title: "kinerja.go_to",
+    },
     nav_initiatives: workspacePage("nav_initiatives", Target, () => ["initiatives"], isWorkspaceMember),
     nav_stickies: workspacePage("nav_stickies", MultipleStickyIcon, () => ["stickies"], isAnyWorkspaceRole, "gt"),
     nav_quick_links: workspacePage("nav_quick_links", Link2, () => ["quick-links"], isAnyWorkspaceRole, "gl"),
@@ -115,6 +136,17 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
         handlePowerKNavigate(ctx, [slugOf(ctx), "projects", ctx.params.projectId?.toString(), "persetujuan"]),
       isEnabled: isProjectMember,
       isVisible: isProjectMember,
+      closeOnSelect: true,
+    },
+    nav_workspace_approvals: {
+      id: "nav_workspace_approvals",
+      type: "action",
+      group: "navigation",
+      i18n_title: "persetujuan_p29.power_k_title",
+      icon: Stamp,
+      action: (ctx) => handlePowerKNavigate(ctx, [slugOf(ctx), "persetujuan"]),
+      isEnabled: (ctx) => isWorkspaceMember(ctx) && persetujuanTerlihat,
+      isVisible: (ctx) => isWorkspaceMember(ctx) && persetujuanTerlihat,
       closeOnSelect: true,
     },
     open_account_setting: {

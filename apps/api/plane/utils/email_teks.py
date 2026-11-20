@@ -49,14 +49,19 @@ TEKS = {
         "id": {
             "subjek": "Atur ulang kata sandi {merek} Anda",
             "judul": "Atur ulang kata sandi",
-            "intro": "Kami menerima permintaan untuk mengatur ulang kata sandi akun {email}. Klik tombol di bawah untuk membuat kata sandi baru.",
+            "intro": (
+                "Kami menerima permintaan untuk mengatur ulang kata sandi akun {email}. Klik tombol di bawah untuk "
+                "membuat kata sandi baru."
+            ),
             "tombol": "Buat kata sandi baru",
             "abaikan": "Kalau Anda tidak memintanya, abaikan email ini. Kata sandi lama tetap berlaku.",
         },
         "en": {
             "subjek": "Reset your {merek} password",
             "judul": "Reset your password",
-            "intro": "We received a request to reset the password for {email}. Click the button below to choose a new one.",
+            "intro": (
+                "We received a request to reset the password for {email}. Click the button below to choose a new one."
+            ),
             "tombol": "Choose a new password",
             "abaikan": "If you didn't ask for this, ignore this email. Your current password still works.",
         },
@@ -97,13 +102,19 @@ TEKS = {
         "id": {
             "subjek": "Anda ditambahkan ke project {project} di {merek}",
             "judul": "Anda sekarang anggota {project}",
-            "intro": "{pengundang} menambahkan Anda ke project {project} di workspace {workspace}. Tugas dan diskusinya sudah bisa Anda buka.",
+            "intro": (
+                "{pengundang} menambahkan Anda ke project {project} di workspace {workspace}. Tugas dan diskusinya "
+                "sudah bisa Anda buka."
+            ),
             "tombol": "Buka project",
         },
         "en": {
             "subjek": "You were added to the {project} project on {merek}",
             "judul": "You're now a member of {project}",
-            "intro": "{pengundang} added you to the {project} project in the {workspace} workspace. Its work items and discussions are open to you now.",
+            "intro": (
+                "{pengundang} added you to the {project} project in the {workspace} workspace. Its work items and "
+                "discussions are open to you now."
+            ),
             "tombol": "Open project",
         },
     },
@@ -125,13 +136,19 @@ TEKS = {
         "id": {
             "subjek": "Akun {merek} Anda aktif kembali",
             "judul": "Selamat datang kembali",
-            "intro": "Akun Anda sudah aktif lagi. Tugas dan data Anda bisa dibuka seperti sebelumnya, selama project-nya masih aktif.",
+            "intro": (
+                "Akun Anda sudah aktif lagi. Tugas dan data Anda bisa dibuka seperti sebelumnya, selama project-nya "
+                "masih aktif."
+            ),
             "tombol": "Buka {merek}",
         },
         "en": {
             "subjek": "Your {merek} account is active again",
             "judul": "Welcome back",
-            "intro": "Your account is active again. Your work items and data are available as before, as long as their projects are still active.",
+            "intro": (
+                "Your account is active again. Your work items and data are available as before, as long as their "
+                "projects are still active."
+            ),
             "tombol": "Open {merek}",
         },
     },
@@ -139,14 +156,20 @@ TEKS = {
         "id": {
             "subjek": "Akun {merek} Anda dinonaktifkan",
             "judul": "Akun dinonaktifkan",
-            "intro": "Akun Anda sudah dinonaktifkan. Tugas dan data project Anda tetap tersimpan dan bisa dibuka anggota lain.",
+            "intro": (
+                "Akun Anda sudah dinonaktifkan. Tugas dan data project Anda tetap tersimpan dan bisa dibuka anggota "
+                "lain."
+            ),
             "tombol": "Aktifkan akun",
             "abaikan": "Kalau bukan Anda yang menonaktifkannya, segera hubungi tim IT.",
         },
         "en": {
             "subjek": "Your {merek} account was deactivated",
             "judul": "Account deactivated",
-            "intro": "Your account has been deactivated. Your work items and project data are kept and stay available to other members.",
+            "intro": (
+                "Your account has been deactivated. Your work items and project data are kept and stay available to "
+                "other members."
+            ),
             "tombol": "Reactivate account",
             "abaikan": "If you didn't do this, contact the IT team right away.",
         },
@@ -185,12 +208,18 @@ TEKS = {
         "id": {
             "subjek": "Email uji dari {merek}",
             "judul": "Pengaturan SMTP berfungsi",
-            "intro": "Email ini dikirim untuk memastikan pengaturan email di {merek} bekerja. Kalau Anda membacanya, server surat sudah tersambung.",
+            "intro": (
+                "Email ini dikirim untuk memastikan pengaturan email di {merek} bekerja. Kalau Anda membacanya, server "
+                "surat sudah tersambung."
+            ),
         },
         "en": {
             "subjek": "Test email from {merek}",
             "judul": "Your SMTP settings work",
-            "intro": "This email checks that the email settings in {merek} work. If you can read it, the mail server is connected.",
+            "intro": (
+                "This email checks that the email settings in {merek} work. If you can read it, the mail server is "
+                "connected."
+            ),
         },
     },
     "pembaruan": {

@@ -542,7 +542,9 @@ class TestJadikanDepartemenDariProject:
     @pytest.mark.django_db
     def test_buat_departemen_dan_tempatkan_anggota_lama(self, org, super_admin, lama):
         p, orang = lama
-        r = self._kirim(super_admin, {"project_id": str(p.id), "divisi_id": str(org.hrga.id), "member_ids": [str(orang.id)]})
+        r = self._kirim(
+            super_admin, {"project_id": str(p.id), "divisi_id": str(org.hrga.id), "member_ids": [str(orang.id)]}
+        )
         assert r.status_code == status.HTTP_201_CREATED, r.data
         dep = Departemen.objects.get(kode="LEGAL")
         assert dep.divisi_id == org.hrga.id and dep.nama == "Legal"
@@ -560,12 +562,16 @@ class TestJadikanDepartemenDariProject:
     def test_manager_dilewati_dan_bukan_anggota_ditolak(self, org, super_admin, lama):
         p, _ = lama
         ProjectMember.objects.create(project=p, member=org.manager, workspace=org.ws, role=20)
-        r = self._kirim(super_admin, {"project_id": str(p.id), "divisi_id": str(org.hrga.id), "member_ids": [str(org.manager.id)]})
+        r = self._kirim(
+            super_admin, {"project_id": str(p.id), "divisi_id": str(org.hrga.id), "member_ids": [str(org.manager.id)]}
+        )
         assert r.status_code == status.HTTP_201_CREATED and r.data["dilewati"] == 1
         assert JabatanOrganisasi.objects.get(member=org.manager).departemen_id is None
 
         p2 = Project.objects.create(name="GA", identifier="GA", workspace=org.ws, created_by=org.manager)
-        r = self._kirim(super_admin, {"project_id": str(p2.id), "divisi_id": str(org.hrga.id), "member_ids": [str(org.staf2.id)]})
+        r = self._kirim(
+            super_admin, {"project_id": str(p2.id), "divisi_id": str(org.hrga.id), "member_ids": [str(org.staf2.id)]}
+        )
         assert r.status_code == status.HTTP_400_BAD_REQUEST
         assert not Departemen.objects.filter(kode="GA").exists()
 

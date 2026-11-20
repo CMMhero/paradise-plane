@@ -40,7 +40,7 @@ def _penempatan(workspace_id, user_id) -> list[dict]:
     hasil = []
     baris = (
         JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
-        .select_related("departemen__divisi", "divisi")
+        .select_related("departemen__divisi__cabang", "divisi__cabang", "cabang")
         .order_by("-tingkat", "created_at")
     )
     for b in baris:
@@ -48,13 +48,17 @@ def _penempatan(workspace_id, user_id) -> list[dict]:
         div = b.divisi if b.divisi and b.divisi.deleted_at is None else None
         if div is None and dep is not None and dep.divisi.deleted_at is None:
             div = dep.divisi
-        if (b.departemen_id and dep is None) or (b.divisi_id and div is None):
+        cab = b.cabang or (div.cabang if div else None)
+        if cab is not None and cab.deleted_at is not None:
+            cab = None
+        if (b.departemen_id and dep is None) or (b.divisi_id and div is None) or (b.cabang_id and cab is None):
             continue  # tempatnya sudah dihapus: jangan tampilkan penempatan basi
         hasil.append(
             {
                 "tingkat": b.tingkat,
                 "departemen": {"id": str(dep.id), "kode": dep.kode, "nama": dep.nama} if dep else None,
                 "divisi": {"id": str(div.id), "kode": div.kode, "nama": div.nama} if div else None,
+                "cabang": {"id": str(cab.id), "kode": cab.kode, "nama": cab.nama} if cab else None,
             }
         )
     return hasil

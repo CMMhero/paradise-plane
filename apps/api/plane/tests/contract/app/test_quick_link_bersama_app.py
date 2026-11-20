@@ -265,7 +265,9 @@ class TestJudulDanIkon:
         ],
     )
     def test_logo_tidak_valid_ditolak(self, org, logo):
-        resp = _klien(org.admin).post(URL.format(slug=org.ws.slug), {"url": "erp.example.com", "logo_props": logo}, format="json")
+        resp = _klien(org.admin).post(
+            URL.format(slug=org.ws.slug), {"url": "erp.example.com", "logo_props": logo}, format="json"
+        )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["error"] == "Pick an icon from the list."
         assert not QuickLinkBersama.objects.exists()
@@ -317,7 +319,9 @@ class TestQuickLinkPribadi:
 
     def test_ikon_pilihan_dibuat_diubah_dan_dihapus(self, org):
         klien = _klien(org.staf_smt1)
-        resp = klien.post(URL_PRIBADI.format(slug=org.ws.slug), {"url": "mail.example.com", "logo_props": IKON}, format="json")
+        resp = klien.post(
+            URL_PRIBADI.format(slug=org.ws.slug), {"url": "mail.example.com", "logo_props": IKON}, format="json"
+        )
         assert resp.status_code == status.HTTP_201_CREATED
         assert resp.data["metadata"]["logo_props"] == IKON
         detail = URL_PRIBADI.format(slug=org.ws.slug) + f"{resp.data['id']}/"

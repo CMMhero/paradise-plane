@@ -6,14 +6,22 @@
 """Struktur divisi -> departemen -> project dari God Mode (KEP-29, KEP-32).
 
     GET    /api/instances/organisasi/                         pohon lengkap
-    POST   /api/instances/organisasi/divisi/                  {kode, nama}
-    PATCH  /api/instances/organisasi/divisi/<id>/             {kode?, nama?}
+    POST   /api/instances/organisasi/cabang/                  {kode, nama}
+    PATCH  /api/instances/organisasi/cabang/<id>/             {kode?, nama?}
+    DELETE /api/instances/organisasi/cabang/<id>/
+    POST   /api/instances/organisasi/divisi/                  {kode, nama, cabang_id?}
+    PATCH  /api/instances/organisasi/divisi/<id>/             {kode?, nama?, cabang_id?}
     DELETE /api/instances/organisasi/divisi/<id>/
     POST   /api/instances/organisasi/departemen/              {divisi_id, kode, nama}
     PATCH  /api/instances/organisasi/departemen/<id>/         {divisi_id?, kode?, nama?, project_ids?}
     DELETE /api/instances/organisasi/departemen/<id>/
 
-Penempatan orang (departemen / divisi manager) ditulis lewat
+Cabang (P29): divisi tanpa `cabang_id` = kantor pusat. `cabang_id: null` di PATCH
+divisi memindahkannya ke kantor pusat. Hapus cabang DITOLAK selama masih ada
+divisi atau Direktur Cabang di dalamnya: pindahkan dulu, dengan alasan yang sama
+dengan hapus divisi di bawah.
+
+Penempatan orang (departemen / divisi manager / cabang) ditulis lewat
 `POST /api/instances/hierarki/`, di baris jenjangnya, bukan di sini.
 Himpunan departemen seseorang (supervisor boleh banyak) juga lewat sana
 (`departemen_ids` = pengganti penuh; `departemen_id` tunggal ditolak kalau
@@ -43,6 +51,7 @@ from rest_framework.response import Response
 from plane.db.jangkauan import sinkronkan_workspace, tunda_sinkron
 from plane.db.models import (
     DOMAIN_AKUN_TERHAPUS,
+    Cabang,
     Departemen,
     DepartemenProject,
     Divisi,
@@ -58,6 +67,7 @@ from plane.db.models import (
     Workspace,
 )
 from plane.db.penempatan import penempatan_sekarang, setel_penempatan
+from plane.utils.kanal_organisasi import sinkronkan_kanal_organisasi
 from plane.license.api.views.base import BaseAPIView
 from plane.utils.sinkron_departemen import nama_project_terpakai
 from plane.utils.wiki_access import WIKI_IDENTIFIER
@@ -240,12 +250,13 @@ def pohon_organisasi(workspace):
     for dep_id, pid in DepartemenProject.objects.filter(workspace=workspace).values_list("departemen_id", "project_id"):
         if pid in projects:
             peta.setdefault(dep_id, []).append(projects[pid])
-    # Orang per departemen (staf/supervisor) dan manager per divisi, satu query.
-    orang_dep, manager_div = {}, {}
+    # Orang per departemen (staf/supervisor), manager per divisi, dan direktur per
+    # cabang, satu query.
+    orang_dep, manager_div, direktur_cab = {}, {}, {}
     # Akun terhapus tidak pernah ditampilkan (KEP-50): daftar member God Mode juga
     # menyembunyikannya, jadi barisnya tidak akan bisa dicabut dari sini.
     for j in JabatanOrganisasi.objects.filter(workspace=workspace).filter(
-        Q(departemen__isnull=False) | Q(divisi__isnull=False)
+        Q(departemen__isnull=False) | Q(divisi__isnull=False) | Q(cabang__isnull=False)
     ).exclude(member__email__endswith=f"@{DOMAIN_AKUN_TERHAPUS}").select_related("member"):
         baris = {
             "id": str(j.member_id),
@@ -259,7 +270,9 @@ def pohon_organisasi(workspace):
         # Direktur dan sekretaris menjangkau semuanya, jadi tidak didaftar di satu tempat.
         if menjangkau_seluruh_organisasi(j.tingkat):
             continue
-        if j.divisi_id and j.tingkat >= TINGKAT_MANAGER:
+        if j.cabang_id:
+            direktur_cab.setdefault(j.cabang_id, []).append(baris)
+        elif j.divisi_id and j.tingkat >= TINGKAT_MANAGER:
             manager_div.setdefault(j.divisi_id, []).append(baris)
         elif j.departemen_id:
             orang_dep.setdefault(j.departemen_id, []).append(baris)
@@ -285,11 +298,21 @@ def pohon_organisasi(workspace):
         )
     berdepartemen = {p.id for daftar in peta.values() for p in daftar}
     return {
+        "cabang": [
+            {
+                "id": str(c.id),
+                "kode": c.kode,
+                "nama": c.nama,
+                "direktur": sorted(direktur_cab.get(c.id, []), key=lambda b: b["nama"].lower()),
+            }
+            for c in Cabang.objects.filter(workspace=workspace).order_by("nama")
+        ],
         "divisi": [
             {
                 "id": str(v.id),
                 "kode": v.kode,
                 "nama": v.nama,
+                "cabang_id": str(v.cabang_id) if v.cabang_id else None,
                 "manager": sorted(manager_div.get(v.id, []), key=lambda b: b["nama"].lower()),
                 "departemen": departemen_per_divisi.get(v.id, []),
             }
@@ -312,6 +335,57 @@ class InstanceOrganisasiEndpoint(BaseAPIView):
         return Response(pohon_organisasi(workspace))
 
 
+class InstanceCabangEndpoint(BaseAPIView):
+    def post(self, request):
+        workspace = _workspace_utama()
+        if workspace is None:
+            return Response({"error": "Workspace not found."}, status=404)
+        kode, nama, galat = _kode_nama(request.data, wajib=True)
+        if galat:
+            return Response({"error": galat}, status=400)
+        if Cabang.objects.filter(workspace=workspace, kode=kode).exists():
+            return Response({"error": f"Branch code {kode} is already in use."}, status=400)
+        Cabang.objects.create(workspace=workspace, kode=kode, nama=nama)
+        return Response(pohon_organisasi(workspace), status=201)
+
+    def patch(self, request, pk):
+        cabang = Cabang.objects.filter(pk=pk).first()
+        if cabang is None:
+            return Response({"error": "Branch not found."}, status=404)
+        kode, nama, galat = _kode_nama(request.data, wajib=False)
+        if galat:
+            return Response({"error": galat}, status=400)
+        if kode and Cabang.objects.filter(workspace_id=cabang.workspace_id, kode=kode).exclude(pk=pk).exists():
+            return Response({"error": f"Branch code {kode} is already in use."}, status=400)
+        cabang.kode = kode or cabang.kode
+        cabang.nama = nama or cabang.nama
+        cabang.save(update_fields=["kode", "nama", "updated_at"])
+        sinkronkan_kanal_organisasi(cabang.workspace_id)
+        return Response(pohon_organisasi(cabang.workspace))
+
+    def delete(self, request, pk):
+        cabang = Cabang.objects.filter(pk=pk).first()
+        if cabang is None:
+            return Response({"error": "Branch not found."}, status=404)
+        if Divisi.objects.filter(cabang=cabang).exists():
+            return Response({"error": "Move its divisions to head office or another branch first."}, status=409)
+        if JabatanOrganisasi.objects.filter(cabang=cabang).exists():
+            return Response({"error": "A Branch Director is still placed in this branch."}, status=409)
+        workspace = cabang.workspace
+        cabang.delete()
+        sinkronkan_kanal_organisasi(workspace.id)
+        return Response(pohon_organisasi(workspace))
+
+
+def _cabang_dari(workspace_id, data):
+    """(cabang|None, galat|None) dari `cabang_id` badan permintaan. null/kosong = kantor pusat."""
+    cabang_id = data.get("cabang_id")
+    if not cabang_id:
+        return None, None
+    cabang = Cabang.objects.filter(workspace_id=workspace_id, pk=cabang_id).first()
+    return cabang, None if cabang else "Branch not found."
+
+
 class InstanceDivisiEndpoint(BaseAPIView):
     def post(self, request):
         workspace = _workspace_utama()
@@ -322,7 +396,10 @@ class InstanceDivisiEndpoint(BaseAPIView):
             return Response({"error": galat}, status=400)
         if Divisi.objects.filter(workspace=workspace, kode=kode).exists():
             return Response({"error": f"Division code {kode} is already in use."}, status=400)
-        Divisi.objects.create(workspace=workspace, kode=kode, nama=nama)
+        cabang, galat = _cabang_dari(workspace.id, request.data)
+        if galat:
+            return Response({"error": galat}, status=400)
+        Divisi.objects.create(workspace=workspace, kode=kode, nama=nama, cabang=cabang)
         _sinkron_wiki(workspace, request.user)
         return Response(pohon_organisasi(workspace), status=201)
 
@@ -335,9 +412,16 @@ class InstanceDivisiEndpoint(BaseAPIView):
             return Response({"error": galat}, status=400)
         if kode and Divisi.objects.filter(workspace_id=divisi.workspace_id, kode=kode).exclude(pk=pk).exists():
             return Response({"error": f"Division code {kode} is already in use."}, status=400)
+        if "cabang_id" in request.data:
+            cabang, galat = _cabang_dari(divisi.workspace_id, request.data)
+            if galat:
+                return Response({"error": galat}, status=400)
+            divisi.cabang = cabang
         divisi.kode = kode or divisi.kode
         divisi.nama = nama or divisi.nama
-        divisi.save(update_fields=["kode", "nama", "updated_at"])
+        # Signal `Divisi` menyinkronkan ulang workspace: direktur cabang lama
+        # kehilangan, yang baru mendapat project divisi ini.
+        divisi.save(update_fields=["kode", "nama", "cabang", "updated_at"])
         _sinkron_wiki(divisi.workspace, request.user)
         return Response(pohon_organisasi(divisi.workspace))
 

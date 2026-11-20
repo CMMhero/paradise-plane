@@ -85,7 +85,7 @@ from .issue_property import IssueProperty, IssuePropertyOption, IssuePropertyVal
 from .issue_template import IssueTemplate, RecurringIssue
 from .initiative import Initiative, InitiativeProject
 from .wiki_access import WikiGovernedProject, WikiFolderAccess
-from .wiki import WikiFolder, WikiMaterial
+from .wiki import WikiFolder, WikiFolderEditor, WikiMaterial
 from .plan import WorkspacePlan
 from .superadmin_visibility import SuperAdminTerlihatDiProject
 from .akun_terhapus import AkunTerhapus, DOMAIN_AKUN_TERHAPUS, NAMA_AKUN_TERHAPUS, adalah_akun_terhapus, email_akun_terhapus  # noqa: E501
@@ -93,12 +93,12 @@ from .deadline_reminder import PengingatTenggat
 from .jadwal_kantor import JadwalTerlaksana
 from .google_calendar import AcaraKalender, KalenderGoogle, SCOPE_KALENDER
 from .chat import (
-    AWALAN_KABAR,
     BATAS_ISI,
     KUNCI_CHANGELOG,
     KUNCI_PENGUMUMAN,
     JenisPesan,
     Langganan,
+    PenulisKanal,
     PesanLangsung,
     ReaksiPesan,
     Ruang,
@@ -115,8 +115,10 @@ from .persetujuan_penugasan import (
 from .hierarki import (
     JabatanOrganisasi,
     PengawasanDivisi,
+    TINGKAT_CABANG,
     TINGKAT_CHOICES,
     TINGKAT_DIREKTUR,
+    TINGKAT_LEADER,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_NAMA,
@@ -124,7 +126,7 @@ from .hierarki import (
     TINGKAT_SUPERVISOR,
     menjangkau_seluruh_organisasi,
 )
-from .organisasi import AksesHierarki, Departemen, DepartemenProject, Divisi
+from .organisasi import AksesHierarki, Cabang, Departemen, DepartemenProject, Divisi
 from .quick_link_bersama import QuickLinkBersama, CAKUPAN_SEMUA as CAKUPAN_QUICK_LINK_SEMUA, CAKUPAN_ORGANISASI as CAKUPAN_QUICK_LINK_ORGANISASI  # noqa: E501
 
 from .recent_visit import UserRecentVisit

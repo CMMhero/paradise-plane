@@ -25,6 +25,7 @@ from plane.bgtasks.direktur_digest_task import DataWorkspace, susun_laporan
 from plane.bgtasks.direktur_digest_email import susun_email
 from plane.db.models import (
     TINGKAT_DIREKTUR,
+    Issue,
     JabatanOrganisasi,
     PengawasanDivisi,
     UserNotificationPreference,
@@ -121,6 +122,11 @@ class TestEmailPenugasan:
 
 @pytest.mark.contract
 class TestLaporanDirektur:
+    @pytest.fixture(autouse=True)
+    def _buatan_pimpinan(self, dunia):
+        # Laporan direktur hanya menghitung tugas buatan Supervisor ke atas (statistik_pimpinan).
+        Issue.objects.filter(workspace=dunia.ws, created_by__isnull=True).update(created_by=dunia.mgr)
+
     def _laporan(self, dunia, direktur):
         sejak = timezone.now() - timedelta(hours=24)
         data = DataWorkspace(dunia.ws.id, HARI_INI, sejak)

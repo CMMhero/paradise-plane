@@ -20,10 +20,12 @@ type Props = {
   value: any;
   onChange: (val: string) => void;
   isDisabled?: boolean;
+  /** Hanya orang-orang ini yang bisa dipilih; tanpa ini semua anggota project non-guest. */
+  memberIds?: string[];
 };
 
 export const MemberSelect = observer(function MemberSelect(props: Props) {
-  const { value, onChange, isDisabled = false } = props;
+  const { value, onChange, isDisabled = false, memberIds } = props;
   // router
   const { projectId } = useParams();
   // store hooks
@@ -31,7 +33,8 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
     project: { projectMemberIds, getProjectMemberDetails },
   } = useMember();
 
-  const options = projectMemberIds
+  const izinkan = memberIds ? new Set(memberIds) : null;
+  const options = (izinkan ? projectMemberIds?.filter((userId) => izinkan.has(userId)) : projectMemberIds)
     ?.map((userId) => {
       const memberDetails = projectId ? getProjectMemberDetails(userId, projectId.toString()) : null;
 
@@ -79,7 +82,6 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
       }
       buttonClassName="!px-3 !py-2 bg-surface-1"
       options={
-        options &&
         options && [
           ...options,
           {

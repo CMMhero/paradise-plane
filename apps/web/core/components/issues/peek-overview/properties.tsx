@@ -32,6 +32,7 @@ import { AssigneeProperty } from "../issue-detail/assignee-property";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+import { PrivateProperty } from "@/components/issues/privat/private-property";
 // helpers
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -39,7 +40,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
-import { useAturanTugas, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { IssueParentSelectRoot } from "@/plane-web/components/issues/issue-details/parent-select-root";
 import { ApprovalSidebarInfo } from "@/plane-web/components/issues/issue-details/sidebar/approval-info";
 import { DateAlert } from "@/plane-web/components/issues/issue-details/sidebar/date-alert";
@@ -76,6 +77,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
   // pembuatnya atau Super Admin yang boleh menggesernya. Server menegakkannya; kontrol
   // di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
   const { bisaGantiTenggat } = useAturanTugas();
+  const kunciSelesai = useKunciSelesai(workspaceSlug, projectId, issue);
   if (!issue) return <></>;
   const createdByDetails = getUserDetails(issue?.created_by);
   const projectDetails = getProjectById(issue.project_id);
@@ -97,7 +99,8 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             value={issue?.state_id}
             onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { state_id: val })}
             projectId={projectId}
-            disabled={disabled}
+            disabled={kunciSelesai.selesai ? !kunciSelesai.bolehBuka : disabled}
+            stateIds={kunciSelesai.stateIds}
             buttonVariant="transparent-with-text"
             className="group w-full grow"
             buttonContainerClassName="w-full text-left h-7.5"
@@ -124,6 +127,12 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             Peek adalah tampilan detail yang paling sering dibuka, jadi wajib sama
             dengan sidebar halaman penuh. */}
         <ApprovalSidebarInfo workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
+
+        <PrivateProperty
+          value={!!issue.is_private}
+          onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { is_private: val })}
+          disabled={disabled}
+        />
 
         <SidebarPropertyListItem icon={PriorityPropertyIcon} label={t("common.priority")}>
           <PriorityDropdown

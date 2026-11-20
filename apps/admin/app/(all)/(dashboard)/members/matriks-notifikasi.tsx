@@ -70,6 +70,13 @@ export function MatriksNotifikasi({ nilai, onUbah, dikunci = TANPA_KUNCI }: Prop
         </tbody>
       </table>
 
+      <Saklar
+        label={t.pengumuman}
+        nilai={nilai.pengumuman}
+        onUbah={(v) => onUbah("pengumuman", v)}
+        disabled={kunci("pengumuman")}
+      />
+
       <div className="space-y-0.5">
         <span className="block text-11 font-medium text-secondary">{t.digest_title}</span>
         <span className="block text-11 text-tertiary">{t.digest_note}</span>

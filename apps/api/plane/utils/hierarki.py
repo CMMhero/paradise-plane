@@ -31,6 +31,8 @@ aktornya `None`, dan gerbangnya **menolak** (gagal ke arah aman, prinsip #3).
 from django.utils import timezone
 
 # Module imports
+from plane.utils.cabang import baris_penempatan
+from plane.utils.kunci_selesai import galat_tugas_selesai, tugas_selesai
 from plane.utils.saklar_instance import (
     APPROVAL_REQUIRED_BELOW_LEVEL,
     ASSIGN_DOWN_ONLY,
@@ -42,6 +44,7 @@ from plane.db.models import (
     JabatanOrganisasi,
     ProjectMember,
     TINGKAT_DIREKTUR,
+    TINGKAT_LEADER,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
     TINGKAT_SUPERVISOR,
@@ -69,6 +72,7 @@ __all__ = [
     "jangkauan_hierarki",
     "calon_penyetuju",
     "galat_penugasan",
+    "aturan_staf_berlaku",
     "selesai_perlu_persetujuan",
     "boleh_memutuskan",
     "galat_tambah_rekan",
@@ -225,9 +229,7 @@ def ditempatkan_ids(workspace_id, project_id):
     if not deps:
         return None
     hasil = set()
-    for uid, tingkat, dep, div in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
-        "member_id", "tingkat", "departemen_id", "divisi_id"
-    ):
+    for uid, tingkat, dep, div in baris_penempatan(workspace_id):
         if (
             menjangkau_seluruh_organisasi(tingkat)
             or (dep and str(dep) in deps)
@@ -403,9 +405,7 @@ def peta_tingkat(workspace_id, project_id=None):
                 peta[uid] = tingkat
         return peta
     baris = {}
-    for uid, tingkat, dep, div in JabatanOrganisasi.objects.filter(workspace_id=workspace_id).values_list(
-        "member_id", "tingkat", "departemen_id", "divisi_id"
-    ):
+    for uid, tingkat, dep, div in baris_penempatan(workspace_id):
         baris.setdefault(uid, []).append((tingkat, dep, div))
     return {uid: _tingkat_lokal(b, tempat) for uid, b in baris.items()}
 
@@ -492,13 +492,13 @@ def penempatan_semua(user_id, workspace_id):
 
     Supervisor multi-departemen punya satu baris per departemen (keputusan user
     2026-10-23: tidak ada lagi "utama" vs "tambahan"). Kosong = jenjang belum diisi.
+    Baris Direktur Cabang sudah diurai jadi divisi-divisi cabangnya (`utils/cabang.py`).
     """
     if user_id is None:
         return []
-    return list(
-        JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id=user_id)
-        .order_by("-tingkat", "departemen_id", "divisi_id")
-        .values_list("tingkat", "departemen_id", "divisi_id")
+    return sorted(
+        ((t, dep, div) for _, t, dep, div in baris_penempatan(workspace_id, user_id)),
+        key=lambda b: (-b[0], b[1] is None, str(b[1]), b[2] is None, str(b[2])),
     )
 
 
@@ -575,6 +575,7 @@ def jangkauan_hierarki(user_id, workspace_id):
     Ini sisi LIHAT, bukan sisi wewenang (itu `divisi_diawasi`):
 
         direktur   -> semua project, role 20
+        dir. cabang-> semua project di divisi-divisi cabangnya, role 20
         manager    -> semua project di divisinya + departemennya, role 20
         supervisor -> project SEMUA departemennya, role 20
         staf       -> project SEMUA departemennya, role 15 (lihat semua, edit hanya
@@ -719,11 +720,14 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
     `lama` = assignee yang sudah ada di tugas itu (jalur ubah). Mereka tidak
     diperiksa penempatannya lagi supaya tugas lama tetap bisa disunting.
 
-    Admin workspace dan Super Admin dihitung SETARA DIREKTUR untuk aturan "hanya
-    ke bawah": boleh menugaskan siapa pun yang ditempatkan di sini, sama dengan
-    direktur. Alasannya: keduanya mengurus sistem dari luar tangga divisi, dan
-    keputusan user 9 Nov (ca9fff6180) sudah memberi Super Admin wewenang
-    menunjuk assignee di tugas mana pun. Yang baru hanyalah batas penempatan.
+    Sesudah penempatan, larangan menugaskan atasan (`galat_atasan`, P29 putaran 2),
+    juga sebelum katup: tidak ada yang bisa menugaskan orang yang jenjangnya di atas
+    jenjangnya sendiri, admin workspace yang berjenjang termasuk.
+
+    Super Admin dan admin workspace yang lolos dua pemeriksaan itu dihitung SETARA
+    DIREKTUR untuk aturan "hanya ke bawah": keduanya mengurus sistem dari luar
+    tangga divisi, dan keputusan user 9 Nov (ca9fff6180) sudah memberi Super Admin
+    wewenang menunjuk assignee di tugas mana pun.
     """
     # Tugas tanpa penerima tidak pernah butuh persetujuan: approval melekat pada
     # PENUGASAN, bukan pada pembuatan tugas (kata user: "hanya bisa assign diri sendiri,
@@ -736,20 +740,18 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
     if galat_tempat:
         return galat_tempat
 
+    from plane.utils.atasan import galat_atasan  # noqa: PLC0415
+
+    galat_ke_atas = galat_atasan(actor, project_id, assignee_ids, lama=lama)
+    if galat_ke_atas:
+        return galat_ke_atas
+
     if not abaikan_katup and not gerbang_aktif():
         return None
 
     # Aktor tidak diketahui -> gagal ke arah aman (prinsip #3).
     if actor is None:
         return "Pelaku penugasan tidak diketahui, jadi penugasan ini tidak dapat diverifikasi."
-
-    from plane.db.superadmin import is_super_admin  # noqa: PLC0415
-
-    if is_super_admin(actor):
-        # Super Admin mengurus sistem dan sudah punya akses ke seluruh project (B1).
-        # Setara direktur: tidak diperiksa terhadap divisi mana pun, tetapi
-        # penerimanya tetap harus ditempatkan di sini (`galat_penempatan` di atas).
-        return None
 
     dari_id = {getattr(actor, "id", None)}
     if set(assignee_ids) <= dari_id:
@@ -766,15 +768,16 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
 
     workspace_id = project.workspace_id
 
-    # Admin workspace: boleh menugaskan siapa pun yang DITEMPATKAN di project ini
-    # (13 Nov; batas penempatan 17 Nov sudah diperiksa di atas).
-    if adalah_admin_penuh(actor, workspace_id):
-        return None
-
     # Kolaborasi staf: boleh menambah rekan setingkat di departemen yang sama,
     # tapi dirinya sendiri WAJIB tetap ada (staf hanya membuat tugasnya sendiri).
-    if _adalah_staf(actor.id, workspace_id, project_id):
+    if aturan_staf_berlaku(actor, workspace_id, project_id):
         return _galat_kolaborasi_staf(actor.id, workspace_id, project_id, assignee_ids)
+
+    # Super Admin (B1) dan admin workspace (13 Nov) setara direktur: boleh menugaskan
+    # siapa pun yang DITEMPATKAN di project ini dan tidak di atas jenjangnya (keduanya
+    # sudah diperiksa di atas).
+    if adalah_admin_penuh(actor, workspace_id):
+        return None
 
     # Batas KEP-02: orang luar divisi memang tidak boleh menugaskan ke dalamnya.
     # Jalur REST sudah menolaknya lebih dulu; ini pertahanan kedua supaya jalur yang
@@ -784,17 +787,23 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
 
     tingkat = tingkat_anggota(actor.id, workspace_id, project_id)
 
+    if tingkat is not None and tingkat < TINGKAT_SUPERVISOR:
+        # Leader (P29): dirinya sendiri dan Staf di departemen yang ia pimpin, tidak lebih.
+        boleh = {str(u) for u in dari_id | _bawahan_ids(actor.id, workspace_id, project_id)}
+        if {str(a) for a in assignee_ids} <= boleh:
+            return None
+        return "Leader hanya boleh menugaskan dirinya sendiri dan Staf di departemen yang ia pimpin."
+
     if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
         # "direktur bisa create task cross divisi manapun karena tingkat teratas".
         # Sengaja `>= TINGKAT_DIREKTUR`, bukan `menjangkau_seluruh_organisasi`: sekretaris
         # (KEP-101) mengawasi semua project tetapi BUKAN puncak tangga, jadi ia jatuh ke
-        # cabang `divisi_diawasi` di bawah: direktur selalu ditolak sebagai penerima
-        # (`_di_bawah_direktur`), sesama sekretaris ditolak oleh ASSIGN_DOWN_ONLY.
+        # cabang `divisi_diawasi` di bawah: direktur sudah ditolak `galat_atasan`,
+        # sesama sekretaris ditolak oleh ASSIGN_DOWN_ONLY.
         return None
 
     if project_id in divisi_diawasi(actor.id, workspace_id):
-        ke_bawah = periksa_tingkat_penerima()
-        if ke_bawah or _di_bawah_direktur(tingkat):
+        if periksa_tingkat_penerima():
             peta = peta_tingkat(workspace_id, project_id)
             for uid in assignee_ids:
                 if uid in dari_id:
@@ -802,9 +811,7 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
                 lain = peta.get(uid)
                 if lain is None:
                     continue
-                if (ke_bawah and lain >= (tingkat or TINGKAT_MEMBER)) or (
-                    _di_bawah_direktur(tingkat) and lain >= TINGKAT_DIREKTUR
-                ):
+                if lain >= (tingkat or TINGKAT_MEMBER):
                     return (
                         "Penerima tugas berada pada jenjang yang sama atau lebih tinggi "
                         "dari Anda, jadi ia bukan bawahan yang dapat Anda tugaskan."
@@ -814,18 +821,30 @@ def galat_penugasan(project_id, assignee_ids, actor=None, abaikan_katup=False, l
     return _pesan_tolak(tingkat, project.identifier)
 
 
-def _di_bawah_direktur(tingkat):
-    """True untuk sekretaris (KEP-101): menjangkau seluruh organisasi tapi bukan puncak.
-
-    Direktur tidak pernah ditugaskan oleh sekretaris, apa pun nilai saklar
-    ASSIGN_DOWN_ONLY: itu aturan kedudukan, bukan pilihan yang bisa dimatikan.
-    """
-    return menjangkau_seluruh_organisasi(tingkat) and tingkat < TINGKAT_DIREKTUR
-
-
 def _adalah_staf(user_id, workspace_id, project_id=None):
+    """Staf untuk aturan PENUGASAN: jenjang di bawah Leader, atau belum diisi."""
     tingkat = tingkat_anggota(user_id, workspace_id, project_id)
-    return tingkat is None or tingkat < TINGKAT_SUPERVISOR
+    return tingkat is None or tingkat < TINGKAT_LEADER
+
+
+def aturan_staf_berlaku(actor, workspace_id, project_id):
+    """Apakah aturan penugasan staf mengikat `actor` di project ini.
+
+    Admin workspace dan Super Admin biasanya lolos, KECUALI di departemen tempat
+    ia sendiri ditempatkan sebagai Staf (keputusan 7, P29): di sana ia terisi
+    otomatis sebagai assignee, wajib tetap ada, dan rekannya mengikuti aturan
+    kolaborasi staf. Di luar departemennya ia tetap admin. Katup gerbang
+    diperiksa pemanggil.
+    """
+    if actor is None or not _adalah_staf(actor.id, workspace_id, project_id):
+        return False
+    if not adalah_admin_penuh(actor, workspace_id):
+        return True
+    tempat = _tempat_jika_aktif(workspace_id, project_id)
+    if tempat is None:
+        return False
+    deps, _ = tempat
+    return any(dep and str(dep) in deps for _, dep, _ in penempatan_semua(actor.id, workspace_id))
 
 
 def _wajib_persetujuan_jenjang(user_id, workspace_id, project_id=None):
@@ -839,7 +858,10 @@ def _wajib_persetujuan_jenjang(user_id, workspace_id, project_id=None):
     menunggu persetujuan, bukan siapa yang terkunci aturan penugasan staf
     (`_galat_kolaborasi_staf`).
     """
-    tingkat = tingkat_anggota(user_id, workspace_id, project_id)
+    return _jenjang_wajib_persetujuan(tingkat_anggota(user_id, workspace_id, project_id))
+
+
+def _jenjang_wajib_persetujuan(tingkat):
     return tingkat is None or tingkat < setelan_angka(APPROVAL_REQUIRED_BELOW_LEVEL)
 
 
@@ -904,7 +926,7 @@ def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
 def rekan_staf_ids(actor_id, workspace_id, project_id):
     """Id rekan yang boleh diajak staf: setingkat, satu departemen, anggota project ini."""
     tingkat = tingkat_efektif(actor_id, workspace_id, project_id)
-    if tingkat >= TINGKAT_SUPERVISOR:
+    if tingkat >= TINGKAT_LEADER:
         return set()
     dept_saya = semua_departemen_ids(actor_id, workspace_id)
     if not dept_saya:
@@ -939,8 +961,10 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
         return set()
     peta = peta_tingkat(workspace_id, project_id)
     tingkat_actor = peta.get(actor_id)
-    if tingkat_actor is None or tingkat_actor < TINGKAT_SUPERVISOR:
+    if tingkat_actor is None or tingkat_actor < TINGKAT_LEADER:
         return set()
+    if tingkat_actor < TINGKAT_SUPERVISOR:
+        return _staf_dipimpin(actor_id, workspace_id, project_id, peta)
     # Normalisasi ke string: pemanggil dari URL (kwargs) membawa UUID sebagai
     # string, pemanggil dari serializer membawa objek UUID — tanpa ini
     # perbandingan `in` selalu gagal dan atasan tidak pernah punya bawahan
@@ -972,6 +996,34 @@ def _bawahan_ids(actor_id, workspace_id, project_id):
         if uid != actor_id and uid not in peta:
             bawahan.add(uid)
     return bawahan
+
+
+def _staf_dipimpin(actor_id, workspace_id, project_id, peta):
+    """Bawahan seorang Leader di project ini: Staf di departemen yang ia pimpin.
+
+    Hanya departemen milik project ini tempat perannya Leader, dan hanya orang
+    yang jenjangnya di project ini masih Staf. Anggota tanpa jenjang tidak
+    termasuk: mereka tidak ditempatkan di departemen mana pun.
+    """
+    tempat = _tempat_jika_aktif(workspace_id, project_id)
+    if tempat is None:
+        return set()
+    deps, _ = tempat
+    dipimpin = {
+        dep
+        for tingkat, dep, _ in penempatan_semua(actor_id, workspace_id)
+        if dep and tingkat == TINGKAT_LEADER and str(dep) in deps
+    }
+    if not dipimpin:
+        return set()
+    anggota = anggota_project_ids(workspace_id, project_id)
+    return {
+        uid
+        for uid in JabatanOrganisasi.objects.filter(workspace_id=workspace_id, departemen_id__in=dipimpin).values_list(
+            "member_id", flat=True
+        )
+        if uid != actor_id and peta.get(uid, TINGKAT_MEMBER) < TINGKAT_LEADER and uid in anggota
+    }
 
 
 def selesai_perlu_persetujuan(project_id, actor, state_baru, penerima_ids, sudah_selesai=False):
@@ -1136,22 +1188,31 @@ def pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
 # `galat_terkunci` / `KunciPersetujuanMixin` / masa susun.)
 
 
-def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, abaikan_katup=False):
+def galat_ubah_tugas(
+    project_id, issue, actor=None, mengubah_assignee=False, abaikan_katup=False, perubahan=None, kunci_selesai=True
+):
     """Bolehkah actor mengubah tugas ini? Kembalikan pesan galat atau None.
+
+    Tugas selesai terkunci untuk SEMUA orang, sebelum katup dan sebelum admin
+    (P29, `kunci_selesai.py`). `perubahan` = isi PATCH, supaya pembukaan kembali
+    yang sah lolos; `kunci_selesai=False` hanya untuk hapus/arsip, yang tetap
+    mengikuti aturan lama (arsip justru mensyaratkan selesai).
 
     Keputusan user: member hanya boleh mengerjakan tugas yang di-assign ke
     dirinya; supervisor/manager/direktur boleh mengubah tugas bawahannya
     (siapa pun yang tingkatnya lebih rendah di divisi yang dia awasi).
 
     - Super Admin: selalu boleh (B1).
-    - Supervisor+: boleh kalau ia pembuat/assignee tugas ini, ATAU assignee-nya
-      termasuk bawahannya.
+    - Leader/Supervisor+: boleh kalau ia pembuat/assignee tugas ini, ATAU assignee-nya
+      termasuk bawahannya (bawahan Leader = Staf di departemen yang ia pimpin).
     - Member (dan jenjang belum diisi): hanya kalau ia assignee tugas ini.
     - `mengubah_assignee=True`: DITOLAK untuk semua orang KECUALI atasan yang
       berwenang menugaskan ulang (supervisor+ atas bawahannya, direktur di
       mana pun ia anggota). Member tidak bisa mengubah assignee SAMA SEKALI —
       bahkan miliknya sendiri (auto-assign saat create sudah menanganinya).
     """
+    if kunci_selesai and tugas_selesai(issue):
+        return galat_tugas_selesai(issue, actor, perubahan)
     if not abaikan_katup and not gerbang_aktif():
         return None
     if actor is None:
@@ -1185,7 +1246,7 @@ def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, aba
         # direktur lolos dari gate ini, lalu nilai barunya tetap diperiksa di
         # sana (atasan tidak bisa assign ke orang setingkat/lebih tinggi, dan
         # tidak bisa di luar divisinya).
-        if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
+        if tingkat is not None and tingkat >= TINGKAT_LEADER:
             return None
         if saya_terlibat:
             # Staf yang terlibat boleh MENAMBAH rekan setingkat sedepartemen
@@ -1200,7 +1261,7 @@ def galat_ubah_tugas(project_id, issue, actor=None, mengubah_assignee=False, aba
     # Bukan assignee: staf tidak boleh menyentuh tugas orang lain.
     if saya_terlibat:
         return None
-    if tingkat is not None and tingkat >= TINGKAT_SUPERVISOR:
+    if tingkat is not None and tingkat >= TINGKAT_LEADER:
         if assignee_ids <= _bawahan_ids(actor.id, workspace_id, project_id):
             return None
         # Atasan di divisi yang sama tapi tugasnya milik orang setingkat/lebih
@@ -1272,14 +1333,14 @@ def butuh_persetujuan(actor, project_id, assignee_ids):
     saja)". Jadi supervisor/manager/direktur -- walau menugaskan ke dirinya sendiri --
     tidak menghasilkan permintaan persetujuan. Dan karena member memang hanya boleh
     menugaskan ke dirinya sendiri, keadaan itu satu-satunya yang perlu disetujui.
+
+    Leader (P29) yang menyelesaikan tugas Staf-nya juga ditahan walau ia bukan
+    assignee: Leader tidak menyetujui, jadi memindahkan tugas bawahannya ke
+    selesai tidak boleh menjadi jalan pintas melewati Supervisor.
     """
     if actor is None:
         return False
     diterima = [a for a in (assignee_ids or []) if a is not None]
-    # Staf yang ikut jadi assignee (sendiri atau bersama rekan) = butuh persetujuan.
-    # Siapa saja rekan yang sah sudah diputuskan `galat_penugasan`.
-    if getattr(actor, "id", None) not in diterima:
-        return False
 
     from plane.db.models import Project  # noqa: PLC0415
 
@@ -1287,8 +1348,16 @@ def butuh_persetujuan(actor, project_id, assignee_ids):
     if project is None:
         return False
 
+    tingkat = tingkat_anggota(actor.id, project.workspace_id, project_id)
+    # Staf yang ikut jadi assignee (sendiri atau bersama rekan) = butuh persetujuan.
+    # Siapa saja rekan yang sah sudah diputuskan `galat_penugasan`.
+    if getattr(actor, "id", None) not in diterima and not (
+        tingkat is not None and TINGKAT_LEADER <= tingkat < TINGKAT_SUPERVISOR
+    ):
+        return False
+
     # KEP-83: ambang jenjangnya dari God Mode (bawaan = staf saja, aturan di atas).
-    return _wajib_persetujuan_jenjang(actor.id, project.workspace_id, project_id)
+    return _jenjang_wajib_persetujuan(tingkat)
 
 
 def catat_persetujuan(issue, actor=None, state_sebelumnya_id=None):

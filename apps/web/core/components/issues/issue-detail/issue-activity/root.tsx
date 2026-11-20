@@ -21,7 +21,8 @@ import { CommentCreate } from "@/components/comments/comment-create";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
-import { useBolehPercakapanTugas } from "@/hooks/use-aturan-tugas";
+import { useBolehPercakapanTugas, useTugasSelesai } from "@/hooks/use-aturan-tugas";
+import { useUrutanAktivitas } from "@/hooks/use-urutan-aktivitas";
 // plane web components
 import { ActivityFilterRoot } from "@/plane-web/components/issues/worklog/activity/filter-root";
 import { IssueActivityWorklogCreateButton } from "@/plane-web/components/issues/worklog/activity/worklog-create-button";
@@ -56,7 +57,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
     "issue_activity_filters",
     defaultActivityFilters
   );
-  const { setValue: setSortOrder, storedValue: sortOrder } = useLocalStorage("activity_sort_order", E_SORT_ORDER.ASC);
+  const { urutan: sortOrder, setUrutan: setSortOrder } = useUrutanAktivitas();
   // store hooks
   const {
     issue: { getIssueById },
@@ -76,6 +77,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   // Server tetap penegaknya (`galat_percakapan_tugas`); ini hanya menyembunyikan
   // kontrol yang pasti ditolak.
   const bolehPercakapan = useBolehPercakapanTugas(workspaceSlug, projectId, issue);
+  const tugasSelesai = useTugasSelesai()(issue);
   const percakapanTerkunci = disabled || !bolehPercakapan;
   // toggle filter
   const toggleFilter = (filter: TActivityFilters) => {
@@ -92,7 +94,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   };
 
   const toggleSortOrder = () => {
-    setSortOrder(sortOrder === E_SORT_ORDER.ASC ? E_SORT_ORDER.DESC : E_SORT_ORDER.ASC);
+    void setSortOrder(sortOrder === E_SORT_ORDER.ASC ? E_SORT_ORDER.DESC : E_SORT_ORDER.ASC);
   };
 
   // helper hooks
@@ -106,7 +108,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
     () =>
       !bolehPercakapan ? (
         <p className="rounded-md border border-subtle bg-surface-1 px-3 py-2 text-body-sm-regular text-secondary">
-          {t("issue.comments.not_involved")}
+          {t(tugasSelesai ? "jenjang_p29.done_locked" : "issue.comments.not_involved")}
         </p>
       ) : (
         <CommentCreate
@@ -119,7 +121,17 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
           attachmentStatus={<StatusLampiranTempel {...statusLampiran} />}
         />
       ),
-    [workspaceSlug, issueId, activityOperations, projectId, attachFiles, statusLampiran, bolehPercakapan, t]
+    [
+      workspaceSlug,
+      issueId,
+      activityOperations,
+      projectId,
+      attachFiles,
+      statusLampiran,
+      bolehPercakapan,
+      tugasSelesai,
+      t,
+    ]
   );
   if (!project) return <></>;
 
@@ -137,7 +149,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
               disabled={disabled}
             />
           )}
-          <ActivitySortRoot sortOrder={sortOrder || E_SORT_ORDER.ASC} toggleSort={toggleSortOrder} />
+          <ActivitySortRoot sortOrder={sortOrder} toggleSort={toggleSortOrder} />
           <ActivityFilterRoot
             selectedFilters={selectedFilters || defaultActivityFilters}
             toggleFilter={toggleFilter}
@@ -161,7 +173,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
               activityOperations={activityOperations}
               showAccessSpecifier={!!project.anchor}
               disabled={percakapanTerkunci}
-              sortOrder={sortOrder || E_SORT_ORDER.ASC}
+              sortOrder={sortOrder}
             />
             {!disabled && sortOrder === E_SORT_ORDER.ASC && renderCommentCreationBox}
           </div>

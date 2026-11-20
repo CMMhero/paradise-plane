@@ -6,27 +6,29 @@
  */
 
 import { useEffect } from "react";
-import { useKehadiranTersambung } from "@/hooks/use-kehadiran";
-import { pasangPenjagaData, SELANG_CADANGAN_MS, segarkanSemua } from "@/lib/data-live";
+import { useKehadiranDiaktifkan, useKehadiranTersambung } from "@/hooks/use-kehadiran";
+import { jendelaAktif, pasangPenjagaData, SELANG_CADANGAN_MS, segarkanSenyap } from "@/lib/data-live";
 
 /**
  * Dipasang sekali di lapisan workspace. Dua tugasnya:
  * - memasang pendengar dokumen (tab kembali terlihat, fokus lepas dari isian);
- * - saat soket live putus, menyegarkan berkala sebagai jaring pengaman. Dengan
- *   soket tersambung tidak ada jam sama sekali: kabar datang sendiri.
+ * - saat soket live yang SUDAH dinyalakan putus, menyegarkan senyap tiap
+ *   `SELANG_CADANGAN_MS`, hanya selama jendela terlihat dan berfokus. Dengan soket
+ *   tersambung, atau realtime tidak pernah dinyalakan, tidak ada jam sama sekali.
  */
 export function PenyegarLangsung() {
   const tersambung = useKehadiranTersambung();
+  const diaktifkan = useKehadiranDiaktifkan();
 
   useEffect(() => pasangPenjagaData(), []);
 
   useEffect(() => {
-    if (tersambung) return;
+    if (!diaktifkan || tersambung) return;
     const jam = setInterval(() => {
-      if (document.visibilityState === "visible") void segarkanSemua();
+      if (jendelaAktif()) void segarkanSenyap();
     }, SELANG_CADANGAN_MS);
     return () => clearInterval(jam);
-  }, [tersambung]);
+  }, [diaktifkan, tersambung]);
 
   return null;
 }

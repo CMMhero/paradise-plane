@@ -45,6 +45,10 @@ export const anakDari = (folder: TWikiFolder[], indukId: string | null | undefin
 export const bisaPunyaSubtopik = (folder: TWikiFolder | undefined): boolean =>
   !!folder && (adalahUnit(folder) || !folder.parent_id);
 
+/** Folder yang membatasi penulisan di `folder` (dirinya atau leluhurnya), atau undefined. */
+export const folderPembatas = (folder: TWikiFolder[], f: TWikiFolder | undefined): TWikiFolder | undefined =>
+  f?.restricted_by ? folderDenganId(folder, f.restricted_by) : undefined;
+
 /** Folder ini beserta leluhurnya, dari akar sampai folder itu sendiri. */
 export const jalurFolder = (folder: TWikiFolder[], id?: string | null): TWikiFolder[] => {
   const jalur: TWikiFolder[] = [];

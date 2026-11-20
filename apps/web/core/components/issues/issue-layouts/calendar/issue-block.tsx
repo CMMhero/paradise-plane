@@ -13,6 +13,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 import { Popover } from "@plane/propel/popover";
 import type { TIssue } from "@plane/types";
 import { ControlLink } from "@plane/ui";
+import { PrivateBadge } from "@/components/issues/privat/private-badge";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -138,6 +139,7 @@ export const CalendarIssueBlock = observer(
                       />
                     )}
                     {/* Paradise: minimal 12px; judul lengkap lewat title karena sel sempit memotongnya. */}
+                    <PrivateBadge isPrivate={issue.is_private} variant="icon" />
                     <div className="truncate text-13 font-medium md:text-12 md:font-regular" title={issue.name}>
                       {issue.name}
                     </div>

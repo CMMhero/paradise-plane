@@ -18,14 +18,18 @@ from plane.app.views.penempatan_saya import PenempatanSayaEndpoint
 from plane.app.views.workspace.boleh_buat_project import BolehBuatProjectEndpoint
 from plane.app.views.workspace.izin_saya import IzinSayaEndpoint
 from plane.app.views.workspace.perhatian import PerhatianEndpoint
+from plane.app.views.workspace.persetujuan import AntreanPersetujuanWorkspaceEndpoint
 from plane.app.views.chat_kelola import ChatKelolaRuangEndpoint, ChatKeluarkanAnggotaEndpoint
 from plane.app.views.chat_kartu import ChatPanggilanLogEndpoint
-from plane.app.views.chat import ChatRuangSematanEndpoint, ChatSematanEndpoint
+from plane.app.views.chat_penulis import ChatPenulisKanalEndpoint
+from plane.app.views.chat import ChatRuangBacaEndpoint, ChatRuangSematanEndpoint, ChatSematanEndpoint
 from plane.app.views.chat_rujukan import ChatRujukanEndpoint, ChatRujukanInfoEndpoint
 from plane.app.views.issue.persetujuan import PenggunaBisaDitugaskanEndpoint, PersetujuanPenugasanEndpoint
 from plane.app.views.wiki import (
     WikiAkarEndpoint,
     WikiFolderArsipEndpoint,
+    WikiFolderEditorEndpoint,
+    WikiFolderEditorListEndpoint,
     WikiFolderEndpoint,
     WikiFolderListEndpoint,
     WikiFolderPulihkanEndpoint,
@@ -62,6 +66,8 @@ from plane.app.views import (
     ChatUnreadEndpoint,
     CompletedReportEndpoint,
     DivisionDashboardEndpoint,
+    KinerjaEndpoint,
+    KinerjaLingkupEndpoint,
     WorkLogExportEndpoint,
     GoogleCalendarCallbackEndpoint,
     GoogleCalendarConnectEndpoint,
@@ -172,6 +178,11 @@ urlpatterns = [
         name="chat-ruang-isi",
     ),
     path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/baca/",
+        ChatRuangBacaEndpoint.as_view(),
+        name="chat-ruang-baca",
+    ),
+    path(
         "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/panggilan/",
         ChatPanggilanTokenEndpoint.as_view(),
         name="chat-panggilan-token",
@@ -206,6 +217,16 @@ urlpatterns = [
         ChatKelolaRuangEndpoint.as_view(),
         name="chat-ruang-kelola",
     ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/penulis/",
+        ChatPenulisKanalEndpoint.as_view(),
+        name="chat-ruang-penulis",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/penulis/<uuid:penulis_id>/",
+        ChatPenulisKanalEndpoint.as_view(),
+        name="chat-ruang-penulis-cabut",
+    ),
     # KEP-91: saran dan keterangan rujukan #kanal / #work item, dipakai juga
     # oleh editor deskripsi dan komentar.
     path(
@@ -228,6 +249,12 @@ urlpatterns = [
         PerhatianEndpoint.as_view(),
         name="perhatian",
     ),
+    # Semua yang menunggu keputusan saya di seluruh departemen (keputusan user 2026-11-20).
+    path(
+        "workspaces/<str:slug>/persetujuan/",
+        AntreanPersetujuanWorkspaceEndpoint.as_view(),
+        name="persetujuan-workspace",
+    ),
     path(
         "workspaces/<str:slug>/divisi-dashboard/",
         DivisionDashboardEndpoint.as_view(),
@@ -238,6 +265,8 @@ urlpatterns = [
         CompletedReportEndpoint.as_view(),
         name="divisi-dashboard-laporan",
     ),
+    path("workspaces/<str:slug>/kinerja/", KinerjaEndpoint.as_view(), name="kinerja"),
+    path("workspaces/<str:slug>/kinerja/lingkup/", KinerjaLingkupEndpoint.as_view(), name="kinerja-lingkup"),
     # Permintaan tugas lintas divisi. "tujuan" dan "ringkasan" ditaruh sebelum
     # "permintaan" (yang tidak punya segmen variabel) supaya niatnya terbaca;
     # tidak akan bentrok karena ketiganya literal.
@@ -338,6 +367,16 @@ urlpatterns = [
         "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/",
         WikiFolderEndpoint.as_view(),
         name="wiki-folder",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/editors/",
+        WikiFolderEditorListEndpoint.as_view(),
+        name="wiki-folder-editors",
+    ),
+    path(
+        "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/editors/<uuid:user_id>/",
+        WikiFolderEditorEndpoint.as_view(),
+        name="wiki-folder-editor",
     ),
     path(
         "workspaces/<str:slug>/wiki/folders/<uuid:folder_id>/archive/",

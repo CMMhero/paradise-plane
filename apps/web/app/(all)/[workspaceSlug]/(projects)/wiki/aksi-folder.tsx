@@ -17,7 +17,7 @@ import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 // services
 import type { TWikiFolder } from "@/services/wiki.service";
 // local imports
-import { adalahUnit, layananWiki } from "./data";
+import { adalahUnit, layananWiki, usePohonWiki } from "./data";
 import { KelolaFolder } from "./kelola";
 
 const KELAS_AKSI =
@@ -51,9 +51,12 @@ export function AksiFolder({ workspaceSlug, folder, onBerubah, varian = "kartu" 
   const [kelolaTerbuka, setKelolaTerbuka] = useState(false);
   const { minta, dialog } = useKonfirmasi();
 
+  const { adalahAdmin } = usePohonWiki(workspaceSlug);
+
   const menu = varian === "menu";
   if (!folder.can_manage && !menu) return null;
-  const bisaHapus = !adalahUnit(folder);
+  // Folder tingkat atas bebas unit hanya dihapus admin; editornya tidak.
+  const bisaHapus = !adalahUnit(folder) && (adalahAdmin || !!folder.parent_id);
 
   const hapus = async () => {
     let diarsipkan = false;

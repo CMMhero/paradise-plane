@@ -171,7 +171,10 @@ TEKS_PENGINGAT = {
         "status": "Status",
         "tombol": "Buka tugas",
         "buka": "Buka: {url}",
-        "ics": "Berkas .ics terlampir. Buka sekali untuk memasukkan tenggat ini ke kalender Anda (Outlook, Google, atau ponsel) berikut pengingatnya.",
+        "ics": (
+            "Berkas .ics terlampir. Buka sekali untuk memasukkan tenggat ini ke kalender Anda "
+            "(Outlook, Google, atau ponsel) berikut pengingatnya."
+        ),
         "alasan": "Anda menerima email ini karena Anda penanggung jawab atau pemberi tugas ini.",
         "hari_ini": "jatuh tempo hari ini",
         "sisa": "tinggal {n} hari lagi",
@@ -188,7 +191,10 @@ TEKS_PENGINGAT = {
         "status": "State",
         "tombol": "Open work item",
         "buka": "Open: {url}",
-        "ics": "An .ics file is attached. Open it once to add this deadline and its reminders to your calendar (Outlook, Google, or phone).",
+        "ics": (
+            "An .ics file is attached. Open it once to add this deadline and its reminders to your "
+            "calendar (Outlook, Google, or phone)."
+        ),
         "alasan": "You received this email because you are assigned to or created this work item.",
         "hari_ini": "due today",
         "sisa": "{n} days left",
@@ -201,12 +207,18 @@ TEKS_PENGINGAT = {
 TEKS_PENYETUJU = {
     "id": {
         "awalan_lewat": "Menunggu persetujuan",
-        "kalimat_lewat": "Tugas ini sudah diajukan selesai dan menunggu persetujuan Anda, sementara tenggatnya sudah lewat",
+        "kalimat_lewat": (
+            "Tugas ini sudah diajukan selesai dan menunggu persetujuan Anda, "
+            "sementara tenggatnya sudah lewat"
+        ),
         "alasan": "Anda menerima email ini karena Anda dapat menyetujui tugas ini.",
     },
     "en": {
         "awalan_lewat": "Waiting for approval",
-        "kalimat_lewat": "This work item was submitted as done and is waiting for your approval, and its due date has passed",
+        "kalimat_lewat": (
+            "This work item was submitted as done and is waiting for your approval, "
+            "and its due date has passed"
+        ),
         "alasan": "You received this email because you can approve this work item.",
     },
 }
@@ -335,7 +347,8 @@ def _kirim(issue, kelompok, titik: int, label: str, utas, penyetuju: bool = Fals
     ics = bangun_ics(
         issue=issue,
         judul=f"{kode} {issue.name}",
-        deskripsi=f"Project {issue.project.name}. Tenggat {tanggal_id(issue.target_date)}." + (f" {tautan}" if tautan else ""),
+        deskripsi=f"Project {issue.project.name}. Tenggat {tanggal_id(issue.target_date)}."
+        + (f" {tautan}" if tautan else ""),
         url=tautan,
     )
     # `text/calendar` dengan method=PUBLISH: dibaca sebagai berkas yang bisa

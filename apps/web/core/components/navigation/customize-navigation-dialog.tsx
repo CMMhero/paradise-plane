@@ -26,6 +26,7 @@ import { useInstance } from "@/hooks/store/use-instance";
 import { isNavKeyEnabled } from "@/lib/paradise-modules";
 // helpers
 import { getSidebarNavigationItemIcon } from "@/plane-web/components/workspace/sidebar/helper";
+import { useNavPersetujuanTerlihat } from "@/plane-web/components/workspace/sidebar/sidebar-item";
 // types
 import type { TPersonalNavigationItemKey, TProjectNavigationMode } from "@plane/types";
 
@@ -68,6 +69,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
   // store hooks
   const { allowPermissions } = useUserPermissions();
   const { config: instanceConfig } = useInstance();
+  const persetujuanTerlihat = useNavPersetujuanTerlihat(workspaceSlug?.toString());
   const {
     preferences: personalPreferences,
     togglePersonalItem,
@@ -104,6 +106,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
         EUserPermissionsLevel.WORKSPACE,
         workspaceSlug?.toString() || ""
       );
+      if (item.key === "persetujuan" && !persetujuanTerlihat) return false;
       // Modul yang dimatikan di God Mode > Features tidak ditawarkan untuk dipin.
       return hasPermission && isNavKeyEnabled(instanceConfig, item.key);
     }).map((item) => {
@@ -122,7 +125,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
 
     // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); items is a fresh local array
     return items.sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [workspaceSlug, allowPermissions, workspacePreferences, instanceConfig]);
+  }, [workspaceSlug, allowPermissions, workspacePreferences, instanceConfig, persetujuanTerlihat]);
 
   // Handle checkbox toggle
   const handleWorkspaceItemToggle = useCallback(

@@ -26,7 +26,7 @@ Modul ini menambahkan pintu itu, dan **tidak menyentuh** resolver izin mana pun:
 Tiga endpoint:
 
     GET  /workspaces/<slug>/cross-division/tujuan/      divisi yang menerima
-    GET  /workspaces/<slug>/cross-division/permintaan/  milik saya sendiri
+    GET  /workspaces/<slug>/cross-division/permintaan/  milik saya sendiri (+ alasan tolak)
     POST /workspaces/<slug>/cross-division/permintaan/  kirim permintaan baru
     GET  /workspaces/<slug>/cross-division/ringkasan/   hitungan per divisi
 
@@ -74,11 +74,8 @@ from plane.db.models import (
 )
 from plane.utils.content_validator import validate_html_content
 from plane.utils.host import base_host
-
-# Nilai `IntakeIssue.source`. `source` adalah CharField tanpa `choices`
-# (plane/db/models/intake.py), jadi tidak perlu migrasi; yang wajib cuma
-# mempertahankan string ini kalau nanti dijadikan konstanta.
-SOURCE_LINTAS_DIVISI = "CROSSDIV"
+from plane.utils.permintaan_lintas_divisi import SOURCE_LINTAS_DIVISI
+from plane.utils.wiki_access import WIKI_IDENTIFIER
 
 PRIORITAS_SAH = {"low", "medium", "high", "urgent", "none"}
 BATAS_CATATAN = 2000
@@ -92,7 +89,12 @@ _GROUP_TERBUKA = ["backlog", "unstarted", "started"]
 
 
 class DivisiTujuanEndpoint(BaseAPIView):
-    """Divisi yang membuka pintu permintaan (punya Intake default aktif)."""
+    """Departemen yang membuka pintu permintaan (punya Intake default aktif).
+
+    Departemen tempat pemanggil sudah anggota tidak ikut (keputusan user
+    2026-11-20: permintaan adalah jalan ke departemen yang BUKAN miliknya; di
+    departemen sendiri ia membuat work item langsung). Wiki bukan departemen.
+    """
 
     permission_classes = [WorkspaceEntityPermission]
 
@@ -104,10 +106,18 @@ class DivisiTujuanEndpoint(BaseAPIView):
                 project_intake__is_default=True,
                 project_intake__deleted_at__isnull=True,
             )
+            .exclude(id__in=_project_saya(request.user, slug))
+            .exclude(identifier=WIKI_IDENTIFIER)
             .distinct()
             .order_by("name")
         )
         return Response(DivisiTujuanSerializer(projects, many=True).data, status=status.HTTP_200_OK)
+
+
+def _project_saya(user, slug):
+    return ProjectMember.objects.filter(
+        workspace__slug=slug, member=user, is_active=True, deleted_at__isnull=True
+    ).values_list("project_id", flat=True)
 
 
 class PermintaanLintasDivisiEndpoint(BaseAPIView):
@@ -130,7 +140,10 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
             )
             .order_by("-created_at")
         )
-        return Response([serialize_permintaan(p) for p in permintaan], status=status.HTTP_200_OK)
+        terlihat = set(_project_saya(request.user, slug))
+        return Response(
+            [serialize_permintaan(p, p.tujuan_project_id in terlihat) for p in permintaan], status=status.HTTP_200_OK
+        )
 
     def post(self, request, slug):
         judul = (request.data.get("judul") or "").strip()
@@ -178,6 +191,11 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
         if str(asal.id) == str(tujuan.id):
             return Response(
                 {"error": "Divisi tujuan tidak boleh sama dengan divisi asal."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if ProjectMember.objects.filter(project=tujuan, member=request.user, is_active=True).exists():
+            return Response(
+                {"error": f"Anda anggota {tujuan.name}. Buat work item langsung di sana."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -275,7 +293,7 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
         permintaan = PermintaanLintasDivisi.objects.select_related(
             "asal_project", "tujuan_project", "intake_issue", "intake_issue__issue", "intake_issue__issue__state"
         ).get(pk=permintaan.pk)
-        return Response(serialize_permintaan(permintaan), status=status.HTTP_201_CREATED)
+        return Response(serialize_permintaan(permintaan, False), status=status.HTTP_201_CREATED)
 
 
 class RingkasanLintasDivisiEndpoint(BaseAPIView):

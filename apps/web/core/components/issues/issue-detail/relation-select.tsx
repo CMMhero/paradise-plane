@@ -8,6 +8,7 @@ import React from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 
+import { useTranslation } from "@plane/i18n";
 import { EditIcon, CloseIcon } from "@plane/propel/icons";
 // Plane
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -20,6 +21,7 @@ import { ExistingIssuesListModal } from "@/components/core/modals/existing-issue
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // Plane web imports
 import { useTimeLineRelationOptions } from "@/plane-web/components/relations";
@@ -48,6 +50,8 @@ export const IssueRelationSelect = observer(function IssueRelationSelect(props: 
   } = useIssueDetail();
   const { issueMap } = useIssues();
   const { isMobile } = usePlatformOS();
+  const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
   const relationIssueIds = getRelationByIssueIdRelationType(issueId, relationKey);
   const ISSUE_RELATION_OPTIONS = useTimeLineRelationOptions();
 
@@ -81,6 +85,7 @@ export const IssueRelationSelect = observer(function IssueRelationSelect(props: 
 
   return (
     <>
+      {dialog}
       <ExistingIssuesListModal
         workspaceSlug={workspaceSlug}
         projectId={projectId}
@@ -142,7 +147,15 @@ export const IssueRelationSelect = observer(function IssueRelationSelect(props: 
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            removeRelation(workspaceSlug, projectId, issueId, relationKey, relationIssueId);
+                            minta(
+                              {
+                                judul: t("ui_fixes.confirm_relation_title"),
+                                isi: t("ui_fixes.confirm_relation_body", { name: currentIssue.name }),
+                                tombol: t("remove"),
+                                tombolProses: t("removing"),
+                              },
+                              () => removeRelation(workspaceSlug, projectId, issueId, relationKey, relationIssueId)
+                            );
                           }}
                         >
                           <CloseIcon className="h-2.5 w-2.5 text-tertiary hover:text-danger-primary" />

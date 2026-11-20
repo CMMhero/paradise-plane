@@ -65,6 +65,7 @@ class IntakeIssuePublicViewSet(BaseViewSet):
         filters = issue_filters(request.query_params, "GET")
         issues = (
             Issue.objects.filter(
+                is_private=False,
                 issue_intake__intake_id=intake_id,
                 workspace_id=project_deploy_board.workspace_id,
                 project_id=project_deploy_board.project_id,

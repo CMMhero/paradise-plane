@@ -328,8 +328,8 @@ export const Gelembung = memo(function Gelembung(props: Props) {
 
   // Kartu (panggilan, tugas, persetujuan) yang SAYA picu berwarna sama dengan
   // gelembung keluar saya (permintaan user 5 Nov); kartunya menyesuaikan teks,
-  // kotak, dan chip lewat `terang`. Kartu tanpa pengirim (catatan rilis, ruang
-  // kabar) dan kartu dari orang lain tetap netral. Kartu tidak bisa disunting
+  // kotak, dan chip lewat `terang`. Kartu tanpa pengirim (catatan rilis) dan
+  // kartu dari orang lain tetap netral. Kartu tidak bisa disunting
   // atau dihapus, jadi izin ubah dihitung terpisah dari warnanya.
   const kartu = !dihapus && adalahKartu(pesan);
   const terang = dariSaya && !dihapus;

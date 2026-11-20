@@ -113,26 +113,20 @@ class DraftIssueCreateSerializer(BaseSerializer):
         if self.context.get("project_id"):
             from plane.utils.hierarki import (  # noqa: PLC0415
                 aktor_dari_context,
+                aturan_staf_berlaku,
                 galat_penugasan,
-                adalah_admin_penuh,
                 gerbang_aktif,
                 penerima_otomatis,
-                tingkat_anggota,
             )
             from plane.db.models import Project as _ProjectHierarki  # noqa: PLC0415
 
             _actor = aktor_dari_context(self.context)
             _project = _ProjectHierarki.objects.filter(pk=self.context.get("project_id")).first()
-            _tingkat = (
-                tingkat_anggota(_actor.id, _project.workspace_id, _project.id)
-                if (_actor is not None and _project is not None)
-                else None
-            )
             _staf = (
-            gerbang_aktif()
-            and (_tingkat is None or _tingkat < 20)
-            and not (_actor is not None and _project is not None and adalah_admin_penuh(_actor, _project.workspace_id))
-        )
+                _project is not None
+                and gerbang_aktif()
+                and aturan_staf_berlaku(_actor, _project.workspace_id, _project.id)
+            )
 
             if self.instance is None and not attrs.get("assignee_ids") and _project is not None:
                 _diri = penerima_otomatis(_project.id, _actor)

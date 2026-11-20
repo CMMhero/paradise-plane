@@ -23,12 +23,11 @@ const izinSumberService = new IzinSumberService();
 
 /**
  * Satu kunci per (workspace, project), dipakai bersama oleh semua baris yang
- * memanggilnya. Fokus tab SENGAJA memicu ambil ulang: data ini membawa bendera
- * izin, dan setelan God Mode bisa berubah selama tab terbuka.
+ * memanggilnya. Tidak menarik ulang saat fokus: server tetap menegakkan izin,
+ * dan perubahan setelan God Mode tampak pada pemuatan berikutnya atau tombol segarkan.
  */
 const OPSI_IZIN: SWRConfiguration = {
   revalidateIfStale: false,
-  revalidateOnFocus: true,
 };
 
 export type TIzinSumber = {

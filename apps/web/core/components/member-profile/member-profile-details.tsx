@@ -19,6 +19,15 @@ import { getButtonStyling } from "@plane/propel/button";
 import { MemberProfileFields, MemberProfileSkeleton } from "@plane/propel/member-profile-card";
 import type { TMemberProfilePlacement } from "@plane/propel/member-profile-card";
 import { useTranslation } from "@plane/i18n";
+import {
+  TINGKAT_CABANG,
+  TINGKAT_DIREKTUR,
+  TINGKAT_LEADER,
+  TINGKAT_MANAGER,
+  TINGKAT_MEMBER,
+  TINGKAT_SEKRETARIS,
+  TINGKAT_SUPERVISOR,
+} from "@plane/services";
 import { cn } from "@plane/utils";
 // hooks
 import { useUser, useUserPermissions } from "@/hooks/store/user";
@@ -27,7 +36,15 @@ import { UserService } from "@/services/user.service";
 // local
 import { useMemberProfile } from "./use-member-profile";
 
-const TINGKAT_DIKENAL = new Set([10, 20, 30, 35, 40]);
+const TINGKAT_DIKENAL = new Set<number>([
+  TINGKAT_MEMBER,
+  TINGKAT_LEADER,
+  TINGKAT_SUPERVISOR,
+  TINGKAT_MANAGER,
+  TINGKAT_CABANG,
+  TINGKAT_SEKRETARIS,
+  TINGKAT_DIREKTUR,
+]);
 
 // Sama dengan kunci SWR di `use-aturan-tugas.ts`, jadi status Super Admin diambil sekali per sesi.
 const OPSI_STATUS_SUPER_ADMIN: SWRConfiguration = {
@@ -77,8 +94,9 @@ export const MemberProfileDetails = observer(function MemberProfileDetails({
   // departemen, jadi barisnya tanpa tempat tetap harus tampil sebagai jenjang.
   const placements: TMemberProfilePlacement[] = profile.penempatan
     .map((p) => ({
-      key: `${p.departemen?.id ?? ""}-${p.divisi?.id ?? ""}-${p.tingkat}`,
-      division: p.divisi,
+      key: `${p.departemen?.id ?? ""}-${p.divisi?.id ?? ""}-${p.cabang?.id ?? ""}-${p.tingkat}`,
+      // Direktur Cabang tidak duduk di satu divisi: cabangnya yang tampil sebagai unit.
+      division: p.divisi ?? p.cabang ?? null,
       department: p.departemen,
       levelLabel: TINGKAT_DIKENAL.has(p.tingkat) ? t(`profil_ui.level_${p.tingkat}`) : null,
     }))

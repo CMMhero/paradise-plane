@@ -39,8 +39,9 @@ from plane.utils.ice import daftar_ice
 from plane.utils.inbox_chat import catat_pesan_dm, tandai_chat_terbaca
 from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, url_livekit
 from plane.utils.obrolan_siaran import siarkan
+from plane.utils.sinyal_data import siarkan_notifikasi
+from plane.bgtasks.pengumuman_email_task import kirim_email_pengumuman
 from plane.utils.kanal_sistem import adalah_admin_workspace, boleh_kirim, ikutkan_jika_belum
-from plane.utils.kartu_obrolan import kartu_disebut_di_obrolan
 from plane.utils.rujukan_obrolan import kanal_privat_milik, samarkan, saring_kanal, saring_tugas
 from plane.utils.saklar_instance import (
     CHAT_ATTACHMENTS_MAX,
@@ -199,6 +200,40 @@ def _tandai_terbaca(langganan, sampai):
     if sampai and (langganan.dibaca_sampai is None or sampai > langganan.dibaca_sampai):
         langganan.dibaca_sampai = sampai
         langganan.save(update_fields=["dibaca_sampai", "updated_at"])
+        return True
+    return False
+
+
+def _boleh_tandai(request):
+    """Tab yang sedang tersembunyi menarik isi dengan `?tandai=0`: pesan yang
+    muncul di tab yang tak dilihat siapa pun belum dibaca."""
+    return request.query_params.get("tandai") != "0"
+
+
+def _baca_ruang(request, ruang, langganan):
+    """Tandai ruang ini terbaca oleh peminta: SATU jalur untuk DM dan kanal.
+
+    Tiga hal digeser: `dibaca_pada` (tanda terima yang dilihat pengirim DM),
+    `dibaca_sampai` (dipakai lencana dan daftar), dan baris inbox. Hanya kalau
+    ada yang BENAR-BENAR bergeser, pengirim diberi tahu lewat siaran `baca` dan
+    tab lain milik pembaca lewat sinyal notifikasi. Penarikan berkala yang tidak
+    mengubah apa pun tidak menyiarkan apa-apa, jadi tidak ada badai kejadian.
+    """
+    bergeser = False
+    if ruang.tipe == Ruang.Tipe.DM:
+        bergeser = (
+            PesanLangsung.objects.filter(ruang=ruang, penerima=request.user, dibaca_pada__isnull=True).update(
+                dibaca_pada=timezone.now()
+            )
+            > 0
+        )
+    if _tandai_terbaca(langganan, ruang.pesan_terakhir_pada):
+        bergeser = True
+    tandai_chat_terbaca(request.user.id, ruang.id)
+    if bergeser:
+        siarkan(ruang.id, "baca", request.user.id)
+        siarkan_notifikasi(ruang.workspace_id, [request.user.id])
+    return bergeser
 
 
 def _jumlah_belum_dibaca(langganan):
@@ -239,7 +274,7 @@ def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None,
     return {
         "dihapus": False,
         "id": str(pesan.id),
-        # Kosong = pesan sistem ("Paradise"): catatan rilis dan kartu kabar.
+        # Kosong = pesan sistem: catatan rilis.
         "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
         "isi": isi,
         # Kartu: `jenis` selain "teks" dirender peramban dari `muatan`.
@@ -320,7 +355,7 @@ class _HakTulis:
 def _bentuk_ruang(ruang, saya_id, belum_dibaca=0, ikut=True, boleh_tulis=True):
     return {
         # Kanal sistem: tanpa tombol keluar/ganti nama, berlencana "System".
-        # `kunci_sistem` = pengumuman | changelog | kabar:<user_id>.
+        # `kunci_sistem` = pengumuman | changelog | divisi:<id> | departemen:<id>.
         "sistem": ruang.sistem,
         "kunci_sistem": ruang.kunci_sistem,
         "boleh_kirim": boleh_tulis,
@@ -635,9 +670,9 @@ def _boleh_sematkan(user, ruang) -> bool:
 
     Anggota ruang (berlangganan), sama dengan hak baca dan hak reaksi, DAN orang
     yang boleh menulis di ruang itu (`boleh_kirim`). Syarat kedua yang membuat
-    kanal sistem tetap terkunci: Announcements hanya disematkan admin, dan
-    Changelog serta ruang kabar tidak bisa diubah siapa pun, sama seperti tidak
-    bisa ditulisi. Kanal biasa dan DM: semua anggotanya, seperti WhatsApp grup
+    kanal sistem tetap terkunci: Announcements hanya disematkan yang boleh
+    menulis pengumuman, dan Changelog tidak bisa diubah siapa pun, sama seperti
+    tidak bisa ditulisi. Kanal biasa dan DM: semua anggotanya, seperti WhatsApp grup
     yang tidak dikunci admin.
     """
     return _langganan(user.id, ruang) is not None and boleh_kirim(ruang, user)
@@ -953,18 +988,6 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
     if penerima_id is not None:
         catat_pesan_dm(pesan)
 
-    # Yang disebut di kanal mendapat kartu di ruang "Paradise"-nya, supaya
-    # sebutan tetap sampai walau kanalnya dibisukan atau jarang dibuka.
-    # KEP-91: @all = seluruh anggota ruang, digabung dengan sebutan bernama
-    # tanpa kembar. Pengirim tidak pernah dikirimi kartu, termasuk @yourself.
-    if ruang.tipe != Ruang.Tipe.DM:
-        tujuan = set(sebut)
-        if muatan.get("semua"):
-            tujuan |= set(Langganan.objects.filter(ruang=ruang).values_list("user_id", flat=True))
-        tujuan.discard(request.user.id)
-        if tujuan:
-            kartu_disebut_di_obrolan(pesan, ruang, tujuan)
-
     if lampiran_ids:
         # Yang boleh ditempel HANYA berkas yang diunggah orang ini sendiri, di
         # workspace ini, bertipe lampiran obrolan, dan belum menempel di pesan
@@ -984,6 +1007,10 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
                 len(lampiran_ids),
                 terpakai,
             )
+
+    # Sesudah lampiran menempel, supaya emailnya bisa menyebut jumlahnya.
+    if ruang.kunci_sistem == KUNCI_PENGUMUMAN:
+        kirim_email_pengumuman.delay(str(pesan.id))
 
     peta = _peta_lampiran([pesan.id], slug)
     kutipan = _peta_kutipan([pesan])
@@ -1025,20 +1052,16 @@ class ChatThreadEndpoint(BaseAPIView):
 
         isi = _muat_isi_ruang(request, slug, ruang, batas)
 
-        # Membuka percakapan berarti membacanya. Dua penanda digeser sekaligus
-        # dan keduanya perlu: `dibaca_pada` adalah tanda terima yang dilihat
-        # pengirim, `dibaca_sampai` adalah yang dipakai lencana dan kanal.
-        # WAJIB sesudah `_muat_isi_ruang`, karena medan `baru` dihitung dari
-        # keadaan sebelum dibaca. Membalik urutannya membuat garis "pesan belum
-        # dibaca" tidak pernah muncul untuk siapa pun.
-        PesanLangsung.objects.filter(
-            ruang=ruang, pengirim_id=user_id, penerima=request.user, dibaca_pada__isnull=True
-        ).update(dibaca_pada=timezone.now())
-
-        langganan = _langganan(request.user.id, ruang)
-        if langganan is not None:
-            _tandai_terbaca(langganan, ruang.pesan_terakhir_pada)
-        tandai_chat_terbaca(request.user.id, ruang.id)
+        # Membuka percakapan berarti membacanya. WAJIB sesudah `_muat_isi_ruang`,
+        # karena medan `baru` dihitung dari keadaan sebelum dibaca. Membalik
+        # urutannya membuat garis "pesan belum dibaca" tidak pernah muncul.
+        # `tandai=0`: tab tersembunyi hanya menarik isi, tidak membaca.
+        if _boleh_tandai(request):
+            langganan = _langganan(request.user.id, ruang)
+            if langganan is not None:
+                _baca_ruang(request, ruang, langganan)
+            else:
+                tandai_chat_terbaca(request.user.id, ruang.id)
 
         return Response(isi, status=status.HTTP_200_OK)
 
@@ -1183,9 +1206,6 @@ class ChatRuangEndpoint(BaseAPIView):
         if (
             Ruang.objects.filter(workspace=workspace, nama__iexact=nama)
             .exclude(tipe=Ruang.Tipe.DM)
-            # Ruang kabar "Paradise" milik tiap orang tidak terlihat orang lain,
-            # jadi namanya tidak boleh menghalangi kanal bernama sama.
-            .exclude(kunci_sistem__startswith="kabar:")
             .exists()
         ):
             return Response(
@@ -1234,15 +1254,8 @@ class ChatRuangThreadEndpoint(BaseAPIView):
 
         isi = _muat_isi_ruang(request, slug, ruang, batas)
 
-        # Untuk DM, tanda terima ikut digeser supaya pengirimnya melihat
-        # pesannya sudah dibaca, sama seperti lewat jalur `chat/<user_id>/`.
-        if ruang.tipe == Ruang.Tipe.DM:
-            PesanLangsung.objects.filter(
-                ruang=ruang, penerima=request.user, dibaca_pada__isnull=True
-            ).update(dibaca_pada=timezone.now())
-            tandai_chat_terbaca(request.user.id, ruang.id)
-
-        _tandai_terbaca(langganan, ruang.pesan_terakhir_pada)
+        if _boleh_tandai(request):
+            _baca_ruang(request, ruang, langganan)
         return Response(isi, status=status.HTTP_200_OK)
 
     def post(self, request, slug, ruang_id):
@@ -1253,16 +1266,34 @@ class ChatRuangThreadEndpoint(BaseAPIView):
         # DM tetap membawa `penerima` supaya tanda terima, email pemberitahuan,
         # dan penjaga lampiran terus bekerja. Kanal tidak punya penerima tunggal.
         penerima_id = _lawan_bicara(ruang, request.user.id) if ruang.tipe == Ruang.Tipe.DM else None
-        # Kanal sistem: Changelog dan ruang kabar hanya ditulis sistem,
-        # Announcements hanya Super Admin dan admin workspace.
+        # Kanal sistem: Changelog hanya ditulis sistem, Announcements hanya
+        # admin dan penulis yang diizinkan admin (PenulisKanal).
         if not boleh_kirim(ruang, request.user):
             pesan_galat = (
-                "Hanya admin yang bisa menulis pengumuman."
+                "Hanya admin dan departemen yang diizinkan yang bisa menulis pengumuman."
                 if ruang.kunci_sistem == KUNCI_PENGUMUMAN
                 else "Kanal ini hanya bisa dibaca."
             )
             return Response({"error": pesan_galat}, status=status.HTTP_403_FORBIDDEN)
         return _kirim_ke_ruang(request, slug, ruang, penerima_id=penerima_id)
+
+
+class ChatRuangBacaEndpoint(ChatRuangThreadEndpoint):
+    """Tandai satu ruang terbaca tanpa memuat isinya.
+
+    Dipakai tab yang kembali terlihat: ia sudah memegang pesannya (ditarik saat
+    tersembunyi dengan `?tandai=0`), jadi cukup menggeser penanda.
+    """
+
+    def get(self, request, slug, ruang_id):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def post(self, request, slug, ruang_id):
+        ruang, langganan = self._ruang_saya(request, slug, ruang_id)
+        if ruang is None or langganan is None:
+            return Response({"error": "Ruang tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        _baca_ruang(request, ruang, langganan)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ChatGabungEndpoint(BaseAPIView):
@@ -1344,8 +1375,7 @@ class ChatAnggotaEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if ruang.sistem:
-            # Announcements & Changelog sudah diikuti semua anggota; ruang kabar
-            # "Paradise" milik satu orang saja.
+            # Announcements & Changelog sudah diikuti semua anggota.
             return Response(
                 {"error": "Anggota kanal sistem diatur otomatis."},
                 status=status.HTTP_400_BAD_REQUEST,

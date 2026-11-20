@@ -41,6 +41,12 @@ from drf_spectacular.utils import (
 )
 
 # Module imports
+from plane.utils.akses_privat import (
+    boleh_lihat_tugas,
+    galat_ubah_privat,
+    saring_tugas_privat,
+    tugas_privat_tersembunyi,
+)
 from plane.api.serializers import (
     IssueAttachmentSerializer,
     IssueActivitySerializer,
@@ -81,6 +87,7 @@ from plane.db.models import (
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan
+from plane.utils.kunci_selesai import galat_induk_selesai, galat_tugas_selesai
 from plane.utils.task_access import (
     bisa_ganti_tenggat,
     bisa_hapus_tugas,
@@ -205,7 +212,8 @@ class WorkspaceIssueAPIEndpoint(BaseAPIView):
 
     def get_queryset(self):
         return (
-            Issue.issue_objects.annotate(
+            saring_tugas_privat(Issue.issue_objects, self.request.user)
+            .annotate(
                 sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
                 .order_by()
                 .annotate(count=Func(F("id"), function="Count"))
@@ -248,15 +256,19 @@ class WorkspaceIssueAPIEndpoint(BaseAPIView):
         This endpoint provides workspace-level access to work items.
         """
         if issue_identifier and project_identifier:
-            issue = Issue.issue_objects.annotate(
-                sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
-                .order_by()
-                .annotate(count=Func(F("id"), function="Count"))
-                .values("count")
-            ).get(
-                workspace__slug=slug,
-                project__identifier=project_identifier,
-                sequence_id=issue_identifier,
+            issue = (
+                saring_tugas_privat(Issue.issue_objects, request.user)
+                .annotate(
+                    sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
+                    .order_by()
+                    .annotate(count=Func(F("id"), function="Count"))
+                    .values("count")
+                )
+                .get(
+                    workspace__slug=slug,
+                    project__identifier=project_identifier,
+                    sequence_id=issue_identifier,
+                )
             )
             return Response(
                 IssueSerializer(issue, fields=self.fields, expand=self.expand).data,
@@ -277,7 +289,8 @@ class IssueListCreateAPIEndpoint(BaseAPIView):
 
     def get_queryset(self):
         return (
-            Issue.issue_objects.annotate(
+            saring_tugas_privat(Issue.issue_objects, self.request.user)
+            .annotate(
                 sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
                 .order_by()
                 .annotate(count=Func(F("id"), function="Count"))
@@ -343,7 +356,7 @@ class IssueListCreateAPIEndpoint(BaseAPIView):
         external_source = request.GET.get("external_source")
 
         if external_id and external_source:
-            issue = Issue.objects.get(
+            issue = saring_tugas_privat(Issue.objects, request.user).get(
                 external_id=external_id,
                 external_source=external_source,
                 workspace__slug=slug,
@@ -391,7 +404,9 @@ class IssueListCreateAPIEndpoint(BaseAPIView):
             )
         )
 
-        total_issue_queryset = Issue.issue_objects.filter(project_id=project_id, workspace__slug=slug)
+        total_issue_queryset = saring_tugas_privat(
+            Issue.issue_objects.filter(project_id=project_id, workspace__slug=slug), request.user
+        )
 
         # Priority Ordering
         if order_by_param == "priority" or order_by_param == "-priority":
@@ -545,7 +560,8 @@ class IssueDetailAPIEndpoint(BaseAPIView):
 
     def get_queryset(self):
         return (
-            Issue.issue_objects.annotate(
+            saring_tugas_privat(Issue.issue_objects, self.request.user)
+            .annotate(
                 sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
                 .order_by()
                 .annotate(count=Func(F("id"), function="Count"))
@@ -649,10 +665,18 @@ class IssueDetailAPIEndpoint(BaseAPIView):
                     external_source=external_source,
                 )
 
+                if not boleh_lihat_tugas(issue, request.user):
+                    return Response({"error": "Work item not found"}, status=status.HTTP_404_NOT_FOUND)
                 # Kustomisasi Paradise: upsert lewat external_id adalah PATCH juga,
-                # jadi aturan tenggat yang sama berlaku (dulu pintu ini terlewat).
+                # jadi aturan tenggat dan kunci selesai (P29) yang sama berlaku.
+                galat_selesai = galat_tugas_selesai(issue, request.user, request.data)
+                if galat_selesai:
+                    return Response({"error": galat_selesai}, status=status.HTTP_403_FORBIDDEN)
                 if tenggat_diubah(issue, request.data) and not bisa_ganti_tenggat(request.user, issue):
                     return Response({"error": pesan_tolak_tenggat()}, status=status.HTTP_403_FORBIDDEN)
+                galat_privat = galat_ubah_privat(issue, request.user, request.data)
+                if galat_privat:
+                    return Response({"error": galat_privat}, status=status.HTTP_403_FORBIDDEN)
 
                 # Get the current instance of the issue in order to track
                 # changes and dispatch the issue activity
@@ -795,6 +819,13 @@ class IssueDetailAPIEndpoint(BaseAPIView):
         """
         issue = Issue.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
 
+        # P29: tugas selesai terkunci untuk API token juga, kecuali pembukaan kembali yang sah.
+        galat_selesai = galat_tugas_selesai(issue, request.user, request.data) or (
+            galat_induk_selesai([issue.parent_id]) if "parent" in request.data else None
+        )
+        if galat_selesai:
+            return Response({"error": galat_selesai}, status=status.HTTP_403_FORBIDDEN)
+
         # Kustomisasi Paradise: aturan tenggat berlaku di
         # SINI juga. API token adalah pintu yang sama ke data yang sama, dan
         # aturan yang cuma dipasang di aplikasi web bukan aturan, cuma saran.
@@ -803,6 +834,9 @@ class IssueDetailAPIEndpoint(BaseAPIView):
                 {"error": pesan_tolak_tenggat()},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        galat_privat = galat_ubah_privat(issue, request.user, request.data)
+        if galat_privat:
+            return Response({"error": galat_privat}, status=status.HTTP_403_FORBIDDEN)
 
         project = Project.objects.get(pk=project_id)
         current_instance = json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder)
@@ -2327,12 +2361,15 @@ class IssueSearchEndpoint(BaseAPIView):
                 q |= Q(**{f"{field}__icontains": query})
 
         # Filter issues
-        issues = Issue.issue_objects.filter(
-            q,
-            project__project_projectmember__member=self.request.user,
-            project__project_projectmember__is_active=True,
-            project__archived_at__isnull=True,
-            workspace__slug=slug,
+        issues = saring_tugas_privat(
+            Issue.issue_objects.filter(
+                q,
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+                workspace__slug=slug,
+            ),
+            request.user,
         )
 
         # Apply project filter if not searching across workspace
@@ -2429,7 +2466,11 @@ class IssueRelationListCreateAPIEndpoint(BaseAPIView):
         relations = IssueRelation.objects.filter(
             Q(issue_id=issue_id) | Q(related_issue_id=issue_id),
             workspace__slug=slug,
-        ).values(
+        )
+        tersembunyi = tugas_privat_tersembunyi(request.user)
+        if tersembunyi is not None:
+            relations = relations.exclude(issue_id__in=tersembunyi).exclude(related_issue_id__in=tersembunyi)
+        relations = relations.values(
             "relation_type",
             "issue_id",
             "related_issue_id",

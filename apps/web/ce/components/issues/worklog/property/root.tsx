@@ -16,6 +16,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Input } from "@plane/ui";
 // hooks
 import { useUser } from "@/hooks/store/user";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 // services
 import { IssueWorkLogService, type TIssueWorkLog } from "@/services/issue/issue_worklog.service";
 
@@ -46,6 +47,7 @@ const displayName = (log: TIssueWorkLog, t: TTerjemah): string => {
 
 const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyContent(props: TIssueWorklogProperty) {
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
   const { workspaceSlug, projectId, issueId, disabled } = props;
   // store
   const { data: currentUser } = useUser();
@@ -120,6 +122,7 @@ const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyConten
 
   return (
     <div className="flex w-full flex-col gap-2 border-t border-subtle py-3">
+      {dialog}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-13 text-secondary">
           <Clock className="size-4" />
@@ -154,7 +157,15 @@ const IssueWorklogPropertyContent = observer(function IssueWorklogPropertyConten
                     variant="ghost"
                     size="sm"
                     icon={Trash2}
-                    onClick={() => handleDelete(log)}
+                    onClick={() =>
+                      minta(
+                        {
+                          judul: t("ui_fixes.confirm_worklog_title"),
+                          isi: t("ui_fixes.confirm_worklog_body", { duration: formatDuration(log.duration, t) }),
+                        },
+                        () => handleDelete(log)
+                      )
+                    }
                     className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                     aria-label={t("worklog_ui.delete")}
                   />

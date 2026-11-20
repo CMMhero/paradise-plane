@@ -18,6 +18,7 @@ import { calculateTimeAgo, copyTextToClipboard } from "@plane/utils";
 // helpers
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { usePratinjauTautan } from "@/components/pratinjau-tautan/kartu";
 import { LabelSumberTeks } from "@/components/pratinjau-tautan/label-sumber";
@@ -35,6 +36,7 @@ export const IssueLinkItem = observer(function IssueLinkItem(props: TIssueLinkIt
   const { linkId, linkOperations, isNotAllowed, issueServiceType = EIssueServiceType.ISSUES } = props;
   // hooks
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
   const {
     toggleIssueLinkModal: toggleIssueLinkModalStore,
     setIssueLinkData,
@@ -67,6 +69,7 @@ export const IssueLinkItem = observer(function IssueLinkItem(props: TIssueLinkIt
 
   return (
     <>
+      {dialog}
       <div
         key={linkId}
         className="group 3xl:col-span-2 col-span-12 flex h-10 flex-shrink-0 items-center justify-between gap-3 rounded-sm border-[0.5px] border-subtle bg-surface-2 px-3 hover:bg-layer-1 lg:col-span-6 xl:col-span-4 2xl:col-span-3"
@@ -128,7 +131,13 @@ export const IssueLinkItem = observer(function IssueLinkItem(props: TIssueLinkIt
               <CustomMenu.MenuItem
                 className="flex items-center gap-2"
                 onClick={() => {
-                  linkOperations.remove(linkDetail.id);
+                  minta(
+                    {
+                      judul: t("ui_fixes.confirm_link_title"),
+                      isi: t("ui_fixes.confirm_link_body", { name: linkDetail.title || linkDetail.url }),
+                    },
+                    () => linkOperations.remove(linkDetail.id)
+                  );
                 }}
               >
                 <TrashIcon className="h-3 w-3" />

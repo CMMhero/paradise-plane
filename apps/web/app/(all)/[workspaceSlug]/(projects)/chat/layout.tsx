@@ -16,7 +16,11 @@ export default function ChatLayout() {
   return (
     <>
       <AppHeader header={<ChatHeader />} />
-      <ContentWrapper>
+      {/* Obrolan menggulir daftar pesannya sendiri. Kotak gulir luar bawaan ContentWrapper
+          akan ikut menggulirkan seluruh obrolan (kotak tulis ikut naik) begitu isinya
+          lebih tinggi satu piksel pun. `clip` melarang gulir itu, juga yang dipicu
+          skrip (scrollIntoView, fokus). */}
+      <ContentWrapper className="overflow-clip">
         <Outlet />
       </ContentWrapper>
     </>

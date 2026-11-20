@@ -88,6 +88,8 @@ const SELANG_PESAN_CADANGAN = 30000;
 const SELANG_DAFTAR = 15000;
 /** Berapa lama sesudah aksi di tab ini gema soketnya dianggap milik aksi itu. */
 const JENDELA_GEMA_MS = 3000;
+/** Tab tidak terlihat: menarik isi saja, jangan membaca atas nama orangnya. */
+const tersembunyi = (): boolean => typeof document !== "undefined" && document.visibilityState === "hidden";
 /** Dipanggil penangan aksi pesan, di luar render; lihat `onPerubahan`. */
 const tandaiAksiLokal = (ref: { current: number }): void => {
   ref.current = Date.now();
@@ -227,6 +229,29 @@ function ChatPage() {
   // belum punya ruang, dan memang belum punya apa pun untuk disematkan.
   const kunciSematan = slug && ruangSaatIni ? `CHAT_SEMATAN_${slug}_${ruangSaatIni}` : null;
 
+  /** Tarikan yang sudah menandai terbaca di server: yang terakhir diselesaikan. */
+  const terakhirDibacaRef = useRef<string | null>(null);
+  /** Ada tarikan selagi tab tersembunyi, jadi belum ada yang dibaca. */
+  const tertundaBacaRef = useRef(false);
+  const segarkanLencana = useCallback(() => {
+    void mutate(KUNCI_BELUM_DIBACA);
+    void mutate(`CHAT_PERCAKAPAN_${slug}`);
+    void mutate(`CHAT_KANAL_${slug}`);
+  }, [slug]);
+  // Dipanggil SESUDAH server menjawab, jadi penandaan di server sudah terjadi dan
+  // angkanya tidak lagi berlomba dengan tarikan yang menandainya. Hanya saat
+  // pesan terakhirnya berganti: tarikan berkala tidak menambah permintaan.
+  const sesudahDimuat = (isi: TPesan[]) => {
+    if (tersembunyi()) {
+      tertundaBacaRef.current = true;
+      return;
+    }
+    const penanda = `${kunciIsi}|${isi[isi.length - 1]?.id ?? ""}`;
+    if (terakhirDibacaRef.current === penanda) return;
+    terakhirDibacaRef.current = penanda;
+    segarkanLencana();
+  };
+
   // Sengaja memakai `mutate` global, bukan handle dari useSWR di bawah: hook ini
   // harus berdiri SEBELUM SWR isi percakapan supaya `tersambung` bisa dipakai
   // menentukan seberapa sering penarikan cadangan berjalan.
@@ -234,6 +259,13 @@ function ChatPage() {
     slug,
     ruangId: ruangSaatIni,
     onPerubahan: (kejadian) => {
+      // Lawan bicara membuka percakapan: tanda terima pesan saya berubah. Baca
+      // oleh saya sendiri tidak perlu apa-apa; lencana tab ini sudah diurus
+      // `sesudahDimuat` dan tab lain lewat sinyal notifikasi.
+      if (kejadian.tipe === "baca") {
+        if (kejadian.oleh !== currentUser?.id && kunciIsi) void mutate(kunciIsi);
+        return;
+      }
       // Gema aksi tab ini sendiri: penangan aksinya sudah menarik ulang, jadi
       // menarik lagi di sini menggandakan tiap request (dan tiap tarik pesan
       // juga menandai dibaca di server). Dibatasi jendela waktu, BUKAN cuma
@@ -268,15 +300,28 @@ function ChatPage() {
   const { data: pesan, mutate: muatPesan } = useSWR(
     slug && (ruangParam || dengan) ? `CHAT_ISI_${slug}_${ruangParam ?? dengan}` : null,
     slug && ruangParam
-      ? () => chatService.getPesanRuang(slug, ruangParam)
+      ? () => chatService.getPesanRuang(slug, ruangParam, !tersembunyi())
       : slug && dengan
-        ? () => chatService.getPesan(slug, dengan)
+        ? () => chatService.getPesan(slug, dengan, !tersembunyi())
         : null,
     // Soket hidup = pesan sudah datang seketika, jadi penarikan tinggal jadi
     // jaring pengaman. TIDAK dimatikan sama sekali: kalau soketnya putus tanpa
     // sempat menyambung lagi, ini satu-satunya yang menyelamatkan percakapan.
-    { refreshInterval: tersambung ? SELANG_PESAN_CADANGAN : SELANG_PESAN }
+    { refreshInterval: tersambung ? SELANG_PESAN_CADANGAN : SELANG_PESAN, onSuccess: sesudahDimuat }
   );
+
+  // Kembali ke tab ini: pesan yang ditarik selagi tersembunyi belum dibaca.
+  // Cukup menggeser penanda di server; isinya sudah ada, jadi tidak menarik ulang.
+  useEffect(() => {
+    if (!slug || !ruangSaatIni) return;
+    const saatTerlihat = () => {
+      if (document.visibilityState !== "visible" || !tertundaBacaRef.current) return;
+      tertundaBacaRef.current = false;
+      void chatService.tandaiTerbaca(slug, ruangSaatIni).then(segarkanLencana);
+    };
+    document.addEventListener("visibilitychange", saatTerlihat);
+    return () => document.removeEventListener("visibilitychange", saatTerlihat);
+  }, [slug, ruangSaatIni, segarkanLencana]);
 
   // Siaran "sematan" lewat soket yang memicu tarik ulang; penarikan berkala di
   // sini cuma jaring pengaman saat soket putus, jadi jarang.
@@ -360,10 +405,6 @@ function ChatPage() {
     } else {
       setAdaPesanBaru(true);
     }
-    // Memuat percakapan berarti menandainya terbaca di server, jadi lencana di
-    // sidebar sudah basi sejak detik itu. Disegarkan di sini supaya angkanya
-    // turun seketika, bukan pada tarikan 30 detik berikutnya.
-    void mutate(KUNCI_BELUM_DIBACA);
   }, [pesan?.length, dengan, ruangParam]);
   /* oxlint-enable react/set-state-in-effect, react/exhaustive-effect-dependencies, react-hooks/exhaustive-deps */
 
@@ -716,7 +757,7 @@ function ChatPage() {
     if (!ruangSaatIni) return undefined;
     return lupakanKonferensi;
   }, [ruangSaatIni, lupakanKonferensi]);
-  // Kanal sistem yang hanya dibaca (Announcements, Changelog, Paradise) tidak
+  // Kanal sistem yang hanya dibaca (Announcements, Changelog) tidak
   // bisa ditelepon; kanal divisi/departemen bisa, karena isinya orang sungguhan.
   const kanalTanpaPanggilan = !!kanalAktif?.sistem && !/^(divisi|departemen):/.test(kanalAktif.kunci_sistem ?? "");
   const kanalDiikuti = (() => {
@@ -828,7 +869,7 @@ function ChatPage() {
   if (!slug) return <></>;
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full min-h-0 w-full">
       <PageHead title={t("chat_nav")} />
 
       {/* Daftar orang */}
@@ -941,11 +982,13 @@ function ChatPage() {
                         <span className="shrink-0 rounded-control bg-layer-3 px-1.5 py-px text-11 font-medium text-tertiary">
                           {/* Kanal divisi/departemen diberi label unitnya, bukan "System":
                               isinya obrolan orang, cuma anggotanya yang diatur God Mode. */}
-                          {r.kunci_sistem?.startsWith("divisi:")
-                            ? t("chatkartu_ui.org_division")
-                            : r.kunci_sistem?.startsWith("departemen:")
-                              ? t("chatkartu_ui.org_department")
-                              : t("chatkartu_ui.system_badge")}
+                          {r.kunci_sistem?.startsWith("cabang:")
+                            ? t("cabang.org_branch")
+                            : r.kunci_sistem?.startsWith("divisi:")
+                              ? t("chatkartu_ui.org_division")
+                              : r.kunci_sistem?.startsWith("departemen:")
+                                ? t("chatkartu_ui.org_department")
+                                : t("chatkartu_ui.system_badge")}
                         </span>
                       ) : null}
                       {adaBaru ? (
@@ -1085,7 +1128,10 @@ function ChatPage() {
           dibuka. Keadaan kosong "Pilih orang di sebelah kiri" tidak masuk akal
           di HP, karena di situ tidak ada "sebelah kiri". */}
       <section
-        className={cn("relative flex min-w-0 flex-1 flex-col", !adaPercakapanTerbuka && "hidden lg:flex")}
+        className={cn(
+          "relative flex min-h-0 min-w-0 flex-1 flex-col overflow-clip",
+          !adaPercakapanTerbuka && "hidden lg:flex"
+        )}
         {...(adaPercakapanTerbuka ? aturSeret : {})}
       >
         {/* Area lepas: muncul hanya saat berkas diseret di atas percakapan. */}
@@ -1259,7 +1305,7 @@ function ChatPage() {
             />
 
             <div className="relative flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 overflow-y-auto px-4 py-3" onScroll={saatGulir}>
+              <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3" onScroll={saatGulir}>
                 {/* Tombol riwayat hanya muncul kalau memang ada kemungkinan ada
                   yang lebih lama, dan menghilang setelah server bilang habis. */}
                 {barisPesan.length > 0 && !habis ? (
@@ -1396,13 +1442,13 @@ function ChatPage() {
               </div>
             ) : null}
 
-            {/* Kanal sistem yang hanya bisa dibaca: Changelog, ruang kabar
-                "Paradise", dan Announcements bagi yang bukan admin. Server tetap
+            {/* Kanal sistem yang hanya bisa dibaca: Changelog, dan Announcements
+                bagi yang bukan admin atau penulis yang diizinkan. Server tetap
                 menolak 403; kolom tulis cuma disembunyikan supaya tidak menipu. */}
             {kanalAktif?.boleh_kirim === false ? (
               <p className="border-t border-subtle p-3 text-center text-12 text-tertiary">
                 {kanalAktif.kunci_sistem === "pengumuman"
-                  ? t("chatkartu_ui.announcements_admin_only")
+                  ? t("obrolan_p29.announcements_restricted")
                   : t("chatkartu_ui.read_only")}
               </p>
             ) : null}

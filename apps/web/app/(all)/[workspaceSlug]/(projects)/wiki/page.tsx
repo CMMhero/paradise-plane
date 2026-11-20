@@ -8,7 +8,7 @@
 import { useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { Plus } from "lucide-react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -20,6 +20,7 @@ import type { TWikiFolder } from "@/services/wiki.service";
 // local imports
 import { AksiFolder } from "./aksi-folder";
 import { anakDari, folderTerlihat, jumlahHalamanDalam, jumlahMateriDalam, layananWiki, usePohonWiki } from "./data";
+import { FolderBaru } from "./folder-baru";
 import { PencarianWiki } from "./pencarian";
 
 /**
@@ -35,28 +36,28 @@ function WikiBerandaPage() {
   const slug = workspaceSlug?.toString() ?? "";
   const { folder, adalahAdmin, sedangMemuat, galat, muatUlang } = usePohonWiki(slug);
   const [mencari, setMencari] = useState(false);
-  const [sedangMembuat, setSedangMembuat] = useState(false);
+  const [dialogBuka, setDialogBuka] = useState(false);
+  const navigate = useNavigate();
 
   const terlihat = useMemo(() => folderTerlihat(folder), [folder]);
   const tingkatAtas = anakDari(terlihat, null);
   const divisi = tingkatAtas.filter((f) => f.divisi_id);
   const lainnya = tingkatAtas.filter((f) => !f.divisi_id);
 
-  const buatFolder = async () => {
-    if (sedangMembuat) return;
-    setSedangMembuat(true);
+  const buatFolder = async (nama: string) => {
     try {
-      await layananWiki.createFolder(slug, { nama: t("wiki_ui.home.new_folder_name") });
+      const baru = await layananWiki.createFolder(slug, { nama });
       await muatUlang();
-      setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.home.folder_created_title") });
+      setToast({ type: TOAST_TYPE.SUCCESS, title: t("wiki_ui.home.folder_created_title"), message: nama });
+      setDialogBuka(false);
+      void navigate(`/${slug}/wiki/${baru.id}`);
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: t("wiki_ui.common.failed"),
         message: (error as { error?: string })?.error || t("wiki_ui.home.create_folder_failed"),
       });
-    } finally {
-      setSedangMembuat(false);
+      throw error;
     }
   };
 
@@ -93,6 +94,7 @@ function WikiBerandaPage() {
   return (
     <>
       <PageHead title={t("wiki_ui.home.title")} />
+      <FolderBaru isOpen={dialogBuka} onClose={() => setDialogBuka(false)} onBuat={buatFolder} />
       <div className="flex h-full w-full flex-col overflow-y-auto">
         <div className="border-b border-subtle bg-surface-1 px-page-x py-8">
           <h1 className="text-24 font-semibold tracking-tight text-primary">{t("wiki_ui.home.title")}</h1>
@@ -113,7 +115,7 @@ function WikiBerandaPage() {
                   </span>
                 </div>
                 {adalahAdmin && (
-                  <Button variant="primary" size="sm" onClick={buatFolder} loading={sedangMembuat}>
+                  <Button variant="primary" size="sm" onClick={() => setDialogBuka(true)}>
                     <Plus className="size-3.5" />
                     {t("wiki_ui.home.new_folder")}
                   </Button>

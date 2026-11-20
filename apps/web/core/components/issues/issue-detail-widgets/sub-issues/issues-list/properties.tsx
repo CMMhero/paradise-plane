@@ -21,7 +21,7 @@ import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // hooks
 import { WithDisplayPropertiesHOC } from "@/components/issues/issue-layouts/properties/with-display-properties-HOC";
 import { useProjectState } from "@/hooks/store/use-project-state";
-import { useAturanTugas } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 
 type Props = {
   workspaceSlug: string;
@@ -53,6 +53,7 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
   // pembuatnya atau Super Admin yang boleh menggesernya. Server menegakkannya; kontrol
   // di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
   const { bisaGantiTenggat } = useAturanTugas();
+  const opsiAssignee = useOpsiAssignee(workspaceSlug, issue.project_id, issue.assignee_ids);
 
   const handleStartDate = (date: Date | null) => {
     if (issue.project_id) {
@@ -221,9 +222,10 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
             onChange={(val) =>
               issue.project_id &&
               updateSubIssue(workspaceSlug, issue.project_id, parentIssueId, issueId, {
-                assignee_ids: val,
+                assignee_ids: opsiAssignee.rapikan(val),
               })
             }
+            memberIds={opsiAssignee.memberIds}
             disabled={!canEdit}
             multiple
             buttonVariant={(issue?.assignee_ids || []).length > 0 ? "transparent-without-text" : "border-without-text"}

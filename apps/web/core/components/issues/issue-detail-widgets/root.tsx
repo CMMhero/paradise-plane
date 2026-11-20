@@ -9,7 +9,8 @@ import React from "react";
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
 import { observer } from "mobx-react";
 // hooks
-import { useTerlibatDiAnak } from "@/hooks/use-aturan-tugas";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useTerlibatDiAnak, useTugasSelesai } from "@/hooks/use-aturan-tugas";
 // local imports
 import { IssueDetailWidgetActionButtons } from "./action-buttons";
 import { IssueDetailWidgetCollapsibles } from "./issue-detail-widget-collapsibles";
@@ -40,8 +41,13 @@ export const IssueDetailWidgets = observer(function IssueDetailWidgets(props: Pr
   } = props;
   // Kustomisasi Paradise: yang sudah mengerjakan salah satu anak boleh menambah
   // sub-work item di induknya, walau induk itu bukan buatan atau tugasnya.
+  // Induk yang selesai tidak menerima sub-item baru dari siapa pun (P29).
   const terlibatDiAnak = useTerlibatDiAnak(issueId, issueServiceType);
-  const subIssueDisabled = isArchived || (disabled && !terlibatDiAnak);
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail(issueServiceType);
+  const selesai = useTugasSelesai()(getIssueById(issueId));
+  const subIssueDisabled = isArchived || selesai || (disabled && !terlibatDiAnak);
 
   return (
     <>

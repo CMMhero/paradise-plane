@@ -248,7 +248,13 @@ class Command(BaseCommand):
 
         k = konteks_pembaruan(
             {"issue_identifier": "GDG-41", "name": t1.name, "issue_url": f"{URL}/x"},
-            [{"nama": "Budi", "waktu": "09:12", "changes": {"state": {"old_value": ["In Progress"], "new_value": ["Done"]}}}],
+            [
+                {
+                    "nama": "Budi",
+                    "waktu": "09:12",
+                    "changes": {"state": {"old_value": ["In Progress"], "new_value": ["Done"]}},
+                }
+            ],
             "id",
         )
         html, _ = render_email(
@@ -286,7 +292,8 @@ class Command(BaseCommand):
             "<h2>Siapa menerima apa (bawaan)</h2><table class=m><tr><th>Email</th><th>Staf</th>"
             "<th>Supervisor</th><th>Manager</th><th>Direktur</th></tr>"
             f"{baris}</table><p><small>* mati = bisa dinyalakan sendiri di Profil &gt; Notifikasi. "
-            "Bawaan bisa diubah Super Admin di God Mode &gt; Members &gt; Defaults (berlaku untuk akun baru).</small></p>"
+            "Bawaan bisa diubah Super Admin di God Mode &gt; Members &gt; Defaults "
+            "(berlaku untuk akun baru).</small></p>"
         )
 
     def _halaman(self, email):
@@ -296,7 +303,8 @@ class Command(BaseCommand):
                 f'<section id="e{i}"><h3>{escape(judul)} <span class=p>untuk {escape(siapa)}</span></h3>'
                 f"<div class=s><b>Subjek:</b> {escape(subjek)}</div>"
                 + (f"<div class=k>{escape(ket)}</div>" if ket else "")
-                + f'<iframe srcdoc="{escape(html)}" onload="this.style.height=this.contentDocument.body.scrollHeight+40+\'px\'"></iframe>'
+                + f'<iframe srcdoc="{escape(html)}" '
+                f'onload="this.style.height=this.contentDocument.body.scrollHeight+40+\'px\'"></iframe>'
                 f"<details><summary>Versi teks</summary><pre>{escape(teks)}</pre></details></section>"
             )
         daftar = "".join(
@@ -310,7 +318,8 @@ table.m{{border-collapse:collapse;background:#fff;width:100%;font-size:13px}}
 table.m td,table.m th{{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;vertical-align:top}}
 section{{background:#fff;border-radius:8px;padding:16px;margin:20px 0;box-shadow:0 1px 2px #0001}}
 section h3{{margin:0 0 8px;font-size:16px}} .p{{color:#6b7280;font-weight:normal;font-size:13px}}
-.s{{font-size:13px;background:#f9fafb;padding:6px 8px;border-radius:4px}} .k{{font-size:12px;color:#b45309;margin:6px 0}}
+.s{{font-size:13px;background:#f9fafb;padding:6px 8px;border-radius:4px}} \
+.k{{font-size:12px;color:#b45309;margin:6px 0}}
 iframe{{width:100%;border:1px solid #e5e7eb;border-radius:4px;margin-top:10px;min-height:200px}}
 pre{{white-space:pre-wrap;font-size:12px;background:#f9fafb;padding:8px}}
 </style><main><h1>Pratinjau email notifikasi Paradise</h1>

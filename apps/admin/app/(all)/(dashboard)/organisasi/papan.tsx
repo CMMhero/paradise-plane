@@ -20,9 +20,9 @@
  * Setiap hasil bisa di-Undo dari toast; itu menggantikan dialog konfirmasi.
  */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { sortBy } from "lodash-es";
-import { Building2, ChevronRight, ChevronsDownUp, ChevronsUpDown, AlertTriangle, Plus } from "lucide-react";
+import { Building2, ChevronRight, ChevronsDownUp, ChevronsUpDown, AlertTriangle, Factory, Plus, X } from "lucide-react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -30,10 +30,12 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
+  TINGKAT_LEADER,
   TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
   menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
+  type TCabangOrganisasi,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
   type TOrangOrganisasi,
@@ -41,10 +43,12 @@ import {
 } from "@plane/services";
 import { Input } from "@plane/ui";
 import { cn } from "@plane/utils";
+// components
+import { PersonAvatar } from "@/components/common/paradise-ui";
 // local
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { BadgeJabatan } from "../members/jabatan";
-import { MenuDepartemen, MenuDivisi } from "./menu-node";
+import { MenuCabang, MenuDepartemen, MenuDivisi } from "./menu-node";
 import { PemilihOrang } from "./orang";
 import { KonteksPapan, usePapan, type TKonteksPapan, type TPemilihTujuan } from "./papan-konteks";
 import {
@@ -82,6 +86,7 @@ const indukGulir = (el: HTMLElement): HTMLElement | null => {
 /** Jangkar DOM supaya klik di bagan bisa menggulir ke divisi/departemen di papan. */
 export const idDivisi = (id: string) => `org-divisi-${id}`;
 export const idDepartemen = (id: string) => `org-departemen-${id}`;
+export const idCabang = (id: string) => `org-cabang-${id}`;
 
 const tampilOrang = (daftar: TOrangOrganisasi[]) => daftar.filter((o) => !akunTerhapus(o.email));
 
@@ -276,9 +281,10 @@ function KartuDepartemen({
   const mode = useTujuanLepas(ref, { jenis: "departemen", id: dep.id }, false);
   const anggota = tampilOrang(dep.anggota);
   // KEP-93: tidak ada "manager departemen". Tingkat di sini = peran orang itu DI
-  // departemen ini (Staf/Supervisor); baris lama yang masih Manager ikut Supervisor.
+  // departemen ini (Staf/Leader/Supervisor); baris lama yang masih Manager ikut Supervisor.
   const supervisor = anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR);
-  const staf = anggota.filter((a) => a.tingkat < TINGKAT_SUPERVISOR);
+  const leader = anggota.filter((a) => a.tingkat >= TINGKAT_LEADER && a.tingkat < TINGKAT_SUPERVISOR);
+  const staf = anggota.filter((a) => a.tingkat < TINGKAT_LEADER);
 
   return (
     <div
@@ -305,6 +311,7 @@ function KartuDepartemen({
         </div>
       )}
       <LajurDepartemen dep={dep} tingkat={TINGKAT_SUPERVISOR} judul={s.org.supervisors} orang={supervisor} />
+      <LajurDepartemen dep={dep} tingkat={TINGKAT_LEADER} judul={s.org.leaders} orang={leader} />
       <LajurDepartemen dep={dep} tingkat={TINGKAT_MEMBER} judul={s.org.staff} orang={staf} />
       <div className="flex justify-end pt-1">
         <PemilihOrang
@@ -430,6 +437,126 @@ function BarisDivisi({
           />
         </div>
       )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cabang
+// ---------------------------------------------------------------------------
+
+/**
+ * Direktur Cabang tidak punya lajur seret: penempatannya satu langkah eksplisit
+ * (tombol tambah, menu cabang, atau editor member), dan dicabut lewat tombol x.
+ */
+function ZonaDirekturCabang({
+  c,
+  aksi,
+  orang,
+  onKelola,
+}: {
+  c: TCabangOrganisasi;
+  aksi: TAksiOrganisasi;
+  orang: TAnggotaHierarki[];
+  onKelola: TKelola;
+}) {
+  const { s, fill } = useGodmodeStrings();
+  const direktur = tampilOrang(c.direktur);
+  const cabut = (id: string) => {
+    const o = orang.find((x) => x.id === id);
+    if (o)
+      void aksi.setelCabang(
+        o,
+        (o.cabang_ids ?? []).filter((x) => x !== c.id)
+      );
+  };
+  return (
+    <div className="space-y-1 py-1.5">
+      <div className="px-0.5 text-10 font-semibold text-tertiary">
+        {s.org.branch.directors} · {direktur.length}
+      </div>
+      <div className="space-y-1 md:max-w-[calc(50%-0.375rem)] 2xl:max-w-[calc(33.333%-0.5rem)]">
+        {direktur.length === 0 ? (
+          <p className="rounded-item border border-dashed border-subtle px-2 py-1.5 text-11 text-placeholder">
+            {s.org.branch.no_director}
+          </p>
+        ) : (
+          direktur.map((d) => (
+            <div
+              key={d.id}
+              title={d.email}
+              className="flex min-w-0 items-center gap-2 rounded-item border border-subtle bg-layer-2 py-1 pr-0.5 pl-1.5"
+            >
+              <PersonAvatar name={d.nama || d.email} size="sm" />
+              <span className="min-w-0 flex-1 truncate text-12 text-primary">{d.nama || d.email}</span>
+              <BadgeJabatan tingkat={d.tingkat} size="sm" />
+              <button
+                type="button"
+                aria-label={fill(s.org.branch.remove_director, { name: d.nama, branch: c.nama })}
+                title={fill(s.org.branch.remove_director, { name: d.nama, branch: c.nama })}
+                onClick={() => cabut(d.id)}
+                className="grid size-6 shrink-0 place-items-center rounded-item text-tertiary hover:bg-layer-transparent-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-accent-strong"
+              >
+                <X className="size-3.5" aria-hidden />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex">
+        <Button
+          variant="ghost"
+          size="base"
+          prependIcon={<Plus />}
+          onClick={() => onKelola({ jenis: "tambah-direktur-cabang", id: c.id })}
+        >
+          {s.org.branch.add_director}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Satu cabang: Direktur Cabangnya, lalu divisi-divisinya dengan departemennya. */
+function BagianCabang({
+  c,
+  divisi,
+  barisDivisi,
+  aksi,
+  orang,
+  onKelola,
+}: {
+  c: TCabangOrganisasi;
+  divisi: TDivisiOrganisasi[];
+  barisDivisi: (v: TDivisiOrganisasi) => ReactNode;
+  aksi: TAksiOrganisasi;
+  orang: TAnggotaHierarki[];
+  onKelola: TKelola;
+}) {
+  const { s, fill } = useGodmodeStrings();
+  return (
+    <section
+      id={idCabang(c.id)}
+      aria-label={c.nama}
+      className="scroll-mt-4 space-y-2 rounded-card border border-subtle bg-layer-2 p-2"
+    >
+      <div className="flex items-center gap-2 px-1.5 py-1">
+        <Factory className="size-4 shrink-0 text-tertiary" aria-hidden />
+        <span className="truncate text-14 font-semibold text-primary">{c.nama}</span>
+        <span className="shrink-0 text-11 text-placeholder">{c.kode}</span>
+        <span className="ml-auto shrink-0 text-11 text-tertiary">
+          {fill(s.org.branch.divisions_n, { n: divisi.length })}
+        </span>
+        <MenuCabang id={c.id} nama={c.nama} onKelola={onKelola} />
+      </div>
+      <div className="px-1.5">
+        <ZonaDirekturCabang c={c} aksi={aksi} orang={orang} onKelola={onKelola} />
+      </div>
+      {divisi.map(barisDivisi)}
+      <TombolTambah
+        label={fill(s.org.branch.new_division_in, { name: c.nama })}
+        onClick={() => onKelola({ jenis: "buat-divisi", cabangId: c.id })}
+      />
     </section>
   );
 }
@@ -615,6 +742,10 @@ export function PapanOrganisasi({
   };
 
   const bersama = { aksi, orang: anggota, namaDepartemen, namaDivisi, onKelola };
+  const barisDivisi = (v: TDivisiOrganisasi) => (
+    <BarisDivisi key={v.id} v={v} buka={dibuka.has(v.id)} onLipat={() => lipat(v.id)} {...bersama} />
+  );
+  const pusat = pohon.divisi.filter((v) => !v.cabang_id);
 
   return (
     <KonteksPapan.Provider value={konteks}>
@@ -631,7 +762,7 @@ export function PapanOrganisasi({
               <span className="text-11 font-semibold text-tertiary">{s.org.board.levels}</span>
               <span className="text-11 text-tertiary">{s.org.board.levels_hint}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
               {LAJUR_JENJANG.map((t) => (
                 <LajurJenjang key={t} tingkat={t} orang={orangJenjang(t)} />
               ))}
@@ -654,16 +785,30 @@ export function PapanOrganisasi({
                 )}
               </div>
             </div>
-            {pohon.divisi.length === 0 ? (
+            {pohon.divisi.length === 0 && pohon.cabang.length === 0 ? (
               <p className="rounded-card border border-dashed border-subtle px-4 py-6 text-center text-12 text-tertiary">
                 {s.org.no_division}
               </p>
             ) : (
-              pohon.divisi.map((v) => (
-                <BarisDivisi key={v.id} v={v} buka={dibuka.has(v.id)} onLipat={() => lipat(v.id)} {...bersama} />
-              ))
+              <>
+                {pohon.cabang.length > 0 && (
+                  <h3 className="px-0.5 pt-1 text-12 font-semibold text-secondary">{s.org.branch.head_office}</h3>
+                )}
+                {pusat.map(barisDivisi)}
+              </>
             )}
             <TombolTambah label={s.org.new_division} onClick={() => onKelola({ jenis: "buat-divisi" })} />
+            {pohon.cabang.map((c) => (
+              <BagianCabang
+                key={c.id}
+                c={c}
+                divisi={pohon.divisi.filter((v) => v.cabang_id === c.id)}
+                barisDivisi={barisDivisi}
+                aksi={aksi}
+                orang={anggota}
+                onKelola={onKelola}
+              />
+            ))}
           </div>
         </div>
       </div>

@@ -37,6 +37,7 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.db.models import (
+    Cabang,
     Departemen,
     DepartemenProject,
     Divisi,
@@ -44,6 +45,7 @@ from plane.db.models import (
     PengawasanDivisi,
     Project,
     ProjectMember,
+    TINGKAT_CABANG,
     TINGKAT_CHOICES,
     TINGKAT_MANAGER,
     TINGKAT_MEMBER,
@@ -55,6 +57,7 @@ from plane.db.models import (
 )
 from plane.db.penempatan import (
     PERAN_DEPARTEMEN_SAH,
+    cabang_sekarang,
     departemen_dalam_divisi,
     penempatan_sekarang,
     peran_departemen_sekarang,
@@ -136,10 +139,13 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         # ada di `departemen_ids` tiap baris anggota.
         dept_orang = {}
         div_orang = {}
+        cab_orang = {}
         peran_orang = {}
-        for uid, dep, div, t in JabatanOrganisasi.objects.filter(workspace=workspace).values_list(
-            "member_id", "departemen_id", "divisi_id", "tingkat"
+        for uid, dep, div, cab, t in JabatanOrganisasi.objects.filter(workspace=workspace).values_list(
+            "member_id", "departemen_id", "divisi_id", "cabang_id", "tingkat"
         ):
+            if cab:
+                cab_orang.setdefault(uid, set()).add(str(cab))
             if dep:
                 dept_orang.setdefault(uid, set()).add(str(dep))
                 # KEP-93: peran orang ini DI departemen itu (manager = Staf/Supervisor).
@@ -207,6 +213,8 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     "divisi_id": sorted(div_orang.get(uid, set()))[0] if div_orang.get(uid) else None,
                     "departemen_ids": dept_ids,
                     "divisi_ids": sorted(div_orang.get(uid, set())),
+                    # P29: cabang yang ia pimpin sebagai Direktur Cabang.
+                    "cabang_ids": sorted(cab_orang.get(uid, set())),
                     "peran_departemen": peran_orang.get(uid, {}),
                     "punya_atasan": punya_atasan,
                 }
@@ -266,8 +274,17 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     for d in Departemen.objects.filter(workspace=workspace).order_by("nama")
                 ],
                 "divisi_pilihan": [
-                    {"id": str(v.id), "kode": v.kode, "nama": v.nama}
+                    {
+                        "id": str(v.id),
+                        "kode": v.kode,
+                        "nama": v.nama,
+                        "cabang_id": str(v.cabang_id) if v.cabang_id else None,
+                    }
                     for v in Divisi.objects.filter(workspace=workspace).order_by("nama")
+                ],
+                "cabang_pilihan": [
+                    {"id": str(c.id), "kode": c.kode, "nama": c.nama}
+                    for c in Cabang.objects.filter(workspace=workspace).order_by("nama")
                 ],
                 "gerbang_aktif": gerbang_aktif(),
                 "flag_gerbang": FLAG_GERBANG,
@@ -312,7 +329,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
 
         ```
         { "member_id": "<uuid>",
-          "tingkat": 10|20|30|35|40|null,    # null = jenjang + semua tempat dicabut,
+          "tingkat": 10|12|20|30|33|35|40|null, # null = jenjang + semua tempat dicabut,
                                                  # orangnya kembali Staf tanpa tempat
           "sumber": "...",                    # opsional, default "manual"
           "catatan": "...",                   # opsional
@@ -324,6 +341,9 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                                                  # (null = cabut semua departemen)
           "divisi_id": "<div_id>"|null       # singkatan: TAMBAH satu divisi
                                                  # (null = cabut semua divisi)
+          "cabang_ids": ["<cab_id>", ...]     # opsional: MENGGANTI cabang yang dipimpin
+                                                 # (Direktur Cabang, P29)
+          "cabang_id": "<cab_id>"|null       # singkatan: TAMBAH satu cabang
           "peran_departemen": {"<dep_id>": 10|20}  # opsional, KEP-93: peran per departemen
           "pertahankan_peran": true         # opsional: `tingkat` tidak menyeragamkan
                                                  # peran departemen yang lain
@@ -387,8 +407,10 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         # satu tempat (tidak memindahkan yang lama), null = cabut semua tempat jenis
         # itu. Kunci tidak dikirim = jangan sentuh.
         tingkat_lama, dep_lama, div_lama = penempatan_sekarang(workspace.id, user.id)
+        cab_lama = cabang_sekarang(workspace.id, user.id)
         sah_dep = {str(d) for d in Departemen.objects.filter(workspace=workspace).values_list("id", flat=True)}
         sah_div = {str(v) for v in Divisi.objects.filter(workspace=workspace).values_list("id", flat=True)}
+        sah_cab = {str(c) for c in Cabang.objects.filter(workspace=workspace).values_list("id", flat=True)}
 
         def _daftar(kunci_daftar, kunci_satu, lama, sah, label):
             """(himpunan baru, galat|None, menambah_baru)."""
@@ -413,7 +435,10 @@ class InstanceHierarkiEndpoint(BaseAPIView):
         div_baru, galat, div_ditambah = _daftar("divisi_ids", "divisi_id", div_lama, sah_div, "divisions")
         if galat:
             return Response({"error": galat}, status=400)
-        tempat_diubah = dep_baru != dep_lama or div_baru != div_lama
+        cab_baru, galat, cab_ditambah = _daftar("cabang_ids", "cabang_id", cab_lama, sah_cab, "branches")
+        if galat:
+            return Response({"error": galat}, status=400)
+        tempat_diubah = dep_baru != dep_lama or div_baru != div_lama or cab_baru != cab_lama
 
         # KEP-93: peran per departemen (hanya bermakna untuk manager ke atas).
         peran_departemen = None
@@ -431,7 +456,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     nilai = None
                 if nilai not in PERAN_DEPARTEMEN_SAH:  # tidak ada manager departemen
                     return Response(
-                        {"error": "A department role is Staff (10) or Supervisor (20), never Manager."},
+                        {"error": "A department role is Staff (10), Leader (12) or Supervisor (20), never Manager."},
                         status=400,
                     )
                 peran_departemen[str(dep_id)] = nilai
@@ -439,10 +464,22 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             if any(peran_lama.get(d) != v for d, v in peran_departemen.items()):
                 tempat_diubah = True
 
+        # Memimpin cabang hanya untuk Direktur Cabang. Tanpa jenjang yang dikirim,
+        # menambah cabang menaikkan ke Direktur Cabang, kecuali dari sekretaris atau
+        # direktur: itu penurunan, dan harus dipilih eksplisit.
+        if cab_ditambah and (
+            (tingkat not in (None, "tidak-diubah") and tingkat != TINGKAT_CABANG)
+            or (tingkat == "tidak-diubah" and tingkat_lama is not None and tingkat_lama > TINGKAT_CABANG)
+        ):
+            return Response(
+                {"error": "Only a Branch Director can lead a branch. Pick Branch Director as the level."},
+                status=400,
+            )
+
         # Jenjang efektif. Tidak pernah menolak hanya karena urutan langkah:
         # orang tanpa jenjang yang ditempatkan jadi Staf (departemen) atau Manager
         # (divisi); memimpin divisi baru menaikkan jenjang ke Manager kalau jenjang
-        # tidak ikut dikirim.
+        # tidak ikut dikirim. Menambah cabang menaikkan ke Direktur Cabang.
         if tingkat is None:
             tingkat_baru = None
         elif tingkat != "tidak-diubah":
@@ -452,6 +489,8 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     {"error": "Only a manager or director can lead a division. Pick Manager as the level."},
                     status=400,
                 )
+        elif cab_ditambah:
+            tingkat_baru = TINGKAT_CABANG
         elif tingkat_lama is not None:
             tingkat_baru = tingkat_lama
             if div_ditambah and tingkat_baru < TINGKAT_MANAGER:
@@ -514,6 +553,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                         # dipindah ke departemen divisinya sendiri (papan), peran
                         # departemen lainnya tetap.
                         seragam="tingkat" in request.data and not request.data.get("pertahankan_peran"),
+                        cabang_ids=cab_baru,
                     )
 
             sinkronkan_satu(workspace.id, user.id)
@@ -523,6 +563,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             .order_by("departemen_id", "divisi_id")
             .values_list("tingkat", "departemen_id", "divisi_id")
         )
+        cabang_semua = sorted(cabang_sekarang(workspace.id, user.id))
         peran_semua = {str(d): t for t, d, _ in semua if d}
         tingkat_sekarang = max((t for t, _, _ in semua), default=TINGKAT_MEMBER)
         dept_semua = sorted({str(d) for _, d, _ in semua if d})
@@ -539,6 +580,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
                     "divisi_id": divisi_semua[0] if divisi_semua else None,
                     "departemen_ids": dept_semua,
                     "divisi_ids": divisi_semua,
+                    "cabang_ids": cabang_semua,
                     # Divisi yang dicabut otomatis karena jenjangnya turun di bawah
                     # Manager (KEP-76). UI menampilkannya, bukan menolak simpan.
                     "divisi_dilepas": sorted(divisi_dilepas),

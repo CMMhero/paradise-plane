@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-"""Perusahaan (workspace) -> Divisi -> Departemen -> project. KEP-29.
+"""Perusahaan (workspace) -> [Cabang] -> Divisi -> Departemen -> project. KEP-29.
 
 Sebelum KEP-29, "divisi" = satu project (KEP-02). Sekarang project adalah badan
 kerja DI BAWAH sebuah departemen, dan divisi/departemen adalah record sendiri.
@@ -32,10 +32,42 @@ from django.db.models import Q
 from .base import BaseModel
 
 
+class Cabang(BaseModel):
+    """Cabang perusahaan dengan divisi dan departemennya sendiri, mis. Plant Cilegon (P29).
+
+    Divisi tanpa cabang = kantor pusat. Direktur Cabang (`TINGKAT_CABANG`) memimpin
+    semua divisi di cabangnya; direktur dan sekretaris tetap menjangkau semua cabang.
+    """
+
+    workspace = models.ForeignKey("db.Workspace", related_name="cabang_organisasi", on_delete=models.CASCADE)
+    kode = models.CharField(max_length=20)
+    nama = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ["workspace", "kode", "deleted_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["workspace", "kode"],
+                condition=Q(deleted_at__isnull=True),
+                name="cabang_unique_kode_aktif",
+            )
+        ]
+        verbose_name = "Cabang"
+        verbose_name_plural = "Cabang"
+        db_table = "organisasi_cabang"
+        ordering = ("nama",)
+
+    def __str__(self):
+        return f"{self.kode} {self.nama}"
+
+
 class Divisi(BaseModel):
     """Unit organisasi teratas di bawah perusahaan, mis. Sales, HRGA, Finance."""
 
     workspace = models.ForeignKey("db.Workspace", related_name="divisi_organisasi", on_delete=models.CASCADE)
+    # Kosong = kantor pusat. SET_NULL, bukan CASCADE: hapus lunak cabang menjalankan
+    # `soft_delete_related_objects`, dan CASCADE akan ikut menghapus divisinya.
+    cabang = models.ForeignKey(Cabang, related_name="divisi", null=True, blank=True, on_delete=models.SET_NULL)
     kode = models.CharField(max_length=20)
     nama = models.CharField(max_length=255)
 

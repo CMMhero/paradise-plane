@@ -159,10 +159,15 @@ type TApprovalRejectModalProps = {
   /** Project tugasnya; kosong = dibaca dari URL. Aturan wajib-alasan berlaku se-instance. */
   workspaceSlug?: string;
   projectId?: string;
+  /** Teks lain dari "Tolak" (mis. menolak permintaan lintas departemen). */
+  title?: string;
+  description?: string;
+  confirmLabel?: string;
 };
 
 export function ApprovalRejectModal(props: TApprovalRejectModalProps) {
-  const { isOpen, isSubmitting, onClose, onConfirm, workspaceSlug, projectId } = props;
+  const { isOpen, isSubmitting, onClose, onConfirm, workspaceSlug, projectId, title, description, confirmLabel } =
+    props;
   const { t } = useTranslation();
   // God Mode: alasan penolakan wajib atau opsional (bawaan wajib, sama dengan server lama).
   const { alasan_tolak_wajib: alasanWajib } = useAturanInstance(workspaceSlug, projectId);
@@ -184,11 +189,12 @@ export function ApprovalRejectModal(props: TApprovalRejectModalProps) {
       <form onSubmit={(e) => void handleSubmit(e)}>
         <div className="space-y-5 p-5">
           <div className="space-y-1">
-            <h3 className="text-18 font-medium text-primary">{t("issue.approval.modal.reject_title")}</h3>
+            <h3 className="text-18 font-medium text-primary">{title ?? t("issue.approval.modal.reject_title")}</h3>
             <p className="text-13 text-secondary">
-              {alasanWajib
-                ? t("issue.approval.modal.reject_description")
-                : t("aturan_tugas_ui.reject_description_optional")}
+              {description ??
+                (alasanWajib
+                  ? t("issue.approval.modal.reject_description")
+                  : t("aturan_tugas_ui.reject_description_optional"))}
             </p>
           </div>
           <TextArea
@@ -219,7 +225,7 @@ export function ApprovalRejectModal(props: TApprovalRejectModalProps) {
             loading={isSubmitting}
             disabled={alasanWajib && !alasan.trim()}
           >
-            {t("issue.approval.actions.reject")}
+            {confirmLabel ?? t("issue.approval.actions.reject")}
           </Button>
         </div>
       </form>

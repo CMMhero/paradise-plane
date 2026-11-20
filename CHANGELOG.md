@@ -6,6 +6,126 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-20
+
+### Versi 2.9.0
+
+- **Naik 2.8.0 ke 2.9.0, minor.** Banyak fitur baru (KPI, halaman
+  Persetujuan, tugas privat, jenjang Leader, cabang dan Direktur Cabang,
+  penulis Pengumuman, editor folder wiki), perubahan izin (tugas Done
+  terkunci, tidak bisa menugaskan atasan), dan delapan migrasi (0177 sampai
+  0181, 0183, 0184). Langkah operator:
+  - Jalankan migrasi. **0181 menghapus permanen** semua ruang obrolan
+    "Paradise" (`kabar:<user>`) beserta pesannya. Tidak bisa dibalik. Ambil
+    cadangan database dulu.
+  - Mulai ulang worker Celery setelah deploy. Kartu obrolan dan email
+    Pengumuman dibuat di worker, dan worker lama tetap menjalankan kode lama.
+  - Atur SMTP di God Mode kalau belum. Tanpa SMTP, email Pengumuman hanya
+    tercatat "SMTP belum diatur".
+  - Di Pengumuman > setelan > "Siapa yang boleh menulis", tambahkan
+    departemen HR (atau siapa pun yang boleh menyiarkan).
+  - Tempatkan Leader lewat papan Organisasi di God Mode.
+  - Migrasi 0184 menambah cabang. Untuk menjadikan Plant Cilegon cabang:
+    `python manage.py jadikan_cabang --divisi PC --kode CLG --nama "Plant Cilegon"
+    [--direktur-cabang <email>] --dry-run`, periksa rencananya, lalu jalankan
+    tanpa `--dry-run`. Angka departemen, project, tugas, dan orang di PC harus
+    sama sebelum dan sesudah. Menjalankan ulang harus mencetak "Nothing to
+    change". Setelah itu pecah PC menjadi divisi-divisi cabang di God Mode.
+- **Cabang dan Direktur Cabang (33).** Struktur baru Cabang > Divisi >
+  Departemen. Divisi tanpa cabang adalah kantor pusat. Direktur Cabang berada
+  di antara Manager (30) dan Sekretaris (35): ia melihat, menyetujui,
+  menugaskan, dan mendapat KPI hanya di cabangnya. Direktur dan Sekretaris
+  tetap menjangkau semua cabang. Manager dan Supervisor kantor pusat tidak
+  melihat cabang. God Mode bisa membuat cabang, memindahkan divisi ke cabang,
+  dan menempatkan Direktur Cabang. Tiap cabang punya kanal obrolan sendiri.
+  Kode: `utils/cabang.py`, perintah `jadikan_cabang`.
+- **Tidak bisa menugaskan atasan.** Siapa pun yang berjenjang tidak bisa
+  menjadikan orang berjenjang lebih tinggi sebagai assignee, termasuk admin
+  workspace yang punya jenjang, saat gerbang mati, saat `ASSIGN_DOWN_ONLY`
+  mati, lewat sub-item yang dinaikkan ke induk, dan lewat assignee bawaan
+  project. Rekan setingkat tetap seperti sebelumnya. Yang dikecualikan hanya
+  Super Admin dan admin tanpa jenjang. Daftar pemilih assignee tidak lagi
+  menawarkan atasan. Ini membalik aturan putaran pertama bahwa admin yang
+  ditempatkan sebagai Staf tetap admin penuh di luar departemennya. Kode:
+  `utils/atasan.py`.
+- **Tidak menyegarkan saat pindah tab atau jendela.** Fokus jendela tidak lagi
+  memicu pengambilan ulang data. Kembali ke tab setelah kurang dari 5 menit
+  hanya menarik yang berubah menurut sinyal waktu itu. Setelah 5 menit lebih
+  ada satu penyegaran senyap tanpa layar muat dan tanpa scroll kembali ke
+  atas. Polling berhenti saat jendela tidak fokus. Cadangan saat soket putus
+  kini tiap 120 detik dan hanya saat jendela fokus.
+- **Tanda baca obrolan seketika.** Membuka obrolan langsung menurunkan lencana
+  dan angka belum dibaca, dan pengirim melihat centang dua dalam sekitar satu
+  detik lewat kejadian `baca` di soket. Tab yang tersembunyi tidak lagi
+  menandai pesan terbaca.
+- **CI Lint API hijau.** Pola pengecualian ruff untuk berkas uji salah tulis
+  (`tests/*` tidak pernah cocok dengan `plane/tests/...`). Baris terlalu
+  panjang dirapikan tanpa mengubah perilaku.
+- **Jenjang Leader (12).** Di antara Staf dan Supervisor, ditempatkan per
+  departemen. Leader boleh menugaskan Staf di departemennya dan mengubah tugas
+  mereka. Penyelesaian tugas Leader tetap butuh persetujuan Supervisor, dan
+  Leader tidak menyetujui. Nilai 12, bukan 15, supaya penjaga `_SALAH_KAPAL`
+  (15 adalah peran project) tetap utuh.
+- **Tugas Done terkunci.** Tidak ada yang bisa mengubah isi tugas berstatus
+  Done, termasuk admin dan Super Admin: kolom, deskripsi, komentar, reaksi,
+  tautan, lampiran, sub-item, relasi. Yang boleh hanya membuka kembali
+  (memindahkan keluar dari Done), oleh atasan semua assignee, admin workspace,
+  atau Super Admin. Alur persetujuan tetap berjalan. Kode:
+  `utils/kunci_selesai.py`.
+- **Admin yang berjenjang Staf ikut aturan Staf di departemennya.** Form buat
+  tugas langsung mengisi dirinya sebagai assignee, dan ia harus tetap ada di
+  daftar. Di departemen lain admin tetap bebas. Ini membalik aturan 12 Nov
+  bahwa Super Admin yang ditempatkan sebagai Staf boleh menugaskan siapa saja.
+- **Tugas privat.** Hanya terlihat oleh assignee, pembuat, atasan langsung
+  assignee (termasuk Leader), dan Super Admin. Disembunyikan dari daftar,
+  detail (404), pencarian, notifikasi, kartu obrolan, ekspor, API v1, dan
+  space. Tetap dihitung di angka KPI dan Dashboard Divisi. Kode:
+  `utils/akses_privat.py`.
+- **Halaman Persetujuan workspace.** Satu halaman untuk semua yang menunggu
+  keputusan Supervisor, Manager, Sekretaris, dan Direktur di semua
+  departemen dan divisi yang ia awasi: persetujuan selesai dan permintaan
+  lintas departemen. Dikelompokkan per divisi lalu departemen. Staf tidak
+  melihat menunya. Membalik keputusan 2026-10-16 yang memindahkan antrean ke
+  tab per divisi (tab itu tetap ada).
+- **Permintaan lintas departemen kembali ke sidebar.** Siapa pun bisa meminta
+  tugas ke departemen lain. Permintaan masuk Intake tujuan dan muncul di
+  halaman Persetujuan. Setelah diterima, ia jadi tugas biasa. Peminta melihat
+  status dan alasan penolakan di "Permintaan saya", dan mendapat kabar di
+  inbox. Halaman ini dulu berulang memuat tanpa henti karena `t` dari
+  `useTranslation` berubah tiap render. Kini `t` dimemo di hook-nya.
+- **Angka direktur hanya dari tugas buatan Supervisor ke atas.** Direktur dan
+  sekretaris di Dashboard Divisi, Perlu Perhatian, Laporan, dan ringkasan email
+  direktur tidak lagi menghitung tugas buatan Staf atau Leader. Supervisor dan
+  Manager tetap melihat angka penuh. Kode: `utils/statistik_pimpinan.py`.
+- **Dashboard KPI untuk semua orang.** Selesai, ketepatan waktu, terlambat,
+  beban terbuka, waktu siklus, hasil persetujuan, jam kerja, dan tren per
+  periode. Staf melihat dirinya, Leader dan Supervisor departemennya, Manager
+  divisinya, Sekretaris, Direktur, dan admin seluruh organisasi. Kode:
+  `utils/kinerja.py`.
+- **Ruang "Paradise" dihapus.** Kartu dari aktor manusia tetap masuk DM.
+  Kartu tanpa aktor manusia, sebutan di kanal, dan "ditambahkan ke project"
+  tidak lagi masuk obrolan, tapi tetap ada di Inbox dan email.
+- **Kartu obrolan menampilkan teks, bukan HTML.** Komentar, sebutan, dan
+  deskripsi tampil sebagai teks biasa dengan `@Nama`. Kartu lama yang masih
+  berisi HTML dibersihkan saat ditampilkan. Kode: `utils/teks_html.py`.
+- **Pengumuman dengan email.** Admin memilih departemen (atau orang) yang boleh
+  menulis. Tiap pos baru diemail ke semua anggota kecuali penulisnya. Ada
+  saklar per pengguna "Email Pengumuman", bawaan menyala.
+- **Editor folder wiki.** Admin bisa memberi folder (mis. QMS) daftar editor.
+  Di folder itu hanya editor dan admin yang boleh menulis, yang lain hanya
+  melihat. Subfolder mewarisi. "Folder baru" kini meminta nama dulu.
+- **Urutan aktivitas jadi preferensi akun**, bawaan terbaru di atas. Bisa
+  diubah di Profil > Preferensi atau tombol urutan di timeline.
+- **Konfirmasi hapus** untuk komentar dan balasan, quick link pribadi, tautan
+  tugas dan modul, lepas sub-item, lepas relasi, logo workspace, catatan
+  waktu, dan copot integrasi.
+- **Kartu Perlu Perhatian di Home bisa ditindaklanjuti.** Setujui atau tolak,
+  ganti status, balas cepat sebutan, buka, dan tandai dibaca.
+- **Obrolan:** daftar pesan tidak lagi bisa digulir ke bawah kotak tulis.
+- **Teruji.** Suite pytest penuh: 2616 lulus (355 lebih banyak dari `main`),
+  44 gagal yang sama persis dengan `main` sebelum perubahan. 58 skenario
+  langsung (desktop dan HP) dijalankan di browser dengan tangkapan layar.
+
 ## 2026-11-17
 
 ### Versi 2.8.0

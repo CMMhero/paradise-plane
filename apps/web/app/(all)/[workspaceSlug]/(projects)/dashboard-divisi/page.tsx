@@ -80,6 +80,9 @@ function DivisionDashboardPage() {
           <div>
             <h1 className="text-20 font-semibold text-primary">{t("division_dashboard_ui.title")}</h1>
             {data && <p className="text-12 text-tertiary">{t("division_dashboard_ui.updated", { time: updatedAt })}</p>}
+            {data?.leader_created_only && (
+              <p className="text-12 text-tertiary">{t("persetujuan_p29.dashboard_leader_note")}</p>
+            )}
           </div>
           <fieldset aria-label={t("division_dashboard_ui.mode_label")} className="m-0 border-0 p-0">
             <TabNavigationList>

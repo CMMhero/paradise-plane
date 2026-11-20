@@ -82,6 +82,18 @@ hari, bulan ini, atau bulan lalu, lalu lihat jumlah selesai (dibanding periode
 sebelumnya), persen tepat waktu, bilah per divisi, dan judul tiap tugas yang
 selesai per divisi > project beserta penanggung jawab dan tanggalnya. Daftar
 lengkapnya bisa diunduh sebagai CSV.
+
+**KPI.** Menu KPI (`/kinerja`) ada buat semua orang. Staf lihat angkanya
+sendiri: selesai, persen tepat waktu, selesai terlambat, terlambat sekarang,
+tugas terbuka, rata-rata dan median waktu pengerjaan, penyelesaian yang
+disetujui atau ditolak, plus tren per hari atau per minggu. Leader dan
+supervisor juga bisa buka departemennya dan tiap bawahannya, manager buka
+divisinya, sekretaris, direktur, dan admin workspace buka seluruh organisasi.
+Di luar itu server jawab 403. Periodenya bisa minggu ini, bulan ini, 30 hari,
+kuartal ini, atau rentang sendiri, selalu pakai hari kantor. Tugas dengan
+beberapa penanggung jawab dihitung penuh buat tiap orang, dan sekali di angka
+departemen, divisi, dan organisasi. Daftar metriknya satu tabel di
+`apps/api/plane/utils/kinerja.py` (`METRIK`), dan halaman web ngikutin tabel itu.
 Ambang statusnya diatur di God Mode > Features. Yang dihitung cuma project yang
 kamu ikuti.
 

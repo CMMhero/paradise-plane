@@ -347,7 +347,9 @@ def _tim_teks(ringkasan, hari_ini, label, bahasa="id"):
             )
         )
         perlu = t.lewat + t.hari
-        baris += [_baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan, bahasa), bahasa) for i in perlu[:BATAS_BARIS_TIM]]
+        baris += [
+            _baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan, bahasa), bahasa) for i in perlu[:BATAS_BARIS_TIM]
+        ]
         if len(perlu) > BATAS_BARIS_TIM:
             baris.append("  ... " + s["lainnya"].format(n=len(perlu) - BATAS_BARIS_TIM))
         baris.append("")
@@ -484,7 +486,9 @@ def susun_email(penerima, ringkasan, hari_ini, bahasa="id"):
     tgl = tanggal(hari_ini, bahasa)
 
     teks = [sapaan, "", f"{judul}, {tgl} ({peran}).", ""]
-    teks += [f"== {s['tugas_anda'].upper()} ==", ""] + (_kelompok_teks(k, hari_ini, label, bahasa=bahasa) or [kosong, ""])
+    teks += [f"== {s['tugas_anda'].upper()} ==", ""] + (
+        _kelompok_teks(k, hari_ini, label, bahasa=bahasa) or [kosong, ""]
+    )
     if ringkasan.diberikan:
         teks += [f"== {s['diberikan'].upper()} ==", ""] + _kelompok_teks(
             ringkasan.diberikan, hari_ini, label, ringkasan, bahasa

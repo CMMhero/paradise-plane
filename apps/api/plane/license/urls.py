@@ -37,6 +37,7 @@ from plane.license.api.views.setelan import InstanceSettingsEndpoint
 from plane.license.api.views.email_preview import InstanceEmailPreviewEndpoint, InstanceEmailPreviewSendEndpoint
 from plane.license.api.views.divisi import InstanceDivisiAnggotaEndpoint
 from plane.license.api.views.organisasi import (
+    InstanceCabangEndpoint,
     InstanceDepartemenDariProjectEndpoint,
     InstanceDepartemenEndpoint,
     InstanceDivisiEndpoint,
@@ -156,6 +157,8 @@ urlpatterns = [
     path("divisi-anggota/", InstanceDivisiAnggotaEndpoint.as_view(), name="instance-divisi-anggota"),
     # Struktur divisi -> departemen -> project (KEP-29).
     path("organisasi/", InstanceOrganisasiEndpoint.as_view(), name="instance-organisasi"),
+    path("organisasi/cabang/", InstanceCabangEndpoint.as_view(), name="instance-organisasi-cabang"),
+    path("organisasi/cabang/<uuid:pk>/", InstanceCabangEndpoint.as_view(), name="instance-organisasi-cabang-detail"),
     path("organisasi/divisi/", InstanceDivisiEndpoint.as_view(), name="instance-organisasi-divisi"),
     path("organisasi/divisi/<uuid:pk>/", InstanceDivisiEndpoint.as_view(), name="instance-organisasi-divisi-detail"),
     # Literal "dari-project" sebelum <uuid:pk> supaya tidak dibaca sebagai id.

@@ -16,7 +16,10 @@ export const DEFAULT_SWR_CONFIG = {
 export const WEB_SWR_CONFIG = {
   refreshWhenHidden: false,
   revalidateIfStale: true,
-  revalidateOnFocus: true,
+  // Pindah tab/jendela tidak boleh menarik ulang apa pun. Data hidup lewat sinyal
+  // server (`core/lib/data-live.ts`); `revalidateIfStale` tetap menyegarkan data
+  // lama saat layar dipasang, yaitu saat orang berpindah halaman, bukan fokus.
+  revalidateOnFocus: false,
   revalidateOnMount: true,
   errorRetryCount: 3,
 };

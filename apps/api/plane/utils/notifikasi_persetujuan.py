@@ -94,11 +94,12 @@ def _tulis(
 ):
     """Satu baris inbox + (kalau saklar email penerima hidup) satu baris email."""
     from plane.db.models import EmailNotificationLog, Notification, Project, Workspace
+    from plane.utils.akses_privat import penonton_tugas_ids
 
     try:
         workspace = Workspace.objects.filter(pk=workspace_id).first()
         project = Project.objects.filter(pk=project_id).first()
-        if workspace is None or project is None:
+        if workspace is None or project is None or not penonton_tugas_ids(issue, [penerima_id]):
             return
         data = {
             "issue": _data_issue(issue),

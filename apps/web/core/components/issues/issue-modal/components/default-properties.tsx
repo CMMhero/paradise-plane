@@ -25,13 +25,14 @@ import { ModuleDropdown } from "@/components/dropdowns/module/dropdown";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { ParentIssuesListModal } from "@/components/issues/parent-issues-list-modal";
+import { PrivateToggleButton } from "@/components/issues/privat/private-toggle-button";
 import { IssueLabelSelect } from "@/components/issues/select";
 // helpers
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
-import { stafSaja as hanyaStaf, useAturanTugas, useBisaDitugaskan, useTingkatSaya } from "@/hooks/use-aturan-tugas";
+import { modeStaf, useAturanTugas, useBisaDitugaskan } from "@/hooks/use-aturan-tugas";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
@@ -73,17 +74,18 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   const { isMobile } = usePlatformOS();
   const { allowPermissions } = useUserPermissions();
   // Dropdown assignee = tepat isi `bisa-ditugaskan/`: staf → [diri sendiri]
-  // (otomatis terisi + terkunci), atasan → diri + bawahan, direktur → semua.
-  // `memberIds` eksplisit mengalahkan fallback anggota-project di dropdown.
-  const tingkatSaya = useTingkatSaya(workspaceSlug, projectId);
+  // (otomatis terisi + terkunci), Leader/atasan → diri + bawahan, direktur → semua.
+  // Admin yang ditempatkan sebagai Staf di departemen ini ikut mode staf (P29).
+  // `memberIds` eksplisit mengalahkan fallback anggota-project di dropdown, juga
+  // selama daftar dimuat (kosong): fallback itu menawarkan atasan.
   const { idSaya } = useAturanTugas();
   const daftarBoleh = useBisaDitugaskan(workspaceSlug, projectId);
-  const stafSaja = hanyaStaf(tingkatSaya, daftarBoleh.aturan.persetujuan_di_bawah) && daftarBoleh.mode !== "semua";
-  const opsiAssignee = daftarBoleh.memuat ? undefined : daftarBoleh.userIds;
+  const stafSaja = modeStaf(daftarBoleh.mode);
+  const opsiAssignee = daftarBoleh.userIds;
   // Server mengisi pembuat sebagai assignee hanya kalau ia sah di project ini
   // (ditempatkan di departemennya). Yang tidak sah tidak ada di daftar, jadi
   // tampilan tidak boleh berpura-pura "ditugaskan ke saya".
-  const sayaSah = !!idSaya && (opsiAssignee ?? []).includes(idSaya);
+  const sayaSah = !!idSaya && opsiAssignee.includes(idSaya);
   const projectDetails = getProjectById(projectId);
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
@@ -152,9 +154,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
               }}
               buttonVariant={value?.length > 0 ? "transparent-without-text" : "border-with-text"}
               buttonClassName={value?.length > 0 ? "hover:bg-transparent" : ""}
-              placeholder={
-                stafSaja ? "Ditugaskan ke saya (bisa ajak rekan) — menunggu persetujuan atasan" : t("assignees")
-              }
+              placeholder={stafSaja ? t("ui_fixes.assigned_to_me_pending") : t("assignees")}
               multiple
               tabIndex={getIndex("assignee_ids")}
               hanyaDiriSendiri={stafSaja && daftarBoleh.mode !== "rekan" ? idSaya : null}
@@ -278,6 +278,23 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
                 buttonVariant="border-with-text"
                 tabIndex={getIndex("estimate_point")}
                 placeholder={t("estimate")}
+              />
+            </div>
+          )}
+        />
+      )}
+      {!isDraft && (
+        <Controller
+          control={control}
+          name="is_private"
+          render={({ field: { value, onChange } }) => (
+            <div className="h-7 sentuh:h-10">
+              <PrivateToggleButton
+                value={!!value}
+                onChange={(isPrivate) => {
+                  onChange(isPrivate);
+                  handleFormChange();
+                }}
               />
             </div>
           )}

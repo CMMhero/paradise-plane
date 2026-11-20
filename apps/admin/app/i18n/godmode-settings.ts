@@ -375,7 +375,7 @@ export const settingsStrings = {
     },
     ENABLE_TUGAS_KE_DM: {
       name: "Assignments to DM",
-      help: "New work item details are posted in the direct message between assigner and assignee.",
+      help: "Work item cards (new assignments, comments, updates, approvals) are posted in the direct message between the person who acted and the person affected. Off: no work item cards in chat.",
     },
     DEADLINE_REMINDER_EMAIL_DAYS: {
       name: "Reminder email days",
@@ -502,8 +502,8 @@ export const settingsStrings = {
   choices: {
     ...permissionChoices,
     APPROVAL_REQUIRED_BELOW_LEVEL: {
-      20: "Staff only",
-      30: "Staff and supervisors",
+      20: "Staff and leaders",
+      30: "Staff, leaders and supervisors",
       40: "Everyone below director",
     },
     TASK_DELETE_RULE: {
@@ -665,8 +665,8 @@ export const settingsStrings = {
     save_failed: "Could not save",
     reset: "Reset to defaults",
     label: "Defaults by role",
-    col_staf: "Staff (or no position)",
-    col_pimpinan: "Leaders (supervisor, manager)",
+    col_staf: "Staff and leaders (or no position)",
+    col_pimpinan: "Supervisors and managers",
     col_direktur: "Directors and secretaries",
     direktur_note:
       "Also a hard limit: anything off here is off for every director and secretary right away, whatever their own settings. Keep it to mentions, chat, and summaries.",

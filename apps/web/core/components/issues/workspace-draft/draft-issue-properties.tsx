@@ -28,6 +28,7 @@ import { useLabel } from "@/hooks/store/use-label";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
+import { useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { IssuePropertyLabels } from "../issue-layouts/properties";
 // local components
@@ -58,6 +59,7 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
 
   // router
   const { workspaceSlug } = useParams();
+  const opsiAssignee = useOpsiAssignee(workspaceSlug?.toString(), issue.project_id, issue.assignee_ids);
   // derived values
   const stateDetails = getStateById(issue.state_id);
 
@@ -219,6 +221,7 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
           projectId={issue?.project_id}
           value={issue?.assignee_ids}
           onChange={handleAssignee}
+          memberIds={issue.project_id ? opsiAssignee.memberIds : undefined}
           multiple
           buttonVariant={issue.assignee_ids?.length > 0 ? "transparent-without-text" : "border-without-text"}
           buttonClassName={issue.assignee_ids?.length > 0 ? "hover:bg-transparent px-0" : ""}
