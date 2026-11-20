@@ -5,6 +5,7 @@
  */
 
 import { memo, useMemo } from "react";
+import { cn } from "../utils/classname";
 import { Popover as BasePopover } from "@base-ui-components/react/popover";
 import { PreviewCard as BasePreviewCard } from "@base-ui-components/react/preview-card";
 import type { TPlacement, TSide, TAlign } from "../utils/placement";
@@ -53,7 +54,13 @@ const PopoverContent = memo(function PopoverContent({
         className={positionerClassName}
         anchor={anchor}
       >
-        <BasePopover.Popup data-slot="popover-content" className={className} {...props}>
+        <BasePopover.Popup
+          data-slot="popover-content"
+          // Base UI sets --available-height on the positioner; without this cap a tall panel
+          // (filters, pickers) runs past the viewport on short screens and cannot be reached.
+          className={cn("max-h-(--available-height) overflow-y-auto overscroll-contain", className)}
+          {...props}
+        >
           {children}
         </BasePopover.Popup>
       </PopoverPositioner>

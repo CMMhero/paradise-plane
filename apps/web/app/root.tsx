@@ -158,7 +158,7 @@ export const meta: Route.MetaFunction = () => [
 export default function Root() {
   return (
     <AppProvider>
-      <div className={cn("relative flex h-screen w-full flex-col overflow-hidden bg-canvas", "desktop-app-container")}>
+      <div className={cn("relative flex h-dvh w-full flex-col overflow-hidden bg-canvas", "desktop-app-container")}>
         <main className="relative h-full w-full overflow-hidden">
           <Outlet />
         </main>
@@ -180,7 +180,7 @@ export function HydrateFallback() {
   if (!isMounted) return <div />;
 
   return (
-    <div className="relative flex h-screen w-full items-center justify-center bg-canvas">
+    <div className="relative flex h-dvh w-full items-center justify-center bg-canvas">
       <LogoSpinner />
     </div>
   );
