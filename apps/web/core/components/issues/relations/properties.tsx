@@ -14,6 +14,7 @@ import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 // types
 import type { TRelationIssueOperations } from "../issue-detail-widgets/relations/helper";
 
@@ -34,6 +35,7 @@ export const RelationIssueProperty = observer(function RelationIssueProperty(pro
 
   // derived value
   const issue = getIssueById(issueId);
+  const opsiAssignee = useOpsiAssignee(workspaceSlug, issue?.project_id, issue?.assignee_ids);
 
   // if issue is not found, return empty
   if (!issue) return <></>;
@@ -54,7 +56,7 @@ export const RelationIssueProperty = observer(function RelationIssueProperty(pro
   const handleAssigneeChange = (val: string[]) =>
     issue.project_id &&
     issueOperations.update(workspaceSlug, issue.project_id, issueId, {
-      assignee_ids: val,
+      assignee_ids: opsiAssignee.rapikan(val),
     });
 
   return (
@@ -86,6 +88,7 @@ export const RelationIssueProperty = observer(function RelationIssueProperty(pro
           value={issue.assignee_ids}
           projectId={issue.project_id ?? undefined}
           onChange={handleAssigneeChange}
+          memberIds={opsiAssignee.memberIds}
           disabled={disabled}
           multiple
           buttonVariant={(issue?.assignee_ids || []).length > 0 ? "transparent-without-text" : "border-without-text"}

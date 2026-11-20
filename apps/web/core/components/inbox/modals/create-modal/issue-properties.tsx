@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import { ETabIndices } from "@plane/constants";
 import { ParentPropertyIcon } from "@plane/propel/icons";
 import type { ISearchIssueResponse, TIssue } from "@plane/types";
@@ -25,6 +26,7 @@ import { IssueLabelSelect } from "@/components/issues/select";
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useProject } from "@/hooks/store/use-project";
+import { useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
 type TInboxIssueProperties = {
@@ -37,6 +39,8 @@ type TInboxIssueProperties = {
 export const InboxIssueProperties = observer(function InboxIssueProperties(props: TInboxIssueProperties) {
   const { projectId, data, handleData, isVisible = false } = props;
   // hooks
+  const { workspaceSlug } = useParams();
+  const opsiAssignee = useOpsiAssignee(workspaceSlug?.toString(), projectId, data?.assignee_ids);
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
   const { getProjectById } = useProject();
   const { isMobile } = usePlatformOS();
@@ -87,6 +91,7 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
           projectId={projectId}
           value={data?.assignee_ids || []}
           onChange={(assigneeIds) => handleData("assignee_ids", assigneeIds)}
+          memberIds={opsiAssignee.memberIds}
           buttonVariant={(data?.assignee_ids || [])?.length > 0 ? "transparent-without-text" : "border-with-text"}
           buttonClassName={(data?.assignee_ids || [])?.length > 0 ? "hover:bg-transparent" : ""}
           placeholder="Assignees"

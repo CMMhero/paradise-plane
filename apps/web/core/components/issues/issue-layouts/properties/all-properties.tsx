@@ -64,7 +64,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useAturanTugas, useKunciSelesai } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
@@ -127,6 +127,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   // P29: tugas selesai hanya bisa dibuka kembali, oleh atasan assignee atau admin.
   const kunciSelesai = useKunciSelesai(workspaceSlug?.toString(), issue.project_id, issue);
   const statusTerkunci = kunciSelesai.selesai && !issue.archived_at ? !kunciSelesai.bolehBuka : isReadOnly;
+  const opsiAssignee = useOpsiAssignee(workspaceSlug?.toString(), issue.project_id, issue.assignee_ids);
   const subIssueCount = issue?.sub_issues_count ?? 0;
 
   const issueOperations = useMemo(
@@ -164,7 +165,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   };
 
   const handleAssignee = async (ids: string[]) => {
-    if (updateIssue) await updateIssue(issue.project_id, issue.id, { assignee_ids: ids });
+    if (updateIssue) await updateIssue(issue.project_id, issue.id, { assignee_ids: opsiAssignee.rapikan(ids) });
   };
 
   const handleModule = useCallback(
@@ -387,6 +388,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             projectId={issue?.project_id}
             value={issue?.assignee_ids}
             onChange={handleAssignee}
+            memberIds={opsiAssignee.memberIds}
             disabled={isReadOnly}
             multiple
             buttonVariant={issue.assignee_ids?.length > 0 ? "transparent-without-text" : "border-without-text"}

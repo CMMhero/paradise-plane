@@ -393,10 +393,13 @@ export const useKunciSelesai = (
 };
 
 /**
- * Pilihan dropdown assignee untuk tugas YANG SUDAH ADA (sidebar detail, peek).
+ * Pilihan dropdown assignee untuk tugas YANG SUDAH ADA (sidebar detail, peek,
+ * kartu papan, sub-item, relasi, intake, draft, Power K).
  *
  * `memberIds` = daftar dari server (diri + bawahan/rekan/semua) digabung
  * dengan assignee yang sudah ada, supaya yang sudah ditunjuk tetap terlihat.
+ * Selama daftar belum dimuat hanya assignee lama: jatuh ke anggota project
+ * berarti menawarkan atasan, yang pasti ditolak server.
  * `rapikan` untuk staf: assignee lama tidak bisa dilepas (hanya menambah rekan),
  * jadi pilihan yang membuangnya dikembalikan alih-alih ditolak server.
  */
@@ -404,13 +407,13 @@ export const useOpsiAssignee = (
   workspaceSlug: string | undefined,
   projectId: string | null | undefined,
   assigneeIds: string[] | null | undefined
-): { memberIds: string[] | undefined; rapikan: (val: string[]) => string[] } => {
+): { memberIds: string[]; rapikan: (val: string[]) => string[] } => {
   const daftar = useBisaDitugaskan(workspaceSlug, projectId);
   // Hanya mode staf yang terkunci menambah; "semua" dan "bawahan" boleh melepas assignee lama.
   const staf = modeStaf(daftar.mode);
   const lama = assigneeIds ?? [];
   return {
-    memberIds: daftar.memuat ? undefined : Array.from(new Set([...daftar.userIds, ...lama])),
+    memberIds: Array.from(new Set([...daftar.userIds, ...lama])),
     rapikan: (val) => (staf ? Array.from(new Set([...lama, ...val])) : val),
   };
 };

@@ -76,15 +76,16 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   // Dropdown assignee = tepat isi `bisa-ditugaskan/`: staf → [diri sendiri]
   // (otomatis terisi + terkunci), Leader/atasan → diri + bawahan, direktur → semua.
   // Admin yang ditempatkan sebagai Staf di departemen ini ikut mode staf (P29).
-  // `memberIds` eksplisit mengalahkan fallback anggota-project di dropdown.
+  // `memberIds` eksplisit mengalahkan fallback anggota-project di dropdown, juga
+  // selama daftar dimuat (kosong): fallback itu menawarkan atasan.
   const { idSaya } = useAturanTugas();
   const daftarBoleh = useBisaDitugaskan(workspaceSlug, projectId);
   const stafSaja = modeStaf(daftarBoleh.mode);
-  const opsiAssignee = daftarBoleh.memuat ? undefined : daftarBoleh.userIds;
+  const opsiAssignee = daftarBoleh.userIds;
   // Server mengisi pembuat sebagai assignee hanya kalau ia sah di project ini
   // (ditempatkan di departemennya). Yang tidak sah tidak ada di daftar, jadi
   // tampilan tidak boleh berpura-pura "ditugaskan ke saya".
-  const sayaSah = !!idSaya && (opsiAssignee ?? []).includes(idSaya);
+  const sayaSah = !!idSaya && opsiAssignee.includes(idSaya);
   const projectDetails = getProjectById(projectId);
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
