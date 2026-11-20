@@ -151,7 +151,8 @@ POSTGRES_USER="{nama_db}"
 POSTGRES_PASSWORD="{sandi_db}"
 
 WEB_URL="{alamat}"
-ADMIN_BASE_URL="{alamat}/god-mode"
+# Asal saja, TANPA /god-mode: ADMIN_BASE_PATH ditambahkan sendiri oleh api.
+ADMIN_BASE_URL="{alamat}"
 CORS_ALLOWED_ORIGINS="{alamat}"
 
 # Instance pelanggan TIDAK pernah menjalankan bidang kendali.

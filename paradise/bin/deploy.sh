@@ -14,6 +14,36 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 compose=(docker compose -f docker-compose.yml -f docker-compose.ghcr.yml)
 
+# ---------------------------------------------------------------------------
+# ADMIN_BASE_URL / SPACE_BASE_URL harus SATU ASAL dengan WEB_URL.
+#
+# Nov 2026: produksi berjalan dengan WEB_URL=https://<domain> tapi
+# ADMIN_BASE_URL=http://<IP>. Login god-mode dari domain berhasil, lalu
+# dialihkan ke IP, tempat cookie sesinya tidak ada, jadi god-mode hanya bisa
+# dipakai dari jaringan kantor. Sejak versi ini api mengarahkan balik ke asal
+# yang sedang dipakai peramban, jadi nilai yang meleset tidak lagi mematahkan
+# login. Tapi nilainya tetap jadi cadangan dan tetap dikirim ke klien, jadi
+# diperingatkan di sini supaya dibetulkan, bukan dibiarkan.
+#
+# Yang diperiksa apps/api/.env (itu yang dibaca container `api`) dan .env root.
+# Hanya PERINGATAN: deploy tidak digagalkan karena ini.
+# ---------------------------------------------------------------------------
+asal_url() { printf '%s' "$1" | sed -E 's#^([A-Za-z]+://[^/]+).*#\1#' | tr '[:upper:]' '[:lower:]'; }
+nilai_env() { { [ -f "$2" ] && grep -m1 "^$1=" "$2" | cut -d= -f2- | tr -d "\"'"; } || true; }
+for berkas in apps/api/.env .env; do
+  [ -f "$berkas" ] || continue
+  web_asal="$(asal_url "$(nilai_env WEB_URL "$berkas")")"
+  [ -n "$web_asal" ] || continue
+  for var in ADMIN_BASE_URL SPACE_BASE_URL; do
+    isi="$(nilai_env "$var" "$berkas")"
+    if [ -n "$isi" ] && [ "$(asal_url "$isi")" != "$web_asal" ]; then
+      echo "PERINGATAN: $berkas: $var=$isi berbeda asal dengan WEB_URL ($web_asal)."
+      echo "  Samakan dengan WEB_URL, atau kosongkan supaya api memakai WEB_URL."
+      echo "  Alamat tambahan (mis. IP LAN) cukup di CORS_ALLOWED_ORIGINS dan SITE_ADDRESS."
+    fi
+  done
+done
+
 git pull --ff-only
 "${compose[@]}" pull
 
