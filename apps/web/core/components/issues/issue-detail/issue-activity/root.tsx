@@ -22,6 +22,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useBolehPercakapanTugas } from "@/hooks/use-aturan-tugas";
+import { useUrutanAktivitas } from "@/hooks/use-urutan-aktivitas";
 // plane web components
 import { ActivityFilterRoot } from "@/plane-web/components/issues/worklog/activity/filter-root";
 import { IssueActivityWorklogCreateButton } from "@/plane-web/components/issues/worklog/activity/worklog-create-button";
@@ -56,7 +57,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
     "issue_activity_filters",
     defaultActivityFilters
   );
-  const { setValue: setSortOrder, storedValue: sortOrder } = useLocalStorage("activity_sort_order", E_SORT_ORDER.ASC);
+  const { urutan: sortOrder, setUrutan: setSortOrder } = useUrutanAktivitas();
   // store hooks
   const {
     issue: { getIssueById },
@@ -92,7 +93,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   };
 
   const toggleSortOrder = () => {
-    setSortOrder(sortOrder === E_SORT_ORDER.ASC ? E_SORT_ORDER.DESC : E_SORT_ORDER.ASC);
+    void setSortOrder(sortOrder === E_SORT_ORDER.ASC ? E_SORT_ORDER.DESC : E_SORT_ORDER.ASC);
   };
 
   // helper hooks
@@ -137,7 +138,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
               disabled={disabled}
             />
           )}
-          <ActivitySortRoot sortOrder={sortOrder || E_SORT_ORDER.ASC} toggleSort={toggleSortOrder} />
+          <ActivitySortRoot sortOrder={sortOrder} toggleSort={toggleSortOrder} />
           <ActivityFilterRoot
             selectedFilters={selectedFilters || defaultActivityFilters}
             toggleFilter={toggleFilter}
@@ -161,7 +162,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
               activityOperations={activityOperations}
               showAccessSpecifier={!!project.anchor}
               disabled={percakapanTerkunci}
-              sortOrder={sortOrder || E_SORT_ORDER.ASC}
+              sortOrder={sortOrder}
             />
             {!disabled && sortOrder === E_SORT_ORDER.ASC && renderCommentCreationBox}
           </div>

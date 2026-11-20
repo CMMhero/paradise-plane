@@ -1274,5 +1274,29 @@
     "announcement_email_section": "Pengumuman",
     "announcement_email_title": "Email pengumuman",
     "announcement_email_description": "Kirimi saya email untuk setiap pengumuman baru di kanal Announcements."
+  },
+  "ui_fixes": {
+    "activity_order": "Urutan aktivitas",
+    "activity_order_help": "Urutan linimasa di work item. Pilihanmu berlaku di semua perangkat.",
+    "activity_order_desc": "Terbaru di atas",
+    "activity_order_asc": "Terlama di atas",
+    "activity_order_save_failed": "Urutan aktivitas gagal disimpan. Coba lagi.",
+    "confirm_comment_title": "Hapus komentar?",
+    "confirm_comment_body": "Komentar ini akan dihapus dan tidak bisa dikembalikan.",
+    "confirm_reply_title": "Hapus balasan?",
+    "confirm_reply_body": "Balasan ini akan dihapus dan tidak bisa dikembalikan.",
+    "confirm_link_title": "Hapus tautan?",
+    "confirm_link_body": "Tautan \"{name}\" akan dihapus.",
+    "confirm_subitem_title": "Lepas sub-work item?",
+    "confirm_subitem_body": "\"{name}\" tidak lagi menjadi sub-work item di sini. Work item-nya tetap ada.",
+    "confirm_relation_title": "Hapus relasi?",
+    "confirm_relation_body": "Relasi dengan \"{name}\" akan dihapus. Kedua work item tetap ada.",
+    "confirm_logo_title": "Hapus logo workspace?",
+    "confirm_logo_body": "Workspace kembali memakai logo bawaan.",
+    "confirm_worklog_title": "Hapus catatan waktu?",
+    "confirm_worklog_body": "Catatan waktu {duration} akan dihapus.",
+    "confirm_integration_title": "Copot integrasi?",
+    "confirm_integration_body": "{name} akan diputus dari workspace ini.",
+    "confirm_integration_button": "Copot"
   }
 }

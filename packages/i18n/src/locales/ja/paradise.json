@@ -1274,5 +1274,29 @@
     "announcement_email_section": "Announcements",
     "announcement_email_title": "Announcement emails",
     "announcement_email_description": "Email me each new post in the Announcements channel."
+  },
+  "ui_fixes": {
+    "activity_order": "Activity order",
+    "activity_order_help": "Order of the timeline on a work item. Your choice applies on every device.",
+    "activity_order_desc": "Newest first",
+    "activity_order_asc": "Oldest first",
+    "activity_order_save_failed": "Could not save the activity order. Try again.",
+    "confirm_comment_title": "Delete comment?",
+    "confirm_comment_body": "This comment will be deleted. This cannot be undone.",
+    "confirm_reply_title": "Delete reply?",
+    "confirm_reply_body": "This reply will be deleted. This cannot be undone.",
+    "confirm_link_title": "Delete link?",
+    "confirm_link_body": "The link \"{name}\" will be deleted.",
+    "confirm_subitem_title": "Remove sub-work item?",
+    "confirm_subitem_body": "\"{name}\" will no longer be a sub-work item here. The work item itself is kept.",
+    "confirm_relation_title": "Remove relation?",
+    "confirm_relation_body": "The relation with \"{name}\" will be removed. Both work items are kept.",
+    "confirm_logo_title": "Remove workspace logo?",
+    "confirm_logo_body": "The workspace goes back to the default logo.",
+    "confirm_worklog_title": "Delete time entry?",
+    "confirm_worklog_body": "The logged time of {duration} will be deleted.",
+    "confirm_integration_title": "Uninstall integration?",
+    "confirm_integration_body": "{name} will be disconnected from this workspace.",
+    "confirm_integration_button": "Uninstall"
   }
 }

@@ -22,6 +22,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useBolehHapus, useBolehUbahTugas } from "@/hooks/use-aturan-tugas";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
@@ -62,6 +63,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
     storeType = EIssuesStoreType.PROJECT,
   } = props;
   const { t } = useTranslation();
+  const { minta, dialog } = useKonfirmasi();
   const {
     issue: { getIssueById },
     subIssues: {
@@ -112,6 +114,7 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
 
   return (
     <div key={issueId} className="@container">
+      {dialog}
       <ControlLink
         id={`issue-${issue.id}`}
         href={workItemLink}
@@ -232,8 +235,17 @@ export const SubIssuesListItem = observer(function SubIssuesListItem(props: Prop
                 {bisaUbahAnak && (
                   <CustomMenu.MenuItem
                     onClick={() => {
-                      if (issue.project_id)
-                        subIssueOperations.removeSubIssue(workspaceSlug, issue.project_id, parentIssueId, issue.id);
+                      const projectId = issue.project_id;
+                      if (projectId)
+                        minta(
+                          {
+                            judul: t("ui_fixes.confirm_subitem_title"),
+                            isi: t("ui_fixes.confirm_subitem_body", { name: issue.name }),
+                            tombol: t("remove"),
+                            tombolProses: t("removing"),
+                          },
+                          () => subIssueOperations.removeSubIssue(workspaceSlug, projectId, parentIssueId, issue.id)
+                        );
                     }}
                   >
                     <div className="flex items-center gap-2">

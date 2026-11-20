@@ -7,6 +7,7 @@
 import { observer } from "mobx-react";
 
 import { MODULE_TRACKER_ELEMENTS } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { CopyIcon, EditIcon, TrashIcon } from "@plane/propel/icons";
 // plane types
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -18,6 +19,7 @@ import { getIconForLink, copyTextToClipboard, calculateTimeAgo } from "@plane/ut
 //
 // hooks
 import { useMember } from "@/hooks/store/use-member";
+import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
 type Props = {
@@ -30,7 +32,9 @@ type Props = {
 export const ModulesLinksListItem = observer(function ModulesLinksListItem(props: Props) {
   const { handleDeleteLink, handleEditLink, isEditingAllowed, link } = props;
   // store hooks
+  const { t } = useTranslation();
   const { getUserDetails } = useMember();
+  const { minta, dialog } = useKonfirmasi();
   // derived values
   const createdByDetails = getUserDetails(link.created_by);
   // platform os
@@ -50,6 +54,7 @@ export const ModulesLinksListItem = observer(function ModulesLinksListItem(props
 
   return (
     <div className="relative flex flex-col rounded-md bg-layer-3 p-2.5">
+      {dialog}
       <div className="flex w-full items-start justify-between gap-2">
         <div className="flex items-start gap-2 truncate">
           <span className="py-1">
@@ -92,7 +97,13 @@ export const ModulesLinksListItem = observer(function ModulesLinksListItem(props
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                handleDeleteLink();
+                minta(
+                  {
+                    judul: t("ui_fixes.confirm_link_title"),
+                    isi: t("ui_fixes.confirm_link_body", { name: link.title || link.url }),
+                  },
+                  () => handleDeleteLink()
+                );
               }}
             >
               <TrashIcon className="size-3 stroke-[1.5]" />
