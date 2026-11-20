@@ -11,7 +11,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [("db", "0176_project_network_privat")]
+    dependencies = [("db", "0178_issue_privat")]
 
     operations = [
         migrations.CreateModel(

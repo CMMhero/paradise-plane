@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     di setiap daftar, dan tugas privat hanya sebagian kecil dari tabel.
     """
 
-    dependencies = [("db", "0176_project_network_privat")]
+    dependencies = [("db", "0177_tingkat_leader")]
 
     operations = [
         migrations.AddField(

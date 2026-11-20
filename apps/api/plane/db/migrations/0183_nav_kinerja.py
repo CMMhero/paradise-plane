@@ -32,6 +32,6 @@ def _hapus(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [("db", "0176_project_network_privat")]
+    dependencies = [("db", "0181_hapus_ruang_kabar")]
 
     operations = [migrations.RunPython(_tambah, _hapus)]

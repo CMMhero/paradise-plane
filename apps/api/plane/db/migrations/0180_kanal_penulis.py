@@ -20,7 +20,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [("db", "0176_project_network_privat")]
+    dependencies = [("db", "0179_wiki_folder_editor")]
 
     operations = [
         migrations.AddField(
