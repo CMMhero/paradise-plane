@@ -52,11 +52,13 @@ let nomorTimer = 0;
 const maju = async (ms: number) => {
   const sampai = sekarang + ms;
   for (;;) {
+    // oxlint-disable-next-line unicorn/no-array-sort -- sorts the fresh copy from filter(); the project lib has no toSorted
     const berikut = timers.filter((t) => t.at <= sampai).sort((a, b) => a.at - b.at)[0];
     if (!berikut) break;
     timers = timers.filter((t) => t !== berikut);
     sekarang = Math.max(sekarang, berikut.at);
     berikut.f();
+    // oxlint-disable-next-line no-await-in-loop -- timers fire one by one on a shared fake clock
     await Promise.resolve();
   }
   sekarang = sampai;
@@ -115,9 +117,6 @@ modul.daftarkanPenyegar({ jenis: ["tugas"], proyek: "p1", tarik: () => void (pen
 const hasil: Record<string, number> = {};
 console.log(`modul: ${process.argv[2] ?? "./data-live"}`);
 console.log(`WEB_SWR_CONFIG.revalidateOnFocus = ${WEB_SWR_CONFIG.revalidateOnFocus}`);
-console.log(
-  `WEB_SWR_CONFIG.isVisible = ${"isVisible" in WEB_SWR_CONFIG ? "ada (polling berhenti saat blur)" : "tidak ada"}`
-);
 
 const tersembunyiSelama = (ms: number) => async () => {
   sembunyikan();
@@ -142,6 +141,7 @@ hasil.petunjuk = await hitung("tersembunyi 30 dtk + 3 petunjuk tugas p1 saat ter
   sembunyikan();
   for (let i = 0; i < 3; i++) {
     modul.terimaSinyalData({ jenis: "tugas", proyek: "p1", tugas: `t${i}` });
+    // oxlint-disable-next-line no-await-in-loop -- each hint must land 5 s after the previous one
     await maju(5000);
   }
   await maju(15_000);
