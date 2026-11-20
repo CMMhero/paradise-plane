@@ -224,6 +224,23 @@ export function NotificationContent({
     );
   }
 
+  // Permintaan lintas departemen diterima/ditolak (plane/utils/permintaan_lintas_divisi.py).
+  if (notificationField === "cross_division") {
+    const alasan = data?.issue_activity.issue_comment;
+    return (
+      <>
+        {renderTriggerName()}
+        <span className="text-tertiary">
+          {t((verb as string) === "accepted" ? "persetujuan_p29.inbox_accepted" : "persetujuan_p29.inbox_declined", {
+            department: newValue ?? "",
+          })}
+          {alasan ? `: ${alasan}` : ""}
+        </span>
+        {"."}
+      </>
+    );
+  }
+
   if (notificationField === "deadline") {
     return (
       <span className="text-primary">

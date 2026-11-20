@@ -28,6 +28,7 @@ import { useWorkspaceNavigationPreferences } from "@/hooks/use-navigation-prefer
 // local imports
 import { UpgradeBadge } from "../upgrade-badge";
 import { getSidebarNavigationItemIcon } from "./helper";
+import { useNavPersetujuanTerlihat } from "./sidebar-item";
 
 type TExtendedSidebarItemProps = {
   item: IWorkspaceSidebarNavigationItem;
@@ -62,6 +63,9 @@ export const ExtendedSidebarItem = observer(function ExtendedSidebarItem(props: 
 
   // derived values
   const isPinned = workspacePreferences.items[item.key]?.is_pinned ?? false;
+  const persetujuanTerlihat = useNavPersetujuanTerlihat(
+    item.key === "persetujuan" ? workspaceSlug?.toString() : undefined
+  );
 
   const handleLinkClick = () => toggleExtendedSidebar(true);
 
@@ -153,6 +157,7 @@ export const ExtendedSidebarItem = observer(function ExtendedSidebarItem(props: 
   if (!allowPermissions(item.access as any, EUserPermissionsLevel.WORKSPACE, workspaceSlug.toString())) {
     return null;
   }
+  if (item.key === "persetujuan" && !persetujuanTerlihat) return null;
 
   return (
     <div

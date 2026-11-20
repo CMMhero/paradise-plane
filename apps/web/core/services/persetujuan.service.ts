@@ -6,6 +6,7 @@
  */
 
 import { API_BASE_URL } from "@plane/constants";
+import type { TStateGroups } from "@plane/types";
 // services
 import { APIService } from "@/services/api.service";
 
@@ -59,6 +60,47 @@ export type TDaftarPersetujuan = {
 };
 
 export type TAksiPersetujuan = "setujui" | "tolak" | "ajukan-ulang";
+
+type TTempatRingkas = { id: string; kode: string; nama: string };
+
+type TBarisAntreanDasar = {
+  /** Id `PersetujuanPenugasan` (selesai) atau `PermintaanLintasDivisi` (permintaan). */
+  id: string;
+  project: { id: string; identifier: string; name: string };
+  departemen: TTempatRingkas | null;
+  divisi: TTempatRingkas | null;
+  tugas: {
+    id: string;
+    nomor: string;
+    judul: string;
+    /** Permintaan yang belum diterima masih di grup `triage`. */
+    state: { id: string; name: string; group: TStateGroups | "triage"; color: string } | null;
+    assignee_ids: string[];
+    target_date: string | null;
+  };
+  pemohon: { id: string; nama: string | null } | null;
+  diminta_pada: string;
+};
+
+/**
+ * Satu baris `GET /workspaces/<slug>/persetujuan/` (`plane/utils/antrean_persetujuan.py`).
+ * `selesai` diputuskan lewat `persetujuan-penugasan/<id>/`, `permintaan` lewat Intake.
+ */
+export type TBarisAntreanWorkspace =
+  | (TBarisAntreanDasar & { jenis: "selesai" })
+  | (TBarisAntreanDasar & {
+      jenis: "permintaan";
+      asal: { id: string; identifier: string; name: string };
+      catatan: string;
+      ditunda: boolean;
+    });
+
+export type TAntreanWorkspace = {
+  /** Punya wewenang memutuskan di mana pun; false = menu Persetujuan disembunyikan. */
+  boleh_memutuskan: boolean;
+  jumlah: number;
+  hasil: TBarisAntreanWorkspace[];
+};
 
 // Balasan `bisa-ditugaskan/`: siapa boleh masuk dropdown assignee saya.
 // mode "diri-sendiri" = staf (satu user: diri sendiri, auto-select).
@@ -114,6 +156,14 @@ export class PersetujuanService extends APIService {
 
   private dasar(workspaceSlug: string, projectId: string): string {
     return `/api/workspaces/${workspaceSlug}/projects/${projectId}/persetujuan-penugasan/`;
+  }
+
+  async antreanWorkspace(workspaceSlug: string): Promise<TAntreanWorkspace> {
+    return this.get(`/api/workspaces/${workspaceSlug}/persetujuan/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
   }
 
   async bisaDitugaskan(workspaceSlug: string, projectId: string): Promise<TBisaDitugaskan> {

@@ -58,6 +58,7 @@ const MODUL_PER_PERINTAH: Record<string, TParadiseGate> = {
   nav_quick_links: "quick_links",
   nav_your_work_calendar: "your_work",
   nav_project_approvals: "approvals",
+  nav_workspace_approvals: "approvals",
 };
 
 export const isPowerKCommandModuleActive = (commandId: string): boolean =>

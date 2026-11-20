@@ -92,6 +92,18 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/initiatives", "./(all)/[workspaceSlug]/(projects)/initiatives/page.tsx"),
         ]),
 
+        // Persetujuan semua departemen yang diawasi + permintaan lintas departemen
+        // (Paradise, keputusan user 2026-11-20).
+        layout("./(all)/[workspaceSlug]/(projects)/persetujuan/layout.tsx", [
+          route(":workspaceSlug/persetujuan", "./(all)/[workspaceSlug]/(projects)/persetujuan/page.tsx"),
+        ]),
+        layout("./(all)/[workspaceSlug]/(projects)/tugas-lintas-divisi/layout.tsx", [
+          route(
+            ":workspaceSlug/tugas-lintas-divisi",
+            "./(all)/[workspaceSlug]/(projects)/tugas-lintas-divisi/page.tsx"
+          ),
+        ]),
+
         // Obrolan antar-karyawan (Paradise)
         layout("./(all)/[workspaceSlug]/(projects)/chat/layout.tsx", [
           route(":workspaceSlug/chat", "./(all)/[workspaceSlug]/(projects)/chat/page.tsx"),

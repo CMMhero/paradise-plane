@@ -25,6 +25,8 @@ export const WIKI_MATERIALS_NAV_KEY = "wiki_materials";
 const MODUL_PER_KUNCI_MENU: Record<string, TParadiseGate> = {
   dashboard_divisi: "dashboards",
   persetujuan: "approvals",
+  // Permintaan lintas departemen masuk Intake departemen tujuan.
+  tugas_lintas_divisi: "intake",
   [WIKI_MATERIALS_NAV_KEY]: "wiki",
   // Dicabut (KEP-53): menunya tak pernah tampil lagi.
   cycles: PARADISE_REMOVED,
@@ -47,6 +49,8 @@ const MODUL_PER_PATH: [RegExp, TParadiseModule][] = [
   [pola("initiatives"), "initiatives"],
   [pola("workspace-views"), "views"],
   [pola("analytics"), "analytics"],
+  [pola("persetujuan"), "approvals"],
+  [pola("tugas-lintas-divisi"), "intake"],
   [pola("chat"), "chat"],
   [pola("wiki"), "wiki"],
   // `projects/archives` didaftarkan SEBELUM pola project: kata `archives` di sana
