@@ -139,6 +139,12 @@ class ProjectCreateSerializer(BaseSerializer):
             ).exists():
                 raise serializers.ValidationError("Default assignee should be a user in the workspace")
 
+        from plane.utils.atasan import galat_default_assignee  # noqa: PLC0415
+
+        galat = galat_default_assignee(self.context, self.instance, data.get("default_assignee"))
+        if galat:
+            raise serializers.ValidationError({"default_assignee": galat})
+
         return data
 
     def create(self, validated_data):

@@ -261,9 +261,10 @@ class IssueSerializer(BaseSerializer):
 
         # Membuat tugas tidak butuh persetujuan (2026-10-26); hanya gerbang selesai.
         # Assignee anak ikut jadi assignee induknya (KEP-98).
+        from plane.utils.hierarki import aktor_dari_context  # noqa: PLC0415
         from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
 
-        naikkan_assignee(issue.id)
+        naikkan_assignee(issue.id, aktor_dari_context(self.context))
         return issue
 
     def update(self, instance, validated_data):
@@ -326,9 +327,10 @@ class IssueSerializer(BaseSerializer):
         # SUDAH disetujui membuka antrean (dan kunci) baru.
         tugas = super().update(instance, validated_data)
         # Assignee atau induk berubah: assignee anak ikut naik ke induknya (KEP-98).
+        from plane.utils.hierarki import aktor_dari_context  # noqa: PLC0415
         from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
 
-        naikkan_assignee(tugas.id)
+        naikkan_assignee(tugas.id, aktor_dari_context(self.context))
         return tugas
 
     def to_representation(self, instance):

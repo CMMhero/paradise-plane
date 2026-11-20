@@ -22,6 +22,11 @@ Aturan:
 * Sengaja TIDAK melewati gerbang penugasan hierarki (`galat_penugasan`): ini
   turunan dari penugasan yang sudah lolos gerbang pada anaknya, bukan penugasan
   baru oleh seseorang.
+* Kecuali satu aturan: orang yang tidak bisa ditugaskan langsung oleh pelaku
+  karena jenjangnya di atas pelaku (`atasan_di_antara`) tidak dinaikkan ke induk.
+  Tanpa itu, staf yang memasang sub-item milik atasannya ke tugas induk diam-diam
+  menugaskan atasannya ke induk itu. Naiknya tetap terjadi saat atasan sendiri
+  yang memicunya.
 
 Dipanggil sesudah assignee, induk, atau module sebuah tugas berubah (serializer
 buat/ubah tugas, tambah sub-work item, tambah tugas ke module). Idempoten dan
@@ -52,12 +57,15 @@ def _rantai(issue_id):
     return hasil
 
 
-def naikkan_assignee(issue_id):
+def naikkan_assignee(issue_id, actor):
     """Sebarkan assignee `issue_id` ke induknya dan ke module-module di rantai itu.
 
-    Mengembalikan (jumlah assignee induk ditambah, jumlah anggota module ditambah).
+    `actor` = orang yang tindakannya memicu kenaikan ini (None = tanpa pelaku,
+    dihitung Staf). Mengembalikan (jumlah assignee induk ditambah, jumlah anggota
+    module ditambah).
     """
     from plane.db.models import IssueAssignee, ModuleIssue, ModuleMember  # noqa: PLC0415
+    from plane.utils.atasan import atasan_di_antara  # noqa: PLC0415
 
     rantai = _rantai(issue_id)
     if not rantai:
@@ -70,6 +78,7 @@ def naikkan_assignee(issue_id):
     for induk_id, _, project_id, workspace_id, pembuat_id in rantai[1:]:
         ada = set(IssueAssignee.objects.filter(issue_id=induk_id).values_list("assignee_id", flat=True))
         baru = asal - ada
+        baru -= atasan_di_antara(actor, workspace_id, project_id, baru)
         if not baru:
             continue
         try:

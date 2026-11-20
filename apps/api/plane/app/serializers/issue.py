@@ -433,9 +433,10 @@ class IssueCreateSerializer(BaseSerializer):
             catat_persetujuan(issue, actor=aktor_dari_context(self.context))
 
         # Assignee anak ikut jadi assignee induknya (KEP-98).
+        from plane.utils.hierarki import aktor_dari_context  # noqa: PLC0415
         from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
 
-        naikkan_assignee(issue.id)
+        naikkan_assignee(issue.id, aktor_dari_context(self.context))
 
         return issue
 
@@ -512,9 +513,10 @@ class IssueCreateSerializer(BaseSerializer):
 
             batalkan_pengajuan_menunggu(tugas.id)
         # Assignee atau induk berubah: assignee anak ikut naik ke induknya (KEP-98).
+        from plane.utils.hierarki import aktor_dari_context  # noqa: PLC0415
         from plane.utils.naik_assignee import naikkan_assignee  # noqa: PLC0415
 
-        naikkan_assignee(tugas.id)
+        naikkan_assignee(tugas.id, aktor_dari_context(self.context))
         return tugas
 
 

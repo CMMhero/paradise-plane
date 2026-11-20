@@ -48,6 +48,7 @@ from plane.tests.contract.app.test_persetujuan_manager_app import (  # noqa: F40
     _user,
     org,
 )
+from plane.utils.atasan import PESAN_ATASAN
 from plane.utils.hierarki import FLAG_GERBANG, tingkat_anggota
 
 URL_KUASA = "/api/workspaces/{slug}/projects/{project_id}/persetujuan-penugasan/bisa-ditugaskan/"
@@ -267,8 +268,13 @@ class TestAdminBerjenjangStaf:
         assert _buat(klien, p29, [p29.admin_staf, p29.staf]).status_code == status.HTTP_201_CREATED
 
     def test_di_luar_departemennya_tetap_admin(self, p29):
-        respon = _buat(_klien(p29.admin_staf), p29, [p29.sup2], project=p29.p2)
+        """Tanpa aturan staf (tidak wajib ikut jadi assignee), tapi tetap tidak bisa menugaskan atasan."""
+        klien = _klien(p29.admin_staf)
+        respon = _buat(klien, p29, [p29.staf_lain], project=p29.p2)
         assert respon.status_code == status.HTTP_201_CREATED, getattr(respon, "data", None)
+        respon = _buat(klien, p29, [p29.sup2], project=p29.p2)
+        assert respon.status_code == status.HTTP_400_BAD_REQUEST
+        assert PESAN_ATASAN in str(respon.data["assignee_ids"])
 
     def test_super_admin_staf_juga_terikat(self, p29):
         _tempatkan(p29, p29.sa, TINGKAT_MEMBER, p29.smt1)

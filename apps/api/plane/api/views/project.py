@@ -242,7 +242,8 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
             from plane.utils.bawaan_project import lengkapi_data_project
 
             serializer = ProjectCreateSerializer(
-                data=lengkapi_data_project({**request.data}), context={"workspace_id": workspace.id}
+                data=lengkapi_data_project({**request.data}),
+                context={"workspace_id": workspace.id, "actor": request.user},
             )
 
             if serializer.is_valid():
@@ -582,7 +583,7 @@ class ProjectDetailAPIEndpoint(BaseAPIView):
             serializer = ProjectUpdateSerializer(
                 project,
                 data={**request.data, "intake_view": intake_view},
-                context={"workspace_id": workspace.id},
+                context={"workspace_id": workspace.id, "actor": request.user},
                 partial=True,
             )
 
