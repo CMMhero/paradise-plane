@@ -438,6 +438,9 @@ class WorkspaceUserPreference(BaseModel):
         INITIATIVES = "initiatives", "Initiatives"
         CHAT = "chat", "Chat"
         WIKI = "wiki", "Wiki"
+        # Kembali ke sidebar (keputusan user 2026-11-20).
+        PERSETUJUAN = "persetujuan", "Approvals"
+        TUGAS_LINTAS_DIVISI = "tugas_lintas_divisi", "Department requests"
 
     workspace = models.ForeignKey(
         "db.Workspace",
