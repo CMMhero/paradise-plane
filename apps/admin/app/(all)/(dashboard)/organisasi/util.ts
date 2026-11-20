@@ -12,6 +12,7 @@ import {
   TINGKAT_MANAGER,
   menjangkauSeluruhOrganisasi,
   type TAnggotaHierarki,
+  type TCabangOrganisasi,
   type TDepartemenOrganisasi,
   type TDivisiOrganisasi,
 } from "@plane/services";
@@ -19,8 +20,14 @@ import type { TGodmodeStrings } from "@/app/i18n/godmode";
 
 export type TAksiOrganisasi = {
   /** Aksi struktur mengembalikan true kalau berhasil (galat sudah di-toast), supaya modal tahu boleh menutup. */
-  buatDivisi: (kode: string, nama: string) => Promise<boolean>;
+  buatCabang: (kode: string, nama: string) => Promise<boolean>;
+  ubahCabang: (id: string, kode: string, nama: string) => Promise<boolean>;
+  hapusCabang: (id: string) => Promise<boolean>;
+  /** `cabangId` kosong = kantor pusat. */
+  buatDivisi: (kode: string, nama: string, cabangId?: string) => Promise<boolean>;
   ubahDivisi: (id: string, kode: string, nama: string) => Promise<boolean>;
+  /** Pindah divisi ke cabang lain; null = kantor pusat. */
+  pindahDivisi: (id: string, cabangId: string | null) => Promise<boolean>;
   hapusDivisi: (id: string) => Promise<boolean>;
   buatDepartemen: (divisiId: string, kode: string, nama: string) => Promise<boolean>;
   ubahDepartemen: (
@@ -31,8 +38,10 @@ export type TAksiOrganisasi = {
   hapusDepartemen: (id: string) => Promise<boolean>;
   tempatkan: (
     orang: TAnggotaHierarki,
-    tujuan: { departemen_id?: string | null; divisi_id?: string | null }
+    tujuan: { departemen_id?: string | null; divisi_id?: string | null; cabang_id?: string | null }
   ) => Promise<void>;
+  /** Ganti SELURUH daftar cabang yang dipimpin seseorang (Direktur Cabang). */
+  setelCabang: (orang: TAnggotaHierarki, cabangIds: string[]) => Promise<void>;
   /** Ganti SELURUH daftar departemen seseorang (MENGGANTI, bukan tambah-satu). */
   setelEkstra: (orangId: string, departemenIds: string[]) => Promise<void>;
   /** Ganti SELURUH daftar divisi yang dipimpin seseorang (KEP-76). */
@@ -53,7 +62,12 @@ export type TAksiOrganisasi = {
  * hanya ditulis sekali (kelola.tsx).
  */
 export type TPerintahKelola =
-  | { jenis: "buat-divisi" }
+  | { jenis: "buat-cabang" }
+  | { jenis: "ubah-cabang"; id: string }
+  | { jenis: "hapus-cabang"; id: string }
+  | { jenis: "tambah-direktur-cabang"; id: string }
+  | { jenis: "pindah-divisi"; id: string }
+  | { jenis: "buat-divisi"; cabangId?: string }
   | { jenis: "ubah-divisi"; id: string }
   | { jenis: "hapus-divisi"; id: string }
   | { jenis: "tambah-manager"; id: string }
@@ -73,6 +87,15 @@ export type TKelola = (perintah: TPerintahKelola) => void;
 export const calonManager = (orang: TAnggotaHierarki[], divisi: TDivisiOrganisasi): TAnggotaHierarki[] => {
   const sudah = new Set(divisi.manager.map((m) => m.id));
   return orang.filter((o) => o.tingkat !== null && !menjangkauSeluruhOrganisasi(o.tingkat) && !sudah.has(o.id));
+};
+
+/**
+ * Calon Direktur Cabang: siapa pun di bawah Sekretaris yang belum memimpin cabang
+ * ini. Menempatkannya menaikkan jenjangnya ke Direktur Cabang.
+ */
+export const calonDirekturCabang = (orang: TAnggotaHierarki[], cabang: TCabangOrganisasi): TAnggotaHierarki[] => {
+  const sudah = new Set(cabang.direktur.map((d) => d.id));
+  return orang.filter((o) => !menjangkauSeluruhOrganisasi(o.tingkat) && !sudah.has(o.id));
 };
 
 /**

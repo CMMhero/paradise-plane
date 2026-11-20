@@ -362,6 +362,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
           hierarki={diedit.h}
           pilihanDepartemen={hierarki?.departemen_pilihan ?? []}
           pilihanDivisi={hierarki?.divisi_pilihan ?? []}
+          pilihanCabang={hierarki?.cabang_pilihan ?? []}
           onSelesai={async () => {
             await mutate();
             await mutateHierarki();
