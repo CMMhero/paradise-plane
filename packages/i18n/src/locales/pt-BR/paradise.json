@@ -274,7 +274,6 @@
       "empty_message": "Division folders appear automatically from the organization structure in God Mode. Workspace admins can also add a shared folder with the button above.",
       "open_to_all": "Open for all employees to read",
       "new_folder": "Nova pasta",
-      "new_folder_name": "Nova pasta",
       "other_folders": "Geral e outras pastas",
       "folder_created_title": "Pasta criada",
       "create_folder_failed": "Não foi possível criar a nova pasta."
@@ -1297,7 +1296,12 @@
     "confirm_worklog_body": "The logged time of {duration} will be deleted.",
     "confirm_integration_title": "Uninstall integration?",
     "confirm_integration_body": "{name} will be disconnected from this workspace.",
-    "confirm_integration_button": "Uninstall"
+    "confirm_integration_button": "Uninstall",
+    "assigned_to_me_pending": "Assigned to me (can add colleagues), pending your supervisor's approval",
+    "new_folder_title": "New folder",
+    "new_folder_hint": "Give the folder a name, for example QMS. You can set who edits it next.",
+    "new_folder_placeholder": "Folder name",
+    "new_folder_create": "Create folder"
   },
   "wiki_editor": {
     "section_title": "Editors",

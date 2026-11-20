@@ -274,7 +274,6 @@
       "empty_message": "Folder divisi muncul otomatis dari struktur organisasi di God Mode. Admin workspace juga bisa menambah folder bersama lewat tombol di atas.",
       "open_to_all": "Terbuka dibaca semua karyawan",
       "new_folder": "Folder baru",
-      "new_folder_name": "Folder baru",
       "other_folders": "Umum dan folder lainnya",
       "folder_created_title": "Folder dibuat",
       "create_folder_failed": "Folder baru tidak dapat dibuat."
@@ -1297,7 +1296,12 @@
     "confirm_worklog_body": "Catatan waktu {duration} akan dihapus.",
     "confirm_integration_title": "Copot integrasi?",
     "confirm_integration_body": "{name} akan diputus dari workspace ini.",
-    "confirm_integration_button": "Copot"
+    "confirm_integration_button": "Copot",
+    "assigned_to_me_pending": "Ditugaskan ke saya (bisa ajak rekan), menunggu persetujuan atasan",
+    "new_folder_title": "Folder baru",
+    "new_folder_hint": "Beri nama folder, misalnya QMS. Pengaturan siapa yang boleh mengedit bisa dilanjutkan setelahnya.",
+    "new_folder_placeholder": "Nama folder",
+    "new_folder_create": "Buat folder"
   },
   "wiki_editor": {
     "section_title": "Editor",

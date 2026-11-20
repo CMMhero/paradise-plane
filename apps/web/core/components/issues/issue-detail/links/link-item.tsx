@@ -134,7 +134,7 @@ export const IssueLinkItem = observer(function IssueLinkItem(props: TIssueLinkIt
                   minta(
                     {
                       judul: t("ui_fixes.confirm_link_title"),
-                      isi: t("ui_fixes.confirm_link_body", { name: linkTitle || linkDetail.url }),
+                      isi: t("ui_fixes.confirm_link_body", { name: linkDetail.title || linkDetail.url }),
                     },
                     () => linkOperations.remove(linkDetail.id)
                   );
