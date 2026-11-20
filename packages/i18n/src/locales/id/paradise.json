@@ -1327,6 +1327,10 @@
   "kinerja": {
     "nav": "KPI",
     "title": "KPI",
+    "tabs_label": "Bagian KPI",
+    "tab_kpi": "KPI",
+    "tab_analytics": "Analitik",
+    "tab_dashboards": "Dasbor",
     "go_to": "Buka KPI",
     "heading": "KPI: {name}",
     "load_failed": "Gagal memuat KPI ini. Mungkin Anda tidak punya akses.",

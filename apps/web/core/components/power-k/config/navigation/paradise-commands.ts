@@ -108,7 +108,7 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
     nav_dashboard_divisi: workspacePage(
       "nav_dashboard_divisi",
       LayoutDashboard,
-      () => ["dashboard-divisi"],
+      () => ["kinerja", "dasbor"],
       (ctx) => hasWorkspaceRole(ctx, [EUserWorkspaceRoles.ADMIN]),
       "gb"
     ),

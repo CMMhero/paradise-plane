@@ -39,6 +39,13 @@ export type TTingkat =
 export const menjangkauSeluruhOrganisasi = (tingkat: number | null | undefined): boolean =>
   tingkat != null && tingkat >= TINGKAT_SEKRETARIS;
 
+/**
+ * True bila salah satu penempatan berjenjang Direktur (persis 40). Sekretaris
+ * (35) dan Direktur Cabang (33) BUKAN direktur: menu mereka tidak disembunyikan.
+ */
+export const isDirektur = (penempatan: { tingkat: number }[] | null | undefined): boolean =>
+  (penempatan ?? []).some((p) => p.tingkat === TINGKAT_DIREKTUR);
+
 export type TAnggotaHierarki = {
   id: string;
   email: string;

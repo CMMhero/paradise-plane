@@ -23,6 +23,7 @@ import {
   useWorkspaceNavigationPreferences,
 } from "@/hooks/use-navigation-preferences";
 import { useInstance } from "@/hooks/store/use-instance";
+import { DIRECTOR_HIDDEN_NAV_KEYS, useIsDirektur } from "@/hooks/use-is-direktur";
 import { isNavKeyEnabled } from "@/lib/paradise-modules";
 // helpers
 import { getSidebarNavigationItemIcon } from "@/plane-web/components/workspace/sidebar/helper";
@@ -70,6 +71,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
   const { allowPermissions } = useUserPermissions();
   const { config: instanceConfig } = useInstance();
   const persetujuanTerlihat = useNavPersetujuanTerlihat(workspaceSlug?.toString());
+  const { isDirektur } = useIsDirektur(workspaceSlug?.toString());
   const {
     preferences: personalPreferences,
     togglePersonalItem,
@@ -93,8 +95,12 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
   // Filter personal items by feature flags
   // Paradise: item yang dimatikan Super Admin di God Mode tidak ditawarkan.
   const filteredPersonalItems = useMemo(
-    () => PERSONAL_ITEMS.filter((item) => isNavKeyEnabled(instanceConfig, item.key)),
-    [instanceConfig]
+    () =>
+      PERSONAL_ITEMS.filter(
+        (item) =>
+          isNavKeyEnabled(instanceConfig, item.key) && !(isDirektur && DIRECTOR_HIDDEN_NAV_KEYS.includes(item.key))
+      ),
+    [instanceConfig, isDirektur]
   );
 
   // Filter workspace items by permissions and feature flags, then get pinned/unpinned items
@@ -107,6 +113,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
         workspaceSlug?.toString() || ""
       );
       if (item.key === "persetujuan" && !persetujuanTerlihat) return false;
+      if (isDirektur && DIRECTOR_HIDDEN_NAV_KEYS.includes(item.key)) return false;
       // Modul yang dimatikan di God Mode > Features tidak ditawarkan untuk dipin.
       return hasPermission && isNavKeyEnabled(instanceConfig, item.key);
     }).map((item) => {
@@ -125,7 +132,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
 
     // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); items is a fresh local array
     return items.sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [workspaceSlug, allowPermissions, workspacePreferences, instanceConfig, persetujuanTerlihat]);
+  }, [workspaceSlug, allowPermissions, workspacePreferences, instanceConfig, persetujuanTerlihat, isDirektur]);
 
   // Handle checkbox toggle
   const handleWorkspaceItemToggle = useCallback(

@@ -6,7 +6,7 @@
 
 import { observer } from "mobx-react";
 import { usePathname } from "next/navigation";
-import { Outlet } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import useSWR from "swr";
 // components
 import { PROFILE_VIEWER_TAB, PROFILE_ADMINS_TAB, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
@@ -17,7 +17,8 @@ import { ProfileSidebar } from "@/components/profile/sidebar";
 // constants
 import { USER_PROFILE_PROJECT_SEGREGATION } from "@plane/constants";
 // hooks
-import { useUserPermissions } from "@/hooks/store/user";
+import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useIsDirektur } from "@/hooks/use-is-direktur";
 import useSize from "@/hooks/use-window-size";
 // local components
 import { UserService } from "@/services/user.service";
@@ -38,6 +39,8 @@ function UseProfileLayout({ params }: Route.ComponentProps) {
   const pathname = usePathname();
   // store hooks
   const { allowPermissions } = useUserPermissions();
+  const { data: currentUser } = useUser();
+  const { isDirektur } = useIsDirektur(workspaceSlug);
   const { t } = useTranslation();
   // derived values
   const isAuthorized = allowPermissions(
@@ -68,6 +71,10 @@ function UseProfileLayout({ params }: Route.ComponentProps) {
   const currentTab = tabsList.find(
     (tab) => tanpaGarisAkhir(pathname) === tanpaGarisAkhir(`/${workspaceSlug}/profile/${userId}${tab.selected}`)
   );
+
+  // Pekerjaan Anda disembunyikan untuk Direktur: halaman profilnya sendiri ikut tertutup.
+  // Profil orang lain tetap bisa dibuka dari kartu anggota.
+  if (isDirektur && currentUser?.id === userId) return <Navigate to={`/${workspaceSlug}/`} replace />;
 
   return (
     <>
