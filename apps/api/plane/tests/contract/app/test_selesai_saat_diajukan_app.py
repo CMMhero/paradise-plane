@@ -336,11 +336,13 @@ class TestMenungguTidakTerlambat:
         assert menunggu.id in {i.id for i in TugasWorkspace(workspace.id, _hari_ini()).tugas}
 
     @pytest.mark.django_db
-    def test_laporan_direktur_tanpa_tugas_menunggu(self, workspace, staf, divisi):
+    def test_laporan_direktur_tanpa_tugas_menunggu(self, workspace, staf, bos, divisi):
         from plane.bgtasks.direktur_digest_task import DataWorkspace
 
         _tugas_lewat(workspace, divisi, staf, menunggu=True, hari_lewat=10)
         _tugas_lewat(workspace, divisi, staf, menunggu=False, hari_lewat=10)
+        # Laporan direktur hanya menghitung tugas buatan Supervisor ke atas (statistik_pimpinan).
+        Issue.objects.filter(project=divisi).update(created_by=bos)
         sejak = timezone.now() - timedelta(days=1)
 
         angka = DataWorkspace(workspace.id, _hari_ini(), sejak, hari_macet=7, hari_ke_depan=7).angka[divisi.id]
@@ -454,6 +456,7 @@ class TestSelesaiMenurutKeputusan:
         issue_id = _buat(staf, workspace, divisi)
         baris = _ajukan(staf, workspace, divisi, issue_id, mundur_hari=3)
         _putuskan(bos, workspace, divisi, baris)
+        Issue.objects.filter(pk=issue_id).update(created_by=bos)
 
         sejak = timezone.now() - timedelta(days=1)
         angka = DataWorkspace(workspace.id, _hari_ini(), sejak, hari_macet=7, hari_ke_depan=7).angka[divisi.id]

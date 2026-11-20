@@ -36,9 +36,10 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 # Module imports
-from plane.db.models import Issue, IssueAssignee
+from plane.db.models import Issue, IssueAssignee, Workspace
 from plane.utils.ringkasan_divisi import _peta_departemen, project_terjangkau
 from plane.utils.setelan_instance import zona_kantor
+from plane.utils.statistik_pimpinan import cakupan_angka
 
 # Zona kantor dibaca dari God Mode (OFFICE_TIMEZONE) tiap pemanggilan, bukan konstanta.
 
@@ -64,6 +65,10 @@ def _awal_bulan(hari):
 
 def _bulan_sebelumnya(awal):
     return _awal_bulan(awal - timedelta(days=1))
+
+
+def _cakupan(user, slug):
+    return cakupan_angka(user, Workspace.objects.values_list("id", flat=True).get(slug=slug))
 
 
 def rentang_periode(periode, hari_ini):
@@ -96,8 +101,9 @@ def ketepatan(tanggal_selesai, tenggat):
     return TEPAT_WAKTU if tanggal_selesai <= tenggat else TERLAMBAT
 
 
-def _selesai_di(project_ids, awal, akhir):
+def _selesai_di(project_ids, awal, akhir, cakupan):
     return Issue.issue_objects.filter(
+        cakupan,
         project_id__in=project_ids,
         state__group=_SELESAI,
         completed_at__gte=_ke_waktu(awal),
@@ -192,9 +198,13 @@ def _baris_tugas(issue, nama):
     }
 
 
-def daftar_selesai(project_ids, awal, akhir, batas=None):
+def daftar_selesai(project_ids, awal, akhir, cakupan, batas=None):
     """Tugas selesai dalam periode, terbaru dulu, lengkap dengan penanggung jawab."""
-    qs = _selesai_di(project_ids, awal, akhir).select_related("project").order_by("-completed_at", "-sequence_id")
+    qs = (
+        _selesai_di(project_ids, awal, akhir, cakupan)
+        .select_related("project")
+        .order_by("-completed_at", "-sequence_id")
+    )
     tugas = list(qs[:batas] if batas else qs)
     nama = _penanggung_jawab([t.id for t in tugas])
     return [_baris_tugas(t, nama) for t in tugas]
@@ -210,17 +220,18 @@ def susun_laporan(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
 
     projects = list(project_terjangkau(user, slug))
     ids = [p.id for p in projects]
+    cakupan = _cakupan(user, slug)
 
     angka_project = {
-        r["project_id"]: r for r in _selesai_di(ids, awal, akhir).values("project_id").annotate(**_ANGKA)
+        r["project_id"]: r for r in _selesai_di(ids, awal, akhir, cakupan).values("project_id").annotate(**_ANGKA)
     }
     totals = _lengkapi({k: sum(r[k] for r in angka_project.values()) for k in _ANGKA})
-    sebelumnya = _lengkapi(_selesai_di(ids, awal_lalu, akhir_lalu).aggregate(**_ANGKA))
+    sebelumnya = _lengkapi(_selesai_di(ids, awal_lalu, akhir_lalu, cakupan).aggregate(**_ANGKA))
     totals["created"] = Issue.issue_objects.filter(
-        project_id__in=ids, created_at__gte=_ke_waktu(awal), created_at__lt=_ke_waktu(akhir)
+        cakupan, project_id__in=ids, created_at__gte=_ke_waktu(awal), created_at__lt=_ke_waktu(akhir)
     ).count()
 
-    items = daftar_selesai(ids, awal, akhir, batas=BATAS_DAFTAR)
+    items = daftar_selesai(ids, awal, akhir, cakupan, batas=BATAS_DAFTAR)
     return {
         "generated_at": sekarang,
         "period": {
@@ -246,7 +257,7 @@ def baris_csv(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
     ids = list(project_terjangkau(user, slug).values_list("id", flat=True))
     peta = {str(pid): dp for pid, dp in _peta_departemen(ids).items()}
     yield ["Divisi", "Departemen", "Project", "Nomor", "Judul", "Penanggung jawab", "Selesai", "Tenggat", "Ketepatan"]
-    for t in daftar_selesai(ids, awal, akhir):
+    for t in daftar_selesai(ids, awal, akhir, _cakupan(user, slug)):
         dp = peta.get(t["project_id"])
         yield [
             dp.departemen.divisi.nama if dp else "",

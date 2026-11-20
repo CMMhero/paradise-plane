@@ -40,6 +40,7 @@ from plane.db.models import (
     Project,
     ProjectMember,
     STATUS_PERSETUJUAN_MENUNGGU,
+    Workspace,
 )
 from plane.utils.hierarki import pengajuan_boleh_diputuskan
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
@@ -50,6 +51,7 @@ from plane.utils.saklar_instance import (
     setelan_angka,
 )
 from plane.utils.setelan_instance import hari_ini_kantor, zona_kantor
+from plane.utils.statistik_pimpinan import hanya_buatan_pimpinan, q_dibuat_pimpinan
 from plane.utils.tanggal_otomatis import batas_terlambat
 from plane.utils.wiki_access import WIKI_IDENTIFIER
 
@@ -104,11 +106,12 @@ def _persen(bagian, keseluruhan):
     return round(bagian * 100 / keseluruhan) if keseluruhan > 0 else None
 
 
-def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu):
+def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu, cakupan):
     """{project_id: angka tugas} dalam satu kueri.
 
     Terlambat memakai `batas_terlambat` (tenggang `OVERDUE_GRACE_DAYS` dari God
     Mode), jadi angkanya sama dengan Due date yang tampil merah di aplikasi.
+    `cakupan`: Q tambahan (`statistik_pimpinan`), direktur hanya tugas buatan atasan.
     """
     tujuh_hari = sekarang - timedelta(days=7)
     empat_belas_hari = sekarang - timedelta(days=14)
@@ -128,7 +131,7 @@ def _angka_tugas(project_ids, hari_ini, sekarang, jendela_tepat_waktu):
     awal_sepekan_lalu = datetime.combine(sepekan_lalu, time.min, tzinfo=zona_kantor())
 
     baris = (
-        Issue.issue_objects.filter(project_id__in=project_ids)
+        Issue.issue_objects.filter(cakupan, project_id__in=project_ids)
         .annotate(tanggal_selesai=TruncDate("completed_at", tzinfo=zona_kantor()))
         .values("project_id")
         .annotate(
@@ -324,7 +327,9 @@ def hitung_ringkasan(user, slug, sekarang=None):
     projects = list(project_terjangkau(user, slug))
     ids = [p.id for p in projects]
     jendela_tepat_waktu = setelan_angka(DASHBOARD_ON_TIME_WINDOW_DAYS)
-    tugas = _angka_tugas(ids, hari_ini, sekarang, jendela_tepat_waktu)
+    hanya_pimpinan = hanya_buatan_pimpinan(user, Workspace.objects.values_list("id", flat=True).get(slug=slug))
+    cakupan = q_dibuat_pimpinan() if hanya_pimpinan else Q()
+    tugas = _angka_tugas(ids, hari_ini, sekarang, jendela_tepat_waktu, cakupan)
     kerja = _menit_kerja(ids, awal_bulan)
     anggota = _jumlah_anggota(ids)
     persetujuan = _persetujuan_untuk_saya(user, projects)
@@ -346,6 +351,8 @@ def hitung_ringkasan(user, slug, sekarang=None):
         "thresholds": {"attention": ambang[0], "critical": ambang[1]},
         # Label "Selesai tepat waktu (N hari terakhir)" di apps/web membaca ini.
         "on_time_window_days": jendela_tepat_waktu,
+        # Direktur dan sekretaris: angka tugas hanya dari buatan Supervisor ke atas.
+        "leader_created_only": hanya_pimpinan,
         "totals": totals,
         "divisions": divisions,
         "projects": sorted(rows, key=_kunci_urut),
