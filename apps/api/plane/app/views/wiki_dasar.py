@@ -17,7 +17,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.app.views.base import BaseAPIView
-from plane.db.models import Workspace, WikiFolder, WikiMaterial
+from plane.db.models import User, Workspace, WikiFolder, WikiMaterial
 from plane.utils.saklar_instance import PERM_WIKI_DELETE, PERM_WIKI_EDIT
 from plane.utils.wiki_mandiri import PenilaiWiki, is_anggota_workspace
 
@@ -89,8 +89,27 @@ class WikiAPIView(BaseAPIView):
             "jumlah_halaman": jumlah_halaman,
             "project_id": str(project_id) if project_id else None,
             "can_upload": f.archived_at is None and self.penilai.boleh_unggah(f.id),
+            "can_write": f.archived_at is None and self.penilai.boleh_unggah(f.id),
             "can_manage": self.penilai.boleh_kelola_folder(f.id),
+            "editors": self.editor_json(f.id),
+            "restricted_by": self.penilai.terbatas_oleh(f.id),
         }
+
+    def editor_json(self, folder_id):
+        """Editor yang dipasang langsung di folder ini. Folder turunan memakai
+        daftar folder `restricted_by`, jadi klien membacanya dari pohon."""
+        ids = self.penilai.editor.get(str(folder_id))
+        if not ids:
+            return []
+        if not hasattr(self, "_info_editor"):
+            semua = {u for orang in self.penilai.editor.values() for u in orang}
+            self._info_editor = {
+                str(u.id): {"id": str(u.id), "display_name": u.display_name, "avatar_url": u.avatar_url}
+                for u in User.objects.filter(id__in=semua).select_related("avatar_asset")
+            }
+        return sorted(
+            (self._info_editor[i] for i in ids if i in self._info_editor), key=lambda e: e["display_name"].lower()
+        )
 
     def materi_json(self, m):
         atribut = m.berkas.attributes or {}

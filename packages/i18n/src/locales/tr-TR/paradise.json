@@ -1237,5 +1237,25 @@
     "label": "Yenile",
     "tooltip": "İçeriği yenile",
     "busy": "Yenileniyor"
+  },
+  "wiki_editor": {
+    "section_title": "Editors",
+    "section_note": "Only these people can add or edit here. Everyone else can view.",
+    "inherited_note": "Editors are inherited from {name}. Adding someone here replaces that list for this folder.",
+    "empty": "No editors yet. Everyone with access by their department or division can add here.",
+    "add_label": "Add an editor",
+    "add_placeholder": "Choose a person",
+    "added_title": "Editor added",
+    "removed_title": "Editor removed",
+    "add_failed": "Could not add the editor.",
+    "remove_failed": "Could not remove the editor.",
+    "remove_confirm_title": "Remove this editor?",
+    "remove_confirm": "{name} will no longer be able to add or edit in {folder}. They can still view it.",
+    "remove_last_confirm": "{name} is the last editor of {folder}. Removing them puts the folder back under the normal department and division rules.",
+    "remove_button": "Remove",
+    "removing": "Removing",
+    "badge": "Only {names} can edit",
+    "badge_more": "{names} and {count} more",
+    "badge_tooltip": "Editors: {names}. Everyone else can view."
   }
 }

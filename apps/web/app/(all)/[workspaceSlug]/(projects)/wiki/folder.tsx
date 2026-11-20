@@ -8,7 +8,7 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { observer } from "mobx-react";
-import { BookOpen, Settings2 } from "lucide-react";
+import { BookOpen, Lock, Settings2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useSWRConfig } from "swr";
 import { useTranslation } from "@plane/i18n";
@@ -22,7 +22,15 @@ import { GridKartu, KartuKerangka } from "@/components/wiki/kartu";
 // local imports
 import { UbinTambahSubtopik, bolehTambahSubtopik, useBuatSubtopik } from "./buat-subtopik";
 import { GridMateri, KerangkaUnggah, SeksiSubtopik, ZonaKosong, useMateriTopik } from "./daftar-materi";
-import { anakDari, folderDenganId, folderTerlihat, jumlahHalamanDalam, jumlahMateriDalam, usePohonWiki } from "./data";
+import {
+  anakDari,
+  folderDenganId,
+  folderPembatas,
+  folderTerlihat,
+  jumlahHalamanDalam,
+  jumlahMateriDalam,
+  usePohonWiki,
+} from "./data";
 import { HalamanDepartemen } from "./halaman-departemen";
 import { KelolaFolder } from "./kelola";
 
@@ -90,6 +98,8 @@ function WikiFolderPage() {
   const materi = daftar?.materials ?? [];
   // Jawaban server, bukan dihitung ulang di sini, supaya aturan izinnya tidak pernah bercabang dua.
   const bolehKelola = !!folder?.can_manage;
+  const pembatas = folderPembatas(terlihat, folder);
+  const namaEditor = pembatas?.editors.map((e) => e.display_name) ?? [];
 
   if (!sedangMemuat && !folder)
     return (
@@ -186,6 +196,23 @@ function WikiFolderPage() {
                     <Chip>
                       {departemen.length} {t("wiki_ui.folder.departments")}
                     </Chip>
+                  )}
+                  {namaEditor.length > 0 && (
+                    <span
+                      title={t("wiki_editor.badge_tooltip", { names: namaEditor.join(", ") })}
+                      className="flex items-center gap-1.5 rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary"
+                    >
+                      <Lock className="size-3" />
+                      {t("wiki_editor.badge", {
+                        names:
+                          namaEditor.length > 3
+                            ? t("wiki_editor.badge_more", {
+                                names: namaEditor.slice(0, 3).join(", "),
+                                count: namaEditor.length - 3,
+                              })
+                            : namaEditor.join(", "),
+                      })}
+                    </span>
                   )}
                   {subtopik.length > 0 && <Chip>{t("wiki_ui.folder.subtopic_count", { count: subtopik.length })}</Chip>}
                   {totalHalaman > 0 && (

@@ -16,13 +16,14 @@ teratas) tetap urusan admin. Di dalam wilayahnya, manager divisi dan supervisor
 departemen mengelola sendiri (KEP-95).
 """
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 
 from plane.app.views.wiki_dasar import Galat, WikiAPIView, anotasi_jumlah
 from plane.app.views.wiki_halaman import jumlah_halaman_per_departemen, project_per_departemen
-from plane.db.models import Project, WikiFolder, WikiMaterial
+from plane.db.models import Project, WikiFolder, WikiFolderEditor, WikiMaterial, WorkspaceMember
 from plane.utils.exception_logger import log_exception
 from plane.utils.wiki_mandiri import pastikan_folder_unit
 
@@ -40,6 +41,14 @@ def _wajib_admin(penilai):
 def _wajib_kelola(penilai, folder_id):
     if not penilai.boleh_kelola_folder(folder_id):
         raise Galat(_PESAN_KELOLA, status.HTTP_403_FORBIDDEN)
+
+
+def _wajib_kelola_diri(penilai, folder):
+    """Ganti nama, arsip, dan hapus folder tingkat atas bebas unit tetap urusan
+    admin, juga bagi editornya: editor mengisi folder, bukan membongkarnya."""
+    if folder.parent_id is None and not folder.unit and not penilai.admin:
+        raise Galat(_PESAN_ADMIN, status.HTTP_403_FORBIDDEN)
+    _wajib_kelola(penilai, folder.id)
 
 
 def _nama_bersih(nilai):
@@ -164,6 +173,7 @@ class WikiFolderEndpoint(WikiAPIView):
         if "umum" in data or ("urutan" in data and folder.parent_id is None):
             _wajib_admin(self.penilai)
         if "nama" in data:
+            _wajib_kelola_diri(self.penilai, folder)
             if folder.unit:
                 raise Galat(_PESAN_UNIT)
             folder.nama = _nama_bersih(data.get("nama"))
@@ -189,7 +199,7 @@ class WikiFolderEndpoint(WikiAPIView):
 
     def delete(self, request, slug, folder_id):
         folder = self.folder_atau_404(folder_id)
-        _wajib_kelola(self.penilai, folder.id)
+        _wajib_kelola_diri(self.penilai, folder)
         if folder.unit:
             raise Galat("A division or department folder cannot be deleted.")
         if folder.archived_at is None:
@@ -205,7 +215,7 @@ class WikiFolderEndpoint(WikiAPIView):
 class WikiFolderArsipEndpoint(WikiAPIView):
     def post(self, request, slug, folder_id):
         folder = self.folder_atau_404(folder_id)
-        _wajib_kelola(self.penilai, folder.id)
+        _wajib_kelola_diri(self.penilai, folder)
         if folder.unit:
             raise Galat("A division or department folder cannot be archived.")
         cap = timezone.now()
@@ -217,7 +227,7 @@ class WikiFolderArsipEndpoint(WikiAPIView):
 
     def delete(self, request, slug, folder_id):
         folder = self.folder_atau_404(folder_id)
-        _wajib_kelola(self.penilai, folder.id)
+        _wajib_kelola_diri(self.penilai, folder)
         if folder.archived_at is None:
             raise Galat("The folder is not archived.")
         if folder.parent_id:
@@ -246,4 +256,44 @@ class WikiFolderPulihkanEndpoint(WikiAPIView):
                 raise Galat("Restore the parent folder first.")
         WikiFolder.all_objects.filter(id=folder.id).update(deleted_at=None, updated_at=timezone.now())
         folder.refresh_from_db()
+        return Response(self.folder_json(folder), status=status.HTTP_200_OK)
+
+
+class WikiFolderEditorListEndpoint(WikiAPIView):
+    """Daftar editor satu folder dan penambahan editor. Hanya admin Wiki."""
+
+    def get(self, request, slug, folder_id):
+        _wajib_admin(self.penilai)
+        folder = self.folder_atau_404(folder_id)
+        return Response(self.editor_json(folder.id), status=status.HTTP_200_OK)
+
+    def post(self, request, slug, folder_id):
+        _wajib_admin(self.penilai)
+        folder = self.folder_atau_404(folder_id)
+        user_id = request.data.get("user_id")
+        # Editor harus bisa menulis, jadi anggota penuh (bukan tamu) workspace ini.
+        try:
+            anggota = WorkspaceMember.objects.filter(
+                workspace_id=self.workspace.id, member_id=user_id, is_active=True, role__gte=15
+            ).exists()
+        except (ValueError, DjangoValidationError):
+            anggota = False
+        if not anggota:
+            raise Galat("user_id must be an active member of this workspace.")
+        WikiFolderEditor.objects.get_or_create(
+            workspace_id=self.workspace.id, folder=folder, user_id=user_id, defaults={"created_by_id": request.user.id}
+        )
+        self.penilai = type(self.penilai)(request.user, self.workspace.id)
+        return Response(self.folder_json(folder), status=status.HTTP_201_CREATED)
+
+
+class WikiFolderEditorEndpoint(WikiAPIView):
+    def delete(self, request, slug, folder_id, user_id):
+        _wajib_admin(self.penilai)
+        folder = self.folder_atau_404(folder_id)
+        baris = WikiFolderEditor.objects.filter(workspace_id=self.workspace.id, folder=folder, user_id=user_id)
+        if not baris.exists():
+            raise Galat("This person is not an editor of the folder.", status.HTTP_404_NOT_FOUND)
+        baris.update(deleted_at=timezone.now())
+        self.penilai = type(self.penilai)(request.user, self.workspace.id)
         return Response(self.folder_json(folder), status=status.HTTP_200_OK)

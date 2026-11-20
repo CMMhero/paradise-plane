@@ -99,6 +99,35 @@ class WikiFolder(BaseModel):
         return self.divisi_id is not None or self.departemen_id is not None
 
 
+class WikiFolderEditor(BaseModel):
+    """Satu orang yang boleh menulis di satu folder (KEP: editor folder).
+
+    Folder yang punya setidaknya satu baris, atau yang punya induk bertanda
+    begitu, menjadi terbatas: hanya editornya dan admin Wiki yang boleh
+    menulis. Membaca tidak berubah. Lihat `PenilaiWiki.terbatas_oleh`.
+    """
+
+    workspace = models.ForeignKey("db.Workspace", related_name="wiki_folder_editor", on_delete=models.CASCADE)
+    folder = models.ForeignKey(WikiFolder, related_name="editor", on_delete=models.CASCADE)
+    user = models.ForeignKey("db.User", related_name="wiki_folder_editor", on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "wiki_folder_editor"
+        verbose_name = "Wiki folder editor"
+        verbose_name_plural = "Wiki folder editors"
+        ordering = ("created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["folder", "user"],
+                condition=Q(deleted_at__isnull=True),
+                name="wiki_folder_editor_satu_per_orang",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} -> {self.folder_id}"
+
+
 class WikiMaterial(BaseModel):
     workspace = models.ForeignKey("db.Workspace", related_name="wiki_materi", on_delete=models.CASCADE)
     folder = models.ForeignKey(WikiFolder, related_name="materi", on_delete=models.CASCADE)

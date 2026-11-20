@@ -36,6 +36,8 @@ export type TWikiBlock =
   | { type: "list_item"; level: number; runs: TWikiRun[] }
   | { type: "table"; rows: string[][]; truncated?: boolean };
 
+export type TWikiFolderEditor = { id: string; display_name: string; avatar_url: string | null };
+
 export type TWikiFolder = {
   id: string;
   parent_id: string | null;
@@ -67,7 +69,13 @@ export type TWikiFolder = {
   project_id: string | null;
   /** Semua izin datang dari server. Klien tidak pernah menghitungnya sendiri. */
   can_upload: boolean;
+  /** Boleh menambah isi (unggah, sub-topik) di folder ini. Sama dengan `can_upload`. */
+  can_write: boolean;
   can_manage: boolean;
+  /** Editor yang dipasang langsung di folder ini. Sub-folder membaca daftar `restricted_by`. */
+  editors: TWikiFolderEditor[];
+  /** Folder yang membatasi penulisan di sini (folder ini atau leluhurnya). null = tidak dibatasi. */
+  restricted_by: string | null;
 };
 
 export type TWikiTree = {
@@ -246,6 +254,17 @@ export class WikiService extends APIService {
 
   deleteFolder(workspaceSlug: string, folderId: string): Promise<void> {
     return this.panggil(() => this.delete(`${this.base(workspaceSlug)}/folders/${folderId}/`));
+  }
+
+  /** Hanya admin Wiki. Mengembalikan folder yang sudah diperbarui. */
+  addFolderEditor(workspaceSlug: string, folderId: string, userId: string): Promise<TWikiFolder> {
+    return this.panggil(() =>
+      this.post(`${this.base(workspaceSlug)}/folders/${folderId}/editors/`, { user_id: userId })
+    );
+  }
+
+  removeFolderEditor(workspaceSlug: string, folderId: string, userId: string): Promise<TWikiFolder> {
+    return this.panggil(() => this.delete(`${this.base(workspaceSlug)}/folders/${folderId}/editors/${userId}/`));
   }
 
   fetchMaterials(workspaceSlug: string, folderId: string): Promise<TWikiMaterialList> {
