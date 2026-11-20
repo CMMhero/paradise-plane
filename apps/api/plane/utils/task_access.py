@@ -406,11 +406,40 @@ def galat_ubah_tugas_ids(issue_ids, actor):
     return None
 
 
+def tolak_tugas_tersembunyi(view, request, kwargs):
+    """404 untuk tugas privat yang tak boleh dilihat (P29), di semua rute tugas dan sub-sumbernya.
+
+    Tugasnya dibaca dari `issue_id`/`work_item_id` di URL, `pk` kalau view-nya view
+    tugas atau intake (keduanya memakai id tugas sebagai pk), tugas pemilik
+    `comment_id`, dan isi body untuk request tulis. 404, bukan 403: 403 mengaku
+    tugasnya ada.
+    """
+    from plane.db.models import IntakeIssue, Issue, IssueComment  # noqa: PLC0415
+    from plane.utils.akses_privat import tugas_tersembunyi_ids  # noqa: PLC0415
+
+    ids = _uuid_saja(kwargs.get("issue_id")) + _uuid_saja(kwargs.get("work_item_id"))
+    if getattr(view, "model", None) in (Issue, IntakeIssue):
+        ids += _uuid_saja(kwargs.get("pk"))
+    komentar = _uuid_saja(kwargs.get("comment_id"))
+    if komentar:
+        ids += IssueComment.all_objects.filter(id__in=komentar).values_list("issue_id", flat=True)
+    if request.method in _METODE_TULIS:
+        ids += tugas_disentuh_request(request, kwargs)
+    if tugas_tersembunyi_ids(ids, request.user):
+        from rest_framework.exceptions import NotFound  # noqa: PLC0415
+
+        raise NotFound({"error": "Work item not found"})
+
+
 class KepemilikanTugasMixin:
-    """Tolak tulis ke sub-sumber tugas yang bukan milik pelaku (atau bawahannya)."""
+    """Tolak tulis ke sub-sumber tugas yang bukan milik pelaku (atau bawahannya).
+
+    Juga gerbang LIHAT tugas privat untuk semua rute yang menyebut satu tugas.
+    """
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
+        tolak_tugas_tersembunyi(self, request, kwargs)
         if request.method not in _METODE_TULIS:
             return
         if any(seg in request.path for seg in _JALUR_BEBAS):

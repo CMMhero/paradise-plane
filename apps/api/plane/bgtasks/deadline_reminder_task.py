@@ -20,6 +20,7 @@ Gmail.
 import logging
 from datetime import date, datetime, timedelta
 
+from plane.utils.akses_privat import penonton_tugas_ids
 from plane.db.models import Issue, Notification, PengingatTenggat
 from plane.utils.exception_logger import log_exception
 from plane.utils.menunggu_persetujuan import menunggu_tidak_terlambat, q_bisa_terlambat, q_menunggu_persetujuan
@@ -186,7 +187,7 @@ def penyetuju_tugas_menunggu(tenggat) -> tuple[list, dict]:
             calon[kunci] = calon_penyetuju(ws, issue.project_id, peta=peta[kunci])
         pid = pemohon.get(issue.id)
         sah = saring_penyetuju(calon[kunci], peta[kunci], pid, issue.created_by_id)
-        hasil[issue.id] = {uid for uid in sah if uid != pid}
+        hasil[issue.id] = set(penonton_tugas_ids(issue, [uid for uid in sah if uid != pid]))
     return antrian, hasil
 
 

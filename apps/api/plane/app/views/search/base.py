@@ -28,6 +28,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.views.base import BaseAPIView
 from plane.app.permissions import WorkspaceUserPermission
 from plane.db.superadmin import super_admin_user_ids, terlihat_di_project
@@ -119,12 +120,15 @@ class GlobalSearchEndpoint(BaseAPIView):
                 else:
                     q |= Q(**{f"{field}__icontains": query})
 
-        issues = Issue.issue_objects.filter(
-            q,
-            project__project_projectmember__member=self.request.user,
-            project__project_projectmember__is_active=True,
-            project__archived_at__isnull=True,
-            workspace__slug=slug,
+        issues = saring_tugas_privat(
+            Issue.issue_objects.filter(
+                q,
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+                workspace__slug=slug,
+            ),
+            self.request.user,
         )
 
         if workspace_search == "false" and project_id:
@@ -270,13 +274,16 @@ class GlobalSearchEndpoint(BaseAPIView):
                 else:
                     q |= Q(**{f"{field}__icontains": query})
 
-        issues = Issue.objects.filter(
-            q,
-            project__project_projectmember__member=self.request.user,
-            project__project_projectmember__is_active=True,
-            project__archived_at__isnull=True,
-            workspace__slug=slug,
-        ).filter(models.Q(issue_intake__status=0) | models.Q(issue_intake__status=-2))
+        issues = saring_tugas_privat(
+            Issue.objects.filter(
+                q,
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+                workspace__slug=slug,
+            ).filter(models.Q(issue_intake__status=0) | models.Q(issue_intake__status=-2)),
+            self.request.user,
+        )
 
         if workspace_search == "false" and project_id:
             issues = issues.filter(project_id=project_id)
@@ -444,12 +451,15 @@ class SearchEndpoint(BaseAPIView):
                                 q |= Q(**{f"{field}__icontains": query})
 
                     issues = (
-                        Issue.issue_objects.filter(
-                            q,
-                            project__project_projectmember__member=self.request.user,
-                            project__project_projectmember__is_active=True,
-                            workspace__slug=slug,
-                            project_id=project_id,
+                        saring_tugas_privat(
+                            Issue.issue_objects.filter(
+                                q,
+                                project__project_projectmember__member=self.request.user,
+                                project__project_projectmember__is_active=True,
+                                workspace__slug=slug,
+                                project_id=project_id,
+                            ),
+                            self.request.user,
                         )
                         .order_by("-created_at")
                         .distinct()
@@ -645,11 +655,14 @@ class SearchEndpoint(BaseAPIView):
                                 q |= Q(**{f"{field}__icontains": query})
 
                     issues = (
-                        Issue.issue_objects.filter(
-                            q,
-                            project__project_projectmember__member=self.request.user,
-                            project__project_projectmember__is_active=True,
-                            workspace__slug=slug,
+                        saring_tugas_privat(
+                            Issue.issue_objects.filter(
+                                q,
+                                project__project_projectmember__member=self.request.user,
+                                project__project_projectmember__is_active=True,
+                                workspace__slug=slug,
+                            ),
+                            self.request.user,
                         )
                         .order_by("-created_at")
                         .distinct()

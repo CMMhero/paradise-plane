@@ -103,7 +103,7 @@ class ProjectIssuesPublicEndpoint(BaseAPIView):
         slug = deploy_board.workspace.slug
 
         issue_queryset = (
-            Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id)
+            Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id, is_private=False)
             .select_related("workspace", "project", "state", "parent")
             .prefetch_related("assignees", "labels", "issue_module__module")
             .prefetch_related(

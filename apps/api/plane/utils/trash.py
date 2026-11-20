@@ -23,6 +23,7 @@ from django.utils import timezone
 from auditlog.models import LogEntry
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.saklar_instance import TRASH_RETENTION_DAYS, setelan_angka
 from plane.bgtasks.deletion_task import restore_related_objects
 from plane.db.models import (
@@ -230,8 +231,11 @@ def _kumpulkan_akun(limit):
     ]
 
 
-def kumpulkan(project_id=None, tipe=None, limit=200):
-    """Daftar barang di tong sampah. `project_id=None` berarti seluruh instance."""
+def kumpulkan(project_id=None, tipe=None, limit=200, user=None):
+    """Daftar barang di tong sampah. `project_id=None` berarti seluruh instance.
+
+    `user` diisi = tugas privat yang tak boleh ia lihat tidak didaftar (P29).
+    """
     hasil = []
     kunci = [tipe] if tipe in SEMUA_TIPE else list(SEMUA_TIPE)
 
@@ -244,7 +248,10 @@ def kumpulkan(project_id=None, tipe=None, limit=200):
         if project_id and spec["filter_project"] is None:
             continue
 
-        objek = list(_queryset(spec, project_id).order_by("-deleted_at")[:limit])
+        qs = _queryset(spec, project_id)
+        if user is not None and spec["model"] is Issue:
+            qs = saring_tugas_privat(qs, user)
+        objek = list(qs.order_by("-deleted_at")[:limit])
         penghapus = _peta_penghapus(spec["model"]._meta.model_name, [o.pk for o in objek])
 
         for o in objek:

@@ -111,18 +111,21 @@ def penerima_project(project_id, pembuat_tugas_id=None):
     return slug, penerima
 
 
-def _pembuat_tugas(issue_id):
-    if not issue_id:
-        return None
-    from plane.db.models import Issue  # noqa: PLC0415
-
-    return Issue.all_objects.filter(pk=issue_id).values_list("created_by_id", flat=True).first()
-
-
 def siarkan_tugas(project_id, issue_id=None, bidang=None, aksi="updated", oleh_id=None) -> None:
-    """Sebuah tugas (atau isinya: komentar, lampiran, tautan, relasi) berubah."""
+    """Sebuah tugas (atau isinya: komentar, lampiran, tautan, relasi) berubah.
+
+    Tugas privat (P29) hanya disiarkan kepada yang boleh melihatnya, kecuali saat
+    privatnya baru dinyalakan: layar semua anggota perlu menarik ulang supaya
+    tugas itu hilang dari papan mereka. Sinyalnya hanya id, tanpa isi.
+    """
     try:
-        slug, penerima = penerima_project(project_id, _pembuat_tugas(issue_id))
+        from plane.db.models import Issue  # noqa: PLC0415
+        from plane.utils.akses_privat import penonton_tugas_ids  # noqa: PLC0415
+
+        issue = Issue.all_objects.filter(pk=issue_id).first() if issue_id else None
+        slug, penerima = penerima_project(project_id, issue.created_by_id if issue else None)
+        if issue is not None and issue.is_private and "is_private" not in (bidang or []):
+            penerima = penonton_tugas_ids(issue, penerima)
         siarkan_data(
             slug,
             JENIS_TUGAS,

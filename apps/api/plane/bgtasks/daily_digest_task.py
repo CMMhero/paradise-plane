@@ -66,7 +66,7 @@ from plane.db.models import (
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.exception_logger import log_exception
-from plane.utils.hierarki import divisi_diawasi, semua_departemen_ids, semua_divisi_ids, tingkat_efektif
+from plane.utils.hierarki import _bawahan_ids, divisi_diawasi, semua_departemen_ids, semua_divisi_ids, tingkat_efektif
 from plane.utils.preferensi_email import saklar_efektif
 from plane.utils.saklar_instance import DIGEST_LOOKAHEAD_DAYS, setelan_angka
 from plane.utils.setelan_instance import DIGEST_WEEKDAYS, setelan_hari_kerja, zona_kantor
@@ -232,9 +232,19 @@ def susun_ringkasan(user, workspace_id, data, hari_ini, bagian=None, sore=False)
     if not pids or not bagian.get("digest_tim", True):
         return ringkasan
 
+    # P29: tugas privat di bagian tim hanya kalau salah satu assignee-nya bawahan langsung.
+    bawahan = {}
+
+    def terlihat(i):
+        if not i.is_private:
+            return True
+        if i.project_id not in bawahan:
+            bawahan[i.project_id] = _bawahan_ids(user.id, workspace_id, i.project_id)
+        return bool(data.assignee[i.id] & bawahan[i.project_id])
+
     per_project = defaultdict(list)
     for i in data.tugas:
-        if i.project_id in pids and i.id not in sudah:
+        if i.project_id in pids and i.id not in sudah and terlihat(i):
             per_project[i.project].append(i)
     grup = [GrupTim(nama=p.name, tugas=_kelompok(t, data, hari_ini, bagian)) for p, t in per_project.items()]
     # Yang paling butuh perhatian di atas: terlambat terbanyak, lalu hari ini.

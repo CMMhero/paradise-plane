@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.db.models import Prefetch
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.db.models import ExporterHistory, Issue, IssueComment, IssueRelation, IssueSubscriber
 from plane.utils.exception_logger import log_exception
 from plane.utils.porters.exporter import DataExporter
@@ -146,12 +147,15 @@ def issue_export_task(
 
         # Build base queryset for issues
         workspace_issues = (
-            Issue.objects.filter(
-                workspace__id=workspace_id,
-                project_id__in=project_ids,
-                project__project_projectmember__member=exporter_instance.initiated_by_id,
-                project__project_projectmember__is_active=True,
-                project__archived_at__isnull=True,
+            saring_tugas_privat(
+                Issue.objects.filter(
+                    workspace__id=workspace_id,
+                    project_id__in=project_ids,
+                    project__project_projectmember__member=exporter_instance.initiated_by_id,
+                    project__project_projectmember__is_active=True,
+                    project__archived_at__isnull=True,
+                ),
+                exporter_instance.initiated_by,
             )
             .select_related(
                 "project",

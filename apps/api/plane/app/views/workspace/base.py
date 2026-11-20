@@ -25,6 +25,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.permissions import (
     WorkSpaceAdminPermission,
     WorkSpaceBasePermission,
@@ -393,13 +394,17 @@ class ExportWorkspaceUserActivityEndpoint(BaseAPIView):
         if not request.data.get("date"):
             return Response({"error": "Date is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_activities = IssueActivity.objects.filter(
-            ~Q(field__in=["comment", "vote", "reaction", "draft"]),
-            workspace__slug=slug,
-            created_at__date=request.data.get("date"),
-            project__project_projectmember__member=request.user,
-            project__project_projectmember__is_active=True,
-            actor_id=user_id,
+        user_activities = saring_tugas_privat(
+            IssueActivity.objects.filter(
+                ~Q(field__in=["comment", "vote", "reaction", "draft"]),
+                workspace__slug=slug,
+                created_at__date=request.data.get("date"),
+                project__project_projectmember__member=request.user,
+                project__project_projectmember__is_active=True,
+                actor_id=user_id,
+            ),
+            request.user,
+            prefix="issue__",
         ).select_related("actor", "workspace", "issue", "project")[:10000]
 
         header = [

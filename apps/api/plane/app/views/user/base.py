@@ -24,6 +24,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
 # Module imports
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.serializers import (
     AccountSerializer,
     IssueActivitySerializer,
@@ -380,9 +381,9 @@ class UpdateUserTourCompletedEndpoint(BaseAPIView):
 
 class UserActivityEndpoint(BaseAPIView, BasePaginator):
     def get(self, request):
-        queryset = IssueActivity.objects.filter(actor=request.user).select_related(
-            "actor", "workspace", "issue", "project"
-        )
+        queryset = saring_tugas_privat(
+            IssueActivity.objects.filter(actor=request.user), request.user, prefix="issue__"
+        ).select_related("actor", "workspace", "issue", "project")
 
         return self.paginate(
             order_by=sanitize_order_by(

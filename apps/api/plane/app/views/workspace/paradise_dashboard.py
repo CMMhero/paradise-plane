@@ -16,6 +16,7 @@ from rest_framework import status
 
 # Module imports
 from .. import BaseAPIView
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.db.models import IssueWorkLog
 from plane.utils.laporan_selesai import PERIODE_BAWAAN, PERIODE_SAH, baris_csv, susun_laporan
@@ -71,7 +72,9 @@ class WorkLogExportEndpoint(BaseAPIView):
     def get(self, request, slug):
         project_ids = project_terjangkau(request.user, slug).values_list("id", flat=True)
         logs = (
-            IssueWorkLog.objects.filter(project_id__in=list(project_ids))
+            saring_tugas_privat(
+                IssueWorkLog.objects.filter(project_id__in=list(project_ids)), request.user, prefix="issue__"
+            )
             .select_related("project", "issue", "logged_by")
             .order_by("project__name", "-logged_at")
         )

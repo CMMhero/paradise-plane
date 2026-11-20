@@ -188,6 +188,34 @@ def track_priority(
         )
 
 
+def track_is_private(
+    requested_data,
+    current_instance,
+    issue_id,
+    project_id,
+    workspace_id,
+    actor_id,
+    issue_activities,
+    epoch,
+):
+    lama, baru = bool(current_instance.get("is_private")), bool(requested_data.get("is_private"))
+    if lama != baru:
+        issue_activities.append(
+            IssueActivity(
+                issue_id=issue_id,
+                actor_id=actor_id,
+                verb="updated",
+                old_value=str(lama).lower(),
+                new_value=str(baru).lower(),
+                field="is_private",
+                project_id=project_id,
+                workspace_id=workspace_id,
+                comment="made the work item private" if baru else "made the work item visible to the project",
+                epoch=epoch,
+            )
+        )
+
+
 # Track changes in state of the issue
 def track_state(
     requested_data,
@@ -617,6 +645,7 @@ def update_issue_activity(
         "estimate_point": track_estimate_points,
         "archived_at": track_archive_at,
         "closed_to": track_closed_to,
+        "is_private": track_is_private,
         # External endpoint keys
         "parent": track_parent,
         "state": track_state,

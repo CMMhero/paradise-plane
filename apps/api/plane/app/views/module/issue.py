@@ -17,6 +17,7 @@ from django.views.decorators.gzip import gzip_page
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.utils.akses_privat import saring_tugas_privat
 from plane.app.permissions import allow_permission, ROLE
 from plane.app.serializers import ModuleIssueSerializer
 from plane.bgtasks.issue_activities_task import issue_activity
@@ -84,13 +85,14 @@ class ModuleIssueViewSet(BaseViewSet):
         )
 
     def get_queryset(self):
-        return (
+        return saring_tugas_privat(
             Issue.issue_objects.filter(
                 project_id=self.kwargs.get("project_id"),
                 workspace__slug=self.kwargs.get("slug"),
                 issue_module__module_id=self.kwargs.get("module_id"),
                 issue_module__deleted_at__isnull=True,
-            )
+            ),
+            self.request.user,
         ).distinct()
 
     @method_decorator(gzip_page)
