@@ -38,12 +38,12 @@ const WorkspaceSettingLayout = observer(function WorkspaceSettingLayout({ params
   }
 
   return (
-    <>
+    <div className="flex size-full flex-col">
       <SettingsMobileNav
         hamburgerContent={WorkspaceSettingsSidebarRoot}
         activePath={getWorkspaceActivePath(pathname) || ""}
       />
-      <div className="inset-y-0 flex h-full w-full flex-row">
+      <div className="flex min-h-0 w-full flex-1 flex-row">
         {workspaceUserInfo && !isAuthorized ? (
           <NotAuthorizedView section="settings" className="h-auto" />
         ) : (
@@ -55,7 +55,7 @@ const WorkspaceSettingLayout = observer(function WorkspaceSettingLayout({ params
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 });
 

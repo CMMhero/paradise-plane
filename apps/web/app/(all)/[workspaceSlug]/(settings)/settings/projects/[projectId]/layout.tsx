@@ -22,12 +22,12 @@ function ProjectDetailSettingsLayout({ params }: Route.ComponentProps) {
   const pathname = usePathname();
 
   return (
-    <>
+    <div className="flex size-full flex-col">
       <SettingsMobileNav
         hamburgerContent={(props) => <ProjectSettingsSidebarRoot {...props} projectId={projectId} />}
         activePath={getProjectActivePath(pathname) || ""}
       />
-      <div className="inset-y-0 flex h-full w-full flex-row">
+      <div className="flex min-h-0 w-full flex-1 flex-row">
         <div className="relative flex size-full">
           <div className="hidden h-full shrink-0 md:block">
             <ProjectSettingsSidebarRoot projectId={projectId} />
@@ -37,7 +37,7 @@ function ProjectDetailSettingsLayout({ params }: Route.ComponentProps) {
           </ProjectAuthWrapper>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
