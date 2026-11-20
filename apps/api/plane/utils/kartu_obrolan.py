@@ -171,6 +171,9 @@ def _detail(jenis, notif) -> dict:
     aktivitas = (notif.data or {}).get("issue_activity") or {}
     if jenis == JenisPesan.KOMENTAR:
         return {"komentar": _cuplikan_kolom("comment", aktivitas.get("new_value")), **_ringkas_gabungan(notif)}
+    if jenis == JenisPesan.MENTION:
+        # Sebutan di komentar membawa HTML komentarnya, di deskripsi HTML deskripsinya.
+        return {"komentar": _cuplikan_kolom(aktivitas.get("field"), aktivitas.get("new_value"))}
     if jenis == JenisPesan.PEMBARUAN:
         field = aktivitas.get("field") or ""
         return {

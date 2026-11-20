@@ -300,6 +300,22 @@ class TestKartuKabar:
         }
 
     @pytest.mark.django_db
+    @pytest.mark.parametrize("field", ["comment", "description"])
+    def test_kartu_mention_memuat_teks_polos(self, tugas, field):
+        workspace, admin, staf, project, issue = tugas
+        html = (
+            '<p class="editor-paragraph-block">Tolong cek '
+            f'<mention-component entity_identifier="{staf.id}" entity_name="user_mention"></mention-component>'
+            " <b>hari ini</b></p>"
+        )
+        notif = _notif(
+            workspace, project, issue, admin, staf, field, sender="in_app:issue_activities:mentioned", new_value=html
+        )
+        assert kirim_kartu_notifikasi([notif]) == 1
+        kartu = PesanLangsung.objects.get(jenis=JenisPesan.MENTION)
+        assert kartu.muatan["detail"]["komentar"] == f"Tolong cek @{staf.display_name} hari ini"
+
+    @pytest.mark.django_db
     def test_saklar_mati_tidak_ada_kartu(self, tugas, monkeypatch):
         workspace, admin, staf, project, issue = tugas
         monkeypatch.setattr("plane.utils.kartu_obrolan._tugas_ke_dm_aktif", lambda: False)
