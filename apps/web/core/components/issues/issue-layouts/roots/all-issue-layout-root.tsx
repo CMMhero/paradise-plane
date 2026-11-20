@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { observer } from "mobx-react";
 import { useParams, useSearchParams } from "next/navigation";
 import useSWR from "swr";
@@ -44,8 +44,11 @@ export const AllIssueLayoutRoot = observer(function AllIssueLayoutRoot(props: Pr
   // store hooks
   const {
     issuesFilter: { filters, fetchFilters, updateFilterExpression },
-    issues: { clear, groupedIssueIds, fetchIssues, fetchNextIssues },
+    issues: { clear, groupedIssueIds, fetchIssues, fetchNextIssues, tarikSenyap },
   } = useIssues(EIssuesStoreType.GLOBAL);
+  // Kunci tampilan yang sudah pernah termuat. Revalidasi SWR atas kunci yang sama
+  // (tombol segarkan, kejar-kabar) menarik senyap: tanpa clear, tanpa pemuat.
+  const kunciTermuat = useRef<string | null>(null);
   const { fetchAllGlobalViews, getViewDetailsById } = useGlobalView();
   // Derived values
   const viewDetails = globalViewId ? getViewDetailsById(globalViewId) : undefined;
@@ -94,17 +97,22 @@ export const AllIssueLayoutRoot = observer(function AllIssueLayoutRoot(props: Pr
   );
 
   // Fetch issues
+  const kunciIsi =
+    workspaceSlug && globalViewId ? `WORKSPACE_GLOBAL_VIEW_ISSUES_${workspaceSlug}_${globalViewId}` : null;
   const { isLoading: issuesLoading } = useSWR(
-    workspaceSlug && globalViewId ? `WORKSPACE_GLOBAL_VIEW_ISSUES_${workspaceSlug}_${globalViewId}` : null,
+    kunciIsi,
     async () => {
       if (workspaceSlug && globalViewId) {
+        const opsi = { canGroup: false, perPageCount: 100 };
+        if (kunciTermuat.current === kunciIsi) {
+          await tarikSenyap(() => fetchIssues(workspaceSlug, globalViewId, "loaded", opsi));
+          return;
+        }
         clear();
         toggleLoading(true);
         await fetchFilters(workspaceSlug, globalViewId);
-        await fetchIssues(workspaceSlug, globalViewId, groupedIssueIds ? "mutation" : "init-loader", {
-          canGroup: false,
-          perPageCount: 100,
-        });
+        await fetchIssues(workspaceSlug, globalViewId, groupedIssueIds ? "mutation" : "init-loader", opsi);
+        kunciTermuat.current = kunciIsi;
         toggleLoading(false);
       }
     },

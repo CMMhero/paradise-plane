@@ -49,7 +49,6 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
     `HOME_ATTENTION_${workspaceSlug}`,
     () => attentionService.getAttention(workspaceSlug),
     {
-      revalidateOnFocus: true,
       revalidateIfStale: true,
       dedupingInterval: 30_000,
     }

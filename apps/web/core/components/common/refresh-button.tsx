@@ -7,13 +7,13 @@
 
 import { useCallback, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { useSWRConfig } from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { IconButton } from "@plane/propel/icon-button";
 import { Tooltip } from "@plane/propel/tooltip";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { segarkanSemua } from "@/lib/data-live";
 
 // Putaran ikon paling singkat. Data lokal kembali dalam hitungan milidetik, dan
 // tombol yang tak terlihat bereaksi terasa seperti tak bekerja.
@@ -26,7 +26,6 @@ const MIN_PUTAR_MS = 600;
  */
 export function RefreshButton() {
   const { t } = useTranslation();
-  const { mutate } = useSWRConfig();
   const { isMobile } = usePlatformOS();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -35,14 +34,14 @@ export function RefreshButton() {
     setIsRefreshing(true);
     const minimum = new Promise((resolve) => setTimeout(resolve, MIN_PUTAR_MS));
     try {
-      // Tanpa nilai kedua: revalidasi saja, jangan kosongkan cache dulu supaya layar tidak berkedip.
-      await Promise.all([mutate(() => true), minimum]);
+      // Lewat data-live: penyegar store (daftar tugas) ditarik senyap, kunci SWR hanya direvalidasi.
+      await Promise.all([segarkanSemua(), minimum]);
     } catch (error) {
       console.error("Gagal menyegarkan data", error);
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, mutate]);
+  }, [isRefreshing]);
 
   const label = isRefreshing ? t("refreshing") : t("refresh");
 

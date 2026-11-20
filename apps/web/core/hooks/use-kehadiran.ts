@@ -18,7 +18,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { LIVE_BASE_PATH, LIVE_BASE_URL } from "@plane/constants";
-import { segarkanSemua, terimaSinyalData, type TSinyalData } from "@/lib/data-live";
+import { saatSoketTersambungUlang, terimaSinyalData, type TSinyalData } from "@/lib/data-live";
 import {
   statusTab,
   terapkanPesanKehadiran,
@@ -111,6 +111,16 @@ export function useKehadiranTersambung(): boolean {
 
 // ---- sambungan (satu per tab, dihitung referensinya) ----
 let pemakai = 0;
+
+/** Realtime dinyalakan di tab ini (modul Chat aktif). False = tidak pernah ada soket,
+ * jadi jam cadangan penyegar tidak perlu jalan. */
+export function useKehadiranDiaktifkan(): boolean {
+  return useSyncExternalStore(
+    langganan,
+    () => pemakai > 0,
+    () => false
+  );
+}
 let hentikan: (() => void) | null = null;
 
 function mulai(slug: string): () => void {
@@ -123,6 +133,7 @@ function mulai(slug: string): () => void {
   let dicatatPada = 0;
   let terkirim: "online" | "away" | null = null;
   let pernahTersambung = false;
+  let terputusSejak: number | null = null;
 
   const kirim = (paksa = false) => {
     const status = statusTab(gerakTerakhir, Date.now(), document.visibilityState === "visible");
@@ -160,8 +171,9 @@ function mulai(slug: string): () => void {
     const soket = new WebSocket(url.toString());
     ws = soket;
     soket.addEventListener("open", () => {
-      // Tersambung lagi sesudah putus: sinyal yang lewat selama itu hilang, jadi kejar.
-      if (pernahTersambung) void segarkanSemua();
+      // Tersambung lagi sesudah putus cukup lama: sinyal yang lewat selama itu hilang, jadi kejar senyap.
+      if (pernahTersambung && terputusSejak !== null) saatSoketTersambungUlang(Date.now() - terputusSejak);
+      terputusSejak = null;
       pernahTersambung = true;
       percobaan = 0;
       terkirim = null;
@@ -201,6 +213,7 @@ function mulai(slug: string): () => void {
     soket.addEventListener("close", () => {
       ws = null;
       if (soketTerbuka === soket) soketTerbuka = null;
+      if (pernahTersambung) terputusSejak ??= Date.now();
       // Tanpa sambungan, status orang lain tidak bisa dipercaya lagi.
       peta = new Map();
       kabari();
@@ -248,12 +261,14 @@ export function useSambungKehadiran(slug: string | undefined, aktif: boolean) {
     if (!slug || !aktif) return;
     pemakai += 1;
     if (pemakai === 1) hentikan = mulai(slug);
+    kabari();
     return () => {
       pemakai -= 1;
       if (pemakai === 0) {
         hentikan?.();
         hentikan = null;
       }
+      kabari();
     };
   }, [slug, aktif]);
 }

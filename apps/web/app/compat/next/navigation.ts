@@ -7,6 +7,7 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate, useParams as useParamsRR, useSearchParams as useSearchParamsRR } from "react-router";
 import { ensureTrailingSlash } from "./helper";
+import { segarkanSemua } from "@/lib/data-live";
 
 export function useRouter() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export function useRouter() {
         setTimeout(() => navigate(1), 0);
       },
       refresh: () => {
-        location.reload();
+        void segarkanSemua();
       },
       prefetch: async (_to: string) => {
         // no-op in this shim

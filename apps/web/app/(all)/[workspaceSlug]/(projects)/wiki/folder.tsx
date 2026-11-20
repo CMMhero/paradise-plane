@@ -85,8 +85,6 @@ function WikiFolderPage() {
     sedangMembuat: sedangMembuatSub,
     dialog: dialogSubtopik,
   } = useBuatSubtopik(slug, muatUlang);
-  // Tanpa `revalidateOnFocus: false`: daftar ini membawa `can_upload`, jadi ia
-  // harus ikut segar sama seperti pohonnya.
   const {
     daftar,
     sedangMemuat: memuatMateri,

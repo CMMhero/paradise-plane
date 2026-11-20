@@ -318,7 +318,8 @@ export class ProjectStore implements IProjectStore {
    */
   fetchPartialProjects = async (workspaceSlug: string) => {
     try {
-      this.loader = "init-loader";
+      // Penarikan ulang di latar tidak boleh memunculkan pemuat sidebar lagi.
+      if (!this.workspaceProjectIds?.length) this.loader = "init-loader";
       const projectsResponse = await this.projectService.getProjectsLite(workspaceSlug);
       runInAction(() => {
         projectsResponse.forEach((project) => {
