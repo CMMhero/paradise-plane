@@ -58,9 +58,14 @@ export function useTranslation(): TTranslationStore {
     [i18n]
   );
 
-  return {
-    t: (key: string, params?: Record<string, unknown>) =>
+  const translate = useCallback(
+    (key: string, params?: Record<string, unknown>) =>
       coerceToString(key, params === undefined ? t(key) : t(key, params)),
+    [t]
+  );
+
+  return {
+    t: translate,
     currentLocale: i18n.language as TLanguage,
     changeLanguage,
     languages: SUPPORTED_LANGUAGES,
