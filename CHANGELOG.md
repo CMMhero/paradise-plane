@@ -11,9 +11,10 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 ### Versi 2.9.0
 
 - **Naik 2.8.0 ke 2.9.0, minor.** Banyak fitur baru (KPI, halaman
-  Persetujuan, tugas privat, jenjang Leader, penulis Pengumuman, editor folder
-  wiki), satu perubahan izin (tugas Done terkunci), dan tujuh migrasi
-  (0177 sampai 0181, 0183). Langkah operator:
+  Persetujuan, tugas privat, jenjang Leader, cabang dan Direktur Cabang,
+  penulis Pengumuman, editor folder wiki), perubahan izin (tugas Done
+  terkunci, tidak bisa menugaskan atasan), dan delapan migrasi (0177 sampai
+  0181, 0183, 0184). Langkah operator:
   - Jalankan migrasi. **0181 menghapus permanen** semua ruang obrolan
     "Paradise" (`kabar:<user>`) beserta pesannya. Tidak bisa dibalik. Ambil
     cadangan database dulu.
@@ -24,6 +25,42 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
   - Di Pengumuman > setelan > "Siapa yang boleh menulis", tambahkan
     departemen HR (atau siapa pun yang boleh menyiarkan).
   - Tempatkan Leader lewat papan Organisasi di God Mode.
+  - Migrasi 0184 menambah cabang. Untuk menjadikan Plant Cilegon cabang:
+    `python manage.py jadikan_cabang --divisi PC --kode CLG --nama "Plant Cilegon"
+    [--direktur-cabang <email>] --dry-run`, periksa rencananya, lalu jalankan
+    tanpa `--dry-run`. Angka departemen, project, tugas, dan orang di PC harus
+    sama sebelum dan sesudah. Menjalankan ulang harus mencetak "Nothing to
+    change". Setelah itu pecah PC menjadi divisi-divisi cabang di God Mode.
+- **Cabang dan Direktur Cabang (33).** Struktur baru Cabang > Divisi >
+  Departemen. Divisi tanpa cabang adalah kantor pusat. Direktur Cabang berada
+  di antara Manager (30) dan Sekretaris (35): ia melihat, menyetujui,
+  menugaskan, dan mendapat KPI hanya di cabangnya. Direktur dan Sekretaris
+  tetap menjangkau semua cabang. Manager dan Supervisor kantor pusat tidak
+  melihat cabang. God Mode bisa membuat cabang, memindahkan divisi ke cabang,
+  dan menempatkan Direktur Cabang. Tiap cabang punya kanal obrolan sendiri.
+  Kode: `utils/cabang.py`, perintah `jadikan_cabang`.
+- **Tidak bisa menugaskan atasan.** Siapa pun yang berjenjang tidak bisa
+  menjadikan orang berjenjang lebih tinggi sebagai assignee, termasuk admin
+  workspace yang punya jenjang, saat gerbang mati, saat `ASSIGN_DOWN_ONLY`
+  mati, lewat sub-item yang dinaikkan ke induk, dan lewat assignee bawaan
+  project. Rekan setingkat tetap seperti sebelumnya. Yang dikecualikan hanya
+  Super Admin dan admin tanpa jenjang. Daftar pemilih assignee tidak lagi
+  menawarkan atasan. Ini membalik aturan putaran pertama bahwa admin yang
+  ditempatkan sebagai Staf tetap admin penuh di luar departemennya. Kode:
+  `utils/atasan.py`.
+- **Tidak menyegarkan saat pindah tab atau jendela.** Fokus jendela tidak lagi
+  memicu pengambilan ulang data. Kembali ke tab setelah kurang dari 5 menit
+  hanya menarik yang berubah menurut sinyal waktu itu. Setelah 5 menit lebih
+  ada satu penyegaran senyap tanpa layar muat dan tanpa scroll kembali ke
+  atas. Polling berhenti saat jendela tidak fokus. Cadangan saat soket putus
+  kini tiap 120 detik dan hanya saat jendela fokus.
+- **Tanda baca obrolan seketika.** Membuka obrolan langsung menurunkan lencana
+  dan angka belum dibaca, dan pengirim melihat centang dua dalam sekitar satu
+  detik lewat kejadian `baca` di soket. Tab yang tersembunyi tidak lagi
+  menandai pesan terbaca.
+- **CI Lint API hijau.** Pola pengecualian ruff untuk berkas uji salah tulis
+  (`tests/*` tidak pernah cocok dengan `plane/tests/...`). Baris terlalu
+  panjang dirapikan tanpa mengubah perilaku.
 - **Jenjang Leader (12).** Di antara Staf dan Supervisor, ditempatkan per
   departemen. Leader boleh menugaskan Staf di departemennya dan mengubah tugas
   mereka. Penyelesaian tugas Leader tetap butuh persetujuan Supervisor, dan
@@ -85,8 +122,8 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 - **Kartu Perlu Perhatian di Home bisa ditindaklanjuti.** Setujui atau tolak,
   ganti status, balas cepat sebutan, buka, dan tandai dibaca.
 - **Obrolan:** daftar pesan tidak lagi bisa digulir ke bawah kotak tulis.
-- **Teruji.** Suite pytest penuh: 2448 lulus (187 lebih banyak dari `main`),
-  44 gagal yang sama persis dengan `main` sebelum perubahan. 44 skenario
+- **Teruji.** Suite pytest penuh: 2616 lulus (355 lebih banyak dari `main`),
+  44 gagal yang sama persis dengan `main` sebelum perubahan. 58 skenario
   langsung (desktop dan HP) dijalankan di browser dengan tangkapan layar.
 
 ## 2026-11-17
