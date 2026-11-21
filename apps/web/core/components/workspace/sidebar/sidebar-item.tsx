@@ -66,7 +66,7 @@ export const SidebarItemBase = observer(function SidebarItemBase({
   if (!allowPermissions(item.access, EUserPermissionsLevel.WORKSPACE, slug)) return null;
   // Modul yang dimatikan Super Admin di God Mode > Features.
   if (!isNavKeyEnabled(item.key)) return null;
-  // Direktur tidak memakai Pekerjaan Anda dan Arsip.
+  // Direktur tidak memakai Arsip.
   if (isDirektur && DIRECTOR_HIDDEN_NAV_KEYS.includes(item.key)) return null;
 
   const isPinned = isWorkspaceItemPinned(item.key);
