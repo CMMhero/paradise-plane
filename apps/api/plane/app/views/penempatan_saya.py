@@ -14,6 +14,8 @@ Batas yang disengaja:
   bisa diberikan lewat endpoint ini.
 * Memilih departemen = ikut jangkauan departemen itu (sinkron otomatis lewat
   signal `JabatanOrganisasi`).
+* God Mode bisa mematikan layar ini (ASK_UNPLACED_TO_CHOOSE_DEPARTMENT); GET
+  lalu menjawab tidak perlu dan POST ditolak, jadi penempatan hanya lewat admin.
 """
 
 # Django imports
@@ -36,6 +38,8 @@ from plane.db.models import (
 )
 from plane.db.penempatan import setel_penempatan
 from plane.db.superadmin import is_super_admin
+from plane.utils import aturan
+from plane.utils.aturan.area_visibilitas import ASK_UNPLACED_TO_CHOOSE_DEPARTMENT
 from plane.utils.hierarki import struktur_aktif
 
 SUMBER_MANDIRI = "mandiri"
@@ -43,6 +47,8 @@ SUMBER_MANDIRI = "mandiri"
 
 def perlu_pilih_departemen(user, workspace_id):
     """True kalau struktur aktif dan orang ini belum punya departemen/divisi."""
+    if not aturan.get_bool(ASK_UNPLACED_TO_CHOOSE_DEPARTMENT):
+        return False
     if not struktur_aktif(workspace_id) or is_super_admin(user):
         return False
     # Tamu tidak bisa POST (WorkspaceEntityPermission), dan tamu memang bukan staf.

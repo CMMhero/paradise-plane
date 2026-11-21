@@ -14,6 +14,10 @@ Semua orang punya halaman ini. Yang berbeda hanya LINGKUP yang boleh dibuka:
     sekretaris, direktur,
     admin workspace      -> seluruh organisasi
 
+Dua bagian bisa diubah di God Mode: jenjang terendah yang melihat KPI tim
+(KPI_TEAM_MIN_LEVEL, bawaan Leader) dan apakah admin workspace melihat seluruh
+organisasi (KPI_WORKSPACE_ADMINS_SEE_ALL, bawaan ya). Super Admin selalu semua.
+
 ## Satu tabel metrik
 
 `METRIK` adalah satu-satunya daftar metrik. Server menghitung tiap baris dari
@@ -78,12 +82,14 @@ from plane.db.models import (
     STATUS_PERSETUJUAN_DITOLAK,
     TINGKAT_CABANG,
     TINGKAT_MANAGER,
-    TINGKAT_MEMBER,
     User,
     WorkspaceMember,
     menjangkau_seluruh_organisasi,
 )
+from plane.db.superadmin import is_super_admin
+from plane.utils import aturan
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.aturan.area_visibilitas import KPI_TEAM_MIN_LEVEL, KPI_WORKSPACE_ADMINS_SEE_ALL
 from plane.utils.hierarki import _bawahan_ids, adalah_admin_penuh, divisi_diawasi
 from plane.utils.ketepatan_waktu import anotasi_ketepatan, ketepatan, q_tepat_waktu, q_terlambat
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
@@ -321,7 +327,10 @@ def lingkup_untuk(user, workspace_id):
         if info["branch_id"] in anggota_cab:
             anggota_cab[info["branch_id"]] |= anggota_div[div]
 
-    seluruh = adalah_admin_penuh(user, workspace_id) or menjangkau_seluruh_organisasi(jenjang.get(saya))
+    seluruh = menjangkau_seluruh_organisasi(jenjang.get(saya)) or (
+        adalah_admin_penuh(user, workspace_id)
+        and (aturan.get_bool(KPI_WORKSPACE_ADMINS_SEE_ALL) or is_super_admin(user))
+    )
     if seluruh:
         semua = frozenset(
             str(m)
@@ -347,6 +356,8 @@ def lingkup_untuk(user, workspace_id):
     divisi = {}
     cabang = {}
     jenjang_saya = jenjang.get(saya)
+    # Bawaan Leader (12) = dulu `> TINGKAT_MEMBER`: setiap jenjang di atas Staf.
+    min_tim = aturan.get_int(KPI_TEAM_MIN_LEVEL)
 
     def buka_divisi(div):
         divisi[div] = anggota_div[div]
@@ -366,13 +377,13 @@ def lingkup_untuk(user, workspace_id):
         if div in anggota_div and jenjang_saya >= TINGKAT_MANAGER:
             buka_divisi(div)
             orang |= {m2 for m2 in anggota_div[div] if jenjang[m2] < jenjang_saya}
-        # Di atas Staf di departemen ini (leader, supervisor): bawahannya adalah
-        # yang perannya di departemen yang sama lebih rendah.
-        if dep in anggota_dep and peran_dep[(saya, dep)] > TINGKAT_MEMBER:
+        # Peran di departemen ini setinggi KPI_TEAM_MIN_LEVEL (bawaan: leader,
+        # supervisor): bawahannya adalah yang perannya di departemen itu lebih rendah.
+        if dep in anggota_dep and peran_dep[(saya, dep)] >= min_tim:
             departemen[dep] = anggota_dep[dep]
             orang |= {m2 for m2 in anggota_dep[dep] if peran_dep[(m2, dep)] < peran_dep[(saya, dep)]}
 
-    if not info_divisi:
+    if not info_divisi and (jenjang_saya or 0) >= min_tim:
         # Struktur belum diisi: bawahan datang dari keanggotaan project, seperti
         # resolver hierarki yang lain.
         for project_id in divisi_diawasi(user.id, workspace_id):

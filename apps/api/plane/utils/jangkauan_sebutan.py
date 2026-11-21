@@ -28,9 +28,14 @@ Satu dari dua:
    sinkron keanggotaan belum berjalan untuk project yang baru dibuat.
 
 Bukan dari keanggotaan WORKSPACE: itu justru "semua orang", yang ingin dibatasi.
+
+God Mode (MENTION_NOTIFY_REACH) bisa menyempitkan ke (1) saja, atau melebarkan ke
+seluruh anggota aktif workspace. Bawaannya (1) + (2), persis aturan di atas.
 """
 
 from plane.db.models import JabatanOrganisasi, ProjectMember, WorkspaceMember, menjangkau_seluruh_organisasi
+from plane.utils import aturan
+from plane.utils.aturan.area_visibilitas import MENTION_NOTIFY_REACH, SEBUTAN_PROJECT, SEBUTAN_WORKSPACE
 
 
 def _uuid_str(nilai) -> str | None:
@@ -60,6 +65,9 @@ def dalam_jangkauan(project_id, user_ids) -> set:
     sisa = calon - anggota
     if not sisa:
         return anggota
+    jangkauan = aturan.get_choice(MENTION_NOTIFY_REACH)
+    if jangkauan == SEBUTAN_PROJECT:
+        return anggota
     from plane.db.models import Project  # noqa: PLC0415
 
     workspace_id = Project.objects.filter(pk=project_id).values_list("workspace_id", flat=True).first()
@@ -70,6 +78,8 @@ def dalam_jangkauan(project_id, user_ids) -> set:
             "member_id", flat=True
         )
     )
+    if jangkauan == SEBUTAN_WORKSPACE:
+        return anggota | {str(uid) for uid in aktif}
     puncak: dict = {}
     for uid, tingkat in JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member_id__in=aktif).values_list(
         "member_id", "tingkat"
