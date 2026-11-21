@@ -275,7 +275,7 @@ class TestJudulDanIkon:
     def test_logo_gambar_diunduh_server_dan_disimpan_sebagai_data_uri(self, org):
         respons = mock.MagicMock(status_code=200, headers={})
         respons.iter_content.return_value = iter([b"\x89PNG\r\n\x1a\n" + b"0" * 32])
-        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects", return_value=(respons, "x")) as f:
+        with mock.patch("plane.utils.quick_link.pinned_fetch", return_value=respons) as f:
             link = _buat(
                 org,
                 url="erp.example.com",

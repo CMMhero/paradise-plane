@@ -178,7 +178,7 @@ def _logo_gambar(url: str) -> dict:
 class TestLogoGambarDariUrl:
     def _unduh(self, isi: bytes, **kw):
         with mock.patch(
-            "plane.utils.quick_link.pinned_fetch_following_redirects", return_value=(_respons(isi, **kw), "x")
+            "plane.utils.quick_link.pinned_fetch", return_value=_respons(isi, **kw)
         ) as fetch:
             return quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png")), fetch
 
@@ -207,7 +207,7 @@ class TestLogoGambarDariUrl:
 
     def test_content_length_besar_ditolak_sebelum_dibaca(self):
         resp = _respons(_PNG, headers={"content-length": str(quick_link.MAKS_BYTE_GAMBAR + 1)})
-        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects", return_value=(resp, "x")):
+        with mock.patch("plane.utils.quick_link.pinned_fetch", return_value=resp):
             with pytest.raises(quick_link.LogoTidakValid):
                 quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
         resp.iter_content.assert_not_called()
@@ -222,7 +222,7 @@ class TestLogoGambarDariUrl:
         ["http://cdn.example.com/a.png", "ftp://x/a.png", "data:image/png;base64,AAAA", "//x/a.png", None, 5],
     )
     def test_bukan_https_ditolak_tanpa_mengunduh(self, url):
-        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects") as fetch:
+        with mock.patch("plane.utils.quick_link.pinned_fetch") as fetch:
             with pytest.raises(quick_link.LogoTidakValid):
                 quick_link.rapikan_logo(_logo_gambar(url))
         fetch.assert_not_called()
@@ -259,9 +259,66 @@ class TestLogoGambarDariUrl:
                 quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
         assert req.call_count == 1  # hop kedua tidak pernah dikoneksikan
 
+    def test_userinfo_di_url_ditolak_tanpa_mengunduh(self):
+        for url in ("https://user:pw@cdn.example.com/a.png", "https://user@cdn.example.com/a.png"):
+            with mock.patch("plane.utils.quick_link.pinned_fetch") as fetch:
+                with pytest.raises(quick_link.LogoTidakValid):
+                    quick_link.rapikan_logo(_logo_gambar(url))
+            fetch.assert_not_called()
+
+    def test_redirect_turun_ke_http_ditolak(self):
+        redirect = mock.MagicMock(status_code=302, headers={"Location": "http://cdn.example.com/b.png"})
+        with mock.patch("plane.utils.quick_link.pinned_fetch", return_value=redirect) as fetch:
+            with pytest.raises(quick_link.LogoTidakValid):
+                quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
+        assert fetch.call_count == 1
+        redirect.close.assert_called()
+
+    def test_redirect_https_diikuti(self):
+        redirect = mock.MagicMock(status_code=302, headers={"Location": "/b.png"})
+        with mock.patch("plane.utils.quick_link.pinned_fetch", side_effect=[redirect, _respons(_PNG)]) as fetch:
+            hasil = quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
+        assert fetch.call_args_list[1].args[1] == "https://cdn.example.com/b.png"
+        assert hasil["image"]["data"].startswith("data:image/png")
+
+    def test_batas_waktu_total_memutus_unduhan_yang_menetes(self):
+        resp = _respons(_PNG)
+        waktu = {"t": 0.0}
+
+        def menetes():
+            for _ in range(10):
+                waktu["t"] += 4.0  # 1 byte tiap 4 detik: lolos timeout per-soket
+                yield b"0"
+
+        resp.iter_content.return_value = menetes()
+        with (
+            mock.patch("plane.utils.quick_link.pinned_fetch", return_value=resp),
+            mock.patch("plane.utils.quick_link.time.monotonic", side_effect=lambda: waktu["t"]),
+        ):
+            with pytest.raises(quick_link.LogoTidakValid):
+                quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
+        assert waktu["t"] <= 12.0  # berhenti setelah melewati 8 detik, bukan sampai habis
+        resp.close.assert_called()
+
+    def test_batas_waktu_terlampaui_sebelum_hop_berikutnya(self):
+        redirect = mock.MagicMock(status_code=302, headers={"Location": "https://cdn.example.com/b.png"})
+        waktu = iter([0.0, 0.0, 9.0])
+        with (
+            mock.patch("plane.utils.quick_link.pinned_fetch", return_value=redirect) as fetch,
+            mock.patch("plane.utils.quick_link.time.monotonic", side_effect=lambda: next(waktu)),
+        ):
+            with pytest.raises(quick_link.LogoTidakValid):
+                quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
+        assert fetch.call_count == 1
+
+    def test_log_tanpa_userinfo_dan_query(self):
+        assert quick_link._url_untuk_log("https://u:p@cdn.example.com:8443/a.png?token=x") == (
+            "https://cdn.example.com:8443/a.png"
+        )
+
     def test_data_tersimpan_diperiksa_ulang_tanpa_mengunduh(self):
         data = "data:image/png;base64," + base64.b64encode(_PNG).decode()
-        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects") as fetch:
+        with mock.patch("plane.utils.quick_link.pinned_fetch") as fetch:
             hasil = quick_link.rapikan_logo({"in_use": "image", "image": {"url": "https://a.b/c.png", "data": data}})
         fetch.assert_not_called()
         assert hasil == {"in_use": "image", "image": {"url": "https://a.b/c.png", "data": data}}
