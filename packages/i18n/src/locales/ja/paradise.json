@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "お知らせ",
+    "title": "お知らせ",
     "empty": "お知らせはまだありません。",
     "placeholder": "お知らせを書く",
     "send": "公開",

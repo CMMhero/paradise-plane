@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "公告",
+    "title": "公告",
     "empty": "暂无公告。",
     "placeholder": "撰写公告",
     "send": "发布",

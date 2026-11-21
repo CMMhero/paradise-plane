@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "공지사항",
+    "title": "공지사항",
     "empty": "아직 공지사항이 없습니다.",
     "placeholder": "공지사항 작성",
     "send": "게시",

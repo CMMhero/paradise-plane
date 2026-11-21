@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Announcements",
+    "title": "Announcements",
     "empty": "No announcements yet.",
     "placeholder": "Write an announcement",
     "send": "Publish",

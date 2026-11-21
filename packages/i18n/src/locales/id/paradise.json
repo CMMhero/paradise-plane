@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Pengumuman",
+    "title": "Pengumuman",
     "empty": "Belum ada pengumuman.",
     "placeholder": "Tulis pengumuman",
     "send": "Terbitkan",

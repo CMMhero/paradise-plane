@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Comunicados",
+    "title": "Comunicados",
     "empty": "Ainda não há comunicados.",
     "placeholder": "Escreva um comunicado",
     "send": "Publicar",

@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Anunțuri",
+    "title": "Anunțuri",
     "empty": "Încă nu există anunțuri.",
     "placeholder": "Scrie un anunț",
     "send": "Publică",

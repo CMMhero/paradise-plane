@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Oznámenia",
+    "title": "Oznámenia",
     "empty": "Zatiaľ žiadne oznámenia.",
     "placeholder": "Napísať oznámenie",
     "send": "Zverejniť",

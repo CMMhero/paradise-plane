@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Anuncios",
+    "title": "Anuncios",
     "empty": "Aún no hay anuncios.",
     "placeholder": "Escribe un anuncio",
     "send": "Publicar",
