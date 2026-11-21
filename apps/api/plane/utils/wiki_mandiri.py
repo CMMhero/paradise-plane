@@ -222,12 +222,13 @@ class PenilaiWiki:
             return False
         if self.admin:
             return True
-        pengawas = aturan.get_choice(PRIVATE_PAGE_OVERSEERS)
-        if self.direktur and pengawas != HALAMAN_ADMIN_WIKI:
+        if self.direktur and aturan.get_choice(PRIVATE_PAGE_OVERSEERS) != HALAMAN_ADMIN_WIKI:
             return True
         if departemen_id and str(departemen_id) in self.departemen:
             return True
-        return pengawas == HALAMAN_PIMPINAN_DIVISI and bool(divisi_id) and str(divisi_id) in self.divisi_pimpin
+        if not divisi_id or str(divisi_id) not in self.divisi_pimpin:
+            return False
+        return aturan.get_choice(PRIVATE_PAGE_OVERSEERS) == HALAMAN_PIMPINAN_DIVISI
 
 
     def unit(self, folder_id):
