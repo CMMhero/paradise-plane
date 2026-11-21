@@ -72,6 +72,16 @@ class InstanceConfigurationEndpoint(BaseAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # Aturan registri (plane/utils/aturan) hanya lewat /api/instances/rules/:
+        # di sini validator, frasa konfirmasi, dan audit per aturan terlewati.
+        from plane.utils.aturan import REGISTRI
+
+        aturan = sorted(k for k in request.data.keys() if k in REGISTRI)
+        if aturan:
+            return Response(
+                {"error": f"These rules are changed via /api/instances/rules/: {', '.join(aturan)}", "keys": aturan},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         # Setelan Paradise divalidasi dengan validator registri yang sama
         # (plane/utils/setelan_instance.py): saklar hanya "0"/"1" (typo diam-diam
         # mematikan fitur), angka dalam rentangnya (retensi 0 hari = seluruh

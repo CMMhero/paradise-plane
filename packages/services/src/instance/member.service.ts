@@ -190,10 +190,12 @@ export type TMemberDefaults = {
   navigasi: TMemberNavigation;
   /** Bawaan kolom per project; berlaku untuk tiap member+project baru. */
   work_items: { layout: TWorkItemLayout };
+  /** Bawaan tampilan yang dideklarasikan di registri aturan (urutan linimasa aktivitas). */
+  tampilan: { aktivitas_terbaru_di_atas: boolean };
 };
 
 /** Bagian yang bisa diterapkan ke member LAMA sekaligus. */
-export type TMemberDefaultsSection = "navigasi" | "work_items";
+export type TMemberDefaultsSection = "navigasi" | "work_items" | "tampilan";
 
 /** Setelan project baru. Cermin `PABRIK` di plane/utils/bawaan_project.py. */
 export type TProjectDefaults = {
@@ -221,6 +223,7 @@ export type TMemberDefaultsUpdate = {
   keanggotaan?: Partial<TMemberDefaults["keanggotaan"]>;
   navigasi?: TMemberPreferencesUpdate["navigasi"];
   work_items?: { layout?: TWorkItemLayout };
+  tampilan?: Partial<TMemberDefaults["tampilan"]>;
 };
 
 export type TMemberFilter = {

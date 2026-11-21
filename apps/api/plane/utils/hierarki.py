@@ -31,6 +31,8 @@ aktornya `None`, dan gerbangnya **menolak** (gagal ke arah aman, prinsip #3).
 from django.utils import timezone
 
 # Module imports
+from plane.utils import aturan
+from plane.utils.aturan.area_tugas import APPROVER_MIN_LEVEL
 from plane.utils.cabang import baris_penempatan
 from plane.utils.kunci_selesai import galat_tugas_selesai, tugas_selesai
 from plane.utils.saklar_instance import (
@@ -667,7 +669,9 @@ def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None, peta=None):
 
     if peta is None:
         peta = peta_tingkat(workspace_id, project_id)
-    kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
+    # God Mode > Work rules > All rules (bawaan 20 = supervisor, perilaku sebelum aturannya ada).
+    ambang = aturan.get_int(APPROVER_MIN_LEVEL)
+    kandidat = [uid for uid, tingkat in peta.items() if tingkat >= ambang]
     if tingkat_pembuat is not None:
         kandidat = [uid for uid in kandidat if peta[uid] > tingkat_pembuat]
 

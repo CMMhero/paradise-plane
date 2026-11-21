@@ -24,6 +24,10 @@ tiap dipakai seperti saklar KEP-40. Tiga bagian, dengan saat berlaku yang beda:
 - `work_items`: tata letak daftar work item (Board, List, ...). Dibaca bawaan
   kolom `ProjectUserProperty.display_filters`, jadi berlaku untuk setiap pasangan
   member+project yang baru, termasuk member lama yang baru masuk project.
+- `tampilan`: bawaan tampilan yang DIDEKLARASIKAN di registri aturan
+  (`plane/utils/aturan`, `Rule(member_default="tampilan.<kolom>")`), bukan di
+  sini. Ditulis ke `Profile.theme` akun baru, dan ke semua akun lewat tombol
+  "Apply to existing members".
 
 Akun lama bisa disamakan sekaligus lewat `terapkan_ke_semua` (tombol "Apply to
 existing members" di God Mode), tidak pernah diam-diam.
@@ -162,6 +166,21 @@ BATAS_PROJECT_MAKS = 50
 # Cermin EIssueLayoutTypes di packages/types, tanpa gantt (dicabut bersama cycles).
 TATA_LETAK_SAH = frozenset({"list", "kanban", "calendar", "spreadsheet"})
 
+
+def aturan_tampilan() -> dict:
+    """{kolom: Rule} untuk bagian `tampilan`, dari registri aturan."""
+    from plane.utils.aturan import REGISTRI
+    from plane.utils.aturan.jenis import BAGIAN_TAMPILAN
+
+    hasil = {}
+    for rule in REGISTRI.values():
+        if rule.member_default:
+            bagian, kolom = rule.member_default.split(".")
+            if bagian == BAGIAN_TAMPILAN:
+                hasil[kolom] = rule
+    return hasil
+
+
 PABRIK = {
     "profile": {
         "language": "en",
@@ -187,6 +206,8 @@ PABRIK = {
     },
     # Board, bukan List (permintaan user 2 Nov 2026).
     "work_items": {"layout": "kanban"},
+    # Dibangun dari registri aturan; `default` tiap Rule = perilaku hari ini.
+    "tampilan": {kolom: rule.default for kolom, rule in aturan_tampilan().items()},
 }
 
 
@@ -315,6 +336,36 @@ def periksa_work_items(data) -> tuple[dict, str | None]:
     return baru, None
 
 
+def periksa_tampilan(data) -> tuple[dict, str | None]:
+    """Cek bagian tampilan dengan validator registri aturan yang sama dengan layar Rules."""
+    from plane.utils.aturan.jenis import NilaiTidakSah, ke_json, normalkan
+
+    aturan = aturan_tampilan()
+    if not isinstance(data, dict) or set(data) - set(aturan):
+        return {}, "Unknown display defaults."
+    baru = {}
+    for kolom, nilai in data.items():
+        try:
+            baru[kolom] = ke_json(aturan[kolom], normalkan(aturan[kolom], nilai))
+        except NilaiTidakSah as e:
+            return {}, f"{aturan[kolom].label}: {e}"
+    return baru, None
+
+
+def nilai_tampilan(bawaan: dict) -> dict:
+    """{Rule: nilai kanonik} dari bawaan yang sudah dibaca. Nilai rusak = default aturannya."""
+    from plane.utils.aturan.jenis import NilaiTidakSah, normalkan
+
+    isi = bawaan.get("tampilan") if isinstance(bawaan.get("tampilan"), dict) else {}
+    hasil = {}
+    for kolom, rule in aturan_tampilan().items():
+        try:
+            hasil[rule] = normalkan(rule, isi.get(kolom, rule.default))
+        except NilaiTidakSah:
+            hasil[rule] = rule.default
+    return hasil
+
+
 def periksa_perubahan(data) -> tuple[dict, str | None]:
     """Cek PATCH parsial. Kembalikan (bawaan_lengkap_sesudahnya, galat).
 
@@ -334,6 +385,7 @@ def periksa_perubahan(data) -> tuple[dict, str | None]:
         ("keanggotaan", _periksa_keanggotaan),
         ("navigasi", periksa_navigasi),
         ("work_items", periksa_work_items),
+        ("tampilan", periksa_tampilan),
     ):
         if bagian in data:
             if bagian == "profile" and isinstance(data[bagian], dict) and set(data[bagian]) - set(PABRIK["profile"]):
@@ -360,12 +412,18 @@ def terapkan_ke_profil_baru(profil) -> None:
     "Diberikan" = berbeda dari bawaan kolom model. Kolom yang masih bernilai bawaan
     model dianggap belum dipilih siapa pun, jadi diisi dari God Mode.
     """
-    bawaan = baca_bawaan()["profile"]
+    semua = baca_bawaan()
+    bawaan = semua["profile"]
     for kolom in KOLOM_PROFIL:
         if getattr(profil, kolom) == profil._meta.get_field(kolom).get_default():
             setattr(profil, kolom, bawaan[kolom])
     if not profil.theme:
         profil.theme = {"theme": bawaan["theme"], **{kunci: bawaan[kunci] for kunci in KUNCI_TEMA_PARADISE}}
+        # Hanya yang menyimpang dari default: kunci yang tidak ada dibaca web
+        # sebagai default, jadi akun baru tetap persis seperti sebelum aturannya ada.
+        for rule, nilai in nilai_tampilan(semua).items():
+            if rule.profile_theme_key and nilai != rule.default:
+                profil.theme[rule.profile_theme_key] = rule.profile_values[nilai]
 
 
 def terapkan_ke_user_baru(user) -> None:
@@ -412,18 +470,18 @@ def terapkan_ke_properti_workspace_baru(properti) -> None:
         properti.navigation_control_preference = bawaan["project_mode"]
 
 
-BAGIAN_MASSAL = frozenset({"navigasi", "work_items"})
+BAGIAN_MASSAL = frozenset({"navigasi", "work_items", "tampilan"})
 
 
 def terapkan_ke_semua(bagian) -> dict:
-    """Samakan member LAMA dengan bawaan sekarang, hanya `navigasi` dan `work_items`.
+    """Samakan member LAMA dengan bawaan sekarang: `navigasi`, `work_items`, `tampilan`.
 
     Mengembalikan jumlah baris yang diubah per bagian. Profil dan email sengaja
     tidak ikut: bahasa dan surel adalah pilihan pribadi yang tak boleh tertimpa massal.
     """
     from django.db import transaction
 
-    from plane.db.models import ProjectUserProperty, WorkspaceUserPreference, WorkspaceUserProperties
+    from plane.db.models import Profile, ProjectUserProperty, WorkspaceUserPreference, WorkspaceUserProperties
 
     bawaan = baca_bawaan()
     hasil = {}
@@ -460,4 +518,19 @@ def terapkan_ke_semua(bagian) -> dict:
                     berubah.append(prop)
             ProjectUserProperty.objects.bulk_update(berubah, ["display_filters"], batch_size=200)
             hasil["work_items"] = len(berubah)
+        if "tampilan" in bagian:
+            tema = {
+                rule.profile_theme_key: rule.profile_values[nilai]
+                for rule, nilai in nilai_tampilan(bawaan).items()
+                if rule.profile_theme_key
+            }
+            berubah = []
+            for profil in Profile.objects.filter(user__is_bot=False).only("id", "theme"):
+                lama = profil.theme if isinstance(profil.theme, dict) else {}
+                baru = {**lama, **tema}
+                if baru != lama:
+                    profil.theme = baru
+                    berubah.append(profil)
+            Profile.objects.bulk_update(berubah, ["theme"], batch_size=200)
+            hasil["tampilan"] = len(berubah)
     return hasil

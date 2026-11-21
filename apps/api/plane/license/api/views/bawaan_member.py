@@ -52,7 +52,7 @@ class InstanceMemberDefaultsEndpoint(BaseAPIView):
 class InstanceMemberDefaultsApplyEndpoint(BaseAPIView):
     """Samakan member LAMA dengan bawaan sekarang. Hanya Super Admin.
 
-    `POST {"sections": ["navigasi", "work_items"]}`. Sengaja tombol terpisah dari
+    `POST {"sections": ["navigasi", "work_items", "tampilan"]}`. Sengaja tombol terpisah dari
     Simpan: menimpa pilihan puluhan orang harus disengaja, bukan efek samping.
     Profil dan email tidak bisa diterapkan massal (pilihan pribadi).
     """
@@ -61,7 +61,7 @@ class InstanceMemberDefaultsApplyEndpoint(BaseAPIView):
         bagian = request.data.get("sections") if isinstance(request.data, dict) else None
         if not isinstance(bagian, list) or not bagian or set(bagian) - BAGIAN_MASSAL:
             return Response(
-                {"error": "Sections must be a non-empty list of 'navigasi' and/or 'work_items'."},
+                {"error": "Sections must be a non-empty list of 'navigasi', 'work_items', and/or 'tampilan'."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         hasil = terapkan_ke_semua(set(bagian))

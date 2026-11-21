@@ -33,6 +33,7 @@ export * from "./module";
 export * from "./notification";
 export * from "./notification-preferences";
 export * from "./page";
+export * from "./aturan";
 export * from "./paradise-features";
 export * from "./paradise-navigation";
 export * from "./payment";

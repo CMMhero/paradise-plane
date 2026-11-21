@@ -195,6 +195,12 @@ class InstanceEndpoint(BaseAPIView):
             "office_timezone": efektif(OFFICE_TIMEZONE),
         }
 
+        # Aturan God Mode yang perlu diketahui web (`web=True` di plane/utils/aturan),
+        # nilai saja. Web memakai bawaan yang sama di @plane/constants sampai ini datang.
+        from plane.utils.aturan.daftar import nilai_web
+
+        data["paradise_rules"] = nilai_web()
+
         # Bawaan project baru (God Mode > Workspaces > New project defaults).
         # Formulir "Create project" di apps/web mengisi dirinya dari sini.
         from plane.utils.bawaan_project import baca_bawaan as bawaan_project

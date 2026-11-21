@@ -15,3 +15,4 @@ export * from "./activity.service";
 export * from "./divisi-member.service";
 export * from "./email-preview.service";
 export * from "./settings.service";
+export * from "./rules.service";

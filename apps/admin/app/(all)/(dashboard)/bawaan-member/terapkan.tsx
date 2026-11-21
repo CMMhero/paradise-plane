@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  *
  * Tombol terpisah dari Simpan: menimpa pilihan puluhan orang harus disengaja.
- * Server hanya menerima `navigasi` dan `work_items` (lihat
+ * Server hanya menerima `navigasi`, `work_items`, dan `tampilan` (lihat
  * InstanceMemberDefaultsApplyEndpoint); bahasa dan email tetap pilihan pribadi.
  */
 
@@ -65,12 +65,23 @@ export function TerapkanKeSemua({ isDirty }: Props) {
         <Button variant="secondary" size="base" disabled={isDirty} onClick={() => setBagian("work_items")}>
           {t.apply_work_items}
         </Button>
+        <Button variant="secondary" size="base" disabled={isDirty} onClick={() => setBagian("tampilan")}>
+          {t.apply_display}
+        </Button>
       </div>
       <AlertModalCore
         isOpen={bagian !== null}
         variant="primary"
-        title={bagian === "navigasi" ? t.apply_navigation : t.apply_work_items}
-        content={bagian === "navigasi" ? t.apply_confirm_navigation : t.apply_confirm_work_items}
+        title={
+          bagian === "navigasi" ? t.apply_navigation : bagian === "tampilan" ? t.apply_display : t.apply_work_items
+        }
+        content={
+          bagian === "navigasi"
+            ? t.apply_confirm_navigation
+            : bagian === "tampilan"
+              ? t.apply_confirm_display
+              : t.apply_confirm_work_items
+        }
         isSubmitting={isSubmitting}
         primaryButtonText={{ default: t.apply_yes, loading: t.applying }}
         secondaryButtonText={s.common.cancel}
