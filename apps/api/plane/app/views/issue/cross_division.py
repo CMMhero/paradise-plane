@@ -48,16 +48,18 @@ import json
 # Django imports
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.utils import timezone
 
 # Third Party imports
 from rest_framework import status
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
 # Module imports
 from .. import BaseAPIView
 from plane.app.permissions import WorkspaceEntityPermission
+from plane.app.permissions.workspace import Admin, Member
 from plane.app.serializers.cross_division import (
     ARAH_KELUAR,
     ARAH_MASUK,
@@ -67,6 +69,7 @@ from plane.app.serializers.cross_division import (
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import (
     IntakeIssue,
+    DepartemenProject,
     Issue,
     PermintaanLintasDivisi,
     Project,
@@ -74,6 +77,7 @@ from plane.db.models import (
     State,
     StateGroup,
     Workspace,
+    WorkspaceMember,
 )
 from plane.utils.content_validator import validate_html_content
 from plane.utils.hierarki import divisi_diawasi
@@ -100,6 +104,31 @@ def _galat(kode, pesan, http=status.HTTP_400_BAD_REQUEST, **params):
     return Response({"error": pesan, "error_code": kode, "params": params}, status=http)
 
 
+def tujuan_sah(slug):
+    """Satu-satunya sumber divisi yang boleh jadi tujuan: hidup, tidak diarsipkan,
+    bukan Wiki, terpetakan ke departemen, dan Intake-nya menyala. Daftar tujuan dan
+    POST memakai ini, jadi keduanya tidak bisa berbeda pendapat. Migrasi 0185
+    menyalakan Intake untuk SEMUA project, jadi `intake_view` saja tidak cukup."""
+    return (
+        Project.objects.filter(workspace__slug=slug, archived_at__isnull=True, intake_view=True)
+        .exclude(identifier=WIKI_IDENTIFIER)
+        .filter(
+            Exists(DepartemenProject.objects.filter(project=OuterRef("pk"), deleted_at__isnull=True)),
+        )
+    )
+
+
+class AnggotaBukanTamu(BasePermission):
+    """Admin/Member workspace. Tamu tidak boleh melihat daftar divisi tujuan."""
+
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return WorkspaceMember.objects.filter(
+            workspace__slug=view.workspace_slug, member=request.user, role__in=[Admin, Member], is_active=True
+        ).exists()
+
+
 class DivisiTujuanEndpoint(BaseAPIView):
     """Departemen yang membuka pintu permintaan (Intake menyala).
 
@@ -108,15 +137,10 @@ class DivisiTujuanEndpoint(BaseAPIView):
     departemen sendiri ia membuat work item langsung). Wiki bukan departemen.
     """
 
-    permission_classes = [WorkspaceEntityPermission]
+    permission_classes = [AnggotaBukanTamu]
 
     def get(self, request, slug):
-        projects = (
-            Project.objects.filter(workspace__slug=slug, archived_at__isnull=True, intake_view=True)
-            .exclude(id__in=_project_saya(request.user, slug))
-            .exclude(identifier=WIKI_IDENTIFIER)
-            .order_by("name")
-        )
+        projects = tujuan_sah(slug).exclude(id__in=_project_saya(request.user, slug)).order_by("name")
         return Response(DivisiTujuanSerializer(projects, many=True).data, status=status.HTTP_200_OK)
 
 
@@ -217,6 +241,12 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
         if not tujuan.intake_view:
             return _galat(
                 "intake_off", f"{tujuan.name} has turned off Intake and can't take requests.", name=tujuan.name
+            )
+        if not tujuan_sah(slug).filter(pk=tujuan.pk).exists():
+            return _galat(
+                "target_not_allowed",
+                f"{tujuan.name} is not a department that can take requests.",
+                name=tujuan.name,
             )
         intake = ensure_default_intake(tujuan)
 
