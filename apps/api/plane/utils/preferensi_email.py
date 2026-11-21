@@ -14,7 +14,9 @@ Keputusan user 2026-10-30, dipecah 2026-11-02 jadi tiga kelompok:
 
 - Direktur (`BAWAAN_DIREKTUR`): hanya penyebutan, obrolan, dan ringkasan. Baris
   direktur di God Mode sekaligus BATAS ATAS untuk setiap direktur, berlaku
-  seketika untuk akun lama juga.
+  seketika untuk akun lama juga (aturan DIRECTOR_DEFAULTS_ARE_CEILING bisa
+  mematikannya). Jenjang leader, direktur cabang, dan sekretaris memilih kolomnya
+  lewat aturan NOTIFY_GROUP_*.
 - Leader (supervisor, manager; kunci tabel "pimpinan"): satu-satunya email bawaan adalah
   ringkasan harian sesuai jabatannya (tugas sendiri + tim/departemen/divisi).
   Di luar preferensi: email sistem (undangan, reset sandi, dst.) dan ringkasan
@@ -38,6 +40,14 @@ Begitu orangnya (atau Super Admin di God Mode) mengubah satu saklar, seluruh nil
 yang berlaku dibekukan ke kolom dan `ikut_bawaan_jabatan` dimatikan: sejak itu
 pilihan manusia yang menang, bukan jabatan.
 """
+
+from plane.utils import aturan
+from plane.utils.aturan.area_notifikasi import (
+    DIRECTOR_DEFAULTS_ARE_CEILING,
+    NOTIFY_GROUP_BRANCH_DIRECTOR,
+    NOTIFY_GROUP_LEADER,
+    NOTIFY_GROUP_SECRETARY,
+)
 
 SAKLAR_EMAIL = (
     "property_change",
@@ -134,12 +144,26 @@ KELOMPOK_JABATAN = ("staf", "pimpinan", "direktur")
 
 
 def _kelompok_dari_tingkat(tingkat) -> str:
-    from plane.db.models import TINGKAT_SUPERVISOR, menjangkau_seluruh_organisasi
+    from plane.db.models import (
+        TINGKAT_CABANG,
+        TINGKAT_LEADER,
+        TINGKAT_SEKRETARIS,
+        TINGKAT_SUPERVISOR,
+        menjangkau_seluruh_organisasi,
+    )
 
-    if tingkat is None or tingkat < TINGKAT_SUPERVISOR:
-        return "staf"
+    # Tiga jenjang yang kelompoknya bisa dipilih di God Mode (area D). Bawaannya
+    # persis tabel lama: leader = staf, direktur cabang = pimpinan, sekretaris = direktur.
+    if tingkat == TINGKAT_LEADER:
+        return aturan.get_choice(NOTIFY_GROUP_LEADER)
+    if tingkat == TINGKAT_CABANG:
+        return aturan.get_choice(NOTIFY_GROUP_BRANCH_DIRECTOR)
     # Sekretaris (KEP-101) memakai baris "direktur": jangkauannya sama, jadi kebijakan
     # notifikasinya juga. Tidak ada baris bawaan keempat di God Mode.
+    if tingkat == TINGKAT_SEKRETARIS:
+        return aturan.get_choice(NOTIFY_GROUP_SECRETARY)
+    if tingkat is None or tingkat < TINGKAT_SUPERVISOR:
+        return "staf"
     return "direktur" if menjangkau_seluruh_organisasi(tingkat) else "pimpinan"
 
 
@@ -200,7 +224,9 @@ def bawaan_jabatan(user_id, tabel=None) -> dict:
 def dikunci(user_id, sekarang=None, kelompok=None) -> list:
     """Saklar yang dipaksa mati kebijakan direktur di God Mode. Kosong untuk selain direktur."""
     kelompok = kelompok or kelompok_jabatan(user_id)
-    if kelompok != "direktur":
+    # Batas atas bisa dimatikan di God Mode (DIRECTOR_DEFAULTS_ARE_CEILING): kolom
+    # direktur lalu hanya bawaan, orangnya boleh menyalakan sendiri.
+    if kelompok != "direktur" or not aturan.get_bool(DIRECTOR_DEFAULTS_ARE_CEILING):
         return []
     batas = (sekarang or tabel_bawaan_sekarang())["direktur"]
     return [kunci for kunci in SAKLAR_NOTIFIKASI if not batas[kunci]]
