@@ -34,6 +34,8 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.settings.storage import S3Storage
+from plane.utils import aturan
+from plane.utils.aturan.area_obrolan import CHAT_PINS_MAX
 from plane.utils.chat_ruang import ruang_dm
 from plane.utils.ice import daftar_ice
 from plane.utils.inbox_chat import catat_pesan_dm, tandai_chat_terbaca
@@ -651,10 +653,9 @@ class ChatReaksiEndpoint(BaseAPIView):
         return Response({"aktif": aktif}, status=status.HTTP_201_CREATED if aktif else status.HTTP_200_OK)
 
 
-# Batas sematan per ruang. Bilah sematan di atas percakapan berguna selama
-# isinya bisa dipindai sekilas; lewat dari ini ia jadi daftar kedua yang tidak
-# dibaca siapa pun.
-BATAS_SEMATAN = 20
+def batas_sematan() -> int:
+    """Batas pesan tersemat per ruang (God Mode, aturan CHAT_PINS_MAX, bawaan 20)."""
+    return aturan.get_int(CHAT_PINS_MAX)
 
 
 def _bentuk_sematan(pesan, saya_id=None):
@@ -718,9 +719,10 @@ class ChatSematanEndpoint(BaseAPIView):
             return galat
         if pesan.disematkan_pada is None:
             jumlah = PesanLangsung.objects.filter(ruang_id=pesan.ruang_id, disematkan_pada__isnull=False).count()
-            if jumlah >= BATAS_SEMATAN:
+            batas = batas_sematan()
+            if jumlah >= batas:
                 return Response(
-                    {"error": f"Maksimum {BATAS_SEMATAN} pesan tersemat. Lepas salah satu dulu."},
+                    {"error": f"Maksimum {batas} pesan tersemat. Lepas salah satu dulu."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             pesan.disematkan_pada = timezone.now()
@@ -756,7 +758,7 @@ class ChatRuangSematanEndpoint(BaseAPIView):
         if ruang is None or _langganan(request.user.id, ruang) is None:
             return Response({"error": "Ruang tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
         tersemat = PesanLangsung.objects.filter(ruang=ruang, disematkan_pada__isnull=False)
-        daftar = tersemat.order_by("-disematkan_pada")[:BATAS_SEMATAN]
+        daftar = tersemat.order_by("-disematkan_pada")[: batas_sematan()]
         return Response(
             {
                 "boleh_sematkan": _boleh_sematkan(request.user, ruang),
