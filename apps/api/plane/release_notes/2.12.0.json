@@ -1,0 +1,26 @@
+{
+  "version": "2.12.0",
+  "date": "2026-11-21",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "God Mode has a new All rules screen. 89 rules that used to be fixed are now settings: what each level sees, who can edit and assign work, which work item fields staff can change, notification and digest rules, chat, wiki and quick link rights, sign-in and file limits, and display defaults."
+    },
+    {
+      "type": "Added",
+      "text": "New accounts can start with a chosen work item layout, grouping and order, Home widgets, timeline order and more. A button applies them to existing members."
+    },
+    {
+      "type": "Added",
+      "text": "What directors see in the sidebar and in KPI is now a setting."
+    },
+    {
+      "type": "Changed",
+      "text": "Risky rules need the confirmation phrase, every change is recorded in the audit log, and any rule can be reset to its default."
+    },
+    {
+      "type": "Changed",
+      "text": "Nothing changes until an admin changes a rule: every rule starts at today's behavior."
+    }
+  ]
+}
