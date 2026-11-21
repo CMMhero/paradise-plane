@@ -138,29 +138,29 @@ def _tutup(tugas, grup):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("grup", ["completed", "cancelled"])
-def test_tugas_selesai_dilewati_bawaan_dan_diisi_dengan_flag(project, grup):
+def test_tugas_selesai_diisi_bawaan_dan_dilewati_dengan_flag(project, grup):
     u = _user("a")
     _anggota(project, u)
     t = _tugas(project, u)
     _tutup(t, grup)
-    hasil = _jalan()
+    hasil = _jalan(include_closed=False)
     assert _hidup(t) == []
     assert hasil["dilewati"]["sudah_selesai"] == 1 and hasil["diisi"] == 0
     assert "sudah_selesai=1" in ringkas(hasil)
-    hasil = _jalan(include_closed=True)
+    hasil = _jalan()
     assert _hidup(t) == [u.id]
     assert hasil["dilewati"]["sudah_selesai"] == 0 and hasil["diisi"] == 1
 
 
 @pytest.mark.django_db
-def test_perintah_termasuk_selesai(project):
+def test_perintah_hanya_terbuka(project):
     u = _user("a")
     _anggota(project, u)
     t = _tugas(project, u)
     _tutup(t, "completed")
-    call_command("isi_assignee_staf", "--apply", stdout=StringIO())
+    call_command("isi_assignee_staf", "--apply", "--hanya-terbuka", stdout=StringIO())
     assert _hidup(t) == []
-    call_command("isi_assignee_staf", "--apply", "--termasuk-selesai", stdout=StringIO())
+    call_command("isi_assignee_staf", "--apply", stdout=StringIO())
     assert _hidup(t) == [u.id]
 
 

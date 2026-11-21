@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-"""`python manage.py isi_assignee_staf [--apply] [--termasuk-selesai]`
+"""`python manage.py isi_assignee_staf [--apply] [--hanya-terbuka]`
 
 Tugas buatan staf yang belum punya assignee diberi assignee: pembuatnya. Logikanya
 sama dengan migrasi 0186 (satu fungsi di `plane.utils.isi_assignee_staf`, aturan
@@ -23,15 +23,15 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--apply", action="store_true", help="Write the assignees. Without it nothing is written.")
         parser.add_argument(
-            "--termasuk-selesai",
+            "--hanya-terbuka",
             action="store_true",
-            help="Also fill completed and cancelled work items (skipped by default: it shifts KPI and workload numbers).",
+            help="Skip completed and cancelled work items (they are filled by default and that shifts KPI and workload numbers).",
         )
         parser.add_argument("--dry-run", action="store_true", help="Count only (the default). Wins over --apply.")
 
     def handle(self, *args, **options):
         tulis = options["apply"] and not options["dry_run"]
-        hasil = isi_assignee_staf(apps.get_model, apply=tulis, include_closed=options["termasuk_selesai"])
+        hasil = isi_assignee_staf(apps.get_model, apply=tulis, include_closed=not options["hanya_terbuka"])
         self.stdout.write(ringkas(hasil))
         if tulis:
             self.stdout.write(self.style.SUCCESS("Done."))

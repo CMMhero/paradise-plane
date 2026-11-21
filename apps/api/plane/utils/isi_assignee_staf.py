@@ -16,8 +16,9 @@ Aturan pilih, semuanya harus benar:
   projectnya hidup dan tidak diarsipkan (sama dengan `Issue.issue_objects`);
 - tidak pernah punya baris `IssueAssignee` sama sekali, hidup maupun soft-delete
   (assignee yang sengaja dicopot tidak boleh dipasang lagi);
-- masih terbuka: grup state bukan completed/cancelled, kecuali `include_closed=True`
-  (mengisi tugas yang sudah selesai akan menggeser angka KPI dan beban kerja);
+- state apa pun, termasuk completed/cancelled (keputusan pemilik: tugas selesai ikut diisi;
+  `include_closed=False` membatasi ke yang masih terbuka, karena mengisi tugas selesai
+  menggeser angka KPI dan beban kerja);
 - punya pembuat, dan pembuat itu user aktif bukan bot;
 - pembuat itu staf: jenjang tertingginya di workspace tugas itu di bawah Leader,
   atau tidak punya baris `JabatanOrganisasi` hidup sama sekali (sama dengan
@@ -40,7 +41,7 @@ ALASAN = ("sudah_selesai", "pembuat_nonaktif", "bukan_staf", "bukan_anggota_proj
 _GRUP_TUTUP = ("completed", "cancelled")
 
 
-def isi_assignee_staf(get_model, *, apply: bool, batch: int = BATCH, include_closed: bool = False) -> dict:
+def isi_assignee_staf(get_model, *, apply: bool, batch: int = BATCH, include_closed: bool = True) -> dict:
     """Kembalikan {"diperiksa", "diisi", "dilewati": {alasan: n}}. Dengan `apply=False` tidak menulis apa pun.
 
     `diisi` pada dry-run adalah jumlah yang AKAN diisi.
