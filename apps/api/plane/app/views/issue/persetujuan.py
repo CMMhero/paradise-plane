@@ -94,6 +94,36 @@ def _aturan_tugas():
     }
 
 
+def _hak_ubah_saya(user, project, admin_penuh, tingkat):
+    """Hak ubah per orang dari aturan God Mode area B, untuk dicerminkan klien.
+
+    Dihitung di server supaya klien tidak menghitung ulang izin dari nilai aturan.
+    Sama dengan `galat_ubah_tugas` (staf = bukan admin dan di bawah Leader),
+    `galat_percakapan_tugas`, dan `hak_buka_kembali`.
+    """
+    from plane.db.models import TINGKAT_LEADER  # noqa: PLC0415
+    from plane.utils import aturan  # noqa: PLC0415
+    from plane.utils.aturan.area_tugas import (  # noqa: PLC0415
+        KOMENTAR_SEMUA_ANGGOTA,
+        TASK_COMMENT_RULE,
+        TASK_EDIT_RULE,
+        TASK_FIELDS_LOCKED_FOR_STAFF,
+        TASK_FIELDS_OPEN_TO_MEMBERS,
+        UBAH_SEMUA_ANGGOTA,
+    )
+    from plane.utils.kunci_selesai import hak_buka_kembali  # noqa: PLC0415
+
+    staf = not admin_penuh and (tingkat is None or tingkat < TINGKAT_LEADER)
+    terkunci = list(aturan.get_list(TASK_FIELDS_LOCKED_FOR_STAFF)) if staf else []
+    return {
+        "ubah_semua_tugas": aturan.get_choice(TASK_EDIT_RULE) == UBAH_SEMUA_ANGGOTA,
+        "komentar_semua_tugas": aturan.get_choice(TASK_COMMENT_RULE) == KOMENTAR_SEMUA_ANGGOTA,
+        "bidang_terkunci": terkunci,
+        "bidang_terbuka": [k for k in aturan.get_list(TASK_FIELDS_OPEN_TO_MEMBERS) if k not in terkunci],
+        "buka_kembali": hak_buka_kembali(user, project.workspace_id, project.id),
+    }
+
+
 def _q_daftar(user):
     """Baris milik saya (apa pun statusnya) ATAU yang masih menunggu keputusan."""
     return Q(pemohon=user) | Q(status=STATUS_PERSETUJUAN_MENUNGGU)
@@ -274,8 +304,8 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         from plane.utils.hierarki import (  # noqa: PLC0415
             _bawahan_ids,
             aturan_staf_berlaku,
-            ditempatkan_ids,
             gerbang_aktif,
+            tempat_penerima,
             tingkat_anggota,
         )
         from plane.db.superadmin import is_super_admin  # noqa: PLC0415
@@ -288,8 +318,9 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
         saya = request.user.id
         from plane.utils.hierarki import adalah_admin_penuh  # noqa: PLC0415
 
-        # None = tanpa batas penempatan (struktur belum aktif / project tanpa departemen).
-        tempat = ditempatkan_ids(project.workspace_id, project_id)
+        # None = tanpa batas penempatan (struktur belum aktif / project tanpa departemen,
+        # atau ASSIGNEE_MUST_BE_PLACED dimatikan di God Mode).
+        tempat = tempat_penerima(project.workspace_id, project_id)
 
         def tanpa_atasan(ids):
             return ids - atasan_di_antara(request.user, project.workspace_id, project_id, ids)
@@ -304,6 +335,8 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             return tanpa_atasan(ids if tempat is None else ids & tempat)
 
         admin_penuh = is_super_admin(request.user) or adalah_admin_penuh(request.user, project.workspace_id)
+        tingkat = tingkat_anggota(saya, project.workspace_id, project.id)
+        hak = _hak_ubah_saya(request.user, project, admin_penuh, tingkat)
         # Admin yang ditempatkan sebagai Staf di departemen project ini memakai daftar
         # staf (keputusan 7, P29), sama dengan `galat_penugasan`; hak ubahnya tetap admin.
         if not gerbang_aktif() or (
@@ -313,7 +346,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
             return Response(
                 {
                     "mode": "semua",
-                    "tingkat_saya": tingkat_anggota(saya, project.workspace_id, project.id),
+                    "tingkat_saya": tingkat,
                     "user_ids": [str(u) for u in anggota],
                     # Klien memakai dua kunci ini untuk mencerminkan `galat_ubah_tugas`:
                     # gerbang mati = tidak ada kunci edit; Super Admin dibaca klien sendiri.
@@ -322,6 +355,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     # komentar, reaksi), walau tidak boleh DITUGASKAN tanpa penempatan.
                     "admin_penuh": admin_penuh,
                     "aturan": _aturan_tugas(),
+                    **hak,
                     # Katup mati tidak melepas kunci tugas selesai (P29): klien tetap
                     # butuh bawahan untuk tahu siapa yang boleh membukanya kembali.
                     "bawahan_ids": (
@@ -330,7 +364,6 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 }
             )
 
-        tingkat = tingkat_anggota(saya, project.workspace_id, project.id)
         if tingkat is not None and tingkat >= TINGKAT_DIREKTUR:
             anggota = anggota_sah()
             return Response(
@@ -341,6 +374,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "admin_penuh": False,
                     "gerbang_aktif": True,
                     "aturan": _aturan_tugas(),
+                    **hak,
                     # Hak UBAH direktur tetap "assignee-nya bawahan saya" (`galat_ubah_tugas`),
                     # lebih sempit daripada hak menugaskan "semua anggota".
                     "bawahan_ids": [str(u) for u in _bawahan_ids(saya, project.workspace_id, project_id)],
@@ -381,6 +415,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                     "gerbang_aktif": True,
                     "admin_penuh": False,
                     "aturan": _aturan_tugas(),
+                    **hak,
                     # Tanpa saringan anggota project: sama persis dengan yang dibaca `galat_ubah_tugas`.
                     "bawahan_ids": [str(u) for u in bawahan],
                     "users": [
@@ -410,6 +445,7 @@ class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
                 "gerbang_aktif": True,
                 "admin_penuh": admin_penuh,
                 "aturan": _aturan_tugas(),
+                **hak,
                 # Rekan boleh DIAJAK, bukan disunting tugasnya: staf hanya mengubah tugas yang melibatkan dirinya.
                 "bawahan_ids": [],
                 "users": [
@@ -647,18 +683,22 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         """Tolak: kembalikan tugas ke In Progress supaya staf mengerjakannya lagi.
 
         KEP-55 (keputusan user 2 Nov 2026, "if rejected return to in progress"):
-        tujuannya status `started` pertama project, apa pun status asalnya. Kalau
-        project tidak punya status `started`, jatuh ke `state_sebelumnya`, lalu
-        status bawaan. Tugas yang sudah di `started` atau dibatalkan dibiarkan.
+        tujuannya status pertama grup REJECT_TARGET_STATE_GROUP (God Mode, bawaan
+        `started`), apa pun status asalnya. Kalau project tidak punya status grup
+        itu, jatuh ke `state_sebelumnya`, lalu status bawaan. Tugas yang sudah di
+        grup itu atau dibatalkan dibiarkan.
         """
         from plane.db.models import Issue, State  # noqa: PLC0415
+        from plane.utils import aturan  # noqa: PLC0415
+        from plane.utils.aturan.area_tugas import REJECT_TARGET_STATE_GROUP  # noqa: PLC0415
 
+        grup = aturan.get_choice(REJECT_TARGET_STATE_GROUP)
         issue = Issue.objects.filter(pk=baris.issue_id).select_related("state").first()
-        if issue is None or (issue.state is not None and issue.state.group in ("started", "cancelled")):
+        if issue is None or (issue.state is not None and issue.state.group in (grup, "cancelled")):
             return
         dasar = State.objects.filter(project_id=baris.project_id)
         tujuan = (
-            dasar.filter(group="started").order_by("sequence").first()
+            dasar.filter(group=grup).order_by("sequence").first()
             or dasar.filter(pk=baris.state_sebelumnya_id).exclude(group="completed").first()
             or dasar.exclude(group__in=["completed", "cancelled"]).filter(default=True).first()
         )

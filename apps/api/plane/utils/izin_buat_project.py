@@ -9,8 +9,8 @@ Permintaan user: member biasa / staf TIDAK boleh membuat project baru. Yang bole
 
     Super Admin (God Mode)            selalu
     Admin workspace (role 20)         selalu
-    Member workspace (role 15)        hanya kalau jenjangnya Supervisor ke atas
-                                      (pimpinan departemen, manager divisi, direktur)
+    Member workspace (role 15)        hanya kalau jenjangnya PROJECT_CREATE_MIN_LEVEL
+                                      ke atas (God Mode, bawaan Supervisor)
     Guest (role 5) / bukan anggota    tidak pernah
 
 Jenjang dibaca lewat `tingkat_efektif`: orang tanpa baris jabatan dihitung STAF,
@@ -22,8 +22,11 @@ Kalau aturan ini berubah, ubah di sini saja.
 """
 
 # Module imports
-from plane.db.models import TINGKAT_SUPERVISOR, WorkspaceMember
+from plane.db.models import WorkspaceMember
 from plane.db.superadmin import is_super_admin
+from plane.utils import aturan
+from plane.utils.aturan.area_tugas import PROJECT_CREATE_MIN_LEVEL
+from plane.utils.aturan.jenis import NAMA_TINGKAT
 from plane.utils.hierarki import tingkat_efektif
 
 PERAN_ADMIN_WORKSPACE = 20
@@ -31,7 +34,11 @@ PERAN_MEMBER_WORKSPACE = 15
 
 PESAN_DEPARTEMEN_DI_GODMODE = "Departments are created in God Mode."
 
-PESAN_TOLAK_BUAT_PROJECT = "Only workspace admins and leaders (supervisor and above) can create projects."
+
+def pesan_tolak_buat_project() -> str:
+    """Pesan 403 yang menyebut jenjang terendah yang berlaku sekarang."""
+    nama = NAMA_TINGKAT[aturan.get_int(PROJECT_CREATE_MIN_LEVEL)]
+    return f"Only workspace admins and members at {nama} level and above can create projects."
 
 
 def boleh_buat_project(user, workspace_id) -> bool:
@@ -49,4 +56,4 @@ def boleh_buat_project(user, workspace_id) -> bool:
         return False
     if peran >= PERAN_ADMIN_WORKSPACE:
         return True
-    return tingkat_efektif(user.id, workspace_id) >= TINGKAT_SUPERVISOR
+    return tingkat_efektif(user.id, workspace_id) >= aturan.get_int(PROJECT_CREATE_MIN_LEVEL)
