@@ -56,8 +56,10 @@ from plane.utils.email_merek import (
 # Bawaan DIGEST_LOOKAHEAD_DAYS. Nilai yang berlaku dibaca task tiap putaran.
 HARI_KE_DEPAN = 7
 # Orang dengan 80 tugas terlambat butuh tahu angkanya, bukan 80 baris.
+# Bawaan DIGEST_PERSONAL_ROW_CAP; nilai yang berlaku dibawa `Ringkasan.batas_baris`.
 BATAS_BARIS = 15
 # Per project di bagian tim. Direktur bisa melihat 30+ project sekaligus.
+# Bawaan DIGEST_TEAM_ROW_CAP; nilai yang berlaku dibawa `Ringkasan.batas_baris_tim`.
 BATAS_BARIS_TIM = 5
 
 MERAH, JINGGA, GELAP, ABU, HIJAU = WARNA["bahaya"], WARNA["peringatan"], WARNA["teks"], WARNA["teks_3"], WARNA["sukses"]
@@ -226,6 +228,9 @@ class Ringkasan:
     sore: bool = False
     # Lebar jendela "depan" dalam hari. Pagi 7; sore sampai hari kerja berikutnya.
     hari_ke_depan: int = HARI_KE_DEPAN
+    # Baris per daftar (God Mode DIGEST_PERSONAL_ROW_CAP / DIGEST_TEAM_ROW_CAP).
+    batas_baris: int = BATAS_BARIS
+    batas_baris_tim: int = BATAS_BARIS_TIM
 
     def __bool__(self):
         return bool(self.sendiri or self.diberikan or any(g.tugas for g in self.tim))
@@ -317,13 +322,17 @@ def _daftar_teks(judul, daftar, hari_ini, batas=BATAS_BARIS, ringkasan=None, bah
     return baris + [""]
 
 
-def _kelompok_teks(kelompok, hari_ini, label, ringkasan=None, bahasa="id"):
+def _kelompok_teks(kelompok, hari_ini, label, ringkasan=None, bahasa="id", batas=BATAS_BARIS):
     s = _t(bahasa)
+
+    def daftar(judul, isi):
+        return _daftar_teks(judul, isi, hari_ini, batas, ringkasan, bahasa)
+
     return (
-        _daftar_teks(s["selesai_hari_ini"].upper(), kelompok.selesai, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
-        + _daftar_teks(s["terlambat"].upper(), kelompok.lewat, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
-        + _daftar_teks(label.hari.upper(), kelompok.hari, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
-        + _daftar_teks(label.depan.upper(), kelompok.depan, hari_ini, ringkasan=ringkasan, bahasa=bahasa)
+        daftar(s["selesai_hari_ini"].upper(), kelompok.selesai)
+        + daftar(s["terlambat"].upper(), kelompok.lewat)
+        + daftar(label.hari.upper(), kelompok.hari)
+        + daftar(label.depan.upper(), kelompok.depan)
     )
 
 
@@ -348,10 +357,11 @@ def _tim_teks(ringkasan, hari_ini, label, bahasa="id"):
         )
         perlu = t.lewat + t.hari
         baris += [
-            _baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan, bahasa), bahasa) for i in perlu[:BATAS_BARIS_TIM]
+            _baris_teks(i, hari_ini, _nama_penanggung(i, ringkasan, bahasa), bahasa)
+            for i in perlu[: ringkasan.batas_baris_tim]
         ]
-        if len(perlu) > BATAS_BARIS_TIM:
-            baris.append("  ... " + s["lainnya"].format(n=len(perlu) - BATAS_BARIS_TIM))
+        if len(perlu) > ringkasan.batas_baris_tim:
+            baris.append("  ... " + s["lainnya"].format(n=len(perlu) - ringkasan.batas_baris_tim))
         baris.append("")
     return baris
 
@@ -386,24 +396,28 @@ def _daftar_tugas_html(daftar, hari_ini, batas, ringkasan=None, bahasa="id"):
     return daftar_tugas(baris, lain)
 
 
-def _daftar_html(judul, daftar, hari_ini, warna, ringkasan=None, bahasa="id"):
+def _daftar_html(judul, daftar, hari_ini, warna, ringkasan=None, bahasa="id", batas=BATAS_BARIS):
     if not daftar:
         return ""
     return label_daftar(f"{judul} ({len(daftar)})", warna) + _daftar_tugas_html(
-        daftar, hari_ini, BATAS_BARIS, ringkasan, bahasa
+        daftar, hari_ini, batas, ringkasan, bahasa
     )
 
 
-def _kelompok_html(judul, kelompok, hari_ini, label, ringkasan=None, bahasa="id"):
+def _kelompok_html(judul, kelompok, hari_ini, label, ringkasan=None, bahasa="id", batas=BATAS_BARIS):
     if not kelompok:
         return ""
     s = _t(bahasa)
+
+    def daftar(nama, isi, warna):
+        return _daftar_html(nama, isi, hari_ini, warna, ringkasan, bahasa, batas)
+
     return (
         judul_bagian(judul)
-        + _daftar_html(s["selesai_hari_ini"], kelompok.selesai, hari_ini, HIJAU, ringkasan, bahasa)
-        + _daftar_html(s["terlambat"], kelompok.lewat, hari_ini, MERAH, ringkasan, bahasa)
-        + _daftar_html(label.hari, kelompok.hari, hari_ini, JINGGA, ringkasan, bahasa)
-        + _daftar_html(label.depan, kelompok.depan, hari_ini, GELAP, ringkasan, bahasa)
+        + daftar(s["selesai_hari_ini"], kelompok.selesai, HIJAU)
+        + daftar(s["terlambat"], kelompok.lewat, MERAH)
+        + daftar(label.hari, kelompok.hari, JINGGA)
+        + daftar(label.depan, kelompok.depan, GELAP)
     )
 
 
@@ -430,7 +444,7 @@ def _tim_html(ringkasan, hari_ini, label, bahasa="id"):
         perlu = g.tugas.lewat + g.tugas.hari
         if perlu:
             rinci += label_daftar(g.nama, huruf_besar=False) + _daftar_tugas_html(
-                perlu, hari_ini, BATAS_BARIS_TIM, ringkasan, bahasa
+                perlu, hari_ini, ringkasan.batas_baris_tim, ringkasan, bahasa
             )
     judul = judul_bagian(terjemah_data(ringkasan.judul_tim, bahasa))
     return judul + tabel_angka(s["kolom_project"], kolom, baris) + rinci
@@ -487,11 +501,11 @@ def susun_email(penerima, ringkasan, hari_ini, bahasa="id"):
 
     teks = [sapaan, "", f"{judul}, {tgl} ({peran}).", ""]
     teks += [f"== {s['tugas_anda'].upper()} ==", ""] + (
-        _kelompok_teks(k, hari_ini, label, bahasa=bahasa) or [kosong, ""]
+        _kelompok_teks(k, hari_ini, label, bahasa=bahasa, batas=ringkasan.batas_baris) or [kosong, ""]
     )
     if ringkasan.diberikan:
         teks += [f"== {s['diberikan'].upper()} ==", ""] + _kelompok_teks(
-            ringkasan.diberikan, hari_ini, label, ringkasan, bahasa
+            ringkasan.diberikan, hari_ini, label, ringkasan, bahasa, ringkasan.batas_baris
         )
     teks += _tim_teks(ringkasan, hari_ini, label, bahasa)
     teks.append(s["kaki_teks"].format(merek=MEREK))
@@ -506,10 +520,12 @@ def susun_email(penerima, ringkasan, hari_ini, bahasa="id"):
         judul_html(f"{judul}, {tgl}")
         + sapaan_html(sapaan, peran)
         + (
-            _kelompok_html(s["tugas_anda"], k, hari_ini, label, bahasa=bahasa)
+            _kelompok_html(s["tugas_anda"], k, hari_ini, label, bahasa=bahasa, batas=ringkasan.batas_baris)
             or judul_bagian(s["tugas_anda"]) + paragraf(kosong, WARNA["teks_2"], UKURAN["isi_2"], jarak=RUANG["blok"])
         )
-        + _kelompok_html(s["diberikan"], ringkasan.diberikan, hari_ini, label, ringkasan, bahasa)
+        + _kelompok_html(
+            s["diberikan"], ringkasan.diberikan, hari_ini, label, ringkasan, bahasa, ringkasan.batas_baris
+        )
         + _tim_html(ringkasan, hari_ini, label, bahasa)
         + tombol(s["tombol"], f"{url}/{slug}/" if url and slug else url)
     )

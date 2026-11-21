@@ -42,7 +42,6 @@ from plane.bgtasks.direktur_digest_email import Angka, DivisiLaporan, Laporan, U
 from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
     TINGKAT_MANAGER,
-    TINGKAT_SEKRETARIS,
     TINGKAT_SUPERVISOR,
     DepartemenProject,
     Issue,
@@ -52,6 +51,8 @@ from plane.db.models import (
     STATUS_PERSETUJUAN_DISETUJUI,
     Workspace,
 )
+from plane.utils import aturan
+from plane.utils.aturan.area_notifikasi import DIRECTOR_REPORT_ATTENTION_UNITS, DIRECTOR_REPORT_RECIPIENTS
 from plane.utils.exception_logger import log_exception
 from plane.utils.hierarki import divisi_diawasi
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
@@ -194,14 +195,25 @@ def susun_laporan(data, pids, jendela):
             key=lambda k: (k == TANPA_DIVISI, cabang_dari[k], -per_divisi[k].angka.lewat, per_divisi[k].nama),
         )
     ]
-    return Laporan(divisi=urut, jendela=jendela, hari_macet=data.hari_macet, hari_ke_depan=data.hari_ke_depan)
+    return Laporan(
+        divisi=urut,
+        jendela=jendela,
+        hari_macet=data.hari_macet,
+        hari_ke_depan=data.hari_ke_depan,
+        batas_perhatian=aturan.get_int(DIRECTOR_REPORT_ATTENTION_UNITS),
+    )
 
 
 def direktur_workspace():
-    """{workspace_id: [User]} direktur dan sekretaris aktif (KEP-101), satu kali per orang per workspace."""
+    """{workspace_id: [User]} penerima laporan, satu kali per orang per workspace.
+
+    Bawaan direktur dan sekretaris (KEP-101); jenjang penerimanya diatur di God Mode
+    (DIRECTOR_REPORT_RECIPIENTS). Laporan tiap orang tetap dibatasi `divisi_diawasi`.
+    """
+    jenjang = [int(t) for t in aturan.get_list(DIRECTOR_REPORT_RECIPIENTS)]
     hasil = defaultdict(dict)
     for j in JabatanOrganisasi.objects.filter(
-        tingkat__gte=TINGKAT_SEKRETARIS, member__is_active=True, member__is_bot=False
+        tingkat__in=jenjang, member__is_active=True, member__is_bot=False
     ).select_related("member"):
         hasil[j.workspace_id][j.member_id] = j.member
     return {ws: list(orang.values()) for ws, orang in hasil.items()}

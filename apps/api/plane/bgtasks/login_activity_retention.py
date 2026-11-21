@@ -8,7 +8,8 @@ Permintaan kantor: riwayat bisa ditelusuri mundur sampai 3 bulan, dan **sebelum
 data tertua hilang**, God Mode memberi peringatan dan super admin dikirimi
 email.
 
-Peringatannya sengaja muncul beberapa hari di depan (AMBANG_PERINGATAN_HARI),
+Peringatannya sengaja muncul beberapa hari di depan (God Mode, aturan
+LOGIN_RETENTION_WARNING_DAYS, bawaan 7),
 bukan pada hari penghapusan. Pemberitahuan yang datang bersamaan dengan
 hilangnya data tidak memberi siapa pun kesempatan mengekspornya.
 """
@@ -26,6 +27,8 @@ from celery import shared_task
 
 # Module imports
 from plane.db.models import LoginActivity
+from plane.utils import aturan
+from plane.utils.aturan.area_notifikasi import LOGIN_RETENTION_WARNING_DAYS
 from plane.license.models import InstanceAdmin
 from plane.license.utils.instance_value import email_aktif, get_email_configuration
 from plane.utils.email_merek import (
@@ -48,9 +51,6 @@ from plane.utils.saklar_instance import (
 )
 
 logger = logging.getLogger("plane.worker")
-
-# Berapa hari sebelum penghapusan peringatan mulai muncul.
-AMBANG_PERINGATAN_HARI = 7
 
 # Peringatan terus benar selama ada data yang akan dibuang, dan itu keadaan tetap
 # sesudah bulan ketiga: tiap hari ada baris yang masuk jendela 7 hari. Email
@@ -78,7 +78,9 @@ def hitung_peringatan():
     sekarang = timezone.now()
     retensi = setelan_angka(LOGIN_HISTORY_RETENTION_DAYS)
     batas_hapus = sekarang - timedelta(days=retensi)
-    batas_peringatan = batas_hapus + timedelta(days=AMBANG_PERINGATAN_HARI)
+    # Berapa hari sebelum penghapusan peringatan mulai muncul.
+    ambang = aturan.get_int(LOGIN_RETENTION_WARNING_DAYS)
+    batas_peringatan = batas_hapus + timedelta(days=ambang)
 
     tertua = LoginActivity.objects.order_by("terjadi_pada").values_list("terjadi_pada", flat=True).first()
     akan_dibuang = LoginActivity.objects.filter(terjadi_pada__lt=batas_peringatan).count()
@@ -90,7 +92,7 @@ def hitung_peringatan():
 
     return {
         "retensi_hari": retensi,
-        "ambang_peringatan_hari": AMBANG_PERINGATAN_HARI,
+        "ambang_peringatan_hari": ambang,
         "tertua": tertua,
         "sisa_hari": sisa_hari,
         "akan_dibuang": akan_dibuang,

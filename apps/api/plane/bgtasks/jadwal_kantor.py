@@ -13,7 +13,8 @@ crontab tetap tidak cukup: beat hanya mendetakkan `jalankan_jadwal_kantor` tiap
 Aturan satu slot:
 
 - jatuh tempo kalau jam kantor sekarang (OFFICE_TIMEZONE) >= jam slot, pada hari
-  yang diizinkan (DIGEST_WEEKDAYS untuk ringkasan; pengingat tenggat tiap hari);
+  yang diizinkan (DIGEST_WEEKDAYS untuk ringkasan; DEADLINE_REMINDER_WEEKDAYS untuk
+  pengingat tenggat, bawaan tiap hari);
 - paling banyak sekali per tanggal kantor. Penandanya baris `JadwalTerlaksana`
   dengan kunci unik (slot, tanggal) di database, jadi detak ganda, dua worker,
   atau worker yang dimulai ulang tidak membuat kiriman ganda;
@@ -42,6 +43,8 @@ from django.utils import timezone
 from kombu.utils.imports import symbol_by_name
 
 from plane.db.models import JadwalTerlaksana
+from plane.utils import aturan
+from plane.utils.aturan.area_notifikasi import DEADLINE_REMINDER_WEEKDAYS
 from plane.utils.exception_logger import log_exception
 from plane.utils.setelan_instance import (
     DEADLINE_REMINDER_TIME,
@@ -63,14 +66,21 @@ class Slot:
     kunci_jam: str
     # Path task Celery yang menerima `tanggal` (ISO, tanggal kantor).
     task: str
-    # Kunci weekday_set yang membatasi hari kirim. None = tiap hari.
+    # Kunci weekday_set (registri lama) yang membatasi hari kirim. None = tiap hari.
     kunci_hari: str | None = None
+    # Sama, tapi kunci aturan registri baru (list_of_keys berisi hari ISO "1".."7").
+    aturan_hari: str | None = None
 
 
 SLOT = (
-    # Tiap hari, termasuk akhir pekan, seperti crontab lamanya: tenggat Sabtu
-    # tetap perlu diingatkan.
-    Slot("pengingat-tenggat", DEADLINE_REMINDER_TIME, "plane.bgtasks.deadline_reminder_task.kirim_pengingat_tenggat"),
+    # Bawaan tiap hari, termasuk akhir pekan, seperti crontab lamanya: tenggat Sabtu
+    # tetap perlu diingatkan. Hari yang dikeluarkan di God Mode tidak disusulkan.
+    Slot(
+        "pengingat-tenggat",
+        DEADLINE_REMINDER_TIME,
+        "plane.bgtasks.deadline_reminder_task.kirim_pengingat_tenggat",
+        aturan_hari=DEADLINE_REMINDER_WEEKDAYS,
+    ),
     Slot(
         "ringkasan-pagi", DIGEST_MORNING_TIME, "plane.bgtasks.daily_digest_task.kirim_ringkasan_harian", DIGEST_WEEKDAYS
     ),
@@ -98,6 +108,8 @@ def slot_jatuh_tempo(sekarang: datetime) -> tuple[date, list[Slot]]:
     hasil = []
     for slot in SLOT:
         if slot.kunci_hari and hari not in setelan_hari_kerja(slot.kunci_hari):
+            continue
+        if slot.aturan_hari and str(hari) not in aturan.get_list(slot.aturan_hari):
             continue
         if jam >= setelan_jam(slot.kunci_jam):
             hasil.append(slot)
