@@ -23,7 +23,8 @@ export class InboxIssueService extends APIService {
     })
       .then((response) => response?.data)
       .catch((error) => {
-        throw error?.response?.data;
+        // Status HTTP ikut dibawa: halaman Intake menampilkan pesan per jenis galat.
+        throw { ...error?.response?.data, status_code: error?.response?.status };
       });
   }
 
