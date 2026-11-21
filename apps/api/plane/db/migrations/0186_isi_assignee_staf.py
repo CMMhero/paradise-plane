@@ -16,7 +16,7 @@ from django.db import migrations
 from plane.utils.isi_assignee_staf import isi_assignee_staf, ringkas
 
 # Satu-satunya tempat yang diubah saat digabung dengan cabang yang membawa 0185.
-MIGRASI_SEBELUMNYA = "0184_cabang"
+MIGRASI_SEBELUMNYA = "0185_intake_bawaan"
 
 
 def _isi(apps, schema_editor):
