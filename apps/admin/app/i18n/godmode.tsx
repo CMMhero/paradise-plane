@@ -655,6 +655,7 @@ const en = {
       persetujuan: "Approvals",
       tugas_lintas_divisi: "Department requests",
       chat: "Chat",
+      pengumuman: "Announcements",
       wiki: "Wiki",
       archives: "Archives",
     } satisfies Record<TNavItemKey, string>,

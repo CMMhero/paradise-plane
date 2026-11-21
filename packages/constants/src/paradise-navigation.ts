@@ -160,6 +160,7 @@ export const PARADISE_NAV_PREFERENCE_KEYS = {
     "persetujuan",
     "tugas_lintas_divisi",
     "chat",
+    "pengumuman",
     "wiki",
     "archives",
   ],

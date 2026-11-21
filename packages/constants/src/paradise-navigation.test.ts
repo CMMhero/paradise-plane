@@ -82,6 +82,11 @@ describe("PARADISE_NAV_ITEMS", () => {
     expect(paradise).toEqual(PARADISE_NAV_ITEMS.map((i) => i.key));
   });
 
+  it("tiap menu bisa disematkan, jadi Customize navigation menyimpan pilihannya", () => {
+    const workspace: readonly string[] = PARADISE_NAV_PREFERENCE_KEYS.workspace;
+    for (const item of PARADISE_NAV_ITEMS) expect(workspace, item.key).toContain(item.key);
+  });
+
   it("id perintah Power K unik", () => {
     const ids = PARADISE_NAV_ITEMS.flatMap((i) => ("palette" in i ? [i.palette.id] : []));
     expect(new Set(ids).size).toBe(ids.length);
