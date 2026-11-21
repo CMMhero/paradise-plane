@@ -99,9 +99,10 @@ def nomor_tugas(intake_issue, tujuan_project):
 def serialize_permintaan(p, boleh_buka_tujuan, arah=ARAH_KELUAR):
     """Satu baris permintaan, bentuk yang dilihat peminta dan atasan departemen tujuan.
 
-    `judul` dan `catatan` ditulis peminta sendiri. `catatan` hanya dikembalikan
-    ke peminta (arah keluar): sesuai model, catatan sengaja tidak diperlihatkan
-    ke divisi tujuan, termasuk atasannya. `nomor_tugas`,
+    `judul` dan `catatan` ditulis peminta sendiri. `catatan` ikut
+    dikembalikan di dua arah: ke peminta (keluar) dan ke atasan departemen
+    tujuan (masuk), sesuai teks formulir "terlihat divisi tujuan". Pemilihan
+    baris ada di view, jadi orang lain tidak pernah sampai ke sini. `nomor_tugas`,
     `status_permintaan`, `status_tugas`, dan alasan tolak adalah satu-satunya hal
     yang menyeberang dari project tujuan, dan semuanya sengaja kasar.
 
@@ -138,7 +139,6 @@ def serialize_permintaan(p, boleh_buka_tujuan, arah=ARAH_KELUAR):
         "arah": arah,
         # Nama peminta sudah terlihat atasan tujuan di Intake (`extra.crossdiv.peminta`).
         "peminta": p.diminta_oleh.display_name or p.diminta_oleh.email,
+        "catatan": p.catatan or "",
     }
-    if arah == ARAH_KELUAR:
-        hasil["catatan"] = p.catatan or ""
     return hasil

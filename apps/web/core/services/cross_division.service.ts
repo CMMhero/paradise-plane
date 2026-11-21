@@ -27,7 +27,7 @@ export type TStatusTugas = "belum_diterima" | "terbuka" | "selesai" | "dibatalka
 export type TPermintaanLintasDivisi = {
   id: string;
   dibuat_pada: string;
-  /** Hanya ada di baris `keluar`; permintaan masuk tidak membawa catatan peminta. */
+  /** Catatan peminta; terlihat peminta (`keluar`) dan atasan departemen tujuan (`masuk`). */
   catatan?: string;
   asal: TDivisiLintasDivisi;
   tujuan: TDivisiLintasDivisi;

@@ -6,6 +6,72 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ---
 
+## 2026-11-21
+
+### Versi 2.11.0
+
+- **Naik 2.10.0 ke 2.11.0, minor.** Banyak perubahan yang terlihat dan dua
+  migrasi data (0185, 0186), ditambah satu perintah operator untuk memecah
+  Plant Cilegon. Akun lama tetap jalan. Langkah operator:
+  - Jalankan migrasi. **0185 menyalakan Intake di semua project** (termasuk
+    yang sengaja dimatikan admin) dan membuat kotak masuk bawaannya.
+    **0186 mengisi assignee tugas buatan staf yang masih kosong dengan
+    pembuatnya**, termasuk tugas selesai dan batal, kecuali tugas yang pernah
+    punya assignee. Angka KPI dan beban kerja masa lalu bisa bergeser.
+    Pratinjau dulu dengan `python manage.py isi_assignee_staf` (dry run).
+  - Pecah Plant Cilegon: `pecah_divisi`, rencananya di
+    `paradise/rencana/pecah-plant-cilegon.json` (tujuh divisi menurut bagan
+    organisasi). **Ambil cadangan database dulu**, jalankan dry run, baru
+    `--apply`. Perintah ini tidak jalan otomatis saat deploy.
+- **Intake dan Permintaan antar departemen.** Departemen yang dibuat di God
+  Mode tidak pernah dapat kotak Intake, jadi daftar Intake gagal dengan
+  "Intake not found" dan daftar tujuan permintaan kosong. Kotak Intake kini
+  dibuat di semua jalur pembuatan project dan dibuat ulang kalau hilang. Daftar
+  tujuan hanya berisi project yang dipetakan ke departemen, Intake menyala,
+  bukan arsip, bukan Wiki, dan tamu tidak bisa melihatnya. Supervisor dan
+  manajer departemen tujuan melihat permintaan masuk, lengkap dengan catatan
+  pengirim. Halaman Intake menjelaskan penyebab galat (tak ada akses, Intake
+  mati, galat server).
+- **Pemecah divisi.** `pecah_divisi` membuat divisi baru di cabang yang sama,
+  memindahkan departemen (id dan papan kerja tetap), memasang manajer lewat
+  helper yang sama dengan God Mode, lalu menghapus divisi sumber yang kosong.
+  Folder wiki divisi lama dilepas (tidak dihapus). Tautan cepat bersama yang
+  hanya untuk divisi lama jadi tak terlihat siapa pun; judulnya dicetak.
+- **Direktur melihat Pekerjaan Anda lagi.** Arsip tetap tersembunyi.
+- **Menu Departemen bisa dimatikan.** Admin mematikannya untuk semua orang di
+  God Mode > Modules > Visibility, dan tiap anggota bisa menyembunyikannya
+  sendiri di Customize navigation. Pengumuman kini bisa disematkan dan
+  dilepas, dan tersemat bawaannya.
+- **Penampil gambar.** Gambar di deskripsi, komentar, lampiran tugas, dan
+  obrolan bisa dijelajahi dengan panah, tombol, atau geser, tanpa menutup
+  penampil. Komponen bersama `@plane/propel/image-gallery` menggantikan
+  lightbox editor.
+- **Ikon tautan cepat dari URL.** Server mengunduh gambar https (PNG, JPEG,
+  WebP, GIF, maksimal 150 KB, 8 detik) dan menyimpan salinannya sebagai data
+  URI. `emoji.url` kini harus https atau `data:image`.
+- **God Mode.** Retensi log API, webhook, dan email serta batas pratinjau Wiki
+  kini setelan God Mode. Satu registri menu (`paradise-navigation.ts`)
+  menurunkan sidebar, bawaan modul, Power-K, dan menu God Mode, dengan tes yang
+  gagal bila ada yang menyimpang. Tata letak organisasi: kartu statistik
+  membungkus, papan Levels dua baris, bagan mendukung cubit dua jari.
+- **HP.** Di bawah 768px ukuran teks naik satu tingkat dan tombol, tab, dan
+  kolom isian punya area ketuk 40 sampai 44px, di aplikasi dan di God Mode.
+  Notifikasi muncul di atas supaya tak menutup tombol Add dan Cancel.
+  Halaman Permintaan antar departemen, Pengumuman, dan Tautan cepat kini punya
+  judul halaman lewat `PageShell`.
+- **Perbaikan lain.** Teks `pengumuman_ui.title` dan `other` tampil mentah
+  karena kuncinya tak pernah ada; tes baru membandingkan semua kunci statis
+  dengan en dan id. Tamu tidak lagi diminta memilih departemen. Perintah Power-K
+  Pengumuman bernama "Go to announcements". Filter halaman Persetujuan tak
+  menimpa tombol di HP.
+- **Belum diuji di HP sungguhan atau build produksi.** Pengujian peramban
+  memakai Chromium pada salinan database dev. Pertanyaan terbuka: Pengumuman
+  yang dilepas dari Customize navigation tetap tampil di sidebar (menu
+  Paradise selalu tampil); sebaiknya tombol lepas disembunyikan atau
+  dihormati.
+
+---
+
 ## 2026-11-20
 
 ### Versi 2.10.0

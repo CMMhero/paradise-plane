@@ -347,20 +347,24 @@ class TestPermintaanMasukAtasan:
             assert baris[0]["tujuan"]["id"] == str(it_project.id)
 
     @pytest.mark.django_db
-    def test_catatan_tersembunyi_dari_atasan_tujuan_tapi_terlihat_peminta(
-        self, tender_client, workspace, tender_project, it_project
+    def test_catatan_terlihat_atasan_tujuan_dan_peminta_tapi_tidak_orang_lain(
+        self, tender_client, outsider_client, workspace, tender_project, it_project
     ):
         _, dep = _jadikan_departemen(workspace, it_project, "ITS")
         supervisor = _tempatkan(workspace, TINGKAT_SUPERVISOR, departemen=dep)
+        tamu = _buat_user("tamu-catatan")
+        WorkspaceMember.objects.create(workspace=workspace, member=tamu, role=5)
         _kirim(tender_client, workspace, tender_project, it_project, catatan="Nomor tender 123/PP/2026")
 
-        masuk = _baris(_klien(supervisor).get(URL_PERMINTAAN.format(slug=workspace.slug)))
-        keluar = _baris(tender_client.get(URL_PERMINTAAN.format(slug=workspace.slug)))
+        url = URL_PERMINTAAN.format(slug=workspace.slug)
+        masuk = _baris(_klien(supervisor).get(url))
+        keluar = _baris(tender_client.get(url))
 
         assert masuk[0]["arah"] == "masuk"
-        assert "catatan" not in masuk[0]
-        assert "123/PP/2026" not in str(masuk)
+        assert masuk[0]["catatan"] == "Nomor tender 123/PP/2026"
         assert keluar[0]["catatan"] == "Nomor tender 123/PP/2026"
+        for orang_luar in (outsider_client, _klien(tamu)):
+            assert "123/PP/2026" not in str(_baris(orang_luar.get(url)))
 
     @pytest.mark.django_db
     def test_staf_tujuan_dan_orang_luar_tidak_melihat_permintaan_masuk(

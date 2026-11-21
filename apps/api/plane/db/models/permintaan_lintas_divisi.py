@@ -70,8 +70,9 @@ class PermintaanLintasDivisi(BaseModel):
         on_delete=models.CASCADE,
     )
     # Keterangan tambahan dari peminta (mis. nomor tender, nama barang).
-    # Sengaja teks bebas dan BUKAN bagian judul: judul masuk ke papan divisi
-    # tujuan, sedangkan catatan ini tidak.
+    # Sengaja teks bebas dan BUKAN bagian judul. Catatan terlihat peminta dan
+    # atasan departemen tujuan (daftar permintaan masuk dan antrean persetujuan);
+    # orang lain tidak melihatnya.
     catatan = models.TextField(blank=True, default="")
 
     class Meta:

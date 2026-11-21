@@ -1,0 +1,54 @@
+{
+  "version": "2.11.0",
+  "date": "2026-11-21",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Images in a work item (description, comments, attachments) and in a chat can be browsed in one viewer with arrows, buttons or swipe, without closing it each time."
+    },
+    {
+      "type": "Added",
+      "text": "A quick link icon can be set from an image URL. Only secure (https) PNG, JPEG, WebP and GIF files up to 150 KB work, and a copy is saved so nobody's browser calls the link."
+    },
+    {
+      "type": "Added",
+      "text": "The department list in the sidebar can be switched off for everyone by an admin, and hidden or shown by each member in Customize navigation."
+    },
+    {
+      "type": "Added",
+      "text": "Announcements can be pinned and unpinned in Customize navigation, and it is pinned by default."
+    },
+    {
+      "type": "Changed",
+      "text": "Directors see Your work again. Archives stays hidden for them."
+    },
+    {
+      "type": "Changed",
+      "text": "On phones, text is one step larger and buttons, tabs and fields are big enough to tap, in the app and in God Mode. Notices appear at the top so they no longer cover a form's buttons."
+    },
+    {
+      "type": "Changed",
+      "text": "Department requests, Announcements and Quick links now open with a page heading, and KPI, Division dashboard, Announcements and Quick links share one page layout."
+    },
+    {
+      "type": "Changed",
+      "text": "Work items created by staff with no assignee now get their creator as assignee, unless someone removed an assignee on purpose."
+    },
+    {
+      "type": "Fixed",
+      "text": "Every department now has Intake turned on with an inbox ready. The Intake page no longer shows \"Error fetching the intake work items\", and it explains the cause when something else goes wrong."
+    },
+    {
+      "type": "Fixed",
+      "text": "Requests to another department work for every department with Intake on. Supervisors and managers of the target department see the requests sent to them."
+    },
+    {
+      "type": "Fixed",
+      "text": "The Announcements page title and the \"Other\" project group no longer show raw translation keys."
+    },
+    {
+      "type": "Fixed",
+      "text": "Guests are no longer asked to pick a department. The Approvals filters no longer cover the request button on phones."
+    }
+  ]
+}
