@@ -8,7 +8,6 @@ import logging
 from typing import Callable, Iterable
 
 # Django imports
-from django.conf import settings
 from django.utils import timezone
 from django.db.models import F, Window, Subquery
 from django.db.models.functions import RowNumber
@@ -25,6 +24,12 @@ from plane.db.models import (
     WebhookLog,
 )
 from plane.utils.exception_logger import log_exception
+from plane.utils.saklar_instance import (
+    API_ACTIVITY_LOG_RETENTION_DAYS,
+    EMAIL_LOG_RETENTION_DAYS,
+    WEBHOOK_LOG_RETENTION_DAYS,
+    setelan_angka,
+)
 
 
 logger = logging.getLogger("plane.worker")
@@ -84,7 +89,7 @@ def process_cleanup_task(
 # Queryset functions for each cleanup task, each yields primary keys to delete
 def get_api_logs_queryset():
     """Get API activity logs older than the API retention window."""
-    cutoff_time = timezone.now() - timedelta(days=settings.API_ACTIVITY_LOG_RETENTION_DAYS)
+    cutoff_time = timezone.now() - timedelta(days=setelan_angka(API_ACTIVITY_LOG_RETENTION_DAYS))
     logger.info(f"API logs cutoff time: {cutoff_time}")
     return (
         APIActivityLog.all_objects.filter(created_at__lte=cutoff_time)
@@ -95,7 +100,7 @@ def get_api_logs_queryset():
 
 def get_email_logs_queryset():
     """Get email logs older than the email retention window."""
-    cutoff_time = timezone.now() - timedelta(days=settings.EMAIL_LOG_RETENTION_DAYS)
+    cutoff_time = timezone.now() - timedelta(days=setelan_angka(EMAIL_LOG_RETENTION_DAYS))
     logger.info(f"Email logs cutoff time: {cutoff_time}")
     return (
         EmailNotificationLog.all_objects.filter(sent_at__lte=cutoff_time)
@@ -148,7 +153,7 @@ def get_issue_description_versions_queryset():
 
 def get_webhook_logs_queryset():
     """Get webhook logs older than the webhook retention window."""
-    cutoff_time = timezone.now() - timedelta(days=settings.WEBHOOK_LOG_RETENTION_DAYS)
+    cutoff_time = timezone.now() - timedelta(days=setelan_angka(WEBHOOK_LOG_RETENTION_DAYS))
     logger.info(f"Webhook logs cutoff time: {cutoff_time}")
     return (
         WebhookLog.all_objects.filter(created_at__lte=cutoff_time)

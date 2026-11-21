@@ -205,7 +205,10 @@ export const SETTINGS_LAYOUT: Record<TSettingsTabId, TSettingSection[]> = {
     },
   ],
 
-  modules_files: [{ id: "files", rows: [{ key: "UPLOAD_MAX_MB", unit: "mb" }] }],
+  modules_files: [
+    { id: "files", rows: [{ key: "UPLOAD_MAX_MB", unit: "mb" }] },
+    { id: "wiki_preview", rows: [{ key: "WIKI_PREVIEW_MAX_MB", unit: "mb" }] },
+  ],
 
   integrations_google: [{ id: "google_calendar", rows: [{ key: "ENABLE_GOOGLE_CALENDAR_SYNC" }] }],
 
@@ -215,6 +218,14 @@ export const SETTINGS_LAYOUT: Record<TSettingsTabId, TSettingSection[]> = {
       rows: [
         { key: "TRASH_RETENTION_DAYS", unit: "days" },
         { key: "LOGIN_HISTORY_RETENTION_DAYS", unit: "days" },
+      ],
+    },
+    {
+      id: "retention_logs",
+      rows: [
+        { key: "API_ACTIVITY_LOG_RETENTION_DAYS", unit: "days" },
+        { key: "WEBHOOK_LOG_RETENTION_DAYS", unit: "days" },
+        { key: "EMAIL_LOG_RETENTION_DAYS", unit: "days" },
       ],
     },
   ],

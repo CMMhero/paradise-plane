@@ -33,7 +33,7 @@ from plane.settings.storage import S3Storage
 from plane.utils.exception_logger import log_exception
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
-from plane.utils.saklar_instance import PERM_WIKI_DELETE, PERM_WIKI_EDIT
+from plane.utils.saklar_instance import PERM_WIKI_DELETE, PERM_WIKI_EDIT, WIKI_PREVIEW_MAX_MB, setelan_angka
 from plane.utils.tipe_unggahan import rapikan_tipe_unggahan
 from plane.utils.wiki_cari import MIN_TOKEN_MIRIP, ambang_mirip, cuplikan, pecah_kueri, skor_judul
 from plane.utils.wiki_pratinjau import (  # noqa: F401 - jenis_pratinjau juga diimpor tes
@@ -241,7 +241,7 @@ class WikiPratinjauEndpoint(WikiAPIView):
         if not alamat:
             return None, "conversion is not enabled on this server"
         asal = materi.berkas
-        batas = getattr(settings, "WIKI_PREVIEW_MAX_BYTES", 52428800)
+        batas = setelan_angka(WIKI_PREVIEW_MAX_MB) * 1024 * 1024
         if asal.size and asal.size > batas:
             return None, "the file is too large to convert"
 
