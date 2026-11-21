@@ -37,6 +37,7 @@ export const MENU_TABS: Record<TMenuId, { id: TTabId; href: string }[]> = {
     { id: "rules_permissions", href: "/rules/permissions/" },
     { id: "rules_archiving", href: "/rules/archiving/" },
     { id: "rules_projects", href: "/rules/projects/" },
+    { id: "rules_all", href: "/rules/all/" },
   ],
   notifications: [
     { id: "notifications_email", href: "/notifications/" },

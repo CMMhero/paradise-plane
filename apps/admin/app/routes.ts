@@ -47,6 +47,7 @@ export default [
     // Work rules
     route("rules/archiving", `${D}/rules/archiving.tsx`),
     route("rules/projects", `${D}/bawaan-project/page.tsx`),
+    route("rules/all", `${D}/rules/all.tsx`),
     // Notifications
     route("notifications", `${D}/email/page.tsx`),
     route("notifications/roles", `${D}/bawaan-member/roles.tsx`),
