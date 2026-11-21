@@ -141,6 +141,13 @@ export const PARADISE_NAV_ITEMS = [
   palette?: { id: string; titleKey?: string; keySequence?: string };
 }[];
 
+/**
+ * Menu yang tampil di grup atas sidebar (bersama Home dan Drafts), di atas
+ * grup "Workspace". Selalu tampil, jadi tidak muncul lagi di grup Workspace,
+ * di panel "Lainnya", maupun di daftar sematan Customize navigation.
+ */
+export const PARADISE_TOP_NAV_KEYS: readonly string[] = ["chat", "pengumuman"];
+
 export type TParadiseNavItem = (typeof PARADISE_NAV_ITEMS)[number];
 export type TParadiseNavKey = TParadiseNavItem["key"];
 export type TParadiseNavPaletteId = NonNullable<Extract<TParadiseNavItem, { palette: unknown }>["palette"]>["id"];
