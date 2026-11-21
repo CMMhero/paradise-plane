@@ -249,7 +249,10 @@ export function MemberProfilePopover({
         // base-ui memberi role="button" + tabIndex sendiri saat nativeButton=false.
         // Nama lewat teks sr-only, BUKAN aria-label: isi pemicu sering berupa teks terlihat (nama, inisial avatar),
         // dan aria-label yang tidak memuat teks itu melanggar WCAG 2.5.3 (axe label-content-name-mismatch).
-        className={cn("inline-flex max-w-full cursor-pointer items-center rounded-sm outline-none", triggerClassName)}
+        className={cn(
+          "sasaran-sentuh inline-flex max-w-full cursor-pointer items-center rounded-sm outline-none",
+          triggerClassName
+        )}
         onMouseEnter={hoverHandlers?.onMouseEnter}
         onMouseLeave={hoverHandlers?.onMouseLeave}
         onClick={(e) => {

@@ -28,11 +28,12 @@ export interface IButtonStyling {
   };
 }
 
+// Paradise: layar sentuh menaikkan tombol ke 40/44px, sama dengan Button di propel.
 enum buttonSizeStyling {
-  sm = `h-6 px-2.5 font-medium text-11 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
-  md = `h-7 px-3 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
-  lg = `h-8 px-4 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
-  xl = `h-9 px-5 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center`,
+  sm = `h-6 px-2.5 font-medium text-11 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center sentuh:min-h-10 sentuh:min-w-10`,
+  md = `h-7 px-3 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center sentuh:min-h-10 sentuh:min-w-10`,
+  lg = `h-8 px-4 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center sentuh:min-h-11 sentuh:min-w-11`,
+  xl = `h-9 px-5 font-medium text-13 rounded-button flex items-center gap-1.5 whitespace-nowrap transition-all justify-center sentuh:min-h-11 sentuh:min-w-11`,
 }
 
 enum buttonIconStyling {

@@ -139,7 +139,7 @@ function Menu(props: TMenuProps) {
         <BaseMenu.Trigger
           type="button"
           onClick={handleMenuButtonClick}
-          className={cn(customButtonClassName, "outline-none")}
+          className={cn("sasaran-sentuh", customButtonClassName, "outline-none")}
           tabIndex={customButtonTabIndex}
           disabled={disabled}
           aria-label={ariaLabel}
@@ -153,7 +153,7 @@ function Menu(props: TMenuProps) {
               type="button"
               onClick={handleMenuButtonClick}
               disabled={disabled}
-              className={`relative grid place-items-center rounded-sm p-1 text-secondary outline-none hover:text-primary ${
+              className={`sasaran-sentuh relative grid place-items-center rounded-sm p-1 text-secondary outline-none hover:text-primary ${
                 disabled ? "cursor-not-allowed" : "cursor-pointer hover:bg-layer-1"
               } ${buttonClassName}`}
               tabIndex={customButtonTabIndex}
@@ -164,7 +164,7 @@ function Menu(props: TMenuProps) {
           ) : (
             <BaseMenu.Trigger
               type="button"
-              className={`flex items-center justify-between gap-1 rounded-md px-2.5 py-1 text-11 whitespace-nowrap duration-300 outline-none ${
+              className={`flex items-center justify-between gap-1 rounded-md px-2.5 py-1 text-11 whitespace-nowrap duration-300 outline-none sentuh:min-h-10 ${
                 isOpen ? "bg-surface-2 text-primary" : "text-secondary"
               } ${noBorder ? "" : "shadow-sm border border-strong focus:outline-none"} ${
                 disabled ? "cursor-not-allowed text-secondary" : "cursor-pointer hover:bg-layer-1"

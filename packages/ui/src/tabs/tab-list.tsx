@@ -52,7 +52,7 @@ function TabListInner({ tabs, tabListClassName, tabClassName, size = "md", selec
         <Tab
           className={({ selected }) =>
             cn(
-              "flex w-full min-w-fit cursor-pointer items-center justify-center rounded-sm p-1 font-medium text-primary transition-all outline-none focus:outline-none",
+              "flex w-full min-w-fit cursor-pointer items-center justify-center rounded-sm p-1 font-medium text-primary transition-all outline-none focus:outline-none sentuh:min-h-10",
               (selectedTab ? selectedTab === tab.key : selected)
                 ? "shadow-sm bg-layer-transparent-active text-primary"
                 : tab.disabled

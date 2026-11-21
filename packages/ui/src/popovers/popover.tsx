@@ -51,6 +51,7 @@ export function Popover(props: TPopover) {
         <HeadlessReactPopover.Button
           ref={popoverButtonRef as Ref<HTMLButtonElement>}
           className={cn(
+            "sasaran-sentuh",
             {
               "flex h-6 w-6 items-center justify-center rounded-sm bg-surface-2 text-14 transition-all hover:bg-layer-1":
                 !button,

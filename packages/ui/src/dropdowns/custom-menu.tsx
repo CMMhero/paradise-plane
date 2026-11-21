@@ -254,7 +254,7 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
                 ref={setReferenceElement}
                 type="button"
                 onClick={handleMenuButtonClick}
-                className={customButtonClassName}
+                className={cn("sasaran-sentuh", customButtonClassName)}
                 tabIndex={customButtonTabIndex}
                 disabled={disabled}
                 aria-label={ariaLabel}
@@ -271,7 +271,7 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
                     type="button"
                     onClick={handleMenuButtonClick}
                     disabled={disabled}
-                    className={`relative grid place-items-center rounded-sm p-[5px] text-secondary outline-none hover:text-primary ${
+                    className={`sasaran-sentuh relative grid place-items-center rounded-sm p-[5px] text-secondary outline-none hover:text-primary ${
                       disabled ? "cursor-not-allowed" : "cursor-pointer hover:bg-layer-transparent-hover"
                     } ${buttonClassName}`}
                     tabIndex={customButtonTabIndex}
@@ -285,7 +285,7 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
                   <button
                     ref={setReferenceElement}
                     type="button"
-                    className={`flex items-center justify-between gap-1 rounded-field px-2.5 py-1 text-11 whitespace-nowrap duration-300 ${
+                    className={`flex items-center justify-between gap-1 rounded-field px-2.5 py-1 text-11 whitespace-nowrap duration-300 sentuh:min-h-10 ${
                       open ? "text-primary" : "text-secondary"
                     } ${noBorder ? "" : "border border-strong focus:outline-none"} ${
                       disabled ? "cursor-not-allowed text-secondary" : "cursor-pointer hover:bg-layer-transparent-hover"
