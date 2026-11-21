@@ -1553,5 +1553,18 @@
   "departments_menu": {
     "label": "Tampilkan daftar departemen",
     "off_by_admin": "Dimatikan oleh administrator."
+  },
+  "image_gallery": {
+    "dialog": "Penampil gambar",
+    "close": "Tutup penampil gambar",
+    "previous": "Gambar sebelumnya",
+    "next": "Gambar berikutnya",
+    "zoom_in": "Perbesar",
+    "zoom_out": "Perkecil",
+    "reset_zoom": "Kembalikan ukuran",
+    "download": "Unduh gambar",
+    "open_in_new_tab": "Buka gambar di tab baru",
+    "load_error": "Gambar ini gagal dimuat. Anda tetap bisa pindah ke gambar lain.",
+    "counter": "Gambar {current} dari {total}"
   }
 }

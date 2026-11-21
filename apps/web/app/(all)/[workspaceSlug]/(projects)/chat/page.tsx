@@ -31,6 +31,7 @@ import { useTranslation } from "@plane/i18n";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
 import { Button } from "@plane/propel/button";
 import { IconButton } from "@plane/propel/icon-button";
+import { ImageGallery } from "@plane/propel/image-gallery";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar, Input } from "@plane/ui";
 import { cn, getFileURL, getNumberCount, renderFormattedDate, renderFormattedTime } from "@plane/utils";
@@ -177,6 +178,8 @@ function ChatPage() {
   const [jelajah, setJelajah] = useState(false);
   const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
+  /** the message list: its loaded images are the conversation's gallery */
+  const daftarPesanRef = useRef<HTMLDivElement>(null);
   /** Tombol "ke pesan terbaru" muncul sejauh ini dari bawah. */
   const [jauhDariBawah, setJauhDariBawah] = useState(false);
   const jauhDariBawahRef = useRef(false);
@@ -1305,124 +1308,130 @@ function ChatPage() {
               onLepas={sematan?.boleh_sematkan ? (pesanId) => void sematkan(pesanId, false) : undefined}
             />
 
-            <div className="relative flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3" onScroll={saatGulir}>
-                {/* Tombol riwayat hanya muncul kalau memang ada kemungkinan ada
-                  yang lebih lama, dan menghilang setelah server bilang habis. */}
-                {barisPesan.length > 0 && !habis ? (
-                  <div className="mb-2 flex justify-center">
-                    <Button
-                      variant="secondary"
-                      size="base"
-                      prependIcon={<ChevronUp />}
-                      onClick={() => void muatLama()}
-                      disabled={memuatLama}
-                    >
-                      {memuatLama ? t("chat_ui.loading") : t("chat_ui.load_older")}
-                    </Button>
-                  </div>
-                ) : null}
-
-                {barisPesan.length === 0 ? (
-                  <EmptyStateCompact
-                    assetKey="inbox"
-                    title={t("chat_ui.no_messages")}
-                    description={t("chat_ui.empty_thread")}
-                    assetClassName="size-20"
-                  />
-                ) : (
-                  <div className="flex flex-col">
-                    {barisPesan.map((baris) => {
-                      if (baris.jenis === "tanggal")
-                        return (
-                          <div key={baris.kunci} className="my-3 flex items-center justify-center">
-                            <span className="rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">
-                              {baris.relatif === "hari-ini"
-                                ? t("chat_ui.today")
-                                : baris.relatif === "kemarin"
-                                  ? t("chat_ui.yesterday")
-                                  : baris.label}
-                            </span>
-                          </div>
-                        );
-
-                      if (baris.jenis === "belum-dibaca")
-                        return (
-                          <div key={baris.kunci} className="my-3 flex items-center gap-2">
-                            <div className="h-px flex-1 bg-accent-primary/40" />
-                            <span className="text-12 font-medium text-accent-primary">
-                              {t("chat_ui.unread_messages")}
-                            </span>
-                            <div className="h-px flex-1 bg-accent-primary/40" />
-                          </div>
-                        );
-
-                      const { pesan: p, dariSaya, awalKelompok, akhirKelompok } = baris;
-                      // Di kanal tiap pesan bisa dari orang lain, jadi avatarnya
-                      // dari pengirim pesan itu, bukan dari lawan bicara DM.
-                      const pengirim = p.pengirim ? getWorkspaceMemberDetails(p.pengirim)?.member : undefined;
-                      return (
-                        <div
-                          key={baris.kunci}
-                          id={idElemenPesan(p.id)}
-                          className={`flex scroll-my-16 items-end gap-2 rounded-item transition-colors duration-700 ${
-                            awalKelompok ? "mt-3" : "mt-0.5"
-                          } ${dariSaya ? "justify-end" : "justify-start"} ${disorot === p.id ? "bg-accent-subtle" : ""}`}
-                        >
-                          {!dariSaya ? (
-                            <div className="w-7 shrink-0">
-                              {awalKelompok && p.pengirim ? (
-                                <MemberProfileTrigger userId={p.pengirim}>
-                                  <Avatar
-                                    name={pengirim?.display_name}
-                                    src={getFileURL(pengirim?.avatar_url ?? "")}
-                                    size={28}
-                                    shape="circle"
-                                  />
-                                </MemberProfileTrigger>
-                              ) : null}
-                            </div>
-                          ) : null}
-                          <Gelembung
-                            pesan={p}
-                            dariSaya={dariSaya}
-                            awalKelompok={awalKelompok}
-                            akhirKelompok={akhirKelompok}
-                            sayaId={currentUser?.id}
-                            namaOrang={namaOrang}
-                            namaSebutan={namaSebutan}
-                            onBukaKutipan={bukaKutipan}
-                            onBalas={balasPesan}
-                            onSunting={suntingPesan}
-                            onHapus={hapusPesan}
-                            batasHapusJam={batasHapusJam}
-                            onReaksi={reaksiPesan}
-                            onSematkan={bolehSematkan ? sematkanPesan : undefined}
-                            onTelepon={teleponDariKartu}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <div ref={akhirRef} />
-              </div>
-              {jauhDariBawah ? (
-                <button
-                  type="button"
-                  onClick={keTerbaru}
-                  aria-label={t("chat_ui.jump_to_latest")}
-                  title={t("chat_ui.jump_to_latest")}
-                  className="absolute right-4 bottom-3 grid size-9 place-items-center rounded-button border border-subtle bg-layer-1 text-secondary shadow-raised-200 transition-colors hover:bg-layer-2 hover:text-primary"
+            <ImageGallery.Scope rootRef={daftarPesanRef} resetKey={kunciIsi}>
+              <div className="relative flex min-h-0 flex-1 flex-col">
+                <div
+                  ref={daftarPesanRef}
+                  className="flex-1 overflow-y-auto overscroll-contain px-4 py-3"
+                  onScroll={saatGulir}
                 >
-                  {" "}
-                  <ArrowDown className="size-4" />{" "}
-                  {adaPesanBaru ? (
-                    <span className="ring-layer-1 absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-accent-primary ring-2" />
-                  ) : null}{" "}
-                </button>
-              ) : null}{" "}
-            </div>
+                  {/* Tombol riwayat hanya muncul kalau memang ada kemungkinan ada
+                  yang lebih lama, dan menghilang setelah server bilang habis. */}
+                  {barisPesan.length > 0 && !habis ? (
+                    <div className="mb-2 flex justify-center">
+                      <Button
+                        variant="secondary"
+                        size="base"
+                        prependIcon={<ChevronUp />}
+                        onClick={() => void muatLama()}
+                        disabled={memuatLama}
+                      >
+                        {memuatLama ? t("chat_ui.loading") : t("chat_ui.load_older")}
+                      </Button>
+                    </div>
+                  ) : null}
+
+                  {barisPesan.length === 0 ? (
+                    <EmptyStateCompact
+                      assetKey="inbox"
+                      title={t("chat_ui.no_messages")}
+                      description={t("chat_ui.empty_thread")}
+                      assetClassName="size-20"
+                    />
+                  ) : (
+                    <div className="flex flex-col">
+                      {barisPesan.map((baris) => {
+                        if (baris.jenis === "tanggal")
+                          return (
+                            <div key={baris.kunci} className="my-3 flex items-center justify-center">
+                              <span className="rounded-control bg-layer-3 px-2.5 py-1 text-12 font-medium text-secondary">
+                                {baris.relatif === "hari-ini"
+                                  ? t("chat_ui.today")
+                                  : baris.relatif === "kemarin"
+                                    ? t("chat_ui.yesterday")
+                                    : baris.label}
+                              </span>
+                            </div>
+                          );
+
+                        if (baris.jenis === "belum-dibaca")
+                          return (
+                            <div key={baris.kunci} className="my-3 flex items-center gap-2">
+                              <div className="h-px flex-1 bg-accent-primary/40" />
+                              <span className="text-12 font-medium text-accent-primary">
+                                {t("chat_ui.unread_messages")}
+                              </span>
+                              <div className="h-px flex-1 bg-accent-primary/40" />
+                            </div>
+                          );
+
+                        const { pesan: p, dariSaya, awalKelompok, akhirKelompok } = baris;
+                        // Di kanal tiap pesan bisa dari orang lain, jadi avatarnya
+                        // dari pengirim pesan itu, bukan dari lawan bicara DM.
+                        const pengirim = p.pengirim ? getWorkspaceMemberDetails(p.pengirim)?.member : undefined;
+                        return (
+                          <div
+                            key={baris.kunci}
+                            id={idElemenPesan(p.id)}
+                            className={`flex scroll-my-16 items-end gap-2 rounded-item transition-colors duration-700 ${
+                              awalKelompok ? "mt-3" : "mt-0.5"
+                            } ${dariSaya ? "justify-end" : "justify-start"} ${disorot === p.id ? "bg-accent-subtle" : ""}`}
+                          >
+                            {!dariSaya ? (
+                              <div className="w-7 shrink-0">
+                                {awalKelompok && p.pengirim ? (
+                                  <MemberProfileTrigger userId={p.pengirim}>
+                                    <Avatar
+                                      name={pengirim?.display_name}
+                                      src={getFileURL(pengirim?.avatar_url ?? "")}
+                                      size={28}
+                                      shape="circle"
+                                    />
+                                  </MemberProfileTrigger>
+                                ) : null}
+                              </div>
+                            ) : null}
+                            <Gelembung
+                              pesan={p}
+                              dariSaya={dariSaya}
+                              awalKelompok={awalKelompok}
+                              akhirKelompok={akhirKelompok}
+                              sayaId={currentUser?.id}
+                              namaOrang={namaOrang}
+                              namaSebutan={namaSebutan}
+                              onBukaKutipan={bukaKutipan}
+                              onBalas={balasPesan}
+                              onSunting={suntingPesan}
+                              onHapus={hapusPesan}
+                              batasHapusJam={batasHapusJam}
+                              onReaksi={reaksiPesan}
+                              onSematkan={bolehSematkan ? sematkanPesan : undefined}
+                              onTelepon={teleponDariKartu}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div ref={akhirRef} />
+                </div>
+                {jauhDariBawah ? (
+                  <button
+                    type="button"
+                    onClick={keTerbaru}
+                    aria-label={t("chat_ui.jump_to_latest")}
+                    title={t("chat_ui.jump_to_latest")}
+                    className="absolute right-4 bottom-3 grid size-9 place-items-center rounded-button border border-subtle bg-layer-1 text-secondary shadow-raised-200 transition-colors hover:bg-layer-2 hover:text-primary"
+                  >
+                    {" "}
+                    <ArrowDown className="size-4" />{" "}
+                    {adaPesanBaru ? (
+                      <span className="ring-layer-1 absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-accent-primary ring-2" />
+                    ) : null}{" "}
+                  </button>
+                ) : null}{" "}
+              </div>
+            </ImageGallery.Scope>
 
             {/* Ajakan gabung, bukan dering. Muncul untuk yang sedang membuka ruang
                 saat orang lain memulai panggilan di sana. Barisnya mengalir tepat

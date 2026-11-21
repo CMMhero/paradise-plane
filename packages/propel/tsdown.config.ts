@@ -29,6 +29,7 @@ export default defineConfig({
     "src/emoji-reaction-picker/index.ts",
     "src/icon-button/index.ts",
     "src/icons/index.ts",
+    "src/image-gallery/index.ts",
     "src/input/index.ts",
     "src/member-profile-card/index.ts",
     "src/menu/index.ts",

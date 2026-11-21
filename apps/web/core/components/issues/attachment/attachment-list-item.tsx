@@ -8,6 +8,7 @@ import { observer } from "mobx-react";
 
 import { useTranslation } from "@plane/i18n";
 import { TrashIcon } from "@plane/propel/icons";
+import { useImageGallery } from "@plane/propel/image-gallery";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TIssueServiceType } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
@@ -16,6 +17,7 @@ import { CustomMenu } from "@plane/ui";
 import { convertBytesToSize, getFileExtension, getFileName, getFileURL, renderFormattedDate } from "@plane/utils";
 // components
 //
+import { isImageFileName } from "@/components/common/image-gallery";
 import { ButtonAvatars } from "@/components/dropdowns/member/avatar";
 import { getFileIcon } from "@/components/icons";
 import { LabelSumberTeks } from "@/components/pratinjau-tautan/label-sumber";
@@ -49,6 +51,7 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
   const fileURL = getFileURL(attachment?.asset_url ?? "");
   // hooks
   const { isMobile } = usePlatformOS();
+  const gallery = useImageGallery();
 
   if (!attachment) return <></>;
 
@@ -63,6 +66,9 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            // an image opens in the work item's gallery, next to the other images; other files in a new tab
+            const isImage = isImageFileName(attachment.attributes.name);
+            if (isImage && fileURL && gallery?.open(fileURL, e.currentTarget)) return;
             window.open(fileURL, "_blank");
           }}
         >

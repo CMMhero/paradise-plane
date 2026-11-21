@@ -27,6 +27,3 @@ export * from "@/types";
 
 // additional exports
 export { TrailingNode } from "./core/extensions/trailing-node";
-
-// Paradise KEP-88: the same image lightbox as work item descriptions, reused by chat
-export { ImageFullScreenModal } from "./core/extensions/custom-image/components/toolbar/full-screen/modal";

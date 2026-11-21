@@ -1553,5 +1553,18 @@
   "departments_menu": {
     "label": "顯示部門清單",
     "off_by_admin": "已被管理員關閉。"
+  },
+  "image_gallery": {
+    "dialog": "Image viewer",
+    "close": "Close image viewer",
+    "previous": "Previous image",
+    "next": "Next image",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "reset_zoom": "Reset zoom",
+    "download": "Download image",
+    "open_in_new_tab": "Open image in new tab",
+    "load_error": "This image couldn't load. You can still move to the other images.",
+    "counter": "Image {current} of {total}"
   }
 }
