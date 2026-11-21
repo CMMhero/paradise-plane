@@ -675,6 +675,12 @@ export const settingsStrings = {
     off: "Off",
     none_selected: "None",
     text_counter: "{used} of {max} characters",
+    move_up: "Move {name} up",
+    move_down: "Move {name} down",
+    apply_confirm_work_items:
+      "Overwrite every member's work item layout, grouping, order, sub-work items, empty groups and fields on every project with the saved defaults? People can change them again afterwards.",
+    apply_confirm_display:
+      "Overwrite every member's activity order and Home widgets with the saved defaults? People can change them again afterwards.",
     validation: {
       int: "Enter a whole number.",
       int_range: "Enter a whole number from {min} to {max}.",

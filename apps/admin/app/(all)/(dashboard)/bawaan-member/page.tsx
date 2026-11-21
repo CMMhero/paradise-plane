@@ -182,7 +182,7 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
           <Bagian title={t.group_work_items} note={t.work_items_note}>
             <BidangTataLetak
               nilai={nilai.work_items.layout}
-              onUbah={(layout) => ubah((b) => ({ ...b, work_items: { layout } }))}
+              onUbah={(layout) => ubah((b) => ({ ...b, work_items: { ...b.work_items, layout } }))}
             />
           </Bagian>
 

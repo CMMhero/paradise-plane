@@ -233,11 +233,31 @@ const sortedList = (v: TParadiseRuleValue): string =>
         .join("\u0000")
     : "";
 
-/** Same value? Lists compare as sets; choices compare by their text so 20 and "20" agree. */
-export function valuesEqual(kind: TRuleKind, a: TParadiseRuleValue, b: TParadiseRuleValue): boolean {
-  if (kind === "list_of_keys") return sortedList(a) === sortedList(b);
+/**
+ * Same value? Unordered lists compare as sets; ordered lists (the order is part of the value)
+ * compare item by item. Choices compare by their text so 20 and "20" agree.
+ */
+export function valuesEqual(
+  kind: TRuleKind,
+  a: TParadiseRuleValue,
+  b: TParadiseRuleValue,
+  ordered: boolean = false
+): boolean {
+  if (kind === "list_of_keys") {
+    if (!ordered) return sortedList(a) === sortedList(b);
+    return Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((x, i) => x === b[i]) : a === b;
+  }
   if (kind === "choice" || kind === "level") return String(a) === String(b);
   return Object.is(a, b);
+}
+
+/** Moves the item at `index` one place up (-1) or down (+1). Out of range or at an end: returns the list unchanged. */
+export function moveItem(list: string[], index: number, step: -1 | 1): string[] {
+  const to = index + step;
+  if (index < 0 || index >= list.length || to < 0 || to >= list.length) return list;
+  const next = [...list];
+  [next[index], next[to]] = [next[to], next[index]];
+  return next;
 }
 
 export const effectiveValue = (rule: TRegistryRule, draft: TDraft): TParadiseRuleValue =>
@@ -246,14 +266,14 @@ export const effectiveValue = (rule: TRegistryRule, draft: TDraft): TParadiseRul
 /** Does the value on screen (draft or saved) differ from the default? Legacy rows use the server's flag. */
 export function isRuleChanged(rule: TRule, draft: TDraft): boolean {
   if (rule.source === "legacy") return rule.changed;
-  return !valuesEqual(rule.kind, effectiveValue(rule, draft), rule.default);
+  return !valuesEqual(rule.kind, effectiveValue(rule, draft), rule.default, rule.ordered);
 }
 
 /** Registry rules whose draft differs from the saved value, in list order. */
 export function pendingChanges(rules: TRule[], draft: TDraft): TRegistryRule[] {
   return rules.filter(
     (r): r is TRegistryRule =>
-      r.source === "registry" && Object.hasOwn(draft, r.key) && !valuesEqual(r.kind, draft[r.key], r.value)
+      r.source === "registry" && Object.hasOwn(draft, r.key) && !valuesEqual(r.kind, draft[r.key], r.value, r.ordered)
   );
 }
 
@@ -269,7 +289,7 @@ export function pruneDraft(rules: TRule[], draft: TDraft): TDraft {
   return Object.fromEntries(
     Object.entries(draft).filter(([key, value]) => {
       const rule = byKey.get(key);
-      return rule?.source === "registry" && !valuesEqual(rule.kind, value, rule.value);
+      return rule?.source === "registry" && !valuesEqual(rule.kind, value, rule.value, rule.ordered);
     })
   );
 }
