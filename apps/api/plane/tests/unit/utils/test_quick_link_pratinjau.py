@@ -5,6 +5,7 @@
 
 """og:image: pemilihan alamat dari HTML dan pengambilan jadi data URI."""
 
+import base64
 from unittest import mock
 
 import pytest
@@ -155,3 +156,135 @@ class TestRapikanLogo:
         meta = {"diambil_pada": "x", "og_image": None, "logo_props": {"in_use": "emoji", "emoji": {"value": "1"}}}
         assert quick_link.metadata_baru(meta, "https://a.b", url_berubah=False) == meta
         assert "logo_props" not in quick_link.metadata_baru(meta, "https://a.b", url_berubah=False, logo_props=None)
+
+
+_PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+_SVG = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+
+
+def _respons(isi: bytes, status: int = 200, headers: dict | None = None):
+    r = mock.MagicMock()
+    r.status_code = status
+    r.headers = headers or {}
+    r.iter_content.return_value = iter([isi[i : i + 1024] for i in range(0, len(isi), 1024)] or [b""])
+    return r
+
+
+def _logo_gambar(url: str) -> dict:
+    return {"in_use": "image", "image": {"url": url}}
+
+
+@pytest.mark.unit
+class TestLogoGambarDariUrl:
+    def _unduh(self, isi: bytes, **kw):
+        with mock.patch(
+            "plane.utils.quick_link.pinned_fetch_following_redirects", return_value=(_respons(isi, **kw), "x")
+        ) as fetch:
+            return quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png")), fetch
+
+    def test_gambar_valid_disimpan_sebagai_data_uri(self):
+        hasil, fetch = self._unduh(_PNG)
+        assert hasil["in_use"] == "image"
+        assert hasil["image"]["url"] == "https://cdn.example.com/a.png"
+        assert hasil["image"]["data"].startswith("data:image/png;base64,")
+        assert fetch.call_args.kwargs["stream"] is True
+
+    @pytest.mark.parametrize(
+        "isi",
+        [b"\xff\xd8\xff\xe0" + b"0" * 20, b"RIFF\x00\x00\x00\x00WEBPVP8 ", b"GIF89a" + b"0" * 20],
+    )
+    def test_jpeg_webp_gif_diterima(self, isi):
+        hasil, _ = self._unduh(isi)
+        assert hasil["image"]["data"].startswith("data:image/")
+
+    def test_svg_ditolak(self):
+        with pytest.raises(quick_link.LogoTidakValid):
+            self._unduh(_SVG, headers={"content-type": "image/png"})
+
+    def test_terlalu_besar_ditolak(self):
+        with pytest.raises(quick_link.LogoTidakValid):
+            self._unduh(_PNG + b"0" * quick_link.MAKS_BYTE_GAMBAR)
+
+    def test_content_length_besar_ditolak_sebelum_dibaca(self):
+        resp = _respons(_PNG, headers={"content-length": str(quick_link.MAKS_BYTE_GAMBAR + 1)})
+        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects", return_value=(resp, "x")):
+            with pytest.raises(quick_link.LogoTidakValid):
+                quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
+        resp.iter_content.assert_not_called()
+        resp.close.assert_called()
+
+    def test_status_bukan_200_ditolak(self):
+        with pytest.raises(quick_link.LogoTidakValid):
+            self._unduh(_PNG, status=404)
+
+    @pytest.mark.parametrize(
+        "url",
+        ["http://cdn.example.com/a.png", "ftp://x/a.png", "data:image/png;base64,AAAA", "//x/a.png", None, 5],
+    )
+    def test_bukan_https_ditolak_tanpa_mengunduh(self, url):
+        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects") as fetch:
+            with pytest.raises(quick_link.LogoTidakValid):
+                quick_link.rapikan_logo(_logo_gambar(url))
+        fetch.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://127.0.0.1/a.png",
+            "https://localhost/a.png",
+            "https://10.0.0.5/a.png",
+            "https://169.254.169.254/latest/meta-data/a.png",
+            "https://[::1]/a.png",
+        ],
+    )
+    def test_host_privat_ditolak(self, url):
+        # Tanpa mock: pengambil sungguhan harus menolak sebelum membuka koneksi.
+        with pytest.raises(quick_link.LogoTidakValid):
+            quick_link.rapikan_logo(_logo_gambar(url))
+
+    def test_redirect_ke_host_privat_ditolak(self):
+        redirect = mock.MagicMock(status_code=302, headers={"Location": "https://127.0.0.1/a.png"})
+        from plane.utils import url_security
+
+        asli = url_security.resolve_and_validate
+
+        def resolve(hostname, **kw):
+            return ["93.184.216.34"] if hostname == "cdn.example.com" else asli(hostname, **kw)
+
+        with (
+            mock.patch.object(url_security, "resolve_and_validate", side_effect=resolve),
+            mock.patch.object(url_security, "_request_to_ip", return_value=redirect) as req,
+        ):
+            with pytest.raises(quick_link.LogoTidakValid):
+                quick_link.rapikan_logo(_logo_gambar("https://cdn.example.com/a.png"))
+        assert req.call_count == 1  # hop kedua tidak pernah dikoneksikan
+
+    def test_data_tersimpan_diperiksa_ulang_tanpa_mengunduh(self):
+        data = "data:image/png;base64," + base64.b64encode(_PNG).decode()
+        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects") as fetch:
+            hasil = quick_link.rapikan_logo({"in_use": "image", "image": {"url": "https://a.b/c.png", "data": data}})
+        fetch.assert_not_called()
+        assert hasil == {"in_use": "image", "image": {"url": "https://a.b/c.png", "data": data}}
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            "data:image/svg+xml;base64," + base64.b64encode(_SVG).decode(),
+            "data:image/png;base64," + base64.b64encode(_SVG).decode(),  # jenis tidak cocok isinya
+            "data:text/html;base64,AAAA",
+            "data:image/png;base64,***",
+            5,
+        ],
+    )
+    def test_data_palsu_ditolak(self, data):
+        with pytest.raises(quick_link.LogoTidakValid):
+            quick_link.rapikan_logo({"in_use": "image", "image": {"data": data}})
+
+    @pytest.mark.parametrize("url", ["http://x/y.png", "javascript:alert(1)", "//x/y.png", "/y.png"])
+    def test_emoji_url_wajib_https_atau_data_image(self, url):
+        with pytest.raises(quick_link.LogoTidakValid):
+            quick_link.rapikan_logo({"in_use": "emoji", "emoji": {"value": "1", "url": url}})
+
+    def test_emoji_url_data_image_diterima(self):
+        nilai = {"in_use": "emoji", "emoji": {"value": "1", "url": "data:image/png;base64,AAAA"}}
+        assert quick_link.rapikan_logo(nilai) == nilai

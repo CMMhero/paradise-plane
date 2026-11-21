@@ -257,7 +257,7 @@ class TestJudulDanIkon:
     @pytest.mark.parametrize(
         "logo",
         [
-            {"in_use": "image", "emoji": {"value": "1"}},
+            {"in_use": "video", "emoji": {"value": "1"}},
             {"in_use": "emoji", "emoji": {}},
             {"in_use": "icon", "icon": {"name": "Bad Name"}},
             {"in_use": "icon", "icon": {"name": "star", "color": "red"}},
@@ -270,6 +270,37 @@ class TestJudulDanIkon:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["error"] == "Pick an icon from the list."
+        assert not QuickLinkBersama.objects.exists()
+
+    def test_logo_gambar_diunduh_server_dan_disimpan_sebagai_data_uri(self, org):
+        respons = mock.MagicMock(status_code=200, headers={})
+        respons.iter_content.return_value = iter([b"\x89PNG\r\n\x1a\n" + b"0" * 32])
+        with mock.patch("plane.utils.quick_link.pinned_fetch_following_redirects", return_value=(respons, "x")) as f:
+            link = _buat(
+                org,
+                url="erp.example.com",
+                logo_props={"in_use": "image", "image": {"url": "https://cdn.example.com/a.png"}},
+            )
+            # Tulis ulang metadata lewat PATCH: isi yang sudah ada tidak diunduh lagi.
+            resp = _klien(org.admin).patch(
+                URL_DETAIL.format(slug=org.ws.slug, pk=link["id"]),
+                {"logo_props": link["metadata"]["logo_props"]},
+                format="json",
+            )
+        gambar = link["metadata"]["logo_props"]["image"]
+        assert gambar["data"].startswith("data:image/png;base64,")
+        assert resp.status_code == status.HTTP_200_OK
+        assert f.call_count == 1
+
+    @pytest.mark.parametrize("url", ["http://cdn.example.com/a.png", "https://127.0.0.1/a.png"])
+    def test_logo_gambar_ditolak(self, org, url):
+        resp = _klien(org.admin).post(
+            URL.format(slug=org.ws.slug),
+            {"url": "erp.example.com", "logo_props": {"in_use": "image", "image": {"url": url}}},
+            format="json",
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "PNG" in resp.data["error"]
         assert not QuickLinkBersama.objects.exists()
 
     def test_patch_tanpa_logo_props_tidak_menyentuhnya(self, org):
