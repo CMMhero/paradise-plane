@@ -11,25 +11,22 @@
  * tidak pernah disentuh saklar ini.
  */
 
-import { PARADISE_MODULE_DEFAULTS, PARADISE_REMOVED, type TParadiseGate } from "@plane/constants";
+import { PARADISE_MODULE_DEFAULTS, PARADISE_NAV_ITEMS, PARADISE_REMOVED, type TParadiseGate } from "@plane/constants";
 import type { IInstanceConfig, TParadiseModule } from "@plane/types";
 
-/**
- * Kunci item menu (sidebar, nav project) yang namanya BUKAN nama modul.
- * Kunci lain yang kebetulan sama dengan nama modul (mis. `stickies`, `modules`)
- * langsung dipetakan ke modul itu.
- */
 /** Tab Materials project departemen (KEP-97): materi Wiki, jadi ikut modul Wiki. */
 export const WIKI_MATERIALS_NAV_KEY = "wiki_materials";
 
+/**
+ * Kunci item menu (sidebar, nav project) -> modul. Menu workspace Paradise datang
+ * dari registri (`PARADISE_NAV_ITEMS`); sisanya menu yang namanya BUKAN nama
+ * modul. Kunci lain yang kebetulan sama dengan nama modul (mis. `stickies`,
+ * `modules`) langsung dipetakan ke modul itu.
+ */
 const MODUL_PER_KUNCI_MENU: Record<string, TParadiseGate> = {
+  ...Object.fromEntries(PARADISE_NAV_ITEMS.map((item) => [item.key, item.module])),
+  // Dasbor Divisi kini tab KPI, kuncinya tetap dipakai preferensi lama.
   dashboard_divisi: "dashboards",
-  kinerja: "dashboards",
-  // Pengumuman = kanal sistem Obrolan, jadi ikut modul Chat.
-  pengumuman: "chat",
-  persetujuan: "approvals",
-  // Permintaan lintas departemen masuk Intake departemen tujuan.
-  tugas_lintas_divisi: "intake",
   [WIKI_MATERIALS_NAV_KEY]: "wiki",
   // Dicabut (KEP-53): menunya tak pernah tampil lagi.
   cycles: PARADISE_REMOVED,
@@ -50,15 +47,11 @@ const MODUL_PER_PATH: [RegExp, TParadiseModule][] = [
   // Menu workspace
   // Tab Analitik di halaman KPI mengikuti modul Analytics, bukan Dashboards.
   [pola("kinerja/analitik"), "analytics"],
-  [pola("(dashboard-divisi|dashboards|kinerja)"), "dashboards"],
-  [pola("initiatives"), "initiatives"],
+  [pola("(dashboard-divisi|dashboards)"), "dashboards"],
+  // Halaman tiap menu Paradise ikut modul menunya (registri PARADISE_NAV_ITEMS).
+  ...PARADISE_NAV_ITEMS.map((item): [RegExp, TParadiseModule] => [pola(item.href.replaceAll("/", "")), item.module]),
   [pola("workspace-views"), "views"],
   [pola("analytics"), "analytics"],
-  [pola("persetujuan"), "approvals"],
-  [pola("tugas-lintas-divisi"), "intake"],
-  [pola("chat"), "chat"],
-  [pola("pengumuman"), "chat"],
-  [pola("wiki"), "wiki"],
   // `projects/archives` didaftarkan SEBELUM pola project: kata `archives` di sana
   // bukan id project.
   [pola("projects/archives"), "archives"],

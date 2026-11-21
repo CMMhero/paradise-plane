@@ -13,6 +13,7 @@
  * halaman bawaan upstream. Toggle ID/EN sudah dicabut; jangan dihidupkan lagi.
  */
 
+import type { TNavItemKey } from "@plane/services";
 import { settingsStrings } from "./godmode-settings";
 
 /**
@@ -656,7 +657,7 @@ const en = {
       chat: "Chat",
       wiki: "Wiki",
       archives: "Archives",
-    },
+    } satisfies Record<TNavItemKey, string>,
     project_mode: "Department list style",
     project_mode_accordion: "Accordion",
     project_mode_tabbed: "Tabs",

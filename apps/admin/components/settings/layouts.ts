@@ -9,7 +9,8 @@
  * does not know is skipped, so a row can never show a setting nothing reads.
  */
 
-import type { TParadiseModule } from "@plane/types";
+import { paradiseModulesInGroup } from "@plane/constants";
+import type { TParadiseModuleGroup } from "@plane/constants";
 import type { TGodmodeStrings } from "@/app/i18n/godmode";
 
 type TSettingStrings = TGodmodeStrings["settings"];
@@ -44,8 +45,8 @@ export type TSettingsTabId =
   | "integrations_google"
   | "logs_retention";
 
-const moduleRows = (modules: TParadiseModule[]): TSettingRow[] =>
-  modules.map((m) => ({ key: `ENABLE_${m.toUpperCase()}` }));
+const moduleRows = (group: TParadiseModuleGroup): TSettingRow[] =>
+  paradiseModulesInGroup(group).map((m) => ({ key: `ENABLE_${m.toUpperCase()}` }));
 
 export const SETTINGS_LAYOUT: Record<TSettingsTabId, TSettingSection[]> = {
   general_company: [{ id: "company", rows: [{ key: "OFFICE_TIMEZONE" }] }],
@@ -165,14 +166,12 @@ export const SETTINGS_LAYOUT: Record<TSettingsTabId, TSettingSection[]> = {
     },
   ],
 
+  // Groups and order come from PARADISE_MODULES in @plane/constants.
   modules_visibility: [
-    { id: "modules_sidebar", rows: moduleRows(["inbox", "your_work", "stickies", "drafts", "quick_links"]) },
-    {
-      id: "modules_workspace",
-      rows: moduleRows(["dashboards", "initiatives", "views", "analytics", "chat", "wiki", "archives"]),
-    },
-    { id: "modules_project", rows: moduleRows(["work_items", "modules", "pages", "intake", "approvals"]) },
-    { id: "modules_work_item", rows: moduleRows(["time_tracking", "estimates"]) },
+    { id: "modules_sidebar", rows: moduleRows("sidebar") },
+    { id: "modules_workspace", rows: moduleRows("workspace") },
+    { id: "modules_project", rows: moduleRows("project") },
+    { id: "modules_work_item", rows: moduleRows("work_item") },
   ],
 
   modules_chat: [

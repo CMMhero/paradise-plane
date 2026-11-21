@@ -11,41 +11,19 @@ import type {
   TIssueOrderByOptions,
   TParadiseModule,
 } from "@plane/types";
+import { PARADISE_MODULES } from "./paradise-navigation";
 
 /**
  * Nilai bawaan tiap modul, dipakai sebelum server menjawab atau bila server lama
- * tak mengirim modulnya. Cermin `_MODUL_BAWAAN` di
- * apps/api/plane/utils/saklar_instance.py.
+ * tak mengirim modulnya. Diturunkan dari `PARADISE_MODULES` (paradise-navigation.ts),
+ * yang dicocokkan dengan `_MODUL_BAWAAN` di apps/api/plane/utils/saklar_instance.py.
  *
- * Time tracking dan estimates bawaannya mati (keputusan user 30 Okt 2026).
  * Cycles, work item types, dan templates DICABUT 2 Nov 2026 (KEP-53): bukan modul
  * lagi, tak bisa dinyalakan dari God Mode. Lihat `PARADISE_REMOVED`.
  */
-export const PARADISE_MODULE_DEFAULTS: Record<TParadiseModule, boolean> = {
-  // Sidebar utama
-  inbox: true,
-  your_work: true,
-  stickies: true,
-  drafts: true,
-  quick_links: true,
-  // Menu workspace
-  dashboards: true,
-  initiatives: false,
-  views: true,
-  analytics: true,
-  chat: true,
-  wiki: true,
-  archives: true,
-  // Tab project
-  work_items: true,
-  modules: true,
-  pages: true,
-  intake: true,
-  approvals: true,
-  // Fitur di dalam work item & setelan project
-  time_tracking: false,
-  estimates: false,
-};
+export const PARADISE_MODULE_DEFAULTS = Object.fromEntries(
+  Object.entries(PARADISE_MODULES).map(([modul, { defaultEnabled }]) => [modul, defaultEnabled])
+) as Record<TParadiseModule, boolean>;
 
 /**
  * Salinan `paradise_modules` dari /api/instances/, untuk pemanggil di luar React

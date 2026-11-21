@@ -10,6 +10,8 @@
  * Each help line says what the setting does and who it affects.
  */
 
+import type { TParadiseModule } from "@plane/types";
+
 const tab = (title: string, description: string) => ({ title, description });
 
 // KEP-85 permission keys. Content has an owner; project structure goes by level.
@@ -520,7 +522,7 @@ export const settingsStrings = {
     },
     time_tracking: { name: "Time tracking", desc: "Worklogs on work items and logged hours on division dashboards." },
     estimates: { name: "Estimates", desc: "Story points or time estimates on work items, per department." },
-  },
+  } satisfies Record<TParadiseModule, { name: string; desc: string }>,
 
   /** Labels for choice values. A value the server adds later falls back to "Option N". */
   choices: {
