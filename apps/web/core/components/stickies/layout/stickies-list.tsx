@@ -80,6 +80,20 @@ export const StickiesList = observer(function StickiesList(props: TProps) {
     }
   };
 
+  // Masonry places items with absolute positions and sizes its container once.
+  // The sticky editors mount and grow after that (and the column count changes
+  // on mobile), so the container stays too short and whatever follows the
+  // widget (the changelog on Home) is drawn underneath the stickies. Relayout
+  // whenever an item changes size.
+  const itemCount = workspaceStickyIds.length;
+  useEffect(() => {
+    const container: HTMLElement | undefined = masonryRef.current?.masonryContainer;
+    if (!container || typeof ResizeObserver === "undefined") return;
+    const resizeObserver = new ResizeObserver(() => masonryRef.current?.performLayout());
+    for (const item of Array.from(container.children)) resizeObserver.observe(item);
+    return () => resizeObserver.disconnect();
+  }, [itemCount, columnCount, loader]);
+
   // Function to determine if an item is in first or last row
   const getRowPositions = (index: number) => {
     const currentRow = Math.floor(index / columnCount);
@@ -173,6 +187,16 @@ export const StickiesList = observer(function StickiesList(props: TProps) {
   );
 });
 
+const getColumnCount = (width: number | null): number => {
+  if (width === null) return 4;
+
+  if (width < 640) return 2; // sm
+  if (width < 850) return 3; // md
+  if (width < 1024) return 4; // lg
+  if (width < 1280) return 5; // xl
+  return 6; // 2xl and above
+};
+
 export function StickiesLayout(props: TStickiesLayout) {
   // states
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
@@ -194,15 +218,6 @@ export function StickiesLayout(props: TStickiesLayout) {
     return () => resizeObserver.disconnect();
   }, []);
 
-  const getColumnCount = (width: number | null): number => {
-    if (width === null) return 4;
-
-    if (width < 640) return 2; // sm
-    if (width < 850) return 3; // md
-    if (width < 1024) return 4; // lg
-    if (width < 1280) return 5; // xl
-    return 6; // 2xl and above
-  };
   const columnCount = getColumnCount(containerWidth);
 
   return (
