@@ -573,3 +573,72 @@ th,
   --txt-icon-success-primary: var(--green-700);
   --txt-icon-warning-primary: var(--amber-700);
 }
+
+/* ==========================================================================
+   13. Ukuran huruf dan sasaran sentuh di HP (permintaan pemilik, Nov 2026)
+   ==========================================================================
+
+   Staf memakai aplikasi ini di HP, dan keluhannya dua: tombol terlalu kecil
+   untuk jari, tulisan terlalu kecil untuk dibaca. Diukur di 375px dengan
+   emulasi sentuh: 2.005 teks 11px, 1.785 teks 13px, dan 9 dari 10 kontrol di
+   bawah 40px.
+
+   HURUF. Hampir semua teks memakai token `--text-*` (langsung `text-11`, atau
+   lewat token semantik `text-caption-*`/`text-body-*` yang menunjuk ke sana).
+   Jadi cukup token dasarnya yang dinaikkan di layar sempit, dan setiap halaman
+   ikut: tidak ada teks di bawah 12px, isi 13px jadi 14px. Ditakar dari LEBAR
+   layar, bukan jenis penunjuk: tablet dan desktop memakai ukuran padat yang
+   lama. */
+@media (max-width: 767.98px) {
+  :root {
+    --text-9: 0.75rem;
+    --text-10: 0.75rem;
+    --text-11: 0.75rem;
+    --text-12: 0.8125rem;
+    --text-13: 0.875rem;
+  }
+}
+
+/* SASARAN SENTUH. Komponen bersama (Button, IconButton, tab, kolom isian)
+   sudah membesar sendiri lewat `sentuh:min-h-*`. Utilitas ini untuk kontrol
+   yang tidak boleh berubah ukuran karena hidup di baris padat (saklar, menu
+   titik tiga, tautan kecil): area sentuhnya saja yang dilebarkan sampai 40px
+   lewat pseudo-element tak terlihat, tumbuh sama rata ke segala arah dan hanya
+   seperlunya (kontrol yang sudah 40px tidak berubah). Tampilannya tetap. */
+@utility sasaran-sentuh {
+  @media (pointer: coarse) {
+    &:not(.absolute, .fixed, .sticky) {
+      position: relative;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: min(0px, calc((100% - 40px) / 2));
+    }
+  }
+}
+
+/* Chip properti dan avatar pembuka kartu profil di baris daftar dan kartu
+   kanban (bagian 11). Di layar sentuh chipnya naik ke 28x32px, jarak
+   antarchip 12px, dan area sentuhnya ditambah 6px di tiap sisi: 40x44px tanpa
+   menimpa chip tetangga. Avatar pembuka kartu profil memakai `sasaran-sentuh`
+   langsung di pemicunya (propel member-profile-card). */
+@media (pointer: coarse) {
+  [data-sasaran-chip] {
+    gap: 0.75rem;
+  }
+
+  /* Hanya pembungkus langsung tiap chip; `.h-5` yang lebih dalam bisa avatar
+     bulat (h-5 w-5) yang akan jadi lonjong. */
+  [data-sasaran-chip] > .h-5 {
+    height: 1.75rem;
+  }
+
+  /* content-box (bagian 11): lebar minimum ini untuk chip yang terlihat, padding di luarnya. */
+  [data-sasaran-chip] .clickable {
+    min-width: 2rem;
+    margin: -6px;
+    padding: 6px;
+  }
+}
