@@ -1549,5 +1549,18 @@
     "forbidden": "Anda tidak punya akses ke Intake departemen ini. Minta supervisor atau admin departemen untuk menambahkan Anda.",
     "not_found": "Intake departemen ini sedang mati, atau halamannya sudah usang. Muat ulang halaman.",
     "load_failed": "Intake gagal dimuat. Coba lagi sebentar lagi. Kalau terus terjadi, beri tahu admin."
+  },
+  "image_gallery": {
+    "dialog": "Penampil gambar",
+    "close": "Tutup penampil gambar",
+    "previous": "Gambar sebelumnya",
+    "next": "Gambar berikutnya",
+    "zoom_in": "Perbesar",
+    "zoom_out": "Perkecil",
+    "reset_zoom": "Kembalikan ukuran",
+    "download": "Unduh gambar",
+    "open_in_new_tab": "Buka gambar di tab baru",
+    "load_error": "Gambar ini gagal dimuat. Anda tetap bisa pindah ke gambar lain.",
+    "counter": "Gambar {current} dari {total}"
   }
 }
