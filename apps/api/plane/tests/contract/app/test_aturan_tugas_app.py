@@ -45,7 +45,7 @@ from plane.utils import aturan
 from plane.utils.aturan import area_tugas as B
 from plane.utils.aturan.jenis import ke_teks
 from plane.utils.atasan import PESAN_ATASAN
-from plane.utils.hierarki import direktur_ikut_memutuskan
+from plane.utils.hierarki import FLAG_GERBANG, direktur_ikut_memutuskan
 from plane.utils.ketepatan_waktu import anotasi_ketepatan, dibuat_dihitung, q_terlambat
 from plane.utils.naik_assignee import naikkan_assignee
 from plane.utils.task_access import bisa_ganti_tenggat_intake
@@ -161,6 +161,14 @@ class TestMengubah:
         assert _kuasa(p29.sup1, p29)["bidang_terkunci"] == []
         milik.refresh_from_db()
         assert (milik.name, milik.priority) == ("Oleh atasan", "high")
+
+    def test_bidang_terkunci_ikut_katup_gerbang(self, p29, monkeypatch):
+        """Katup HIERARKI_GERBANG_TUGAS mati = tidak ada kunci edit, bidang juga."""
+        milik = _tugas(p29, p29.staf, [p29.staf])
+        _atur(B.TASK_FIELDS_LOCKED_FOR_STAFF, ("name",))
+        monkeypatch.setenv(FLAG_GERBANG, "0")
+        assert _kuasa(p29.staf, p29)["bidang_terkunci"] == []
+        assert _patch(_klien(p29.staf), p29, milik, {"name": "Katup mati"}).status_code == status.HTTP_200_OK
 
     def test_bidang_dibuka_untuk_semua_anggota(self, p29):
         """TASK_FIELDS_OPEN_TO_MEMBERS: staf mengubah prioritas tugas rekan, tidak judulnya."""

@@ -98,8 +98,9 @@ def _hak_ubah_saya(user, project, admin_penuh, tingkat):
     """Hak ubah per orang dari aturan God Mode area B, untuk dicerminkan klien.
 
     Dihitung di server supaya klien tidak menghitung ulang izin dari nilai aturan.
-    Sama dengan `galat_ubah_tugas` (staf = bukan admin dan di bawah Leader),
-    `galat_percakapan_tugas`, dan `hak_buka_kembali`.
+    Sama dengan `galat_ubah_tugas` (staf = bukan admin dan di bawah Leader; katup
+    gerbang mati = tidak ada kunci bidang), `galat_percakapan_tugas`, dan
+    `hak_buka_kembali`.
     """
     from plane.db.models import TINGKAT_LEADER  # noqa: PLC0415
     from plane.utils import aturan  # noqa: PLC0415
@@ -113,7 +114,7 @@ def _hak_ubah_saya(user, project, admin_penuh, tingkat):
     )
     from plane.utils.kunci_selesai import hak_buka_kembali  # noqa: PLC0415
 
-    staf = not admin_penuh and (tingkat is None or tingkat < TINGKAT_LEADER)
+    staf = gerbang_aktif() and not admin_penuh and (tingkat is None or tingkat < TINGKAT_LEADER)
     terkunci = list(aturan.get_list(TASK_FIELDS_LOCKED_FOR_STAFF)) if staf else []
     return {
         "ubah_semua_tugas": aturan.get_choice(TASK_EDIT_RULE) == UBAH_SEMUA_ANGGOTA,
