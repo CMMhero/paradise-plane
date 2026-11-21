@@ -36,6 +36,7 @@ import { Avatar, Input } from "@plane/ui";
 import { cn, getFileURL, getNumberCount, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
 import { CountChip } from "@/components/common/count-chip";
+import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
@@ -869,7 +870,7 @@ function ChatPage() {
   if (!slug) return <></>;
 
   return (
-    <div className="flex h-full min-h-0 w-full">
+    <PageShell width="full" className="flex">
       <PageHead title={t("chat_nav")} />
 
       {/* Daftar orang */}
@@ -1593,7 +1594,7 @@ function ChatPage() {
         kanal={kanalBelumDiikuti}
         onGabung={(ruangId) => void gabung(ruangId)}
       />
-    </div>
+    </PageShell>
   );
 }
 

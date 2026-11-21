@@ -228,6 +228,12 @@ export function ChipOrang({
       <span className="min-w-0 flex-1 truncate text-12 text-primary">{nama || email}</span>
       {!ringkas && <BadgeJabatan tingkat={tingkat} size="sm" />}
       {bisa && !ringkas && <MenuOrang orangId={orangId} nama={nama || email} asal={asal} tingkat={tingkat} />}
+      {/* Seret HTML5 tidak jalan di layar sentuh, jadi di sana lajur Levels memakai menu yang sama. */}
+      {bisa && ringkas && (
+        <span className="hidden pointer-coarse:block">
+          <MenuOrang orangId={orangId} nama={nama || email} asal={asal} tingkat={tingkat} />
+        </span>
+      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar, Loader, TextArea } from "@plane/ui";
 import { getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
+import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
@@ -141,7 +142,7 @@ function PengumumanPage() {
   return (
     <>
       <PageHead title={t("pengumuman_ui.title")} />
-      <div className="mx-auto flex w-full max-w-[800px] flex-col gap-4 px-page-x py-6">
+      <PageShell>
         {kanal?.boleh_kirim ? (
           <div className="flex flex-col gap-2 rounded-card border border-subtle bg-surface-1 p-3">
             <TextArea
@@ -184,7 +185,7 @@ function PengumumanPage() {
                 <li key={p.id} className="flex flex-col gap-2 rounded-card border border-subtle bg-surface-1 p-4">
                   <div className="flex items-center gap-2">
                     <Avatar name={nama(p.pengirim)} src={getFileURL(penulis?.avatar_url ?? "")} size="sm" />
-                    <p className="text-13 font-medium text-primary">{nama(p.pengirim)}</p>
+                    <p className="min-w-0 truncate text-13 font-medium text-primary">{nama(p.pengirim)}</p>
                     <p className="ml-auto shrink-0 text-12 text-tertiary">
                       {renderFormattedDate(p.created_at)} {renderFormattedTime(p.created_at)}
                     </p>
@@ -215,7 +216,7 @@ function PengumumanPage() {
             {t("pengumuman_ui.open_in_chat")}
           </Link>
         ) : null}
-      </div>
+      </PageShell>
     </>
   );
 }

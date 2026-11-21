@@ -39,7 +39,7 @@ export function PageTabs({ tabs }: { tabs: TPageTab[] }) {
             key={tab.href}
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
-            className={cn("-mb-px border-b-2 pb-2 text-13 font-medium transition-colors", {
+            className={cn("-mb-px border-b-2 py-2.5 text-13 font-medium transition-colors", {
               "border-accent-strong text-primary": isActive,
               "border-transparent text-tertiary hover:text-secondary": !isActive,
             })}
@@ -151,9 +151,11 @@ export function Callout({ icon, title, children }: { icon?: ReactNode; title: st
 /** Small stat tile used on overview pages. */
 export function StatCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="rounded-card border border-subtle bg-layer-1 px-4 py-3">
+    <div className="min-w-0 rounded-card border border-subtle bg-layer-1 px-4 py-3">
       <div className="text-h5-semibold text-primary">{value}</div>
-      <div className="mt-0.5 text-13 text-secondary">{label}</div>
+      <div className="mt-0.5 text-13 break-words text-secondary" title={label}>
+        {label}
+      </div>
       {hint && <div className="mt-1 text-11 text-placeholder">{hint}</div>}
     </div>
   );

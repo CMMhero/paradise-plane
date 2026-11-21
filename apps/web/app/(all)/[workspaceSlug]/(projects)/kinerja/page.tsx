@@ -18,6 +18,7 @@ import { Button } from "@plane/propel/button";
 import { Avatar, Loader } from "@plane/ui";
 import { cn, getFileURL } from "@plane/utils";
 // components
+import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 import { formatDay } from "@/components/dashboard-divisi/laporan";
 import { Section } from "@/components/kinerja/bagian";
@@ -70,29 +71,29 @@ function KinerjaPage() {
   const scopeName = data ? data.scope.name || t("kinerja.scope.organisation") : "";
 
   return (
-    <div className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6">
+    <>
       <PageHead title={t("kinerja.title")} />
-      <div className="mx-auto flex max-w-6xl flex-col gap-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-20 font-semibold text-primary">
-              {scopeName ? t("kinerja.heading", { name: scopeName }) : t("kinerja.title")}
-            </h1>
-            {data && (
-              <p className="text-12 text-tertiary">
+      <PageShell width="wide">
+        <PageShell.Header
+          title={scopeName ? t("kinerja.heading", { name: scopeName }) : t("kinerja.title")}
+          description={
+            data && (
+              <p>
                 {t("kinerja.period.range", {
                   start: formatDay(data.period.start, currentLocale),
                   end: formatDay(data.period.end, currentLocale, true),
                 })}
                 {data.scope.kind !== "orang" && ` · ${t("kinerja.people_count", { count: data.scope.people })}`}
               </p>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ScopePicker scope={scope} options={scopes} currentName={scopeName} onChange={openScope} />
-            <PeriodPicker period={period} onChange={setPeriod} today={localToday()} />
-          </div>
-        </div>
+            )
+          }
+          actions={
+            <>
+              <ScopePicker scope={scope} options={scopes} currentName={scopeName} onChange={openScope} />
+              <PeriodPicker period={period} onChange={setPeriod} today={localToday()} />
+            </>
+          }
+        />
 
         {error && !isLoading ? (
           <div role="alert" className="flex flex-wrap items-center gap-3">
@@ -121,8 +122,8 @@ function KinerjaPage() {
             onOpen={openScope}
           />
         )}
-      </div>
-    </div>
+      </PageShell>
+    </>
   );
 }
 

@@ -18,6 +18,7 @@ import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { CustomSearchSelect, CustomSelect, Input, Loader, TextArea } from "@plane/ui";
 // components
+import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
@@ -359,10 +360,10 @@ function TugasLintasDivisiPage() {
   if (!workspaceSlug) return <></>;
 
   return (
-    <div className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6">
+    <>
       <PageHead title={t("persetujuan_p29.nav_requests")} />
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <PageShell>
         <p className="text-12 text-tertiary">{t("persetujuan_p29.requests_intro")}</p>
 
         {gagalMuat ? (
@@ -611,8 +612,8 @@ function TugasLintasDivisiPage() {
             )}
           </>
         )}
-      </div>
-    </div>
+      </PageShell>
+    </>
   );
 }
 
