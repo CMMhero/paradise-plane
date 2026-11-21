@@ -17,6 +17,7 @@ import { WorkItemImageGalleryScope } from "@/components/common/image-gallery";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import useKeypress from "@/hooks/use-keypress";
+import { useAturan } from "@/hooks/use-aturan";
 import usePeekOverviewOutsideClickDetector from "@/hooks/use-peek-overview-outside-click";
 // local imports
 import type { TIssueOperations } from "../issue-detail";
@@ -55,8 +56,10 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
     embedRemoveCurrentNotification,
     issueOperations,
   } = props;
+  const { get: getAturan } = useAturan();
   // states
-  const [peekMode, setPeekMode] = useState<TPeekModes>("side-peek");
+  // Mode awal dari aturan God Mode PEEK_MODE_DEFAULT; pilihan di header hanya berlaku selama peek terbuka.
+  const [peekMode, setPeekMode] = useState<TPeekModes>(() => getAturan("PEEK_MODE_DEFAULT"));
   const [isSubmitting, setIsSubmitting] = useState<TNameDescriptionLoader>("saved");
   const [isDeleteIssueModalOpen, setIsDeleteIssueModalOpen] = useState(false);
   const [isArchiveIssueModalOpen, setIsArchiveIssueModalOpen] = useState(false);

@@ -30,6 +30,7 @@ import { PeriodPicker, ScopePicker } from "@/components/kinerja/pemilih";
 import { MetricTable } from "@/components/kinerja/tabel-metrik";
 import { MetricTiles } from "@/components/kinerja/ubin-metrik";
 // hooks
+import { useAturan } from "@/hooks/use-aturan";
 import useLocalStorage from "@/hooks/use-local-storage";
 // services
 import { KinerjaService } from "@/services/kinerja.service";
@@ -49,8 +50,11 @@ function KinerjaPage() {
   const { workspaceSlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const scope = scopeFromParams(searchParams);
-  const { storedValue, setValue: setPeriod } = useLocalStorage<TKpiPeriod>(PERIOD_STORAGE_KEY, { key: "this_month" });
-  const period = sanitizePeriod(storedValue);
+  // Nilai awal null: kosong = belum pernah memilih, jadi periode bawaan dari aturan
+  // God Mode. Pilihan tersimpan selalu menang dan tidak pernah ditimpa aturan.
+  const { storedValue, setValue: setPeriod } = useLocalStorage<TKpiPeriod | null>(PERIOD_STORAGE_KEY, null);
+  const { get } = useAturan();
+  const period = sanitizePeriod(storedValue, get("KPI_DEFAULT_PERIOD"));
   // Jam kerja berasal dari Time Tracking; disembunyikan bersama fiturnya.
   const isTimeTrackingEnabled = isParadiseFeatureEnabled("timeTracking");
 
