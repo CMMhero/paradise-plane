@@ -59,7 +59,7 @@ function Pilihan<T extends string>({
           type="button"
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
-          className={cn("rounded-control border px-2.5 py-1 text-12 font-medium transition-colors", {
+          className={cn("rounded-control border px-2.5 py-1 text-12 font-medium transition-colors sentuh:min-h-10", {
             "border-accent-strong bg-accent-primary text-on-color": value === o.value,
             "border-subtle text-secondary hover:bg-layer-1": value !== o.value,
           })}

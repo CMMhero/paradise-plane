@@ -39,7 +39,7 @@ export function PageTabs({ tabs }: { tabs: TPageTab[] }) {
             key={tab.href}
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
-            className={cn("-mb-px border-b-2 py-2.5 text-13 font-medium transition-colors", {
+            className={cn("sasaran-sentuh -mb-px border-b-2 py-2.5 text-13 font-medium transition-colors", {
               "border-accent-strong text-primary": isActive,
               "border-transparent text-tertiary hover:text-secondary": !isActive,
             })}

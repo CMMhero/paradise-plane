@@ -412,7 +412,7 @@ function BarisDivisi({
           onClick={onLipat}
           aria-expanded={buka}
           aria-label={label}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-item px-1.5 py-1 text-left hover:bg-layer-transparent-hover"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-item px-1.5 py-1 text-left hover:bg-layer-transparent-hover sentuh:min-h-10"
         >
           <ChevronRight className={cn("size-4 shrink-0 text-tertiary transition-transform", buka && "rotate-90")} />
           <Building2 className="size-4 shrink-0 text-tertiary" aria-hidden />
@@ -497,7 +497,7 @@ function ZonaDirekturCabang({
                 aria-label={fill(s.org.branch.remove_director, { name: d.nama, branch: c.nama })}
                 title={fill(s.org.branch.remove_director, { name: d.nama, branch: c.nama })}
                 onClick={() => cabut(d.id)}
-                className="grid size-6 shrink-0 place-items-center rounded-item text-tertiary hover:bg-layer-transparent-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-accent-strong"
+                className="grid size-6 shrink-0 place-items-center rounded-item text-tertiary hover:bg-layer-transparent-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-accent-strong sentuh:size-10"
               >
                 <X className="size-3.5" aria-hidden />
               </button>

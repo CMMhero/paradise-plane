@@ -67,7 +67,7 @@ export const AdminSidebarHelpSection = observer(function AdminSidebarHelpSection
         <Tooltip tooltipContent="Versi instance" position={isSidebarCollapsed ? "right" : "top"} className="ml-4">
           <button
             type="button"
-            className={`ml-auto grid place-items-center rounded-button p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary ${
+            className={`ml-auto grid place-items-center rounded-button p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary sentuh:size-10 ${
               isSidebarCollapsed ? "w-full" : ""
             }`}
             onClick={() => setIsNeedHelpOpen((prev) => !prev)}
@@ -78,7 +78,7 @@ export const AdminSidebarHelpSection = observer(function AdminSidebarHelpSection
         <Tooltip tooltipContent="Toggle sidebar" position={isSidebarCollapsed ? "right" : "top"} className="ml-4">
           <button
             type="button"
-            className={`grid place-items-center rounded-button p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary ${
+            className={`grid place-items-center rounded-button p-1.5 text-secondary outline-none hover:bg-layer-1-hover hover:text-primary sentuh:size-10 ${
               isSidebarCollapsed ? "w-full" : ""
             }`}
             onClick={() => toggleSidebar(!isSidebarCollapsed)}

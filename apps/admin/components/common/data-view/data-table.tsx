@@ -226,12 +226,18 @@ function KepalaKolom<Row>({
         <button
           type="button"
           onClick={() => onSort({ key: c.key, dir: aktif && sort.dir === "asc" ? "desc" : "asc" })}
-          className={cn("group -mx-1 inline-flex items-center gap-1 rounded-item px-1 hover:text-secondary", {
-            "text-primary": aktif,
-          })}
+          className={cn(
+            "group sasaran-sentuh -mx-1 inline-flex items-center gap-1 rounded-item px-1 hover:text-secondary",
+            {
+              "text-primary": aktif,
+            }
+          )}
         >
           {c.label}
-          <Ikon className={cn("size-3 shrink-0", { "opacity-0 group-hover:opacity-100": !aktif })} aria-hidden />
+          <Ikon
+            className={cn("size-3 shrink-0", { "opacity-0 group-hover:opacity-100 sentuh:opacity-100": !aktif })}
+            aria-hidden
+          />
         </button>
       ) : (
         c.label
