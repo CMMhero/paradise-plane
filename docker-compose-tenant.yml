@@ -12,7 +12,7 @@
 #
 # Hanya layanan yang MEMEGANG DATA satu pelanggan. Sisanya dibagi bersama dan
 # hidup di docker-compose-shared.yml. Rinciannya beserta angkanya ada di
-# paradise/KAPASITAS-SAAS.md.
+# paradise/SAAS-CAPACITY.md.
 #
 #   di sini (per pelanggan)  plane-db, plane-redis, plane-mq,
 #                            api, worker, beat-worker, migrator, live

@@ -16,7 +16,7 @@ termahalnya.
 
 1. Isi setiap `[ISI: ...]`. Itu keputusan bisnis, dan tidak ada yang bisa
    mengisinya selain pemilik produk.
-2. Serahkan ke ahli hukum **beserta** `paradise/PENGAWASAN-DAN-PRIVASI.md`.
+2. Serahkan ke ahli hukum **beserta** `paradise/MONITORING-AND-PRIVACY.md`.
    Dokumen itu berisi audit apa yang benar-benar direkam sistem, dan itu yang
    biasanya paling sulit didapat ahli hukum dari klien.
 3. Jangan terbitkan sebelum ditinjau.

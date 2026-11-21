@@ -1,0 +1,30 @@
+{
+  "version": "2.12.1",
+  "date": "2026-11-21",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Department requests has a New request button in the page header. The form opens from it, and when no department can take a request yet, the page says why."
+    },
+    {
+      "type": "Changed",
+      "text": "Chat and Announcements moved to the top of the sidebar, next to Home and Drafts. The Departments link inside the Workspace group is gone because the department list below it already covers it."
+    },
+    {
+      "type": "Changed",
+      "text": "There is one refresh button now, in the top bar. The duplicate in the breadcrumb bar is removed."
+    },
+    {
+      "type": "Changed",
+      "text": "Work item detail uses less side padding on phones, so the description and activity get more room."
+    },
+    {
+      "type": "Changed",
+      "text": "On a touch screen, tapping an image in a description or comment opens it full screen, like the full screen button on desktop."
+    },
+    {
+      "type": "Fixed",
+      "text": "On phones, the sticky notes on Home no longer overlap the Changelog below them."
+    }
+  ]
+}

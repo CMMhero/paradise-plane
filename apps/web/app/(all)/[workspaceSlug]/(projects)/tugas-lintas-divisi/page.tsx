@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 import { useParams } from "react-router";
@@ -15,6 +15,7 @@ import { useTranslation } from "@plane/i18n";
 import { Badge } from "@plane/propel/badge";
 import type { TBadgeVariant } from "@plane/propel/badge";
 import { Button } from "@plane/propel/button";
+import { PlusIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { CustomSearchSelect, CustomSelect, Input, Loader, TextArea } from "@plane/ui";
 // components
@@ -267,6 +268,9 @@ function TugasLintasDivisiPage() {
   const [keterangan, setKeterangan] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [gagalKirim, setGagalKirim] = useState<string | null>(null);
+  // Formulir dibuka lewat tombol "Permintaan baru", bukan selalu terbentang.
+  const [formTerbuka, setFormTerbuka] = useState(false);
+  const formRef = useRef<HTMLElement>(null);
 
   // Divisi asal diturunkan dari store, bukan disalin ke state: kalau
   // keanggotaan berubah, pilihannya ikut berubah tanpa state basi.
@@ -315,6 +319,12 @@ function TugasLintasDivisiPage() {
     .map(([projectId, baris]) => ({ projectId, baris, nama: getProjectById(projectId)?.name ?? null }))
     .filter((item) => item.baris.keluar_menunggu + item.baris.keluar_terbuka > 0);
 
+  const bukaForm = () => {
+    setFormTerbuka(true);
+    // Ringkasan ada di atasnya; di layar sempit formulir jatuh di bawah layar.
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+
   const handleKirim = async () => {
     if (!workspaceSlug) return;
     setGagalKirim(null);
@@ -343,6 +353,7 @@ function TugasLintasDivisiPage() {
       setJudul("");
       setCatatan("");
       setKeterangan("");
+      setFormTerbuka(false);
       // Muat ulang daftarnya supaya baris baru langsung terlihat, alih-alih
       // menebak bentuk balasan POST di state lokal.
       await muatSemua();
@@ -367,7 +378,15 @@ function TugasLintasDivisiPage() {
       <PageHead title={t("persetujuan_p29.nav_requests")} />
 
       <PageShell>
-        <PageShell.Header title={t("persetujuan_p29.nav_requests")} description={t("persetujuan_p29.requests_intro")} />
+        <PageShell.Header
+          title={t("persetujuan_p29.nav_requests")}
+          description={t("persetujuan_p29.requests_intro")}
+          actions={
+            <Button variant="primary" size="lg" prependIcon={<PlusIcon />} onClick={bukaForm}>
+              {t("cross_division_ui.new_request")}
+            </Button>
+          }
+        />
 
         {gagalMuat ? (
           <div
@@ -438,161 +457,170 @@ function TugasLintasDivisiPage() {
             </section>
 
             {/* 2. Form kirim permintaan */}
-            <section className="flex flex-col gap-3">
-              <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.request_help")}</h2>
-
-              {divisiSaya.length === 0 ? (
-                <p className="text-13 text-tertiary">{t("cross_division_ui.no_origin")}</p>
-              ) : tujuanTersedia.length === 0 ? (
-                <div className="flex items-start gap-2 rounded-card border border-subtle bg-layer-1 px-3 py-2 text-12 text-secondary">
-                  <Inbox className="mt-0.5 size-4 shrink-0 text-tertiary" />
-                  <span>{t("cross_division_ui.no_targets")}</span>
+            {formTerbuka && (
+              <section ref={formRef} className="flex scroll-mt-4 flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.request_help")}</h2>
+                  <Button variant="secondary" size="base" onClick={() => setFormTerbuka(false)}>
+                    {t("cross_division_ui.cancel")}
+                  </Button>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-3 rounded-card border border-subtle bg-layer-1 p-4">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <fieldset
-                      aria-labelledby="lintas-divisi-origin"
-                      className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
-                    >
-                      <span id="lintas-divisi-origin" className="text-12 font-medium text-secondary">
-                        {t("cross_division_ui.origin")}
-                      </span>
-                      <CustomSelect
-                        value={asalId}
-                        onChange={(v: string) => setAsalDipilih(v)}
-                        label={labelDivisi(divisiSaya.find((d) => d.id === asalId))}
-                        buttonClassName="w-full"
-                        className="w-full"
-                        input
-                      >
-                        {divisiSaya.map((divisi) => (
-                          <CustomSelect.Option key={divisi.id} value={divisi.id}>
-                            {labelDivisi(divisi)}
-                          </CustomSelect.Option>
-                        ))}
-                      </CustomSelect>
-                      <span className="text-11 text-tertiary">{t("cross_division_ui.origin_hint")}</span>
-                    </fieldset>
 
-                    <fieldset
-                      aria-labelledby="lintas-divisi-target"
-                      className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
-                    >
-                      <span id="lintas-divisi-target" className="text-12 font-medium text-secondary">
-                        {t("cross_division_ui.target")}
-                      </span>
-                      <CustomSearchSelect
-                        value={tujuanDipilih}
-                        onChange={(v: string) => setTujuanDipilih(v)}
-                        label={
-                          tujuanDipilih
-                            ? labelDivisi(tujuanTersedia.find((d) => d.id === tujuanDipilih))
-                            : t("cross_division_ui.target_placeholder")
-                        }
-                        options={tujuanTersedia.map((divisi) => ({
-                          value: divisi.id,
-                          query: `${divisi.name} ${divisi.identifier}`,
-                          content: labelDivisi(divisi),
-                        }))}
-                        buttonClassName="w-full"
-                        className="w-full"
-                        input
-                      />
-                      <span className="text-11 text-tertiary">{t("cross_division_ui.target_hint")}</span>
-                    </fieldset>
+                {divisiSaya.length === 0 ? (
+                  <p className="text-13 text-tertiary">{t("cross_division_ui.no_origin")}</p>
+                ) : tujuanTersedia.length === 0 ? (
+                  <div className="flex items-start gap-2 rounded-card border border-subtle bg-layer-1 px-3 py-2 text-12 text-secondary">
+                    <Inbox className="mt-0.5 size-4 shrink-0 text-tertiary" />
+                    <span>{t("cross_division_ui.no_targets")}</span>
                   </div>
+                ) : (
+                  <div className="flex flex-col gap-3 rounded-card border border-subtle bg-layer-1 p-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <fieldset
+                        aria-labelledby="lintas-divisi-origin"
+                        className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
+                      >
+                        <span id="lintas-divisi-origin" className="text-12 font-medium text-secondary">
+                          {t("cross_division_ui.origin")}
+                        </span>
+                        <CustomSelect
+                          value={asalId}
+                          onChange={(v: string) => setAsalDipilih(v)}
+                          label={labelDivisi(divisiSaya.find((d) => d.id === asalId))}
+                          buttonClassName="w-full"
+                          className="w-full"
+                          input
+                        >
+                          {divisiSaya.map((divisi) => (
+                            <CustomSelect.Option key={divisi.id} value={divisi.id}>
+                              {labelDivisi(divisi)}
+                            </CustomSelect.Option>
+                          ))}
+                        </CustomSelect>
+                        <span className="text-11 text-tertiary">{t("cross_division_ui.origin_hint")}</span>
+                      </fieldset>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
+                      <fieldset
+                        aria-labelledby="lintas-divisi-target"
+                        className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
+                      >
+                        <span id="lintas-divisi-target" className="text-12 font-medium text-secondary">
+                          {t("cross_division_ui.target")}
+                        </span>
+                        <CustomSearchSelect
+                          value={tujuanDipilih}
+                          onChange={(v: string) => setTujuanDipilih(v)}
+                          label={
+                            tujuanDipilih
+                              ? labelDivisi(tujuanTersedia.find((d) => d.id === tujuanDipilih))
+                              : t("cross_division_ui.target_placeholder")
+                          }
+                          options={tujuanTersedia.map((divisi) => ({
+                            value: divisi.id,
+                            query: `${divisi.name} ${divisi.identifier}`,
+                            content: labelDivisi(divisi),
+                          }))}
+                          buttonClassName="w-full"
+                          className="w-full"
+                          input
+                        />
+                        <span className="text-11 text-tertiary">{t("cross_division_ui.target_hint")}</span>
+                      </fieldset>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
+                      <label className="flex flex-col gap-1">
+                        <span className="text-12 font-medium text-secondary">
+                          {t("cross_division_ui.request_title")}
+                        </span>
+                        <Input
+                          type="text"
+                          value={judul}
+                          maxLength={255}
+                          onChange={(e) => setJudul(e.target.value)}
+                          placeholder={t("cross_division_ui.request_title_placeholder")}
+                          className={inputClass}
+                        />
+                      </label>
+
+                      <fieldset
+                        aria-labelledby="lintas-divisi-priority"
+                        className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
+                      >
+                        <span id="lintas-divisi-priority" className="text-12 font-medium text-secondary">
+                          {t("cross_division_ui.priority_label")}
+                        </span>
+                        <CustomSelect
+                          value={prioritas}
+                          onChange={(v: string) => setPrioritas(v)}
+                          label={t(PRIORITAS.find((p) => p.value === prioritas)?.label ?? PRIORITAS[0].label)}
+                          buttonClassName="w-full"
+                          className="w-full"
+                          input
+                        >
+                          {PRIORITAS.map((pilihan) => (
+                            <CustomSelect.Option key={pilihan.value} value={pilihan.value}>
+                              {t(pilihan.label)}
+                            </CustomSelect.Option>
+                          ))}
+                        </CustomSelect>
+                      </fieldset>
+                    </div>
+
                     <label className="flex flex-col gap-1">
-                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.request_title")}</span>
-                      <Input
-                        type="text"
-                        value={judul}
-                        maxLength={255}
-                        onChange={(e) => setJudul(e.target.value)}
-                        placeholder={t("cross_division_ui.request_title_placeholder")}
-                        className={inputClass}
+                      <span className="text-12 font-medium text-secondary">{t("cross_division_ui.note_label")}</span>
+                      <TextArea
+                        value={catatan}
+                        maxLength={batasCatatan}
+                        rows={3}
+                        onChange={(e) => setCatatan(e.target.value)}
+                        placeholder={t("cross_division_ui.note_placeholder")}
+                        className={`${inputClass} ${TINGGI_TIGA_BARIS}`}
                       />
+                      <span className="text-11 text-tertiary">
+                        {t("cross_division_ui.char_count", { count: catatan.length, max: batasCatatan })}
+                      </span>
                     </label>
 
-                    <fieldset
-                      aria-labelledby="lintas-divisi-priority"
-                      className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0"
-                    >
-                      <span id="lintas-divisi-priority" className="text-12 font-medium text-secondary">
-                        {t("cross_division_ui.priority_label")}
+                    <label className="flex flex-col gap-1">
+                      <span className="text-12 font-medium text-secondary">
+                        {t("cross_division_ui.description_label")}
                       </span>
-                      <CustomSelect
-                        value={prioritas}
-                        onChange={(v: string) => setPrioritas(v)}
-                        label={t(PRIORITAS.find((p) => p.value === prioritas)?.label ?? PRIORITAS[0].label)}
-                        buttonClassName="w-full"
-                        className="w-full"
-                        input
+                      <TextArea
+                        value={keterangan}
+                        rows={3}
+                        onChange={(e) => setKeterangan(e.target.value)}
+                        placeholder={t("cross_division_ui.description_placeholder")}
+                        className={`${inputClass} ${TINGGI_TIGA_BARIS}`}
+                      />
+                      <span className="text-11 text-tertiary">{t("cross_division_ui.description_hint")}</span>
+                    </label>
+
+                    {gagalKirim && (
+                      <p
+                        role="alert"
+                        className="rounded-item border border-danger-subtle bg-danger-subtle px-2 py-1 text-12 text-danger-primary"
                       >
-                        {PRIORITAS.map((pilihan) => (
-                          <CustomSelect.Option key={pilihan.value} value={pilihan.value}>
-                            {t(pilihan.label)}
-                          </CustomSelect.Option>
-                        ))}
-                      </CustomSelect>
-                    </fieldset>
+                        {gagalKirim}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        prependIcon={<Send />}
+                        disabled={isSending}
+                        onClick={() => void handleKirim()}
+                      >
+                        {isSending ? t("cross_division_ui.sending") : t("cross_division_ui.send")}
+                      </Button>
+                      <span className="text-11 text-tertiary">{t("cross_division_ui.visibility_hint")}</span>
+                    </div>
                   </div>
-
-                  <label className="flex flex-col gap-1">
-                    <span className="text-12 font-medium text-secondary">{t("cross_division_ui.note_label")}</span>
-                    <TextArea
-                      value={catatan}
-                      maxLength={batasCatatan}
-                      rows={3}
-                      onChange={(e) => setCatatan(e.target.value)}
-                      placeholder={t("cross_division_ui.note_placeholder")}
-                      className={`${inputClass} ${TINGGI_TIGA_BARIS}`}
-                    />
-                    <span className="text-11 text-tertiary">
-                      {t("cross_division_ui.char_count", { count: catatan.length, max: batasCatatan })}
-                    </span>
-                  </label>
-
-                  <label className="flex flex-col gap-1">
-                    <span className="text-12 font-medium text-secondary">
-                      {t("cross_division_ui.description_label")}
-                    </span>
-                    <TextArea
-                      value={keterangan}
-                      rows={3}
-                      onChange={(e) => setKeterangan(e.target.value)}
-                      placeholder={t("cross_division_ui.description_placeholder")}
-                      className={`${inputClass} ${TINGGI_TIGA_BARIS}`}
-                    />
-                    <span className="text-11 text-tertiary">{t("cross_division_ui.description_hint")}</span>
-                  </label>
-
-                  {gagalKirim && (
-                    <p
-                      role="alert"
-                      className="rounded-item border border-danger-subtle bg-danger-subtle px-2 py-1 text-12 text-danger-primary"
-                    >
-                      {gagalKirim}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      prependIcon={<Send />}
-                      disabled={isSending}
-                      onClick={() => void handleKirim()}
-                    >
-                      {isSending ? t("cross_division_ui.sending") : t("cross_division_ui.send")}
-                    </Button>
-                    <span className="text-11 text-tertiary">{t("cross_division_ui.visibility_hint")}</span>
-                  </div>
-                </div>
-              )}
-            </section>
+                )}
+              </section>
+            )}
 
             {/* 3. Tabel permintaan saya */}
             <section className="flex flex-col gap-3">

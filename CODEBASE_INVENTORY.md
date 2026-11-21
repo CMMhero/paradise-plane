@@ -1,99 +1,99 @@
 # CODEBASE INVENTORY, Plane
 
-> Audit read-only oleh staff-level architect. Semua klaim dilacak ke `path:baris`.
-> Repo di-clone lokal sebagai `Pradise_Plane`; upstream = `github.com/makeplane/plane`.
-> **Cakupan pass ini:** breadth-first menyeluruh (FASE 0–6 + keamanan + operasional).
-> Depth per-modul (kutipan tiap fungsi) belum tuntas untuk semua ~4.100 file, lihat
-> bagian **MODULE INDEX** untuk status per-modul dan **"Yang Belum Sempat Didalami"** di akhir.
+> Read-only audit by a staff-level architect. Every claim is traced to `path:line`.
+> The repo is cloned locally as `Pradise_Plane`; upstream = `github.com/makeplane/plane`.
+> **Scope of this pass:** thorough breadth-first (PHASE 0–6 + security + operations).
+> Per-module depth (quoting every function) is not finished for all ~4,100 files. See
+> the **MODULE INDEX** section for per-module status and **"What was not examined"** at the end.
 
 ---
 
 ## EXECUTIVE SUMMARY
 
-- **Apa ini:** Plane, tool project management open-source (alternatif Jira/Linear). Kelola issue, cycle (sprint), module, page (docs), roadmap.
-- **Stack:** Monorepo **pnpm + Turborepo**. Frontend TS/React (React Router 7 SPA + Vite), backend **Django 5.2 + DRF** (Python 3.12), realtime collab **Node/TypeScript (Hocuspocus + Yjs)**, proxy **Caddy**.
-- **Skala:** ~2.129 `.tsx` + ~1.355 `.ts` + **629 `.py`**. 6 aplikasi (`apps/*`) + 15 package internal (`packages/*`).
-- **Data plane:** PostgreSQL (utama + read-replica opsional), Redis (cache/celery result/ws), RabbitMQ (celery broker), S3/MinIO (asset), Celery (worker + beat).
-- **Lisensi:** AGPL-3.0. Versi node `1.3.1`, versi API `0.24.0`.
-- **3 hal paling menonjol:**
-  1. Backend punya **kesadaran keamanan tinggi**, mitigasi SSRF webhook (allowlist IP/host/domain), guard `SECRET_KEY` insecure, TOCTOU fix di sign-up (commit terakhir). Bukan boilerplate biasa.
-  2. Arsitektur **layered + domain-split** rapi: `db/` (model) → `app/` (views/serializers internal) → `api/` (REST publik v1 dgn API-key) → `space/` (public deploy board) → `authentication/` (multi-provider OAuth+magic).
-  3. Editor kolaboratif kelas berat: **Tiptap/ProseMirror + Yjs + Hocuspocus** di `apps/live` + `packages/editor`, dengan export PDF server-side.
-- **Risiko utama (awal, perlu deep-dive):** permukaan API sangat besar (permission/IDOR object-level perlu diaudit per-endpoint), `ALLOWED_HOSTS` default `*`, banyak env var wajib tanpa validasi startup terpusat.
+- **What it is:** Plane, an open-source project management tool (alternative to Jira/Linear). Manages issues, cycles (sprints), modules, pages (docs), roadmaps.
+- **Stack:** **pnpm + Turborepo** monorepo. TS/React frontend (React Router 7 SPA + Vite), **Django 5.2 + DRF** backend (Python 3.12), realtime collaboration in **Node/TypeScript (Hocuspocus + Yjs)**, **Caddy** proxy.
+- **Scale:** ~2,129 `.tsx` + ~1,355 `.ts` + **629 `.py`**. 6 apps (`apps/*`) + 15 internal packages (`packages/*`).
+- **Data plane:** PostgreSQL (primary + optional read replica), Redis (cache/celery result/ws), RabbitMQ (celery broker), S3/MinIO (assets), Celery (worker + beat).
+- **License:** AGPL-3.0. Node version `1.3.1`, API version `0.24.0`.
+- **3 standout points:**
+  1. The backend shows strong security awareness: webhook SSRF mitigation (IP/host/domain allowlist), a guard against an insecure `SECRET_KEY`, a TOCTOU fix in sign-up (latest commit). Not ordinary boilerplate.
+  2. A tidy **layered + domain-split** architecture: `db/` (models) → `app/` (internal views/serializers) → `api/` (public REST v1 with API key) → `space/` (public deploy board) → `authentication/` (multi-provider OAuth + magic link).
+  3. A heavyweight collaborative editor: **Tiptap/ProseMirror + Yjs + Hocuspocus** in `apps/live` + `packages/editor`, with server-side PDF export.
+- **Main risks (initial, need a deep dive):** the API surface is very large (object-level permissions/IDOR need auditing per endpoint), `ALLOWED_HOSTS` defaults to `*`, and many required env vars have no central startup validation.
 
 ---
 
 ## MODULE INDEX (master checklist)
 
-Status: ✅ deep-read · 🟡 di-skim (struktur + file kunci) · ⬜ belum dibuka
+Status: ✅ deep-read · 🟡 skimmed (structure + key files) · ⬜ not opened yet
 
-| Modul                 | Path                                                                 | Bahasa | Status | Catatan                                   |
-| --------------------- | -------------------------------------------------------------------- | ------ | ------ | ----------------------------------------- |
-| Root/workspace config | `package.json`, `turbo.json`, `pnpm-workspace.yaml`                  | ,      | ✅     | Turborepo tasks, catalog deps             |
-| API settings          | `apps/api/plane/settings/*`                                          | Py     | ✅     | env var, config numerik                   |
-| API routing           | `apps/api/plane/urls.py` + `app/urls/*`                              | Py     | 🟡     | daftar route file, belum per-endpoint     |
-| API models            | `apps/api/plane/db/models/*` (178 file)                              | Py     | 🟡     | daftar model, belum tiap field            |
-| API views (internal)  | `apps/api/plane/app/views/*` (112 file)                              | Py     | 🟡     | daftar domain, belum tiap handler         |
-| API v1 (publik)       | `apps/api/plane/api/*` (49 file)                                     | Py     | 🟡     | REST + API-key                            |
-| Auth                  | `apps/api/plane/authentication/*`                                    | Py     | 🟡     | provider OAuth + credentials              |
-| Background tasks      | `apps/api/plane/bgtasks/*` (34 file)                                 | Py     | ✅     | daftar task + jadwal cron                 |
-| Celery config         | `apps/api/plane/celery.py`                                           | Py     | ✅     | beat_schedule lengkap                     |
-| License/instance      | `apps/api/plane/license/*`                                           | Py     | ⬜     | telemetry, instance admin                 |
-| Space (public)        | `apps/api/plane/space/*`                                             | Py     | ⬜     | deploy board publik                       |
-| Web app               | `apps/web/*` (2.039 file)                                            | TSX    | 🟡     | store/services/components teridentifikasi |
-| Admin app             | `apps/admin/*` (100 file)                                            | TSX    | 🟡     | god-mode instance admin                   |
-| Space app             | `apps/space/*` (166 file)                                            | TSX    | 🟡     | published views frontend                  |
-| Live (realtime)       | `apps/live/src/*`                                                    | TS     | 🟡     | hocuspocus + yjs                          |
-| Proxy                 | `apps/proxy/*`                                                       | Caddy  | ✅     | 3 file config                             |
-| Editor pkg            | `packages/editor` (226 file)                                         | TS     | ⬜     | tiptap extensions                         |
-| Propel (UI kit?)      | `packages/propel` (390 file)                                         | TS     | ⬜     | package terbesar, belum dibuka            |
-| UI pkg                | `packages/ui` (128 file)                                             | TS     | ⬜     | komponen dasar                            |
-| Types pkg             | `packages/types` (120 file)                                          | TS     | ⬜     | tipe bersama                              |
-| Services pkg          | `packages/services` (56 file)                                        | TS     | ⬜     | client API bersama                        |
-| Lainnya pkg           | `constants,utils,hooks,i18n,logger,decorators,shared-state,codemods` | TS     | ⬜     | ,                                         |
-| Infra                 | `docker-compose*.yml`, `deployments/*`                               | YAML   | ✅     | services teridentifikasi                  |
+| Module                | Path                                                                 | Language | Status | Notes                                 |
+| --------------------- | -------------------------------------------------------------------- | -------- | ------ | ------------------------------------- |
+| Root/workspace config | `package.json`, `turbo.json`, `pnpm-workspace.yaml`                  | ,        | ✅     | Turborepo tasks, catalog deps         |
+| API settings          | `apps/api/plane/settings/*`                                          | Py       | ✅     | env vars, numeric config              |
+| API routing           | `apps/api/plane/urls.py` + `app/urls/*`                              | Py       | 🟡     | list of route files, not per endpoint |
+| API models            | `apps/api/plane/db/models/*` (178 files)                             | Py       | 🟡     | list of models, not every field       |
+| API views (internal)  | `apps/api/plane/app/views/*` (112 files)                             | Py       | 🟡     | list of domains, not every handler    |
+| API v1 (public)       | `apps/api/plane/api/*` (49 files)                                    | Py       | 🟡     | REST + API key                        |
+| Auth                  | `apps/api/plane/authentication/*`                                    | Py       | 🟡     | OAuth providers + credentials         |
+| Background tasks      | `apps/api/plane/bgtasks/*` (34 files)                                | Py       | ✅     | task list + cron schedule             |
+| Celery config         | `apps/api/plane/celery.py`                                           | Py       | ✅     | full beat_schedule                    |
+| License/instance      | `apps/api/plane/license/*`                                           | Py       | ⬜     | telemetry, instance admin             |
+| Space (public)        | `apps/api/plane/space/*`                                             | Py       | ⬜     | public deploy board                   |
+| Web app               | `apps/web/*` (2,039 files)                                           | TSX      | 🟡     | stores/services/components identified |
+| Admin app             | `apps/admin/*` (100 files)                                           | TSX      | 🟡     | god-mode instance admin               |
+| Space app             | `apps/space/*` (166 files)                                           | TSX      | 🟡     | published views frontend              |
+| Live (realtime)       | `apps/live/src/*`                                                    | TS       | 🟡     | hocuspocus + yjs                      |
+| Proxy                 | `apps/proxy/*`                                                       | Caddy    | ✅     | 3 config files                        |
+| Editor pkg            | `packages/editor` (226 files)                                        | TS       | ⬜     | tiptap extensions                     |
+| Propel (UI kit?)      | `packages/propel` (390 files)                                        | TS       | ⬜     | largest package, not opened           |
+| UI pkg                | `packages/ui` (128 files)                                            | TS       | ⬜     | base components                       |
+| Types pkg             | `packages/types` (120 files)                                         | TS       | ⬜     | shared types                          |
+| Services pkg          | `packages/services` (56 files)                                       | TS       | ⬜     | shared API client                     |
+| Other packages        | `constants,utils,hooks,i18n,logger,decorators,shared-state,codemods` | TS       | ⬜     | ,                                     |
+| Infra                 | `docker-compose*.yml`, `deployments/*`                               | YAML     | ✅     | services identified                   |
 
 ---
 
-## FASE 0, Deteksi Stack & Tipe Project
+## PHASE 0, Stack and project type detection
 
-**Bahasa & porsi (di luar node_modules/build):**
+**Languages and share (excluding node_modules/build):**
 
-| Bahasa         | File                        | Peran                                  |
-| -------------- | --------------------------- | -------------------------------------- |
-| TypeScript/TSX | ~3.484 (2129 tsx + 1355 ts) | Semua frontend + live server + package |
-| Python         | 629                         | Backend API (Django)                   |
-| JSON           | 594                         | Config, i18n locales, tsconfig         |
-| CSS            | 19                          | Styling (Tailwind v4)                  |
-| Shell          | 14                          | Script build/entrypoint                |
+| Language       | Files                       | Role                                  |
+| -------------- | --------------------------- | ------------------------------------- |
+| TypeScript/TSX | ~3,484 (2129 tsx + 1355 ts) | All frontend + live server + packages |
+| Python         | 629                         | Backend API (Django)                  |
+| JSON           | 594                         | Config, i18n locales, tsconfig        |
+| CSS            | 19                          | Styling (Tailwind v4)                 |
+| Shell          | 14                          | Build/entrypoint scripts              |
 
-**Manifest terdeteksi:**
+**Detected manifests:**
 
-| File                                    | Lokasi                              | Ekosistem                                                                |
-| --------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
-| `package.json`                          | root + tiap `apps/*` & `packages/*` | pnpm workspace (Turborepo)                                               |
-| `pnpm-workspace.yaml`                   | root                                | Workspace: `apps/*`, `packages/*`, **kecuali** `apps/api` & `apps/proxy` |
-| `pyproject.toml` + `requirements/*.txt` | `apps/api`                          | Python/Django (pip)                                                      |
-| `turbo.json`                            | root                                | Turborepo task graph                                                     |
+| File                                    | Location                            | Ecosystem                                                                 |
+| --------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
+| `package.json`                          | root + each `apps/*` & `packages/*` | pnpm workspace (Turborepo)                                                |
+| `pnpm-workspace.yaml`                   | root                                | Workspace: `apps/*`, `packages/*`, **except** `apps/api` and `apps/proxy` |
+| `pyproject.toml` + `requirements/*.txt` | `apps/api`                          | Python/Django (pip)                                                       |
+| `turbo.json`                            | root                                | Turborepo task graph                                                      |
 
-**Tipe project:** Monorepo multi-service:
+**Project type:** multi-service monorepo:
 
-- **Backend/API**, `apps/api` (Django + DRF + Celery), Python. Tidak ikut pnpm workspace (punya build sendiri via Docker).
-- **Frontend/SPA**, `apps/web` (utama), `apps/admin` (instance admin), `apps/space` (public published views). Semua React 18 + React Router 7 + Vite.
-- **Realtime service**, `apps/live` (Node/Express + Hocuspocus + Yjs) untuk kolaborasi dokumen.
+- **Backend/API**, `apps/api` (Django + DRF + Celery), Python. Not part of the pnpm workspace (has its own build via Docker).
+- **Frontend/SPA**, `apps/web` (main), `apps/admin` (instance admin), `apps/space` (public published views). All React 18 + React Router 7 + Vite.
+- **Realtime service**, `apps/live` (Node/Express + Hocuspocus + Yjs) for document collaboration.
 - **Reverse proxy**, `apps/proxy` (Caddy).
-- **Library internal**, 15 package di `packages/*` (editor, ui, types, services, i18n, dst).
+- **Internal libraries**, 15 packages in `packages/*` (editor, ui, types, services, i18n, etc).
 
-**Framework inti + versi:**
+**Core frameworks + versions:**
 
-| Area          | Framework               | Versi                                |
+| Area          | Framework               | Version                              |
 | ------------- | ----------------------- | ------------------------------------ |
 | Backend       | Django                  | 5.2.17                               |
 | Backend API   | Django REST Framework   | 3.18.3                               |
 | Task queue    | Celery                  | 5.5.3 (+ django-celery-beat/results) |
 | DB driver     | psycopg (3)             | 3.3.4                                |
 | Frontend      | React                   | 18.3.1                               |
-| Routing/SSR   | React Router            | 7.15.x (mode framework)              |
+| Routing/SSR   | React Router            | 7.15.x (framework mode)              |
 | Bundler       | Vite                    | 8.0.16                               |
 | State         | MobX + mobx-react       | 6.12.0 / 9.1.1                       |
 | Data fetching | SWR                     | 2.2.4                                |
@@ -104,77 +104,77 @@ Status: ✅ deep-read · 🟡 di-skim (struktur + file kunci) · ⬜ belum dibuk
 | Lint/format   | oxlint + oxfmt          | 1.51.0 / 0.35.0                      |
 | Node          | engines                 | `>=22.18.0`, pnpm 11.3.0             |
 
-**Monorepo tooling:** Turborepo 2.11.10. Task graph di `turbo.json`: `build`, `dev` (concurrency 18), `check` (format+lint+types), `fix`. Catalog dependency terpusat di `pnpm-workspace.yaml` (`catalog:`) + banyak `overrides` (pinning keamanan: `axios`, `ws`, `undici`, `form-data`, dst).
+**Monorepo tooling:** Turborepo 2.11.10. Task graph in `turbo.json`: `build`, `dev` (concurrency 18), `check` (format+lint+types), `fix`. Central dependency catalog in `pnpm-workspace.yaml` (`catalog:`) + many `overrides` (security pinning: `axios`, `ws`, `undici`, `form-data`, etc).
 
 ---
 
-## FASE 1, INVENTARIS LENGKAP ⭐
+## PHASE 1, FULL INVENTORY ⭐
 
-### Struktur folder top-level
+### Top-level folder structure
 
 ```
 Pradise_Plane/
 ├── apps/
-│   ├── api/      # Django backend (Python), TIDAK ikut pnpm workspace
-│   ├── web/      # SPA utama (React Router 7 + Vite), app terbesar
+│   ├── api/      # Django backend (Python), NOT part of the pnpm workspace
+│   ├── web/      # Main SPA (React Router 7 + Vite), largest app
 │   ├── admin/    # Instance admin "god-mode" (React)
 │   ├── space/    # Public published views / deploy boards (React)
 │   ├── live/     # Realtime collab server (Node/Express + Hocuspocus + Yjs)
 │   └── proxy/    # Caddy reverse proxy
-├── packages/     # 15 library internal bersama (editor, ui, types, services, i18n, …)
+├── packages/     # 15 shared internal libraries (editor, ui, types, services, i18n, …)
 ├── deployments/  # aio, cli, kubernetes, swarm
-├── docs/         # linting.md (minim)
+├── docs/         # linting.md (minimal)
 ├── docker-compose*.yml  # ce (community) + local + test
 ├── setup.sh
 ├── turbo.json / pnpm-workspace.yaml / package.json
 ```
 
-### Entry point
+### Entry points
 
-| App             | Entry                                                    | Bukti                         |
+| App             | Entry                                                    | Evidence                      |
 | --------------- | -------------------------------------------------------- | ----------------------------- |
 | API (WSGI/ASGI) | `plane/wsgi.py`, `plane/asgi.py`                         | `apps/api/plane/`             |
 | API mgmt        | `manage.py`                                              | `apps/api/manage.py`          |
 | Celery          | `plane/celery.py` (app + beat_schedule)                  | `apps/api/plane/celery.py:44` |
-| Web/Admin/Space | React Router `react-router.config.ts` + `vite.config.ts` | tiap app                      |
+| Web/Admin/Space | React Router `react-router.config.ts` + `vite.config.ts` | each app                      |
 | Live            | `src/server.ts` → `src/start.ts`                         | `apps/live/src/`              |
 | Proxy           | `Caddyfile.ce` / `Caddyfile.aio.ce`                      | `apps/proxy/`                 |
 
-### Dependency langsung, backend (`apps/api/requirements/base.txt`)
+### Direct dependencies, backend (`apps/api/requirements/base.txt`)
 
-| Paket                                 | Versi                   | Untuk apa                                             |
-| ------------------------------------- | ----------------------- | ----------------------------------------------------- |
-| Django                                | 5.2.17                  | Web framework                                         |
-| djangorestframework                   | 3.18.3                  | REST API                                              |
-| psycopg / psycopg-binary              | 3.3.4                   | Driver PostgreSQL                                     |
-| dj-database-url                       | 3.0.1                   | Parse `DATABASE_URL`                                  |
-| redis / django-redis                  | 5.0.4 / 7.0.0           | Cache, session, celery result                         |
-| celery / django_celery_beat / results | 5.5.3 / 2.9.0 / 2.6.0   | Task queue + scheduler                                |
-| django-cors-headers                   | 4.9.0                   | CORS                                                  |
-| whitenoise                            | 6.12.0                  | Static serve                                          |
-| django-storages / boto3               | 1.14.6 / 1.34.96        | S3/MinIO asset                                        |
-| channels                              | 4.3.2                   | WebSocket/ASGI                                        |
-| uvicorn                               | 0.29.0                  | ASGI server                                           |
-| openai                                | 1.63.2                  | Fitur AI                                              |
-| slack-sdk                             | 3.27.1                  | Integrasi Slack                                       |
-| scout-apm                             | 3.5.3                   | APM monitoring                                        |
-| posthog                               | 3.5.0                   | Analytics/telemetry                                   |
-| cryptography / PyJWT                  | 48.0.1 / 2.13.0         | Crypto, JWT                                           |
-| nh3 / lxml / beautifulsoup4           | 0.2.18 / 6.1.0 / 4.12.3 | Sanitasi & parse HTML                                 |
-| zxcvbn                                | 4.4.28                  | Validator kekuatan password                           |
-| drf-spectacular                       | 0.29.0                  | OpenAPI schema                                        |
-| openpyxl                              | 3.1.2                   | Export XLSX                                           |
-| opentelemetry-\*                      | 1.28.1                  | Tracing                                               |
-| requests                              | 2.33.0                  | Webhook delivery (pinned utk SSRF IP-pinning adapter) |
-| urllib3                               | >=2.7.0                 | Pinned (CVE-2026-44431/44432)                         |
+| Package                               | Version                 | Purpose                                                   |
+| ------------------------------------- | ----------------------- | --------------------------------------------------------- |
+| Django                                | 5.2.17                  | Web framework                                             |
+| djangorestframework                   | 3.18.3                  | REST API                                                  |
+| psycopg / psycopg-binary              | 3.3.4                   | PostgreSQL driver                                         |
+| dj-database-url                       | 3.0.1                   | Parses `DATABASE_URL`                                     |
+| redis / django-redis                  | 5.0.4 / 7.0.0           | Cache, session, celery result                             |
+| celery / django_celery_beat / results | 5.5.3 / 2.9.0 / 2.6.0   | Task queue + scheduler                                    |
+| django-cors-headers                   | 4.9.0                   | CORS                                                      |
+| whitenoise                            | 6.12.0                  | Static file serving                                       |
+| django-storages / boto3               | 1.14.6 / 1.34.96        | S3/MinIO assets                                           |
+| channels                              | 4.3.2                   | WebSocket/ASGI                                            |
+| uvicorn                               | 0.29.0                  | ASGI server                                               |
+| openai                                | 1.63.2                  | AI features                                               |
+| slack-sdk                             | 3.27.1                  | Slack integration                                         |
+| scout-apm                             | 3.5.3                   | APM monitoring                                            |
+| posthog                               | 3.5.0                   | Analytics/telemetry                                       |
+| cryptography / PyJWT                  | 48.0.1 / 2.13.0         | Crypto, JWT                                               |
+| nh3 / lxml / beautifulsoup4           | 0.2.18 / 6.1.0 / 4.12.3 | HTML sanitizing and parsing                               |
+| zxcvbn                                | 4.4.28                  | Password strength validator                               |
+| drf-spectacular                       | 0.29.0                  | OpenAPI schema                                            |
+| openpyxl                              | 3.1.2                   | XLSX export                                               |
+| opentelemetry-\*                      | 1.28.1                  | Tracing                                                   |
+| requests                              | 2.33.0                  | Webhook delivery (pinned for the SSRF IP-pinning adapter) |
+| urllib3                               | >=2.7.0                 | Pinned (CVE-2026-44431/44432)                             |
 
-> Split: `requirements/base.txt` (inti) + `local.txt` (dev, mis. debug-toolbar) + `production.txt` + `test.txt` (pytest).
+> Split into: `requirements/base.txt` (core) + `local.txt` (dev, e.g. debug-toolbar) + `production.txt` + `test.txt` (pytest).
 
-### Dependency langsung, frontend (catalog `pnpm-workspace.yaml`)
+### Direct dependencies, frontend (catalog `pnpm-workspace.yaml`)
 
-Highlight (bukan exhaustif, catalog ~180 entri):
+Highlights (not exhaustive, the catalog has ~180 entries):
 
-| Paket                                           | Versi                  | Untuk apa                |
+| Package                                         | Version                | Purpose                  |
 | ----------------------------------------------- | ---------------------- | ------------------------ |
 | react / react-dom                               | 18.3.1                 | UI                       |
 | react-router                                    | 7.15.x                 | Routing (framework mode) |
@@ -185,69 +185,69 @@ Highlight (bukan exhaustif, catalog ~180 entri):
 | yjs / y-prosemirror / y-protocols / y-indexeddb | ^13.6.20               | CRDT collab              |
 | @hocuspocus/\*                                  | 2.15.2                 | Collab server/provider   |
 | tailwindcss + @tailwindcss/postcss              | 4.1.17                 | Styling                  |
-| framer-motion                                   | ^12.23                 | Animasi                  |
-| recharts                                        | ^2.15.1                | Chart/analytics          |
-| @tanstack/react-table + react-virtual           | ^8.21 / ^3.13          | Tabel + virtualisasi     |
-| @atlaskit/pragmatic-drag-and-drop\*             | 1.x                    | Drag & drop board        |
+| framer-motion                                   | ^12.23                 | Animation                |
+| recharts                                        | ^2.15.1                | Charts/analytics         |
+| @tanstack/react-table + react-virtual           | ^8.21 / ^3.13          | Tables + virtualization  |
+| @atlaskit/pragmatic-drag-and-drop\*             | 1.x                    | Board drag and drop      |
 | i18next + react-i18next + i18next-icu           | 25.x/16.x/2.4          | i18n                     |
-| zod                                             | ^3.25                  | Validasi schema          |
-| react-hook-form                                 | 7.51.5                 | Form                     |
+| zod                                             | ^3.25                  | Schema validation        |
+| react-hook-form                                 | 7.51.5                 | Forms                    |
 | @react-pdf/renderer + pdf-parse                 | ^4.3 / ^2.4.5          | PDF export/parse         |
 | express + express-ws + helmet + compression     | 4.22 / 5.0 / 7.1 / 1.8 | Live server              |
 | ioredis                                         | 5.7.0                  | Redis (live)             |
 | winston + express-winston                       | ^3.17 / ^4.2           | Logging (live)           |
 
-### Script/command
+### Scripts/commands
 
 **Root (`package.json`):** `build`, `dev` (turbo, concurrency 18), `start`, `clean`, `fix`/`fix:format`/`fix:lint`, `check`/`check:lint`/`check:format`/`check:types`, `prepare` (husky), `doctor` (react-doctor).
-**lint-staged:** `oxfmt` + `oxlint --fix --deny-warnings` pada file JS/TS/JSON/CSS/MD.
-**API:** `apps/api/manage.py` (Django), `run_tests.py` / `run_tests.sh` / `pytest.ini`, `bin/` (entrypoint container).
+**lint-staged:** `oxfmt` + `oxlint --fix --deny-warnings` on JS/TS/JSON/CSS/MD files.
+**API:** `apps/api/manage.py` (Django), `run_tests.py` / `run_tests.sh` / `pytest.ini`, `bin/` (container entrypoint).
 
-### File konfigurasi kunci
+### Key config files
 
-| File                                                                                    | Fungsi                                            |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `turbo.json`                                                                            | Task graph + `globalEnv` (daftar env Vite/Sentry) |
-| `pnpm-workspace.yaml`                                                                   | Workspace + catalog + overrides + allowBuilds     |
-| `apps/api/plane/settings/{common,production,local,test,redis,storage,openapi}.py`       | Konfigurasi Django berlapis                       |
-| `apps/*/vite.config.ts`, `react-router.config.ts`, `postcss.config.js`, `tsconfig.json` | Config frontend per-app                           |
-| `.oxlintrc.json`, `.oxfmtrc.json`, `.npmrc`                                             | Lint/format/registry (globalDependencies turbo)   |
-| `apps/proxy/Caddyfile.ce`, `Caddyfile.aio.ce`                                           | Routing proxy                                     |
-| `docker-compose.yml` / `-local.yml` / `-test.yml`                                       | Orkestrasi service                                |
+| File                                                                                    | Function                                                |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `turbo.json`                                                                            | Task graph + `globalEnv` (list of Vite/Sentry env vars) |
+| `pnpm-workspace.yaml`                                                                   | Workspace + catalog + overrides + allowBuilds           |
+| `apps/api/plane/settings/{common,production,local,test,redis,storage,openapi}.py`       | Layered Django configuration                            |
+| `apps/*/vite.config.ts`, `react-router.config.ts`, `postcss.config.js`, `tsconfig.json` | Per-app frontend config                                 |
+| `.oxlintrc.json`, `.oxfmtrc.json`, `.npmrc`                                             | Lint/format/registry (turbo globalDependencies)         |
+| `apps/proxy/Caddyfile.ce`, `Caddyfile.aio.ce`                                           | Proxy routing                                           |
+| `docker-compose.yml` / `-local.yml` / `-test.yml`                                       | Service orchestration                                   |
 
-### Environment variables (backend, dibaca di `plane/settings/`)
+### Environment variables (backend, read in `plane/settings/`)
 
-Wajib/utama (⭐ = kritikal keamanan/operasi):
+Required/main (⭐ = security/operations critical):
 
-| Env                                                                                      | Dibaca di                       | Default            | Catatan                                                   |
-| ---------------------------------------------------------------------------------------- | ------------------------------- | ------------------ | --------------------------------------------------------- |
-| ⭐ `SECRET_KEY`                                                                          | `common.py:34`                  | random jika kosong | Menolak nilai placeholder known-insecure (`common.py:38`) |
-| `DEBUG`                                                                                  | `common.py:59`                  | `0`                | ,                                                         |
-| `ALLOWED_HOSTS`                                                                          | `common.py:99`                  | `*` ⚠️             | Default terlalu longgar utk prod                          |
-| `DATABASE_URL` / `POSTGRES_*`                                                            | settings                        | ,                  | Utama                                                     |
-| `ENABLE_READ_REPLICA` + `DATABASE_READ_REPLICA_URL`/`POSTGRES_READ_REPLICA_*`            | settings                        | off                | Routing middleware read-replica (`common.py:119`)         |
-| `REDIS_URL`                                                                              | redis.py                        | ,                  | Cache/session/result                                      |
-| `AMQP_URL` / `RABBITMQ_*`                                                                | `common.py:209`                 | ,                  | Celery broker                                             |
-| `AWS_*` / `USE_MINIO` / `MINIO_ENDPOINT_*`                                               | storage.py                      | ,                  | S3/MinIO asset                                            |
-| ⭐ `WEBHOOK_ALLOWED_IPS` / `_HOSTS` / `WEBHOOK_DISALLOWED_DOMAINS`                       | `common.py:64–96`               | kosong             | Kontrol SSRF webhook                                      |
-| `FILE_SIZE_LIMIT`                                                                        | `common.py:234`                 | `5242880` (5 MB)   | juga `DATA_UPLOAD_MAX_MEMORY_SIZE`                        |
-| `API_KEY_RATE_LIMIT`                                                                     | `common.py:35` (REST_FRAMEWORK) | `60/minute`        | Throttle API-key                                          |
-| `SIGNED_URL_EXPIRATION`                                                                  | storage                         | ,                  | TTL presigned S3                                          |
-| `SESSION_COOKIE_AGE` / `_NAME` / `ADMIN_SESSION_COOKIE_AGE` / `COOKIE_DOMAIN`            | settings                        | ,                  | Session                                                   |
-| `PASSWORD_RESET_TIMEOUT`                                                                 | `common.py` (hardcoded)         | `3600` s           | ,                                                         |
-| `HARD_DELETE_AFTER_DAYS`                                                                 | settings                        | ,                  | Soft→hard delete window                                   |
-| `CORS_ALLOWED_ORIGINS`                                                                   | settings                        | ,                  | ,                                                         |
-| `OPENAI`/`GITHUB_ACCESS_TOKEN`/`UNSPLASH_ACCESS_KEY`/`POSTHOG_*`/`SCOUT_*`/`ANALYTICS_*` | settings                        | ,                  | Integrasi eksternal                                       |
-| `*_BASE_URL`/`*_BASE_PATH` (APP/ADMIN/SPACE/LIVE/WEB)                                    | settings                        | ,                  | URL antar-service                                         |
+| Env                                                                                      | Read in                         | Default          | Notes                                                      |
+| ---------------------------------------------------------------------------------------- | ------------------------------- | ---------------- | ---------------------------------------------------------- |
+| ⭐ `SECRET_KEY`                                                                          | `common.py:34`                  | random if empty  | Rejects known-insecure placeholder values (`common.py:38`) |
+| `DEBUG`                                                                                  | `common.py:59`                  | `0`              | ,                                                          |
+| `ALLOWED_HOSTS`                                                                          | `common.py:99`                  | `*` ⚠️           | Default too loose for prod                                 |
+| `DATABASE_URL` / `POSTGRES_*`                                                            | settings                        | ,                | Primary                                                    |
+| `ENABLE_READ_REPLICA` + `DATABASE_READ_REPLICA_URL`/`POSTGRES_READ_REPLICA_*`            | settings                        | off              | Read-replica routing middleware (`common.py:119`)          |
+| `REDIS_URL`                                                                              | redis.py                        | ,                | Cache/session/result                                       |
+| `AMQP_URL` / `RABBITMQ_*`                                                                | `common.py:209`                 | ,                | Celery broker                                              |
+| `AWS_*` / `USE_MINIO` / `MINIO_ENDPOINT_*`                                               | storage.py                      | ,                | S3/MinIO assets                                            |
+| ⭐ `WEBHOOK_ALLOWED_IPS` / `_HOSTS` / `WEBHOOK_DISALLOWED_DOMAINS`                       | `common.py:64–96`               | empty            | Webhook SSRF controls                                      |
+| `FILE_SIZE_LIMIT`                                                                        | `common.py:234`                 | `5242880` (5 MB) | also `DATA_UPLOAD_MAX_MEMORY_SIZE`                         |
+| `API_KEY_RATE_LIMIT`                                                                     | `common.py:35` (REST_FRAMEWORK) | `60/minute`      | API-key throttle                                           |
+| `SIGNED_URL_EXPIRATION`                                                                  | storage                         | ,                | Presigned S3 TTL                                           |
+| `SESSION_COOKIE_AGE` / `_NAME` / `ADMIN_SESSION_COOKIE_AGE` / `COOKIE_DOMAIN`            | settings                        | ,                | Session                                                    |
+| `PASSWORD_RESET_TIMEOUT`                                                                 | `common.py` (hardcoded)         | `3600` s         | ,                                                          |
+| `HARD_DELETE_AFTER_DAYS`                                                                 | settings                        | ,                | Soft→hard delete window                                    |
+| `CORS_ALLOWED_ORIGINS`                                                                   | settings                        | ,                | ,                                                          |
+| `OPENAI`/`GITHUB_ACCESS_TOKEN`/`UNSPLASH_ACCESS_KEY`/`POSTHOG_*`/`SCOUT_*`/`ANALYTICS_*` | settings                        | ,                | External integrations                                      |
+| `*_BASE_URL`/`*_BASE_PATH` (APP/ADMIN/SPACE/LIVE/WEB)                                    | settings                        | ,                | URLs between services                                      |
 
-Frontend (Vite, dari `turbo.json:globalEnv`): `VITE_API_BASE_URL/PATH`, `VITE_ADMIN_*`, `VITE_LIVE_*`, `VITE_SPACE_*`, `VITE_WEB_*`, `VITE_WEBSITE_URL`, `VITE_SUPPORT_EMAIL`, Sentry (`VITE_SENTRY_*`), session recorder (`VITE_SESSION_RECORDER_KEY`, `VITE_ENABLE_SESSION_RECORDER`), `APP_VERSION`.
+Frontend (Vite, from `turbo.json:globalEnv`): `VITE_API_BASE_URL/PATH`, `VITE_ADMIN_*`, `VITE_LIVE_*`, `VITE_SPACE_*`, `VITE_WEB_*`, `VITE_WEBSITE_URL`, `VITE_SUPPORT_EMAIL`, Sentry (`VITE_SENTRY_*`), session recorder (`VITE_SESSION_RECORDER_KEY`, `VITE_ENABLE_SESSION_RECORDER`), `APP_VERSION`.
 
-### Integrasi eksternal
+### External integrations
 
-| Kategori             | Teknologi                                                              |
+| Category             | Technology                                                             |
 | -------------------- | ---------------------------------------------------------------------- |
-| Database             | PostgreSQL (utama + read-replica opsional)                             |
-| Cache/session/result | Redis (django-redis + ioredis di live)                                 |
+| Database             | PostgreSQL (primary + optional read replica)                           |
+| Cache/session/result | Redis (django-redis + ioredis in live)                                 |
 | Message broker       | RabbitMQ (Celery)                                                      |
 | Object storage       | S3 / MinIO (django-storages + boto3)                                   |
 | Auth OAuth           | Google, GitHub, GitLab, Gitea (`plane/authentication/provider/oauth/`) |
@@ -258,34 +258,34 @@ Frontend (Vite, dari `turbo.json:globalEnv`): `VITE_API_BASE_URL/PATH`, `VITE_AD
 | Media                | Unsplash (cover image)                                                 |
 | Error/session        | Sentry (frontend)                                                      |
 
-### Background job / cron (`plane/celery.py:44`)
+### Background jobs / cron (`plane/celery.py:44`)
 
-| Jadwal (UTC)         | Task                                                      |
-| -------------------- | --------------------------------------------------------- |
-| tiap 5 menit         | `email_notification_task.stack_email_notification`        |
-| interval (telemetry) | `license.bgtasks.telemetry_metrics.push_instance_metrics` |
-| 00:00                | `deletion_task.hard_delete`                               |
-| 01:00                | `issue_automation_task.archive_and_close_old_issues`      |
-| 01:30 & 03:45        | `exporter_expired_task.delete_old_s3_link` (terdaftar 2×) |
-| 02:00                | `file_asset_task.delete_unuploaded_file_asset`            |
-| 02:30                | `cleanup_task.delete_api_logs`                            |
-| 02:45                | `cleanup_task.delete_email_notification_logs`             |
-| 03:00                | `cleanup_task.delete_page_versions`                       |
-| 03:15                | `cleanup_task.delete_issue_description_versions`          |
-| 03:30                | `cleanup_task.delete_webhook_logs`                        |
+| Schedule (UTC)       | Task                                                       |
+| -------------------- | ---------------------------------------------------------- |
+| every 5 minutes      | `email_notification_task.stack_email_notification`         |
+| interval (telemetry) | `license.bgtasks.telemetry_metrics.push_instance_metrics`  |
+| 00:00                | `deletion_task.hard_delete`                                |
+| 01:00                | `issue_automation_task.archive_and_close_old_issues`       |
+| 01:30 & 03:45        | `exporter_expired_task.delete_old_s3_link` (registered 2×) |
+| 02:00                | `file_asset_task.delete_unuploaded_file_asset`             |
+| 02:30                | `cleanup_task.delete_api_logs`                             |
+| 02:45                | `cleanup_task.delete_email_notification_logs`              |
+| 03:00                | `cleanup_task.delete_page_versions`                        |
+| 03:15                | `cleanup_task.delete_issue_description_versions`           |
+| 03:30                | `cleanup_task.delete_webhook_logs`                         |
 
-> ⚠️ `exporter_expired_task.delete_old_s3_link` terdaftar dua kali (01:30 & 03:45) dengan key beda (`..._exporter_history` vs `..._exporter-history`), kemungkinan redundan. `beat_scheduler = DatabaseScheduler` (`celery.py:118`).
+> ⚠️ `exporter_expired_task.delete_old_s3_link` is registered twice (01:30 & 03:45) under different keys (`..._exporter_history` vs `..._exporter-history`), probably redundant. `beat_scheduler = DatabaseScheduler` (`celery.py:118`).
 
-Task lain (dipicu event, bukan cron) di `plane/bgtasks/`: webhook delivery, issue activities, notifications, exports (xlsx/csv), magic-link/forgot-password email, workspace/project invitation, page & issue version sync, storage metadata, event tracking, dummy data seeding.
+Other tasks (event-triggered, not cron) in `plane/bgtasks/`: webhook delivery, issue activities, notifications, exports (xlsx/csv), magic-link/forgot-password email, workspace/project invitations, page & issue version sync, storage metadata, event tracking, dummy data seeding.
 
-### Kode tersembunyi
+### Hidden code
 
-- `TODO/FIXME/HACK/XXX` di backend Python: **13 penanda** (`grep` `apps/api/plane/**/*.py`). Belum dienumerasi satu-satu, TODO deep-dive.
-- Frontend belum discan utk penanda ini (TODO).
+- `TODO/FIXME/HACK/XXX` in the Python backend: **13 markers** (`grep` over `apps/api/plane/**/*.py`). Not enumerated one by one, TODO deep dive.
+- Frontend not yet scanned for these markers (TODO).
 
-### Nilai konfigurasi aktual (numerik)
+### Actual configuration values (numeric)
 
-| Nilai                                                        | Sumber           |
+| Value                                                        | Source           |
 | ------------------------------------------------------------ | ---------------- |
 | `FILE_SIZE_LIMIT` = 5 MB (5242880)                           | `common.py:234`  |
 | `API_KEY_RATE_LIMIT` = 60/minute                             | `common.py:35`   |
@@ -296,56 +296,56 @@ Task lain (dipicu event, bukan cron) di `plane/bgtasks/`: webhook delivery, issu
 
 ---
 
-## FASE 2, Infrastruktur & Environment
+## PHASE 2, Infrastructure and environment
 
 **Runtime:** Python 3.12 (Django 5.2, uvicorn ASGI), Node >=22.18, pnpm 11.3.
 
-**Containerization:** tiap app punya Dockerfile ganda (`Dockerfile.<app>` prod + `Dockerfile.dev`). Orkestrasi via `docker-compose.yml` (community edition). Services:
+**Containerization:** each app has two Dockerfiles (`Dockerfile.<app>` for prod + `Dockerfile.dev`). Orchestrated through `docker-compose.yml` (community edition). Services:
 
-| Service                        | Peran                            |
-| ------------------------------ | -------------------------------- |
-| `web`, `admin`, `space`        | Frontend SPA (Nginx serve build) |
-| `api`                          | Django (uvicorn/gunicorn)        |
-| `worker`                       | Celery worker                    |
-| `beat-worker`                  | Celery beat (scheduler)          |
-| `migrator`                     | Job migrasi DB (one-shot)        |
-| `live`                         | Realtime collab (Node)           |
-| `plane-db`                     | PostgreSQL                       |
-| `plane-redis`                  | Redis                            |
-| `plane-mq`                     | RabbitMQ                         |
-| `plane-minio`                  | MinIO (S3)                       |
-| `proxy`                        | Caddy (entry HTTP)               |
-| `pgdata`,`redisdata`,`uploads` | Named volumes                    |
+| Service                        | Role                                  |
+| ------------------------------ | ------------------------------------- |
+| `web`, `admin`, `space`        | Frontend SPA (Nginx serves the build) |
+| `api`                          | Django (uvicorn/gunicorn)             |
+| `worker`                       | Celery worker                         |
+| `beat-worker`                  | Celery beat (scheduler)               |
+| `migrator`                     | DB migration job (one-shot)           |
+| `live`                         | Realtime collab (Node)                |
+| `plane-db`                     | PostgreSQL                            |
+| `plane-redis`                  | Redis                                 |
+| `plane-mq`                     | RabbitMQ                              |
+| `plane-minio`                  | MinIO (S3)                            |
+| `proxy`                        | Caddy (HTTP entry)                    |
+| `pgdata`,`redisdata`,`uploads` | Named volumes                         |
 
-**Deployments lain:** `deployments/{aio,cli,kubernetes,swarm}`, AIO (all-in-one image), Kubernetes manifest/Helm, Docker Swarm, CLI installer. Belum dibuka detail (TODO).
+**Other deployments:** `deployments/{aio,cli,kubernetes,swarm}`, AIO (all-in-one image), Kubernetes manifests/Helm, Docker Swarm, CLI installer. Details not opened yet (TODO).
 
-**CI/CD:** GitHub Actions, `.github/workflows/`: `build-branch.yml`, `check-version.yml`, `codeql.yml` (SAST), `copyright-check.yml`, `feature-deployment.yml`, `i18n-sync-check.yml`, `pull-request-build-lint-api.yml`, `pull-request-build-lint-web-apps.yml`, `react-doctor.yml`. Jadi: build/lint terpisah API vs web-apps, CodeQL security scan, cek versi + copyright + i18n sync di PR. Isi tiap workflow belum dibaca detail (TODO).
+**CI/CD:** GitHub Actions, `.github/workflows/`: `build-branch.yml`, `check-version.yml`, `codeql.yml` (SAST), `copyright-check.yml`, `feature-deployment.yml`, `i18n-sync-check.yml`, `pull-request-build-lint-api.yml`, `pull-request-build-lint-web-apps.yml`, `react-doctor.yml`. So: separate build/lint for API vs web apps, a CodeQL security scan, and version + copyright + i18n sync checks on PRs. The contents of each workflow have not been read in detail (TODO).
 
-**Build/run (dev):** `pnpm install` → `pnpm dev` (turbo, semua app frontend + live). API: `apps/api` via `manage.py runserver` atau uvicorn; worker/beat via celery. **Prod:** `docker compose up` (community) atau deployment k8s/swarm. Detail langkah persis → belum diekstrak dari Dockerfile/entrypoint (TODO).
+**Build/run (dev):** `pnpm install` → `pnpm dev` (turbo, all frontend apps + live). API: `apps/api` via `manage.py runserver` or uvicorn; worker/beat via celery. **Prod:** `docker compose up` (community) or a k8s/swarm deployment. The exact steps have not been extracted from the Dockerfiles/entrypoints (TODO).
 
 ---
 
-## FASE 3, Arsitektur & Alur Data
+## PHASE 3, Architecture and data flow
 
-**Pola:** Monolith modular di backend (Django apps per-domain) + SPA multi-app di frontend + service realtime terpisah. Bukan microservices penuh, satu DB, satu codebase Django, dipisah jadi worker/beat/web process.
+**Pattern:** modular monolith in the backend (Django apps per domain) + multi-app SPA in the frontend + a separate realtime service. Not full microservices: one DB, one Django codebase, split into worker/beat/web processes.
 
-**Layering backend (dibuktikan dari struktur):**
+**Backend layering (evidenced by the structure):**
 
 ```
-plane/db/        -> Model + migrasi (sumber kebenaran skema)
-plane/app/       -> Views + serializers "internal" (dipakai web/admin) di /api/
-plane/api/       -> REST publik v1 (/api/v1/) dgn API-key auth
-plane/space/     -> Endpoint publik deploy board (/api/public/)
+plane/db/        -> Models + migrations (source of truth for the schema)
+plane/app/       -> "Internal" views + serializers (used by web/admin) at /api/
+plane/api/       -> Public REST v1 (/api/v1/) with API-key auth
+plane/space/     -> Public deploy board endpoints (/api/public/)
 plane/license/   -> Instance/license admin (/api/instances/)
 plane/authentication/ -> Login/OAuth/magic (/auth/)
 plane/bgtasks/   -> Celery tasks (async)
-plane/middleware/-> Read-replica routing, dll
-plane/utils/     -> Helper lintas domain (69 file)
+plane/middleware/-> Read-replica routing, etc.
+plane/utils/     -> Cross-domain helpers (69 files)
 ```
 
-Routing puncak: `plane/urls.py` memetakan tiap prefix ke app (lihat FASE 4).
+Top-level routing: `plane/urls.py` maps each prefix to an app (see PHASE 4).
 
-**Alur data (garis besar):**
+**Data flow (outline):**
 
 ```
 Browser (web/admin/space SPA, MobX store + SWR)
@@ -354,158 +354,158 @@ Browser (web/admin/space SPA, MobX store + SWR)
   ▼
 Caddy ──► Django API (/api, /api/v1, /api/public, /auth)
       └─► Live service (Node/Hocuspocus) ──► Redis (pubsub) + Postgres (persist doc)
-Django ──► Postgres (utama / read-replica)
+Django ──► Postgres (primary / read-replica)
        ├─► Redis (cache/session)
        ├─► RabbitMQ ──► Celery worker ──► Postgres/S3/email/webhook
        └─► S3/MinIO (asset presigned URL)
-Celery beat ──► jadwalkan task periodik
+Celery beat ──► schedules periodic tasks
 ```
 
-Frontend state: **MobX** (root store `apps/web/core/store/root.store.ts` → sub-store per domain: issue, cycle, module, project, workspace, page, notification, dst) + **SWR** utk fetch. Service layer `apps/web/core/services/*.service.ts` membungkus axios ke endpoint.
+Frontend state: **MobX** (root store `apps/web/core/store/root.store.ts` → per-domain sub-stores: issue, cycle, module, project, workspace, page, notification, etc) + **SWR** for fetching. The service layer `apps/web/core/services/*.service.ts` wraps axios calls to the endpoints.
 
 ---
 
-## FASE 4, Permukaan Antarmuka
+## PHASE 4, Interface surface
 
-**Routing Django puncak (`plane/urls.py`):**
+**Top-level Django routing (`plane/urls.py`):**
 
-| Prefix                                   | Include                     | Guna                                    |
-| ---------------------------------------- | --------------------------- | --------------------------------------- |
-| `api/`                                   | `plane.app.urls`            | API internal (web/admin)                |
-| `api/public/`                            | `plane.space.urls`          | Deploy board publik                     |
-| `api/instances/`                         | `plane.license.urls`        | Instance/license admin                  |
-| `api/v1/`                                | `plane.api.urls`            | **REST publik v1 (API-key)**            |
-| `auth/`                                  | `plane.authentication.urls` | Login/OAuth/magic                       |
-| `` (root)                                | `plane.web.urls`            | Web/health                              |
-| `api/schema/`, `/swagger-ui/`, `/redoc/` | drf-spectacular             | OpenAPI (jika `ENABLE_DRF_SPECTACULAR`) |
+| Prefix                                   | Include                     | Purpose                               |
+| ---------------------------------------- | --------------------------- | ------------------------------------- |
+| `api/`                                   | `plane.app.urls`            | Internal API (web/admin)              |
+| `api/public/`                            | `plane.space.urls`          | Public deploy board                   |
+| `api/instances/`                         | `plane.license.urls`        | Instance/license admin                |
+| `api/v1/`                                | `plane.api.urls`            | **Public REST v1 (API key)**          |
+| `auth/`                                  | `plane.authentication.urls` | Login/OAuth/magic                     |
+| `` (root)                                | `plane.web.urls`            | Web/health                            |
+| `api/schema/`, `/swagger-ui/`, `/redoc/` | drf-spectacular             | OpenAPI (if `ENABLE_DRF_SPECTACULAR`) |
 
-**Domain route internal (`plane/app/urls/`):** `analytic, api, asset, cycle, estimate, exporter, external, intake, issue, module, notification, page, project, search, state, timezone, user, views, webhook, workspace`.
+**Internal route domains (`plane/app/urls/`):** `analytic, api, asset, cycle, estimate, exporter, external, intake, issue, module, notification, page, project, search, state, timezone, user, views, webhook, workspace`.
 
-**REST publik v1 (`plane/api/urls/`):** `asset, cycle, estimate, intake, invite, label, member, module, project, schema, state, sticky, user, work_item`, auth via API key + throttle `API_KEY_RATE_LIMIT`.
+**Public REST v1 (`plane/api/urls/`):** `asset, cycle, estimate, intake, invite, label, member, module, project, schema, state, sticky, user, work_item`, auth via API key plus throttle `API_KEY_RATE_LIMIT`.
 
-**View domain (`plane/app/views/`, 112 file):** direktori per-domain: `analytic, asset, cycle, estimate, exporter, external, intake, issue, module, notification, page, project, search, state, timezone, user, view, webhook, workspace` + `base.py` (base viewset) + `error_404.py`.
+**Domain views (`plane/app/views/`, 112 files):** one directory per domain: `analytic, asset, cycle, estimate, exporter, external, intake, issue, module, notification, page, project, search, state, timezone, user, view, webhook, workspace`, plus `base.py` (base viewset) and `error_404.py`.
 
-> Enumerasi endpoint + method + permission per-URLconf = **TODO deep-dive** (butuh baca tiap `urls/*.py` & viewset). Ini permukaan terbesar & paling relevan utk audit IDOR/permission.
+> Enumerating endpoints, methods and permissions per URLconf is a **TODO deep-dive** (it needs reading each `urls/*.py` and viewset). This is the largest surface and the most relevant one for an IDOR/permission audit.
 
-**Frontend routes:** React Router 7 (file-based via `react-router.config.ts`) di web/admin/space. Guard/layout via `apps/web/core/layouts/`. Belum dienumerasi (TODO).
+**Frontend routes:** React Router 7 (file-based via `react-router.config.ts`) in web/admin/space. Guards and layouts live in `apps/web/core/layouts/`. Not enumerated yet (TODO).
 
-**Live service (`apps/live/src/controllers/`):** `collaboration.controller`, `document.controller`, `health.controller`, `pdf-export.controller` (+ hocuspocus WS server `hocuspocus.ts`).
+**Live service (`apps/live/src/controllers/`):** `collaboration.controller`, `document.controller`, `health.controller`, `pdf-export.controller` (plus the hocuspocus WS server `hocuspocus.ts`).
 
 ---
 
-## FASE 5, Lapisan Data
+## PHASE 5, Data layer
 
-**Engine:** PostgreSQL. ORM Django. Read-replica opsional via `ReadReplicaRoutingMiddleware` (`plane/middleware/db_routing.py`, diaktifkan bila `ENABLE_READ_REPLICA`).
+**Engine:** PostgreSQL. Django ORM. Optional read replica via `ReadReplicaRoutingMiddleware` (`plane/middleware/db_routing.py`, enabled when `ENABLE_READ_REPLICA` is set).
 
-**Model (`plane/db/models/`, 178 file py, daftar file):**
+**Models (`plane/db/models/`, 178 py files, file list):**
 `analytic, api, asset, base, cycle, deploy_board, description, device, draft, estimate, exporter, favorite, importer, intake, integration/, issue, issue_type, label, module, notification, page, project, recent_visit, session, social_connection, state, sticky, user, view, webhook, workspace`.
 
-Domain inti terlihat: **workspace → project → (issue, cycle, module, state, label, page, view, estimate, intake)**, plus asset, notification, webhook, favorite, sticky, draft, deploy_board (public share), api (token), integration.
+Core domain visible: **workspace → project → (issue, cycle, module, state, label, page, view, estimate, intake)**, plus asset, notification, webhook, favorite, sticky, draft, deploy_board (public share), api (token), integration.
 
-**Sumber kebenaran skema:** tunggal, model Django `plane/db/models/*` + migrasi Django. Risiko drift rendah di backend (satu ORM). Tipe frontend (`packages/types`, 120 file) adalah representasi terpisah → potensi drift TS↔Python (perlu cek apakah di-generate dari OpenAPI atau manual, TODO).
+**Schema source of truth:** a single one, the Django models in `plane/db/models/*` plus Django migrations. Drift risk is low in the backend (one ORM). The frontend types (`packages/types`, 120 files) are a separate representation, so TS and Python can drift (need to check whether they are generated from OpenAPI or written by hand, TODO).
 
-**Migrasi:** Django migrations, **121 file** di `plane/db/migrations/`. Job `migrator` (one-shot) menerapkannya di compose.
+**Migrations:** Django migrations, **121 files** in `plane/db/migrations/`. The one-shot `migrator` job applies them in compose.
 
-**Integritas referensial:** Django FK aktif (default). Detail on_delete per-model = TODO. `base.py` kemungkinan menyediakan soft-delete + audit fields (created_by/updated_by via django-crum), perlu konfirmasi baca (`plane/db/models/base.py`).
-
----
-
-## FASE 6, Logika Bisnis / Domain Inti
-
-**Apa yang app lakukan (fitur inti terdeteksi dari model+view+store+components):**
-
-| Fitur                                                   | Bukti                                                            |
-| ------------------------------------------------------- | ---------------------------------------------------------------- |
-| Workspace & member management                           | model `workspace`, view `workspace/`, store `workspace`          |
-| Project management                                      | model/view/store `project`                                       |
-| Issues / work items (CRUD, sub-issue, relasi, activity) | model `issue`, view `issue/`, store `issue/`, api v1 `work_item` |
-| Cycles (sprint) + archive                               | model `cycle`, service `cycle_archive.service.ts`                |
-| Modules + archive                                       | model `module`, service `module_archive.service.ts`              |
-| States & workflow                                       | model/view `state`                                               |
-| Labels                                                  | model/view `label`                                               |
-| Estimates                                               | model/view `estimate`                                            |
-| Intake (inbox triage issue)                             | model `intake`, view `intake/`, store `inbox`                    |
-| Pages (docs kolaboratif)                                | model `page`, live service, versi (`page_version_task`)          |
-| Views (saved filters)                                   | model `view`, components `views/`                                |
-| Notifications (in-app + email)                          | model `notification`, bgtask email tiap 5 mnt                    |
-| Webhooks (outbound, SSRF-guarded)                       | model `webhook`, view `webhook/`, bgtask `webhook_task`          |
-| Analytics/dashboard                                     | view `analytic/`, store `analytics`, recharts                    |
-| API tokens (REST publik)                                | model `api`, api v1                                              |
-| Public deploy board (share)                             | model `deploy_board`, `plane/space/`, `apps/space`               |
-| Import/Export (xlsx/csv)                                | model `importer`/`exporter`, bgtasks export                      |
-| Stickies (notes)                                        | model/view `sticky`                                              |
-| AI assist                                               | service `ai.service.ts`, openai                                  |
-| Favorites, recent visits                                | model `favorite`, `recent_visit`                                 |
-| Instance admin (god mode)                               | `apps/admin`, `plane/license`                                    |
-
-Business logic utama ada di **serializers + viewsets** (`plane/app/views/*`, `plane/app/serializers`) dan **bgtasks** (async). Duplikasi TS↔Py (validasi di frontend & backend), perlu audit konsistensi (TODO).
+**Referential integrity:** Django FKs are on (default). `on_delete` details per model are a TODO. `base.py` probably provides soft delete and audit fields (created_by/updated_by via django-crum), which needs confirming by reading `plane/db/models/base.py`.
 
 ---
 
-## FASE 8, Keamanan (temuan awal)
+## PHASE 6, Business logic / core domain
 
-🟢 **Positif (bukti kesadaran keamanan tinggi):**
+**What the app does (core features detected from models, views, stores and components):**
 
-- **SSRF webhook mitigation**, allowlist IP/CIDR (`common.py:64`), hostname (`common.py:79`), disallowed-domain (`common.py:91`); `requests` di-pin utk adapter IP-pinning TLS (`base.txt`). Delivery via `bgtasks/webhook_task.py`.
-- **SECRET_KEY guard**, menolak nilai known-insecure/placeholder dgn log critical (`common.py:38-51`), fallback random bila kosong (GHSA-cmwv-pjmw-8483).
-- **TOCTOU fix**, commit terakhir `7fbf14a` menutup race di `InstanceAdminSignUp` (GHSA-p548-28jp-wr4p).
-- **Password:** validator Django + zxcvbn; `PASSWORD_RESET_TIMEOUT=3600`.
-- **Sanitasi HTML:** nh3 + lxml + sanitize-html (frontend) utk konten rich-text/page.
+| Feature                                                    | Evidence                                                         |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| Workspace and member management                            | model `workspace`, view `workspace/`, store `workspace`          |
+| Project management                                         | model/view/store `project`                                       |
+| Issues / work items (CRUD, sub-issue, relations, activity) | model `issue`, view `issue/`, store `issue/`, api v1 `work_item` |
+| Cycles (sprints) + archive                                 | model `cycle`, service `cycle_archive.service.ts`                |
+| Modules + archive                                          | model `module`, service `module_archive.service.ts`              |
+| States and workflow                                        | model/view `state`                                               |
+| Labels                                                     | model/view `label`                                               |
+| Estimates                                                  | model/view `estimate`                                            |
+| Intake (inbox for issue triage)                            | model `intake`, view `intake/`, store `inbox`                    |
+| Pages (collaborative docs)                                 | model `page`, live service, versions (`page_version_task`)       |
+| Views (saved filters)                                      | model `view`, components `views/`                                |
+| Notifications (in-app + email)                             | model `notification`, bgtask email every 5 min                   |
+| Webhooks (outbound, SSRF-guarded)                          | model `webhook`, view `webhook/`, bgtask `webhook_task`          |
+| Analytics/dashboard                                        | view `analytic/`, store `analytics`, recharts                    |
+| API tokens (public REST)                                   | model `api`, api v1                                              |
+| Public deploy board (share)                                | model `deploy_board`, `plane/space/`, `apps/space`               |
+| Import/Export (xlsx/csv)                                   | model `importer`/`exporter`, bgtasks export                      |
+| Stickies (notes)                                           | model/view `sticky`                                              |
+| AI assist                                                  | service `ai.service.ts`, openai                                  |
+| Favorites, recent visits                                   | model `favorite`, `recent_visit`                                 |
+| Instance admin (god mode)                                  | `apps/admin`, `plane/license`                                    |
+
+The main business logic lives in **serializers + viewsets** (`plane/app/views/*`, `plane/app/serializers`) and **bgtasks** (async). Validation is duplicated between TS and Python (frontend and backend), so a consistency audit is needed (TODO).
+
+---
+
+## PHASE 8, Security (initial findings)
+
+🟢 **Positive (evidence of strong security awareness):**
+
+- **SSRF webhook mitigation**, IP/CIDR allowlist (`common.py:64`), hostname (`common.py:79`), disallowed domain (`common.py:91`). `requests` is pinned for the TLS IP-pinning adapter (`base.txt`). Delivery goes through `bgtasks/webhook_task.py`.
+- **SECRET_KEY guard**, rejects known-insecure or placeholder values with a critical log (`common.py:38-51`), and falls back to a random value when empty (GHSA-cmwv-pjmw-8483).
+- **TOCTOU fix**, the latest commit `7fbf14a` closes a race in `InstanceAdminSignUp` (GHSA-p548-28jp-wr4p).
+- **Password:** Django validator + zxcvbn; `PASSWORD_RESET_TIMEOUT=3600`.
+- **HTML sanitizing:** nh3 + lxml + sanitize-html (frontend) for rich-text/page content.
 - **Rate limiting:** DRF AnonRateThrottle + API-key throttle (`60/minute`).
 - **Auth rate limit:** `plane/authentication/rate_limit.py`.
-- Dependency **overrides** agresif utk CVE (axios, ws, undici, form-data, urllib3, dst).
+- Aggressive dependency **overrides** for CVEs (axios, ws, undici, form-data, urllib3, and others).
 
-🟠 **HIGH / perlu verifikasi:**
+🟠 **HIGH / needs verification:**
 
-- `ALLOWED_HOSTS` default `*` (`common.py:99`), aman hanya jika proxy membatasi Host. Perlu cek `production.py`.
-- **Object-level authorization / IDOR**, permukaan API besar (workspace/project scoping). Perlu audit tiap viewset apakah query difilter per-member. **Ini area risiko #1, belum diaudit per-endpoint.**
+- `ALLOWED_HOSTS` defaults to `*` (`common.py:99`), which is safe only if the proxy restricts Host. Check `production.py`.
+- **Object-level authorization / IDOR**, large API surface (workspace/project scoping). Each viewset needs an audit to see whether queries are filtered per member. **This is risk area #1 and has not been audited per endpoint.**
 
 🟡 **MEDIUM:**
 
-- Secret hardcoded: tidak ditemukan di settings (semua via env). File `.env` yang ter-track hanya **template** (`deployments/{aio,cli}/community/variables.env`) dgn nilai kosong/placeholder, bukan secret asli (diverifikasi). Scan menyeluruh frontend/test fixtures = TODO.
-- `DEBUG` dari env int, pastikan compose prod `0`.
+- Hardcoded secrets: none found in settings (everything comes from env). The tracked `.env` files are only **templates** (`deployments/{aio,cli}/community/variables.env`) with empty or placeholder values, not real secrets (verified). A full scan of the frontend and test fixtures is a TODO.
+- `DEBUG` comes from an env int; make sure prod compose sets it to `0`.
 
-> **Tidak ada secret asli bocor** pada file yang dibaca; hanya template env berisi placeholder. Scan full-repo otomatis (gitleaks style) belum dijalankan, TODO.
+> **No real secrets leaked** in the files that were read; only env templates with placeholders. A full-repo automated scan (gitleaks style) has not been run, TODO.
 
 ---
 
-## FASE 9, Kualitas & Operasional
+## PHASE 9, Quality and operations
 
-- **Test backend:** pytest (`apps/api/pytest.ini`, `run_tests.py/sh`), 47 file test di `plane/tests/`. Coverage kasar belum diukur.
-- **Test frontend:** vitest (`@vitest/coverage-v8` di catalog); `apps/live/tests`, `vitest.config.ts`. Cakupan belum diukur.
+- **Backend tests:** pytest (`apps/api/pytest.ini`, `run_tests.py/sh`), 47 test files in `plane/tests/`. Rough coverage has not been measured.
+- **Frontend tests:** vitest (`@vitest/coverage-v8` in the catalog); `apps/live/tests`, `vitest.config.ts`. Coverage has not been measured.
 - **Lint/format:** oxlint + oxfmt (JS/TS) via lint-staged + husky pre-commit; ruff (Python, `pyproject.toml`). Type-check via `turbo check:types`.
 - **Logging:** JSON logger (backend `python-json-logger`, celery `JsonFormatter` `celery.py`), winston (live).
 - **Observability:** Scout APM + OpenTelemetry (backend), Sentry (frontend), PostHog analytics, health controller (live), telemetry metrics push (license).
 
 ---
 
-## FASE 10, Katalog Fitur (produk)
+## PHASE 10, Feature catalog (product)
 
-Semua ✅ berdasarkan keberadaan model+view+store+components (fungsional penuh perlu runtime test):
+All ✅, based on the presence of model + view + store + components (full functionality needs a runtime test):
 
 ✅ Workspaces · ✅ Projects · ✅ Issues/work items · ✅ Cycles · ✅ Modules · ✅ States/workflow · ✅ Labels · ✅ Estimates · ✅ Intake/inbox · ✅ Pages (collab docs) · ✅ Views/filters · ✅ Notifications (in-app+email) · ✅ Webhooks · ✅ Analytics/dashboard · ✅ Public deploy boards · ✅ Import/Export · ✅ Stickies · ✅ API tokens (REST v1) · ✅ AI assist · ✅ Instance admin · ✅ Multi-provider auth (Google/GitHub/GitLab/Gitea/email/magic).
 
-Status ⚠️/❌ per-fitur butuh runtime test, belum dijalankan (audit read-only).
+The ⚠️/❌ status per feature needs a runtime test and has not been run (read-only audit).
 
 ---
 
-## Yang Belum Sempat Didalami (transparansi cakupan)
+## What was not examined (scope transparency)
 
-Depth-read yang **belum** dilakukan (prioritas untuk pass berikutnya):
+Deep reads that have **not** been done (priorities for the next pass):
 
-1. **Enumerasi endpoint per-URLconf** (`plane/*/urls/*.py`) + method + permission class → paling penting utk audit IDOR/authz. _(FASE 4/8)_
-2. **Field per-model** + `on_delete` + index + `base.py` (soft-delete/audit) → `plane/db/models/*`. _(FASE 5)_
-3. **`packages/propel` (390 file, terbesar)** dan **`packages/editor` (226)**, belum dibuka sama sekali.
-4. **`packages/{ui,types,services,constants,utils}`**, belum dibuka; cek apakah `types` di-generate dari OpenAPI (risiko drift).
-5. **`apps/live` internal** (hocuspocus extensions, redis pubsub, pdf-export), hanya struktur.
-6. **`plane/license` & `plane/space`**, belum dibuka (telemetry, instance admin, public board logic).
-7. **Frontend routes + guards** (react-router config tiap app), belum dienumerasi.
-8. **CI/CD** (`.github/workflows`), belum diverifikasi keberadaannya.
-9. **Dockerfile/entrypoint (`bin/`) + deployments/{k8s,swarm,aio,cli}**, langkah build/deploy persis.
-10. **Scan menyeluruh:** 13 TODO/FIXME backend belum dienumerasi; frontend belum discan; secret scan full-repo belum dijalankan.
-11. **FASE 6.5 (trace fitur end-to-end sampai akar)**, belum ditulis; perlu ambil 3–5 fitur (mis. create issue, webhook delivery, auth/login, page collab) dan trace lintas layer dgn snippet.
+1. **Endpoint enumeration per URLconf** (`plane/*/urls/*.py`) + method + permission class → the most important item for the IDOR/authz audit. _(PHASE 4/8)_
+2. **Fields per model** + `on_delete` + index + `base.py` (soft-delete/audit) → `plane/db/models/*`. _(PHASE 5)_
+3. **`packages/propel` (390 files, the largest)** and **`packages/editor` (226)**, not opened at all.
+4. **`packages/{ui,types,services,constants,utils}`**, not opened; check whether `types` is generated from OpenAPI (drift risk).
+5. **`apps/live` internals** (hocuspocus extensions, redis pubsub, pdf-export), structure only.
+6. **`plane/license` and `plane/space`**, not opened (telemetry, instance admin, public board logic).
+7. **Frontend routes + guards** (react-router config for each app), not enumerated.
+8. **CI/CD** (`.github/workflows`), existence not verified.
+9. **Dockerfile/entrypoint (`bin/`) + deployments/{k8s,swarm,aio,cli}**, exact build/deploy steps.
+10. **Full scans:** 13 backend TODO/FIXME not enumerated; frontend not scanned; full-repo secret scan not run.
+11. **PHASE 6.5 (end-to-end feature traces down to the root)**, not written yet; needs 3 to 5 features (e.g. create issue, webhook delivery, auth/login, page collab) traced across layers with snippets.
 
-> **Rekomendasi:** lanjut per-modul mengikuti prioritas #1–#2 (authz + skema) karena risiko keamanan tertinggi, lalu FASE 6.5 utk fitur kritikal. Bilang modul mana yang mau didahulukan.
+> **Recommendation:** continue module by module following priorities #1 and #2 (authz + schema) because they carry the highest security risk, then PHASE 6.5 for critical features. Say which module to do first.
 
 ---
 
@@ -513,51 +513,51 @@ Depth-read yang **belum** dilakukan (prioritas untuk pass berikutnya):
 
 # PASS 2, DEEP-DIVE
 
-## DEEP-DIVE #1, Authorization / IDOR (FASE 4 + 8)
+## DEEP-DIVE #1, Authorization / IDOR (PHASE 4 + 8)
 
-### Model authz: RBAC 2-layer
+### Authz model: 2-layer RBAC
 
-**Role** (`plane/app/permissions/base.py:12`, dan mirror di `db/models/project.py`):
+**Roles** (`plane/app/permissions/base.py:12`, mirrored in `db/models/project.py`):
 `ADMIN = 20`, `MEMBER = 15`, `GUEST = 5`.
 
-**Dua mekanisme paralel** (keduanya dipakai di codebase):
+**Two parallel mechanisms** (both used in the codebase):
 
-1. **Class-based `BasePermission`** (`plane/app/permissions/{project,workspace,page}.py`), dipakai via `permission_classes` (31 dari 60 file view). Cek `has_permission(request, view)`:
+1. **Class-based `BasePermission`** (`plane/app/permissions/{project,workspace,page}.py`), used via `permission_classes` (31 of 60 view files). Checks `has_permission(request, view)`:
    - `WorkspaceMember`/`ProjectMember` filter `workspace__slug=view.workspace_slug`, `member=request.user`, `is_active=True`, `role__in=[...]`.
-   - `SAFE_METHODS` (GET) → hanya cek membership; **filtering object-level "diserahkan ke queryset"** (komentar eksplisit `project.py:19` "Handle the filtering logic in queryset").
-   - Kelas: `ProjectBasePermission`, `ProjectMemberPermission`, `ProjectEntityPermission`, `ProjectAdminPermission`, `ProjectLitePermission`; `WorkSpaceBasePermission`, `WorkspaceOwnerPermission`, `WorkSpaceAdminPermission`, `WorkspaceEntityPermission`.
+   - `SAFE_METHODS` (GET) → only checks membership; **object-level filtering is "left to the queryset"** (explicit comment at `project.py:19` "Handle the filtering logic in queryset").
+   - Classes: `ProjectBasePermission`, `ProjectMemberPermission`, `ProjectEntityPermission`, `ProjectAdminPermission`, `ProjectLitePermission`; `WorkSpaceBasePermission`, `WorkspaceOwnerPermission`, `WorkSpaceAdminPermission`, `WorkspaceEntityPermission`.
 
-2. **Decorator `@allow_permission(allowed_roles, level="PROJECT"|"WORKSPACE", creator=False, model=None)`** (`permissions/base.py:19`), dipakai per-method (38 dari 60 file view). Cek membership+role pada `kwargs["slug"]`/`kwargs["project_id"]`; opsi `creator=True` mengizinkan pemilik objek (`created_by=request.user`) meski bukan role cukup.
+2. **Decorator `@allow_permission(allowed_roles, level="PROJECT"|"WORKSPACE", creator=False, model=None)`** (`permissions/base.py:19`), used per method (38 of 60 view files). Checks membership + role on `kwargs["slug"]`/`kwargs["project_id"]`; the `creator=True` option lets the object's owner (`created_by=request.user`) through even without a sufficient role.
 
-**Base viewset** (`plane/app/views/base.py:47`): default `permission_classes=[IsAuthenticated]`, `authentication_classes=[BaseSessionAuthentication]`, dan `get_queryset()` default = `self.model.objects.all()` (`base.py:60`).
+**Base viewset** (`plane/app/views/base.py:47`): default `permission_classes=[IsAuthenticated]`, `authentication_classes=[BaseSessionAuthentication]`, and the default `get_queryset()` is `self.model.objects.all()` (`base.py:60`).
 
-### Titik kritikal IDOR
+### Critical IDOR points
 
-> Karena `BaseViewSet.get_queryset` default mengembalikan **`.all()`**, keamanan object-level **bergantung sepenuhnya pada tiap view meng-override `get_queryset` dengan filter `workspace__slug` + `project_id`**. Pola yang benar terlihat konsisten di `issue/base.py`:
+> Because the default `BaseViewSet.get_queryset` returns **`.all()`**, object-level security **depends entirely on each view overriding `get_queryset` with a `workspace__slug` + `project_id` filter**. The correct pattern shows up consistently in `issue/base.py`:
 >
 > - `get_queryset` → `Issue.issue_objects.filter(project_id=self.kwargs["project_id"], workspace__slug=self.kwargs["slug"])` (`issue/base.py:206`).
-> - tiap handler di-dekor `@allow_permission([...])` (`issue/base.py:84, 253, 392`).
+> - each handler is decorated with `@allow_permission([...])` (`issue/base.py:84, 253, 392`).
 
-**Cakupan (kuantitatif):** 60 file view; **38** pakai `allow_permission`, **31** pakai `permission_classes` override (banyak pakai keduanya). Cakupan tinggi, jarang ada view "telanjang".
+**Coverage (quantitative):** 60 view files; **38** use `allow_permission`, **31** override `permission_classes` (many use both). Coverage is high, and "bare" views are rare.
 
-### Temuan
+### Findings
 
-| Sev                 | Lokasi                                                          | Temuan                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🟠 HIGH (PLAUSIBLE) | `plane/app/views/issue/comment.py:66`, `issue/sub_issue.py:205` | `Issue.objects.get(pk=issue_id)` diambil **tanpa** memverifikasi `issue.project_id == project_id`/`workspace__slug` URL. `@allow_permission` hanya memvalidasi membership pada `project_id` URL, bukan bahwa `issue_id` milik project itu. Potensi **cross-project IDOR**: member project A me-referensikan `issue_id` project B. Perlu verifikasi runtime apakah objek issue dipakai utk menulis (create comment/sub-issue) lintas project. |
-| 🟡 MEDIUM           | `permissions/base.py:60` (`get_queryset` default `.all()`)      | Bukan bug sendiri, tapi _fail-open by default_, view baru yang lupa override `get_queryset` akan expose semua row. Disarankan default deny/scoped.                                                                                                                                                                                                                                                                                           |
-| 🟢 INFO             | `permissions/workspace.py:22`                                   | `WorkSpaceBasePermission` mengizinkan `POST` (create workspace) utk semua user terautentikasi, by design (siapa pun boleh bikin workspace).                                                                                                                                                                                                                                                                                                  |
-| 🟢 INFO             | `permissions/base.py` decorator                                 | Logika "workspace admin yang jadi anggota project boleh akses meski role project rendah" (`base.py:64`), eskalasi terkontrol, wajar.                                                                                                                                                                                                                                                                                                         |
+| Sev                 | Location                                                        | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🟠 HIGH (PLAUSIBLE) | `plane/app/views/issue/comment.py:66`, `issue/sub_issue.py:205` | `Issue.objects.get(pk=issue_id)` is fetched **without** verifying `issue.project_id == project_id`/`workspace__slug` from the URL. `@allow_permission` only validates membership on the URL's `project_id`, not that `issue_id` belongs to that project. Possible **cross-project IDOR**: a member of project A references an `issue_id` from project B. Needs runtime verification of whether the issue object is used for writes (create comment/sub-issue) across projects. |
+| 🟡 MEDIUM           | `permissions/base.py:60` (default `get_queryset` is `.all()`)   | Not a bug by itself, but _fail-open by default_: a new view that forgets to override `get_queryset` will expose every row. A default of deny or scoped is recommended.                                                                                                                                                                                                                                                                                                         |
+| 🟢 INFO             | `permissions/workspace.py:22`                                   | `WorkSpaceBasePermission` allows `POST` (create workspace) for every authenticated user, by design (anyone may create a workspace).                                                                                                                                                                                                                                                                                                                                            |
+| 🟢 INFO             | `permissions/base.py` decorator                                 | Logic that lets a workspace admin who is a project member in even with a low project role (`base.py:64`), a controlled escalation, reasonable.                                                                                                                                                                                                                                                                                                                                 |
 
-**REST publik v1** (`plane/api/`): auth berbeda (API key + throttle `API_KEY_RATE_LIMIT=60/minute`). Permission class terpisah di `plane/api/`, belum dibaca detail (baca `plane/api/views/base.py` + permissions utk pass lanjutan).
+**Public REST v1** (`plane/api/`): different auth (API key + throttle `API_KEY_RATE_LIMIT=60/minute`). Separate permission classes in `plane/api/`, not read in detail yet (read `plane/api/views/base.py` + permissions in a follow-up pass).
 
-**Rekomendasi audit lanjutan (belum dilakukan):** grep tiap `get_queryset` di 60 view utk memastikan **semua** memfilter `workspace__slug`; dan audit tiap `objects.get(pk=<child_id>)` apakah child divalidasi milik parent di URL (pola comment.py di atas mungkin berulang di link/reaction/attachment/relation).
+**Follow-up audit recommendation (not done yet):** grep every `get_queryset` across the 60 views to confirm **all** of them filter on `workspace__slug`; and audit every `objects.get(pk=<child_id>)` to see whether the child is validated as belonging to the parent in the URL (the comment.py pattern above may repeat in link/reaction/attachment/relation).
 
 ---
 
-## DEEP-DIVE #2, Skema DB per-model (FASE 5)
+## DEEP-DIVE #2, DB schema per model (PHASE 5)
 
-### Hierarki base class (`plane/db/mixins.py` + `db/models/base.py`)
+### Base class hierarchy (`plane/db/mixins.py` + `db/models/base.py`)
 
 ```
 TimeAuditModel      -> created_at (auto_now_add), updated_at (auto_now)          mixins.py:16
@@ -567,21 +567,21 @@ SoftDeleteModel     -> deleted_at (nullable); .delete() = set deleted_at        
 AuditModel          = TimeAuditModel + UserAuditModel + SoftDeleteModel          mixins.py:85
 BaseModel           = AuditModel + id: UUIDField(pk, default uuid4)              base.py:16
   ProjectBaseModel  = BaseModel + project(FK CASCADE) + workspace(FK CASCADE)   project.py:180
-                      save() auto-set workspace = project.workspace             project.py:188
+                      save() auto-sets workspace = project.workspace            project.py:188
   WorkspaceBaseModel= BaseModel + workspace(FK CASCADE)                          workspace.py:185
-ChangeTrackerMixin  -> lacak perubahan field (untuk activity feed)              mixins.py:92
+ChangeTrackerMixin  -> tracks field changes (for the activity feed)              mixins.py:92
 ```
 
-**Invariant penting:**
+**Key invariants:**
 
-- **PK = UUID** di semua model (bukan sequential int) → mengurangi enumerasi/IDOR tebak-id.
-- **Soft delete default**, `deleted_at`; manager default menyembunyikan row terhapus. ⚠️ Model dengan manager kustom (mis. `Issue.objects` vs `Issue.issue_objects`) bisa meng-expose row soft-deleted jika query pakai manager yang salah (relevan dgn smell IDOR di comment.py yang pakai `Issue.objects`).
-- **Scoping baked-in**, subclass `ProjectBaseModel` otomatis punya `project`+`workspace` dan menjaga konsistensi via `save()`. Ini memperkuat filtering per-tenant.
-- **Audit otomatis**, `created_by`/`updated_by` via `django-crum` `get_current_user()` (`base.py:24`).
+- **PK = UUID** on every model (not a sequential int) → reduces enumeration and guessing ids for IDOR.
+- **Soft delete by default**, `deleted_at`; the default manager hides deleted rows. Models with a custom manager (e.g. `Issue.objects` vs `Issue.issue_objects`) can expose soft-deleted rows if a query uses the wrong manager (relevant to the IDOR smell in comment.py, which uses `Issue.objects`).
+- **Scoping baked in**, a `ProjectBaseModel` subclass automatically has `project` + `workspace` and keeps them consistent via `save()`. This strengthens per-tenant filtering.
+- **Automatic audit**, `created_by`/`updated_by` via `django-crum` `get_current_user()` (`base.py:24`).
 
-### Model inti & relasi (contoh dari `issue.py`, `db_table` eksplisit)
+### Core models and relations (examples from `issue.py`, explicit `db_table`)
 
-| Model                      | Tabel               | Relasi kunci                                                                          | on_delete                                                       |
+| Model                      | Table               | Key relations                                                                         | on_delete                                                       |
 | -------------------------- | ------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | `Issue` (`issue.py:104`)   | `issues`            | parent(self), state, estimate_point, type, assignees(M2M), labels(M2M via IssueLabel) | parent=CASCADE, state=CASCADE, estimate=SET_NULL, type=SET_NULL |
 | `IssueBlocker` (`:258`)    | `issue_blockers`    | block, blocked_by → Issue                                                             | CASCADE                                                         |
@@ -593,145 +593,145 @@ ChangeTrackerMixin  -> lacak perubahan field (untuk activity feed)              
 | `IssueActivity` (`:415`)   | `issue_activities`  | issue, issue_comment, actor                                                           | issue=DO_NOTHING, actor=SET_NULL                                |
 | `IssueComment` (`:451`)    | `issue_comments`    | description(O2O), issue, actor                                                        | description=CASCADE, issue=CASCADE                              |
 
-> Pola `unique_together` selalu menyertakan `deleted_at` → memungkinkan re-create setelah soft-delete tanpa bentrok unique (idiom yang disengaja).
+> The `unique_together` pattern always includes `deleted_at`, which allows re-creating a row after a soft delete without a unique clash (a deliberate idiom).
 
-### Inventaris model (31 modul di `plane/db/models/`, 178 file)
+### Model inventory (31 modules in `plane/db/models/`, 178 files)
 
 `workspace, project, issue, issue_type, cycle, module, state, label, estimate, page, view, intake, draft, notification, webhook, asset, favorite, sticky, recent_visit, deploy_board (public share), api (token), device, session, social_connection, description, exporter, importer, integration/ (dir), analytic, user`.
 
-Domain graph: _*Workspace 1─* Project 1─_ {Issue, Cycle, Module, State, Label, Page, View, Estimate, Intake}**; Issue _─_ {Label, Assignee(User), Cycle, Module}; scoping ganda project+workspace di tiap entity.
+Domain graph: _*Workspace 1─* Project 1─_ {Issue, Cycle, Module, State, Label, Page, View, Estimate, Intake}**; Issue _─_ {Label, Assignee(User), Cycle, Module}; double scoping by project + workspace on every entity.
 
-**Sumber kebenaran skema:** tunggal (Django ORM). 121 migrasi. Tipe frontend (`packages/types`) terpisah → risiko drift (lihat #4).
+**Schema source of truth:** a single one (Django ORM). 121 migrations. Frontend types (`packages/types`) are separate → drift risk (see #4).
 
-**Belum didalami:** field lengkap tiap model non-issue, index DB (selain unique_together), model `integration/` (dir), `user.py` (auth/permission fields), `deploy_board.py` (kontrol akses share publik, relevan keamanan).
+**Not examined yet:** full fields of each non-issue model, DB indexes (other than unique_together), the `integration/` models (dir), `user.py` (auth/permission fields), `deploy_board.py` (access control for public sharing, relevant to security).
 
 ---
 
-## DEEP-DIVE #3, Trace fitur end-to-end (FASE 6.5)
+## DEEP-DIVE #3, End-to-end feature traces (PHASE 6.5)
 
-### Trace A, Create Issue
+### Trace A, Create issue
 
 ```
 UI: web issue create form (apps/web/core/components/issues/...)
   -> service: apps/web/core/services/issue/*.service.ts (axios POST)
   -> route: POST /api/workspaces/<slug>/projects/<project_id>/issues/  (plane/app/urls/issue.py)
   -> guard: @allow_permission([ROLE.ADMIN, ROLE.MEMBER])         issue/base.py:392
-            (cek ProjectMember role di slug+project_id; GUEST tak boleh create)
+            (checks ProjectMember role on slug+project_id; GUEST cannot create)
   -> handler: IssueViewSet.create(request, slug, project_id)      issue/base.py:393
        project = Project.objects.get(pk=project_id)               issue/base.py:394
-       serializer (IssueCreateSerializer) validasi payload
-  -> model save: Issue (ProjectBaseModel) -> save() set workspace=project.workspace, created_by=user (crum)
-  -> data store: tabel `issues` (+ IssueAssignee/IssueLabel M2M, IssueActivity)
-  -> side-effect: issue_activities_task (async) rekam aktivitas; webhook_activity -> webhook_send_task
+       serializer (IssueCreateSerializer) validates the payload
+  -> model save: Issue (ProjectBaseModel) -> save() sets workspace=project.workspace, created_by=user (crum)
+  -> data store: table `issues` (+ IssueAssignee/IssueLabel M2M, IssueActivity)
+  -> side effect: issue_activities_task (async) records activity; webhook_activity -> webhook_send_task
   <- response: serialized issue (JSON)
-Edge/risiko: create pakai Project.objects.get(pk=project_id) tanpa slug, tapi decorator sudah
-memvalidasi membership pada project_id URL -> aman. Cek: apakah assignee/label di payload
-divalidasi milik project yang sama (belum diverifikasi).
+Edge/risk: create uses Project.objects.get(pk=project_id) without the slug, but the decorator already
+validates membership on the URL's project_id -> safe. To check: whether the assignee/label in the
+payload are validated as belonging to the same project (not verified yet).
 ```
 
-### Trace B, Webhook delivery (SSRF-critical) ⭐
+### Trace B, Webhook delivery (SSRF-critical)
 
 ```
-Trigger: perubahan model (issue/project/dst) -> webhook_activity()          webhook_task.py:393
+Trigger: model change (issue/project/etc.) -> webhook_activity()            webhook_task.py:393
   -> enqueue Celery: webhook_send_task (autoretry RequestException, backoff 600s, jitter)  :235
   -> handler: webhook_send_task(webhook_id, payload, ...)                     :242
   -> SSRF guard: pinned_fetch(webhook.url,
                     allowed_ips=WEBHOOK_ALLOWED_IPS,
                     allowed_hosts=WEBHOOK_ALLOWED_HOSTS)                       webhook_task.py:319
-       -> resolve_and_validate(hostname): DNS resolve + tolak IP privat/loopback
-          kecuali host/ip ada di allowlist                                    url_security.py:180
-       -> PinnedIPAdapter: koneksi DIPAKU ke IP yang sudah divalidasi
-          (get_connection_with_tls_context, hostname utk SNI/cert)            url_security.py:46,67
-          -> mencegah DNS-rebinding TOCTOU (validasi vs koneksi tak bisa beda IP)
-       -> redirect: pinned_fetch_following_redirects re-validasi TIAP hop, batas redirect  :225,264
-  -> sukses -> save_webhook_log(status_ok)                                    :336
+       -> resolve_and_validate(hostname): DNS resolve + reject private/loopback IPs
+          unless the host/ip is in the allowlist                              url_security.py:180
+       -> PinnedIPAdapter: the connection is PINNED to the already validated IP
+          (get_connection_with_tls_context, hostname for SNI/cert)            url_security.py:46,67
+          -> prevents DNS-rebinding TOCTOU (validation and connection cannot see different IPs)
+       -> redirect: pinned_fetch_following_redirects re-validates EVERY hop, redirect limit  :225,264
+  -> success -> save_webhook_log(status_ok)                                   :336
   -> RequestException -> save log + raise -> Celery retry                     :340
-  -> gagal berulang -> send_webhook_deactivation_email + nonaktifkan webhook  :172
-Kekuatan: mitigasi SSRF berlapis (allowlist + IP-pin + per-hop redirect check). Ini defense
-kelas produksi, bukan sekadar cek "is private IP". Komentar kode eksplisit soal ancaman
+  -> repeated failure -> send_webhook_deactivation_email + deactivate webhook  :172
+Strengths: layered SSRF mitigation (allowlist + IP pin + per-hop redirect check). This is
+production-grade defense, not just an "is private IP" check. The code comment is explicit about the threat
 "attacker swap in an IP after validation" (webhook_task.py:313).
 ```
 
-### Trace C, Authentication (permukaan luas)
+### Trace C, Authentication (wide surface)
 
 ```
 Routes (plane/authentication/urls.py):
   Email/password : /auth/sign-in, /sign-up, /sign-out, /email-check           :51-56,119
   Magic link     : /auth/magic-generate, /magic-sign-in, /magic-sign-up       :61-63
   Password mgmt  : /forgot-password, /change-password, /set-password          :122,138,139
-  OAuth          : google, github, gitlab, gitea (+ /callback masing-masing)  :80-148
+  OAuth          : google, github, gitlab, gitea (+ /callback for each)       :80-148
   Space (public) : /auth/spaces/sign-in, /sign-up, /sign-out                   :53-57
   CSRF           : /auth/get-csrf-token                                        :59
 
-Flow magic-link:
-  POST /auth/magic-generate -> generate token -> magic_link_code_task (email async, bgtasks)
-  POST /auth/magic-sign-in  -> validasi token -> adapter (plane/authentication/adapter) -> buat sesi
-Flow OAuth:
-  GET  /auth/<provider>/           -> initiate (redirect ke provider, state)
-  GET  /auth/<provider>/callback/  -> tukar code -> provider oauth class
-       (plane/authentication/provider/oauth/{google,github,gitlab,gitea}.py) -> buat/link user
+Magic-link flow:
+  POST /auth/magic-generate -> generate token -> magic_link_code_task (async email, bgtasks)
+  POST /auth/magic-sign-in  -> validate token -> adapter (plane/authentication/adapter) -> create session
+OAuth flow:
+  GET  /auth/<provider>/           -> initiate (redirect to provider, state)
+  GET  /auth/<provider>/callback/  -> exchange code -> provider oauth class
+       (plane/authentication/provider/oauth/{google,github,gitlab,gitea}.py) -> create/link user
 
-Auth = SessionAuthentication (cookie), bukan JWT untuk web (BaseSessionAuthentication, base.py).
-REST v1 publik pakai API key terpisah. Rate limit: plane/authentication/rate_limit.py.
-Password: validator Django + zxcvbn; reset TTL 3600s.
-Catatan: commit terakhir memperbaiki TOCTOU race di InstanceAdminSignUp (GHSA-p548-28jp-wr4p).
-Belum didalami: isi adapter/session, proteksi CSRF pada callback OAuth, validasi `next`/redirect.
+Auth = SessionAuthentication (cookie), not JWT for web (BaseSessionAuthentication, base.py).
+Public REST v1 uses a separate API key. Rate limit: plane/authentication/rate_limit.py.
+Password: Django validator + zxcvbn; reset TTL 3600s.
+Note: the latest commit fixes a TOCTOU race in InstanceAdminSignUp (GHSA-p548-28jp-wr4p).
+Not examined yet: adapter/session internals, CSRF protection on OAuth callbacks, validation of `next`/redirect.
 ```
 
 ---
 
-## DEEP-DIVE #4, Frontend & Packages (FASE 7)
+## DEEP-DIVE #4, Frontend and packages (PHASE 7)
 
-### Peta package internal (dependency berlapis)
+### Internal package map (layered dependencies)
 
 ```
-@plane/types      (120 file, ZERO deps)  -> tipe TS murni: activity, ai, auth, cycle, issue, ...
+@plane/types      (120 files, ZERO deps)  -> pure TS types: activity, ai, auth, cycle, issue, ...
 @plane/constants  ────────────────────┐
 @plane/utils      ────────────────────┤
 @plane/hooks      ────────────────────┤
-@plane/propel     (390, TERBESAR)  ────┼─> primitives/headless UI: accordion, avatar, badge,
+@plane/propel     (390, LARGEST)  ─────┼─> headless UI primitives: accordion, avatar, badge,
    deps: @base-ui-components/react       │    button, calendar, charts, combobox, command(cmdk),
          @tanstack/react-table, framer   │    ... (design-system layer)
-@plane/ui         (128)  ──────────────┼─> komponen shared tingkat lebih tinggi: auth-form,
+@plane/ui         (128)  ──────────────┼─> higher-level shared components: auth-form,
    deps: propel + blueprintjs + atlaskit │    breadcrumbs, drag-handle, color-picker, ...
-@plane/editor     (226)  ──────────────┼─> editor kolaboratif Tiptap/ProseMirror + Yjs
-   deps: propel, ui, tiptap*, hocuspocus │    struktur: core/ + ce/ + ee/  (split CE/EE!)
-@plane/services   (56)  ───────────────┘─> client axios per-domain (auth, cycle, issue, ...)
-   deps: types + axios + file-type            dipakai app frontend utk panggil API
+@plane/editor     (226)  ──────────────┼─> collaborative Tiptap/ProseMirror + Yjs editor
+   deps: propel, ui, tiptap*, hocuspocus │    structure: core/ + ce/ + ee/  (CE/EE split!)
+@plane/services   (56)  ───────────────┘─> per-domain axios clients (auth, cycle, issue, ...)
+   deps: types + axios + file-type            used by the frontend apps to call the API
 ```
 
-Lainnya: `@plane/i18n` (locales JSON + ICU), `@plane/logger`, `@plane/decorators`, `@plane/shared-state`, `@plane/tailwind-config`, `@plane/typescript-config`, `@plane/codemods` (jscodeshift migrations).
+Others: `@plane/i18n` (locale JSON + ICU), `@plane/logger`, `@plane/decorators`, `@plane/shared-state`, `@plane/tailwind-config`, `@plane/typescript-config`, `@plane/codemods` (jscodeshift migrations).
 
-### Arsitektur CE/EE (Community vs Enterprise Edition)
+### CE/EE architecture (Community vs Enterprise Edition)
 
-Pola berulang: `apps/web/ce/` (components + store) vs `apps/web/core/`, dan `packages/editor/{ce,ee,core}`. **`ce/` = implementasi Community Edition** (open-source ini). Build Enterprise mengganti layer `ce`→`ee`. Artinya repo ini adalah **varian CE**; sebagian fitur EE hadir sebagai stub/interface di `ce`. (Konsisten dgn skill repo yang menyebut `plane-ee` & `plane-cloud`.)
+Recurring pattern: `apps/web/ce/` (components + store) vs `apps/web/core/`, and `packages/editor/{ce,ee,core}`. **`ce/` = the Community Edition implementation** (the open-source one in this repo). The Enterprise build swaps the `ce` layer for `ee`. That means this repo is the **CE variant**; some EE features show up as stubs/interfaces in `ce`. (Consistent with the repo skill that mentions `plane-ee` and `plane-cloud`.)
 
-### Frontend web (`apps/web/core`, 2.039 file)
+### Web frontend (`apps/web/core`, 2,039 files)
 
-| Layer           | Lokasi                     | Isi                                                                                                                                                                                                                        |
-| --------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| State (MobX)    | `core/store/`              | root.store.ts → sub-store: issue/, cycle, module, project/, workspace/, page/, notification/, user/, member/, analytics, instance, theme, router, command-palette, power-k, timeline, sticky, favorite, estimates/, inbox/ |
-| Service (axios) | `core/services/`           | ~30 service: ai, analytics, auth, cycle(+archive), module(+archive), issue/, project/, page/, file(+upload), workspace(+notification), instance, view, webhook, sticky, timezone, dashboard                                |
-| Components      | `core/components/`         | ~55 domain: issues, cycles, modules, project, workspace, analytics, gantt-chart, editor, dropdowns, rich-filters, onboarding, settings, power-k (command palette), automation, web-hooks, ...                              |
-| Layouts         | `core/layouts/`            | route guards / shell                                                                                                                                                                                                       |
-| Hooks/lib       | `core/hooks/`, `core/lib/` | ,                                                                                                                                                                                                                          |
+| Layer           | Location                   | Contents                                                                                                                                                                                                                    |
+| --------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| State (MobX)    | `core/store/`              | root.store.ts → sub-stores: issue/, cycle, module, project/, workspace/, page/, notification/, user/, member/, analytics, instance, theme, router, command-palette, power-k, timeline, sticky, favorite, estimates/, inbox/ |
+| Service (axios) | `core/services/`           | ~30 services: ai, analytics, auth, cycle(+archive), module(+archive), issue/, project/, page/, file(+upload), workspace(+notification), instance, view, webhook, sticky, timezone, dashboard                                |
+| Components      | `core/components/`         | ~55 domains: issues, cycles, modules, project, workspace, analytics, gantt-chart, editor, dropdowns, rich-filters, onboarding, settings, power-k (command palette), automation, web-hooks, ...                              |
+| Layouts         | `core/layouts/`            | route guards / shell                                                                                                                                                                                                        |
+| Hooks/lib       | `core/hooks/`, `core/lib/` | ,                                                                                                                                                                                                                           |
 
-Data flow UI: komponen → MobX store (observer) → `@plane/services` / `core/services` (axios) → Django API. Fetch pakai **SWR** + store. Realtime (page/editor) → Hocuspocus provider → `apps/live`.
+UI data flow: component → MobX store (observer) → `@plane/services` / `core/services` (axios) → Django API. Fetching uses **SWR** + the store. Realtime (page/editor) → Hocuspocus provider → `apps/live`.
 
-### Temuan frontend
+### Frontend findings
 
-| Sev       | Temuan                                                                                                                                                                                                                                                              |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🟠 HIGH   | **`@plane/types` tanpa codegen** (script hanya `tsdown` bundle, tak ada openapi/generate, diverifikasi). Tipe TS di-maintain **manual** terpisah dari model Django → **risiko drift skema** nyata: perubahan model backend tak otomatis tercermin di tipe frontend. |
-| 🟡 MEDIUM | Package `@plane/propel` (390 file) & `@plane/editor` (226) belum dibaca isi implementasinya, hanya inventaris komponen. Kompleksitas editor (Tiptap+Yjs+CE/EE) area risiko bug tinggi.                                                                              |
-| 🟢 INFO   | Pemisahan store/service/component rapi (container/presentational + MobX). Konsisten dgn rule "many small files".                                                                                                                                                    |
+| Sev       | Finding                                                                                                                                                                                                                                                                                   |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🟠 HIGH   | **`@plane/types` has no codegen** (the script is only a `tsdown` bundle, no openapi/generate, verified). TS types are maintained **by hand** separately from the Django models → real **schema drift risk**: a backend model change is not automatically reflected in the frontend types. |
+| 🟡 MEDIUM | The `@plane/propel` (390 files) and `@plane/editor` (226) packages have not had their implementation read, only a component inventory. Editor complexity (Tiptap+Yjs+CE/EE) is a high bug-risk area.                                                                                      |
+| 🟢 INFO   | Store/service/component separation is clean (container/presentational + MobX). Consistent with the "many small files" rule.                                                                                                                                                               |
 
-**Belum didalami:** enumerasi route React Router per-app (react-router.config.ts), guard auth di layouts, isi implementasi propel/editor, `apps/admin` & `apps/space` internal, aksesibilitas/i18n coverage, bundle size aktual.
+**Not examined yet:** React Router route enumeration per app (react-router.config.ts), auth guards in layouts, propel/editor implementation, `apps/admin` and `apps/space` internals, accessibility/i18n coverage, actual bundle size.
 
 ---
 
-## STATUS AKHIR PASS 2
+## FINAL STATUS OF PASS 2
 
-MODULE INDEX ter-update: authz ✅, skema DB ✅ (base+pola, field-detail 🟡), trace fitur ✅ (3 fitur), frontend/packages ✅ (arsitektur, implementasi-detail 🟡).
+MODULE INDEX updated: authz ✅, DB schema ✅ (base + patterns, field detail 🟡), feature traces ✅ (3 features), frontend/packages ✅ (architecture, implementation detail 🟡).
 
-**Sisa deep-read (jika mau pass 3):** (1) enumerasi endpoint per-URLconf + verifikasi runtime IDOR smell di issue/comment,sub_issue,link,reaction,attachment; (2) field per-model non-issue + `deploy_board`/`user`/`api-token`; (3) implementasi `packages/propel`+`editor`; (4) `plane/license`+`plane/space`+`apps/live` internal; (5) `.github/workflows` isi + Dockerfile build steps; (6) secret scan otomatis full-repo + enumerasi 13 TODO backend.
+**Remaining deep reads (if there is a pass 3):** (1) endpoint enumeration per URLconf + runtime verification of the IDOR smell in issue/comment, sub_issue, link, reaction, attachment; (2) fields per non-issue model + `deploy_board`/`user`/`api-token`; (3) `packages/propel` + `editor` implementation; (4) `plane/license` + `plane/space` + `apps/live` internals; (5) `.github/workflows` contents + Dockerfile build steps; (6) automated full-repo secret scan + enumeration of the 13 backend TODOs.

@@ -31,7 +31,7 @@ memutus akses masuk.
 
 ## 4. Akun gratis
 
-🔴 Butir yang menunggu keputusan 4.1 di `../PENGAWASAN-DAN-PRIVASI.md`:
+🔴 Butir yang menunggu keputusan 4.1 di `../MONITORING-AND-PRIVACY.md`:
 operator dapat memutus sesi akun gratis.
 [ISI: dipertahankan, dibatasi, atau dicabut]
 
@@ -55,7 +55,7 @@ Jangan menjanjikan angka yang belum pernah diukur.
 
 ## 7. Penghentian dan data setelahnya
 
-🔴 Menunggu keputusan 4.4 di `../PENGAWASAN-DAN-PRIVASI.md`.
+🔴 Menunggu keputusan 4.4 di `../MONITORING-AND-PRIVACY.md`.
 [ISI: berapa lama data disimpan setelah berhenti]
 [ISI: bagaimana pelanggan meminta ekspor datanya]
 Fakta dari kode: `export_workspace` menghasilkan paket lengkap berisi baris dan

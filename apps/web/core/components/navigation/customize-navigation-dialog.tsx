@@ -9,7 +9,11 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { GripVertical, X } from "lucide-react";
 // plane imports
-import { WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS, EUserPermissionsLevel } from "@plane/constants";
+import {
+  PARADISE_TOP_NAV_KEYS,
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS,
+  EUserPermissionsLevel,
+} from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { RadioGroup } from "@plane/propel/radio-group";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
@@ -117,6 +121,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
         EUserPermissionsLevel.WORKSPACE,
         workspaceSlug?.toString() || ""
       );
+      if (PARADISE_TOP_NAV_KEYS.includes(item.key)) return false;
       if (item.key === "persetujuan" && !persetujuanTerlihat) return false;
       if (hiddenNavKeys.includes(item.key)) return false;
       // Modul yang dimatikan di God Mode > Features tidak ditawarkan untuk dipin.

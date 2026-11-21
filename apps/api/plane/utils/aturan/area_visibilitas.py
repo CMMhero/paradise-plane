@@ -11,7 +11,7 @@ dan direktur), sedangkan menu web menyembunyikan untuk jenjang 40 saja. Teks
 bantuan setiap aturan menyebut jenjangnya dengan angka; DIRECTOR_MENUS_APPLY_TO
 yang memilih apakah aturan menu ikut berlaku untuk sekretaris.
 
-Ditunda (lihat paradise/aturan-godmode.md): A1 ambang jangkauan seluruh
+Ditunda (lihat paradise/god-mode-rules.md): A1 ambang jangkauan seluruh
 organisasi dan A2 cakupan pengawasan per jenjang.
 """
 

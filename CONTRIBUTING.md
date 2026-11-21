@@ -1,74 +1,76 @@
-# Panduan Kerja, Paradise Task Tracker
+# Contributing guide, Paradise Task Tracker
 
-Repositori internal PT Paradise Perkasa. Panduan ini untuk siapa pun yang
-mengerjakan kodenya.
+Internal repository of PT Paradise Perkasa. This guide is for anyone working on
+the code.
 
 ---
 
-## Menyiapkan lingkungan
+## Setting up your environment
 
-**Panduan lengkapnya ada di [README.md, bagian "Cara jalanin di lokal"](README.md#cara-jalanin-di-lokal).**
-Sengaja hanya di satu tempat: versi ringkas di sini pernah melenceng dari
-kenyataan dan memakan waktu orang.
+**The full guide is in [README.md, section "Running it locally"](README.md#running-it-locally).**
+It lives in one place on purpose. A short version here once drifted from
+reality and cost people time.
 
-**Prasyarat:** Docker · **Node >= 22.18.0** (bukan 20) · **pnpm 11.3.0** lewat
-corepack · RAM 12 GB (8 GB sering gagal saat build container).
+**Prerequisites:** Docker, **Node >= 22.18.0** (not 20), **pnpm 11.3.0** via
+corepack, 12 GB RAM (8 GB often fails during the container build).
 
-Ringkasnya tujuh langkah: pasang alat, klon, perbaiki junction i18n di Windows,
-buat **enam** berkas `.env` (bukan dua), `docker compose -f docker-compose-local.yml up -d --build`,
-`pnpm install && pnpm dev`, lalu daftarkan instance admin pertama di
+In short, seven steps: install the tools, clone, fix the i18n junction on
+Windows, create **six** `.env` files (not two),
+`docker compose -f docker-compose-local.yml up -d --build`,
+`pnpm install && pnpm dev`, then register the first admin instance at
 `http://localhost:3001/god-mode/`.
 
-Kalau ada yang tidak jalan, tabel gejala dan obatnya ada di ujung bagian itu.
+If something doesn't work, a table of symptoms and fixes is at the end of that
+section.
 
-| Layanan          | Port                  |
-| ---------------- | --------------------- |
-| Web              | **4000** (bukan 3000) |
-| Admin / God Mode | 3001                  |
-| Space            | 3002                  |
-| Live             | 3100                  |
-| API              | 8000                  |
-
----
-
-## Tiga jebakan lingkungan yang WAJIB diingat
-
-Ketiganya sudah pernah memakan waktu berjam-jam. Baca sebelum melapor "kodenya
-tidak jalan".
-
-**1. Ubah kode backend → `docker compose restart api`**
-`runserver` tidak auto-reload di sini: bind-mount Windows→container tidak
-meneruskan event perubahan berkas. Gejalanya endpoint membalas 404 padahal
-kodenya sudah benar.
-
-**2. Ubah `.env` → `docker compose up -d`, BUKAN `restart`**
-`restart` tidak membaca ulang `env_file`. Container harus dibuat ulang.
-
-**3. Habis commit yang menyentuh berkas locale → cek `git status`**
-`packages/i18n/locales` adalah junction ke `packages/i18n/src/locales`. Proses
-`git stash` milik pre-commit hook bisa memecahnya menjadi direktori asli berisi
-ratusan duplikat. Kalau `git status` tiba-tiba menampilkan ratusan perubahan,
-junction-nya pecah, jangan di-commit, pulihkan dulu.
-
-Selain itu: jangan menaruh berkas sementara di `packages/*` atau `apps/live`
-saat `pnpm dev` jalan, watcher akan me-rebuild dan me-restart server Live di
-tengah pengujian.
+| Service          | Port                |
+| ---------------- | ------------------- |
+| Web              | **4000** (not 3000) |
+| Admin / God Mode | 3001                |
+| Space            | 3002                |
+| Live             | 3100                |
+| API              | 8000                |
 
 ---
 
-## Gerbang sebelum commit
+## Three environment traps you MUST remember
 
-Jalankan semuanya. Pre-commit hook menjalankan lint & format atas berkas
-ter-stage, tapi tidak menjalankan tsc maupun `sync:check`.
+Each of them has already cost hours. Read this before reporting "the code
+doesn't work".
+
+**1. Changed backend code? Run `docker compose restart api`**
+`runserver` doesn't auto-reload here. The Windows-to-container bind mount
+doesn't forward file change events. The symptom is an endpoint returning 404
+even though the code is correct.
+
+**2. Changed `.env`? Run `docker compose up -d`, NOT `restart`**
+`restart` doesn't re-read `env_file`. The container has to be recreated.
+
+**3. Just committed something that touches locale files? Check `git status`**
+`packages/i18n/locales` is a junction to `packages/i18n/src/locales`. The
+`git stash` run by the pre-commit hook can break it into a real directory
+holding hundreds of duplicates. If `git status` suddenly shows hundreds of
+changes, the junction is broken. Don't commit, restore it first.
+
+Also, don't put temporary files in `packages/*` or `apps/live` while `pnpm dev`
+is running. The watcher will rebuild and restart the Live server in the middle
+of your test.
+
+---
+
+## Gate before committing
+
+Run all of it. The pre-commit hook runs lint and format on staged files, but it
+doesn't run tsc or `sync:check`.
 
 ```bash
-pnpm --filter web exec tsc --noEmit          # ulangi utk space, admin, constants
+pnpm --filter web exec tsc --noEmit          # repeat for space, admin, constants
 pnpm exec oxlint --deny-warnings <path>
 pnpm exec oxfmt --check <path>
 ```
 
-Kalau **menambah berkas baru** `.py`, `.ts`, atau `.tsx`, berkas itu wajib
-diawali header lisensi yang isinya persis `COPYRIGHT.txt`:
+If you **add a new** `.py`, `.ts`, or `.tsx` file, it must start with a license
+header that matches `COPYRIGHT.txt` exactly:
 
 ```python
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
@@ -76,86 +78,87 @@ diawali header lisensi yang isinya persis `COPYRIGHT.txt`:
 # See the LICENSE file for details.
 ```
 
-TypeScript memakai gaya blok `/** ... */` dengan tiga baris yang sama. Kalau
-berkasnya punya shebang, header masuk SESUDAH baris pertama.
+TypeScript uses the `/** ... */` block style with the same three lines. If the
+file has a shebang, the header goes AFTER the first line.
 
-Ini bukan formalitas: repo ini menyajikan kode sumbernya sendiri lewat `/source/`
-untuk memenuhi AGPL-3.0 pasal 13, dan `copyright-check` menolak pull request yang
-membawa berkas tanpa keterangan lisensi. Dikecualikan: `**/migrations/**`,
-`*.config.ts`, dan `*.d.ts`.
+This isn't a formality. The repo serves its own source code at `/source/` to
+satisfy AGPL-3.0 section 13, and `copyright-check` rejects pull requests that
+carry a file without a license notice. Excluded: `**/migrations/**`,
+`*.config.ts`, and `*.d.ts`.
 
-Kalau menyentuh berkas locale, tambahkan:
+If you touch locale files, also run:
 
 ```bash
-pnpm --filter @plane/i18n run sync:check     # wajib 19/19
+pnpm --filter @plane/i18n run sync:check     # must report 19/19
 pnpm --filter @plane/i18n run generate:types
 ```
 
-Catatan:
+Notes:
 
-- `oxlint <path>` **tanpa** `--deny-warnings` memberi hijau palsu.
-- Jangan salurkan hasilnya ke `tail` lalu membaca `$?`, yang terbaca exit code
-  `tail`. Tulis ke berkas dulu, atau pakai `${PIPESTATUS[0]}`.
-- Peringatan pre-existing di berkas yang kamu sentuh: **perbaiki**, jangan
-  dibungkam.
+- `oxlint <path>` **without** `--deny-warnings` gives a false green.
+- Don't pipe the output into `tail` and then read `$?`. You'd be reading the
+  exit code of `tail`. Write to a file first, or use `${PIPESTATUS[0]}`.
+- Pre-existing warnings in a file you touch: **fix** them, don't silence them.
 
 ---
 
-## Menjalankan uji backend
+## Running backend tests
 
-Belum pernah tertulis di mana pun sebelum ini, dan akibatnya nyata: modul uji
-`bg_tasks/test_cleanup_task.py` mengimpor `factory`, yang hanya ada di
-`requirements/test.txt`, dan container API tidak memasangnya. Yang terjadi bukan
-satu uji gagal melainkan SELURUH koleksi berhenti dengan `ModuleNotFoundError`.
+This was never written down anywhere before, and the cost was real. The test
+module `bg_tasks/test_cleanup_task.py` imports `factory`, which only exists in
+`requirements/test.txt`, and the API container doesn't install it. The result
+isn't one failing test. The WHOLE collection stops with `ModuleNotFoundError`.
 
 ```bash
-# sekali saja, di dalam container API
+# once, inside the API container
 docker compose -f docker-compose-local.yml exec -T api     pip install -r requirements/test.txt
 
-# jalankan
+# run
 docker compose -f docker-compose-local.yml exec -T api     python -m pytest plane/tests/unit/ -q < /dev/null
 ```
 
-Tiga hal yang menghemat waktu:
+Three things that save time:
 
-- `< /dev/null` bukan hiasan. Tanpa itu `exec -T` bisa menggantung menunggu stdin.
-- `pytest.ini` sudah memakai `--nomigrations` dan `--reuse-db`, jadi skema dibangun
-  langsung dari model. Model baru tidak butuh migrasi dijalankan dulu untuk bisa
-  diuji, tapi migrasinya tetap WAJIB dibuat sebelum commit.
-- Marker yang tersedia: `unit`, `contract`, `smoke`, `slow`. `--strict-markers`
-  menyala, jadi marker yang salah ketik menggagalkan, bukan diabaikan.
+- `< /dev/null` isn't decoration. Without it, `exec -T` can hang waiting for
+  stdin.
+- `pytest.ini` already uses `--nomigrations` and `--reuse-db`, so the schema is
+  built straight from the models. A new model doesn't need its migration run
+  before it can be tested, but you still MUST create the migration before
+  committing.
+- Available markers: `unit`, `contract`, `smoke`, `slow`. `--strict-markers` is
+  on, so a mistyped marker fails instead of being ignored.
 
-Kalau menambah task terjadwal, tambahkan modulnya ke `CELERY_IMPORTS` di
-`plane/settings/common.py`. `test_celery_registry` akan menangkapnya kalau lupa,
-dan itu memang penjaga yang paling berharga di suite ini: task yang dijadwalkan
-tapi tidak terdaftar akan dibuang worker diam-diam sebagai "Received unregistered
-task", tanpa satu gejala pun di layar.
+If you add a scheduled task, add its module to `CELERY_IMPORTS` in
+`plane/settings/common.py`. `test_celery_registry` catches it if you forget, and
+it's the most valuable guard in this suite. A task that is scheduled but not
+registered gets dropped by the worker silently as "Received unregistered
+task", with no symptom on screen at all.
 
-## Menambah key i18n
+## Adding i18n keys
 
-- Nama berkas di `packages/i18n/src/locales/en/` adalah **nama namespace**.
-  Key daun tidak boleh memakai nama yang sama, `"wiki"` ditolak karena
-  `wiki.json` sudah membentuk namespace `wiki.*`. Bentrok ini tidak terdeteksi
-  tsc maupun oxlint, hanya `sync:check`.
-- Key di `common.json` bisa dipanggil tanpa awalan (`defaultNS: "common"`).
-- Key baru wajib ditambahkan ke **semua 19 locale**, lalu `sync:check` harus
-  melaporkan 19/19.
+- A file name in `packages/i18n/src/locales/en/` is a **namespace name**. A leaf
+  key must not use the same name. `"wiki"` is rejected because `wiki.json`
+  already forms the `wiki.*` namespace. Neither tsc nor oxlint detects this
+  clash, only `sync:check` does.
+- Keys in `common.json` can be called without a prefix (`defaultNS: "common"`).
+- A new key must be added to **all 19 locales**, and then `sync:check` must
+  report 19/19.
 
 ---
 
-## Menambah background task
+## Adding a background task
 
-Daftarkan di **dua tempat**, kalau tidak task-nya tidak akan pernah jalan:
+Register it in **two places**, otherwise the task will never run:
 
-1. `apps/api/plane/celery.py` → `beat_schedule` (kapan dikirim)
-2. `apps/api/plane/settings/common.py` → `CELERY_IMPORTS` (agar worker
-   mengenalnya)
+1. `apps/api/plane/celery.py` → `beat_schedule` (when it's sent)
+2. `apps/api/plane/settings/common.py` → `CELERY_IMPORTS` (so the worker
+   knows about it)
 
-`autodiscover_tasks()` hanya mencari `tasks.py` per app, sedangkan task di repo
-ini ada di `plane/bgtasks/*.py`. Task yang tidak terdaftar akan dikirim beat lalu
-**dibuang diam-diam** oleh worker.
+`autodiscover_tasks()` only looks for `tasks.py` in each app, while the tasks in
+this repo live in `plane/bgtasks/*.py`. An unregistered task is sent by beat and
+then **silently dropped** by the worker.
 
-Verifikasi:
+Verify:
 
 ```bash
 docker exec pradise_plane-worker-1 celery -A plane inspect registered
@@ -163,58 +166,55 @@ docker exec pradise_plane-worker-1 celery -A plane inspect registered
 
 ---
 
-## Menambah fitur
+## Adding a feature
 
-Cek **`apps/web/ce/`** lebih dulu. Alias `@/plane-web/*` menunjuk ke sana, dan
-banyak slot UI sudah ter-wire ke stub kosong, mengisinya jauh lebih murah
-daripada membangun jalur baru.
+Check **`apps/web/ce/`** first. The `@/plane-web/*` alias points there, and many
+UI slots are already wired to empty stubs. Filling one in is much cheaper than
+building a new path.
 
-Item navigasi baru harus didaftarkan di **dua** tempat, kalau tidak ia tidak
-akan pernah terlihat:
+A new navigation item must be registered in **two** places, otherwise it will
+never be visible:
 
-1. daftar item nav (`packages/constants/src/workspace.ts`)
-2. `getSidebarNavigationItemIcon` di `apps/web/ce/.../sidebar/helper.tsx`,
-   `switch` ini tidak punya `default`, jadi key tak terdaftar tampil tanpa ikon
-   tanpa error apa pun
+1. the nav item list (`packages/constants/src/workspace.ts`)
+2. `getSidebarNavigationItemIcon` in `apps/web/ce/.../sidebar/helper.tsx`. This
+   `switch` has no `default`, so an unregistered key renders without an icon
+   and without any error
 
-Item nav dinamis juga disembunyikan kalau tidak di-pin. Daftarkan lewat
-`additionalStaticItems` agar selalu tampil.
+Dynamic nav items are also hidden when they aren't pinned. Register them through
+`additionalStaticItems` so they always show.
 
 ---
 
-## Konvensi commit
+## Commit conventions
 
 ```
-<tipe>(<cakupan>): <deskripsi singkat, huruf kecil>
+<type>(<scope>): <short description, lowercase>
 
-Badan pesan menjelaskan KENAPA, bukan cuma apa. Sebutkan perilaku salah yang
-diperbaiki, dan sebutkan juga apa yang sengaja TIDAK dikerjakan beserta
-alasannya.
+The body explains WHY, not just what. Name the wrong behavior being fixed, and
+also name what was deliberately NOT done and why.
 ```
 
-Tipe: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`.
+Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`.
 
-Tulis apa yang sudah diverifikasi dan bagaimana. "Sudah diuji" tanpa menyebut
-caranya tidak berguna buat orang berikutnya, termasuk buat dirimu sendiri
-tiga minggu lagi.
-
----
-
-## Dokumentasi operasional
-
-Panduan deploy, backup, keamanan pra-produksi, dan sinkronisasi upstream ada di
-`paradise/`. Skrip operasionalnya di `paradise/bin/`.
-
-Sinkronisasi upstream harus di-diff terhadap **tag `v0.24.0`**, bukan
-`upstream/main`, repo ini di-vendor dari v0.24.0, jadi diff ke `main` akan
-melaporkan ribuan baris jarak versi sebagai "perubahan kita".
+Write down what you verified and how. "Tested" without saying how is useless to
+the next person, including yourself three weeks from now.
 
 ---
 
-## Lisensi
+## Operations docs
 
-Kontribusi ke repositori ini tunduk pada **GNU AGPL-3.0**
-([LICENSE.txt](LICENSE.txt)). Jangan menghapus header hak cipta di berkas
-sumber, `LICENSE.txt`, atau [NOTICE.md](NOTICE.md), lihat NOTICE untuk
-penjelasan mengapa penghapusan merek produk berbeda dari penghapusan atribusi
-hukum.
+Guides for deploy, backup, pre-production security, and upstream sync are in
+`paradise/`. The operations scripts are in `paradise/bin/`.
+
+An upstream sync must be diffed against the **`v0.24.0` tag**, not
+`upstream/main`. This repo was vendored from v0.24.0, so a diff against `main`
+would report thousands of lines of version distance as "our changes".
+
+---
+
+## License
+
+Contributions to this repository are covered by **GNU AGPL-3.0**
+([LICENSE.txt](LICENSE.txt)). Don't remove the copyright headers in source
+files, `LICENSE.txt`, or [NOTICE.md](NOTICE.md). See NOTICE for why removing
+the product brand is different from removing legal attribution.

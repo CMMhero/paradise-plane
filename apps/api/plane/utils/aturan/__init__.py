@@ -5,7 +5,7 @@
 
 """Satu registri bertipe untuk setiap aturan yang diatur Super Admin di God Mode.
 
-Cara pakai (lihat paradise/aturan-godmode.md untuk langkah lengkap):
+Cara pakai (lihat paradise/god-mode-rules.md untuk langkah lengkap):
 
     from plane.utils import aturan
 

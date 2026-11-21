@@ -2,7 +2,7 @@
 
 🔴 Bukan dokumen hukum. Isi tiap `[ISI: ...]`, lalu serahkan ke ahli hukum.
 
-Audit lengkap apa yang direkam sistem ada di `../PENGAWASAN-DAN-PRIVASI.md`.
+Audit lengkap apa yang direkam sistem ada di `../MONITORING-AND-PRIVACY.md`.
 Serahkan dokumen itu bersama kerangka ini.
 
 ## 1. Siapa yang bertanggung jawab
@@ -33,7 +33,7 @@ diawasi.
 
 ## 3. Data yang keluar dari instance pelanggan
 
-🔴 Menunggu keputusan 4.2 di `../PENGAWASAN-DAN-PRIVASI.md`.
+🔴 Menunggu keputusan 4.2 di `../MONITORING-AND-PRIVACY.md`.
 
 Fakta dari kode: tiap instance berbayar mengirim EMPAT hal ke NomaX tiap jam,
 yaitu jumlah workspace, jumlah anggota, total byte terpakai, dan versi

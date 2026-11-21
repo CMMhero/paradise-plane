@@ -31,7 +31,7 @@ git cat-file -e "$SHA:apps/api/plane/release_notes/$VERSI.json" 2>/dev/null ||
   { echo "BATAL: apps/api/plane/release_notes/$VERSI.json tidak ada di $SHA."; exit 1; }
 # Tanpa -q: grep -q keluar di kecocokan pertama, git show kena SIGPIPE, dan
 # pipefail menganggapnya gagal begitu CHANGELOG cukup panjang.
-git show "$SHA:CHANGELOG.md" | grep "^### Versi $VERSI\b" >/dev/null ||
+git show "$SHA:CHANGELOG.md" | grep "^### \(Versi\|Version\) $VERSI\b" >/dev/null ||
   { echo "BATAL: CHANGELOG.md di $SHA tidak punya '### Versi $VERSI'."; exit 1; }
 
 # Namespace GHCR dibaca dari .env server supaya laptop dan server tidak pernah
