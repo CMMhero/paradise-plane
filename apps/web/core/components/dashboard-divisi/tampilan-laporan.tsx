@@ -10,13 +10,16 @@
  */
 
 import type { ReactNode } from "react";
+import { observer } from "mobx-react";
 import Link from "next/link";
 import useSWR from "swr";
 import { Download } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { getButtonStyling } from "@plane/propel/button";
 import { cn, generateWorkItemLink } from "@plane/utils";
+import { useAturan } from "@/hooks/use-aturan";
 import useLocalStorage from "@/hooks/use-local-storage";
+import { pilihanTersimpanAtauAturan } from "@/lib/tampilan-bawaan";
 import type {
   TCompletedItem,
   TCompletedReport,
@@ -39,12 +42,12 @@ const TIMING_CLASS: Record<TReportTiming, string> = {
   no_due_date: "bg-layer-3 text-tertiary",
 };
 
-const isPeriod = (value: unknown): value is TReportPeriod => REPORT_PERIODS.includes(value as TReportPeriod);
-
-export function ReportView({ workspaceSlug }: { workspaceSlug: string }) {
+export const ReportView = observer(function ReportView({ workspaceSlug }: { workspaceSlug: string }) {
   const { t, currentLocale } = useTranslation();
-  const { storedValue, setValue: setPeriod } = useLocalStorage<TReportPeriod>(PERIOD_STORAGE_KEY, "7d");
-  const period: TReportPeriod = isPeriod(storedValue) ? storedValue : "7d";
+  // Nilai awal null: kosong = belum pernah memilih, jadi periode awal dari aturan God Mode.
+  const { storedValue, setValue: setPeriod } = useLocalStorage<TReportPeriod | null>(PERIOD_STORAGE_KEY, null);
+  const { get } = useAturan();
+  const period = pilihanTersimpanAtauAturan(storedValue, REPORT_PERIODS, get("DIVISION_REPORT_DEFAULT_PERIOD"));
   const { data, isLoading } = useSWR(
     ["DIVISION_DASHBOARD_REPORT", workspaceSlug, period],
     () => dashboardService.getCompletedReport(workspaceSlug, period),
@@ -114,7 +117,7 @@ export function ReportView({ workspaceSlug }: { workspaceSlug: string }) {
       )}
     </div>
   );
-}
+});
 
 function ReportKpis({ report }: { report: TCompletedReport }) {
   const { t } = useTranslation();

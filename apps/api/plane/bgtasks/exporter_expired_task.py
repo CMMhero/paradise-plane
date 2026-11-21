@@ -17,13 +17,16 @@ from botocore.client import Config
 
 # Module imports
 from plane.db.models import ExporterHistory
+from plane.utils import aturan
+from plane.utils.aturan.area_keamanan import EXPORT_FILE_KEEP_DAYS
 
 
 @shared_task
 def delete_old_s3_link():
-    # Get a list of keys and IDs to process
+    # Get a list of keys and IDs to process. Paradise: retention is God Mode EXPORT_FILE_KEEP_DAYS.
+    hari = aturan.get_int(EXPORT_FILE_KEEP_DAYS)
     expired_exporter_history = ExporterHistory.objects.filter(
-        Q(url__isnull=False) & Q(created_at__lte=timezone.now() - timedelta(days=8))
+        Q(url__isnull=False) & Q(created_at__lte=timezone.now() - timedelta(days=hari))
     ).values_list("key", "id")
     if settings.USE_MINIO:
         s3 = boto3.client(

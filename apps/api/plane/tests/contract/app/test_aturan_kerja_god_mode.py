@@ -481,9 +481,9 @@ class TestUmurSesi:
         assert _masuk(_user("sesi"), is_space=True).get_expiry_age() == 3 * 86400
 
     @pytest.mark.django_db
-    def test_sesi_god_mode_tetap_dari_env(self, db):
+    def test_sesi_god_mode_tidak_ikut_session_days(self, db):
         _setel(si.SESSION_DAYS, 3)
-        assert _masuk(_user("admin"), is_admin=True).get_expiry_age() == settings.ADMIN_SESSION_COOKIE_AGE
+        assert _masuk(_user("admin"), is_admin=True).get_expiry_age() == 3600
 
 
 # ---------------------------------------------------------------------------

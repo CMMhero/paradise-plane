@@ -80,15 +80,16 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.utils.content_validator import validate_html_content
-from plane.utils.hierarki import divisi_diawasi
+from plane.utils import aturan
+from plane.utils.aturan.area_keputusan import CROSS_DIVISION_MIN_LEVEL, CROSS_DIVISION_NOTE_MAX
+from plane.utils.aturan.jenis import NAMA_TINGKAT
+from plane.utils.hierarki import adalah_admin_penuh, divisi_diawasi, tingkat_efektif
 from plane.utils.host import base_host
 from plane.utils.intake_bawaan import ensure_default_intake
 from plane.utils.permintaan_lintas_divisi import SOURCE_LINTAS_DIVISI
 from plane.utils.wiki_access import WIKI_IDENTIFIER
 
 PRIORITAS_SAH = {"low", "medium", "high", "urgent", "none"}
-BATAS_CATATAN = 2000
-
 # Status `IntakeIssue`: -2 menunggu · 0 ditunda · 1 diterima.
 _STATUS_BELUM_DIJAWAB = (-2, 0)
 # Hanya status "diterima" yang berarti pekerjaannya jalan di divisi tujuan.
@@ -189,6 +190,21 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
         )
 
     def post(self, request, slug):
+        workspace_id = Workspace.objects.values_list("id", flat=True).get(slug=slug)
+        # Jenjang minimum dari God Mode. Admin workspace dan Super Admin selalu boleh,
+        # seperti di gerbang penugasan (`adalah_admin_penuh`).
+        jenjang_min = aturan.get_int(CROSS_DIVISION_MIN_LEVEL)
+        if (
+            not adalah_admin_penuh(request.user, workspace_id)
+            and tingkat_efektif(request.user.id, workspace_id) < jenjang_min
+        ):
+            return _galat(
+                "level_too_low",
+                f"Only {NAMA_TINGKAT[jenjang_min]} and above can send requests to other departments.",
+                http=status.HTTP_403_FORBIDDEN,
+                level=NAMA_TINGKAT[jenjang_min],
+            )
+
         judul = (request.data.get("judul") or "").strip()
         if not judul:
             return _galat("title_required", "Enter a title for the request.")
@@ -200,8 +216,9 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
             return _galat("unknown_priority", "Unknown priority.")
 
         catatan = (request.data.get("catatan") or "").strip()
-        if len(catatan) > BATAS_CATATAN:
-            return _galat("note_too_long", f"The note can be at most {BATAS_CATATAN} characters.", max=BATAS_CATATAN)
+        batas_catatan = aturan.get_int(CROSS_DIVISION_NOTE_MAX)
+        if len(catatan) > batas_catatan:
+            return _galat("note_too_long", f"The note can be at most {batas_catatan} characters.", max=batas_catatan)
 
         asal_id = request.data.get("asal_project")
         tujuan_id = request.data.get("tujuan_project")

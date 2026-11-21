@@ -17,15 +17,16 @@ from plane.authentication.adapter.error import (
     AuthenticationException,
 )
 from plane.db.models import User
+from plane.utils import aturan
+from plane.utils.aturan.area_keamanan import SIGN_IN_CODE_MINUTES, SIGN_IN_CODE_RESENDS, SIGN_IN_CODE_WRONG_TRIES
 
 
 class MagicCodeProvider(CredentialAdapter):
     provider = "magic-code"
 
-    # Max wrong-code verification attempts per issued token before the token
-    # is invalidated. Prevents brute-forcing the 6-digit code space within
-    # the token TTL window.
-    MAX_VERIFY_ATTEMPTS = 5
+    # Paradise: lifetime, wrong tries, and resends come from God Mode
+    # (SIGN_IN_CODE_*), each with a floor and a ceiling so the 6-digit code
+    # space can never be brute-forced within one code's lifetime.
 
     # Atomic INCR + first-time EXPIRE for the verify-attempt counter.
     # Using a dedicated counter key with this script makes the increment
@@ -86,7 +87,8 @@ class MagicCodeProvider(CredentialAdapter):
 
             current_attempt = data["current_attempt"] + 1
 
-            if data["current_attempt"] > 2:
+            # current_attempt counts resends; the first code is attempt 0.
+            if data["current_attempt"] >= aturan.get_int(SIGN_IN_CODE_RESENDS):
                 email = str(self.key).replace("magic_", "", 1)
                 if User.objects.filter(email=email).exists():
                     raise AuthenticationException(
@@ -106,15 +108,11 @@ class MagicCodeProvider(CredentialAdapter):
                 "email": str(self.key),
                 "token": token,
             }
-            expiry = 600
-            ri.set(key, json.dumps(value), ex=expiry)
         else:
             value = {"current_attempt": 0, "email": self.key, "token": token}
-            expiry = 600
-
-            ri.set(key, json.dumps(value), ex=expiry)
+        ri.set(key, json.dumps(value), ex=aturan.get_int(SIGN_IN_CODE_MINUTES) * 60)
         # Reset the verify-attempt counter so each newly issued token starts
-        # with a fresh budget of MAX_VERIFY_ATTEMPTS.
+        # with a fresh budget of SIGN_IN_CODE_WRONG_TRIES.
         ri.delete(self._verify_attempts_key(key))
         return key, token
 
@@ -166,7 +164,7 @@ class MagicCodeProvider(CredentialAdapter):
                     )
                 )
 
-                if verify_attempts >= self.MAX_VERIFY_ATTEMPTS:
+                if verify_attempts >= aturan.get_int(SIGN_IN_CODE_WRONG_TRIES):
                     # Invalidate the token (and counter) so further attempts
                     # must regenerate; regeneration is itself attempt-counted.
                     ri.delete(self.key)

@@ -22,6 +22,17 @@ def _pasang_pg_trgm(sender, using=None, **kwargs):
         kursor.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
 
 
+@pytest.fixture(autouse=True)
+def _aturan_segar():
+    """Potret aturan God Mode (cache per proses 5 detik) tidak boleh terbawa antar tes:
+    rollback transaksi tes tidak memicu sinyal yang membuangnya."""
+    from plane.utils.aturan import segarkan
+
+    segarkan()
+    yield
+    segarkan()
+
+
 @pytest.fixture(scope="session")
 def django_db_setup(django_db_setup):  # noqa: F811
     """Set up the Django database for the test session"""

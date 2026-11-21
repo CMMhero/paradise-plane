@@ -364,13 +364,21 @@ def isi_metadata_lama(jenis: str, links) -> None:
 
 
 def boleh_kelola_bersama(user, workspace_id) -> bool:
-    """Super Admin atau admin workspace (role 20) boleh mengatur quick link bersama."""
+    """Super Admin atau admin workspace (role 20) boleh mengatur quick link bersama.
+
+    God Mode (QUICK_LINK_SHARED_MANAGERS) bisa menambah jenjang di atas itu; bawaannya hanya admin.
+    """
     from plane.db.models import WorkspaceMember  # noqa: PLC0415
     from plane.db.superadmin import is_super_admin  # noqa: PLC0415
+    from plane.utils import aturan  # noqa: PLC0415
+    from plane.utils.aturan.area_obrolan import QUICK_LINK_SHARED_MANAGERS  # noqa: PLC0415
+    from plane.utils.jenjang_aturan import lolos_jenjang  # noqa: PLC0415
 
     if is_super_admin(user):
         return True
-    return WorkspaceMember.objects.filter(workspace_id=workspace_id, member=user, role=20, is_active=True).exists()
+    if WorkspaceMember.objects.filter(workspace_id=workspace_id, member=user, role=20, is_active=True).exists():
+        return True
+    return lolos_jenjang(user, workspace_id, aturan.get_choice(QUICK_LINK_SHARED_MANAGERS), admin=False)
 
 
 def sasaran_pengguna(user_id, workspace_id) -> tuple[set, set]:

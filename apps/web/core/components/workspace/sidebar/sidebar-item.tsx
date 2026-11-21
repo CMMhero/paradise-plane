@@ -19,7 +19,7 @@ import { SidebarNavItem } from "@/components/sidebar/sidebar-navigation";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useWorkspaceNavigationPreferences } from "@/hooks/use-navigation-preferences";
-import { DIRECTOR_HIDDEN_NAV_KEYS, useIsDirektur } from "@/hooks/use-is-direktur";
+import { useIsDirektur } from "@/hooks/use-is-direktur";
 import { useParadiseModules } from "@/hooks/use-paradise-module";
 // plane web imports
 import { getSidebarNavigationItemIcon } from "@/plane-web/components/workspace/sidebar/helper";
@@ -42,7 +42,7 @@ export const SidebarItemBase = observer(function SidebarItemBase({
   const { isWorkspaceItemPinned } = useWorkspaceNavigationPreferences();
   const { data } = useUser();
   const { isNavKeyEnabled } = useParadiseModules();
-  const { isDirektur } = useIsDirektur(workspaceSlug?.toString());
+  const { hiddenNavKeys } = useIsDirektur(workspaceSlug?.toString());
 
   const { toggleSidebar, isExtendedSidebarOpened, toggleExtendedSidebar } = useAppTheme();
 
@@ -66,8 +66,8 @@ export const SidebarItemBase = observer(function SidebarItemBase({
   if (!allowPermissions(item.access, EUserPermissionsLevel.WORKSPACE, slug)) return null;
   // Modul yang dimatikan Super Admin di God Mode > Features.
   if (!isNavKeyEnabled(item.key)) return null;
-  // Direktur tidak memakai Arsip.
-  if (isDirektur && DIRECTOR_HIDDEN_NAV_KEYS.includes(item.key)) return null;
+  // Menu yang disembunyikan dari Direktur (God Mode, DIRECTOR_SIDEBAR_HIDES).
+  if (hiddenNavKeys.includes(item.key)) return null;
 
   const isPinned = isWorkspaceItemPinned(item.key);
   if (!isPinned && !staticItems.includes(item.key)) return null;

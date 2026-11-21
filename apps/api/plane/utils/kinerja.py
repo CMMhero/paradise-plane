@@ -14,6 +14,10 @@ Semua orang punya halaman ini. Yang berbeda hanya LINGKUP yang boleh dibuka:
     sekretaris, direktur,
     admin workspace      -> seluruh organisasi
 
+Dua bagian bisa diubah di God Mode: jenjang terendah yang melihat KPI tim
+(KPI_TEAM_MIN_LEVEL, bawaan Leader) dan apakah admin workspace melihat seluruh
+organisasi (KPI_WORKSPACE_ADMINS_SEE_ALL, bawaan ya). Super Admin selalu semua.
+
 ## Satu tabel metrik
 
 `METRIK` adalah satu-satunya daftar metrik. Server menghitung tiap baris dari
@@ -78,14 +82,17 @@ from plane.db.models import (
     STATUS_PERSETUJUAN_DITOLAK,
     TINGKAT_CABANG,
     TINGKAT_MANAGER,
-    TINGKAT_MEMBER,
     User,
     WorkspaceMember,
     menjangkau_seluruh_organisasi,
 )
+from plane.db.superadmin import is_super_admin
+from plane.utils import aturan
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.aturan.area_visibilitas import KPI_TEAM_MIN_LEVEL, KPI_WORKSPACE_ADMINS_SEE_ALL
+from plane.utils.aturan.area_tampilan import KPI_DEFAULT_PERIOD, KPI_LIST_SIZE
 from plane.utils.hierarki import _bawahan_ids, adalah_admin_penuh, divisi_diawasi
-from plane.utils.ketepatan_waktu import anotasi_ketepatan, ketepatan, q_tepat_waktu, q_terlambat
+from plane.utils.ketepatan_waktu import anotasi_ketepatan, dibuat_dihitung, ketepatan, q_tepat_waktu, q_terlambat
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.setelan_instance import hari_ini_kantor, zona_kantor
 from plane.utils.tanggal_otomatis import batas_terlambat
@@ -111,12 +118,10 @@ PERIODE_30_HARI = "30d"
 PERIODE_KUARTAL_INI = "this_quarter"
 PERIODE_KHUSUS = "custom"
 PERIODE_SAH = (PERIODE_PEKAN_INI, PERIODE_BULAN_INI, PERIODE_30_HARI, PERIODE_KUARTAL_INI, PERIODE_KHUSUS)
-PERIODE_BAWAAN = PERIODE_BULAN_INI
 RENTANG_KHUSUS_MAKS = 366
 
 # Rentang sampai sepanjang ini digambar per hari, lebih panjang per pekan.
 TREN_HARIAN_MAKS = 31
-BATAS_DAFTAR = 20
 
 _SELESAI = "completed"
 _BATAL = "cancelled"
@@ -321,7 +326,10 @@ def lingkup_untuk(user, workspace_id):
         if info["branch_id"] in anggota_cab:
             anggota_cab[info["branch_id"]] |= anggota_div[div]
 
-    seluruh = adalah_admin_penuh(user, workspace_id) or menjangkau_seluruh_organisasi(jenjang.get(saya))
+    seluruh = menjangkau_seluruh_organisasi(jenjang.get(saya)) or (
+        adalah_admin_penuh(user, workspace_id)
+        and (aturan.get_bool(KPI_WORKSPACE_ADMINS_SEE_ALL) or is_super_admin(user))
+    )
     if seluruh:
         semua = frozenset(
             str(m)
@@ -347,6 +355,8 @@ def lingkup_untuk(user, workspace_id):
     divisi = {}
     cabang = {}
     jenjang_saya = jenjang.get(saya)
+    # Bawaan Leader (12) = dulu `> TINGKAT_MEMBER`: setiap jenjang di atas Staf.
+    min_tim = aturan.get_int(KPI_TEAM_MIN_LEVEL)
 
     def buka_divisi(div):
         divisi[div] = anggota_div[div]
@@ -366,13 +376,13 @@ def lingkup_untuk(user, workspace_id):
         if div in anggota_div and jenjang_saya >= TINGKAT_MANAGER:
             buka_divisi(div)
             orang |= {m2 for m2 in anggota_div[div] if jenjang[m2] < jenjang_saya}
-        # Di atas Staf di departemen ini (leader, supervisor): bawahannya adalah
-        # yang perannya di departemen yang sama lebih rendah.
-        if dep in anggota_dep and peran_dep[(saya, dep)] > TINGKAT_MEMBER:
+        # Peran di departemen ini setinggi KPI_TEAM_MIN_LEVEL (bawaan: leader,
+        # supervisor): bawahannya adalah yang perannya di departemen itu lebih rendah.
+        if dep in anggota_dep and peran_dep[(saya, dep)] >= min_tim:
             departemen[dep] = anggota_dep[dep]
             orang |= {m2 for m2 in anggota_dep[dep] if peran_dep[(m2, dep)] < peran_dep[(saya, dep)]}
 
-    if not info_divisi:
+    if not info_divisi and (jenjang_saya or 0) >= min_tim:
         # Struktur belum diisi: bawahan datang dari keanggotaan project, seperti
         # resolver hierarki yang lain.
         for project_id in divisi_diawasi(user.id, workspace_id):
@@ -692,7 +702,9 @@ def _baris_tugas(issue):
         "target_date": issue.target_date,
         "completed_date": issue.tanggal_selesai,
         "timing": (
-            ketepatan(issue.tanggal_selesai, issue.target_date, issue.created_at) if issue.tanggal_selesai else None
+            ketepatan(issue.tanggal_selesai, issue.target_date, dibuat_dihitung(issue.created_at))
+            if issue.tanggal_selesai
+            else None
         ),
     }
 
@@ -703,9 +715,10 @@ def _daftar(penonton, qs, jendela, hari_ini):
         Q(target_date__lt=batas_terlambat(hari_ini)) & _BELUM_TUNTAS & q_bisa_terlambat()
     ).order_by("target_date", "sequence_id")
     selesai = terlihat.filter(_q_selesai(*jendela)).order_by("-completed_at", "-sequence_id")
+    batas = aturan.get_int(KPI_LIST_SIZE)
     return {
-        "overdue": [_baris_tugas(t) for t in terlambat[:BATAS_DAFTAR]],
-        "completed": [_baris_tugas(t) for t in selesai[:BATAS_DAFTAR]],
+        "overdue": [_baris_tugas(t) for t in terlambat[:batas]],
+        "completed": [_baris_tugas(t) for t in selesai[:batas]],
     }
 
 
@@ -756,8 +769,13 @@ def _rincian_unit(sasaran, lingkup, semua_tugas, workspace_id, persetujuan, kerj
     return {"kind": jenis, "rows": sorted(baris, key=lambda b: b["name"].lower())}
 
 
-def hitung_kinerja(user, workspace_id, jenis, id_=None, periode=PERIODE_BAWAAN, mulai=None, sampai=None, sekarang=None):
-    """Seluruh isi halaman KPI untuk satu lingkup. Melempar `LingkupDitolak` / `PermintaanSalah`."""
+def hitung_kinerja(user, workspace_id, jenis, id_=None, periode=None, mulai=None, sampai=None, sekarang=None):
+    """Seluruh isi halaman KPI untuk satu lingkup. Melempar `LingkupDitolak` / `PermintaanSalah`.
+
+    `periode` None = bawaan God Mode (KPI_DEFAULT_PERIOD).
+    """
+    if periode is None:
+        periode = aturan.get_choice(KPI_DEFAULT_PERIOD)
     sekarang = sekarang or timezone.now()
     hari_ini = hari_ini_kantor(sekarang)
     jendela, jendela_lalu = rentang_periode(periode, hari_ini, mulai, sampai)

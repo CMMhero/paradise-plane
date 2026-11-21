@@ -59,13 +59,13 @@ def get_default_filters():
 
 
 def get_default_display_filters():
-    # Kustomisasi Paradise: tata letak work item bawaan diatur Super Admin di God
-    # Mode (bawaan member, bagian `work_items`; pabriknya Board). Hanya
-    # ProjectUserProperty yang memakai fungsi ini (selain migrasi lama).
-    from plane.utils.bawaan_member import filter_tampilan, tata_letak_bawaan
+    # Kustomisasi Paradise: tata letak, pengelompokan, dan urutan work item bawaan
+    # diatur Super Admin di God Mode (bawaan member, bagian `work_items`; pabriknya
+    # Board dan nilai di bawah). Hanya ProjectUserProperty yang memakai fungsi ini
+    # (selain migrasi lama).
+    from plane.utils.bawaan_member import filter_work_items_bawaan
 
-    return filter_tampilan(
-        tata_letak_bawaan(),
+    return filter_work_items_bawaan(
         {
             "group_by": None,
             "order_by": "-created_at",
@@ -78,21 +78,26 @@ def get_default_display_filters():
 
 
 def get_default_display_properties():
-    return {
-        "assignee": True,
-        "attachment_count": True,
-        "created_on": True,
-        "due_date": True,
-        "estimate": True,
-        "key": True,
-        "labels": True,
-        "link": True,
-        "priority": True,
-        "start_date": True,
-        "state": True,
-        "sub_issue_count": True,
-        "updated_on": True,
-    }
+    # Kustomisasi Paradise: kolom yang tampil diatur di God Mode (aturan WORK_ITEMS_FIELDS).
+    from plane.utils.bawaan_member import properti_work_items_bawaan
+
+    return properti_work_items_bawaan(
+        {
+            "assignee": True,
+            "attachment_count": True,
+            "created_on": True,
+            "due_date": True,
+            "estimate": True,
+            "key": True,
+            "labels": True,
+            "link": True,
+            "priority": True,
+            "start_date": True,
+            "state": True,
+            "sub_issue_count": True,
+            "updated_on": True,
+        }
+    )
 
 
 # TODO: Handle identifiers for Bulk Inserts - nk
@@ -513,18 +518,14 @@ class IssueLink(ProjectBaseModel):
 class IssueWorkLog(ProjectBaseModel):
     """Catatan waktu kerja (time tracking) per work item."""
 
-    issue = models.ForeignKey(
-        "db.Issue", on_delete=models.CASCADE, related_name="issue_worklog"
-    )
+    issue = models.ForeignKey("db.Issue", on_delete=models.CASCADE, related_name="issue_worklog")
     logged_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="issue_worklogs",
     )
     # Durasi kerja dalam MENIT (integer positif). UI mengonversi ke jam:menit.
-    duration = models.PositiveIntegerField(
-        default=0, help_text="Durasi kerja dalam menit"
-    )
+    duration = models.PositiveIntegerField(default=0, help_text="Durasi kerja dalam menit")
     description = models.TextField(blank=True)
     logged_at = models.DateTimeField(default=timezone.now)
 

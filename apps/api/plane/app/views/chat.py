@@ -34,8 +34,19 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.settings.storage import S3Storage
+from plane.utils import aturan
+from plane.utils.aturan.area_obrolan import (
+    CHAT_ALL_MENTION_WHO,
+    CHAT_CALLS_WHO,
+    CHAT_CHANNEL_CREATORS,
+    CHAT_CHANNEL_NAME_MAX,
+    CHAT_MENTIONS_MAX,
+    CHAT_PINS_MAX,
+    TIDAK_ADA,
+)
 from plane.utils.chat_ruang import ruang_dm
 from plane.utils.ice import daftar_ice
+from plane.utils.jenjang_aturan import lolos_jenjang
 from plane.utils.inbox_chat import catat_pesan_dm, tandai_chat_terbaca
 from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, url_livekit
 from plane.utils.obrolan_siaran import siarkan
@@ -56,6 +67,7 @@ from plane.db.models import KUNCI_CHANGELOG, KUNCI_PENGUMUMAN
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.db.models import (
     FileAsset,
+    JenisPesan,
     Langganan,
     PesanLangsung,
     ReaksiPesan,
@@ -65,6 +77,7 @@ from plane.db.models import (
 )
 
 from .base import BaseAPIView
+from .chat_kartu import BERLANGSUNG
 
 # "plane.api", BUKAN "plane". Konfigurasi logging produksi memakai
 # disable_existing_loggers dan TIDAK punya entri untuk "plane" polos, jadi
@@ -82,9 +95,6 @@ JUMLAH_PESAN = 100
 # Batas hasil pencarian. Tanpa batas, satu kata umum seperti "ya" menarik
 # seluruh riwayat ke dalam satu respons.
 JUMLAH_HASIL_CARI = 50
-
-# Berapa orang boleh disebut dalam satu pesan. Lebih dari ini sudah pengumuman.
-BATAS_SEBUT = 20
 
 
 def _peta_lampiran(pesan_ids, slug):
@@ -159,9 +169,13 @@ def _peta_kutipan(pesan_list, saya_id=None):
     }
 
 
-# Panjang maksimum nama kanal. Bukan batas teknis, tapi batas supaya daftar
-# percakapan di sidebar tetap terbaca tanpa terpotong di tengah kata.
-BATAS_NAMA_RUANG = 80
+def batas_nama_ruang() -> int:
+    """Panjang maksimum nama kanal (God Mode, CHAT_CHANNEL_NAME_MAX, bawaan 80).
+
+    Bukan batas teknis, tapi supaya daftar percakapan di sidebar tetap terbaca
+    tanpa terpotong di tengah kata. Kolom `Ruang.nama` 80, jadi hanya turun.
+    """
+    return aturan.get_int(CHAT_CHANNEL_NAME_MAX)
 
 
 def _ruang_dm(request, slug, lawan_id):
@@ -651,10 +665,9 @@ class ChatReaksiEndpoint(BaseAPIView):
         return Response({"aktif": aktif}, status=status.HTTP_201_CREATED if aktif else status.HTTP_200_OK)
 
 
-# Batas sematan per ruang. Bilah sematan di atas percakapan berguna selama
-# isinya bisa dipindai sekilas; lewat dari ini ia jadi daftar kedua yang tidak
-# dibaca siapa pun.
-BATAS_SEMATAN = 20
+def batas_sematan() -> int:
+    """Batas pesan tersemat per ruang (God Mode, aturan CHAT_PINS_MAX, bawaan 20)."""
+    return aturan.get_int(CHAT_PINS_MAX)
 
 
 def _bentuk_sematan(pesan, saya_id=None):
@@ -718,9 +731,10 @@ class ChatSematanEndpoint(BaseAPIView):
             return galat
         if pesan.disematkan_pada is None:
             jumlah = PesanLangsung.objects.filter(ruang_id=pesan.ruang_id, disematkan_pada__isnull=False).count()
-            if jumlah >= BATAS_SEMATAN:
+            batas = batas_sematan()
+            if jumlah >= batas:
                 return Response(
-                    {"error": f"Maksimum {BATAS_SEMATAN} pesan tersemat. Lepas salah satu dulu."},
+                    {"error": f"Maksimum {batas} pesan tersemat. Lepas salah satu dulu."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             pesan.disematkan_pada = timezone.now()
@@ -756,7 +770,7 @@ class ChatRuangSematanEndpoint(BaseAPIView):
         if ruang is None or _langganan(request.user.id, ruang) is None:
             return Response({"error": "Ruang tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
         tersemat = PesanLangsung.objects.filter(ruang=ruang, disematkan_pada__isnull=False)
-        daftar = tersemat.order_by("-disematkan_pada")[:BATAS_SEMATAN]
+        daftar = tersemat.order_by("-disematkan_pada")[: batas_sematan()]
         return Response(
             {
                 "boleh_sematkan": _boleh_sematkan(request.user, ruang),
@@ -899,7 +913,8 @@ def _saring_sebutan(mentah, ruang) -> list:
     if not isinstance(mentah, list):
         return []
     calon = []
-    for nilai in mentah[:BATAS_SEBUT]:
+    # Lebih dari batas ini sudah pengumuman (God Mode, CHAT_MENTIONS_MAX, bawaan 20).
+    for nilai in mentah[: aturan.get_int(CHAT_MENTIONS_MAX)]:
         try:
             u = uuid.UUID(str(nilai))
         except (TypeError, ValueError):
@@ -960,6 +975,15 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
             {"error": "Pesan terlalu panjang, maksimum %s karakter." % batas_isi},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    # @all hanya untuk jenjang yang dipilih di God Mode (CHAT_ALL_MENTION_WHO, bawaan: semua).
+    # Ditolak, bukan diam-diam dibuang: pesannya tidak akan memberi tahu siapa pun.
+    if (
+        request.data.get("semua") is True
+        and ruang.tipe != Ruang.Tipe.DM
+        and not lolos_jenjang(request.user, ruang.workspace_id, aturan.get_choice(CHAT_ALL_MENTION_WHO))
+    ):
+        return Response({"error": "Kamu tidak boleh memakai @all."}, status=status.HTTP_403_FORBIDDEN)
 
     # Yang boleh dikutip hanya pesan dari ruang INI. Tanpa saringan itu, id pesan
     # ruang lain bisa dikutip dan cuplikannya ikut terbaca oleh yang tidak berhak.
@@ -1102,6 +1126,21 @@ class ChatIceEndpoint(BaseAPIView):
         return Response({"iceServers": daftar_ice(request.user.id)}, status=status.HTTP_200_OK)
 
 
+def _boleh_panggil(user, ruang) -> bool:
+    """Hak memulai panggilan (God Mode, CHAT_CALLS_WHO, bawaan: semua).
+
+    Yang tidak lolos tetap boleh MASUK panggilan yang sedang berlangsung, karena
+    panggilan itu hanya bisa dimulai orang yang lolos (`ChatPanggilanLogEndpoint`).
+    Pilihan `nobody` mematikan panggilan untuk semua orang.
+    """
+    pilihan = aturan.get_choice(CHAT_CALLS_WHO)
+    if lolos_jenjang(user, ruang.workspace_id, pilihan):
+        return True
+    return pilihan != TIDAK_ADA and PesanLangsung.objects.filter(
+        ruang=ruang, jenis=JenisPesan.PANGGILAN, muatan__status=BERLANGSUNG
+    ).exists()
+
+
 class ChatPanggilanTokenEndpoint(BaseAPIView):
     """Token masuk ruang panggilan LiveKit.
 
@@ -1117,6 +1156,9 @@ class ChatPanggilanTokenEndpoint(BaseAPIView):
         ruang = Ruang.objects.filter(id=ruang_id, workspace__slug=slug).first()
         if ruang is None or _langganan(request.user.id, ruang) is None:
             return Response({"error": "Ruang tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not _boleh_panggil(request.user, ruang):
+            return Response({"error": "Kamu tidak boleh memulai panggilan."}, status=status.HTTP_403_FORBIDDEN)
 
         if not konfigurasi_ada() or not url_livekit():
             # Dijawab jelas, bukan token kosong. Kegagalan konfigurasi yang
@@ -1185,15 +1227,23 @@ class ChatRuangEndpoint(BaseAPIView):
         )
 
     def post(self, request, slug):
+        workspace = Workspace.objects.filter(slug=slug).first()
+        if workspace is None:
+            return Response({"error": "Workspace tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        # Siapa boleh membuat kanal: God Mode, CHAT_CHANNEL_CREATORS (bawaan: semua anggota).
+        if not lolos_jenjang(request.user, workspace.id, aturan.get_choice(CHAT_CHANNEL_CREATORS)):
+            return Response({"error": "Kamu tidak punya izin membuat kanal."}, status=status.HTTP_403_FORBIDDEN)
+
         nama = (request.data.get("nama") or "").strip()
         tipe = request.data.get("tipe") or Ruang.Tipe.KANAL
         topik = (request.data.get("topik") or "").strip()
 
         if not nama:
             return Response({"error": "Nama kanal wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
-        if len(nama) > BATAS_NAMA_RUANG:
+        batas_nama = batas_nama_ruang()
+        if len(nama) > batas_nama:
             return Response(
-                {"error": "Nama kanal maksimum %s karakter." % BATAS_NAMA_RUANG},
+                {"error": "Nama kanal maksimum %s karakter." % batas_nama},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # DM sengaja tidak bisa dibuat lewat sini. Ia lahir sendiri saat orang
@@ -1204,10 +1254,6 @@ class ChatRuangEndpoint(BaseAPIView):
                 {"error": "Tipe kanal harus `kanal` atau `privat`."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        workspace = Workspace.objects.filter(slug=slug).first()
-        if workspace is None:
-            return Response({"error": "Workspace tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
         # Nama kembar bikin orang salah masuk kanal. Diperiksa case-insensitive
         # karena "Umum" dan "umum" sama saja bagi yang membacanya.

@@ -233,10 +233,10 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
             workspace = Workspace.objects.get(slug=slug)
 
             # Kustomisasi Paradise: staf / member biasa tidak boleh membuat project.
-            from plane.utils.izin_buat_project import PESAN_TOLAK_BUAT_PROJECT, boleh_buat_project
+            from plane.utils.izin_buat_project import boleh_buat_project, pesan_tolak_buat_project
 
             if not boleh_buat_project(request.user, workspace.id):
-                return Response({"error": PESAN_TOLAK_BUAT_PROJECT}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"error": pesan_tolak_buat_project()}, status=status.HTTP_403_FORBIDDEN)
 
             # Kustomisasi Paradise: kolom yang tidak dikirim diisi bawaan project God Mode.
             from plane.utils.bawaan_project import lengkapi_data_project

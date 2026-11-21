@@ -12,6 +12,8 @@ from plane.app.serializers import WorkspaceUserLinkSerializer
 from ..base import BaseViewSet
 from plane.app.permissions import allow_permission, ROLE
 from plane.bgtasks.quick_link_task import JENIS_PRIBADI
+from plane.utils import aturan
+from plane.utils.aturan.area_obrolan import QUICK_LINK_PERSONAL_MAX
 from plane.utils.quick_link import LogoTidakValid, isi_metadata_lama, metadata_baru
 
 
@@ -31,6 +33,13 @@ class QuickLinkViewSet(BaseViewSet):
     def create(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
         serializer = WorkspaceUserLinkSerializer(data=request.data)
+
+        # Batas link pribadi per orang (God Mode, QUICK_LINK_PERSONAL_MAX; 0 = tanpa batas).
+        batas = aturan.get_int(QUICK_LINK_PERSONAL_MAX)
+        if batas and WorkspaceUserLink.objects.filter(workspace_id=workspace.id, owner=request.user).count() >= batas:
+            return Response(
+                {"error": "You can have at most %s quick links." % batas}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if serializer.is_valid():
             # Paradise KEP-82: judul & favicon situs diambil saat link dibuat.

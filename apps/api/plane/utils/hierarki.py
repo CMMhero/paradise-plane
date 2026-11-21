@@ -31,8 +31,21 @@ aktornya `None`, dan gerbangnya **menolak** (gagal ke arah aman, prinsip #3).
 from django.utils import timezone
 
 # Module imports
+from plane.utils import aturan
+from plane.utils.aturan.area_tugas import (
+    APPROVER_MIN_LEVEL,
+    ASSIGNEE_MUST_BE_PLACED,
+    AUTO_ASSIGN_CREATOR,
+    DIRECTOR_APPROVES,
+    DIREKTUR_SEMUA,
+    DIREKTUR_TIDAK_PERNAH,
+    STAF_DIRI_SAJA,
+    STAFF_ASSIGN_RULE,
+    TASK_EDIT_RULE,
+    UBAH_SEMUA_ANGGOTA,
+)
 from plane.utils.cabang import baris_penempatan
-from plane.utils.kunci_selesai import galat_tugas_selesai, tugas_selesai
+from plane.utils.kunci_selesai import galat_tugas_selesai, tugas_terkunci
 from plane.utils.saklar_instance import (
     APPROVAL_REQUIRED_BELOW_LEVEL,
     ASSIGN_DOWN_ONLY,
@@ -252,6 +265,17 @@ def ditempatkan_ids(workspace_id, project_id):
     return hasil
 
 
+def tempat_penerima(workspace_id, project_id):
+    """`ditempatkan_ids` kalau God Mode ASSIGNEE_MUST_BE_PLACED menyala, selain itu None.
+
+    Dipakai setiap pemeriksaan "siapa boleh jadi assignee" (serializer, auto-assign,
+    dropdown). `ditempatkan_ids` sendiri tetap fakta penempatan, tanpa setelan.
+    """
+    if not aturan.get_bool(ASSIGNEE_MUST_BE_PLACED):
+        return None
+    return ditempatkan_ids(workspace_id, project_id)
+
+
 def penerima_sah_ids(project_id, kandidat_ids):
     """Bagian `kandidat_ids` yang sah jadi assignee di project ini.
 
@@ -273,7 +297,7 @@ def penerima_sah_ids(project_id, kandidat_ids):
             project_id=project_id, role__gte=15, is_active=True, member_id__in=kandidat
         ).values_list("member_id", flat=True)
     )
-    tempat = ditempatkan_ids(project.workspace_id, project_id)
+    tempat = tempat_penerima(project.workspace_id, project_id)
     return sah if tempat is None else sah & tempat
 
 
@@ -302,7 +326,7 @@ def galat_penempatan(project_id, assignee_ids, lama=()):
     project = Project.objects.filter(pk=project_id, deleted_at__isnull=True).only("workspace_id").first()
     if project is None:
         return None
-    tempat = ditempatkan_ids(project.workspace_id, project_id)
+    tempat = tempat_penerima(project.workspace_id, project_id)
     if tempat is None:
         return None
     tempat_str = {str(u) for u in tempat}
@@ -329,6 +353,8 @@ def penerima_otomatis(project_id, actor):
     auto-assign juga.
     """
     if actor is None or getattr(actor, "is_anonymous", False) or getattr(actor, "id", None) is None:
+        return None
+    if not aturan.get_bool(AUTO_ASSIGN_CREATOR):
         return None
     return actor.id if actor.id in penerima_sah_ids(project_id, [actor.id]) else None
 
@@ -667,7 +693,9 @@ def calon_penyetuju(workspace_id, project_id, tingkat_pembuat=None, peta=None):
 
     if peta is None:
         peta = peta_tingkat(workspace_id, project_id)
-    kandidat = [uid for uid, tingkat in peta.items() if tingkat >= TINGKAT_SUPERVISOR]
+    # God Mode > Work rules > All rules (bawaan 20 = supervisor, perilaku sebelum aturannya ada).
+    ambang = aturan.get_int(APPROVER_MIN_LEVEL)
+    kandidat = [uid for uid, tingkat in peta.items() if tingkat >= ambang]
     if tingkat_pembuat is not None:
         kandidat = [uid for uid in kandidat if peta[uid] > tingkat_pembuat]
 
@@ -872,7 +900,13 @@ def direktur_ikut_memutuskan(peta, pembuat_id):
     staf, atau tanpa pembuat) cukup diputuskan atasan di divisinya dan tidak
     muncul di direktur. `peta` = peta jenjang project tugas itu, jadi jenjang
     pembuat dibaca di tempat yang sama dengan jenjang calon penyetuju.
+    God Mode DIRECTOR_APPROVES bisa melebarkannya ke semua tugas atau menutupnya.
     """
+    pilihan = aturan.get_choice(DIRECTOR_APPROVES)
+    if pilihan == DIREKTUR_SEMUA:
+        return True
+    if pilihan == DIREKTUR_TIDAK_PERNAH:
+        return False
     return peta.get(pembuat_id, 0) >= TINGKAT_MANAGER
 
 
@@ -910,6 +944,8 @@ def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
     rekan = set(assignee_ids) - {actor_id}
     if not rekan:
         return None
+    if aturan.get_choice(STAFF_ASSIGN_RULE) == STAF_DIRI_SAJA:
+        return "Staf hanya boleh menugaskan dirinya sendiri."
     tingkat = tingkat_efektif(actor_id, workspace_id, project_id)
     peta = peta_tingkat(workspace_id, project_id)
     dept_saya = semua_departemen_ids(actor_id, workspace_id)
@@ -926,7 +962,7 @@ def _galat_kolaborasi_staf(actor_id, workspace_id, project_id, assignee_ids):
 def rekan_staf_ids(actor_id, workspace_id, project_id):
     """Id rekan yang boleh diajak staf: setingkat, satu departemen, anggota project ini."""
     tingkat = tingkat_efektif(actor_id, workspace_id, project_id)
-    if tingkat >= TINGKAT_LEADER:
+    if tingkat >= TINGKAT_LEADER or aturan.get_choice(STAFF_ASSIGN_RULE) == STAF_DIRI_SAJA:
         return set()
     dept_saya = semua_departemen_ids(actor_id, workspace_id)
     if not dept_saya:
@@ -1189,7 +1225,15 @@ def pengajuan_boleh_diputuskan(user, workspace_id, pasangan):
 
 
 def galat_ubah_tugas(
-    project_id, issue, actor=None, mengubah_assignee=False, abaikan_katup=False, perubahan=None, kunci_selesai=True
+    project_id,
+    issue,
+    actor=None,
+    mengubah_assignee=False,
+    abaikan_katup=False,
+    perubahan=None,
+    kunci_selesai=True,
+    isi=None,
+    ikut_setelan_ubah=True,
 ):
     """Bolehkah actor mengubah tugas ini? Kembalikan pesan galat atau None.
 
@@ -1210,8 +1254,14 @@ def galat_ubah_tugas(
       berwenang menugaskan ulang (supervisor+ atas bawahannya, direktur di
       mana pun ia anggota). Member tidak bisa mengubah assignee SAMA SEKALI —
       bahkan miliknya sendiri (auto-assign saat create sudah menanganinya).
+
+    God Mode (utils/bidang_tugas.py): bidang yang dikunci untuk staf ditolak
+    lebih dulu; TASK_EDIT_RULE "semua anggota" dan bidang yang dibuka untuk semua
+    anggota melebarkan siapa yang boleh. `isi` = isi tulisan untuk menilai bidang
+    (bawaan `perubahan`). `ikut_setelan_ubah=False` (hapus/arsip) dan
+    `abaikan_katup` hanya bertanya tangga jenjang, tanpa pelebaran itu.
     """
-    if kunci_selesai and tugas_selesai(issue):
+    if kunci_selesai and tugas_terkunci(issue):
         return galat_tugas_selesai(issue, actor, perubahan)
     if not abaikan_katup and not gerbang_aktif():
         return None
@@ -1238,6 +1288,13 @@ def galat_ubah_tugas(
     assignee_ids = set(issue.issue_assignee.values_list("assignee_id", flat=True))
     saya_terlibat = actor.id in assignee_ids or issue.created_by_id == actor.id
 
+    from plane.utils.bidang_tugas import bidang_diubah, galat_bidang_staf, hanya_bidang_terbuka  # noqa: PLC0415
+
+    bidang = bidang_diubah(issue, isi if isi is not None else perubahan)
+    galat_bidang = galat_bidang_staf(tingkat is None or tingkat < TINGKAT_LEADER, bidang)
+    if galat_bidang:
+        return galat_bidang
+
     if mengubah_assignee:
         # Kewenangan menugaskan ulang = kewenangan `galat_penugasan` (siapa boleh
         # menugaskan ke siapa). Pemeriksaan NILAI barunya ada di serializer
@@ -1261,6 +1318,9 @@ def galat_ubah_tugas(
     # Bukan assignee: staf tidak boleh menyentuh tugas orang lain.
     if saya_terlibat:
         return None
+    if ikut_setelan_ubah and not abaikan_katup:
+        if aturan.get_choice(TASK_EDIT_RULE) == UBAH_SEMUA_ANGGOTA or hanya_bidang_terbuka(bidang):
+            return None
     if tingkat is not None and tingkat >= TINGKAT_LEADER:
         if assignee_ids <= _bawahan_ids(actor.id, workspace_id, project_id):
             return None

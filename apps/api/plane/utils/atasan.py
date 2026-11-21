@@ -16,10 +16,12 @@ jenjang baru di antara dua jenjang lama ikut tercakup tanpa perubahan di sini.
 
 Sengaja tidak bergantung pada katup gerbang maupun ASSIGN_DOWN_ONLY: keduanya
 mengatur tangga persetujuan dan wewenang ke bawah, sedangkan larangan ke atas ini
-berlaku apa pun setelannya.
+berlaku apa pun setelannya. Saklarnya sendiri ada di God Mode (BLOCK_ASSIGN_UPWARD).
 """
 
 from plane.db.models import JabatanOrganisasi, Project, TINGKAT_MEMBER, WorkspaceMember
+from plane.utils import aturan
+from plane.utils.aturan.area_tugas import BLOCK_ASSIGN_UPWARD
 from plane.utils.hierarki import _id_saja, adalah_admin_penuh, aktor_dari_context, peta_tingkat, tingkat_efektif
 
 PESAN_ATASAN = "Anda tidak dapat menugaskan atasan Anda: jenjang penerima tugas ini di atas jenjang Anda."
@@ -62,7 +64,7 @@ def atasan_di_antara(actor, workspace_id, project_id, kandidat_ids):
     """
     actor_id = str(getattr(actor, "id", None))
     kandidat = {_id_saja(k) for k in (kandidat_ids or []) if k is not None and str(_id_saja(k)) != actor_id}
-    if not kandidat or (actor is not None and _bebas(actor, workspace_id)):
+    if not kandidat or not aturan.get_bool(BLOCK_ASSIGN_UPWARD) or (actor is not None and _bebas(actor, workspace_id)):
         return set()
     tingkat_saya = TINGKAT_MEMBER if actor is None else tingkat_efektif(actor.id, workspace_id, project_id)
     peta = {str(u): t for u, t in peta_tingkat(workspace_id, project_id).items()}

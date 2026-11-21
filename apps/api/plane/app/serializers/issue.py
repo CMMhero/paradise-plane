@@ -233,6 +233,8 @@ class IssueCreateSerializer(BaseSerializer):
                 self.instance,
                 actor=_actor,
                 mengubah_assignee="assignee_ids" in attrs,
+                # Bidang yang dikunci/dibuka God Mode dinilai dari payload mentah (utils/bidang_tugas.py).
+                isi=self.initial_data,
             )
             if galat_akses:
                 raise serializers.ValidationError({"detail": galat_akses})

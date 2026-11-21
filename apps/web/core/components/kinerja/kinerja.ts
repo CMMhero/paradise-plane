@@ -7,7 +7,14 @@
  * Logika murni di balik halaman KPI. Tidak menyentuh React.
  */
 
-import type { TKpiMetric, TKpiPeriod, TKpiScope, TKpiScopeKind, TKpiValues } from "@/services/kinerja.service";
+import type {
+  TKpiMetric,
+  TKpiPeriod,
+  TKpiPeriodKey,
+  TKpiScope,
+  TKpiScopeKind,
+  TKpiValues,
+} from "@/services/kinerja.service";
 import { KPI_PERIODS } from "@/services/kinerja.service";
 
 export type TKpiTone = "good" | "bad" | "neutral";
@@ -44,9 +51,12 @@ export function scopeFromKey(key: string): TKpiScope {
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Periode tersimpan yang rusak atau rentang khusus yang belum lengkap jatuh ke bulan ini. */
-export function sanitizePeriod(stored: unknown): TKpiPeriod {
-  const fallback: TKpiPeriod = { key: "this_month" };
+/**
+ * Periode tersimpan yang rusak atau rentang khusus yang belum lengkap jatuh ke
+ * `bawaan` (aturan God Mode KPI_DEFAULT_PERIOD; tanpa aturan, bulan ini).
+ */
+export function sanitizePeriod(stored: unknown, bawaan: TKpiPeriodKey = "this_month"): TKpiPeriod {
+  const fallback: TKpiPeriod = { key: bawaan };
   if (typeof stored !== "object" || stored === null) return fallback;
   const { key, start, end } = stored as Partial<TKpiPeriod>;
   if (!key || !KPI_PERIODS.includes(key)) return fallback;

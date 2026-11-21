@@ -22,6 +22,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser } from "@/hooks/store/user";
+import { useBidangTugas } from "@/hooks/use-aturan-tugas";
 import useReloadConfirmations from "@/hooks/use-reload-confirmation";
 // plane web components
 import { DeDupeIssuePopoverRoot } from "@/plane-web/components/de-dupe/duplicate-popover";
@@ -52,8 +53,17 @@ type Props = {
 };
 
 export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetails(props: Props) {
-  const { editorRef, workspaceSlug, issueId, issueOperations, disabled, isArchived, isSubmitting, setIsSubmitting } =
-    props;
+  const {
+    editorRef,
+    workspaceSlug,
+    projectId,
+    issueId,
+    issueOperations,
+    disabled,
+    isArchived,
+    isSubmitting,
+    setIsSubmitting,
+  } = props;
   // store hooks
   const { data: currentUser } = useUser();
   const {
@@ -91,6 +101,8 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
       issueId: issue?.id,
     }
   );
+  // Judul dan deskripsi bisa dikunci untuk staf atau dibuka untuk semua anggota (God Mode).
+  const bidang = useBidangTugas(workspaceSlug, projectId, issue);
 
   if (!issue || !issue.project_id) return <></>;
 
@@ -135,7 +147,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         isSubmitting={isSubmitting}
         setIsSubmitting={(value) => setIsSubmitting(value)}
         issueOperations={issueOperations}
-        disabled={disabled || isArchived}
+        disabled={isArchived || !bidang.bisa("name", !disabled)}
         value={issue.name}
         containerClassName="-ml-3"
       />
@@ -143,7 +155,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
       <DescriptionInput
         issueSequenceId={issue.sequence_id}
         containerClassName="-ml-3 border-none"
-        disabled={disabled || isArchived}
+        disabled={isArchived || !bidang.bisa("description", !disabled)}
         editorRef={editorRef}
         entityId={issue.id}
         fileAssetType={EFileAssetType.ISSUE_DESCRIPTION}

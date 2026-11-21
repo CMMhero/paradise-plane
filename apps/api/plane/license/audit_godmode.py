@@ -22,6 +22,7 @@ from plane.utils.ip_address import get_client_ip
 # kind -> jenis objek yang tampil di kolom "Object type" (English, God Mode).
 JENIS_LABEL: dict[str, str] = {
     "instance_setting": "Instance setting",
+    "rule": "Rule",
     "instance_config": "Instance configuration",
     "instance_profile": "Instance profile",
     "member_defaults": "Member defaults",

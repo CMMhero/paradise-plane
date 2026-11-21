@@ -17,6 +17,7 @@ import type {
   TCoreLoginMediums,
 } from "./";
 import type { TExtendedLoginMediums } from "./auth-ee";
+import type { TParadiseRulesPayload } from "./rules";
 
 export interface IInstanceInfo {
   instance: IInstance;
@@ -80,6 +81,8 @@ export interface IInstanceConfig {
   paradise_chat_delete_window_hours?: number;
   /** Batas yang diatur Super Admin di God Mode. Tidak ada = server lama, pakai bawaan klien. */
   paradise_limits?: TParadiseLimits;
+  /** Aturan God Mode dengan `web=True` (apps/api/plane/utils/aturan). Baca lewat `useAturan()`, bukan langsung. */
+  paradise_rules?: TParadiseRulesPayload;
   /** Bawaan project baru dari God Mode. Tidak ada = server lama, pakai bawaan formulir. */
   paradise_project_defaults?: {
     /** 2 = Public, 0 = Private. */

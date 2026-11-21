@@ -5,7 +5,6 @@
 # Python imports
 from urllib.parse import urlencode, urljoin
 import uuid
-from zxcvbn import zxcvbn
 
 # Django imports
 from django.http import HttpResponseRedirect
@@ -23,6 +22,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 # Module imports
+from plane.authentication.utils.kata_sandi import sandi_cukup_kuat
 from .base import BaseAPIView
 from plane.license.audit_godmode import catat_godmode
 from plane.license.api.permissions import InstanceAdminPermission
@@ -262,8 +262,7 @@ class InstanceAdminSignUpEndpoint(View):
             )
             return HttpResponseRedirect(url)
         else:
-            results = zxcvbn(password)
-            if results["score"] < 3:
+            if not sandi_cukup_kuat(password):
                 exc = AuthenticationException(
                     error_code=AUTHENTICATION_ERROR_CODES["PASSWORD_TOO_WEAK"],
                     error_message="PASSWORD_TOO_WEAK",

@@ -12,6 +12,10 @@ ini, 7 hari ke depan, dan terlambat. Isinya disesuaikan jabatan (KEP-43):
     direktur   -> TANPA bagian tim (keputusan user 2026-11-02): ikhtisar divisinya
                   datang lewat laporan direktur (`direktur_digest_task`), angka saja
 
+Siapa yang punya bagian tim dan berapa baris tiap daftar diatur di God Mode (aturan
+DIGEST_TEAM_MIN_LEVEL, DIGEST_TEAM_FOR_ORG_WIDE, DIGEST_PERSONAL_ROW_CAP,
+DIGEST_TEAM_ROW_CAP); bawaannya persis daftar di atas.
+
 Cakupan tim dibaca dari `divisi_diawasi`, sumber yang sama dengan wewenang
 memutuskan persetujuan, jadi "yang dia awasi" tidak punya dua definisi.
 
@@ -65,6 +69,13 @@ from plane.db.models import (
     UserNotificationPreference,
     Workspace,
     WorkspaceMember,
+)
+from plane.utils import aturan
+from plane.utils.aturan.area_notifikasi import (
+    DIGEST_PERSONAL_ROW_CAP,
+    DIGEST_TEAM_FOR_ORG_WIDE,
+    DIGEST_TEAM_MIN_LEVEL,
+    DIGEST_TEAM_ROW_CAP,
 )
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.license.utils.instance_value import get_email_configuration
@@ -208,6 +219,18 @@ def _kelompok(daftar, data, hari_ini, bagian):
     return _saring_bagian(kelompok, bagian)
 
 
+def _punya_bagian_tim(tingkat) -> bool:
+    """Bagian tim ringkasan harian (God Mode, aturan DIGEST_TEAM_MIN_LEVEL dan DIGEST_TEAM_FOR_ORG_WIDE).
+
+    Bawaan: supervisor sampai direktur cabang. Direktur dan sekretaris tanpa bagian
+    tim (keputusan 2026-11-02): ikhtisar divisinya datang lewat laporan direktur
+    (direktur_digest_task), angka saja, tanpa rincian staf.
+    """
+    if tingkat < aturan.get_int(DIGEST_TEAM_MIN_LEVEL):
+        return False
+    return tingkat < TINGKAT_SEKRETARIS or aturan.get_bool(DIGEST_TEAM_FOR_ORG_WIDE)
+
+
 def susun_ringkasan(user, workspace_id, data, hari_ini, bagian=None, sore=False):
     """Ringkasan satu orang di satu workspace, disaring dari `data` (TugasWorkspace).
 
@@ -226,9 +249,7 @@ def susun_ringkasan(user, workspace_id, data, hari_ini, bagian=None, sore=False)
     if not bagian.get("digest_diberikan", True):
         diberikan = []
 
-    # Direktur: tanpa bagian tim. Ikhtisar divisinya datang lewat laporan direktur
-    # (direktur_digest_task), angka saja, tanpa rincian staf (keputusan 2026-11-02).
-    pids = divisi_diawasi(user.id, workspace_id) if TINGKAT_SUPERVISOR <= tingkat < TINGKAT_SEKRETARIS else set()
+    pids = divisi_diawasi(user.id, workspace_id) if _punya_bagian_tim(tingkat) else set()
     cakupan, judul_tim = _cakupan(user.id, workspace_id, tingkat, len(pids))
     ringkasan = Ringkasan(
         peran=NAMA_PERAN.get(tingkat, "Staf"),
@@ -240,6 +261,8 @@ def susun_ringkasan(user, workspace_id, data, hari_ini, bagian=None, sore=False)
         bagian=bagian,
         sore=sore,
         hari_ke_depan=data.hari_ke_depan,
+        batas_baris=aturan.get_int(DIGEST_PERSONAL_ROW_CAP),
+        batas_baris_tim=aturan.get_int(DIGEST_TEAM_ROW_CAP),
     )
     if not pids or not bagian.get("digest_tim", True):
         return ringkasan

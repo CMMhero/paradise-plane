@@ -17,9 +17,10 @@ import { ProjectsListMobileHeader } from "@/plane-web/components/projects/mobile
 
 function ProjectListLayout() {
   const { workspaceSlug } = useParams();
-  const { isDirektur } = useIsDirektur(workspaceSlug);
-  // Arsip disembunyikan untuk Direktur: arahkan ke beranda, sama seperti halaman lain yang tertutup.
-  if (isDirektur) return <Navigate to={`/${workspaceSlug}/`} replace />;
+  const { hiddenNavKeys } = useIsDirektur(workspaceSlug);
+  // Arsip disembunyikan untuk Direktur (God Mode, DIRECTOR_SIDEBAR_HIDES): arahkan ke beranda,
+  // sama seperti halaman lain yang tertutup.
+  if (hiddenNavKeys.includes("archives")) return <Navigate to={`/${workspaceSlug}/`} replace />;
   return (
     <>
       <AppHeader header={<ProjectsListHeader />} mobileHeader={<ProjectsListMobileHeader />} />

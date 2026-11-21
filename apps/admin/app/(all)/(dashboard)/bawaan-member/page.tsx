@@ -15,7 +15,7 @@ import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { setPromiseToast } from "@plane/propel/toast";
 import { InstanceMemberService, type TMemberDefaults } from "@plane/services";
-import { CustomSelect, Loader } from "@plane/ui";
+import { CustomSelect, Loader, ToggleSwitch } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Field } from "@/components/common/paradise-ui";
@@ -40,6 +40,7 @@ const withoutEmail = (d: TMemberDefaults): TDefaults => ({
   keanggotaan: d.keanggotaan,
   navigasi: d.navigasi,
   work_items: d.work_items,
+  tampilan: d.tampilan,
 });
 
 const sama = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -70,6 +71,7 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
         keanggotaan: data.keanggotaan,
         navigasi: data.navigasi,
         work_items: data.work_items,
+        tampilan: data.tampilan,
       }
     : null;
   const nilai = draf ?? tersimpan;
@@ -180,8 +182,23 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
           <Bagian title={t.group_work_items} note={t.work_items_note}>
             <BidangTataLetak
               nilai={nilai.work_items.layout}
-              onUbah={(layout) => ubah((b) => ({ ...b, work_items: { layout } }))}
+              onUbah={(layout) => ubah((b) => ({ ...b, work_items: { ...b.work_items, layout } }))}
             />
+          </Bagian>
+
+          <Bagian title={t.group_display} note={t.display_note}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-0.5">
+                <div className="text-13 font-medium text-primary">{t.activity_newest_first}</div>
+                <div className="text-11 leading-5 text-tertiary">{t.activity_newest_first_help}</div>
+              </div>
+              <ToggleSwitch
+                value={nilai.tampilan.aktivitas_terbaru_di_atas}
+                onChange={(v) => ubah((b) => ({ ...b, tampilan: { ...b.tampilan, aktivitas_terbaru_di_atas: v } }))}
+                size="md"
+                label={t.activity_newest_first}
+              />
+            </div>
           </Bagian>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-subtle pt-4">

@@ -13,6 +13,8 @@ import type { TCommentsOperations, TIssueComment } from "@plane/types";
 import { CommentThreadCard } from "@/components/comments/card/thread";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useAturan } from "@/hooks/use-aturan";
+import { urutkanBalasan } from "@/lib/tampilan-bawaan";
 // plane web components
 import { IssueAdditionalPropertiesActivity } from "@/plane-web/components/issues/issue-details/issue-properties-activity";
 import { IssueActivityWorklog } from "@/plane-web/components/issues/worklog/activity/root";
@@ -49,6 +51,7 @@ export const IssueActivityCommentRoot = observer(function IssueActivityCommentRo
     activity: { getActivityAndCommentsByIssueId },
     comment: { getCommentById },
   } = useIssueDetail();
+  const { get: getAturan } = useAturan();
   // derived values
   const activityAndComments = getActivityAndCommentsByIssueId(issueId, sortOrder);
 
@@ -56,8 +59,9 @@ export const IssueActivityCommentRoot = observer(function IssueActivityCommentRo
 
   if (activityAndComments.length <= 0) return null;
 
-  // Replies are drawn inside their thread root, oldest first whatever the sort order, so
-  // they leave the main timeline. A reply whose root is not loaded stays on the timeline.
+  // Replies are drawn inside their thread root, oldest first by default (rule
+  // COMMENT_REPLY_ORDER "timeline" makes them follow the sort order), so they leave the
+  // main timeline. A reply whose root is not loaded stays on the timeline.
   const repliesByRootId: Record<string, TIssueComment[]> = {};
   const filteredActivityAndComments = filterActivityOnSelectedFilters(activityAndComments, selectedFilters).filter(
     (activityComment) => {
@@ -69,12 +73,9 @@ export const IssueActivityCommentRoot = observer(function IssueActivityCommentRo
       return false;
     }
   );
+  const replyOrder = getAturan("COMMENT_REPLY_ORDER");
   const orderedRepliesByRootId = Object.fromEntries(
-    Object.entries(repliesByRootId).map(([rootId, replies]) => [
-      rootId,
-      // oxlint-disable-next-line unicorn/no-array-sort -- apps/web lib is ES2022 (no toSorted); the copy is a fresh array
-      [...replies].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
-    ])
+    Object.entries(repliesByRootId).map(([rootId, replies]) => [rootId, urutkanBalasan(replies, replyOrder, sortOrder)])
   );
 
   return (

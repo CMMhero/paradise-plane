@@ -8,6 +8,62 @@ Format tanggal: YYYY-MM-DD. Referensi commit menunjuk repositori ini.
 
 ## 2026-11-21
 
+### Versi 2.12.0
+
+- **Naik 2.11.0 ke 2.12.0, minor.** Satu layar baru di God Mode (Work rules >
+  All rules) dan 89 aturan produk yang dulu terkunci di kode kini bisa diubah
+  dari sana, termasuk aturan izin. Bawaan tiap aturan sama persis dengan
+  perilaku 2.11.0, jadi tidak ada yang berubah sampai Super Admin mengubahnya.
+  Tidak ada migrasi dan tidak ada langkah operator.
+- **Registri aturan.** `plane/utils/aturan/` mendeklarasikan tiap aturan satu
+  kali (kunci, jenis, bawaan, batas, label, bantuan, risiko, kapan berlaku).
+  Nilai disimpan di `InstanceConfiguration` dan dibaca lewat `aturan.get_*`
+  dengan cache 5 detik per proses; nilai rusak jatuh ke bawaan. Aturan yang
+  dipakai tampilan dikirim di `paradise_rules` pada `/api/instances/`.
+  Endpoint `GET/PATCH /api/instances/rules/` dan `POST .../reset/`. Aturan
+  berisiko tinggi hanya berubah dengan frasa `CHANGE RULES`, dan tiap
+  perubahan tercatat di audit log sebagai `Rule: KEY`. Panduan menambah aturan
+  ada di `paradise/aturan-godmode.md`. Registri lama (`SAKLAR_BAWAAN`,
+  `SETELAN_ANGKA`, `SETELAN_TEKS`) tidak disentuh; layar baru
+  menampilkannya baca-saja dengan tautan ke tab masing-masing.
+- **Yang bisa diubah, per area.** Melihat: tugas privat, cakupan KPI, statistik
+  pimpinan, siapa yang diberi notifikasi sebutan, halaman wiki privat, menu
+  Direktur, tab KPI. Melakukan: aturan penugasan staf, tidak boleh menugaskan
+  atasan, penerima harus ditempatkan, penugasan otomatis ke pembuat, siapa
+  boleh mengubah dan berkomentar, **bidang mana yang dikunci untuk staf atau
+  dibuka untuk semua anggota**, kunci tugas selesai dan jenjang pembuka
+  kembali, jenjang persetujuan, project baru, aturan terlambat. Tampilan:
+  urutan linimasa aktivitas, filter, posisi kotak komentar, pengelompokan dan
+  urutan daftar tugas, widget Beranda dan urutannya, periode KPI. Notifikasi:
+  kelompok notifikasi per jenjang, laporan Direktur, ringkasan harian, hari
+  pengingat, email Pengumuman, @all. Obrolan, wiki, tautan cepat: siapa yang
+  menulis Pengumuman, membuat kanal, memakai @all, menelepon, mengunggah ke
+  wiki, mengelola tautan bersama. Keamanan: tipe berkas yang diblokir,
+  kekuatan kata sandi, batas percobaan masuk dan API, umur kode masuk dan
+  tautan reset, sesi God Mode. Bawaan tampilan berlaku untuk akun baru; tombol
+  "Apply to existing members" menerapkannya ke semua anggota.
+- **Pagar keamanan.** Setiap aturan angka di area keamanan punya batas bawah
+  dan atas sehingga tidak bisa dinolkan atau dibuat tak terbatas, kekuatan
+  kata sandi tidak bisa di bawah skor 3, dan daftar tipe berkas hanya bisa
+  memblokir (daftar tolak untuk skrip dan program dikunci di kode). Aturan
+  `AUTHENTICATION_RATE_LIMIT`, `API_KEY_RATE_LIMIT`, `ADMIN_SESSION_COOKIE_AGE`
+  dan `SESSION_SAVE_EVERY_REQUEST` di env kini hanya mengisi nilai awal, dan
+  dijepit ke rentang aman.
+- **Sengaja belum dipindah.** Jangkauan seluruh organisasi (35 atau 40) dan
+  cakupan pengawasan per jenjang: Sekretaris ditambahkan ke semua project
+  sebagai admin dan tidak pernah dicabut, jadi mengubah angkanya tidak
+  mempersempit apa pun; perlu keputusan soal keanggotaan itu dulu. Siapa yang
+  boleh mengundang tetap admin workspace. Batas tak bisa dinolkan, sengketa
+  data bocor (proyeksi permintaan antar divisi), dan invarian data (satu
+  project per departemen, tenggat lewat tak digeser) tetap di kode.
+- **Celah lama yang ditemukan, tidak diubah.** Perubahan tugas lewat API token
+  (`api/views/issue.py`) tidak melewati aturan ubah tugas. Kode ganti email
+  tidak punya batas salah coba. Data Analytics dan Dashboard Divisi tetap
+  dilayani API ke semua anggota; aturan tab KPI hanya menyembunyikan tab.
+- **Belum diuji di peramban.** Layar All rules, tombol urut, dan konsumen web
+  aturan diperiksa dengan tipe dan tes unit saja. Periksa layar All rules,
+  ubah satu aturan berisiko tinggi dengan frasa, dan atur ulang setelah rilis.
+
 ### Versi 2.11.0
 
 - **Naik 2.10.0 ke 2.11.0, minor.** Banyak perubahan yang terlihat dan dua

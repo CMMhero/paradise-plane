@@ -65,8 +65,12 @@ def naikkan_assignee(issue_id, actor):
     module ditambah).
     """
     from plane.db.models import IssueAssignee, ModuleIssue, ModuleMember  # noqa: PLC0415
+    from plane.utils import aturan  # noqa: PLC0415
     from plane.utils.atasan import atasan_di_antara  # noqa: PLC0415
+    from plane.utils.aturan.area_tugas import BUBBLE_SUBITEM_ASSIGNEES  # noqa: PLC0415
 
+    if not aturan.get_bool(BUBBLE_SUBITEM_ASSIGNEES):
+        return 0, 0
     rantai = _rantai(issue_id)
     if not rantai:
         return 0, 0

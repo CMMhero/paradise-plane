@@ -34,6 +34,7 @@ from plane.license.api.views.bawaan_member import (
 )
 from plane.license.api.views.hierarki import InstanceHierarkiEndpoint
 from plane.license.api.views.setelan import InstanceSettingsEndpoint
+from plane.license.api.views.aturan import InstanceRulesEndpoint, InstanceRulesResetEndpoint
 from plane.license.api.views.email_preview import InstanceEmailPreviewEndpoint, InstanceEmailPreviewSendEndpoint
 from plane.license.api.views.divisi import InstanceDivisiAnggotaEndpoint
 from plane.license.api.views.organisasi import (
@@ -66,6 +67,9 @@ urlpatterns = [
     ),
     # Paradise (KEP-83): registri setelan God Mode. Kunci sensitif HANYA lewat sini.
     path("settings/", InstanceSettingsEndpoint.as_view(), name="instance-settings"),
+    # Registri aturan (plane/utils/aturan). Aturan berisiko tinggi HANYA lewat sini.
+    path("rules/", InstanceRulesEndpoint.as_view(), name="instance-rules"),
+    path("rules/reset/", InstanceRulesResetEndpoint.as_view(), name="instance-rules-reset"),
     path(
         "configurations/disable-email-feature/",
         DisableEmailFeatureEndpoint.as_view(),

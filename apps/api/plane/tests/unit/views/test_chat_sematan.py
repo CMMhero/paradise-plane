@@ -146,16 +146,30 @@ class TestSematan:
         assert _klien(admin).get(_url_daftar(workspace, kanal)).json()["pesan"] == []
 
     @pytest.mark.django_db
-    def test_batas_sematan_per_ruang(self, kantor, monkeypatch):
-        from plane.app.views import chat as chat_views  # noqa: PLC0415
+    def test_batas_sematan_bawaan_20(self, kantor):
+        """Tanpa baris God Mode: 20 sematan boleh, yang ke-21 ditolak (perilaku sebelum aturannya ada)."""
+        workspace, admin, _budi, _citra, kanal = kantor
+        klien = _klien(admin)
+        semua = [_pesan(kanal, admin, f"p{i}") for i in range(21)]
+        for pesan in semua[:20]:
+            assert klien.post(_url_sematkan(workspace, pesan)).status_code == 200
+        respon = klien.post(_url_sematkan(workspace, semua[20]))
+        assert respon.status_code == 400
+        assert "20" in respon.json()["error"]
 
-        monkeypatch.setattr(chat_views, "BATAS_SEMATAN", 2)
+    @pytest.mark.django_db
+    def test_batas_sematan_dari_god_mode(self, kantor):
+        from plane.license.models import InstanceConfiguration  # noqa: PLC0415
+        from plane.utils.aturan.area_obrolan import CHAT_PINS_MAX  # noqa: PLC0415
+
+        InstanceConfiguration.objects.create(key=CHAT_PINS_MAX, value="2", category="PARADISE")
         workspace, admin, _budi, _citra, kanal = kantor
         tiga = [_pesan(kanal, admin, f"p{i}") for i in range(3)]
         klien = _klien(admin)
         assert klien.post(_url_sematkan(workspace, tiga[0])).status_code == 200
         assert klien.post(_url_sematkan(workspace, tiga[1])).status_code == 200
         assert klien.post(_url_sematkan(workspace, tiga[2])).status_code == 400
+        assert len(klien.get(_url_daftar(workspace, kanal)).json()["pesan"]) == 2
 
 
 @pytest.mark.unit

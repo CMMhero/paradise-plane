@@ -7,14 +7,20 @@
 
 Satu-satunya perubahan yang boleh adalah membuka kembali: memindahkan status keluar
 dari selesai, tanpa perubahan lain di permintaan yang sama. Yang boleh membuka
-kembali: Super Admin, admin workspace, dan atasan (Supervisor ke atas) yang semua
-assignee-nya bawahannya. Leader tidak: ia tidak menyetujui, jadi ia juga tidak
-membatalkan hasil persetujuan.
+kembali: Super Admin, admin workspace, dan atasan (REOPEN_MIN_LEVEL ke atas, bawaan
+Supervisor) yang semua assignee-nya bawahannya. Leader tidak: ia tidak menyetujui,
+jadi ia juga tidak membatalkan hasil persetujuan.
+
+Kuncinya sendiri bisa dimatikan di God Mode (LOCK_COMPLETED_TASKS). Pemeriksa kunci
+memakai `tugas_terkunci`, bukan `tugas_selesai`: yang kedua hanya fakta statusnya.
 
 Kenapa tidak bergantung pada katup gerbang hierarki: kunci ini bukan tangga
 jenjang, ia sifat tugas yang sudah selesai. Alur persetujuan (setujui ke selesai,
 tolak ke In Progress) menulis langsung lewat `_pindahkan_tugas` dan tidak lewat sini.
 """
+
+from plane.utils import aturan
+from plane.utils.aturan.area_tugas import LOCK_COMPLETED_TASKS, REOPEN_MIN_LEVEL
 
 PESAN_TERKUNCI = (
     "Tugas ini sudah selesai dan dikunci. Buka kembali tugasnya (pindahkan statusnya "
@@ -37,25 +43,44 @@ def tugas_selesai(issue):
     return getattr(issue.state, "group", None) == "completed"
 
 
-def boleh_buka_kembali(actor, issue):
-    """Super Admin, admin workspace, atau Supervisor+ yang semua assignee-nya bawahannya."""
-    from plane.db.models import TINGKAT_SUPERVISOR  # noqa: PLC0415
-    from plane.utils.hierarki import (  # noqa: PLC0415
-        _bawahan_ids,
-        adalah_admin_penuh,
-        divisi_diawasi,
-        tingkat_anggota,
-    )
+def tugas_terkunci(issue):
+    """True kalau `issue` selesai DAN kunci tugas selesai menyala di God Mode."""
+    return tugas_selesai(issue) and aturan.get_bool(LOCK_COMPLETED_TASKS)
+
+
+# Nilai `hak_buka_kembali`: semua tugas selesai di project itu, atau hanya yang
+# semua assignee-nya bawahan pelaku. None = tidak bisa membuka kembali.
+BUKA_SEMUA = "semua"
+BUKA_BAWAHAN = "bawahan"
+
+
+def hak_buka_kembali(actor, workspace_id, project_id):
+    """BUKA_SEMUA, BUKA_BAWAHAN, atau None untuk `actor` di project ini.
+
+    Satu jawaban untuk `boleh_buka_kembali` dan untuk `bisa-ditugaskan/` (klien
+    menyembunyikan pilihan status), supaya keduanya tidak berbeda pendapat.
+    """
+    from plane.utils.hierarki import adalah_admin_penuh, divisi_diawasi, tingkat_anggota  # noqa: PLC0415
 
     if actor is None or getattr(actor, "is_anonymous", True):
-        return False
-    if adalah_admin_penuh(actor, issue.workspace_id):
-        return True
-    tingkat = tingkat_anggota(actor.id, issue.workspace_id, issue.project_id)
-    if tingkat is None or tingkat < TINGKAT_SUPERVISOR:
-        return False
-    if str(issue.project_id) not in {str(p) for p in divisi_diawasi(actor.id, issue.workspace_id)}:
-        return False
+        return None
+    if adalah_admin_penuh(actor, workspace_id):
+        return BUKA_SEMUA
+    tingkat = tingkat_anggota(actor.id, workspace_id, project_id)
+    if tingkat is None or tingkat < aturan.get_int(REOPEN_MIN_LEVEL):
+        return None
+    if str(project_id) not in {str(p) for p in divisi_diawasi(actor.id, workspace_id)}:
+        return None
+    return BUKA_BAWAHAN
+
+
+def boleh_buka_kembali(actor, issue):
+    """Super Admin, admin workspace, atau REOPEN_MIN_LEVEL+ yang semua assignee-nya bawahannya."""
+    from plane.utils.hierarki import _bawahan_ids  # noqa: PLC0415
+
+    hak = hak_buka_kembali(actor, issue.workspace_id, issue.project_id)
+    if hak != BUKA_BAWAHAN:
+        return hak == BUKA_SEMUA
     assignee_ids = set(issue.issue_assignee.values_list("assignee_id", flat=True))
     return assignee_ids <= _bawahan_ids(actor.id, issue.workspace_id, issue.project_id)
 
@@ -71,7 +96,7 @@ def galat_tugas_selesai(issue, actor, perubahan=None):
     `perubahan` = isi PATCH. None = penulisan apa pun selain status (komentar,
     tautan, lampiran, sub-item, ...), yang selalu ditolak selama tugasnya selesai.
     """
-    if not tugas_selesai(issue):
+    if not tugas_terkunci(issue):
         return None
     if not hasattr(perubahan, "get"):
         return PESAN_TERKUNCI
@@ -96,6 +121,6 @@ def galat_induk_selesai(induk_ids):
     from plane.db.models import Issue  # noqa: PLC0415
 
     ids = [i for i in induk_ids if i]
-    if ids and any(tugas_selesai(i) for i in Issue.objects.filter(id__in=ids).select_related("state")):
+    if ids and any(tugas_terkunci(i) for i in Issue.objects.filter(id__in=ids).select_related("state")):
         return PESAN_TERKUNCI
     return None

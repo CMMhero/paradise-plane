@@ -6,7 +6,7 @@ import logging
 
 from celery import shared_task
 
-from plane.bgtasks.magic_link_code_task import susun_magic_link
+from plane.bgtasks.magic_link_code_task import menit_kode, susun_magic_link
 from plane.utils.email_merek import bahasa_untuk_alamat, buat_pesan, render_email
 from plane.utils.email_teks import teks
 from plane.utils.exception_logger import log_exception
@@ -28,7 +28,9 @@ def send_email_update_magic_code(email, token):
     # Alamat baru belum tersimpan di akun mana pun, jadi bahasanya bahasa bawaan
     # kecuali alamat itu sudah milik akun lain (yang memang akan ditolak).
     try:
-        subjek, html, polos = susun_magic_link(email, token, bahasa_untuk_alamat(email), grup="ganti_email")
+        subjek, html, polos = susun_magic_link(
+            email, token, bahasa_untuk_alamat(email), grup="ganti_email", menit=menit_kode()
+        )
         buat_pesan(ke=email, subjek=subjek, html=html, teks=polos).send()
         logging.getLogger("plane.worker").info("Email sent successfully.")
         return

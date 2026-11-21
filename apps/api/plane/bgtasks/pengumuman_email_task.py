@@ -9,11 +9,15 @@ Penerima = anggota aktif workspace (sama dengan yang diikutkan ke kanal), tanpa
 penulisnya sendiri, disaring saklar email `pengumuman` (bawaan hidup). Sengaja
 TIDAK disaring `ENABLE_CHAT_EMAIL` maupun `ENABLE_EMAIL_ACTIVE_ONLY`: pengumuman
 memang dimaksudkan sampai ke semua orang, termasuk yang jarang membuka aplikasi.
+Dua aturan God Mode mengubahnya: ANNOUNCEMENT_EMAIL (bawaan hidup; mati = tidak ada
+email pengumuman) dan ANNOUNCEMENT_EMAIL_ACTIVE_ONLY (bawaan mati; hidup = hanya yang
+membuka aplikasi dalam EMAIL_ACTIVE_DAYS terakhir).
 
 Sekali kirim per pesan. Menyunting atau menghapus pengumuman tidak mengirim ulang.
 """
 
 import logging
+from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from celery import shared_task
@@ -34,9 +38,13 @@ from plane.utils.email_merek import (
     tombol,
     url_preferensi,
 )
+from plane.utils import aturan
+from plane.utils.aturan.area_notifikasi import ANNOUNCEMENT_EMAIL, ANNOUNCEMENT_EMAIL_ACTIVE_ONLY
 from plane.utils.exception_logger import log_exception
 from plane.utils.kanal_sistem import anggota_layak
+from plane.utils.penerima_aktif import aktif_sejak
 from plane.utils.preferensi_email import penyaring
+from plane.utils.saklar_instance import EMAIL_ACTIVE_DAYS, setelan_angka
 from plane.utils.rujukan_obrolan import samarkan
 
 logger = logging.getLogger("plane.worker")
@@ -115,12 +123,18 @@ def kirim_email_pengumuman(pesan_id):
     )
     if pesan is None:
         return {"terkirim": 0, "gagal": 0}
+    if not aturan.get_bool(ANNOUNCEMENT_EMAIL):
+        logger.info("pengumuman-email: dimatikan di God Mode, pesan %s tidak dikirim lewat email", pesan_id)
+        return {"terkirim": 0, "gagal": 0}
     if not email_aktif(get_email_configuration()[0]):
         logger.info("pengumuman-email: SMTP belum diatur, pesan %s tidak dikirim lewat email", pesan_id)
         return {"terkirim": 0, "gagal": 0}
 
     calon = anggota_layak(pesan.workspace_id) - {pesan.pengirim_id}
     penerima = User.objects.filter(id__in=penyaring(calon, "pengumuman")).exclude(email="").order_by("email")
+    if aturan.get_bool(ANNOUNCEMENT_EMAIL_ACTIVE_ONLY):
+        batas = timezone.now() - timedelta(days=setelan_angka(EMAIL_ACTIVE_DAYS))
+        penerima = [orang for orang in penerima if aktif_sejak(orang, batas)]
     # KEP-91: email bisa diteruskan ke siapa saja, jadi nama kanal privat yang
     # dirujuk selalu disamarkan, untuk penerima mana pun.
     isi, _ = samarkan(pesan.isi, pesan.muatan or {}, None)

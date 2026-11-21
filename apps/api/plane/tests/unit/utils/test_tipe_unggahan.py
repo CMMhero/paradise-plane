@@ -6,12 +6,11 @@
 """Merapikan tipe MIME dari klien: murni teks, tanpa database."""
 
 import pytest
-from django.conf import settings
 
 from plane.app.views.asset.v2 import IMAGE_MIME_TYPES
-from plane.utils.tipe_unggahan import rapikan_tipe_unggahan, tebak_tipe_dari_nama
+from plane.utils.tipe_unggahan import TIPE_LAMPIRAN, rapikan_tipe_unggahan, tebak_tipe_dari_nama
 
-LAMPIRAN = settings.ATTACHMENT_MIME_TYPES
+LAMPIRAN = TIPE_LAMPIRAN
 
 
 @pytest.mark.unit

@@ -13,11 +13,14 @@ from django.test import Client
 from django.core.exceptions import ValidationError
 from unittest.mock import patch
 
-from plane.authentication.provider.credentials.magic_code import MagicCodeProvider
-from plane.authentication.rate_limit import AuthenticationThrottle
 from plane.db.models import User
 from plane.settings.redis import redis_instance
-from plane.license.models import Instance
+from plane.license.models import Instance, InstanceConfiguration
+from plane.utils import aturan
+from plane.utils.aturan.area_keamanan import LOGIN_ATTEMPTS_PER_MINUTE, SIGN_IN_CODE_WRONG_TRIES
+
+# Bawaan God Mode SIGN_IN_CODE_WRONG_TRIES; tes ini tidak menulis barisnya.
+MAX_VERIFY_ATTEMPTS = aturan.REGISTRI[SIGN_IN_CODE_WRONG_TRIES].default
 
 
 @pytest.fixture(autouse=True)
@@ -514,14 +517,14 @@ class TestMagicSignInVerifyAttempts:
         ri = redis_instance()
 
         # First (MAX-1) wrong attempts: each redirects with INVALID_MAGIC_CODE_SIGN_IN.
-        for i in range(MagicCodeProvider.MAX_VERIFY_ATTEMPTS - 1):
+        for i in range(MAX_VERIFY_ATTEMPTS - 1):
             response = django_client.post(url, {"email": self.EMAIL, "code": "000000"}, follow=False)
             assert response.status_code == 302, f"attempt {i+1} unexpected status"
             assert "INVALID_MAGIC_CODE_SIGN_IN" in response.url, f"attempt {i+1} did not return INVALID"
 
         # Token and counter both still live, with counter at MAX-1.
         assert ri.exists(f"magic_{self.EMAIL}")
-        assert int(ri.get(f"magic_{self.EMAIL}:verify_attempts")) == MagicCodeProvider.MAX_VERIFY_ATTEMPTS - 1
+        assert int(ri.get(f"magic_{self.EMAIL}:verify_attempts")) == MAX_VERIFY_ATTEMPTS - 1
 
         # The MAX-th wrong attempt is the exhausting one.
         response = django_client.post(url, {"email": self.EMAIL, "code": "000000"}, follow=False)
@@ -551,7 +554,7 @@ class TestMagicSignInVerifyAttempts:
         # Before any wrong attempt the counter does not exist (Lua INCR creates it).
         assert not ri.exists(counter_key)
 
-        for expected in range(1, MagicCodeProvider.MAX_VERIFY_ATTEMPTS):
+        for expected in range(1, MAX_VERIFY_ATTEMPTS):
             django_client.post(url, {"email": self.EMAIL, "code": "000000"}, follow=False)
             assert int(ri.get(counter_key)) == expected, f"counter mismatch after {expected} attempts"
 
@@ -569,9 +572,9 @@ class TestMagicSignInVerifyAttempts:
         ri = redis_instance()
         counter_key = f"magic_{self.EMAIL}:verify_attempts"
 
-        for _ in range(MagicCodeProvider.MAX_VERIFY_ATTEMPTS - 2):
+        for _ in range(MAX_VERIFY_ATTEMPTS - 2):
             django_client.post(url, {"email": self.EMAIL, "code": "000000"}, follow=False)
-        assert int(ri.get(counter_key)) == MagicCodeProvider.MAX_VERIFY_ATTEMPTS - 2
+        assert int(ri.get(counter_key)) == MAX_VERIFY_ATTEMPTS - 2
 
         # Regenerate the magic-link, the counter should be cleared.
         _generate_magic_token(api_client, self.EMAIL)
@@ -610,7 +613,7 @@ class TestMagicSignUpVerifyAttempts:
         url = reverse("magic-sign-up")
         ri = redis_instance()
 
-        for _ in range(MagicCodeProvider.MAX_VERIFY_ATTEMPTS - 1):
+        for _ in range(MAX_VERIFY_ATTEMPTS - 1):
             response = django_client.post(url, {"email": self.EMAIL, "code": "000000"}, follow=False)
             assert "INVALID_MAGIC_CODE_SIGN_UP" in response.url
 
@@ -618,6 +621,14 @@ class TestMagicSignUpVerifyAttempts:
         assert "EMAIL_CODE_ATTEMPT_EXHAUSTED_SIGN_UP" in response.url
         assert not ri.exists(f"magic_{self.EMAIL}")
         assert not ri.exists(f"magic_{self.EMAIL}:verify_attempts")
+
+
+def _set_login_rate(per_minute):
+    """God Mode LOGIN_ATTEMPTS_PER_MINUTE, written as a row (the throttle reads it per request)."""
+    InstanceConfiguration.objects.update_or_create(
+        key=LOGIN_ATTEMPTS_PER_MINUTE,
+        defaults={"value": str(per_minute), "category": "PARADISE", "is_encrypted": False},
+    )
 
 
 @pytest.mark.contract
@@ -634,28 +645,29 @@ class TestAuthenticationThrottle:
     def test_magic_sign_in_throttled(self, django_client, setup_instance):
         """Posting past the configured rate from one IP returns RATE_LIMIT_EXCEEDED."""
         url = reverse("magic-sign-in")
-        # Drop the rate so the test doesn't have to fire 10+ requests.
-        with patch.object(AuthenticationThrottle, "rate", "2/minute"):
-            for _ in range(2):
-                response = django_client.post(url, {"email": "throttle@plane.so", "code": "000000"}, follow=False)
-                assert response.status_code == 302
-                assert "RATE_LIMIT_EXCEEDED" not in response.url
-
-            # The 3rd request from the same IP within the window trips the throttle.
+        # Drop the rate to the God Mode floor (3) so the test doesn't fire 10+ requests.
+        _set_login_rate(3)
+        for _ in range(3):
             response = django_client.post(url, {"email": "throttle@plane.so", "code": "000000"}, follow=False)
             assert response.status_code == 302
-            assert "RATE_LIMIT_EXCEEDED" in response.url
+            assert "RATE_LIMIT_EXCEEDED" not in response.url
+
+        # The 4th request from the same IP within the window trips the throttle.
+        response = django_client.post(url, {"email": "throttle@plane.so", "code": "000000"}, follow=False)
+        assert response.status_code == 302
+        assert "RATE_LIMIT_EXCEEDED" in response.url
 
     @pytest.mark.django_db
     def test_magic_sign_up_throttled(self, django_client, setup_instance):
         """The sign-up sibling shares the same scope and trips on the same per-IP budget."""
         url = reverse("magic-sign-up")
-        with patch.object(AuthenticationThrottle, "rate", "1/minute"):
+        _set_login_rate(3)
+        for _ in range(3):
             response = django_client.post(url, {"email": "throttle-up@plane.so", "code": "000000"}, follow=False)
             assert "RATE_LIMIT_EXCEEDED" not in response.url
 
-            response = django_client.post(url, {"email": "throttle-up@plane.so", "code": "000000"}, follow=False)
-            assert "RATE_LIMIT_EXCEEDED" in response.url
+        response = django_client.post(url, {"email": "throttle-up@plane.so", "code": "000000"}, follow=False)
+        assert "RATE_LIMIT_EXCEEDED" in response.url
 
 
 @pytest.mark.contract

@@ -9,7 +9,7 @@ import uniq from "lodash-es/uniq";
 import { observer } from "mobx-react";
 // plane package imports
 import type { TActivityFilters } from "@plane/constants";
-import { E_SORT_ORDER, defaultActivityFilters, EUserPermissions } from "@plane/constants";
+import { E_SORT_ORDER, EUserPermissions } from "@plane/constants";
 import { useLocalStorage } from "@plane/hooks";
 // i18n
 import { useTranslation } from "@plane/i18n";
@@ -22,7 +22,9 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useBolehPercakapanTugas, useTugasSelesai } from "@/hooks/use-aturan-tugas";
+import { useAturan } from "@/hooks/use-aturan";
 import { useUrutanAktivitas } from "@/hooks/use-urutan-aktivitas";
+import { efektifFilterAktivitas, posisiKotakKomentar } from "@/lib/tampilan-bawaan";
 // plane web components
 import { ActivityFilterRoot } from "@/plane-web/components/issues/worklog/activity/filter-root";
 import { IssueActivityWorklogCreateButton } from "@/plane-web/components/issues/worklog/activity/worklog-create-button";
@@ -53,11 +55,16 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   // i18n
   const { t } = useTranslation();
   // hooks
-  const { setValue: setFilterValue, storedValue: selectedFilters } = useLocalStorage(
-    "issue_activity_filters",
-    defaultActivityFilters
-  );
   const { urutan: sortOrder, setUrutan: setSortOrder } = useUrutanAktivitas();
+  // Tanpa nilai awal: `storedValue` null = orang ini belum memilih, jadi bawaan dari
+  // aturan God Mode yang berlaku (dibaca saat render, bukan disalin ke localStorage).
+  const { setValue: setFilterValue, storedValue: storedFilters } = useLocalStorage<TActivityFilters[] | null>(
+    "issue_activity_filters",
+    null
+  );
+  const { get: getAturan } = useAturan();
+  const selectedFilters = efektifFilterAktivitas(storedFilters, getAturan("ACTIVITY_DEFAULT_FILTERS"));
+  const posisiKotak = posisiKotakKomentar(getAturan("COMMENT_BOX_POSITION"), sortOrder);
   // store hooks
   const {
     issue: { getIssueById },
@@ -81,16 +88,15 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   const percakapanTerkunci = disabled || !bolehPercakapan;
   // toggle filter
   const toggleFilter = (filter: TActivityFilters) => {
-    if (!selectedFilters) return;
-    let _filters = [];
+    let nextFilters: TActivityFilters[] = [];
     if (selectedFilters.includes(filter)) {
       if (selectedFilters.length === 1) return selectedFilters; // Ensure at least one filter is applied
-      _filters = selectedFilters.filter((f) => f !== filter);
+      nextFilters = selectedFilters.filter((f) => f !== filter);
     } else {
-      _filters = [...selectedFilters, filter];
+      nextFilters = [...selectedFilters, filter];
     }
 
-    setFilterValue(uniq(_filters));
+    setFilterValue(uniq(nextFilters));
   };
 
   const toggleSortOrder = () => {
@@ -151,7 +157,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
           )}
           <ActivitySortRoot sortOrder={sortOrder} toggleSort={toggleSortOrder} />
           <ActivityFilterRoot
-            selectedFilters={selectedFilters || defaultActivityFilters}
+            selectedFilters={selectedFilters}
             toggleFilter={toggleFilter}
             isIntakeIssue={isIntakeIssue}
             projectId={projectId}
@@ -163,19 +169,19 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
       <div className="space-y-3">
         <div className="min-h-[200px]">
           <div className="space-y-3">
-            {!disabled && sortOrder === E_SORT_ORDER.DESC && renderCommentCreationBox}
+            {!disabled && posisiKotak === "top" && renderCommentCreationBox}
             <IssueActivityCommentRoot
               projectId={projectId}
               workspaceSlug={workspaceSlug}
               isIntakeIssue={isIntakeIssue}
               issueId={issueId}
-              selectedFilters={selectedFilters || defaultActivityFilters}
+              selectedFilters={selectedFilters}
               activityOperations={activityOperations}
               showAccessSpecifier={!!project.anchor}
               disabled={percakapanTerkunci}
               sortOrder={sortOrder}
             />
-            {!disabled && sortOrder === E_SORT_ORDER.ASC && renderCommentCreationBox}
+            {!disabled && posisiKotak === "bottom" && renderCommentCreationBox}
           </div>
         </div>
       </div>

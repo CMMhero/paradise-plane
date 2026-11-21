@@ -34,7 +34,9 @@ from operator import or_
 from django.db.models import Count, Exists, OuterRef, Q, Window
 from django.utils import timezone
 
+from plane.utils import aturan
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.aturan.area_tampilan import ATTENTION_ITEMS_PER_GROUP
 from plane.db.models import (
     IssueAssignee,
     Issue,
@@ -53,11 +55,12 @@ from plane.utils.tanggal_otomatis import batas_terlambat
 from plane.utils.saklar_instance import DIGEST_LOOKAHEAD_DAYS, setelan_angka
 from plane.utils.setelan_instance import hari_ini_kantor
 from plane.utils.statistik_pimpinan import cakupan_angka
+
 # Jendela "rejected" dan "mentioned" dari God Mode (KEP-83); bawaan 14 dan 7 hari.
 from plane.utils.saklar_instance import ATTENTION_MENTION_DAYS, ATTENTION_REJECTED_DAYS
 
-# Baris yang dikirim per kelompok; sisanya cukup berupa angka `count`.
-BATAS_ITEM = 5
+# Baris yang dikirim per kelompok (aturan God Mode ATTENTION_ITEMS_PER_GROUP, bawaan 5);
+# sisanya cukup berupa angka `count`.
 
 _TUNTAS = ("completed", "cancelled")
 # Pengajuan menunggu yang tugasnya sudah Done (data lama, KEP-55) tetap harus
@@ -141,7 +144,8 @@ def _item_via_issue(baris, **tambahan):
 
 def _kelompok(queryset, urutan, bangun=_item):
     """(jumlah, [item]) dari satu kueri `.values(...)`."""
-    baris = list(queryset.annotate(_total=Window(Count("id"))).order_by(*urutan)[:BATAS_ITEM])
+    batas = aturan.get_int(ATTENTION_ITEMS_PER_GROUP)
+    baris = list(queryset.annotate(_total=Window(Count("id"))).order_by(*urutan)[:batas])
     return (baris[0]["_total"] if baris else 0), [bangun(b) for b in baris]
 
 
@@ -200,7 +204,9 @@ def susun_perhatian(user, slug):
     )
 
     # Ditolak dan belum diajukan ulang: hanya baris TERBARU tugas itu yang dihitung.
-    lebih_baru = PersetujuanPenugasan.objects.filter(issue_id=OuterRef("issue_id"), created_at__gt=OuterRef("created_at"))  # noqa: E501
+    lebih_baru = PersetujuanPenugasan.objects.filter(
+        issue_id=OuterRef("issue_id"), created_at__gt=OuterRef("created_at")
+    )  # noqa: E501
     ditolak = (
         _persetujuan(
             project_ids,
@@ -274,7 +280,9 @@ def susun_perhatian(user, slug):
             mentioned_by=b["actor__display_name"],
         ),
     )
-    gabungan = sorted(baris_deskripsi + baris_komentar, key=lambda i: i["mentioned_at"], reverse=True)[:BATAS_ITEM]
+    gabungan = sorted(baris_deskripsi + baris_komentar, key=lambda i: i["mentioned_at"], reverse=True)[
+        : aturan.get_int(ATTENTION_ITEMS_PER_GROUP)
+    ]
     simpan("mentioned", (jumlah_deskripsi + jumlah_komentar, gabungan))
 
     # Bagian atasan. Aturannya dipinjam utuh dari hierarki, tidak dihitung ulang:

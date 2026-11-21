@@ -623,13 +623,21 @@ const en = {
       "The layout a department's work items open in. Applies to every new member and department pairing, including existing members who join a department later.",
     apply_title: "Existing members",
     apply_note:
-      "Saving only affects new accounts and departments. Apply the saved navigation or layout to everyone now. This overwrites what people chose themselves.",
+      "Saving only affects new accounts and departments. Apply the saved navigation, work items, or display to everyone now. This overwrites what people chose themselves.",
+    group_display: "Display",
+    display_note: "What new accounts see first. Each person can still change it in their own preferences.",
+    activity_newest_first: "Activity timeline shows newest first",
+    activity_newest_first_help:
+      "The order of activity and comments on a work item for new accounts. Each person can still flip it.",
     apply_navigation: "Apply navigation to everyone",
-    apply_work_items: "Apply layout to everyone",
+    apply_work_items: "Apply work items to everyone",
+    apply_display: "Apply display to everyone",
+    apply_confirm_display:
+      "Overwrite every member's activity order and Home widgets with the saved defaults? People can change them again afterwards.",
     apply_confirm_navigation:
       "Overwrite every member's pinned menus and department list style with the saved defaults? People can change them again afterwards.",
     apply_confirm_work_items:
-      "Switch every member's work item layout in every department to the saved default? People can change it again afterwards.",
+      "Overwrite every member's work item layout, grouping, order, sub-work items, empty groups and fields on every project with the saved defaults? People can change them again afterwards.",
     apply_unsaved: "Save your changes first; apply uses the saved defaults.",
     apply_yes: "Apply",
     applying: "Applying…",

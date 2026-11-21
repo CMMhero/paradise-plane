@@ -35,7 +35,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
-import { useAturanTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useBidangTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 // plane web components
 // components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
@@ -77,6 +77,8 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
   const opsiAssignee = useOpsiAssignee(workspaceSlug, projectId, issue?.assignee_ids);
   // P29: tugas selesai hanya-lihat; dropdown status tetap hidup untuk yang boleh membukanya kembali.
   const kunciSelesai = useKunciSelesai(workspaceSlug, projectId, issue);
+  // Bidang yang God Mode kunci untuk saya atau buka untuk semua anggota project.
+  const bidang = useBidangTugas(workspaceSlug, projectId, issue);
   if (!issue) return <></>;
 
   const createdByDetails = getUserDetails(issue.created_by);
@@ -102,7 +104,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 value={issue?.state_id}
                 onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { state_id: val })}
                 projectId={projectId?.toString() ?? ""}
-                disabled={kunciSelesai.selesai ? !kunciSelesai.bolehBuka : !isEditable}
+                disabled={kunciSelesai.selesai ? !kunciSelesai.bolehBuka : !bidang.bisa("state", isEditable)}
                 stateIds={kunciSelesai.stateIds}
                 buttonVariant="transparent-with-text"
                 className="group w-full grow"
@@ -144,7 +146,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               <PriorityDropdown
                 value={issue?.priority}
                 onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { priority: val })}
-                disabled={!isEditable}
+                disabled={!bidang.bisa("priority", isEditable)}
                 buttonVariant="transparent-with-text"
                 className="h-7.5 w-full grow rounded-sm"
                 buttonContainerClassName="size-full text-left"
@@ -175,7 +177,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                   })
                 }
                 maxDate={maxDate ?? undefined}
-                disabled={!isEditable}
+                disabled={!bidang.bisa("start_date", isEditable)}
                 buttonVariant="transparent-with-text"
                 className="group w-full grow"
                 buttonContainerClassName="w-full text-left h-7.5"
@@ -229,7 +231,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                     issueOperations.update(workspaceSlug, projectId, issueId, { estimate_point: val })
                   }
                   projectId={projectId}
-                  disabled={!isEditable}
+                  disabled={!bidang.bisa("estimate", isEditable)}
                   buttonVariant="transparent-with-text"
                   className="group w-full grow"
                   buttonContainerClassName="w-full text-left h-7.5"
@@ -279,7 +281,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 projectId={projectId}
                 issueId={issueId}
                 issueOperations={issueOperations}
-                disabled={!isEditable}
+                disabled={!bidang.bisa("parent", isEditable)}
               />
             </SidebarPropertyListItem>
 
@@ -288,7 +290,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
                 issueId={issueId}
-                disabled={!isEditable}
+                disabled={!bidang.bisa("labels", isEditable)}
               />
             </SidebarPropertyListItem>
 

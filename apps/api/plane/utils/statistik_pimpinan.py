@@ -7,7 +7,8 @@
 
 Keputusan user 2026-11-20: angka terlambat, statistik, dan dashboard yang dibaca
 direktur (dan sekretaris, yang jangkauannya sama) tidak memuat tugas buatan staf.
-Supervisor dan manager tetap melihat angka penuh timnya.
+Supervisor dan manager tetap melihat angka penuh timnya. God Mode bisa mematikan
+saringan ini (ORG_VIEW_LEADER_CREATED_ONLY); bawaannya menyala.
 
 Jenjang pembuat = jenjang TERTINGGI orangnya di workspace, bukan jenjang yang
 berlaku di project tugas itu (KEP-93). Manager divisi A yang duduk sebagai staf
@@ -22,6 +23,8 @@ from django.db.models import Exists, OuterRef, Q
 
 from plane.db.models import TINGKAT_SUPERVISOR, JabatanOrganisasi, PermintaanLintasDivisi
 from plane.db.models.hierarki import menjangkau_seluruh_organisasi
+from plane.utils import aturan
+from plane.utils.aturan.area_visibilitas import ORG_VIEW_LEADER_CREATED_ONLY
 from plane.utils.hierarki import tingkat_anggota
 
 
@@ -44,9 +47,16 @@ def q_dibuat_pimpinan():
     return Q(_berjenjang_pimpinan("created_by_id")) | (Q(created_by__isnull=True) & Q(Exists(peminta_pimpinan)))
 
 
+def q_angka_seluruh_organisasi():
+    """Q untuk angka yang dibaca jangkauan seluruh organisasi (mis. laporan direktur)."""
+    return q_dibuat_pimpinan() if aturan.get_bool(ORG_VIEW_LEADER_CREATED_ONLY) else Q()
+
+
 def hanya_buatan_pimpinan(user, workspace_id) -> bool:
     """Apakah angka pimpinan `user` disaring ke tugas buatan Supervisor ke atas."""
-    return menjangkau_seluruh_organisasi(tingkat_anggota(user.id, workspace_id))
+    return aturan.get_bool(ORG_VIEW_LEADER_CREATED_ONLY) and menjangkau_seluruh_organisasi(
+        tingkat_anggota(user.id, workspace_id)
+    )
 
 
 def cakupan_angka(user, workspace_id):

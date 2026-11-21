@@ -118,7 +118,7 @@ export const DashboardWidgets = observer(function DashboardWidgets() {
           />
         </div>
       )}
-      {/* Paling bawah, di luar daftar widget: catatan rilis tidak bisa diatur lewat Manage widgets. */}
+      {/* Paling bawah, di luar daftar widget: catatan rilis tidak bisa diatur lewat Manage widgets. Admin mematikannya lewat aturan God Mode CHANGELOG_RELEASES_SHOWN = 0. */}
       <ChangelogWidget workspaceSlug={workspaceSlug.toString()} />
     </div>
   );
