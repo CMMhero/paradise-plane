@@ -64,7 +64,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useAturanTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useBidangTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
@@ -126,7 +126,10 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   const stateDetails = getStateById(issue.state_id);
   // P29: tugas selesai hanya bisa dibuka kembali, oleh atasan assignee atau admin.
   const kunciSelesai = useKunciSelesai(workspaceSlug?.toString(), issue.project_id, issue);
-  const statusTerkunci = kunciSelesai.selesai && !issue.archived_at ? !kunciSelesai.bolehBuka : isReadOnly;
+  // Kartu hanya mempersempit: bidang yang God Mode kunci untuk saya ikut mati di sini.
+  const { terkunci } = useBidangTugas(workspaceSlug?.toString(), issue.project_id, issue);
+  const statusTerkunci =
+    kunciSelesai.selesai && !issue.archived_at ? !kunciSelesai.bolehBuka : isReadOnly || terkunci("state");
   const opsiAssignee = useOpsiAssignee(workspaceSlug?.toString(), issue.project_id, issue.assignee_ids);
   const subIssueCount = issue?.sub_issues_count ?? 0;
 
@@ -283,7 +286,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
           <PriorityDropdown
             value={issue?.priority}
             onChange={handlePriority}
-            disabled={isReadOnly}
+            disabled={isReadOnly || terkunci("priority")}
             buttonVariant="border-without-text"
             renderByDefault={isMobile}
             showTooltip
@@ -345,7 +348,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             icon={<StartDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
             buttonVariant={issue.start_date ? "border-with-text" : "border-without-text"}
             optionsClassName="z-10"
-            disabled={isReadOnly}
+            disabled={isReadOnly || terkunci("start_date")}
             renderByDefault={isMobile}
             showTooltip
           />
@@ -454,7 +457,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
               value={issue.estimate_point ?? undefined}
               onChange={handleEstimate}
               projectId={issue.project_id}
-              disabled={isReadOnly}
+              disabled={isReadOnly || terkunci("estimate")}
               buttonVariant="border-with-text"
               renderByDefault={isMobile}
               showTooltip
@@ -554,7 +557,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
           value={issue?.label_ids || []}
           defaultOptions={defaultLabelOptions}
           onChange={handleLabel}
-          disabled={isReadOnly}
+          disabled={isReadOnly || terkunci("labels")}
           renderByDefault={isMobile}
           hideDropdownArrow
           maxRender={3}

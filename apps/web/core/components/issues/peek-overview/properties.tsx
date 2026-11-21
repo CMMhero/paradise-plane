@@ -40,7 +40,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
-import { useAturanTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
+import { useAturanTugas, useBidangTugas, useKunciSelesai, useOpsiAssignee } from "@/hooks/use-aturan-tugas";
 import { IssueParentSelectRoot } from "@/plane-web/components/issues/issue-details/parent-select-root";
 import { ApprovalSidebarInfo } from "@/plane-web/components/issues/issue-details/sidebar/approval-info";
 import { DateAlert } from "@/plane-web/components/issues/issue-details/sidebar/date-alert";
@@ -78,6 +78,8 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
   // di sini dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
   const { bisaGantiTenggat } = useAturanTugas();
   const kunciSelesai = useKunciSelesai(workspaceSlug, projectId, issue);
+  // Bidang yang God Mode kunci untuk saya atau buka untuk semua anggota project.
+  const bidang = useBidangTugas(workspaceSlug, projectId, issue);
   if (!issue) return <></>;
   const createdByDetails = getUserDetails(issue?.created_by);
   const projectDetails = getProjectById(issue.project_id);
@@ -99,7 +101,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             value={issue?.state_id}
             onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { state_id: val })}
             projectId={projectId}
-            disabled={kunciSelesai.selesai ? !kunciSelesai.bolehBuka : disabled}
+            disabled={kunciSelesai.selesai ? !kunciSelesai.bolehBuka : !bidang.bisa("state", !disabled)}
             stateIds={kunciSelesai.stateIds}
             buttonVariant="transparent-with-text"
             className="group w-full grow"
@@ -138,7 +140,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
           <PriorityDropdown
             value={issue?.priority}
             onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { priority: val })}
-            disabled={disabled}
+            disabled={!bidang.bisa("priority", !disabled)}
             buttonVariant="transparent-with-text"
             className="h-7.5 w-full grow rounded-sm"
             buttonContainerClassName="w-full text-left h-7.5"
@@ -174,7 +176,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             placeholder={t("issue.add.start_date")}
             buttonVariant="transparent-with-text"
             maxDate={maxDate ?? undefined}
-            disabled={disabled}
+            disabled={!bidang.bisa("start_date", !disabled)}
             className="group w-full grow"
             buttonContainerClassName="w-full text-left h-7.5"
             buttonClassName={`text-body-xs-medium ${issue?.start_date ? "" : "text-placeholder"}`}
@@ -221,7 +223,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
               value={issue.estimate_point ?? undefined}
               onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { estimate_point: val })}
               projectId={projectId}
-              disabled={disabled}
+              disabled={!bidang.bisa("estimate", !disabled)}
               buttonVariant="transparent-with-text"
               className="group w-full grow"
               buttonContainerClassName="w-full text-left h-7.5"
@@ -267,7 +269,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
         <SidebarPropertyListItem icon={ParentPropertyIcon} label={t("common.parent")}>
           <IssueParentSelectRoot
             className="h-7.5 w-full grow"
-            disabled={disabled}
+            disabled={!bidang.bisa("parent", !disabled)}
             issueId={issueId}
             issueOperations={issueOperations}
             projectId={projectId}
@@ -276,7 +278,12 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
         </SidebarPropertyListItem>
 
         <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
-          <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
+          <IssueLabel
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            issueId={issueId}
+            disabled={!bidang.bisa("labels", !disabled)}
+          />
         </SidebarPropertyListItem>
 
         <IssueWorklogProperty

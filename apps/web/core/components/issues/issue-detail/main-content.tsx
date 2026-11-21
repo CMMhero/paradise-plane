@@ -21,6 +21,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser } from "@/hooks/store/user";
+import { useBidangTugas } from "@/hooks/use-aturan-tugas";
 import useReloadConfirmations from "@/hooks/use-reload-confirmation";
 import useSize from "@/hooks/use-window-size";
 // plane web components
@@ -92,6 +93,8 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
     } else if (isSubmitting === "submitting") setShowAlert(true);
     return () => clearTimeout(timer);
   }, [isSubmitting, setShowAlert, setIsSubmitting]);
+  // Judul dan deskripsi bisa dikunci untuk staf atau dibuka untuk semua anggota (God Mode).
+  const bidang = useBidangTugas(workspaceSlug, projectId, issue);
 
   if (!issue || !issue.project_id) return <></>;
 
@@ -137,7 +140,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           isSubmitting={isSubmitting}
           setIsSubmitting={(value) => setIsSubmitting(value)}
           issueOperations={issueOperations}
-          disabled={isArchived || !isEditable}
+          disabled={isArchived || !bidang.bisa("name", isEditable)}
           value={issue.name}
           containerClassName="-ml-3"
         />
@@ -145,7 +148,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
         <DescriptionInput
           issueSequenceId={issue.sequence_id}
           containerClassName="-ml-6 border-none p-0! pl-6!"
-          disabled={isArchived || !isEditable}
+          disabled={isArchived || !bidang.bisa("description", isEditable)}
           editorRef={editorRef}
           entityId={issue.id}
           fileAssetType={EFileAssetType.ISSUE_DESCRIPTION}

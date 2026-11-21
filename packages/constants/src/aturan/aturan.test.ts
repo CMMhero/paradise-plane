@@ -17,7 +17,13 @@ import {
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS,
   WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS,
 } from "../workspace";
-import { ATURAN_WEB, DIRECTOR_SIDEBAR_HIDDEN_KEYS, DIRECTOR_SIDEBAR_HIDES_CHOICES, nilaiAturanWeb } from "./index";
+import {
+  ATURAN_WEB,
+  BIDANG_TUGAS,
+  DIRECTOR_SIDEBAR_HIDDEN_KEYS,
+  DIRECTOR_SIDEBAR_HIDES_CHOICES,
+  nilaiAturanWeb,
+} from "./index";
 import type { TKunciAturanWeb } from "./index";
 
 const ROOT = new URL("../../../../", import.meta.url);
@@ -129,5 +135,14 @@ describe("DIRECTOR_SIDEBAR_HIDES", () => {
       for (const kunci of DIRECTOR_SIDEBAR_HIDDEN_KEYS[pilihan])
         expect(kunciMenu, `${pilihan}: ${kunci}`).toContain(kunci);
     }
+  });
+});
+
+describe("BIDANG_TUGAS", () => {
+  it("sama dengan PILIHAN_BIDANG di area_tugas.py, urutan ikut", () => {
+    const blok = /^PILIHAN_BIDANG = \(\s*$([\s\S]*?)^\)\s*$/m.exec(baca(`${DIR_API}area_tugas.py`));
+    expect(blok).not.toBeNull();
+    const python = [...(blok?.[1] ?? "").matchAll(/^\s*\("([a-z_]+)",/gm)].map((m) => m[1]);
+    expect([...BIDANG_TUGAS]).toEqual(python);
   });
 });

@@ -9,7 +9,8 @@ import { useContext } from "react";
 import { useParams } from "next/navigation";
 import useSWR, { type SWRConfiguration } from "swr";
 import { EUserPermissionsLevel } from "@plane/constants";
-import { TINGKAT_LEADER, TINGKAT_SUPERVISOR } from "@plane/services";
+import type { TBidangTugas } from "@plane/constants";
+import { TINGKAT_LEADER } from "@plane/services";
 import type { TIssue, TIssueServiceType } from "@plane/types";
 import { EUserProjectRoles } from "@plane/types";
 // hooks
@@ -17,6 +18,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useAturan } from "@/hooks/use-aturan";
 import { StoreContext } from "@/lib/store-context";
 // services
 import { IssueService } from "@/services/issue";
@@ -187,6 +189,12 @@ export const useBisaDitugaskan = (
   bawahanIds: string[];
   adminPenuh: boolean;
   aturan: TAturanTugas;
+  /** Hak per orang dari aturan God Mode area B; dihitung server, bukan di sini. */
+  ubahSemua: boolean;
+  komentarSemua: boolean;
+  bidangTerkunci: TBidangTugas[];
+  bidangTerbuka: TBidangTugas[];
+  bukaKembali: "semua" | "bawahan" | null;
 } => {
   const kunci = kunciBisaDitugaskan(workspaceSlug, projectId);
   const { data, isLoading } = useSWR(
@@ -204,6 +212,11 @@ export const useBisaDitugaskan = (
       bawahanIds: [],
       adminPenuh: false,
       aturan: gabungAturan(data?.aturan),
+      ubahSemua: false,
+      komentarSemua: false,
+      bidangTerkunci: [],
+      bidangTerbuka: [],
+      bukaKembali: null,
     };
   const users = (data.users ?? []).map((u) => u.id);
   const ids = users.length > 0 ? users : (data.user_ids ?? []);
@@ -217,6 +230,11 @@ export const useBisaDitugaskan = (
     bawahanIds: data.bawahan_ids ?? [],
     adminPenuh: data.admin_penuh ?? false,
     aturan: gabungAturan(data.aturan),
+    ubahSemua: data.ubah_semua_tugas ?? false,
+    komentarSemua: data.komentar_semua_tugas ?? false,
+    bidangTerkunci: data.bidang_terkunci ?? [],
+    bidangTerbuka: data.bidang_terbuka ?? [],
+    bukaKembali: data.buka_kembali ?? null,
   };
 };
 
@@ -264,6 +282,7 @@ type TugasKepemilikan = {
  *     Leader/supervisor+                boleh kalau SEMUA assignee bawahannya
  *                                       (bawahan Leader = Staf departemennya)
  *                                       (tanpa assignee: boleh, sama dengan server)
+ *     God Mode TASK_EDIT_RULE           "semua anggota": boleh (`ubahSemua` dari server)
  *     sisanya                           hanya lihat
  *
  * Belum dimuat: pembuat/assignee langsung boleh (tidak berkedip untuk pemilik),
@@ -283,8 +302,53 @@ export const useBolehUbahTugas = (
  * Keputusan user 2026-11-17: sama persis dengan hak ubah. Server memakai aturan
  * yang sama (`galat_percakapan_tugas` = `galat_ubah_tugas`), jadi di sini juga
  * satu penilai, bukan salinan: kalau aturan ubah berubah, keduanya ikut.
+ * God Mode TASK_COMMENT_RULE "semua anggota" (`komentarSemua`) membukanya untuk
+ * tugas yang tidak terkunci karena selesai.
  */
-export const useBolehPercakapanTugas = useBolehUbahTugas;
+export const useBolehPercakapanTugas = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined,
+  issue: TugasKepemilikan | undefined | null
+): boolean => {
+  const bolehUbah = useBolehUbahTugas(workspaceSlug, projectId, issue);
+  const selesai = useTugasSelesai()(issue);
+  const { memuat, komentarSemua } = useBisaDitugaskan(workspaceSlug, projectId);
+  return bolehUbah || (!!issue && !memuat && komentarSemua && !selesai);
+};
+
+/**
+ * Bidang tugas yang God Mode kunci untuk saya atau buka untuk semua anggota
+ * (`TASK_FIELDS_LOCKED_FOR_STAFF`, `TASK_FIELDS_OPEN_TO_MEMBERS`), cermin
+ * utils/bidang_tugas.py lewat `galat_ubah_tugas`. Daftarnya per orang dari
+ * `bisa-ditugaskan/`; server tetap penegaknya.
+ *
+ *     terkunci(b)       bidang ini tidak boleh saya ubah di tugas mana pun
+ *     bisa(b, dasar)    boleh mengubah bidang ini; `dasar` = hak ubah tugasnya
+ *                       (mis. `isEditable`). Bidang terbuka hanya untuk anggota
+ *                       project, dan tidak untuk tugas selesai atau diarsipkan.
+ */
+export const useBidangTugas = (
+  workspaceSlug: string | undefined,
+  projectId: string | null | undefined,
+  issue: (TugasKepemilikan & { archived_at?: string | null }) | undefined | null
+): { terkunci: (bidang: TBidangTugas) => boolean; bisa: (bidang: TBidangTugas, dasar: boolean) => boolean } => {
+  const { bidangTerkunci, bidangTerbuka } = useBisaDitugaskan(workspaceSlug, projectId);
+  const selesai = useTugasSelesai()(issue);
+  const { allowPermissions } = useUserPermissions();
+  const anggota = allowPermissions(
+    [EUserProjectRoles.ADMIN, EUserProjectRoles.MEMBER],
+    EUserPermissionsLevel.PROJECT,
+    workspaceSlug,
+    projectId ?? undefined
+  );
+  const terkunci = (bidang: TBidangTugas) => bidangTerkunci.includes(bidang);
+  return {
+    terkunci,
+    bisa: (bidang, dasar) =>
+      !terkunci(bidang) &&
+      (dasar || (!!issue && anggota && !selesai && !issue.archived_at && bidangTerbuka.includes(bidang))),
+  };
+};
 
 /**
  * Apakah saya pembuat atau assignee salah satu sub-work item langsung dari
@@ -323,17 +387,25 @@ export const usePenilaiUbahTugas = (
   return (issue) => !selesai(issue) && milik(issue);
 };
 
-/** True kalau status tugas ini di grup `completed` (cermin `tugas_selesai` server). */
+/**
+ * True kalau tugas ini terkunci karena selesai: statusnya di grup `completed` dan
+ * God Mode LOCK_COMPLETED_TASKS menyala (cermin `tugas_terkunci` server).
+ */
 export const useTugasSelesai = (): ((issue: TugasKepemilikan | undefined | null) => boolean) => {
   const { getStateById } = useProjectState();
-  return (issue) => !!issue?.state_id && getStateById(issue.state_id)?.group === "completed";
+  const kunci = useAturan().get("LOCK_COMPLETED_TASKS");
+  return (issue) => kunci && !!issue?.state_id && getStateById(issue.state_id)?.group === "completed";
 };
 
-/** Aturan milik `galat_ubah_tugas` tanpa kunci selesai: dipakai hak hapus/arsip, yang tetap seperti dulu. */
+/**
+ * Aturan milik `galat_ubah_tugas` tanpa kunci selesai: dipakai juga hak hapus/arsip.
+ * `perluas=false` = tangga jenjang saja, tanpa TASK_EDIT_RULE "semua anggota"
+ * (`ikut_setelan_ubah=False` di server, jalur hapus bawaan).
+ */
 const usePenilaiKepemilikan = (
   workspaceSlug: string | undefined,
   projectId: string | null | undefined
-): ((issue: (TugasKepemilikan & { project_id?: string | null }) | undefined | null) => boolean) => {
+): ((issue: (TugasKepemilikan & { project_id?: string | null }) | undefined | null, perluas?: boolean) => boolean) => {
   const { data: currentUser } = useUser();
   const { data: statusAdmin } = useSWR(
     currentUser?.id ? "STATUS_SUPER_ADMIN" : null,
@@ -342,7 +414,7 @@ const usePenilaiKepemilikan = (
   );
   const wewenang = useBisaDitugaskan(workspaceSlug, projectId);
   const bawahan = new Set(wewenang.bawahanIds);
-  return (issue) => {
+  return (issue, perluas = true) => {
     if (!issue) return false;
     if (statusAdmin?.is_instance_admin) return true;
     const idSaya = currentUser?.id;
@@ -352,6 +424,7 @@ const usePenilaiKepemilikan = (
     if (issue.project_id && projectId && issue.project_id !== projectId) return false;
     if (wewenang.memuat) return false;
     if (!wewenang.gerbangAktif || wewenang.adminPenuh) return true;
+    if (perluas && wewenang.ubahSemua) return true;
     if (wewenang.tingkat == null || wewenang.tingkat < TINGKAT_LEADER) return false;
     return assignees.every((id) => bawahan.has(id));
   };
@@ -360,9 +433,9 @@ const usePenilaiKepemilikan = (
 /**
  * Kunci tugas selesai (P29), cermin `kunci_selesai.py` server. Untuk dropdown status:
  *
- *     selesai     tugasnya di grup `completed`, semua kontrol lain hanya-lihat
- *     bolehBuka   Super Admin, admin workspace, atau Supervisor+ yang semua
- *                 assignee-nya bawahannya (Leader tidak)
+ *     selesai     tugasnya di grup `completed` dan kuncinya menyala, semua kontrol lain hanya-lihat
+ *     bolehBuka   Super Admin, admin workspace, atau jenjang REOPEN_MIN_LEVEL+ yang
+ *                 semua assignee-nya bawahannya (`buka_kembali` dari server)
  *     stateIds    pilihan status saat membuka kembali: semua kecuali grup selesai
  */
 export const useKunciSelesai = (
@@ -385,9 +458,8 @@ export const useKunciSelesai = (
     !!statusAdmin?.is_instance_admin ||
     (!wewenang.memuat &&
       (wewenang.adminPenuh ||
-        (wewenang.tingkat != null &&
-          wewenang.tingkat >= TINGKAT_SUPERVISOR &&
-          (issue?.assignee_ids ?? []).every((id) => bawahan.has(id)))));
+        wewenang.bukaKembali === "semua" ||
+        (wewenang.bukaKembali === "bawahan" && (issue?.assignee_ids ?? []).every((id) => bawahan.has(id)))));
   const stateIds = (getProjectStates(projectId) ?? []).filter((s) => s.group !== "completed").map((s) => s.id);
   return { selesai, bolehBuka, stateIds };
 };
@@ -424,6 +496,7 @@ export const useAturanTugas = (workspaceSlug?: string, projectId?: string | null
   const bolehUbah = usePenilaiUbahTugas(konteks.slug, konteks.projectId);
   const { data: currentUser } = useUser();
   const { allowPermissions } = useUserPermissions();
+  const adminIntakeBolehTenggat = useAturan().get("INTAKE_ADMIN_SETS_DUE_DATE");
 
   // Status Super Admin tidak ikut di payload `me`, jadi diambil dari endpoint
   // khususnya. Kuncinya tetap, jadi SWR menyimpannya untuk seluruh sesi dan
@@ -479,7 +552,8 @@ export const useAturanTugas = (workspaceSlug?: string, projectId?: string | null
      * NULL) tidak akan pernah bisa diberi tenggat oleh siapa pun.
      *
      * Begitu tugasnya diterima ke papan (`sudahDiterima`), pengecualian ini
-     * berhenti dan `bisaGantiTenggat` yang berlaku.
+     * berhenti dan `bisaGantiTenggat` yang berlaku. God Mode
+     * INTAKE_ADMIN_SETS_DUE_DATE mematikan pengecualiannya.
      */
     bisaGantiTenggatIntake: (
       issue: PembuatTugas | undefined | null,
@@ -488,6 +562,7 @@ export const useAturanTugas = (workspaceSlug?: string, projectId?: string | null
     ) =>
       bisaGantiTenggat(issue) ||
       (!sudahDiterima &&
+        adminIntakeBolehTenggat &&
         allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT, undefined, idProject)),
 
     /** Lima aturan God Mode (bawaan = perilaku lama selama belum dimuat). */
@@ -506,7 +581,8 @@ export const useAturanTugas = (workspaceSlug?: string, projectId?: string | null
  *     1  pembuat saja
  *     2  siapa pun yang boleh MENGUBAH tugas itu -> `useBolehUbahTugas`
  *     0  (bawaan)
- *     gerbang hierarki aktif   sama dengan hak UBAH (KEP-27) -> `useBolehUbahTugas`
+ *     gerbang hierarki aktif   hak UBAH menurut tangga jenjang (KEP-27), tanpa
+ *                              TASK_EDIT_RULE "semua anggota"
  *     gerbang mati             pembuat, admin project, atau Super Admin
  *
  * `terkunci` selalu False sejak 2026-10-24 (tidak ada lagi kunci menunggu;
@@ -525,14 +601,15 @@ export const useBolehHapus = (
     OPSI_HAK_AKSES
   );
   // Hapus/arsip tidak ikut kunci selesai (P29): arsip justru mensyaratkan selesai.
-  const bolehUbah = usePenilaiKepemilikan(workspaceSlug, projectId)(issue);
+  const penilai = usePenilaiKepemilikan(workspaceSlug, projectId);
+  const bolehUbah = penilai(issue);
   const { memuat, gerbangAktif, aturan } = useBisaDitugaskan(workspaceSlug, projectId);
   if (!issue) return { boleh: false, terkunci: false };
   const adalahPembuat = !!currentUser?.id && issue.created_by === currentUser.id;
   if (aturan.hapus_tugas === ATURAN_HAPUS_PEMBUAT_SAJA)
     return { boleh: !!statusAdmin?.is_instance_admin || adalahPembuat, terkunci: false };
   if (aturan.hapus_tugas === ATURAN_HAPUS_YANG_BOLEH_UBAH) return { boleh: bolehUbah, terkunci: false };
-  if (memuat || gerbangAktif) return { boleh: bolehUbah, terkunci: false };
+  if (memuat || gerbangAktif) return { boleh: penilai(issue, false), terkunci: false };
   const boleh =
     !!statusAdmin?.is_instance_admin ||
     adalahPembuat ||
