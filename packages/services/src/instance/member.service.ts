@@ -175,6 +175,22 @@ export type TMemberPreferencesUpdate = {
 /** Semua saklar tanpa `ikut_bawaan_jabatan`: isi satu kolom tabel bawaan jabatan. */
 export type TSaklarEmail = Omit<TMemberPreferences["notifications"], "ikut_bawaan_jabatan">;
 
+/**
+ * Bawaan work items. `layout` ditulis tangan di halaman Bawaan member; sisanya datang dari
+ * aturan registri (`apply_section = "work_items"`).
+ */
+export type TMemberWorkItemDefaults = {
+  layout: TWorkItemLayout;
+  /** Kunci pengelompokan; "none" = tanpa pengelompokan. */
+  group_by: string;
+  order_by: string;
+  /** Tampilkan sub work item di daftar. */
+  sub_issue: boolean;
+  show_empty_groups: boolean;
+  /** Kunci properti yang tampil di tiap kartu atau baris. */
+  display_properties: string[];
+};
+
 /** Setelan akun baru di God Mode (KEP-44). Cermin `PABRIK` di plane/utils/bawaan_member.py. */
 export type TMemberDefaults = {
   /** Ditulis sekali saat akun lahir; akun lama tidak berubah. */
@@ -188,10 +204,14 @@ export type TMemberDefaults = {
   keanggotaan: { workspace_role: 5 | 15; tingkat: 10 | 20 | 30 | null };
   /** Ditulis saat baris preferensi sidebar orangnya lahir. */
   navigasi: TMemberNavigation;
-  /** Bawaan kolom per project; berlaku untuk tiap member+project baru. */
-  work_items: { layout: TWorkItemLayout };
-  /** Bawaan tampilan yang dideklarasikan di registri aturan (urutan linimasa aktivitas). */
-  tampilan: { aktivitas_terbaru_di_atas: boolean };
+  /** Bawaan daftar work item per project; berlaku untuk tiap member+project baru. */
+  work_items: TMemberWorkItemDefaults;
+  /** Bawaan tampilan yang dideklarasikan di registri aturan (urutan linimasa aktivitas, widget Home). */
+  tampilan: {
+    aktivitas_terbaru_di_atas: boolean;
+    /** Widget Home yang hidup, dari atas ke bawah; yang tidak tercantum mati. */
+    home_widgets: string[];
+  };
 };
 
 /** Bagian yang bisa diterapkan ke member LAMA sekaligus. */
@@ -222,7 +242,7 @@ export type TMemberDefaultsUpdate = {
   };
   keanggotaan?: Partial<TMemberDefaults["keanggotaan"]>;
   navigasi?: TMemberPreferencesUpdate["navigasi"];
-  work_items?: { layout?: TWorkItemLayout };
+  work_items?: Partial<TMemberWorkItemDefaults>;
   tampilan?: Partial<TMemberDefaults["tampilan"]>;
 };
 
