@@ -18,6 +18,7 @@ import { cn } from "@plane/utils";
 // hooks
 import { useUserPermissions } from "@/hooks/store/user";
 import {
+  useDepartmentsMenu,
   usePersonalNavigationPreferences,
   useProjectNavigationPreferences,
   useWorkspaceNavigationPreferences,
@@ -79,6 +80,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
   } = usePersonalNavigationPreferences();
   const {
     preferences: projectPreferences,
+    storedNavigationMode,
     updateNavigationMode,
     updateShowLimitedProjects,
     updateLimitedProjectsCount,
@@ -88,6 +90,12 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
     toggleWorkspaceItem,
     updateWorkspaceItemOrder,
   } = useWorkspaceNavigationPreferences();
+
+  const {
+    isAllowedByInstance: isDepartmentsAllowed,
+    isChosenByMember: isDepartmentsChosen,
+    setChosenByMember: setDepartmentsChosen,
+  } = useDepartmentsMenu();
 
   // local state for limited projects count input
   const [projectCountInput, setProjectCountInput] = useState(projectPreferences.limitedProjectsCount.toString());
@@ -293,11 +301,31 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
 
             <div className="rounded-md border border-subtle bg-surface-2 px-2 py-2">
               <div className="space-y-3">
+                {/* Department list on/off. The Super Admin's switch wins, so a member can't undo it. */}
+                <div className="space-y-1">
+                  <label
+                    className={cn("flex items-center gap-2 rounded-item px-2 py-1.5 transition-colors", {
+                      "cursor-pointer hover:bg-layer-transparent-hover": isDepartmentsAllowed,
+                      "cursor-not-allowed opacity-60": !isDepartmentsAllowed,
+                    })}
+                  >
+                    <Checkbox
+                      checked={isDepartmentsAllowed && isDepartmentsChosen}
+                      disabled={!isDepartmentsAllowed}
+                      onChange={(e) => simpanPreferensiProject(setDepartmentsChosen(e.target.checked))}
+                    />
+                    <span className="text-13 text-primary">{t("departments_menu.label")}</span>
+                  </label>
+                  {!isDepartmentsAllowed && (
+                    <p className="pl-8 text-11 text-tertiary">{t("departments_menu.off_by_admin")}</p>
+                  )}
+                </div>
+
                 {/* Navigation Mode Radio Buttons */}
                 <RadioGroup
                   name="navigation-mode"
                   aria-label={t("projects")}
-                  value={projectPreferences.navigationMode}
+                  value={storedNavigationMode}
                   onValueChange={(mode) =>
                     simpanPreferensiProject(updateNavigationMode(mode as TProjectNavigationMode))
                   }

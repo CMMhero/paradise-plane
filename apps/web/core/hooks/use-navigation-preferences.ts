@@ -22,6 +22,8 @@ import {
   DEFAULT_WORKSPACE_PREFERENCES,
   DEFAULT_APP_RAIL_PREFERENCES,
 } from "@plane/types";
+import { isParadiseModuleEnabled } from "@/lib/paradise-modules";
+import { useInstance } from "./store/use-instance";
 import { useWorkspace } from "./store/use-workspace";
 import useLocalStorage from "./use-local-storage";
 
@@ -114,15 +116,54 @@ export const usePersonalNavigationPreferences = () => {
   };
 };
 
+/** Key of the `WorkspaceUserPreference` row that stores the member's choice for the department list. */
+const DEPARTMENTS_PREFERENCE_KEY = "departments";
+
+/**
+ * The sidebar's department list (divisions > departments). Two switches: the
+ * Super Admin's (God Mode > Visibility, module `departments`) and the member's own
+ * (Customize navigation). The admin switch wins: a member's choice never turns on
+ * what the instance turned off. Hiding is presentation only, access is unchanged.
+ * No stored row (not loaded yet, or an old account) counts as shown.
+ */
+export const useDepartmentsMenu = () => {
+  const { workspaceSlug } = useParams();
+  const { config } = useInstance();
+  const { getNavigationPreferences, updateBulkSidebarPreferences } = useWorkspace();
+
+  const stored = getNavigationPreferences(workspaceSlug?.toString() || "")?.[DEPARTMENTS_PREFERENCE_KEY];
+  const isAllowedByInstance = isParadiseModuleEnabled(config, "departments");
+  const isChosenByMember = stored?.is_pinned ?? true;
+
+  const setChosenByMember = useCallback(
+    async (show: boolean) => {
+      if (!workspaceSlug) return;
+      await updateBulkSidebarPreferences(workspaceSlug.toString(), [
+        { key: DEPARTMENTS_PREFERENCE_KEY, is_pinned: show, sort_order: stored?.sort_order ?? 0 },
+      ]);
+    },
+    [workspaceSlug, stored?.sort_order, updateBulkSidebarPreferences]
+  );
+
+  return {
+    /** What the sidebar renders. */
+    isVisible: isAllowedByInstance && isChosenByMember,
+    isAllowedByInstance,
+    isChosenByMember,
+    setChosenByMember,
+  };
+};
+
 export const useProjectNavigationPreferences = () => {
   const { workspaceSlug } = useParams();
   const { getProjectNavigationPreferences, updateProjectNavigationPreferences } = useWorkspace();
+  const { isVisible: isDepartmentsMenuVisible } = useDepartmentsMenu();
 
   // Get preferences from the store
   const storePreferences = getProjectNavigationPreferences(workspaceSlug?.toString() || "");
 
   // Computed preferences with fallback logic: API → defaults
-  const preferences: TProjectNavigationPreferences = useMemo(() => {
+  const storedPreferences: TProjectNavigationPreferences = useMemo(() => {
     // 1. Try API data first
     if (
       storePreferences &&
@@ -141,6 +182,13 @@ export const useProjectNavigationPreferences = () => {
     // 2. Fall back to defaults
     return DEFAULT_PROJECT_PREFERENCES;
   }, [storePreferences]);
+
+  // Accordion mode puts a department's tabs inside the sidebar list. With the list
+  // hidden there is nowhere to show them, so the tabs fall back to the horizontal bar.
+  const preferences: TProjectNavigationPreferences = useMemo(
+    () => (isDepartmentsMenuVisible ? storedPreferences : { ...storedPreferences, navigationMode: "TABBED" }),
+    [isDepartmentsMenuVisible, storedPreferences]
+  );
 
   // Update navigation mode
   const updateNavigationMode = useCallback(
@@ -183,6 +231,8 @@ export const useProjectNavigationPreferences = () => {
 
   return {
     preferences,
+    /** The member's saved mode, even while the department list is hidden. */
+    storedNavigationMode: storedPreferences.navigationMode,
     updateNavigationMode,
     updateShowLimitedProjects,
     updateLimitedProjectsCount,
