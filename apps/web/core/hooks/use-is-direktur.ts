@@ -11,10 +11,11 @@ import { useMemberProfile } from "@/components/member-profile/use-member-profile
 import { useUser } from "@/hooks/store/user";
 
 /**
- * Item sidebar yang tidak ditampilkan untuk Direktur (jenjang 40). Analitik dan
+ * Item sidebar yang tidak ditampilkan untuk Direktur (jenjang 40). Pekerjaan Anda
+ * sudah dibuka lagi; yang tersisa Arsip. Analitik dan
  * Dasbor Divisi ikut tersembunyi lewat tab di halaman KPI (`kinerja/layout.tsx`).
  */
-export const DIRECTOR_HIDDEN_NAV_KEYS: readonly string[] = ["your_work", "archives"];
+export const DIRECTOR_HIDDEN_NAV_KEYS: readonly string[] = ["archives"];
 
 /**
  * Apakah penonton adalah Direktur, dibaca dari penempatan di profilnya sendiri

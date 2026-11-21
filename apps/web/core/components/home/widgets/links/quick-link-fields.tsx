@@ -11,15 +11,17 @@ import { useState } from "react";
 import type { Control, FieldErrors } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "@plane/i18n";
-import { EmojiIconPickerTypes, EmojiPicker, Logo } from "@plane/propel/emoji-icon-picker";
+import { EmojiIconPickerTypes, EmojiPicker } from "@plane/propel/emoji-icon-picker";
 import { CloseIcon, LinkIcon } from "@plane/propel/icons";
-import type { TLogoProps } from "@plane/types";
+import type { TLogoProps, TQuickLinkLogoProps } from "@plane/types";
 import { Input } from "@plane/ui";
+import { QuickLinkImageField } from "./quick-link-image-field";
+import { QuickLinkLogoView } from "./quick-link-logo";
 
 export type TQuickLinkFormValues = {
   url: string;
   title: string;
-  logo_props: TLogoProps | null;
+  logo_props: TQuickLinkLogoProps | null;
 };
 
 export const EMPTY_QUICK_LINK_FORM: TQuickLinkFormValues = { url: "", title: "", logo_props: null };
@@ -58,6 +60,8 @@ type Props = {
 export function QuickLinkFields({ control, errors, siteTitle }: Props) {
   const { t } = useTranslation();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  // Opened by the toggle, or already true when editing a link that has an image icon.
+  const [wantsImage, setWantsImage] = useState(false);
   return (
     <div className="mt-2 space-y-3">
       <div>
@@ -107,11 +111,16 @@ export function QuickLinkFields({ control, errors, siteTitle }: Props) {
                       title={t("quick_links_ui.icon_label")}
                       aria-label={t("quick_links_ui.icon_label")}
                     >
-                      {value ? <Logo logo={value} size={18} /> : <LinkIcon className="size-4 text-tertiary" />}
+                      {value && (value.in_use !== "image" || value.image?.data) ? (
+                        <QuickLinkLogoView logo={value} size={18} alt="" />
+                      ) : (
+                        <LinkIcon className="size-4 text-tertiary" />
+                      )}
                     </span>
                   }
                   onChange={(picked: TPickerValue) => {
                     onChange(toLogoProps(picked));
+                    setWantsImage(false);
                     setIsPickerOpen(false);
                   }}
                   defaultIconColor={value?.in_use === "icon" ? value.icon?.color : undefined}
@@ -121,7 +130,10 @@ export function QuickLinkFields({ control, errors, siteTitle }: Props) {
                   // Sibling, not inside the picker: a button cannot sit inside the picker's own button.
                   <ClearButton
                     label={t("quick_links_ui.reset_icon")}
-                    onClick={() => onChange(null)}
+                    onClick={() => {
+                      onChange(null);
+                      setWantsImage(false);
+                    }}
                     className="absolute -top-1.5 -right-1.5 size-4 border-[0.5px] border-subtle bg-surface-1"
                   />
                 )}
@@ -155,6 +167,35 @@ export function QuickLinkFields({ control, errors, siteTitle }: Props) {
         </div>
         <span className="mt-1 block text-11 text-tertiary">{t("quick_links_ui.icon_hint")}</span>
       </div>
+      <Controller
+        control={control}
+        name="logo_props"
+        render={({ field: { value, onChange } }) =>
+          wantsImage || value?.in_use === "image" ? (
+            <div className="space-y-1.5">
+              <QuickLinkImageField value={value} onChange={onChange} />
+              <button
+                type="button"
+                onClick={() => {
+                  setWantsImage(false);
+                  if (value?.in_use === "image") onChange(null);
+                }}
+                className="text-11 text-accent-primary hover:underline focus-visible:outline-accent-strong"
+              >
+                {t("quick_links_ui.image_toggle_off")}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setWantsImage(true)}
+              className="text-12 text-accent-primary hover:underline focus-visible:outline-accent-strong"
+            >
+              {t("quick_links_ui.image_toggle")}
+            </button>
+          )
+        }
+      />
     </div>
   );
 }
