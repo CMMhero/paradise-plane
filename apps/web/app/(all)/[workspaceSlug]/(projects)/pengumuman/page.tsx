@@ -143,6 +143,7 @@ function PengumumanPage() {
     <>
       <PageHead title={t("pengumuman_ui.title")} />
       <PageShell>
+        <PageShell.Header title={t("pengumuman_ui.title")} />
         {kanal?.boleh_kirim ? (
           <div className="flex flex-col gap-2 rounded-card border border-subtle bg-surface-1 p-3">
             <TextArea

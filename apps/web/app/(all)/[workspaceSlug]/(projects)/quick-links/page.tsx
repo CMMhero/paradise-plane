@@ -67,6 +67,7 @@ function WorkspaceQuickLinksPage() {
         </div>
       ) : (
         <PageShell width="wide" className="relative">
+          <PageShell.Header title={t("home.quick_links.title_plural")} />
           <SharedQuickLinks workspaceSlug={workspaceSlug} isManageView />
           {hasSharedSection && (
             <div className="mb-2 text-12 font-medium text-tertiary">{t("quick_links_ui.my_links")}</div>

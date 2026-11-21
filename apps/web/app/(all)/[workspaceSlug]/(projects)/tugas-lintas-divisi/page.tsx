@@ -365,7 +365,7 @@ function TugasLintasDivisiPage() {
       <PageHead title={t("persetujuan_p29.nav_requests")} />
 
       <PageShell>
-        <p className="text-12 text-tertiary">{t("persetujuan_p29.requests_intro")}</p>
+        <PageShell.Header title={t("persetujuan_p29.nav_requests")} description={t("persetujuan_p29.requests_intro")} />
 
         {gagalMuat ? (
           <div
