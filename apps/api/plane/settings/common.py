@@ -172,8 +172,8 @@ REST_FRAMEWORK = {
     "SCHEMA_COERCE_PATH_PK": False,
 }
 
-# API key throttle rate (DRF SimpleRateThrottle format, e.g. "60/minute")
-API_KEY_RATE_LIMIT = os.environ.get("API_KEY_RATE_LIMIT", "60/minute")
+# API key throttle rate: God Mode API_KEY_REQUESTS_PER_MINUTE, read per request
+# (plane/api/rate_limit.py). The old API_KEY_RATE_LIMIT env only seeds its default.
 
 # Django Auth Backend
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)  # default
@@ -292,7 +292,8 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Password reset time the number of seconds the uniquely generated uid will be valid
+# Fallback for Django's stock token generator only. Paradise reset links use
+# TokenResetSandi, whose lifetime is God Mode PASSWORD_RESET_LINK_MINUTES.
 PASSWORD_RESET_TIMEOUT = 3600
 
 # Static files (CSS, JavaScript, Images)
@@ -436,11 +437,13 @@ SESSION_ENGINE = "plane.db.models.session"
 SESSION_COOKIE_AGE = int(os.environ.get("SESSION_COOKIE_AGE", 604800))
 SESSION_COOKIE_NAME = os.environ.get("SESSION_COOKIE_NAME", "session-id")
 SESSION_COOKIE_DOMAIN = os.environ.get("COOKIE_DOMAIN", None)
-SESSION_SAVE_EVERY_REQUEST = os.environ.get("SESSION_SAVE_EVERY_REQUEST", "0") == "1"
+# Sliding app sessions and the God Mode session length are God Mode rules
+# (APP_SESSION_SLIDING, GOD_MODE_SESSION_MINUTES), read per request in
+# plane/authentication/middleware/session.py. The old SESSION_SAVE_EVERY_REQUEST
+# and ADMIN_SESSION_COOKIE_AGE env only seed their defaults.
 
 # Admin Cookie
 ADMIN_SESSION_COOKIE_NAME = "admin-session-id"
-ADMIN_SESSION_COOKIE_AGE = int(os.environ.get("ADMIN_SESSION_COOKIE_AGE", 3600))
 
 # CSRF cookies
 CSRF_COOKIE_SECURE = secure_origins
@@ -492,101 +495,9 @@ WEB_URL = os.environ.get("WEB_URL")
 # Instance Changelog URL
 INSTANCE_CHANGELOG_URL = os.environ.get("INSTANCE_CHANGELOG_URL", "")
 
-ATTACHMENT_MIME_TYPES = [
-    # Images
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/svg+xml",
-    "image/webp",
-    "image/tiff",
-    "image/bmp",
-    # Documents
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
-    "text/markdown",
-    "application/rtf",
-    "application/vnd.oasis.opendocument.spreadsheet",
-    "application/vnd.oasis.opendocument.text",
-    "application/vnd.oasis.opendocument.presentation",
-    "application/vnd.oasis.opendocument.graphics",
-    # Microsoft Visio
-    "application/vnd.visio",
-    # Netpbm format
-    "image/x-portable-graymap",
-    "image/x-portable-bitmap",
-    "image/x-portable-pixmap",
-    # Open Office Bae
-    "application/vnd.oasis.opendocument.database",
-    # Audio
-    "audio/mpeg",
-    "audio/wav",
-    "audio/ogg",
-    "audio/midi",
-    "audio/x-midi",
-    "audio/aac",
-    "audio/flac",
-    "audio/x-m4a",
-    # Video
-    "video/mp4",
-    "video/mpeg",
-    "video/ogg",
-    "video/webm",
-    "video/quicktime",
-    "video/x-msvideo",
-    "video/x-ms-wmv",
-    # Keluaran bawaan OBS. Peramban tidak bisa memutarnya, jadi ia sengaja
-    # TIDAK diberi pemutar sebaris di editor dan jatuh ke kartu unduh. Tetap
-    # diterima karena pemilik instance meminta semua tipe berkas boleh masuk,
-    # dan menolaknya di server berarti orang kehilangan rekamannya, bukan
-    # sekadar kehilangan pratinjaunya.
-    "video/x-matroska",
-    # Archives
-    "application/zip",
-    "application/x-rar",
-    "application/x-rar-compressed",
-    "application/x-tar",
-    "application/gzip",
-    "application/x-zip",
-    "application/x-zip-compressed",
-    "application/x-7z-compressed",
-    "application/x-compressed",
-    "application/x-compressed-tar",
-    "application/x-compressed-tar-gz",
-    "application/x-compressed-tar-bz2",
-    "application/x-compressed-tar-zip",
-    "application/x-compressed-tar-7z",
-    "application/x-compressed-tar-rar",
-    "application/x-compressed-tar-zip",
-    # 3D Models
-    "model/gltf-binary",
-    "model/gltf+json",
-    "application/octet-stream",  # for .obj files, but be cautious
-    # Fonts
-    "font/ttf",
-    "font/otf",
-    "font/woff",
-    "font/woff2",
-    # Other
-    "text/css",
-    "text/javascript",
-    "application/json",
-    "text/xml",
-    "text/csv",
-    "application/xml",
-    # SQL
-    "application/x-sql",
-    # Gzip
-    "application/x-gzip",
-    # Markdown
-    "text/markdown",
-]
+# Daftar tipe lampiran yang boleh diunggah tinggal di
+# plane/utils/tipe_unggahan.py (TIPE_LAMPIRAN). God Mode bisa mencoret tipe dari
+# sana (UPLOAD_BLOCKED_FILE_TYPES); pemanggil membaca tipe_lampiran_diizinkan().
 
 # MIME types that browsers can execute as scripts when served inline.
 # These must always be served with Content-Disposition: attachment, even if they

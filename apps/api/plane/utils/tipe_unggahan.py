@@ -21,6 +21,11 @@ disebut klien dan tidak dikenal (mis. `application/x-msdownload`) TIDAK diubah
 jadi sah: itu penolakan yang disengaja (lihat tes Wiki), dan pemanggil menolaknya.
 Entitas yang hanya menerima gambar tidak punya `application/octet-stream`,
 jadi tipe kosong dengan ekstensi bukan gambar tetap ditolak.
+
+Daftar tipe lampiran (`TIPE_LAMPIRAN`, dulu settings.ATTACHMENT_MIME_TYPES)
+tinggal di sini karena registri aturan God Mode membutuhkannya sebagai pilihan
+UPLOAD_BLOCKED_FILE_TYPES, dan berkas area aturan tidak boleh memuat Django.
+God Mode hanya bisa MENCORET tipe dari daftar ini, tidak pernah menambah.
 """
 
 import mimetypes
@@ -28,9 +33,157 @@ import posixpath
 
 OCTET_STREAM = "application/octet-stream"
 
+# Plafon tipe lampiran (Wiki, Obrolan, isi halaman, lampiran task, API publik).
+# Kembar di daftar lama (text/markdown, x-compressed-tar-zip) dibuang: isinya sama.
+TIPE_LAMPIRAN = (
+    # Images
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/svg+xml",
+    "image/webp",
+    "image/tiff",
+    "image/bmp",
+    # Documents
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "text/plain",
+    "text/markdown",
+    "application/rtf",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "application/vnd.oasis.opendocument.text",
+    "application/vnd.oasis.opendocument.presentation",
+    "application/vnd.oasis.opendocument.graphics",
+    # Microsoft Visio
+    "application/vnd.visio",
+    # Netpbm format
+    "image/x-portable-graymap",
+    "image/x-portable-bitmap",
+    "image/x-portable-pixmap",
+    # Open Office Base
+    "application/vnd.oasis.opendocument.database",
+    # Audio
+    "audio/mpeg",
+    "audio/wav",
+    "audio/ogg",
+    "audio/midi",
+    "audio/x-midi",
+    "audio/aac",
+    "audio/flac",
+    "audio/x-m4a",
+    # Video
+    "video/mp4",
+    "video/mpeg",
+    "video/ogg",
+    "video/webm",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/x-ms-wmv",
+    # Keluaran bawaan OBS. Peramban tidak bisa memutarnya, jadi ia sengaja
+    # TIDAK diberi pemutar sebaris di editor dan jatuh ke kartu unduh. Tetap
+    # diterima karena pemilik instance meminta semua tipe berkas boleh masuk,
+    # dan menolaknya di server berarti orang kehilangan rekamannya, bukan
+    # sekadar kehilangan pratinjaunya.
+    "video/x-matroska",
+    # Archives
+    "application/zip",
+    "application/x-rar",
+    "application/x-rar-compressed",
+    "application/x-tar",
+    "application/gzip",
+    "application/x-zip",
+    "application/x-zip-compressed",
+    "application/x-7z-compressed",
+    "application/x-compressed",
+    "application/x-compressed-tar",
+    "application/x-compressed-tar-gz",
+    "application/x-compressed-tar-bz2",
+    "application/x-compressed-tar-zip",
+    "application/x-compressed-tar-7z",
+    "application/x-compressed-tar-rar",
+    # 3D Models
+    "model/gltf-binary",
+    "model/gltf+json",
+    OCTET_STREAM,  # for .obj files, but be cautious
+    # Fonts
+    "font/ttf",
+    "font/otf",
+    "font/woff",
+    "font/woff2",
+    # Other
+    "text/css",
+    "text/javascript",
+    "application/json",
+    "text/xml",
+    "text/csv",
+    "application/xml",
+    # SQL
+    "application/x-sql",
+    # Gzip
+    "application/x-gzip",
+)
+
+# Tipe yang dijalankan peramban atau sistem operasi. Tidak pernah boleh masuk
+# TIPE_LAMPIRAN, apa pun yang diminta: impor modul ini gagal kalau ada yang
+# menambahkannya. SVG, JS, dan XML yang sudah ada sejak upstream tetap diterima
+# tapi selalu disajikan sebagai unduhan (settings.SCRIPT_CAPABLE_MIME_TYPES).
+TIPE_TIDAK_PERNAH_BOLEH = frozenset(
+    {
+        "text/html",
+        "application/xhtml+xml",
+        "application/javascript",
+        "application/x-javascript",
+        "application/ecmascript",
+        "text/ecmascript",
+        "text/vbscript",
+        "application/hta",
+        "application/x-msdownload",
+        "application/x-msdos-program",
+        "application/x-dosexec",
+        "application/vnd.microsoft.portable-executable",
+        "application/x-executable",
+        "application/x-elf",
+        "application/x-mach-binary",
+        "application/x-msi",
+        "application/x-ms-installer",
+        "application/x-ms-shortcut",
+        "application/x-sh",
+        "application/x-csh",
+        "application/x-shellscript",
+        "application/x-bat",
+        "application/x-powershell",
+        "application/x-httpd-php",
+        "application/x-php",
+        "text/x-php",
+        "application/java-archive",
+        "application/x-java-archive",
+    }
+)
+
+_TERLARANG_DI_DAFTAR = sorted(TIPE_TIDAK_PERNAH_BOLEH.intersection(TIPE_LAMPIRAN))
+if _TERLARANG_DI_DAFTAR:
+    raise ValueError(f"Tipe terlarang masuk TIPE_LAMPIRAN: {', '.join(_TERLARANG_DI_DAFTAR)}")
+
+
+def tipe_lampiran_diizinkan() -> tuple:
+    """TIPE_LAMPIRAN dikurangi yang dicoret Super Admin (UPLOAD_BLOCKED_FILE_TYPES), per permintaan."""
+    from plane.utils import aturan
+    from plane.utils.aturan.area_keamanan import UPLOAD_BLOCKED_FILE_TYPES
+
+    dicoret = set(aturan.get_list(UPLOAD_BLOCKED_FILE_TYPES))
+    if not dicoret:
+        return TIPE_LAMPIRAN
+    return tuple(t for t in TIPE_LAMPIRAN if t not in dicoret)
+
+
 # Tebakan dari ekstensi untuk yang tidak dikenal `mimetypes` di semua platform
 # (tabelnya bergantung registri OS pada Windows). Nilainya semua ada di
-# settings.ATTACHMENT_MIME_TYPES.
+# TIPE_LAMPIRAN.
 _TIPE_EKSTENSI = {
     ".txt": "text/plain",
     ".log": "text/plain",

@@ -11,10 +11,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from zxcvbn import zxcvbn
 
 # Django imports
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import HttpResponseRedirect
@@ -23,6 +21,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views import View
 
 # Module imports
+from plane.authentication.utils.kata_sandi import TokenResetSandi, sandi_cukup_kuat
 from plane.bgtasks.forgot_password_task import forgot_password
 from plane.license.models import Instance
 from plane.db.models import User
@@ -37,7 +36,7 @@ from plane.authentication.rate_limit import AuthenticationThrottle
 
 def generate_password_token(user):
     uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
-    token = PasswordResetTokenGenerator().make_token(user)
+    token = TokenResetSandi().make_token(user)
 
     return uidb64, token
 
@@ -116,7 +115,7 @@ class ResetPasswordEndpoint(View):
                 return HttpResponseRedirect(url)
 
             # check if the token is valid for the user
-            if not PasswordResetTokenGenerator().check_token(user, token):
+            if not TokenResetSandi().check_token(user, token):
                 exc = AuthenticationException(
                     error_code=AUTHENTICATION_ERROR_CODES["INVALID_PASSWORD_TOKEN"],
                     error_message="INVALID_PASSWORD_TOKEN",
@@ -142,8 +141,7 @@ class ResetPasswordEndpoint(View):
                 return HttpResponseRedirect(url)
 
             # Check the password complexity
-            results = zxcvbn(password)
-            if results["score"] < 3:
+            if not sandi_cukup_kuat(password):
                 exc = AuthenticationException(
                     error_code=AUTHENTICATION_ERROR_CODES["PASSWORD_TOO_WEAK"],
                     error_message="PASSWORD_TOO_WEAK",

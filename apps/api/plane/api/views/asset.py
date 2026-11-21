@@ -17,6 +17,7 @@ from drf_spectacular.utils import OpenApiExample, OpenApiRequest
 # Module Imports
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.settings.storage import S3Storage
+from plane.utils.tipe_unggahan import tipe_lampiran_diizinkan
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.db.models import FileAsset, User, Workspace
@@ -537,7 +538,7 @@ class GenericAssetEndpoint(BaseAPIView):
         size_limit = batas_ukuran_unggahan(slug, size)
 
         # Check if the file type is allowed
-        if not type or type not in settings.ATTACHMENT_MIME_TYPES:
+        if not type or type not in tipe_lampiran_diizinkan():
             return Response(
                 {"error": "Invalid file type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,

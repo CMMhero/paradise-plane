@@ -52,6 +52,8 @@ from plane.bgtasks.user_deactivation_email_task import user_deactivation_email
 from plane.utils.host import base_host
 from plane.bgtasks.user_email_update_task import send_email_update_magic_code, send_email_update_confirmation
 from plane.authentication.rate_limit import EmailVerificationThrottle
+from plane.utils import aturan
+from plane.utils.aturan.area_keamanan import SIGN_IN_CODE_MINUTES
 
 
 logger = logging.getLogger("plane")
@@ -138,7 +140,7 @@ class UserEndpoint(BaseViewSet):
     def generate_email_verification_code(self, request):
         """
         Generate and send a magic code to the new email address for verification.
-        Rate limited to 3 requests per hour per user (enforced by EmailVerificationThrottle).
+        Rate limited per user per hour (EmailVerificationThrottle, God Mode EMAIL_CHANGE_CODES_PER_HOUR).
         Additional per-email cooldown of 60 seconds prevents rapid repeated requests.
         """
         user = self.get_object()
@@ -156,9 +158,9 @@ class UserEndpoint(BaseViewSet):
             cache_key = f"magic_email_update_{user.id}_{new_email}"
             ## Generate a random token
             token = str(secrets.randbelow(900000) + 100000)
-            # Store in cache with 10 minute expiration
+            # Same lifetime as sign-in codes; the email states it (SIGN_IN_CODE_MINUTES).
             cache_data = json.dumps({"token": token})
-            cache.set(cache_key, cache_data, timeout=600)
+            cache.set(cache_key, cache_data, timeout=aturan.get_int(SIGN_IN_CODE_MINUTES) * 60)
 
             # Send magic code to the new email
             send_email_update_magic_code.delay(new_email, token)

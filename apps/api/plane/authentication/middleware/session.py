@@ -12,6 +12,9 @@ from django.utils.cache import patch_vary_headers
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.http import http_date
 
+from plane.utils import aturan
+from plane.utils.aturan.area_keamanan import APP_SESSION_SLIDING, GOD_MODE_SESSION_MINUTES
+
 
 class SessionMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
@@ -55,19 +58,24 @@ class SessionMiddleware(MiddlewareMixin):
             if accessed:
                 patch_vary_headers(response, ("Cookie",))
             # Paradise (5 Nov 2026): sesi God Mode MENGGESER. Dulu habis tepat
-            # ADMIN_SESSION_COOKIE_AGE sesudah login walau dipakai terus, jadi
+            # umur sesi admin sesudah login walau dipakai terus, jadi
             # seretan di papan Organization tiba-tiba gagal simpan (401) di tengah
             # kerja. Kini tiap permintaan admin yang berhasil memperpanjangnya;
             # sesi baru habis sesudah selama itu TIDAK dipakai.
             geser_admin = is_admin_path and response.status_code < 400
-            if (modified or settings.SESSION_SAVE_EVERY_REQUEST or geser_admin) and not empty:
+            # Aturan dibaca terakhir: permintaan tanpa sesi tidak perlu menyentuhnya.
+            if not empty and (modified or geser_admin or aturan.get_bool(APP_SESSION_SLIDING)):
                 if request.session.get_expire_at_browser_close():
                     max_age = None
                     expires = None
                 else:
                     # Use different max_age based on whether it's an admin cookie
                     if is_admin_path:
-                        max_age = settings.ADMIN_SESSION_COOKIE_AGE
+                        # GOD_MODE_SESSION_MINUTES berlaku live: umur di database
+                        # disamakan juga, bukan hanya umur cookie.
+                        max_age = aturan.get_int(GOD_MODE_SESSION_MINUTES) * 60
+                        if request.session.get_expiry_age() != max_age:
+                            request.session.set_expiry(max_age)
                     else:
                         max_age = request.session.get_expiry_age()
 
