@@ -6,6 +6,7 @@
 
 import type { TStaticViewTypes, IWorkspaceSearchResults } from "@plane/types";
 import { EUserWorkspaceRoles } from "@plane/types";
+import { PARADISE_NAV_ITEMS } from "./paradise-navigation";
 
 export const ORGANIZATION_SIZE: string[] = ["Just myself", "2-10", "11-50", "51-200", "201-500", "500+"];
 
@@ -208,82 +209,20 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
-  // KPI (Paradise 2.9): semua orang punya, isinya dibatasi server menurut jenjang.
-  // Analitik dan Dasbor Divisi tidak lagi punya menu sendiri: keduanya tab di halaman ini
-  // (/kinerja/analitik, /kinerja/dasbor), tampil bagi admin non-direktur.
-  kinerja: {
-    key: "kinerja",
-    labelTranslationKey: "kinerja.nav",
-    href: `/kinerja/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  initiatives: {
-    key: "initiatives",
-    // `common.initiatives`, BUKAN `initiatives` polos. Kunci ini HANYA ada di
-    // bawah `common.` di berkas locale, tidak di top-level seperti `projects`
-    // dan `views` yang kebetulan ada di dua tempat. Tanpa awalannya i18next
-    // tidak menemukan apa pun lalu menampilkan nama kuncinya mentah-mentah,
-    // dan itulah kenapa sidebar menulis "initiatives" huruf kecil di antara
-    // item lain yang Title Case. Diperbaiki di sisi pemanggil, bukan dengan
-    // menambah kunci ke 19 berkas locale.
-    labelTranslationKey: "common.initiatives",
-    href: `/initiatives/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  // Keputusan user 2026-11-20 membalik dua penghapusan lama:
-  // - "persetujuan": atasan memutuskan semua departemen dari satu halaman, tidak
-  //   lagi membuka tab tiap departemen (tab per project tetap ada). Hanya tampil
-  //   bagi yang punya wewenang memutuskan (sidebar-item.tsx).
-  // - "tugas_lintas_divisi": siapa pun boleh meminta pekerjaan dari departemen
-  //   yang bukan miliknya; permintaan masuk Intake departemen tujuan.
-  persetujuan: {
-    key: "persetujuan",
-    labelTranslationKey: "persetujuan_p29.nav",
-    href: `/persetujuan/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  tugas_lintas_divisi: {
-    key: "tugas_lintas_divisi",
-    labelTranslationKey: "persetujuan_p29.nav_requests",
-    href: `/tugas-lintas-divisi/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  // Obrolan antar-karyawan (Paradise). "chat_nav", BUKAN
-  // "chat", mengikuti alasan wiki_nav di bawah: kunci daun bernama "chat" akan
-  // bentrok dengan sync:check begitu ada namespace chat.* di kemudian hari.
-  chat: {
-    key: "chat",
-    labelTranslationKey: "chat_nav",
-    href: `/chat/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  // Pengumuman (Paradise): daftar kanal sistem Announcements.
-  pengumuman: {
-    key: "pengumuman",
-    labelTranslationKey: "pengumuman_ui.nav",
-    href: `/pengumuman/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
-  // Wiki perusahaan (Paradise). href SENGAJA statis `/wiki/`, halaman itu
-  // meresolusi project ber-identifier WIKI lalu redirect. Jangan menaruh UUID
-  // project di sini: UUID-nya berbeda di tiap instance, jadi akan salah di server
-  // produksi.
-  wiki: {
-    key: "wiki",
-    // "wiki_nav", BUKAN "wiki": namespace `wiki.*` sudah dipakai wiki.json
-    // (wiki.nested_pages_*), jadi key daun bernama "wiki" bentrok dan ditolak
-    // sync:check, "wiki is a leaf but wiki.nested_pages_... extends it".
-    labelTranslationKey: "wiki_nav",
-    href: `/wiki/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
-    highlight: (pathname: string, url: string) => pathname.includes(url),
-  },
+  // Menu Paradise (KPI, Initiatives, Persetujuan, Permintaan, Chat, Pengumuman,
+  // Wiki) datang dari satu registri: paradise-navigation.ts.
+  ...Object.fromEntries(
+    PARADISE_NAV_ITEMS.map((item): [string, IWorkspaceSidebarNavigationItem] => [
+      item.key,
+      {
+        key: item.key,
+        labelTranslationKey: item.labelTranslationKey,
+        href: item.href,
+        access: [...item.access],
+        highlight: (pathname: string, url: string) => pathname.includes(url),
+      },
+    ])
+  ),
   archives: {
     key: "archives",
     labelTranslationKey: "archives",
@@ -295,14 +234,8 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
 
 export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebarNavigationItem[] = [
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["views"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["kinerja"],
-  // Dinyalakan/dimatikan di God Mode > Features (lihat apps/web/core/lib/paradise-modules.ts).
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["persetujuan"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["tugas_lintas_divisi"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["chat"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["pengumuman"],
-  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["wiki"],
+  // Dinyalakan/dimatikan di God Mode > Modules (lihat apps/web/core/lib/paradise-modules.ts).
+  ...PARADISE_NAV_ITEMS.map((item) => WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS[item.key]),
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
 ];
 

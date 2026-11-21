@@ -30,6 +30,7 @@ export const usePowerKNavigationCommands = (): TPowerKCommandConfig[] => {
     optionsList["nav_your_work"],
     paradiseList["nav_your_work_calendar"],
     paradiseList["nav_chat"],
+    paradiseList["nav_pengumuman"],
     paradiseList["nav_wiki"],
     paradiseList["nav_stickies"],
     paradiseList["nav_quick_links"],

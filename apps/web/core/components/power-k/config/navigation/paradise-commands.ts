@@ -7,18 +7,21 @@
 
 import { useParams } from "next/navigation";
 import {
+  ArrowLeftRight,
   BookText,
   CalendarDays,
   Gauge,
   LayoutDashboard,
   Link2,
+  Megaphone,
   MessageSquare,
   Stamp,
   Target,
   UserCog,
 } from "lucide-react";
 // plane imports
-import { EUserPermissionsLevel } from "@plane/constants";
+import { EUserPermissionsLevel, PARADISE_NAV_ITEMS } from "@plane/constants";
+import type { TParadiseNavKey, TParadiseNavPaletteId } from "@plane/constants";
 import { MultipleStickyIcon } from "@plane/propel/icons";
 import type { TProfileSettingsTabs } from "@plane/types";
 import { EUserProjectRoles, EUserWorkspaceRoles } from "@plane/types";
@@ -31,28 +34,35 @@ import { useUser } from "@/hooks/store/user";
 import { useNavPersetujuanTerlihat } from "@/plane-web/components/workspace/sidebar/sidebar-item";
 
 export type TPowerKParadiseNavigationCommandKeys =
-  | "nav_chat"
-  | "nav_wiki"
+  | TParadiseNavPaletteId
   | "nav_dashboard_divisi"
-  | "nav_kinerja"
-  | "nav_initiatives"
   | "nav_stickies"
   | "nav_quick_links"
   | "nav_your_work_calendar"
   | "nav_project_approvals"
-  | "nav_workspace_approvals"
   | "open_account_setting";
+
+/** Ikon perintah menu Paradise; sama dengan ikon sidebar-nya (helper.tsx). */
+const IKON_MENU: Record<TParadiseNavKey, TPowerKCommandConfig["icon"]> = {
+  kinerja: Gauge,
+  initiatives: Target,
+  persetujuan: Stamp,
+  tugas_lintas_divisi: ArrowLeftRight,
+  chat: MessageSquare,
+  pengumuman: Megaphone,
+  wiki: BookText,
+};
 
 const slugOf = (ctx: TPowerKContext) => ctx.params.workspaceSlug?.toString();
 const inWorkspace = (ctx: TPowerKContext) => Boolean(slugOf(ctx));
 const inProject = (ctx: TPowerKContext) => Boolean(slugOf(ctx) && ctx.params.projectId?.toString());
 
 /**
- * Halaman Paradise yang punya menu di sidebar atau tab project. Akses tiap
- * perintah cermin `access` item sidebar-nya (`WORKSPACE_SIDEBAR_*` di
- * packages/constants/src/workspace.ts, tab Approval di use-navigation-items.ts);
- * saklar modul God Mode dipasang di core/paradise-gates.ts, bukan di sini, supaya
- * pintasan kuncinya ikut mati.
+ * Halaman Paradise yang punya menu di sidebar atau tab project. Perintah menu
+ * workspace diturunkan dari `PARADISE_NAV_ITEMS` (packages/constants): id,
+ * tujuan, akses, dan pintasan sama persis dengan item sidebar-nya. Saklar modul
+ * God Mode dipasang di core/paradise-gates.ts, bukan di sini, supaya pintasan
+ * kuncinya ikut mati.
  */
 export const usePowerKParadiseNavigationCommandsRecord = (): Record<
   TPowerKParadiseNavigationCommandKeys,
@@ -102,9 +112,22 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
     closeOnSelect: true,
   });
 
+  // Aturan tambahan di atas `access` registri, sama dengan sidebar.
+  const tambahan: Partial<Record<TParadiseNavKey, boolean>> = { persetujuan: persetujuanTerlihat };
+  const perintahMenu = Object.fromEntries(
+    PARADISE_NAV_ITEMS.flatMap((item) => {
+      if (!("palette" in item)) return [];
+      const { id, titleKey, keySequence }: { id: TParadiseNavPaletteId; titleKey?: string; keySequence?: string } =
+        item.palette;
+      const isAllowed = (ctx: TPowerKContext) =>
+        hasWorkspaceRole(ctx, [...item.access]) && (tambahan[item.key] ?? true);
+      const perintah = workspacePage(id, IKON_MENU[item.key], () => [item.href], isAllowed, keySequence);
+      return [[id, titleKey ? { ...perintah, i18n_title: titleKey } : perintah]];
+    })
+  ) as Record<TParadiseNavPaletteId, TPowerKCommandConfig>;
+
   return {
-    nav_chat: workspacePage("nav_chat", MessageSquare, () => ["chat"], isWorkspaceMember, "gc"),
-    nav_wiki: workspacePage("nav_wiki", BookText, () => ["wiki"], isWorkspaceMember, "gw"),
+    ...perintahMenu,
     nav_dashboard_divisi: workspacePage(
       "nav_dashboard_divisi",
       LayoutDashboard,
@@ -112,11 +135,6 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
       (ctx) => hasWorkspaceRole(ctx, [EUserWorkspaceRoles.ADMIN]),
       "gb"
     ),
-    nav_kinerja: {
-      ...workspacePage("nav_kinerja", Gauge, () => ["kinerja"], isWorkspaceMember),
-      i18n_title: "kinerja.go_to",
-    },
-    nav_initiatives: workspacePage("nav_initiatives", Target, () => ["initiatives"], isWorkspaceMember),
     nav_stickies: workspacePage("nav_stickies", MultipleStickyIcon, () => ["stickies"], isAnyWorkspaceRole, "gt"),
     nav_quick_links: workspacePage("nav_quick_links", Link2, () => ["quick-links"], isAnyWorkspaceRole, "gl"),
     nav_your_work_calendar: workspacePage(
@@ -136,17 +154,6 @@ export const usePowerKParadiseNavigationCommandsRecord = (): Record<
         handlePowerKNavigate(ctx, [slugOf(ctx), "projects", ctx.params.projectId?.toString(), "persetujuan"]),
       isEnabled: isProjectMember,
       isVisible: isProjectMember,
-      closeOnSelect: true,
-    },
-    nav_workspace_approvals: {
-      id: "nav_workspace_approvals",
-      type: "action",
-      group: "navigation",
-      i18n_title: "persetujuan_p29.power_k_title",
-      icon: Stamp,
-      action: (ctx) => handlePowerKNavigate(ctx, [slugOf(ctx), "persetujuan"]),
-      isEnabled: (ctx) => isWorkspaceMember(ctx) && persetujuanTerlihat,
-      isVisible: (ctx) => isWorkspaceMember(ctx) && persetujuanTerlihat,
       closeOnSelect: true,
     },
     open_account_setting: {

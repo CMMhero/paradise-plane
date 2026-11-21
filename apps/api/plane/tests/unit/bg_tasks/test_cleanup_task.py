@@ -12,7 +12,6 @@ Verifies that API activity logs past the retention window are hard-deleted
 from datetime import timedelta
 
 import pytest
-from django.conf import settings
 from django.utils import timezone
 
 from uuid import uuid4
@@ -24,6 +23,13 @@ from plane.bgtasks.cleanup_task import (
     process_cleanup_task,
 )
 from plane.db.models import APIActivityLog, EmailNotificationLog, WebhookLog
+from plane.license.models import InstanceConfiguration
+from plane.utils.saklar_instance import (
+    API_ACTIVITY_LOG_RETENTION_DAYS,
+    EMAIL_LOG_RETENTION_DAYS,
+    WEBHOOK_LOG_RETENTION_DAYS,
+    setelan_angka,
+)
 from plane.tests.factories import UserFactory, WorkspaceFactory
 
 
@@ -65,7 +71,7 @@ def _make_email_log(user, sent_at):
 @pytest.mark.django_db
 class TestDeleteApiLogs:
     def test_expired_logs_are_hard_deleted(self):
-        retention_days = settings.API_ACTIVITY_LOG_RETENTION_DAYS
+        retention_days = setelan_angka(API_ACTIVITY_LOG_RETENTION_DAYS)
         expired = _make_api_log(timezone.now() - timedelta(days=retention_days + 1))
 
         delete_api_logs()
@@ -74,7 +80,7 @@ class TestDeleteApiLogs:
         assert not APIActivityLog.all_objects.filter(pk=expired.pk).exists()
 
     def test_recent_logs_are_retained(self):
-        retention_days = settings.API_ACTIVITY_LOG_RETENTION_DAYS
+        retention_days = setelan_angka(API_ACTIVITY_LOG_RETENTION_DAYS)
         recent = _make_api_log(timezone.now() - timedelta(days=retention_days - 1))
 
         delete_api_logs()
@@ -87,7 +93,7 @@ class TestDeleteApiLogs:
 class TestDeleteWebhookLogs:
     def test_expired_logs_are_hard_deleted(self):
         workspace = WorkspaceFactory()
-        retention_days = settings.WEBHOOK_LOG_RETENTION_DAYS
+        retention_days = setelan_angka(WEBHOOK_LOG_RETENTION_DAYS)
         expired = _make_webhook_log(workspace, timezone.now() - timedelta(days=retention_days + 1))
 
         delete_webhook_logs()
@@ -96,7 +102,7 @@ class TestDeleteWebhookLogs:
 
     def test_recent_logs_are_retained(self):
         workspace = WorkspaceFactory()
-        retention_days = settings.WEBHOOK_LOG_RETENTION_DAYS
+        retention_days = setelan_angka(WEBHOOK_LOG_RETENTION_DAYS)
         recent = _make_webhook_log(workspace, timezone.now() - timedelta(days=retention_days - 1))
 
         delete_webhook_logs()
@@ -109,7 +115,7 @@ class TestDeleteWebhookLogs:
 class TestDeleteEmailLogs:
     def test_expired_logs_are_hard_deleted(self):
         user = UserFactory()
-        retention_days = settings.EMAIL_LOG_RETENTION_DAYS
+        retention_days = setelan_angka(EMAIL_LOG_RETENTION_DAYS)
         expired = _make_email_log(user, timezone.now() - timedelta(days=retention_days + 1))
 
         delete_email_notification_logs()
@@ -118,12 +124,37 @@ class TestDeleteEmailLogs:
 
     def test_recent_logs_are_retained(self):
         user = UserFactory()
-        retention_days = settings.EMAIL_LOG_RETENTION_DAYS
+        retention_days = setelan_angka(EMAIL_LOG_RETENTION_DAYS)
         recent = _make_email_log(user, timezone.now() - timedelta(days=retention_days - 1))
 
         delete_email_notification_logs()
 
         assert EmailNotificationLog.all_objects.filter(pk=recent.pk).exists()
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+class TestRetentionFromGodMode:
+    """The window is read on every run, so a God Mode change applies to the next cleanup."""
+
+    def test_stored_value_moves_the_cutoff(self):
+        InstanceConfiguration.objects.update_or_create(
+            key=EMAIL_LOG_RETENTION_DAYS, defaults={"value": "3", "category": "PARADISE"}
+        )
+        user = UserFactory()
+        old = _make_email_log(user, timezone.now() - timedelta(days=5))
+        fresh = _make_email_log(user, timezone.now() - timedelta(days=2))
+
+        delete_email_notification_logs()
+
+        assert not EmailNotificationLog.all_objects.filter(pk=old.pk).exists()
+        assert EmailNotificationLog.all_objects.filter(pk=fresh.pk).exists()
+
+    def test_zero_stored_by_hand_is_clamped_to_one_day(self):
+        InstanceConfiguration.objects.update_or_create(
+            key=API_ACTIVITY_LOG_RETENTION_DAYS, defaults={"value": "0", "category": "PARADISE"}
+        )
+        assert setelan_angka(API_ACTIVITY_LOG_RETENTION_DAYS) == 1
 
 
 @pytest.mark.unit

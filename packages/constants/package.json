@@ -19,6 +19,7 @@
     "check:format": "vp fmt --check .",
     "fix:lint": "vp lint --fix .",
     "fix:format": "vp fmt .",
+    "test": "vp test run",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf node_modules && rm -rf dist"
   },
   "dependencies": {

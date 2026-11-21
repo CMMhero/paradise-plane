@@ -11,6 +11,7 @@
 
 import { useState } from "react";
 // plane imports
+import { PARADISE_NAV_PREFERENCE_KEYS } from "@plane/constants";
 import type { TMemberNavigation, TNavItemKey, TProjectNavMode, TWorkItemLayout } from "@plane/services";
 import { CustomSelect, Input } from "@plane/ui";
 import { cn } from "@plane/utils";
@@ -21,20 +22,9 @@ import { inputClass } from "@/components/common/paradise-styles";
 import { useGodmodeStrings } from "@/app/i18n/godmode";
 import { Saklar } from "./bidang-profil";
 
-/** Urutan dan kelompok sama dengan dialog "Customize navigation" di apps/web. */
-const NAV_PRIBADI: TNavItemKey[] = ["your_work", "stickies", "drafts", "quick_links"];
-const NAV_WORKSPACE: TNavItemKey[] = [
-  "views",
-  "analytics",
-  "dashboard_divisi",
-  "kinerja",
-  "initiatives",
-  "persetujuan",
-  "tugas_lintas_divisi",
-  "chat",
-  "wiki",
-  "archives",
-];
+/** Urutan dan kelompok dari registri yang sama dengan sidebar web (`PARADISE_NAV_PREFERENCE_KEYS`). */
+const NAV_PRIBADI: readonly TNavItemKey[] = PARADISE_NAV_PREFERENCE_KEYS.personal;
+const NAV_WORKSPACE: readonly TNavItemKey[] = PARADISE_NAV_PREFERENCE_KEYS.workspace;
 const MODE_PROJECT: TProjectNavMode[] = ["ACCORDION", "TABBED"];
 export const TATA_LETAK: TWorkItemLayout[] = ["kanban", "list", "calendar", "spreadsheet"];
 const BATAS_PROJECT_MAKS = 50;
@@ -89,7 +79,7 @@ export function BidangNavigasi({ nilai, onUbah }: TNavProps) {
     TABBED: t.project_mode_tabbed,
   };
 
-  const kelompok = (judul: string, kunci: TNavItemKey[]) => (
+  const kelompok = (judul: string, kunci: readonly TNavItemKey[]) => (
     <div className="space-y-0.5">
       <span className="block text-11 font-medium text-tertiary">{judul}</span>
       {kunci.map((k) => (

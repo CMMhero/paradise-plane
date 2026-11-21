@@ -7,6 +7,7 @@
 
 // plane imports
 import { API_BASE_URL } from "@plane/constants";
+import type { TParadiseNavPreferenceKey } from "@plane/constants";
 import type {
   TNotificationPreferenceKey,
   TNotificationPreferences,
@@ -108,22 +109,8 @@ export type TMemberTheme = "system" | "light" | "dark" | "light-contrast" | "dar
 /** Isi `/api/timezones/` (endpoint publik yang sama dengan halaman Preferences pengguna). */
 export type TZonaWaktu = { value: string; label: string; utc_offset: string; gmt_offset: string };
 
-/** Item sidebar yang bisa disematkan. Cermin `NAV_KUNCI` di plane/utils/bawaan_member.py. */
-export type TNavItemKey =
-  | "your_work"
-  | "stickies"
-  | "drafts"
-  | "quick_links"
-  | "views"
-  | "analytics"
-  | "dashboard_divisi"
-  | "kinerja"
-  | "initiatives"
-  | "persetujuan"
-  | "tugas_lintas_divisi"
-  | "chat"
-  | "wiki"
-  | "archives";
+/** Item sidebar yang bisa disematkan. Registrinya di @plane/constants (paradise-navigation.ts). */
+export type TNavItemKey = TParadiseNavPreferenceKey;
 
 /** Gaya daftar project di sidebar. */
 export type TProjectNavMode = "ACCORDION" | "TABBED";
