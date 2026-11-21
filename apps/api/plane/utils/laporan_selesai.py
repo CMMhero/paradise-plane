@@ -43,6 +43,7 @@ from plane.utils.ketepatan_waktu import (
     TEPAT_WAKTU,
     TERLAMBAT,
     anotasi_ketepatan,
+    dibuat_dihitung,
     ketepatan,
     q_tepat_waktu,
     q_terlambat,
@@ -196,7 +197,7 @@ def _baris_tugas(issue, nama):
         "completed_at": issue.completed_at,
         "completed_date": issue.tanggal_selesai,
         "target_date": issue.target_date,
-        "timing": ketepatan(issue.tanggal_selesai, issue.target_date, issue.created_at),
+        "timing": ketepatan(issue.tanggal_selesai, issue.target_date, dibuat_dihitung(issue.created_at)),
         "assignees": nama.get(issue.id, []),
     }
 

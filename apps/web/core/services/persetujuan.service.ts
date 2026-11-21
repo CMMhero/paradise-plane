@@ -6,6 +6,7 @@
  */
 
 import { API_BASE_URL } from "@plane/constants";
+import type { TBidangTugas } from "@plane/constants";
 import type { TStateGroups } from "@plane/types";
 // services
 import { APIService } from "@/services/api.service";
@@ -149,6 +150,16 @@ export type TBisaDitugaskan = {
   bawahan_ids?: string[];
   /** Admin workspace atau Super Admin: lolos `galat_ubah_tugas` (ubah, komentar, reaksi). Server lama: tidak ada. */
   admin_penuh?: boolean;
+  /** God Mode TASK_EDIT_RULE "semua anggota": saya boleh mengubah tugas mana pun di project ini. */
+  ubah_semua_tugas?: boolean;
+  /** God Mode TASK_COMMENT_RULE "semua anggota": saya boleh berkomentar di tugas mana pun. */
+  komentar_semua_tugas?: boolean;
+  /** Bidang yang tidak boleh saya ubah di tugas mana pun (staf, TASK_FIELDS_LOCKED_FOR_STAFF). */
+  bidang_terkunci?: TBidangTugas[];
+  /** Bidang yang boleh saya ubah walau tidak terlibat (TASK_FIELDS_OPEN_TO_MEMBERS). */
+  bidang_terbuka?: TBidangTugas[];
+  /** Hak membuka kembali tugas selesai: semua, hanya yang assignee-nya bawahan saya, atau tidak. */
+  buka_kembali?: "semua" | "bawahan" | null;
 };
 
 export class PersetujuanService extends APIService {

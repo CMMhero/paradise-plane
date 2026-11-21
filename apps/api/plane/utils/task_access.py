@@ -31,7 +31,13 @@ tempat cepat atau lambat jadi tiga aturan.
 """
 
 from plane.db.superadmin import is_super_admin
-from plane.utils.kunci_selesai import PESAN_TERKUNCI, tugas_selesai
+from plane.utils import aturan as aturan_god_mode
+from plane.utils.aturan.area_tugas import (
+    INTAKE_ADMIN_SETS_DUE_DATE,
+    KOMENTAR_SEMUA_ANGGOTA,
+    TASK_COMMENT_RULE,
+)
+from plane.utils.kunci_selesai import PESAN_TERKUNCI, tugas_terkunci
 from plane.utils.saklar_instance import (
     DUE_DATE_CHANGE_RULE,
     HAPUS_PEMBUAT_SAJA,
@@ -120,7 +126,7 @@ def _boleh_ubah(user, issue, project_id, aturan=None, kunci_selesai=True):
     """
     from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
 
-    if kunci_selesai and tugas_selesai(issue):
+    if kunci_selesai and tugas_terkunci(issue):
         return False
     if not _aturan(user, aturan).gerbang:
         return True
@@ -146,13 +152,18 @@ def galat_percakapan_tugas(issue, actor):
     Yang ikut lolos lewat aturan ubah: Super Admin, admin workspace (KEP-85),
     atasan yang semua assignee-nya bawahannya, termasuk penyetuju di alur
     persetujuan. Tamu project tetap melewati pemeriksaan tamu upstream lebih dulu.
+
+    God Mode TASK_COMMENT_RULE "any_project_member" melepas syarat itu; kunci
+    tugas selesai tetap berlaku.
     """
     if issue is None:
         return None
-    if tugas_selesai(issue):
+    if tugas_terkunci(issue):
         return PESAN_TERKUNCI
     if actor is None or getattr(actor, "is_anonymous", True):
         return PESAN_TOLAK_PERCAKAPAN
+    if aturan_god_mode.get_choice(TASK_COMMENT_RULE) == KOMENTAR_SEMUA_ANGGOTA:
+        return None
     if _boleh_ubah(actor, issue, issue.project_id):
         return None
     return PESAN_TOLAK_PERCAKAPAN
@@ -198,10 +209,12 @@ def bisa_hapus_tugas(user, issue, slug, project_id, aturan=None):
     # yaitu pembuat/assignee tugas itu sendiri, atau atasannya. Admin project
     # TIDAK lagi cukup: di kantor ini hampir semua staf berperan admin project,
     # jadi jalur itu membuat staf bisa menghapus tugas orang lain.
+    # `ikut_setelan_ubah=False`: TASK_EDIT_RULE "semua anggota" tidak ikut membuka
+    # hapus; untuk itu Super Admin memilih TASK_DELETE_RULE "yang boleh mengubah".
     from plane.utils.hierarki import galat_ubah_tugas  # noqa: PLC0415
 
     if aturan.gerbang:
-        return galat_ubah_tugas(project_id, issue, actor=user, kunci_selesai=False) is None
+        return galat_ubah_tugas(project_id, issue, actor=user, kunci_selesai=False, ikut_setelan_ubah=False) is None
 
     if issue.created_by_id == user.id:
         return True
@@ -257,10 +270,11 @@ def bisa_ganti_tenggat_intake(user, issue, penanggung_jawab=False):
 
     Pengecualian ini HANYA berlaku di pintu intake. Begitu tugas diterima ke
     papan, berlaku kembali aturan biasa: hanya pembuatnya atau Super Admin.
+    God Mode INTAKE_ADMIN_SETS_DUE_DATE mematikan pengecualiannya.
     """
     if user is None or getattr(user, "is_anonymous", True):
         return False
-    if penanggung_jawab:
+    if penanggung_jawab and aturan_god_mode.get_bool(INTAKE_ADMIN_SETS_DUE_DATE):
         return True
     return bisa_ganti_tenggat(user, issue)
 
@@ -406,7 +420,7 @@ def galat_ubah_tugas_ids(issue_ids, actor):
     # Tugas yang tidak ada dibiarkan: endpoint-nya sendiri yang menjawab 404.
     issues = list(Issue.objects.filter(id__in=issue_ids).select_related("state"))
     # Tugas selesai terkunci untuk semua orang, katup mati maupun Super Admin (P29).
-    if any(tugas_selesai(issue) for issue in issues):
+    if any(tugas_terkunci(issue) for issue in issues):
         return PESAN_TERKUNCI
     if not gerbang_aktif():
         return None

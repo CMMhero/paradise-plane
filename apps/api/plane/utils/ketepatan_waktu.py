@@ -31,6 +31,11 @@ Due date. Semua dihitung saat dibaca dari kolom yang tersimpan; tidak ada nilai
 
 Tugas TERBUKA yang lewat tenggat ("terlambat sekarang") tidak memakai modul ini:
 lihat `batas_terlambat` dan `q_bisa_terlambat`.
+
+God Mode LATE_FROM_RECORDED_DAY mati = tenggat efektif kembali ke Due date saja.
+Karena dihitung saat dibaca, laporan lama ikut berubah. Fungsi murni di bawah
+tidak membaca aturan itu (tanpa database); pemanggil yang mengirim `dibuat_pada`
+memakai `dibuat_dihitung` dulu, dan `anotasi_ketepatan` membacanya sendiri.
 """
 
 # Python imports
@@ -41,6 +46,8 @@ from django.db.models import Case, DateField, F, Q, Value, When
 from django.db.models.functions import Greatest, TruncDate
 
 # Module imports
+from plane.utils import aturan
+from plane.utils.aturan.area_tugas import LATE_FROM_RECORDED_DAY
 from plane.utils.setelan_instance import zona_kantor
 
 TEPAT_WAKTU = "on_time"
@@ -52,6 +59,11 @@ def _hari_kantor(nilai: datetime | date | None) -> date | None:
     if nilai is None or not isinstance(nilai, datetime):
         return nilai
     return nilai.astimezone(zona_kantor()).date()
+
+
+def dibuat_dihitung(dibuat_pada):
+    """`dibuat_pada` kalau hari dicatat ikut menentukan tenggat (God Mode), selain itu None."""
+    return dibuat_pada if aturan.get_bool(LATE_FROM_RECORDED_DAY) else None
 
 
 def tenggat_efektif(target_date: date | None, dibuat_pada: datetime | date | None = None) -> date | None:
@@ -82,6 +94,11 @@ def anotasi_ketepatan() -> dict:
     jadi dijaga dengan CASE).
     """
     zona = zona_kantor()
+    if not aturan.get_bool(LATE_FROM_RECORDED_DAY):
+        return {
+            "tanggal_selesai": TruncDate("completed_at", tzinfo=zona),
+            "tenggat_efektif": F("target_date"),
+        }
     return {
         "tanggal_selesai": TruncDate("completed_at", tzinfo=zona),
         "tenggat_efektif": Case(

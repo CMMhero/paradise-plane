@@ -91,7 +91,7 @@ from plane.utils import aturan
 from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.aturan.area_visibilitas import KPI_TEAM_MIN_LEVEL, KPI_WORKSPACE_ADMINS_SEE_ALL
 from plane.utils.hierarki import _bawahan_ids, adalah_admin_penuh, divisi_diawasi
-from plane.utils.ketepatan_waktu import anotasi_ketepatan, ketepatan, q_tepat_waktu, q_terlambat
+from plane.utils.ketepatan_waktu import anotasi_ketepatan, dibuat_dihitung, ketepatan, q_tepat_waktu, q_terlambat
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
 from plane.utils.setelan_instance import hari_ini_kantor, zona_kantor
 from plane.utils.tanggal_otomatis import batas_terlambat
@@ -703,7 +703,9 @@ def _baris_tugas(issue):
         "target_date": issue.target_date,
         "completed_date": issue.tanggal_selesai,
         "timing": (
-            ketepatan(issue.tanggal_selesai, issue.target_date, issue.created_at) if issue.tanggal_selesai else None
+            ketepatan(issue.tanggal_selesai, issue.target_date, dibuat_dihitung(issue.created_at))
+            if issue.tanggal_selesai
+            else None
         ),
     }
 

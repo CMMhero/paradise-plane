@@ -19,6 +19,8 @@ import {
 } from "../workspace";
 import {
   ATURAN_WEB,
+  ATURAN_WEB,
+  BIDANG_TUGAS,
   DIRECTOR_SIDEBAR_HIDDEN_KEYS,
   DIRECTOR_SIDEBAR_HIDES_CHOICES,
   kpiExtraTabsDitutup,
@@ -153,5 +155,14 @@ describe("KPI_EXTRA_TABS", () => {
 describe("DIRECTOR_MENUS_APPLY_TO", () => {
   it("bawaan = Direktur (40) saja, sekretaris tidak ikut", () => {
     expect(ATURAN_WEB.DIRECTOR_MENUS_APPLY_TO.default).toBe("director");
+  });
+});
+
+describe("BIDANG_TUGAS", () => {
+  it("sama dengan PILIHAN_BIDANG di area_tugas.py, urutan ikut", () => {
+    const blok = /^PILIHAN_BIDANG = \(\s*$([\s\S]*?)^\)\s*$/m.exec(baca(`${DIR_API}area_tugas.py`));
+    expect(blok).not.toBeNull();
+    const python = [...(blok?.[1] ?? "").matchAll(/^\s*\("([a-z_]+)",/gm)].map((m) => m[1]);
+    expect([...BIDANG_TUGAS]).toEqual(python);
   });
 });
