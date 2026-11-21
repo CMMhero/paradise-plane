@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { TLink, TLinkEditableFields, TLogoProps, TSharedQuickLink } from "@plane/types";
+import type { TLink, TLinkEditableFields, TQuickLinkLogoProps, TSharedQuickLink } from "@plane/types";
 import { Checkbox, EModalWidth, ModalCore } from "@plane/ui";
 import { useHome } from "@/hooks/store/use-home";
 import { DEFAULT_AUDIENCE, QuickLinkAudience, audiencePayload, isAudienceEmpty } from "./quick-link-audience";
@@ -44,8 +44,12 @@ const toAudience = (link?: TSharedQuickLink): TQuickLinkAudienceValue =>
     ? { audience: link.cakupan, divisionIds: link.divisi_ids, departmentIds: link.departemen_ids }
     : DEFAULT_AUDIENCE;
 
-const sameLogo = (a: TLogoProps | null | undefined, b: TLogoProps | null | undefined) =>
-  JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+// An image icon with nothing typed yet means "no icon", not a request the server would reject.
+const effectiveLogo = (logo: TQuickLinkLogoProps | null | undefined): TQuickLinkLogoProps | null =>
+  logo?.in_use === "image" && !logo.image?.url && !logo.image?.data ? null : (logo ?? null);
+
+const sameLogo = (a: TQuickLinkLogoProps | null | undefined, b: TQuickLinkLogoProps | null | undefined) =>
+  JSON.stringify(effectiveLogo(a)) === JSON.stringify(effectiveLogo(b));
 
 const errorMessage = (error: unknown): string | undefined =>
   (error as { data?: { error?: string } } | undefined)?.data?.error;
@@ -136,7 +140,7 @@ export const LinkCreateUpdateModal = observer(function LinkCreateUpdateModal(pro
     // Moving a link creates a new row, so its icon always goes along. Otherwise only send a change.
     const isMoving = Boolean(editedLink) && visibility !== initialVisibility;
     if (isMoving || !sameLogo(values.logo_props, editedLink?.metadata?.logo_props))
-      fields.logo_props = values.logo_props;
+      fields.logo_props = effectiveLogo(values.logo_props);
     try {
       if (visibility === "public") await savePublic(fields);
       else await savePrivate(fields);

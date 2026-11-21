@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "2.10.0",
+  "version": "2.11.0",
   "private": true,
   "license": "AGPL-3.0",
   "type": "module",
@@ -10,6 +10,7 @@
     "preview": "react-router build && serve -s build/client -l 4000",
     "start": "serve -s build/client -l 4000",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf .react-router && rm -rf node_modules && rm -rf dist && rm -rf build",
+    "test": "vp test run",
     "check:lint": "vp lint --max-warnings=788 .",
     "check:types": "react-router typegen && tsc --noEmit",
     "check:format": "vp fmt --check .",

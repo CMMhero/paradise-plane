@@ -4,19 +4,13 @@
  * See the LICENSE file for details.
  */
 
+import { MENU_TABS } from "@/components/common/menu-tree";
+import type { TMenuId } from "@/components/common/menu-tree";
 // local imports
 import { coreSidebarMenuLinks } from "./core";
 import type { TSidebarMenuItem } from "./types";
 
+/** Sidebar entries in menu-tree order. */
 export function useSidebarMenu(): TSidebarMenuItem[] {
-  return [
-    coreSidebarMenuLinks.general,
-    coreSidebarMenuLinks.access,
-    coreSidebarMenuLinks.people,
-    coreSidebarMenuLinks.rules,
-    coreSidebarMenuLinks.notifications,
-    coreSidebarMenuLinks.modules,
-    coreSidebarMenuLinks.integrations,
-    coreSidebarMenuLinks.logs,
-  ];
+  return (Object.keys(MENU_TABS) as TMenuId[]).map((menu) => coreSidebarMenuLinks[menu]);
 }

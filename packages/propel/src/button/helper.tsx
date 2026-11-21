@@ -31,11 +31,13 @@ export const buttonVariants = cva(
         // Hasil akhirnya setengah langkah di atas Plane: 24/28/32/36px.
         // Chip properti work item (status, prioritas, penerima, modul, label): kecil dan
         // ringkas seperti chip Plane asli, bersudut tombol biasa (bukan pil).
+        // Di layar sentuh (`sentuh:`, pointer kasar) tombol naik ke 40/44px supaya kena jari.
+        // Desktop tetap 24-36px. Chip sengaja tidak ikut: ia hidup di baris yang padat.
         chip: "h-5 px-1.5 text-caption-sm-medium",
-        sm: "h-6 px-2.5 text-body-xs-medium",
-        base: "h-7 px-3 text-body-xs-medium",
-        lg: "h-8 px-3.5 text-body-sm-medium",
-        xl: "h-9 px-4 text-body-sm-medium",
+        sm: "h-6 px-2.5 text-body-xs-medium sentuh:min-h-10 sentuh:min-w-10",
+        base: "h-7 px-3 text-body-xs-medium sentuh:min-h-10 sentuh:min-w-10",
+        lg: "h-8 px-3.5 text-body-sm-medium sentuh:min-h-11 sentuh:min-w-11",
+        xl: "h-9 px-4 text-body-sm-medium sentuh:min-h-11 sentuh:min-w-11",
       },
       // Paradise (KEP-64): tombol biasa bersudut rounded-button; "pill" untuk chip yang
       // bisa diklik (label work item, chip properti), supaya pemanggil tidak menulis radius sendiri.

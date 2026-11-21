@@ -147,7 +147,8 @@ export const AntreanPersetujuanWorkspace = observer(function AntreanPersetujuanW
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden">
-      <Header variant={EHeaderVariant.SECONDARY}>
+      {/* Wraps so the wide button drops to its own line on phones instead of covering the filters. */}
+      <Header variant={EHeaderVariant.SECONDARY} className="flex-wrap gap-2 !py-2">
         <Header.LeftItem>
           <div className="flex flex-wrap items-center gap-2">
             <CustomSelect

@@ -67,6 +67,7 @@ from plane.db.models import (
     Workspace,
 )
 from plane.db.penempatan import penempatan_sekarang, setel_penempatan
+from plane.utils.intake_bawaan import ensure_default_intake
 from plane.utils.kanal_organisasi import sinkronkan_kanal_organisasi
 from plane.license.api.views.base import BaseAPIView
 from plane.utils.sinkron_departemen import nama_project_terpakai
@@ -171,6 +172,12 @@ def lengkapi_project_departemen(workspace, actor):
     return [_adopsi_atau_buat_project(dep, actor, workspace) for dep in tanpa_project.order_by("kode")]
 
 
+def _petakan(dep, project):
+    """Jadikan `project` milik departemen `dep`. Setiap departemen punya wadah Intake."""
+    DepartemenProject.objects.create(workspace_id=dep.workspace_id, departemen=dep, project=project)
+    ensure_default_intake(project)
+
+
 def _adopsi_atau_buat_project(dep, actor, workspace):
     """Pastikan departemen baru punya tepat satu project (KEP-32: project ikut departemen).
 
@@ -192,7 +199,7 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
     semua = list(Project.all_objects.filter(workspace=workspace, identifier=ident))
     aktif = next((p for p in semua if p.deleted_at is None and p.archived_at is None), None)
     if aktif is not None and not DepartemenProject.objects.filter(project=aktif).exists():
-        DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=aktif)
+        _petakan(dep, aktif)
         jadikan_anggota_project(aktif.pk, actor.id, ROLE.ADMIN.value, workspace_id=workspace.id)
         return aktif
 
@@ -237,7 +244,7 @@ def _adopsi_atau_buat_project(dep, actor, workspace):
             for state in DEFAULT_STATES
         ]
     )
-    DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=project)
+    _petakan(dep, project)
     return project
 
 
@@ -596,7 +603,7 @@ def _ganti_project(dep, project_ids):
         # Hard delete baris lama project ini (di departemen lain): pemetaan tidak
         # butuh riwayat sendiri, jejaknya sudah ada di auditlog.
         DepartemenProject.all_objects.filter(project_id=pid).delete()  # manager biasa = hard delete
-        DepartemenProject.objects.create(workspace_id=dep.workspace_id, departemen=dep, project_id=pid)
+        _petakan(dep, Project.objects.get(pk=pid))
 
 
 class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
@@ -689,7 +696,7 @@ class InstanceDepartemenDariProjectEndpoint(BaseAPIView):
         ditempatkan, dilewati = [], []
         with transaction.atomic(), tunda_sinkron():
             dep = Departemen.objects.create(workspace=workspace, divisi=divisi, kode=kode, nama=nama)
-            DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=project)
+            _petakan(dep, project)
             pengguna = {str(u.id): u for u in User.objects.filter(id__in=list(diminta))}
             for uid in {str(u) for u in diminta}:
                 tingkat, deps, divs = penempatan_sekarang(workspace.id, uid)

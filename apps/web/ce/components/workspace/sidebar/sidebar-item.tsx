@@ -5,6 +5,7 @@
  */
 
 import { useParams } from "next/navigation";
+import { PARADISE_NAV_ITEMS } from "@plane/constants";
 import type { IWorkspaceSidebarNavigationItem } from "@plane/constants";
 import { getNumberCount } from "@plane/utils";
 import { CountChip } from "@/components/common/count-chip";
@@ -17,30 +18,12 @@ type Props = {
   item: IWorkspaceSidebarNavigationItem;
 };
 
-// SidebarItemBase menyembunyikan item nav dinamis yang tidak ter-pin
-// (`if (!isPinned && !staticItems.includes(item.key)) return null`), dan default
-// preferensi adalah TIDAK ter-pin. Akibatnya fitur kustom kita tidak pernah
-// muncul di sidebar siapa pun kecuali tiap user mem-pin-nya sendiri lewat
-// "Customize navigation", yang tidak akan dilakukan orang yang belum tahu
-// fiturnya ada. Didaftarkan di sini supaya selalu tampil, memakai titik
-// ekstensi yang memang sudah disediakan upstream.
-// ⚠️ Mem-pin lewat "Customize navigation" TIDAK berpengaruh untuk kunci di
-// daftar ini. Backend hanya menyimpan preferensi untuk kunci yang terdaftar di
-// WorkspaceUserPreference.UserPreferenceKeys, dan PATCH-nya `continue` diam-diam
-// untuk kunci yang tidak dikenal. Jadi centangnya tersimpan di layar lalu hilang
-// saat halaman dimuat ulang. Karena itulah daftar ini ada.
-// "persetujuan" dan "tugas_lintas_divisi" kembali (keputusan user 2026-11-20).
+// SidebarItemBase menyembunyikan item nav dinamis yang tidak ter-pin, dan orang
+// tidak akan mem-pin fitur yang belum ia tahu ada. Menu Paradise (registri
+// `PARADISE_NAV_ITEMS`) karena itu selalu tampil bagi yang lolos izin dan
+// modulnya menyala; pin hanya mengatur urutannya.
 // Persetujuan hanya bagi yang punya wewenang memutuskan (`useNavPersetujuanTerlihat`).
-const PARADISE_ALWAYS_VISIBLE_ITEMS = [
-  "wiki",
-  "dashboard_divisi",
-  "kinerja",
-  "initiatives",
-  "persetujuan",
-  "tugas_lintas_divisi",
-  "chat",
-  "pengumuman",
-];
+const PARADISE_ALWAYS_VISIBLE_ITEMS: string[] = PARADISE_NAV_ITEMS.map((item) => item.key);
 
 /**
  * Menu Persetujuan hanya untuk yang punya wewenang memutuskan; staf tidak

@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  */
 
-import { isParadiseGateActive } from "@plane/constants";
+import { PARADISE_NAV_ITEMS, isParadiseGateActive } from "@plane/constants";
 import type { TParadiseGate } from "@plane/constants";
 
 /**
@@ -49,17 +49,15 @@ const MODUL_PER_PERINTAH: Record<string, TParadiseGate> = {
   toggle_page_lock: "pages",
   nav_project_intake: "intake",
   change_work_item_estimate: "estimates",
-  // Fitur Paradise
-  nav_chat: "chat",
-  nav_wiki: "wiki",
+  // Fitur Paradise. Perintah menu workspace ikut modul menunya di registri.
+  ...Object.fromEntries(
+    PARADISE_NAV_ITEMS.flatMap((item) => ("palette" in item ? [[item.palette.id, item.module]] : []))
+  ),
   nav_dashboard_divisi: "dashboards",
-  nav_kinerja: "dashboards",
-  nav_initiatives: "initiatives",
   nav_stickies: "stickies",
   nav_quick_links: "quick_links",
   nav_your_work_calendar: "your_work",
   nav_project_approvals: "approvals",
-  nav_workspace_approvals: "approvals",
 };
 
 export const isPowerKCommandModuleActive = (commandId: string): boolean =>

@@ -81,6 +81,9 @@ _MODUL_BAWAAN = {
     "stickies": "1",
     "drafts": "1",
     "quick_links": "1",
+    # Bagian daftar departemen (project) di sidebar. Hanya menyembunyikan tampilan:
+    # akses ke project tetap lewat halaman Projects dan Power K.
+    "departments": "1",
     # Menu workspace
     "dashboards": "1",
     "initiatives": "0",
@@ -228,6 +231,19 @@ CHAT_EDIT_WINDOW_HOURS = "CHAT_EDIT_WINDOW_HOURS"
 # berapa hari ke belakang yang masih ditampilkan.
 ATTENTION_REJECTED_DAYS = "ATTENTION_REJECTED_DAYS"
 ATTENTION_MENTION_DAYS = "ATTENTION_MENTION_DAYS"
+
+# Retensi log teknis, dalam hari (dulu setelan Django di settings/common.py,
+# dibaca sekali saat proses mulai). Dibaca `cleanup_task` setiap kali jalan, jadi
+# perubahan berlaku pada pembersihan berikutnya tanpa restart. Env lama dengan
+# nama yang sama tetap jadi benih, jadi instance yang sudah mengaturnya tidak
+# berubah. Minimal 1: retensi 0 menghapus semua log pada putaran berikutnya.
+API_ACTIVITY_LOG_RETENTION_DAYS = "API_ACTIVITY_LOG_RETENTION_DAYS"
+WEBHOOK_LOG_RETENTION_DAYS = "WEBHOOK_LOG_RETENTION_DAYS"
+EMAIL_LOG_RETENTION_DAYS = "EMAIL_LOG_RETENTION_DAYS"
+# Berkas Office di Wiki yang lebih besar dari ini tidak dikonversi ke PDF, dalam
+# MiB. Konversi berjalan di dalam permintaan, jadi berkas raksasa menahan satu
+# worker gunicorn. Benihnya env lama WIKI_PREVIEW_MAX_BYTES (byte).
+WIKI_PREVIEW_MAX_MB = "WIKI_PREVIEW_MAX_MB"
 
 # Aturan kerja SENSITIF (pilihan, bukan angka bebas):
 #
@@ -392,6 +408,10 @@ SETELAN_ANGKA = {
     CHAT_EDIT_WINDOW_HOURS: (24, 0, 8760),
     ATTENTION_REJECTED_DAYS: (14, 1, 90),
     ATTENTION_MENTION_DAYS: (7, 1, 90),
+    API_ACTIVITY_LOG_RETENTION_DAYS: (14, 1, 365),
+    WEBHOOK_LOG_RETENTION_DAYS: (14, 1, 365),
+    EMAIL_LOG_RETENTION_DAYS: (7, 1, 365),
+    WIKI_PREVIEW_MAX_MB: (_benih_env("WIKI_PREVIEW_MAX_BYTES", _MIB, 50, 1, 1024), 1, 1024),
     APPROVAL_REQUIRED_BELOW_LEVEL: (
         APPROVAL_DI_BAWAH_SUPERVISOR,
         APPROVAL_DI_BAWAH_SUPERVISOR,
@@ -440,6 +460,7 @@ TANPA_ENV = frozenset(
         CHAT_EDIT_WINDOW_HOURS,
         ATTENTION_REJECTED_DAYS,
         ATTENTION_MENTION_DAYS,
+        WIKI_PREVIEW_MAX_MB,
         APPROVAL_REQUIRED_BELOW_LEVEL,
         TASK_DELETE_RULE,
         DUE_DATE_CHANGE_RULE,

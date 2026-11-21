@@ -11,6 +11,7 @@ import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
 import { EmptyStateDetailed } from "@plane/propel/empty-state";
 // components
+import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 import { LinkCreateUpdateModal } from "@/components/home/widgets/links/create-update-link-modal";
 import { ProjectLinkDetail } from "@/components/home/widgets/links/link-detail";
@@ -65,7 +66,8 @@ function WorkspaceQuickLinksPage() {
           />
         </div>
       ) : (
-        <div className="relative h-full w-full overflow-y-auto px-page-x py-6">
+        <PageShell width="wide" className="relative">
+          <PageShell.Header title={t("home.quick_links.title_plural")} />
           <SharedQuickLinks workspaceSlug={workspaceSlug} isManageView />
           {hasSharedSection && (
             <div className="mb-2 text-12 font-medium text-tertiary">{t("quick_links_ui.my_links")}</div>
@@ -81,7 +83,7 @@ function WorkspaceQuickLinksPage() {
               ))}
             </div>
           )}
-        </div>
+        </PageShell>
       )}
     </>
   );

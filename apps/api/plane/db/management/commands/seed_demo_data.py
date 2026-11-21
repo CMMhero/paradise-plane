@@ -330,10 +330,6 @@ class Command(BaseCommand):
                         # Bentuk yang sama dengan yang dikirim modal "project baru" di web.
                         logo_props={"in_use": "emoji", "emoji": {"value": self.rng.choice(EMOJI_PROJECT)}},
                     )
-                    with impersonate(self.actor):
-                        Intake.objects.get_or_create(
-                            project=project, workspace=self.ws, is_default=True, defaults={"name": "Intake"}
-                        )
                     self.project[kode_dep] = project
                     self.dep_obj[kode_dep] = dep
 

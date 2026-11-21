@@ -23,7 +23,6 @@ from drf_spectacular.types import OpenApiTypes
 # Module imports
 from plane.db.models import (
     Cycle,
-    Intake,
     Module,
     Project,
     DeployBoard,
@@ -42,6 +41,7 @@ from plane.bgtasks.webhook_task import model_activity, webhook_activity
 from plane.utils.exception_logger import log_exception
 from .base import BaseAPIView
 from plane.utils.host import base_host
+from plane.utils.intake_bawaan import ensure_default_intake
 from plane.utils.izin_sumber import tolak_izin_project
 from plane.utils.saklar_instance import PERM_PROJECT_ARCHIVE, PERM_PROJECT_DELETE, PERM_PROJECT_EDIT
 from plane.utils.order_queryset import PROJECT_ORDER_BY_ALLOWLIST, sanitize_order_by
@@ -590,13 +590,7 @@ class ProjectDetailAPIEndpoint(BaseAPIView):
             if serializer.is_valid():
                 serializer.save()
                 if serializer.data["intake_view"]:
-                    intake = Intake.objects.filter(project=project, is_default=True).first()
-                    if not intake:
-                        Intake.objects.create(
-                            name=f"{project.name} Intake",
-                            project=project,
-                            is_default=True,
-                        )
+                    ensure_default_intake(project)
 
                 project = self.get_queryset().filter(pk=serializer.instance.id).first()
 

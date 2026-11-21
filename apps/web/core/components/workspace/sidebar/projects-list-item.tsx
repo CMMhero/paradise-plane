@@ -295,7 +295,7 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
           <DropIndicator classNames="absolute top-0" isVisible={instruction === "DRAG_OVER"} />
           <div
             className={cn(
-              "group/project-item relative flex w-full items-center rounded-item px-2 py-1.5 text-primary hover:bg-layer-transparent-hover sentuh:py-2.5",
+              "group/project-item relative flex w-full items-center rounded-item px-2 py-1.5 text-primary hover:bg-layer-transparent-hover sentuh:min-h-10 sentuh:py-2.5",
               {
                 "bg-surface-2": isMenuActive,
                 "bg-layer-transparent-active": shouldHighlightProject,
@@ -329,7 +329,11 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
               </Tooltip>
             )}
             <>
-              <ControlLink href={defaultTabUrl} className="flex flex-grow truncate" onClick={handleItemClick}>
+              <ControlLink
+                href={defaultTabUrl}
+                className="flex flex-grow truncate sentuh:-my-2.5 sentuh:py-2.5"
+                onClick={handleItemClick}
+              >
                 {isAccordionMode ? (
                   <Disclosure.Button
                     as="button"

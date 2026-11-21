@@ -13,6 +13,7 @@ import { useCloseOnBack } from "@plane/hooks";
 import type { TNameDescriptionLoader } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 import { cn } from "@plane/utils";
+import { WorkItemImageGalleryScope } from "@/components/common/image-gallery";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import useKeypress from "@/hooks/use-keypress";
@@ -64,6 +65,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
   // ref
   const issuePeekOverviewRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorRefApi>(null);
+  const galleryRootRef = useRef<HTMLDivElement>(null);
   // store hooks
   const {
     setPeekIssue,
@@ -177,91 +179,37 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                 disabled={disabled}
                 embedIssue={embedIssue}
               />
-              {/* content */}
-              <div className="vertical-scrollbar relative scrollbar-md h-full w-full overflow-hidden overflow-y-auto">
-                {["side-peek", "modal"].includes(peekMode) ? (
-                  <div className="relative flex flex-col gap-3 space-y-3 px-8 py-5">
-                    <PeekOverviewIssueDetails
-                      editorRef={editorRef}
-                      workspaceSlug={workspaceSlug}
-                      projectId={projectId}
-                      issueId={issueId}
-                      issueOperations={issueOperations}
-                      disabled={disabled}
-                      isArchived={is_archived}
-                      isSubmitting={isSubmitting}
-                      setIsSubmitting={(value) => setIsSubmitting(value)}
-                    />
-
-                    <div className="py-2">
-                      <IssueDetailWidgets
+              {/* content: every image in it (description, comments, attachments) is one gallery */}
+              <WorkItemImageGalleryScope issueId={issueId} rootRef={galleryRootRef}>
+                <div
+                  ref={galleryRootRef}
+                  className="vertical-scrollbar relative scrollbar-md h-full w-full overflow-hidden overflow-y-auto"
+                >
+                  {["side-peek", "modal"].includes(peekMode) ? (
+                    <div className="relative flex flex-col gap-3 space-y-3 px-8 py-5">
+                      <PeekOverviewIssueDetails
+                        editorRef={editorRef}
                         workspaceSlug={workspaceSlug}
                         projectId={projectId}
                         issueId={issueId}
-                        disabled={disabled || is_archived}
+                        issueOperations={issueOperations}
+                        disabled={disabled}
                         isArchived={is_archived}
-                        issueServiceType={EIssueServiceType.ISSUES}
+                        isSubmitting={isSubmitting}
+                        setIsSubmitting={(value) => setIsSubmitting(value)}
                       />
-                    </div>
 
-                    <PeekOverviewProperties
-                      workspaceSlug={workspaceSlug}
-                      projectId={projectId}
-                      issueId={issueId}
-                      issueOperations={issueOperations}
-                      disabled={disabled || is_archived}
-                    />
-
-                    <IssueActivity
-                      workspaceSlug={workspaceSlug}
-                      projectId={projectId}
-                      issueId={issueId}
-                      disabled={is_archived}
-                    />
-                  </div>
-                ) : (
-                  <div className="vertical-scrollbar flex h-full w-full flex-col overflow-auto lg:flex-row">
-                    {/* Menumpuk di layar sempit, berdampingan sejak lg. Sebelumnya SELALU
-                        berdampingan, dan karena panel properti dipatok 400px yang tak boleh
-                        menyusut, di HP 375px isi work item-nya tergencet habis. */}
-                    <div className="relative h-full w-full space-y-6 overflow-auto p-4 py-5">
-                      <div className="space-y-3">
-                        <PeekOverviewIssueDetails
-                          editorRef={editorRef}
+                      <div className="py-2">
+                        <IssueDetailWidgets
                           workspaceSlug={workspaceSlug}
                           projectId={projectId}
                           issueId={issueId}
-                          issueOperations={issueOperations}
-                          disabled={disabled}
+                          disabled={disabled || is_archived}
                           isArchived={is_archived}
-                          isSubmitting={isSubmitting}
-                          setIsSubmitting={(value) => setIsSubmitting(value)}
-                        />
-
-                        <div className="py-2">
-                          <IssueDetailWidgets
-                            workspaceSlug={workspaceSlug}
-                            projectId={projectId}
-                            issueId={issueId}
-                            disabled={disabled}
-                            isArchived={is_archived}
-                            issueServiceType={EIssueServiceType.ISSUES}
-                          />
-                        </div>
-
-                        <IssueActivity
-                          workspaceSlug={workspaceSlug}
-                          projectId={projectId}
-                          issueId={issueId}
-                          disabled={is_archived}
+                          issueServiceType={EIssueServiceType.ISSUES}
                         />
                       </div>
-                    </div>
-                    <div
-                      className={`vertical-scrollbar scrollbar-sm w-full shrink-0 overflow-hidden border-t border-subtle p-4 py-5 lg:h-full lg:!w-[400px] lg:border-t-0 lg:border-l ${
-                        is_archived ? "pointer-events-none" : ""
-                      }`}
-                    >
+
                       <PeekOverviewProperties
                         workspaceSlug={workspaceSlug}
                         projectId={projectId}
@@ -269,10 +217,69 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                         issueOperations={issueOperations}
                         disabled={disabled || is_archived}
                       />
+
+                      <IssueActivity
+                        workspaceSlug={workspaceSlug}
+                        projectId={projectId}
+                        issueId={issueId}
+                        disabled={is_archived}
+                      />
                     </div>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="vertical-scrollbar flex h-full w-full flex-col overflow-auto lg:flex-row">
+                      {/* Menumpuk di layar sempit, berdampingan sejak lg. Sebelumnya SELALU
+                        berdampingan, dan karena panel properti dipatok 400px yang tak boleh
+                        menyusut, di HP 375px isi work item-nya tergencet habis. */}
+                      <div className="relative h-full w-full space-y-6 overflow-auto p-4 py-5">
+                        <div className="space-y-3">
+                          <PeekOverviewIssueDetails
+                            editorRef={editorRef}
+                            workspaceSlug={workspaceSlug}
+                            projectId={projectId}
+                            issueId={issueId}
+                            issueOperations={issueOperations}
+                            disabled={disabled}
+                            isArchived={is_archived}
+                            isSubmitting={isSubmitting}
+                            setIsSubmitting={(value) => setIsSubmitting(value)}
+                          />
+
+                          <div className="py-2">
+                            <IssueDetailWidgets
+                              workspaceSlug={workspaceSlug}
+                              projectId={projectId}
+                              issueId={issueId}
+                              disabled={disabled}
+                              isArchived={is_archived}
+                              issueServiceType={EIssueServiceType.ISSUES}
+                            />
+                          </div>
+
+                          <IssueActivity
+                            workspaceSlug={workspaceSlug}
+                            projectId={projectId}
+                            issueId={issueId}
+                            disabled={is_archived}
+                          />
+                        </div>
+                      </div>
+                      <div
+                        className={`vertical-scrollbar scrollbar-sm w-full shrink-0 overflow-hidden border-t border-subtle p-4 py-5 lg:h-full lg:!w-[400px] lg:border-t-0 lg:border-l ${
+                          is_archived ? "pointer-events-none" : ""
+                        }`}
+                      >
+                        <PeekOverviewProperties
+                          workspaceSlug={workspaceSlug}
+                          projectId={projectId}
+                          issueId={issueId}
+                          issueOperations={issueOperations}
+                          disabled={disabled || is_archived}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </WorkItemImageGalleryScope>
             </>
           )}
         </div>

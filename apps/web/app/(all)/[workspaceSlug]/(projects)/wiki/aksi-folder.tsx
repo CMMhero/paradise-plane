@@ -21,7 +21,7 @@ import { adalahUnit, layananWiki, usePohonWiki } from "./data";
 import { KelolaFolder } from "./kelola";
 
 const KELAS_AKSI =
-  "grid size-7 place-items-center rounded-button bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100 sentuh:size-9 sentuh:opacity-100";
+  "grid size-7 place-items-center rounded-button bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100 sentuh:size-10 sentuh:opacity-100";
 
 type TProps = {
   workspaceSlug: string;

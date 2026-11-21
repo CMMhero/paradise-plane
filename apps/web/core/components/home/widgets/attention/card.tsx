@@ -93,7 +93,7 @@ export const AttentionCard = observer(function AttentionCard(props: TCardProps) 
           <Link
             href={href}
             onClick={handleTitleClick}
-            className="block truncate text-13 text-primary hover:underline"
+            className="block truncate text-13 text-primary hover:underline sentuh:-my-2.5 sentuh:py-2.5"
             title={`${item.identifier} ${item.name}`}
           >
             <span className="mr-1.5 text-12 text-tertiary">{item.identifier}</span>

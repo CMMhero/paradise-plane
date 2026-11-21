@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Anunțuri",
+    "title": "Anunțuri",
     "empty": "Încă nu există anunțuri.",
     "placeholder": "Scrie un anunț",
     "send": "Publică",
@@ -577,7 +578,7 @@
     "breakdown": "{pending} pending · {open} open",
     "request_help": "Ask another division for help",
     "no_origin": "You aren't a member of any division in this workspace, so there is no origin division you can file from. Ask an admin to add you to your division first.",
-    "no_targets": "Nicio divizie nu poate primi încă solicitări. Aici apar doar diviziile care au activat Intake, iar activarea este decizia diviziei respective, nu se poate face din această pagină. Contactează administratorul diviziei țintă și roagă-l să activeze Inbox/Intake în setările departamentului.",
+    "no_targets": "No other department can take requests right now. A department shows up here while its Intake is on.",
     "origin": "Origin division",
     "origin_hint": "Only divisions you are a member of.",
     "target": "Target division",
@@ -602,7 +603,26 @@
     "col_task_status": "Task status",
     "col_task_no": "Task no.",
     "col_date": "Date",
-    "footer_note": "The task status in the target division is only shown coarsely (open / done / won't do). Who works on it, due dates, labels and comments are not exposed through this page."
+    "footer_note": "The task status in the target division is only shown coarsely (open / done / won't do). Who works on it, due dates, labels and comments are not exposed through this page.",
+    "errors": {
+      "title_required": "Enter a title for the request.",
+      "title_too_long": "The title can be at most {max} characters.",
+      "unknown_priority": "Pick a priority from the list.",
+      "note_too_long": "The note can be at most {max} characters.",
+      "route_required": "Pick your department and the target department.",
+      "origin_not_found": "Your department was not found. It may have been archived.",
+      "not_origin_member": "You're not a member of {name}, so you can't send requests for it.",
+      "target_not_found": "The target department was not found. It may have been archived.",
+      "same_department": "Pick a department other than your own.",
+      "member_of_target": "You're a member of {name}. Create the work item there directly.",
+      "intake_off": "{name} has turned off Intake, so it can't take requests right now.",
+      "target_not_allowed": "{name} is not a department that can take requests.",
+      "invalid_description": "The description has content that isn't allowed. Remove it and try again.",
+      "forbidden": "You don't have access to department requests."
+    },
+    "incoming_title": "Requests to departments you supervise",
+    "incoming_hint": "Accept or decline them in that department's Intake or on the Approvals page.",
+    "col_requester": "Requested by"
   },
   "notification_ui": {
     "action": {
@@ -1193,6 +1213,15 @@
     "icon_hint": "Faceți clic pe pictogramă pentru a alege una, ca la pictograma unui departament. Fără alegere se folosește pictograma site-ului.",
     "reset_title": "Use the site title",
     "reset_icon": "Use the site icon",
+    "image_toggle": "Use an image URL",
+    "image_toggle_off": "Use the icon picker instead",
+    "image_label": "Image URL",
+    "image_placeholder": "https://example.com/logo.png",
+    "image_hint": "A public https link to a PNG, JPEG, WebP or GIF, up to 150 KB. We save a copy, so nobody else loads your link.",
+    "image_loading": "Loading preview...",
+    "image_error": "Could not load this image. Check the link and the file type.",
+    "image_not_https": "The link must start with https://.",
+    "image_preview_alt": "Icon preview",
     "saved": "Shared link saved",
     "save_failed": "Could not save the shared link",
     "save_failed_message": "Check the address and try again.",
@@ -1515,5 +1544,27 @@
   "cabang": {
     "kpi_scope": "Branch",
     "org_branch": "Branch"
+  },
+  "intake_errors": {
+    "forbidden": "You don't have access to this department's Intake. Ask its supervisor or admin to add you.",
+    "not_found": "Intake is off for this department, or the page is out of date. Reload the page.",
+    "load_failed": "Couldn't load the Intake. Try again in a moment. If it keeps happening, tell your admin."
+  },
+  "departments_menu": {
+    "label": "Afișează lista departamentelor",
+    "off_by_admin": "Dezactivat de administrator."
+  },
+  "image_gallery": {
+    "dialog": "Image viewer",
+    "close": "Close image viewer",
+    "previous": "Previous image",
+    "next": "Next image",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "reset_zoom": "Reset zoom",
+    "download": "Download image",
+    "open_in_new_tab": "Open image in new tab",
+    "load_error": "This image couldn't load. You can still move to the other images.",
+    "counter": "Image {current} of {total}"
   }
 }

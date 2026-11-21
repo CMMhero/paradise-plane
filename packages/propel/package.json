@@ -1,6 +1,6 @@
 {
   "name": "@plane/propel",
-  "version": "2.10.0",
+  "version": "2.11.0",
   "private": true,
   "license": "AGPL-3.0",
   "type": "module",
@@ -31,6 +31,7 @@
     "./empty-state": "./dist/empty-state/index.js",
     "./icon-button": "./dist/icon-button/index.js",
     "./icons": "./dist/icons/index.js",
+    "./image-gallery": "./dist/image-gallery/index.js",
     "./input": "./dist/input/index.js",
     "./member-profile-card": "./dist/member-profile-card/index.js",
     "./menu": "./dist/menu/index.js",
@@ -55,6 +56,7 @@
   "scripts": {
     "dev": "vp pack --watch --no-clean",
     "build": "vp pack",
+    "test": "vp test run",
     "check:lint": "vp lint --max-warnings=99 .",
     "check:types": "tsc --noEmit",
     "check:format": "vp fmt --check .",

@@ -35,7 +35,7 @@ const Input = React.forwardRef(function Input(props: InputProps, ref: React.Forw
       type={type}
       name={name}
       className={cn(
-        "placeholder-tertiary block rounded-field border-subtle-1 bg-layer-2 text-13 focus:outline-none",
+        "placeholder-tertiary block rounded-field border-subtle-1 bg-layer-2 text-13 focus:outline-none sentuh:min-h-10",
         {
           "border-[0.5px]": mode === "primary",
           "border-none bg-transparent ring-0 transition-all focus:ring-1 focus:ring-accent-strong":

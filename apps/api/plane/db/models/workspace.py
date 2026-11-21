@@ -439,9 +439,14 @@ class WorkspaceUserPreference(BaseModel):
         CHAT = "chat", "Chat"
         WIKI = "wiki", "Wiki"
         KINERJA = "kinerja", "KPI"
+        # Tanpa barisnya, sakelar Pengumuman di "Customize navigation" selalu
+        # tampil mati dan mencentangnya tidak tersimpan.
+        PENGUMUMAN = "pengumuman", "Announcements"
         # Kembali ke sidebar (keputusan user 2026-11-20).
         PERSETUJUAN = "persetujuan", "Approvals"
         TUGAS_LINTAS_DIVISI = "tugas_lintas_divisi", "Department requests"
+        # Bagian daftar departemen di sidebar; pilihan tampil/sembunyi per member.
+        DEPARTMENTS = "departments", "Departments"
 
     workspace = models.ForeignKey(
         "db.Workspace",

@@ -7,6 +7,7 @@
 import type { Editor } from "@tiptap/core";
 import { useState } from "react";
 // plane imports
+import { getImageGalleryItemProps } from "@plane/propel/image-gallery";
 import { cn } from "@plane/utils";
 // local imports
 import type { TCustomImageAlignment } from "../../types";
@@ -27,7 +28,7 @@ type Props = {
 };
 
 export function ImageToolbarRoot(props: Props) {
-  const { alignment, editor, downloadSrc, handleAlignmentChange, isTouchDevice } = props;
+  const { alignment, editor, downloadSrc, handleAlignmentChange, isTouchDevice, src } = props;
   // states
   const [shouldShowToolbar, setShouldShowToolbar] = useState(false);
   // derived values
@@ -42,6 +43,9 @@ export function ImageToolbarRoot(props: Props) {
             "pointer-events-auto opacity-100": shouldShowToolbar,
           }
         )}
+        // the toolbar exists only for a finished image (not an upload preview, not a broken one),
+        // which is exactly when the image belongs in the gallery
+        {...getImageGalleryItemProps({ src, downloadSrc })}
       >
         {!isTouchDevice && <ImageDownloadAction src={downloadSrc} />}
         {isEditable && (
@@ -52,11 +56,7 @@ export function ImageToolbarRoot(props: Props) {
             toggleToolbarViewStatus={setShouldShowToolbar}
           />
         )}
-        <ImageFullScreenActionRoot
-          image={props}
-          isTouchDevice={isTouchDevice}
-          toggleToolbarViewStatus={setShouldShowToolbar}
-        />
+        <ImageFullScreenActionRoot image={props} isTouchDevice={isTouchDevice} />
       </div>
     </>
   );

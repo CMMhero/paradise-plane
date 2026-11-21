@@ -10,6 +10,8 @@
  * Each help line says what the setting does and who it affects.
  */
 
+import type { TParadiseModule } from "@plane/types";
+
 const tab = (title: string, description: string) => ({ title, description });
 
 // KEP-85 permission keys. Content has an owner; project structure goes by level.
@@ -122,7 +124,7 @@ export const settingsStrings = {
       "Dashboards",
       "When a division is flagged on the Division Dashboard and how long items stay on Needs attention."
     ),
-    modules_files: tab("Files", "How large an uploaded file may be."),
+    modules_files: tab("Files", "How large an uploaded file may be, and which Wiki files get a preview."),
     integrations_google: tab(
       "Google",
       "Sign in with Google and the Google Calendar sync, with their credentials, on one page."
@@ -132,7 +134,10 @@ export const settingsStrings = {
     logs_activity: tab("Activity", "Who is using the app right now and how often people sign in and out."),
     logs_audit: tab("Audit log", "Who changed what in God Mode and in the app."),
     logs_trash: tab("Trash", "Deleted items waiting to be removed for good."),
-    logs_retention: tab("Retention", "How long deleted items and sign-in history are kept before they are removed."),
+    logs_retention: tab(
+      "Retention",
+      "How long deleted items, sign-in history, and technical logs are kept before they are removed."
+    ),
   },
 
   sections: {
@@ -187,9 +192,14 @@ export const settingsStrings = {
     },
     dashboards_attention: { title: "Needs attention", hint: "The widget on Home that lists work waiting on a person." },
     files: { title: "Uploads" },
+    wiki_preview: { title: "Wiki previews" },
     google_signin: { title: "Sign in with Google" },
     google_calendar: { title: "Google Calendar" },
     retention: { title: "Retention" },
+    retention_logs: {
+      title: "Technical logs",
+      hint: "Cleanup runs once a day. A new value applies from the next run, no restart needed.",
+    },
   },
 
   fields: {
@@ -453,6 +463,10 @@ export const settingsStrings = {
       name: "Largest upload",
       help: "The biggest file anyone can attach, in MB. Applies to every upload in the app and in chat.",
     },
+    WIKI_PREVIEW_MAX_MB: {
+      name: "Largest file to preview",
+      help: "Word, Excel, and PowerPoint files in the Wiki up to this size are turned into a PDF so people can read them in the app. Larger files only offer a download. Applies right away.",
+    },
     ENABLE_GOOGLE_CALENDAR_SYNC: {
       name: "Google Calendar sync",
       help: "Work item due dates are written to the Google calendar of everyone who connects their account.",
@@ -460,6 +474,18 @@ export const settingsStrings = {
     TRASH_RETENTION_DAYS: {
       name: "Trash retention",
       help: "Deleted work items, pages, and modules are removed for good after this many days.",
+    },
+    API_ACTIVITY_LOG_RETENTION_DAYS: {
+      name: "API request log retention",
+      help: "Requests made with API tokens, including what they sent and received, are removed after this many days.",
+    },
+    WEBHOOK_LOG_RETENTION_DAYS: {
+      name: "Webhook log retention",
+      help: "Webhook delivery attempts and their responses are removed after this many days.",
+    },
+    EMAIL_LOG_RETENTION_DAYS: {
+      name: "Email log retention",
+      help: "The record of sent notification emails is removed after this many days. The emails themselves are not affected.",
     },
     LOGIN_HISTORY_RETENTION_DAYS: {
       name: "Sign-in history retention",
@@ -476,6 +502,10 @@ export const settingsStrings = {
     stickies: { name: "Stickies", desc: "Personal sticky notes." },
     drafts: { name: "Drafts", desc: "Work items saved as drafts before they are created." },
     quick_links: { name: "Quick links", desc: "Personal bookmarks to pages inside and outside the app." },
+    departments: {
+      name: "Department list",
+      desc: "The sidebar section that lists departments by division. Hidden for everyone when off; departments stay reachable from the Projects page and the command palette. Members can also hide it for themselves.",
+    },
     dashboards: { name: "Dashboards", desc: "Division dashboards with progress and workload per department." },
     initiatives: { name: "Initiatives", desc: "Cross-project goals that group related work." },
     views: { name: "Views", desc: "Saved work item views, at workspace and department level." },
@@ -496,7 +526,7 @@ export const settingsStrings = {
     },
     time_tracking: { name: "Time tracking", desc: "Worklogs on work items and logged hours on division dashboards." },
     estimates: { name: "Estimates", desc: "Story points or time estimates on work items, per department." },
-  },
+  } satisfies Record<TParadiseModule, { name: string; desc: string }>,
 
   /** Labels for choice values. A value the server adds later falls back to "Option N". */
   choices: {

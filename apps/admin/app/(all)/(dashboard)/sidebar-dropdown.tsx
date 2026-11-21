@@ -90,7 +90,7 @@ export const AdminSidebarDropdown = observer(function AdminSidebarDropdown() {
         >
           <Menu as="div" className="flex-shrink-0">
             <Menu.Button
-              className={cn("grid place-items-center outline-none", {
+              className={cn("sasaran-sentuh grid place-items-center outline-none", {
                 "cursor-default": !isSidebarCollapsed,
               })}
             >
@@ -123,7 +123,7 @@ export const AdminSidebarDropdown = observer(function AdminSidebarDropdown() {
 
       {!isSidebarCollapsed && currentUser && (
         <Menu as="div" className="relative flex-shrink-0">
-          <Menu.Button className="grid place-items-center outline-none">
+          <Menu.Button className="sasaran-sentuh grid place-items-center outline-none">
             <Avatar
               name={currentUser.display_name}
               src={getFileURL(currentUser.avatar_url)}

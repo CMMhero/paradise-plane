@@ -67,7 +67,7 @@ export function ControllerInput<T extends FieldValues>(props: Props<T>) {
           (showPassword ? (
             <button
               tabIndex={-1}
-              className="absolute top-2.5 right-3 flex items-center justify-center text-placeholder"
+              className="sasaran-sentuh absolute top-2.5 right-3 flex items-center justify-center text-placeholder"
               onClick={() => setShowPassword(false)}
             >
               <EyeOff className="h-4 w-4" />
@@ -75,7 +75,7 @@ export function ControllerInput<T extends FieldValues>(props: Props<T>) {
           ) : (
             <button
               tabIndex={-1}
-              className="absolute top-2.5 right-3 flex items-center justify-center text-placeholder"
+              className="sasaran-sentuh absolute top-2.5 right-3 flex items-center justify-center text-placeholder"
               onClick={() => setShowPassword(true)}
             >
               <Eye className="h-4 w-4" />

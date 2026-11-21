@@ -371,6 +371,7 @@
   },
   "pengumuman_ui": {
     "nav": "Pengumuman",
+    "title": "Pengumuman",
     "empty": "Belum ada pengumuman.",
     "placeholder": "Tulis pengumuman",
     "send": "Terbitkan",
@@ -577,7 +578,7 @@
     "breakdown": "{pending} menunggu · {open} terbuka",
     "request_help": "Minta bantuan divisi lain",
     "no_origin": "Kamu belum menjadi anggota divisi mana pun di workspace ini, jadi belum ada divisi asal yang bisa kamu ajukan. Minta admin menambahkanmu ke divisimu dulu.",
-    "no_targets": "Belum ada divisi yang bisa menerima permintaan. Hanya divisi yang sudah menyalakan pintu Intake yang muncul di sini, dan menyalakannya adalah keputusan divisi itu sendiri, bukan sesuatu yang bisa dinyalakan dari halaman ini. Hubungi admin divisi tujuan dan minta mereka mengaktifkan Inbox/Intake di pengaturan departemennya.",
+    "no_targets": "Belum ada departemen lain yang bisa menerima permintaan. Departemen muncul di sini selama Intake-nya menyala.",
     "origin": "Divisi asal",
     "origin_hint": "Hanya divisi tempat kamu menjadi anggota.",
     "target": "Divisi tujuan",
@@ -602,7 +603,26 @@
     "col_task_status": "Status tugas",
     "col_task_no": "No. tugas",
     "col_date": "Tanggal",
-    "footer_note": "Status tugas di divisi tujuan hanya ditampilkan kasar (terbuka / selesai / tidak dikerjakan). Siapa yang mengerjakan, tenggat, label, dan komentar tidak dibuka lewat halaman ini."
+    "footer_note": "Status tugas di divisi tujuan hanya ditampilkan kasar (terbuka / selesai / tidak dikerjakan). Siapa yang mengerjakan, tenggat, label, dan komentar tidak dibuka lewat halaman ini.",
+    "errors": {
+      "title_required": "Isi judul permintaan.",
+      "title_too_long": "Judul maksimal {max} karakter.",
+      "unknown_priority": "Pilih prioritas dari daftar.",
+      "note_too_long": "Catatan maksimal {max} karakter.",
+      "route_required": "Pilih departemen Anda dan departemen tujuan.",
+      "origin_not_found": "Departemen Anda tidak ditemukan. Mungkin sudah diarsipkan.",
+      "not_origin_member": "Anda bukan anggota {name}, jadi tidak bisa mengirim permintaan atas namanya.",
+      "target_not_found": "Departemen tujuan tidak ditemukan. Mungkin sudah diarsipkan.",
+      "same_department": "Pilih departemen selain departemen Anda.",
+      "member_of_target": "Anda anggota {name}. Buat work item langsung di sana.",
+      "intake_off": "{name} mematikan Intake, jadi belum bisa menerima permintaan.",
+      "target_not_allowed": "{name} bukan departemen yang bisa menerima permintaan.",
+      "invalid_description": "Keterangan berisi konten yang tidak diizinkan. Hapus lalu coba lagi.",
+      "forbidden": "Anda tidak punya akses ke permintaan antar departemen."
+    },
+    "incoming_title": "Permintaan ke departemen yang Anda awasi",
+    "incoming_hint": "Terima atau tolak di Intake departemen itu atau di halaman Persetujuan.",
+    "col_requester": "Peminta"
   },
   "notification_ui": {
     "action": {
@@ -1193,6 +1213,15 @@
     "icon_hint": "Klik ikon untuk memilih, seperti ikon departemen. Jika tidak dipilih, ikon situs akan dipakai.",
     "reset_title": "Pakai judul situs",
     "reset_icon": "Pakai ikon situs",
+    "image_toggle": "Pakai URL gambar",
+    "image_toggle_off": "Pakai pilihan ikon saja",
+    "image_label": "URL gambar",
+    "image_placeholder": "https://contoh.com/logo.png",
+    "image_hint": "Link https publik ke gambar PNG, JPEG, WebP, atau GIF, maksimal 150 KB. Kami menyimpan salinannya, jadi tidak ada orang lain yang membuka link Anda.",
+    "image_loading": "Memuat pratinjau...",
+    "image_error": "Gambar tidak bisa dimuat. Periksa link dan jenis filenya.",
+    "image_not_https": "Link harus diawali https://.",
+    "image_preview_alt": "Pratinjau ikon",
     "saved": "Link bersama disimpan",
     "save_failed": "Link bersama gagal disimpan",
     "save_failed_message": "Periksa alamatnya lalu coba lagi.",
@@ -1515,5 +1544,27 @@
   "cabang": {
     "kpi_scope": "Cabang",
     "org_branch": "Cabang"
+  },
+  "intake_errors": {
+    "forbidden": "Anda tidak punya akses ke Intake departemen ini. Minta supervisor atau admin departemen untuk menambahkan Anda.",
+    "not_found": "Intake departemen ini sedang mati, atau halamannya sudah usang. Muat ulang halaman.",
+    "load_failed": "Intake gagal dimuat. Coba lagi sebentar lagi. Kalau terus terjadi, beri tahu admin."
+  },
+  "departments_menu": {
+    "label": "Tampilkan daftar departemen",
+    "off_by_admin": "Dimatikan oleh administrator."
+  },
+  "image_gallery": {
+    "dialog": "Penampil gambar",
+    "close": "Tutup penampil gambar",
+    "previous": "Gambar sebelumnya",
+    "next": "Gambar berikutnya",
+    "zoom_in": "Perbesar",
+    "zoom_out": "Perkecil",
+    "reset_zoom": "Kembalikan ukuran",
+    "download": "Unduh gambar",
+    "open_in_new_tab": "Buka gambar di tab baru",
+    "load_error": "Gambar ini gagal dimuat. Anda tetap bisa pindah ke gambar lain.",
+    "counter": "Gambar {current} dari {total}"
   }
 }

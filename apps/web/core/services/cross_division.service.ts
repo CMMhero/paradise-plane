@@ -27,7 +27,8 @@ export type TStatusTugas = "belum_diterima" | "terbuka" | "selesai" | "dibatalka
 export type TPermintaanLintasDivisi = {
   id: string;
   dibuat_pada: string;
-  catatan: string;
+  /** Catatan peminta; terlihat peminta (`keluar`) dan atasan departemen tujuan (`masuk`). */
+  catatan?: string;
   asal: TDivisiLintasDivisi;
   tujuan: TDivisiLintasDivisi;
   judul: string | null;
@@ -38,6 +39,10 @@ export type TPermintaanLintasDivisi = {
   alasan_tolak?: string;
   /** Peminta anggota departemen tujuan, jadi `nomor_tugas_tujuan` boleh ditautkan. */
   boleh_dibuka?: boolean;
+  /** `keluar` = saya yang meminta, `masuk` = ke departemen yang saya awasi. Server lama: tidak ada. */
+  arah?: "keluar" | "masuk";
+  /** Nama peminta. Server lama: tidak ada. */
+  peminta?: string;
 };
 
 /** Status `IntakeIssue`: 1 diterima, -1 ditolak. */

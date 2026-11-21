@@ -36,10 +36,10 @@ from plane.db.models import (
     Page,
     ProjectPage,
     PageLabel,
-    Intake,
     IntakeIssue,
 )
 from plane.db.models.intake import SourceType
+from plane.utils.intake_bawaan import ensure_default_intake
 
 
 def create_project(workspace, user_id):
@@ -54,6 +54,7 @@ def create_project(workspace, user_id):
         created_by_id=user_id,
         intake_view=True,
     )
+    ensure_default_intake(project)
 
     # Add current member as project member. Lewat `jadikan_anggota_project`:
     # kalau `user_id` seorang Super Admin, signal `plane.db.superadmin` sudah
@@ -361,7 +362,7 @@ def create_issues(workspace, project, user_id, issue_count):
 
 def create_intake_issues(workspace, project, user_id, intake_issue_count):
     issues = create_issues(workspace, project, user_id, intake_issue_count)
-    intake, create = Intake.objects.get_or_create(name="Intake", project=project, is_default=True)
+    intake = ensure_default_intake(project)
     IntakeIssue.objects.bulk_create(
         [
             IntakeIssue(

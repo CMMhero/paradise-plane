@@ -14,28 +14,23 @@ import { useLocation } from "react-router";
 import Link from "next/link";
 import { godmodeStrings, useGodmodeStrings } from "@/app/i18n/godmode";
 import { PageWrapper } from "@/components/common/page-wrapper";
-import { MenuTabs } from "@/components/common/section-tabs";
+import { MENU_TABS, MenuTabs } from "@/components/common/section-tabs";
 import type { TMenuId, TTabId } from "@/components/common/section-tabs";
+import { SETTINGS_LAYOUT } from "@/components/settings/layouts";
 import type { TSettingsTabId } from "@/components/settings/layouts";
 import { SettingsTabForm } from "@/components/settings/settings-tab-form";
 import { SmtpBanner } from "@/components/settings/smtp-banner";
 
 type TTabRoute = { menu: TMenuId; tab: TTabId; layout: TSettingsTabId };
 
-const TAB_BY_PATH: Record<string, TTabRoute> = {
-  "/general/company": { menu: "general", tab: "general_company", layout: "general_company" },
-  "/access/sessions": { menu: "access", tab: "access_sessions", layout: "access_sessions" },
-  "/rules": { menu: "rules", tab: "rules_approvals", layout: "rules_approvals" },
-  "/rules/dates": { menu: "rules", tab: "rules_dates", layout: "rules_dates" },
-  "/rules/permissions": { menu: "rules", tab: "rules_permissions", layout: "rules_permissions" },
-  "/notifications/sending": { menu: "notifications", tab: "notifications_sending", layout: "notifications_sending" },
-  "/notifications/schedule": { menu: "notifications", tab: "notifications_schedule", layout: "notifications_schedule" },
-  "/modules": { menu: "modules", tab: "modules_visibility", layout: "modules_visibility" },
-  "/modules/chat": { menu: "modules", tab: "modules_chat", layout: "modules_chat" },
-  "/modules/dashboards": { menu: "modules", tab: "modules_dashboards", layout: "modules_dashboards" },
-  "/modules/files": { menu: "modules", tab: "modules_files", layout: "modules_files" },
-  "/logs/retention": { menu: "logs", tab: "logs_retention", layout: "logs_retention" },
-};
+/** Every menu-tree tab that has a registry layout, keyed by path without the trailing slash. */
+const TAB_BY_PATH: Record<string, TTabRoute> = Object.fromEntries(
+  (Object.keys(MENU_TABS) as TMenuId[]).flatMap((menu) =>
+    MENU_TABS[menu]
+      .filter((tab) => Object.hasOwn(SETTINGS_LAYOUT, tab.id))
+      .map((tab) => [tab.href.replace(/\/+$/, ""), { menu, tab: tab.id, layout: tab.id as TSettingsTabId }])
+  )
+);
 
 const tabForPath = (pathname: string): TTabRoute | undefined => TAB_BY_PATH[pathname.replace(/\/+$/, "")];
 

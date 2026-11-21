@@ -398,9 +398,8 @@ FILE_SIZE_LIMIT = int(os.environ.get("FILE_SIZE_LIMIT", 5242880))
 # ulang. Kosongkan alamatnya untuk mematikan fitur ini; materi Office akan jatuh
 # ke tombol unduh berikut alasannya, bukan ke bingkai kosong.
 GOTENBERG_URL = os.environ.get("GOTENBERG_URL", "")
-# Di atas ambang ini konversi tidak dicoba. Konversi berjalan di dalam siklus
-# permintaan, jadi satu berkas raksasa berarti satu worker gunicorn tertahan.
-WIKI_PREVIEW_MAX_BYTES = int(os.environ.get("WIKI_PREVIEW_MAX_BYTES", 52428800))
+# Ambang ukuran konversi = WIKI_PREVIEW_MAX_MB di God Mode (env lama
+# WIKI_PREVIEW_MAX_BYTES hanya benih, lihat plane/utils/saklar_instance.py).
 WIKI_PREVIEW_TIMEOUT = int(os.environ.get("WIKI_PREVIEW_TIMEOUT", 120))
 
 # Unsplash Access key
@@ -486,32 +485,9 @@ WEB_URL = os.environ.get("WEB_URL")
 # di God Mode dan dibaca deletion_task. Setelan lama di sini tidak dibaca siapa pun.
 
 
-def _retention_days(env_var, default):
-    """
-    Read a retention window (in days) from the environment, falling back to the
-    default when the variable is unset, unparseable, or negative, a negative
-    window would otherwise select rows with a future cutoff and delete everything.
-    """
-    raw = os.environ.get(env_var)
-    if raw is None:
-        return default
-    try:
-        days = int(raw)
-    except ValueError:
-        return default
-    return days if days >= 0 else default
-
-
-# API activity logs hold request/response payloads, so they are retained for a
-# shorter window than other logs.
-API_ACTIVITY_LOG_RETENTION_DAYS = _retention_days("API_ACTIVITY_LOG_RETENTION_DAYS", 14)
-
-# Webhook delivery logs are retained on their own window, independent of the
-# Trash retention (TRASH_RETENTION_DAYS, God Mode).
-WEBHOOK_LOG_RETENTION_DAYS = _retention_days("WEBHOOK_LOG_RETENTION_DAYS", 14)
-
-# Email notification logs are retained on their own window.
-EMAIL_LOG_RETENTION_DAYS = _retention_days("EMAIL_LOG_RETENTION_DAYS", 7)
+# Retensi log API, webhook, dan email juga bukan setelan Django lagi: kunci
+# God Mode dengan nama yang sama (plane/utils/saklar_instance.py), env lamanya
+# hanya benih, dan cleanup_task membacanya setiap kali jalan.
 
 # Instance Changelog URL
 INSTANCE_CHANGELOG_URL = os.environ.get("INSTANCE_CHANGELOG_URL", "")

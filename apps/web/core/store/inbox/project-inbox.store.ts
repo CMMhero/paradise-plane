@@ -27,6 +27,13 @@ import type { IInboxIssueStore } from "@/store/inbox/inbox-issue.store";
 import { InboxIssueStore } from "@/store/inbox/inbox-issue.store";
 import type { CoreRootStore } from "../root.store";
 
+/** Galat memuat Intake. `httpStatus` dibawa supaya halaman bisa membedakan izin, tidak ditemukan, dan galat server. */
+export type TInboxError = {
+  message: string;
+  status: "init-error" | "pagination-error";
+  httpStatus?: number;
+};
+
 type TLoader =
   | "init-loading"
   | "mutation-loading"
@@ -35,10 +42,16 @@ type TLoader =
   | "issue-loading"
   | undefined;
 
+// `InboxIssueService.list` melempar isi balasan API ditambah `status_code`.
+const httpStatusOf = (error: unknown): number | undefined => {
+  const kode = (error as { status_code?: unknown } | undefined)?.status_code;
+  return typeof kode === "number" ? kode : undefined;
+};
+
 export interface IProjectInboxStore {
   currentTab: TInboxIssueCurrentTab;
   loader: TLoader;
-  error: { message: string; status: "init-error" | "pagination-error" } | undefined;
+  error: TInboxError | undefined;
   currentInboxProjectId: string;
   filtersMap: Record<string, Partial<TInboxIssueFilter>>; // projectId -> Partial<TInboxIssueFilter>
   sortingMap: Record<string, Partial<TInboxIssueSorting>>; // projectId -> Partial<TInboxIssueSorting>
@@ -88,7 +101,7 @@ export class ProjectInboxStore implements IProjectInboxStore {
   // observables
   currentTab: TInboxIssueCurrentTab = EInboxIssueCurrentTab.OPEN;
   loader: TLoader = "init-loading";
-  error: { message: string; status: "init-error" | "pagination-error" } | undefined = undefined;
+  error: TInboxError | undefined = undefined;
   currentInboxProjectId: string = "";
   filtersMap: Record<string, Partial<TInboxIssueFilter>> = {};
   sortingMap: Record<string, Partial<TInboxIssueSorting>> = {};
@@ -145,12 +158,10 @@ export class ProjectInboxStore implements IProjectInboxStore {
 
   get getAppliedFiltersCount() {
     let count = 0;
-    this.inboxFilters != undefined &&
-      Object.keys(this.inboxFilters).forEach((key) => {
-        const filterKey = key as keyof TInboxIssueFilter;
-        if (this.inboxFilters[filterKey] && this.inboxFilters?.[filterKey])
-          count = count + (this.inboxFilters?.[filterKey]?.length ?? 0);
-      });
+    if (this.inboxFilters == undefined) return count;
+    for (const key of Object.keys(this.inboxFilters)) {
+      count += this.inboxFilters[key as keyof TInboxIssueFilter]?.length ?? 0;
+    }
     return count;
   }
 
@@ -194,7 +205,7 @@ export class ProjectInboxStore implements IProjectInboxStore {
     paginationCursor: string
   ) => {
     const filters: Partial<Record<keyof TInboxIssueFilter, string>> = {};
-    !isEmpty(inboxFilters) &&
+    if (!isEmpty(inboxFilters))
       Object.keys(inboxFilters).forEach((key) => {
         const filterKey = key as keyof TInboxIssueFilter;
         if (inboxFilters[filterKey] && inboxFilters[filterKey]?.length) {
@@ -329,6 +340,8 @@ export class ProjectInboxStore implements IProjectInboxStore {
   ) => {
     try {
       if (loadingType === undefined && tab) this.initializeDefaultFilters(projectId, tab);
+      // Galat lama tidak boleh menutupi project lain atau percobaan yang berhasil.
+      this.error = undefined;
 
       if (this.currentInboxProjectId != projectId) {
         runInAction(() => {
@@ -366,6 +379,7 @@ export class ProjectInboxStore implements IProjectInboxStore {
       this.error = {
         message: "Error fetching the intake work items please try again later.",
         status: "init-error",
+        httpStatus: httpStatusOf(error),
       };
       throw error;
     }
@@ -406,6 +420,7 @@ export class ProjectInboxStore implements IProjectInboxStore {
       this.error = {
         message: "Error fetching the paginated intake work items please try again later.",
         status: "pagination-error",
+        httpStatus: httpStatusOf(error),
       };
       throw error;
     }
@@ -497,25 +512,24 @@ export class ProjectInboxStore implements IProjectInboxStore {
     const wasPending = currentIssue?.status === EInboxIssueStatus.PENDING;
     try {
       if (!currentIssue) return;
-      await this.inboxIssueService.destroy(workspaceSlug, projectId, inboxIssueId).then(() => {
-        runInAction(() => {
-          set(
-            this,
-            ["inboxIssuePaginationInfo", "total_results"],
-            (this.inboxIssuePaginationInfo?.total_results || 0) - 1
-          );
-          set(this, "inboxIssues", omit(this.inboxIssues, inboxIssueId));
-          set(
-            this,
-            ["inboxIssueIds"],
-            this.inboxIssueIds.filter((id) => id !== inboxIssueId)
-          );
-          // Decrement intake_count if the deleted issue was PENDING
-          if (wasPending) {
-            const currentCount = this.store.projectRoot.project.projectMap[projectId]?.intake_count ?? 0;
-            set(this.store.projectRoot.project.projectMap, [projectId, "intake_count"], Math.max(0, currentCount - 1));
-          }
-        });
+      await this.inboxIssueService.destroy(workspaceSlug, projectId, inboxIssueId);
+      runInAction(() => {
+        set(
+          this,
+          ["inboxIssuePaginationInfo", "total_results"],
+          (this.inboxIssuePaginationInfo?.total_results || 0) - 1
+        );
+        set(this, "inboxIssues", omit(this.inboxIssues, inboxIssueId));
+        set(
+          this,
+          ["inboxIssueIds"],
+          this.inboxIssueIds.filter((id) => id !== inboxIssueId)
+        );
+        // Decrement intake_count if the deleted issue was PENDING
+        if (wasPending) {
+          const currentCount = this.store.projectRoot.project.projectMap[projectId]?.intake_count ?? 0;
+          set(this.store.projectRoot.project.projectMap, [projectId, "intake_count"], Math.max(0, currentCount - 1));
+        }
       });
     } catch (error) {
       console.error("Error removing the intake issue");

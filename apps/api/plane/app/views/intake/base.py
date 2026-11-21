@@ -55,6 +55,7 @@ from plane.utils.timezone_converter import user_timezone_converter
 from plane.utils.global_paginator import paginate
 from plane.utils.host import base_host
 from plane.db.models.intake import SourceType
+from plane.utils.intake_bawaan import intake_project
 from plane.utils.kunci_selesai import galat_tugas_selesai
 from plane.utils.task_access import bisa_ganti_tenggat_intake, tenggat_diubah
 
@@ -77,7 +78,8 @@ class IntakeViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def list(self, request, slug, project_id):
-        intake = self.get_queryset().first()
+        default = intake_project(slug, project_id)
+        intake = self.get_queryset().filter(pk=default.pk).first() if default else None
         return Response(IntakeSerializer(intake).data, status=status.HTTP_200_OK)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
@@ -199,7 +201,7 @@ class IntakeIssueViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id):
-        intake = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
+        intake = intake_project(slug, project_id)
         if not intake:
             return Response({"error": "Intake not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -268,6 +270,10 @@ class IntakeIssueViewSet(BaseViewSet):
             return Response({"error": "Invalid priority"}, status=status.HTTP_400_BAD_REQUEST)
 
         project = Project.objects.get(pk=project_id)
+        # Dicari sebelum work item dibuat: tanpa wadah, work item-nya yatim.
+        intake_id = intake_project(slug, project_id)
+        if intake_id is None:
+            return Response({"error": "Intake not found"}, status=status.HTTP_404_NOT_FOUND)
 
         # get the triage state
         triage_state = State.triage_objects.filter(project_id=project_id, workspace__slug=slug).first()
@@ -296,7 +302,6 @@ class IntakeIssueViewSet(BaseViewSet):
         )
         if serializer.is_valid():
             serializer.save()
-            intake_id = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
             # create an intake issue
             intake_issue = IntakeIssue.objects.create(
                 intake_id=intake_id.id,
@@ -364,7 +369,7 @@ class IntakeIssueViewSet(BaseViewSet):
         skip_activity = request.data.pop("skip_activity", False)
         is_description_update = request.data.get("description_html") is not None
 
-        intake_id = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
+        intake_id = intake_project(slug, project_id)
         intake_issue = IntakeIssue.objects.get(
             issue_id=pk,
             workspace__slug=slug,
@@ -560,7 +565,7 @@ class IntakeIssueViewSet(BaseViewSet):
 
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], creator=True, model=Issue)
     def retrieve(self, request, slug, project_id, pk):
-        intake_id = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
+        intake_id = intake_project(slug, project_id)
         project = Project.objects.get(pk=project_id)
         intake_issue = (
             IntakeIssue.objects.select_related("issue")
@@ -607,7 +612,7 @@ class IntakeIssueViewSet(BaseViewSet):
 
     @allow_permission(allowed_roles=[ROLE.ADMIN], creator=True, model=Issue)
     def destroy(self, request, slug, project_id, pk):
-        intake_id = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
+        intake_id = intake_project(slug, project_id)
         intake_issue = IntakeIssue.objects.get(
             issue_id=pk,
             workspace__slug=slug,

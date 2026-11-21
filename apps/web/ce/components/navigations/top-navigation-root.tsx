@@ -54,7 +54,7 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
             ada gunanya di alat internal kantor. Header hak cipta di berkas sumber,
             LICENSE, dan NOTICE.md TETAP, yang dibuang merek produk, bukan
             atribusi hukum. */}
-        <div className="flex size-8 items-center justify-center rounded-md hover:bg-layer-1-hover">
+        <div className="flex size-8 items-center justify-center rounded-md hover:bg-layer-1-hover sentuh:size-10">
           <UserMenuRoot />
         </div>
       </div>

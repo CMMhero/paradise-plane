@@ -1,6 +1,6 @@
 {
   "name": "@plane/i18n",
-  "version": "2.10.0",
+  "version": "2.11.0",
   "private": true,
   "description": "I18n shared across multiple apps internally",
   "license": "AGPL-3.0",
@@ -17,6 +17,7 @@
     "build": "pnpm run generate:types && vp pack",
     "generate:types": "vpx scripts/generate-types.ts",
     "sync:check": "vpx scripts/sync-check.ts",
+    "test": "vp test run",
     "check:sync": "vpx scripts/sync-check.ts --ci",
     "check:onboarding": "vpx scripts/check-onboarding.ts",
     "check:lint": "vp lint --max-warnings=0 .",

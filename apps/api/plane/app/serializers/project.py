@@ -13,6 +13,7 @@ from .base import BaseSerializer, DynamicBaseSerializer
 from django.db.models import Max
 from plane.app.serializers.workspace import WorkspaceLiteSerializer
 from plane.app.serializers.user import UserLiteSerializer, UserAdminLiteSerializer
+from plane.utils.intake_bawaan import ensure_default_intake
 from plane.utils.undangan import tanda_kedaluwarsa
 from plane.db.models import (
     Project,
@@ -114,6 +115,7 @@ class ProjectSerializer(BaseSerializer):
         project = Project.objects.create(**validated_data, workspace_id=workspace_id)
 
         ProjectIdentifier.objects.create(name=project.identifier, project=project, workspace_id=workspace_id)
+        ensure_default_intake(project)
 
         return project
 

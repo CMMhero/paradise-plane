@@ -20,6 +20,14 @@ import { InboxLayoutLoader } from "@/components/ui/loader/layouts/project-inbox/
 // hooks
 import { useProjectInbox } from "@/hooks/store/use-project-inbox";
 
+// Kunci i18n per status HTTP. Pesan bawaan Plane ("Error fetching the intake work
+// items") sama untuk semua galat, jadi orang tidak tahu harus minta akses atau lapor.
+const intakeErrorKey = (httpStatus: number | undefined): string => {
+  if (httpStatus === 401 || httpStatus === 403) return "intake_errors.forbidden";
+  if (httpStatus === 404) return "intake_errors.not_found";
+  return "intake_errors.load_failed";
+};
+
 type TInboxIssueRoot = {
   workspaceSlug: string;
   projectId: string;
@@ -81,7 +89,7 @@ export const InboxIssueRoot = observer(function InboxIssueRoot(props: TInboxIssu
     return (
       <div className="relative flex h-full w-full flex-col items-center justify-center gap-3">
         <IntakeIcon className="size-[60px]" strokeWidth={1.5} />
-        <div className="text-secondary">{error?.message}</div>
+        <div className="max-w-md text-center text-secondary">{t(intakeErrorKey(error.httpStatus))}</div>
       </div>
     );
 

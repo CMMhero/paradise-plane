@@ -19,6 +19,7 @@ import { Button } from "@plane/propel/button";
 import { TabNavigationItem, TabNavigationList } from "@plane/propel/tab-navigation";
 import { Loader } from "@plane/ui";
 // components
+import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 import { SummaryView } from "@/components/dashboard-divisi/tampilan-ringkas";
 import { ReportView } from "@/components/dashboard-divisi/tampilan-laporan";
@@ -73,36 +74,38 @@ function DivisionDashboardPage() {
   const updatedAt = data ? formatUpdatedAt(data.generated_at, currentLocale, currentUser?.user_timezone) : "";
 
   return (
-    <div className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6">
+    <>
       <PageHead title={t("division_dashboard_ui.title")} />
-      <div className="mx-auto flex max-w-6xl flex-col gap-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-20 font-semibold text-primary">{t("division_dashboard_ui.title")}</h1>
-            {data && <p className="text-12 text-tertiary">{t("division_dashboard_ui.updated", { time: updatedAt })}</p>}
-            {data?.leader_created_only && (
-              <p className="text-12 text-tertiary">{t("persetujuan_p29.dashboard_leader_note")}</p>
-            )}
-          </div>
-          <fieldset aria-label={t("division_dashboard_ui.mode_label")} className="m-0 border-0 p-0">
-            <TabNavigationList>
-              {MODES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  aria-label={t(MODE_LABEL[m])}
-                  aria-pressed={mode === m}
-                  onClick={() => setMode(m)}
-                  className="rounded-item outline-none focus-visible:ring-2 focus-visible:ring-accent-strong"
-                >
-                  <TabNavigationItem isActive={mode === m}>
-                    <span>{t(MODE_LABEL[m])}</span>
-                  </TabNavigationItem>
-                </button>
-              ))}
-            </TabNavigationList>
-          </fieldset>
-        </div>
+      <PageShell width="wide">
+        <PageShell.Header
+          title={t("division_dashboard_ui.title")}
+          description={
+            <>
+              {data && <p>{t("division_dashboard_ui.updated", { time: updatedAt })}</p>}
+              {data?.leader_created_only && <p>{t("persetujuan_p29.dashboard_leader_note")}</p>}
+            </>
+          }
+          actions={
+            <fieldset aria-label={t("division_dashboard_ui.mode_label")} className="m-0 border-0 p-0">
+              <TabNavigationList>
+                {MODES.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-label={t(MODE_LABEL[m])}
+                    aria-pressed={mode === m}
+                    onClick={() => setMode(m)}
+                    className="rounded-item outline-none focus-visible:ring-2 focus-visible:ring-accent-strong"
+                  >
+                    <TabNavigationItem isActive={mode === m}>
+                      <span>{t(MODE_LABEL[m])}</span>
+                    </TabNavigationItem>
+                  </button>
+                ))}
+              </TabNavigationList>
+            </fieldset>
+          }
+        />
 
         {mode === "laporan" ? (
           <ReportView workspaceSlug={workspaceSlug} />
@@ -129,8 +132,8 @@ function DivisionDashboardPage() {
             csvUrl={dashboardService.worklogExportUrl(workspaceSlug)}
           />
         )}
-      </div>
-    </div>
+      </PageShell>
+    </>
   );
 }
 

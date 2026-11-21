@@ -12,7 +12,7 @@ export function TabNavigationItem({ children, isActive, className }: TTabNavigat
   return (
     <div
       className={cn(
-        "relative z-10 flex items-center gap-2 rounded-item px-2 py-1.5 text-13 font-medium transition-colors",
+        "relative z-10 flex items-center gap-2 rounded-item px-2 py-1.5 text-13 font-medium transition-colors sentuh:min-h-10",
         isActive ? "text-primary" : "text-secondary hover:bg-layer-transparent-hover hover:text-primary",
         className
       )}

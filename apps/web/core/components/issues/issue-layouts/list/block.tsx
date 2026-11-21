@@ -278,7 +278,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                   <button
                     type="button"
                     // size-6 -m-1: sasaran 24px (WCAG 2.5.8) tanpa menggeser tata letak kolom 16px
-                    className="-m-1 grid size-6 place-items-center rounded-xs text-placeholder hover:text-tertiary"
+                    className="sasaran-sentuh -m-1 grid size-6 place-items-center rounded-xs text-placeholder hover:text-tertiary"
                     onClick={handleToggleExpand}
                     aria-label={t("common.sub_work_items")}
                     aria-expanded={isExpanded}

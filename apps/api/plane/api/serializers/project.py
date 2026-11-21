@@ -12,6 +12,7 @@ import re
 
 # Module imports
 from plane.db.models import Project, ProjectIdentifier, WorkspaceMember, State, Estimate
+from plane.utils.intake_bawaan import ensure_default_intake
 
 from plane.utils.content_validator import (
     validate_html_content,
@@ -167,6 +168,7 @@ class ProjectCreateSerializer(BaseSerializer):
             }
 
         project = Project.objects.create(**validated_data, workspace_id=self.context["workspace_id"])
+        ensure_default_intake(project)
         return project
 
     def validate_archive_in(self, archive_in):
@@ -311,6 +313,7 @@ class ProjectSerializer(BaseSerializer):
             project=project,
             workspace_id=self.context["workspace_id"],
         )
+        ensure_default_intake(project)
         return project
 
 

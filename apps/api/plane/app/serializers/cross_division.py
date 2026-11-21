@@ -43,6 +43,11 @@ _STATUS_PERMINTAAN = {
 _GROUP_TERBUKA = {"backlog", "unstarted", "started"}
 _GROUP_TUTUP = {"completed", "cancelled"}
 
+# Arah satu baris dari sudut pandang pemanggil: permintaan yang ia kirim, atau
+# permintaan yang masuk ke departemen yang ia awasi.
+ARAH_KELUAR = "keluar"
+ARAH_MASUK = "masuk"
+
 
 class DivisiTujuanSerializer(serializers.ModelSerializer):
     """Divisi yang bisa menerima permintaan: id, kode, nama. Tidak lebih.
@@ -91,10 +96,13 @@ def nomor_tugas(intake_issue, tujuan_project):
     return f"{tujuan_project.identifier}-{sequence}"
 
 
-def serialize_permintaan(p, boleh_buka_tujuan):
-    """Satu baris permintaan, bentuk yang dilihat PEMINTA.
+def serialize_permintaan(p, boleh_buka_tujuan, arah=ARAH_KELUAR):
+    """Satu baris permintaan, bentuk yang dilihat peminta dan atasan departemen tujuan.
 
-    `judul` dan `catatan` ditulis peminta sendiri. `nomor_tugas`,
+    `judul` dan `catatan` ditulis peminta sendiri. `catatan` ikut
+    dikembalikan di dua arah: ke peminta (keluar) dan ke atasan departemen
+    tujuan (masuk), sesuai teks formulir "terlihat divisi tujuan". Pemilihan
+    baris ada di view, jadi orang lain tidak pernah sampai ke sini. `nomor_tugas`,
     `status_permintaan`, `status_tugas`, dan alasan tolak adalah satu-satunya hal
     yang menyeberang dari project tujuan, dan semuanya sengaja kasar.
 
@@ -104,10 +112,9 @@ def serialize_permintaan(p, boleh_buka_tujuan):
     intake_issue = p.intake_issue
     tujuan = p.tujuan_project
     nomor = nomor_tugas(intake_issue, tujuan)
-    return {
+    hasil = {
         "id": str(p.id),
         "dibuat_pada": p.created_at,
-        "catatan": p.catatan or "",
         "asal": {
             "id": str(p.asal_project_id),
             "identifier": p.asal_project.identifier,
@@ -129,4 +136,9 @@ def serialize_permintaan(p, boleh_buka_tujuan):
             else ""
         ),
         "boleh_dibuka": bool(nomor) and boleh_buka_tujuan,
+        "arah": arah,
+        # Nama peminta sudah terlihat atasan tujuan di Intake (`extra.crossdiv.peminta`).
+        "peminta": p.diminta_oleh.display_name or p.diminta_oleh.email,
+        "catatan": p.catatan or "",
     }
+    return hasil

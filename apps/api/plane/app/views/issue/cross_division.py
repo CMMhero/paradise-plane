@@ -26,7 +26,7 @@ Modul ini menambahkan pintu itu, dan **tidak menyentuh** resolver izin mana pun:
 Tiga endpoint:
 
     GET  /workspaces/<slug>/cross-division/tujuan/      divisi yang menerima
-    GET  /workspaces/<slug>/cross-division/permintaan/  milik saya sendiri (+ alasan tolak)
+    GET  /workspaces/<slug>/cross-division/permintaan/  milik saya + yang masuk ke departemen yang saya awasi
     POST /workspaces/<slug>/cross-division/permintaan/  kirim permintaan baru
     GET  /workspaces/<slug>/cross-division/ringkasan/   hitungan per divisi
 
@@ -37,8 +37,9 @@ Catatan implementasi yang penting, jangan "diperbaiki" tanpa membaca
    peminta, `IntakeIssueViewSet.destroy` (`plane/app/views/intake/base.py:553`)
    yang memakai `creator=True` TANPA penjaga keanggotaan akan membiarkan
    peminta menghapus pekerjaannya di project orang lain.
-2. Divisi tujuan harus sudah menyalakan Intake. Pintu masuk sebuah divisi
-   adalah keputusan divisi itu.
+2. Divisi tujuan harus menyalakan Intake (`intake_view`, bawaannya menyala untuk
+   semua departemen). Wadah `Intake`-nya dibuat bila belum ada, karena departemen
+   dari God Mode dulu lahir tanpa wadah dan tidak pernah muncul sebagai tujuan.
 """
 
 # Python imports
@@ -47,33 +48,41 @@ import json
 # Django imports
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.utils import timezone
 
 # Third Party imports
 from rest_framework import status
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
 # Module imports
 from .. import BaseAPIView
 from plane.app.permissions import WorkspaceEntityPermission
+from plane.app.permissions.workspace import Admin, Member
 from plane.app.serializers.cross_division import (
+    ARAH_KELUAR,
+    ARAH_MASUK,
     DivisiTujuanSerializer,
     serialize_permintaan,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import (
-    Intake,
     IntakeIssue,
+    DepartemenProject,
     Issue,
     PermintaanLintasDivisi,
     Project,
     ProjectMember,
     State,
     StateGroup,
+    Workspace,
+    WorkspaceMember,
 )
 from plane.utils.content_validator import validate_html_content
+from plane.utils.hierarki import divisi_diawasi
 from plane.utils.host import base_host
+from plane.utils.intake_bawaan import ensure_default_intake
 from plane.utils.permintaan_lintas_divisi import SOURCE_LINTAS_DIVISI
 from plane.utils.wiki_access import WIKI_IDENTIFIER
 
@@ -88,29 +97,50 @@ _STATUS_DITERIMA = 1
 _GROUP_TERBUKA = ["backlog", "unstarted", "started"]
 
 
+def _galat(kode, pesan, http=status.HTTP_400_BAD_REQUEST, **params):
+    """Galat yang bisa diterjemahkan web: `error_code` jadi kunci
+    `cross_division_ui.errors.<kode>`, `params` mengisi variabelnya. `error` tetap
+    ada untuk klien lama."""
+    return Response({"error": pesan, "error_code": kode, "params": params}, status=http)
+
+
+def tujuan_sah(slug):
+    """Satu-satunya sumber divisi yang boleh jadi tujuan: hidup, tidak diarsipkan,
+    bukan Wiki, terpetakan ke departemen, dan Intake-nya menyala. Daftar tujuan dan
+    POST memakai ini, jadi keduanya tidak bisa berbeda pendapat. Migrasi 0185
+    menyalakan Intake untuk SEMUA project, jadi `intake_view` saja tidak cukup."""
+    return (
+        Project.objects.filter(workspace__slug=slug, archived_at__isnull=True, intake_view=True)
+        .exclude(identifier=WIKI_IDENTIFIER)
+        .filter(
+            Exists(DepartemenProject.objects.filter(project=OuterRef("pk"), deleted_at__isnull=True)),
+        )
+    )
+
+
+class AnggotaBukanTamu(BasePermission):
+    """Admin/Member workspace. Tamu tidak boleh melihat daftar divisi tujuan."""
+
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return WorkspaceMember.objects.filter(
+            workspace__slug=view.workspace_slug, member=request.user, role__in=[Admin, Member], is_active=True
+        ).exists()
+
+
 class DivisiTujuanEndpoint(BaseAPIView):
-    """Departemen yang membuka pintu permintaan (punya Intake default aktif).
+    """Departemen yang membuka pintu permintaan (Intake menyala).
 
     Departemen tempat pemanggil sudah anggota tidak ikut (keputusan user
     2026-11-20: permintaan adalah jalan ke departemen yang BUKAN miliknya; di
     departemen sendiri ia membuat work item langsung). Wiki bukan departemen.
     """
 
-    permission_classes = [WorkspaceEntityPermission]
+    permission_classes = [AnggotaBukanTamu]
 
     def get(self, request, slug):
-        projects = (
-            Project.objects.filter(
-                workspace__slug=slug,
-                archived_at__isnull=True,
-                project_intake__is_default=True,
-                project_intake__deleted_at__isnull=True,
-            )
-            .exclude(id__in=_project_saya(request.user, slug))
-            .exclude(identifier=WIKI_IDENTIFIER)
-            .distinct()
-            .order_by("name")
-        )
+        projects = tujuan_sah(slug).exclude(id__in=_project_saya(request.user, slug)).order_by("name")
         return Response(DivisiTujuanSerializer(projects, many=True).data, status=status.HTTP_200_OK)
 
 
@@ -121,19 +151,24 @@ def _project_saya(user, slug):
 
 
 class PermintaanLintasDivisiEndpoint(BaseAPIView):
-    """Kirim permintaan baru, dan baca kembali permintaan yang SAYA kirim."""
+    """Kirim permintaan baru, dan baca permintaan yang saya kirim atau yang masuk
+    ke departemen yang saya awasi."""
 
     permission_classes = [WorkspaceEntityPermission]
 
     def get(self, request, slug):
-        # Hanya permintaan milik pemanggil. Divisi asal tidak otomatis melihat
-        # permintaan anggotanya; itu keputusan tersendiri (lihat pertanyaan
-        # terbuka di rancangan), bukan default yang aman untuk ditebak.
+        # Keputusan pemilik produk: supervisor dan manager departemen tujuan ikut
+        # melihat permintaan yang masuk, bukan hanya pembuatnya. Departemen asal
+        # tetap tidak otomatis melihat permintaan anggotanya.
+        workspace_id = Workspace.objects.values_list("id", flat=True).get(slug=slug)
+        diawasi = divisi_diawasi(request.user.id, workspace_id)
         permintaan = (
-            PermintaanLintasDivisi.objects.filter(workspace__slug=slug, diminta_oleh=request.user)
+            PermintaanLintasDivisi.objects.filter(workspace__slug=slug)
+            .filter(Q(diminta_oleh=request.user) | Q(tujuan_project_id__in=diawasi))
             .select_related(
                 "asal_project",
                 "tujuan_project",
+                "diminta_oleh",
                 "intake_issue",
                 "intake_issue__issue",
                 "intake_issue__issue__state",
@@ -142,76 +177,82 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
         )
         terlihat = set(_project_saya(request.user, slug))
         return Response(
-            [serialize_permintaan(p, p.tujuan_project_id in terlihat) for p in permintaan], status=status.HTTP_200_OK
+            [
+                serialize_permintaan(
+                    p,
+                    p.tujuan_project_id in terlihat,
+                    arah=ARAH_KELUAR if p.diminta_oleh_id == request.user.id else ARAH_MASUK,
+                )
+                for p in permintaan
+            ],
+            status=status.HTTP_200_OK,
         )
 
     def post(self, request, slug):
         judul = (request.data.get("judul") or "").strip()
         if not judul:
-            return Response({"error": "Judul permintaan wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+            return _galat("title_required", "Enter a title for the request.")
         if len(judul) > 255:
-            return Response({"error": "Judul maksimal 255 karakter."}, status=status.HTTP_400_BAD_REQUEST)
+            return _galat("title_too_long", "The title can be at most 255 characters.", max=255)
 
         prioritas = request.data.get("prioritas") or "none"
         if prioritas not in PRIORITAS_SAH:
-            return Response({"error": "Prioritas tidak dikenal."}, status=status.HTTP_400_BAD_REQUEST)
+            return _galat("unknown_priority", "Unknown priority.")
 
         catatan = (request.data.get("catatan") or "").strip()
         if len(catatan) > BATAS_CATATAN:
-            return Response(
-                {"error": f"Catatan maksimal {BATAS_CATATAN} karakter."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _galat("note_too_long", f"The note can be at most {BATAS_CATATAN} characters.", max=BATAS_CATATAN)
 
         asal_id = request.data.get("asal_project")
         tujuan_id = request.data.get("tujuan_project")
         if not asal_id or not tujuan_id:
-            return Response(
-                {"error": "Divisi asal dan divisi tujuan wajib diisi."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _galat("route_required", "Pick both your department and the target department.")
 
         asal = Project.objects.filter(workspace__slug=slug, pk=asal_id, archived_at__isnull=True).first()
         if asal is None:
-            return Response({"error": "Divisi asal tidak ditemukan."}, status=status.HTTP_400_BAD_REQUEST)
+            return _galat("origin_not_found", "Your department was not found. It may have been archived.")
 
         # Peminta harus benar-benar anggota divisi asal yang dia klaim. Tanpa
         # pemeriksaan ini, anggota divisi mana pun bisa menuliskan permintaan
         # atas nama divisi lain.
         if not ProjectMember.objects.filter(project=asal, member=request.user, is_active=True).exists():
-            return Response(
-                {"error": "Anda bukan anggota divisi asal yang dipilih."},
-                status=status.HTTP_403_FORBIDDEN,
+            return _galat(
+                "not_origin_member",
+                f"You are not a member of {asal.name}, so you can't send requests on its behalf.",
+                http=status.HTTP_403_FORBIDDEN,
+                name=asal.name,
             )
 
         tujuan = Project.objects.filter(workspace__slug=slug, pk=tujuan_id, archived_at__isnull=True).first()
         if tujuan is None:
-            return Response({"error": "Divisi tujuan tidak ditemukan."}, status=status.HTTP_400_BAD_REQUEST)
+            return _galat("target_not_found", "The target department was not found. It may have been archived.")
 
         if str(asal.id) == str(tujuan.id):
-            return Response(
-                {"error": "Divisi tujuan tidak boleh sama dengan divisi asal."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _galat("same_department", "Pick a department other than your own.")
         if ProjectMember.objects.filter(project=tujuan, member=request.user, is_active=True).exists():
-            return Response(
-                {"error": f"Anda anggota {tujuan.name}. Buat work item langsung di sana."},
-                status=status.HTTP_400_BAD_REQUEST,
+            return _galat(
+                "member_of_target",
+                f"You are a member of {tujuan.name}. Create the work item there directly.",
+                name=tujuan.name,
             )
 
-        # Sengaja TIDAK membuat Intake diam-diam. Menyalakan pintu masuk sebuah
-        # divisi adalah keputusan divisi itu (pola `intake_view` di
-        # plane/app/views/project/base.py:393).
-        intake = Intake.objects.filter(project=tujuan, is_default=True).first()
-        if intake is None:
-            return Response(
-                {"error": f"{tujuan.name} belum membuka pintu permintaan lintas divisi."},
-                status=status.HTTP_400_BAD_REQUEST,
+        # Intake menyala = pintu terbuka. Wadahnya dibuat bila hilang: departemen
+        # dari God Mode dulu lahir tanpa wadah meski Intake-nya menyala.
+        if not tujuan.intake_view:
+            return _galat(
+                "intake_off", f"{tujuan.name} has turned off Intake and can't take requests.", name=tujuan.name
             )
+        if not tujuan_sah(slug).filter(pk=tujuan.pk).exists():
+            return _galat(
+                "target_not_allowed",
+                f"{tujuan.name} is not a department that can take requests.",
+                name=tujuan.name,
+            )
+        intake = ensure_default_intake(tujuan)
 
         html_valid, html_error, html_bersih = validate_html_content(request.data.get("deskripsi_html") or "<p></p>")
         if not html_valid:
-            return Response({"error": html_error}, status=status.HTTP_400_BAD_REQUEST)
+            return _galat("invalid_description", html_error)
         html_bersih = html_bersih or "<p></p>"
 
         with transaction.atomic():
@@ -293,7 +334,7 @@ class PermintaanLintasDivisiEndpoint(BaseAPIView):
         permintaan = PermintaanLintasDivisi.objects.select_related(
             "asal_project", "tujuan_project", "intake_issue", "intake_issue__issue", "intake_issue__issue__state"
         ).get(pk=permintaan.pk)
-        return Response(serialize_permintaan(permintaan, False), status=status.HTTP_201_CREATED)
+        return Response(serialize_permintaan(permintaan, False, arah=ARAH_KELUAR), status=status.HTTP_201_CREATED)
 
 
 class RingkasanLintasDivisiEndpoint(BaseAPIView):

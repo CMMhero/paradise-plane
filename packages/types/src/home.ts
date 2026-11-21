@@ -58,11 +58,22 @@ export type TActivityEntityData = {
   entity_data: TPageEntityData | TProjectEntityData | TIssueEntityData;
 };
 
+/**
+ * Paradise: quick link icon from an image URL. The client sends `url`; the server
+ * fetches it and stores `data` (a data:image URI), which is all viewers load.
+ */
+export type TQuickLinkImageLogo = {
+  in_use: "image";
+  image: { url?: string; data?: string };
+};
+
+export type TQuickLinkLogoProps = TLogoProps | TQuickLinkImageLogo;
+
 export type TLinkEditableFields = {
   title: string;
   url: string;
-  /** Paradise KEP-82: icon picked like a project icon. null = back to the site favicon. Write-only. */
-  logo_props?: TLogoProps | null;
+  /** Paradise KEP-82: icon picked like a project icon, or an image URL. null = back to the site favicon. Write-only. */
+  logo_props?: TQuickLinkLogoProps | null;
 };
 
 /** Paradise KEP-82: filled by the server. Manual title/icon never overwrite these. */
@@ -73,7 +84,7 @@ export type TQuickLinkMetadata = {
   /** Page preview image (og:image or twitter:image) as a data URI. Null = the page has none. */
   og_image?: string | null;
   /** Icon or emoji picked by the user. Wins over the favicon. */
-  logo_props?: TLogoProps | null;
+  logo_props?: TQuickLinkLogoProps | null;
   /** Icon set when the link was created (e.g. imported links). Used only when the site has no favicon. */
   logo_cadangan?: TLogoProps | null;
   diambil_pada?: string;
@@ -139,7 +150,7 @@ export type TSharedQuickLinksResponse = {
 export type TSharedQuickLinkPayload = {
   url?: string;
   title?: string;
-  logo_props?: TLogoProps | null;
+  logo_props?: TQuickLinkLogoProps | null;
   cakupan?: TSharedQuickLinkAudience;
   departemen_ids?: string[];
   divisi_ids?: string[];

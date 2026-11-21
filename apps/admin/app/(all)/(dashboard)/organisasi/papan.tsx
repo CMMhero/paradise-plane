@@ -112,17 +112,19 @@ function LajurJenjang({ tingkat, orang }: { tingkat: number; orang: TAnggotaHier
     <div
       ref={ref}
       className={cn(
-        "relative flex flex-col gap-1.5 rounded-card border bg-layer-1 p-2 transition-colors",
+        "relative flex h-full min-w-0 flex-col gap-1.5 rounded-card border bg-layer-1 p-2 transition-colors",
         bisaLepas ? "border-dashed border-strong" : "border-subtle",
         kelasSorot(mode)
       )}
     >
       <LabelLepas mode={mode} tingkat={tingkat} />
-      <div className="flex items-center justify-between gap-2 px-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 px-1">
         <BadgeJabatan tingkat={tingkat} />
-        <span className="text-11 text-tertiary">{fill(s.org.people_count, { n: orang.length })}</span>
+        <span className="shrink-0 text-11 whitespace-nowrap text-tertiary">
+          {fill(s.org.people_count, { n: orang.length })}
+        </span>
       </div>
-      <ul aria-label={nama} className="h-44 space-y-1 overflow-y-auto overscroll-contain pr-0.5">
+      <ul aria-label={nama} className="max-h-44 min-h-24 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-0.5">
         {orang.length === 0 ? (
           <li className="rounded-item border border-dashed border-subtle px-2 py-1.5 text-11 text-placeholder">
             {bisaLepas ? fill(s.org.board.drop_level, { level: nama }) : s.org.board.level_empty}
@@ -410,7 +412,7 @@ function BarisDivisi({
           onClick={onLipat}
           aria-expanded={buka}
           aria-label={label}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-item px-1.5 py-1 text-left hover:bg-layer-transparent-hover"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-item px-1.5 py-1 text-left hover:bg-layer-transparent-hover sentuh:min-h-10"
         >
           <ChevronRight className={cn("size-4 shrink-0 text-tertiary transition-transform", buka && "rotate-90")} />
           <Building2 className="size-4 shrink-0 text-tertiary" aria-hidden />
@@ -495,7 +497,7 @@ function ZonaDirekturCabang({
                 aria-label={fill(s.org.branch.remove_director, { name: d.nama, branch: c.nama })}
                 title={fill(s.org.branch.remove_director, { name: d.nama, branch: c.nama })}
                 onClick={() => cabut(d.id)}
-                className="grid size-6 shrink-0 place-items-center rounded-item text-tertiary hover:bg-layer-transparent-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-accent-strong"
+                className="grid size-6 shrink-0 place-items-center rounded-item text-tertiary hover:bg-layer-transparent-hover hover:text-primary focus-visible:outline-2 focus-visible:outline-accent-strong sentuh:size-10"
               >
                 <X className="size-3.5" aria-hidden />
               </button>
@@ -758,11 +760,11 @@ export function PapanOrganisasi({
           <p className="text-12 text-tertiary">{s.org.board.hint}</p>
 
           <div className="space-y-2">
-            <div className="flex items-baseline justify-between gap-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
               <span className="text-11 font-semibold text-tertiary">{s.org.board.levels}</span>
               <span className="text-11 text-tertiary">{s.org.board.levels_hint}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
+            <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 xl:grid-cols-4">
               {LAJUR_JENJANG.map((t) => (
                 <LajurJenjang key={t} tingkat={t} orang={orangJenjang(t)} />
               ))}

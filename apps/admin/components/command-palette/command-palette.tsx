@@ -232,7 +232,7 @@ export const CommandPalette = observer(function CommandPalette() {
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label={s.palette.trigger}
-        className="flex shrink-0 items-center gap-2 rounded-field border-[0.5px] border-subtle-1 bg-layer-2 px-2.5 py-1.5 text-left text-13 text-tertiary transition-colors hover:bg-layer-transparent-hover hover:text-secondary focus-visible:ring-1 focus-visible:ring-accent-strong focus-visible:outline-none sm:w-60"
+        className="flex shrink-0 items-center gap-2 rounded-field border-[0.5px] border-subtle-1 bg-layer-2 px-2.5 py-1.5 text-left text-13 text-tertiary transition-colors hover:bg-layer-transparent-hover hover:text-secondary focus-visible:ring-1 focus-visible:ring-accent-strong focus-visible:outline-none sm:w-60 sentuh:min-h-10 sentuh:min-w-10 sentuh:justify-center"
       >
         <Search className="size-3.5 shrink-0" />
         <span className="hidden flex-1 truncate sm:inline">{s.palette.trigger}</span>

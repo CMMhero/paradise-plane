@@ -9,6 +9,7 @@ import type { Editor } from "@tiptap/react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef } from "react";
 // plane utils
+import { ImageGalleryScope } from "@plane/propel/image-gallery";
 import { cn } from "@plane/utils";
 // constants
 import { DEFAULT_DISPLAY_CONFIG } from "@/constants/config";
@@ -30,6 +31,13 @@ type Props = {
   isTouchDevice: boolean;
   provider?: HocuspocusProvider | undefined;
   state?: TCollabValue["state"];
+};
+
+const handleContainerMouseLeave = () => {
+  const dragHandleElement = document.querySelector("#editor-side-menu");
+  if (!dragHandleElement?.classList.contains("side-menu-hidden")) {
+    dragHandleElement?.classList.add("side-menu-hidden");
+  }
 };
 
 export function EditorContainer(props: Props) {
@@ -153,18 +161,14 @@ export function EditorContainer(props: Props) {
     }
   };
 
-  const handleContainerMouseLeave = () => {
-    const dragHandleElement = document.querySelector("#editor-side-menu");
-    if (!dragHandleElement?.classList.contains("side-menu-hidden")) {
-      dragHandleElement?.classList.add("side-menu-hidden");
-    }
-  };
-
   return (
-    <>
+    // the images of this editor form a gallery, unless the page around it already has one
+    <ImageGalleryScope rootRef={containerRef} inherit>
       <div
         ref={containerRef}
         id={`editor-container-${id}`}
+        // the click only moves the caret into the editor; keyboard users are already in it
+        role="presentation"
         onClick={handleContainerClick}
         onMouseLeave={handleContainerMouseLeave}
         className={cn(
@@ -180,6 +184,6 @@ export function EditorContainer(props: Props) {
         {children}
         {!isTouchDevice && <LinkContainer editor={editor} containerRef={containerRef} />}
       </div>
-    </>
+    </ImageGalleryScope>
   );
 }

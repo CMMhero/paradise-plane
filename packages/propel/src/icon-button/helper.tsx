@@ -28,10 +28,11 @@ export const iconButtonVariants = cva(
       },
       size: {
         // Paradise (KEP-64): sama tinggi dengan Button (24/28/32/36px).
-        sm: "size-6 rounded-button",
-        base: "size-7 rounded-button",
-        lg: "size-8 rounded-button",
-        xl: "size-9 rounded-button",
+        // Layar sentuh: kotak 40px (lg/xl 44px), seperti Button. Desktop tidak berubah.
+        sm: "size-6 rounded-button sentuh:size-10",
+        base: "size-7 rounded-button sentuh:size-10",
+        lg: "size-8 rounded-button sentuh:size-11",
+        xl: "size-9 rounded-button sentuh:size-11",
       },
     },
     defaultVariants: {

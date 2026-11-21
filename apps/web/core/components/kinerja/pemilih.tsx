@@ -114,7 +114,7 @@ export function PeriodPicker({ period, onChange, today }: TPeriodPickerProps) {
             aria-pressed={period.key === key}
             onClick={() => select(key)}
             className={cn(
-              "px-3 py-1.5 font-medium transition-colors",
+              "px-3 py-1.5 font-medium transition-colors sentuh:min-h-10",
               period.key === key
                 ? "bg-layer-transparent-active text-primary"
                 : "text-tertiary hover:bg-layer-transparent-hover hover:text-secondary"

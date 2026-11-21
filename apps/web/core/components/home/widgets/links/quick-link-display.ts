@@ -6,7 +6,7 @@
 
 // Paradise KEP-82: what a quick link shows. Manual values win, the site's values
 // are the default, and clearing the manual values brings the default back.
-import type { TLogoProps, TQuickLinkMetadata } from "@plane/types";
+import type { TQuickLinkLogoProps, TQuickLinkMetadata } from "@plane/types";
 
 type TQuickLinkLike = {
   title?: string | null;
@@ -32,20 +32,23 @@ export const getQuickLinkImage = (link: TQuickLinkLike): string | null => {
 export const hasQuickLinkOverride = (link: TQuickLinkLike): boolean =>
   Boolean(link.title?.trim() || link.metadata?.logo_props);
 
-const usableLogo = (logo: TLogoProps | null | undefined): TLogoProps | null => {
+const usableLogo = (logo: TQuickLinkLogoProps | null | undefined): TQuickLinkLogoProps | null => {
+  // Only the server-made copy is drawn, never the address the user typed.
+  if (logo?.in_use === "image" && logo.image?.data?.startsWith("data:image/")) return logo;
   if (logo?.in_use === "emoji" && logo.emoji?.value) return logo;
   if (logo?.in_use === "icon" && logo.icon?.name) return logo;
   return null;
 };
 
-/** Icon or emoji picked from the project icon set. Wins over the favicon. */
-export const getQuickLinkLogo = (link: TQuickLinkLike): TLogoProps | null => usableLogo(link.metadata?.logo_props);
+/** Icon, emoji or image picked for the link. Wins over the favicon. */
+export const getQuickLinkLogo = (link: TQuickLinkLike): TQuickLinkLogoProps | null =>
+  usableLogo(link.metadata?.logo_props);
 
 /**
  * Logo drawn on the card: the picked one, else nothing while the site has a favicon,
  * else the fallback icon the link was created with (imported portal links).
  */
-export const getQuickLinkCardLogo = (link: TQuickLinkLike): TLogoProps | null =>
+export const getQuickLinkCardLogo = (link: TQuickLinkLike): TQuickLinkLogoProps | null =>
   getQuickLinkLogo(link) ?? (getQuickLinkIcon(link) ? null : usableLogo(link.metadata?.logo_cadangan));
 
 /** One grid for shared and personal links so both rows of cards have the same width. */

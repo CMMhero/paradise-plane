@@ -43,6 +43,7 @@ from plane.db.models import (
     User,
     BotTypeEnum,
 )
+from plane.utils.intake_bawaan import ensure_default_intake
 
 logger = logging.getLogger("plane.worker")
 
@@ -120,6 +121,7 @@ def create_project_and_member(workspace: Workspace, bot_user: User, bahasa: str 
             issue_views_view=True,
         )
         project.save(created_by_id=bot_user.id, disable_auto_set_user=True)
+        ensure_default_intake(project)
 
         # Create project members
         ProjectMember.objects.bulk_create(

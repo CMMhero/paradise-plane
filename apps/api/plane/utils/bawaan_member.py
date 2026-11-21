@@ -136,11 +136,12 @@ PERAN_BAWAAN_SAH = frozenset({5, 15})
 # seluruh perusahaan, jadi harus diberikan dengan sadar per orang.
 TINGKAT_BAWAAN_SAH = frozenset({None, 10, 20, 30})
 
-# Item sidebar yang bisa disematkan. Cermin `PERSONAL_ITEMS` dan
-# WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS di apps/web; kuncinya juga harus
+# Item sidebar yang bisa disematkan. Cermin `PARADISE_NAV_PREFERENCE_KEYS` di
+# packages/constants (paradise-navigation.test.ts mencocokkannya); kuncinya juga harus
 # ada di `WorkspaceUserPreference.UserPreferenceKeys`, kalau tidak barisnya tak
 # pernah dibuat dan saklar semat di web tidak berbuat apa-apa.
-NAV_PRIBADI = ("your_work", "stickies", "drafts", "quick_links")
+# "departments" bukan menu: barisnya menyimpan tampil/sembunyi daftar departemen.
+NAV_PRIBADI = ("your_work", "stickies", "drafts", "quick_links", "departments")
 NAV_WORKSPACE = (
     "views",
     "analytics",
@@ -150,6 +151,7 @@ NAV_WORKSPACE = (
     "persetujuan",
     "tugas_lintas_divisi",
     "chat",
+    "pengumuman",
     "wiki",
     "archives",
 )

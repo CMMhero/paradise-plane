@@ -88,7 +88,7 @@ function CustomSelect(props: ICustomSelectProps) {
               <button
                 ref={setReferenceElement}
                 type="button"
-                className={`flex items-center justify-between gap-1 rounded text-left text-11 ${
+                className={`sasaran-sentuh flex items-center justify-between gap-1 rounded text-left text-11 ${
                   disabled ? "cursor-not-allowed text-secondary" : "cursor-pointer hover:bg-layer-transparent-hover"
                 } ${customButtonClassName}`}
                 onClick={toggleDropdown}
@@ -104,7 +104,7 @@ function CustomSelect(props: ICustomSelectProps) {
                 type="button"
                 className={cn(
                   // Paradise (KEP-64): pemicu tampil sama dengan Input (garis tipis, latar layer-2).
-                  "flex w-full items-center justify-between gap-1 rounded-field border-[0.5px] border-subtle-1 bg-layer-2 text-left",
+                  "flex w-full items-center justify-between gap-1 rounded-field border-[0.5px] border-subtle-1 bg-layer-2 text-left sentuh:min-h-10",
                   {
                     "px-3 py-2 text-13": input,
                     "px-2 py-1 text-11": !input,
