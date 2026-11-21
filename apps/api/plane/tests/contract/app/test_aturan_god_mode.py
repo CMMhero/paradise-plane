@@ -124,6 +124,7 @@ class TestDaftar:
             "max": None,
             "max_length": None,
             "choices": [{"value": 20, "label": "Supervisor (20)"}, {"value": 30, "label": "Manager (30)"}],
+            "ordered": False,
             "store": "instance",
             "apply_section": None,
         }
@@ -278,8 +279,8 @@ class TestBawaanTampilan:
         assert not InstanceConfiguration.objects.filter(key=ACTIVITY_NEWEST_FIRST).exists()
 
         bawaan = _panggil(InstanceMemberDefaultsEndpoint, "get", super_admin, url="/api/instances/members/defaults/")
-        assert bawaan.data["tampilan"] == {"aktivitas_terbaru_di_atas": False}
-        assert bawaan.data["pabrik"]["tampilan"] == {"aktivitas_terbaru_di_atas": True}
+        assert bawaan.data["tampilan"]["aktivitas_terbaru_di_atas"] is False
+        assert bawaan.data["pabrik"]["tampilan"]["aktivitas_terbaru_di_atas"] is True
 
         assert self._profil_baru().theme["urutan_aktivitas"] == "asc"
         lama.refresh_from_db()

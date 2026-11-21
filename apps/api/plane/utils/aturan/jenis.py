@@ -17,6 +17,7 @@ Bentuk nilai:
     text          str, panjang <= max_length    apa adanya
     level         jenjang TINGKAT di `choices`  "20"
     list_of_keys  tuple str dari `choices`      "a,b" (urutan `choices`, unik)
+                  `ordered=True`: urutan isian dipertahankan (urutan = nilainya)
 """
 
 import re
@@ -54,10 +55,13 @@ NAMA_TINGKAT = {
 
 TEKS_MAKS_BAWAAN = 200
 _POLA_KUNCI = re.compile(r"^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$")
-# Satu-satunya bagian PARADISE_BAWAAN_MEMBER yang dibangun dari registri ini
-# (bawaan_member.PABRIK["tampilan"]). Bagian lain di sana tetap ditulis tangan.
+# Bagian PARADISE_BAWAAN_MEMBER yang boleh diisi registri ini. `tampilan` seluruhnya
+# dibangun dari registri (bawaan_member.PABRIK["tampilan"]); `work_items` memegang
+# `layout` yang ditulis tangan, kolom lainnya dari registri. Bagian lain tetap tangan.
 BAGIAN_TAMPILAN = "tampilan"
-_POLA_JALUR = re.compile(rf"^{BAGIAN_TAMPILAN}\.[a-z_]+$")
+BAGIAN_WORK_ITEMS = "work_items"
+BAGIAN_MEMBER = (BAGIAN_TAMPILAN, BAGIAN_WORK_ITEMS)
+_POLA_JALUR = re.compile(rf"^({'|'.join(BAGIAN_MEMBER)})\.[a-z_]+$")
 
 
 class NilaiTidakSah(ValueError):
@@ -71,8 +75,8 @@ class Rule:
     `default` WAJIB sama dengan perilaku sebelum aturannya ada. `area` diisi
     penemuan modul (nama berkasnya), jangan diisi tangan.
 
-    `member_default="tampilan.<kolom>"`: nilainya bukan baris sendiri, melainkan
-    kolom di PARADISE_BAWAAN_MEMBER (God Mode > People > New member defaults),
+    `member_default="tampilan.<kolom>"` (atau `work_items.<kolom>`): nilainya bukan
+    baris sendiri, melainkan kolom di PARADISE_BAWAAN_MEMBER (God Mode > People > New member defaults),
     berlaku untuk akun baru dan bisa diterapkan ke semua akun lewat tombol
     "Apply to existing members". `profile_theme_key` + `profile_values` = kunci
     `Profile.theme` yang diisi dan petanya dari nilai aturan.
@@ -97,6 +101,8 @@ class Rule:
     profile_theme_key: str | None = None
     # Dict tidak bisa di-hash; Rule dipakai sebagai kunci dict (bawaan_member.nilai_tampilan).
     profile_values: dict | None = field(default=None, hash=False)
+    # Hanya list_of_keys: urutan isian bagian dari nilai (mis. urutan widget Home).
+    ordered: bool = False
     area: str = field(default="", compare=False)
 
     def __post_init__(self):
@@ -154,13 +160,15 @@ def periksa_deklarasi(rule: Rule) -> str | None:
         return "list_of_keys: setiap kunci str tanpa koma"
     if rule.member_default is not None:
         if not _POLA_JALUR.match(rule.member_default):
-            return f"member_default berbentuk '{BAGIAN_TAMPILAN}.<kolom>'"
+            return f"member_default berbentuk '<{'|'.join(BAGIAN_MEMBER)}>.<kolom>'"
         if rule.web:
             return "aturan bawaan member tidak dikirim ke web: web membaca nilai milik akunnya"
     if (rule.profile_theme_key is None) != (rule.profile_values is None):
         return "profile_theme_key dan profile_values selalu berpasangan"
-    if rule.profile_theme_key is not None and rule.member_default is None:
-        return "profile_theme_key hanya untuk aturan member_default"
+    if rule.profile_theme_key is not None and not (rule.member_default or "").startswith(f"{BAGIAN_TAMPILAN}."):
+        return "profile_theme_key hanya untuk aturan member_default bagian tampilan"
+    if rule.ordered and rule.kind != KEY_LIST:
+        return "ordered hanya untuk list_of_keys"
     try:
         if normalkan(rule, rule.default) != rule.default:
             return "default harus sudah dalam bentuk kanonik"
@@ -248,6 +256,8 @@ def _daftar_kunci(rule: Rule, nilai) -> tuple:
         raise NilaiTidakSah(f"Unknown items: {', '.join(map(str, asing))}.")
     if len(set(butir)) != len(butir):
         raise NilaiTidakSah("Each item may appear only once.")
+    if rule.ordered:
+        return tuple(butir)
     return tuple(k for k in sah if k in butir)
 
 
