@@ -14,7 +14,10 @@ makanya `deleted_at` disaring eksplisit lewat `_base_manager`.
 Aturan pilih, semuanya harus benar:
 - tugas hidup (tidak dihapus), tidak diarsipkan, bukan draf, bukan triase, dan
   projectnya hidup dan tidak diarsipkan (sama dengan `Issue.issue_objects`);
-- tidak punya satu pun `IssueAssignee` hidup (baris soft-delete dianggap tidak ada);
+- tidak pernah punya baris `IssueAssignee` sama sekali, hidup maupun soft-delete
+  (assignee yang sengaja dicopot tidak boleh dipasang lagi);
+- masih terbuka: grup state bukan completed/cancelled, kecuali `include_closed=True`
+  (mengisi tugas yang sudah selesai akan menggeser angka KPI dan beban kerja);
 - punya pembuat, dan pembuat itu user aktif bukan bot;
 - pembuat itu staf: jenjang tertingginya di workspace tugas itu di bawah Leader,
   atau tidak punya baris `JabatanOrganisasi` hidup sama sekali (sama dengan
@@ -32,10 +35,12 @@ from plane.db.models.hierarki import TINGKAT_LEADER
 
 BATCH = 2000
 
-ALASAN = ("pembuat_nonaktif", "bukan_staf", "bukan_anggota_project")
+ALASAN = ("sudah_selesai", "pembuat_nonaktif", "bukan_staf", "bukan_anggota_project")
+
+_GRUP_TUTUP = ("completed", "cancelled")
 
 
-def isi_assignee_staf(get_model, *, apply: bool, batch: int = BATCH) -> dict:
+def isi_assignee_staf(get_model, *, apply: bool, batch: int = BATCH, include_closed: bool = False) -> dict:
     """Kembalikan {"diperiksa", "diisi", "dilewati": {alasan: n}}. Dengan `apply=False` tidak menulis apa pun.
 
     `diisi` pada dry-run adalah jumlah yang AKAN diisi.
@@ -48,7 +53,8 @@ def isi_assignee_staf(get_model, *, apply: bool, batch: int = BATCH) -> dict:
 
     hasil = {"diperiksa": 0, "diisi": 0, "dilewati": {alasan: 0 for alasan in ALASAN}}
 
-    punya_assignee = IssueAssignee._base_manager.filter(issue_id=OuterRef("pk"), deleted_at__isnull=True)
+    # Tanpa saringan deleted_at: baris yang sudah di-soft-delete juga memblokir.
+    punya_assignee = IssueAssignee._base_manager.filter(issue_id=OuterRef("pk"))
     kandidat = (
         Issue._base_manager.filter(
             deleted_at__isnull=True,
@@ -69,7 +75,7 @@ def isi_assignee_staf(get_model, *, apply: bool, batch: int = BATCH) -> dict:
         qs = kandidat.order_by("id")
         if terakhir is not None:
             qs = qs.filter(id__gt=terakhir)
-        baris = list(qs.values_list("id", "project_id", "workspace_id", "created_by_id")[:batch])
+        baris = list(qs.values_list("id", "project_id", "workspace_id", "created_by_id", "state__group")[:batch])
         if not baris:
             break
         terakhir = baris[-1][0]
@@ -96,7 +102,10 @@ def isi_assignee_staf(get_model, *, apply: bool, batch: int = BATCH) -> dict:
         )
 
         baru = []
-        for issue_id, project_id, workspace_id, user_id in baris:
+        for issue_id, project_id, workspace_id, user_id, grup in baris:
+            if not include_closed and grup in _GRUP_TUTUP:
+                hasil["dilewati"]["sudah_selesai"] += 1
+                continue
             if user_id not in aktif:
                 hasil["dilewati"]["pembuat_nonaktif"] += 1
                 continue

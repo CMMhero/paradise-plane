@@ -25,7 +25,7 @@ from plane.db.models import (
     User,
 )
 from plane.db.models.hierarki import TINGKAT_LEADER, TINGKAT_MEMBER, TINGKAT_SUPERVISOR
-from plane.utils.isi_assignee_staf import isi_assignee_staf
+from plane.utils.isi_assignee_staf import isi_assignee_staf, ringkas
 
 
 @pytest.fixture
@@ -53,8 +53,8 @@ def _hidup(tugas):
     return list(IssueAssignee.objects.filter(issue=tugas).values_list("assignee_id", flat=True))
 
 
-def _jalan(apply=True):
-    return isi_assignee_staf(apps.get_model, apply=apply)
+def _jalan(apply=True, **kw):
+    return isi_assignee_staf(apps.get_model, apply=apply, **kw)
 
 
 @pytest.mark.django_db
@@ -117,13 +117,50 @@ def test_tugas_yang_sudah_punya_assignee_tidak_disentuh(project):
 
 
 @pytest.mark.django_db
-def test_assignee_terhapus_dianggap_kosong(project):
+def test_assignee_yang_pernah_dicopot_memblokir(project):
+    # Pencopotan yang disengaja tidak boleh dibatalkan oleh pengisian massal.
     u, lain = _user("a"), _user("b")
     _anggota(project, u)
     t = _tugas(project, u)
     baris = IssueAssignee.objects.create(issue=t, assignee=lain, project=project)
     IssueAssignee.all_objects.filter(pk=baris.pk).update(deleted_at=timezone.now())
-    _jalan()
+    hasil = _jalan()
+    assert _hidup(t) == []
+    assert hasil["diisi"] == 0 and hasil["diperiksa"] == 0
+
+
+def _tutup(tugas, grup):
+    state = State.objects.create(
+        name=grup, color="#000", project=tugas.project, workspace=tugas.workspace, sequence=9, group=grup
+    )
+    Issue.all_objects.filter(pk=tugas.pk).update(state=state)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("grup", ["completed", "cancelled"])
+def test_tugas_selesai_dilewati_bawaan_dan_diisi_dengan_flag(project, grup):
+    u = _user("a")
+    _anggota(project, u)
+    t = _tugas(project, u)
+    _tutup(t, grup)
+    hasil = _jalan()
+    assert _hidup(t) == []
+    assert hasil["dilewati"]["sudah_selesai"] == 1 and hasil["diisi"] == 0
+    assert "sudah_selesai=1" in ringkas(hasil)
+    hasil = _jalan(include_closed=True)
+    assert _hidup(t) == [u.id]
+    assert hasil["dilewati"]["sudah_selesai"] == 0 and hasil["diisi"] == 1
+
+
+@pytest.mark.django_db
+def test_perintah_termasuk_selesai(project):
+    u = _user("a")
+    _anggota(project, u)
+    t = _tugas(project, u)
+    _tutup(t, "completed")
+    call_command("isi_assignee_staf", "--apply", stdout=StringIO())
+    assert _hidup(t) == []
+    call_command("isi_assignee_staf", "--apply", "--termasuk-selesai", stdout=StringIO())
     assert _hidup(t) == [u.id]
 
 

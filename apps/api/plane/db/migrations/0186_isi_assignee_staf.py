@@ -6,7 +6,7 @@
 """Tugas buatan staf yang belum punya assignee diberi assignee: pembuatnya.
 
 Keputusan product owner. Aturan pilih lengkap ada di `plane.utils.isi_assignee_staf`.
-Tidak atomik dan idempoten: tiap batch di-commit sendiri, menjalankannya ulang
+Hanya tugas terbuka dan yang belum pernah punya assignee (aturan di fungsi). Tidak atomik dan idempoten: tiap batch di-commit sendiri, menjalankannya ulang
 tidak menambah apa pun. Mundur = tidak melakukan apa pun (baris yang sudah
 terisi tidak bisa dibedakan dari yang diisi pengguna).
 """
