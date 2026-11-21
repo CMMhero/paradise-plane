@@ -39,7 +39,8 @@ MERAH, JINGGA, HIJAU, GELAP, ABU = WARNA["bahaya"], WARNA["peringatan"], WARNA["
 # Terlambat lebih dari ini = macet, bukan sekadar telat sehari. Bawaan God Mode
 # STUCK_AFTER_DAYS; nilai yang berlaku dibawa `Laporan.hari_macet`.
 HARI_MACET = 7
-# "Perlu perhatian" cukup beberapa unit teratas, bukan daftar kedua.
+# "Perlu perhatian" cukup beberapa unit teratas, bukan daftar kedua. Bawaan
+# DIRECTOR_REPORT_ATTENTION_UNITS; nilai yang berlaku dibawa `Laporan.batas_perhatian`.
 BATAS_PERHATIAN = 3
 
 T = {
@@ -152,6 +153,7 @@ class Laporan:
     jendela: str  # "24 jam terakhir" / "Jumat s.d. Minggu" / "N hari terakhir"
     hari_macet: int = HARI_MACET  # God Mode STUCK_AFTER_DAYS
     hari_ke_depan: int = HARI_KE_DEPAN  # God Mode DIGEST_LOOKAHEAD_DAYS
+    batas_perhatian: int = BATAS_PERHATIAN  # God Mode DIRECTOR_REPORT_ATTENTION_UNITS
 
     @property
     def angka(self) -> Angka:
@@ -167,7 +169,7 @@ class Laporan:
         """[(divisi, unit)] dengan terlambat, yang paling macet di atas."""
         calon = [(d, u) for d in self.divisi for u in d.unit if u.angka.lewat]
         calon.sort(key=lambda du: (-du[1].angka.macet, -du[1].angka.lewat, du[0].nama, du[1].nama))
-        return calon[:BATAS_PERHATIAN]
+        return calon[: self.batas_perhatian]
 
 
 def _orang(nama, peran, bahasa="id") -> str:
