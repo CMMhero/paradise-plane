@@ -30,7 +30,7 @@
 #   gotenberg           konversi Office ke PDF, tanpa keadaan sama sekali
 #
 # Yang memegang data ada di docker-compose-tenant.yml, satu tumpukan per
-# penyewa. Rinciannya beserta angkanya di paradise/KAPASITAS-SAAS.md.
+# penyewa. Rinciannya beserta angkanya di paradise/SAAS-CAPACITY.md.
 #
 # ⚠️ `plane-minio` dibagi, jadi ISOLASI BERKAS antar penyewa datang dari bucket
 # dan kredensial yang berbeda, BUKAN dari proses yang terpisah. Kalau nanti

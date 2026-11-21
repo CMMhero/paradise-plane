@@ -1,283 +1,285 @@
 # Paradise Task Tracker
 
-Sistem manajemen kerja internal PT Paradise Perkasa. Jalan di server sendiri,
-tanpa langganan bulanan ke siapa pun.
+Internal work management system for PT Paradise Perkasa. It runs on our own
+server, with no monthly subscription to anyone.
 
-Sekarang dipakai 16 divisi, 79 akun.
+It is used by 16 divisions and 79 accounts today.
 
-## Kenapa dibikin
+## Why it exists
 
-Kantor butuh satu tempat buat ngelacak kerjaan, catat jam kerja, dan naruh
-dokumentasi perusahaan. Yang komersial mahal kalau dikali 79 orang, dan datanya
-ada di server orang lain.
+The office needs one place to track work, log hours, and keep company
+documentation. Commercial tools get expensive multiplied by 79 people, and the
+data sits on someone else's server.
 
-Jadi saya ambil basis open-source yang bagus (Plane CE, AGPL, lihat bagian
-paling bawah), lalu bangun sendiri bagian-bagian yang kantor butuh tapi memang
-nggak ada di dalamnya.
+So I took a good open-source base (Plane CE, AGPL, see the bottom section) and
+built the parts the office needs that it doesn't have.
 
-## Yang saya bangun sendiri
+## What I built myself
 
-Yang di bawah ini nggak ada di basis aslinya. Semuanya dari nol, model database,
-migrasi, endpoint, aturan izin, sampai tampilannya.
+None of the following exists in the original base. All of it is from scratch:
+database models, migrations, endpoints, permission rules, and the UI.
 
-**Time tracking.** Orang catat jam kerja langsung di work item-nya. Tiap orang
-cuma bisa hapus catatan miliknya sendiri, admin project bisa lihat semua.
+**Time tracking.** People log hours directly on the work item. Everyone can
+delete only their own entries, and project admins can see all of them.
 
-**Work item types, template + recurring, dan Cycles: dicabut (2 Nov 2026,
-KEP-53).** Ketiganya sempat dibangun, lalu dibuang dari aplikasi karena kantor
-tidak memakainya. Halaman, menu, saklar God Mode, endpoint kustom, dan jadwal
-berulangnya sudah tidak ada. Tabelnya sengaja dibiarkan, jadi data lama tidak
-hilang. Sebagai gantinya, semua fitur project (Modules, Views, Pages, Intake,
-Time tracking) sekarang menyala di setiap project, termasuk project lama;
-yang menentukan tampil atau tidaknya tinggal modul di God Mode.
+**Work item types, templates + recurring, and Cycles: removed (2 Nov 2026,
+KEP-53).** All three were built, then dropped from the app because the office
+didn't use them. The pages, menus, God Mode toggles, custom endpoints, and the
+recurring schedule are gone. The tables were left in place on purpose, so old
+data isn't lost. In their place, every project feature (Modules, Views, Pages,
+Intake, Time tracking) is now on in every project, including old ones. Whether
+it shows up is decided by the module toggle in God Mode.
 
-**Setelan pribadi dan project diatur dari God Mode (KEP-44, KEP-57).** Setiap
-setelan yang bisa diubah orang sendiri (bahasa, zona waktu, tema, awal pekan,
-notifikasi, menu yang tersemat di sidebar, gaya daftar project, tata letak work
-item) punya nilai bawaan di Members > New member defaults dan bisa diubah per
-orang dari panel member. Tata letak work item bawaannya Board. Bawaan akun baru
-tidak diam-diam menimpa akun lama; untuk navigasi dan tata letak ada tombol
-"Apply to everyone" yang minta konfirmasi. Project baru mengikuti
-Workspaces > New project defaults (visibilitas, zona waktu, arsip/tutup
-otomatis, akses guest), dan pembuatnya masih bisa mengubahnya di formulir.
+**Personal and project settings are managed from God Mode (KEP-44, KEP-57).**
+Every setting a person can change themselves (language, time zone, theme, week
+start, notifications, items pinned in the sidebar, project list style, work item
+layout) has a default under Members > New member defaults, and can be changed
+per person from the member panel. The default work item layout is Board. New
+account defaults don't silently overwrite existing accounts. For navigation and
+layout there is an "Apply to everyone" button that asks for confirmation. New
+projects follow Workspaces > New project defaults (visibility, time zone,
+auto-archive/auto-close, guest access), and the creator can still change them in
+the form.
 
-**Sistem tampilan (KEP-64).** Semua warna, radius, font, dan gerak berupa token
-di `packages/tailwind-config/paradise-tampilan.css`. Komponen memakai kelas
-token dan prop komponen (`variant`, `size`), tidak menulis warna, radius, atau
-padding sendiri. Latarnya berona sesuai skema, bukan putih atau hitam polos.
-Ada lima skema: Ember (bawaan, aksen merah merek), Dusk, Ink, Forest, dan
-Neutral, masing-masing dengan aksennya sendiri. Hurufnya Plus Jakarta Sans dan
-Geist Mono. Tidak ada yang bulat penuh kecuali foto profil. Di Profile >
-Preferences tiap orang bisa memilih skema warna, font (Plus Jakarta Sans,
-Inter, Geist, Figtree, Bricolage Grotesque, Archivo, Sora, Shantell Sans,
-JetBrains Mono, Source Serif 4, atau font sistem), dan mengurangi animasi; bawaannya
-untuk akun baru ikut aturan God Mode di atas.
+**Design system (KEP-64).** Every color, radius, font, and motion value is a
+token in `packages/tailwind-config/paradise-tampilan.css`. Components use token
+classes and component props (`variant`, `size`) and don't write their own
+colors, radii, or padding. Backgrounds are tinted to match the scheme, never
+plain white or black. There are five schemes: Ember (default, red brand accent),
+Dusk, Ink, Forest, and Neutral, each with its own accent. The fonts are Plus
+Jakarta Sans and Geist Mono. Nothing is fully round except profile photos. In
+Profile > Preferences each person can pick a color scheme, a font (Plus Jakarta
+Sans, Inter, Geist, Figtree, Bricolage Grotesque, Archivo, Sora, Shantell Sans,
+JetBrains Mono, Source Serif 4, or the system font), and reduce motion. The
+default for new accounts follows the God Mode rules above.
 
-**Wiki perusahaan.** Ini yang paling panjang, dikerjain tiga tahap:
+**Company wiki.** This is the longest piece, built in three stages:
 
-Tahap A, halaman bisa nerima semua tipe file, pdf, docx, mp4, zip, sampai
-100 MB, plus node "File" di editor yang bisa nampilin PDF langsung di dalam
-halaman.
+Stage A, pages accept every file type (pdf, docx, mp4, zip) up to 100 MB, plus a
+"File" node in the editor that shows a PDF inline in the page.
 
-Tahap B, kontrol edit per folder. Tiap folder tingkat atas dimiliki divisi
-tertentu; cuma anggotanya yang boleh nyunting, sisanya baca doang. Ini yang
-paling makan waktu, karena harus ditegakkan di **dua tempat**: REST API dan
-server kolaborasi real-time. Kalau cuma di REST, orang di luar divisi bakal
-lihat halamannya bisa diedit, ngetik panjang-panjang, terus tulisannya hilang
-pas reload. Endpoint `can-edit/` sengaja nggak nyalin aturan izinnya, dia
-manggil kelas permission yang sama persis, jadi REST sama editor mustahil beda
-pendapat.
+Stage B, edit control per folder. Each top-level folder is owned by a specific
+division. Only its members can edit and everyone else is read-only. This took
+the most time, because it has to be enforced in **two places**: the REST API
+and the real-time collaboration server. With REST only, someone outside the
+division would see the page as editable, type a long text, and lose it on
+reload. The `can-edit/` endpoint deliberately doesn't copy the permission
+rules. It calls the exact same permission class, so REST and the editor can't
+disagree.
 
-Tahap C, pohon halaman bertingkat. Sub-halaman dulu bukan cuma nggak keliatan,
-tapi **404 kalau dibuka**.
+Stage C, nested page tree. Sub-pages used to be not just invisible but a
+**404 when opened**.
 
-**Dashboard divisi.** Dibuat buat direktur dan Super Admin, jadi yang tampil
-pertama itu mode Ringkas: satu kalimat soal divisi mana yang bermasalah, empat
-angka (selesai tepat waktu, selesai 7 hari, terlambat, nunggu persetujuanmu)
-dengan pembanding minggu lalu, status tiap divisi (Lancar / Perlu perhatian /
-Kritis), dan maksimal lima hal yang perlu dilihat. Angka lengkap per departemen,
-jam kerja, dan ekspor CSV (langsung bisa dibuka Excel) ada di mode Rinci.
-Mode ketiga, Laporan, menjawab "apa saja yang sudah selesai": pilih 7 hari, 30
-hari, bulan ini, atau bulan lalu, lalu lihat jumlah selesai (dibanding periode
-sebelumnya), persen tepat waktu, bilah per divisi, dan judul tiap tugas yang
-selesai per divisi > project beserta penanggung jawab dan tanggalnya. Daftar
-lengkapnya bisa diunduh sebagai CSV.
+**Division dashboard.** Built for directors and Super Admins, so the first thing
+shown is Summary mode: one sentence about which division has a problem, four
+numbers (done on time, done in 7 days, overdue, waiting for your approval) with
+a comparison to last week, the status of each division (On track / Needs
+attention / Critical), and at most five things worth a look. Full numbers per
+department, hours worked, and CSV export (opens directly in Excel) are in
+Detail mode. The third mode, Report, answers "what got done": pick 7 days, 30
+days, this month, or last month, then see the count done (compared with the
+previous period), the on-time percentage, a bar per division, and the title of
+every completed work item per division > project with the assignee and date.
+The full list can be downloaded as CSV.
 
-**KPI.** Menu KPI (`/kinerja`) ada buat semua orang. Staf lihat angkanya
-sendiri: selesai, persen tepat waktu, selesai terlambat, terlambat sekarang,
-tugas terbuka, rata-rata dan median waktu pengerjaan, penyelesaian yang
-disetujui atau ditolak, plus tren per hari atau per minggu. Leader dan
-supervisor juga bisa buka departemennya dan tiap bawahannya, manager buka
-divisinya, sekretaris, direktur, dan admin workspace buka seluruh organisasi.
-Di luar itu server jawab 403. Periodenya bisa minggu ini, bulan ini, 30 hari,
-kuartal ini, atau rentang sendiri, selalu pakai hari kantor. Tugas dengan
-beberapa penanggung jawab dihitung penuh buat tiap orang, dan sekali di angka
-departemen, divisi, dan organisasi. Daftar metriknya satu tabel di
-`apps/api/plane/utils/kinerja.py` (`METRIK`), dan halaman web ngikutin tabel itu.
-Ambang statusnya diatur di God Mode > Features. Yang dihitung cuma project yang
-kamu ikuti.
+**KPI.** The KPI menu (`/kinerja`) is there for everyone. Staff see their own
+numbers: done, on-time percentage, done late, overdue now, open work items,
+average and median completion time, completions approved or rejected, plus a
+trend per day or per week. Leaders and supervisors can also open their
+department and each of their subordinates, managers open their division, and
+secretaries, directors, and workspace admins open the whole organization.
+Anything beyond that gets a 403 from the server. The period can be this week,
+this month, 30 days, this quarter, or a custom range, always counted in working
+days. A work item with several assignees counts in full for each person, and
+once in the department, division, and organization numbers. The metric list is a
+single table in `apps/api/plane/utils/kinerja.py` (`METRIK`), and the web page
+follows that table. Status thresholds are set in God Mode > Features. Only
+projects you are a member of are counted.
 
-**Arsip otomatis.** Work item Done yang sudah lama selesai pindah sendiri ke
-Archives. Lamanya dipilih Super Admin di God Mode > Features > Work items: Off,
-7, 14, 30, 60, 90 (bawaan), 180, atau 365 hari. Berlaku di semua project,
-dicek sekali sehari, dan yang dibatalkan nggak ikut. Yang sudah diarsipkan
-bisa dipulihkan dari Archives.
+**Auto-archive.** Done work items that finished long ago move to Archives on
+their own. A Super Admin picks the age in God Mode > Features > Work items: Off,
+7, 14, 30, 60, 90 (default), 180, or 365 days. It applies to all projects, runs
+once a day, and canceled items are skipped. Archived items can be restored from
+Archives.
 
-**Initiatives.** Sasaran tingkat workspace yang nyambungin beberapa project
-divisi, progresnya dihitung dari semua work item di project yang ketaut.
+**Initiatives.** Workspace-level goals that tie together several division
+projects. Progress is calculated from all the work items in the linked projects.
 
-**Audit logs.** Nyatet siapa ngubah apa di model-model penting. Aktornya
-kerekam baik lewat request HTTP biasa maupun lewat editor kolaboratif, yang
-kedua ini sempat saya ragukan, ternyata jalan.
+**Audit logs.** Records who changed what on the important models. The actor is
+captured both through normal HTTP requests and through the collaborative editor.
+I doubted the second one, but it works.
 
-**Daftar di God Mode bisa disaring kayak work item.** Accounts, Activity,
-Audit log, dan Trash punya kotak cari, tombol Filters yang nambah chip
-(properti, is / is not, nilai), menu Display buat urutan, kolom yang tampil, dan
-jumlah baris, plus kepala tabel yang bisa diklik buat ngurutin. Pilihannya
-diingat per halaman di browser. Accounts disaring di browser (semua akun dimuat
-sekali); Audit log dan riwayat masuk disaring di server karena isinya bisa
-ratusan ribu baris.
+**God Mode lists can be filtered like work items.** Accounts, Activity, Audit
+log, and Trash have a search box, a Filters button that adds chips (property,
+is / is not, value), a Display menu for sort order, visible columns, and row
+count, plus table headers you can click to sort. The choices are remembered per
+page in the browser. Accounts are filtered in the browser (all accounts are
+loaded once). Audit log and the login history are filtered on the server because
+they can hold hundreds of thousands of rows.
 
-**Notifikasi yang bisa dipilih sendiri.** Di Profil > Notifikasi ada satu
-tabel: tiap jenis kabar (diberi tugas, disebut, komentar, persetujuan, tenggat
-dan terlambat, tugas selesai, ganti status, perubahan lain, obrolan) punya dua
-saklar, inbox di aplikasi dan email. Ringkasan tugas datang dua kali sehari
-kerja, masing-masing dengan saklarnya sendiri: 08.30 WIB untuk memulai hari,
-17.30 WIB untuk menutupnya (yang selesai hari ini, yang tenggatnya hari ini tapi
-belum selesai, terlambat, dan tenggat hari kerja berikutnya). Isi keduanya bisa
-dipilih per bagian. Bawaannya ikut jabatan, dan tabel yang sama persis muncul di God
-Mode, baik untuk satu orang maupun untuk bawaan staf dan pimpinan. Daftar
-saklarnya cuma ditulis sekali di tiap sisi (`preferensi_email.py` dan
-`notification-preferences.ts`), jadi tiga layar itu nggak bisa beda isi.
+**Notifications you choose yourself.** In Profile > Notifications there is one
+table: each kind of update (assigned, mentioned, comment, approval, due and
+overdue, work item done, status change, other changes, chat) has two toggles,
+in-app inbox and email. The task digest arrives twice each working day, each
+with its own toggle: 08:30 WIB to start the day, 17:30 WIB to close it (what got
+done today, what is due today but not done, overdue, and what is due the next
+working day). The contents of each digest can be picked per section. Defaults
+follow the person's role, and the exact same table appears in God Mode, both for
+a single person and for the staff and leadership defaults. The list of toggles
+is written only once on each side (`preferensi_email.py` and
+`notification-preferences.ts`), so those three screens can't drift apart.
 
-**Chat yang jadi pusat kabar.** Tiap workspace punya kanal sistem
-Announcements dan Changelog, semua orang otomatis jadi anggota. Changelog terisi
-sendiri tiap deploy dari `apps/api/plane/release_notes/<versi>.json`: tulis
-berkas versi baru (entri Added/Changed/Fixed) bareng bump versinya, API yang
-memposting saat start, sekali saja. Kabar tugas (persetujuan, mention,
-komentar, pembaruan) datang sebagai kartu bertombol di ruang pribadi
-"Paradise", dan Setujui/Tolak bisa langsung dari kartunya. Ada juga log
-panggilan, indikator online, kelola kanal, dan tempel/seret lampiran.
+**Chat as the news hub.** Every workspace has the system channels Announcements
+and Changelog, and everyone is added automatically. The Changelog fills itself on
+every deploy from `apps/api/plane/release_notes/<versi>.json`: write the new
+version file (Added/Changed/Fixed entries) together with the version bump, and
+the API posts it at startup, once. Work updates (approvals, mentions, comments,
+changes) arrive as cards with buttons in the private "Paradise" space, and
+Approve/Reject works right from the card. There is also a call log, online
+indicators, channel management, and paste/drag-and-drop attachments.
 
-Ketik `@` di kotak tulis untuk menyebut orang yang ada di percakapan itu. Di
-kanal, orang yang disebut juga dapat kartu di ruang Paradise-nya. Tiap divisi
-dan departemen punya kanal privat sendiri yang anggotanya ikut penempatan di God
-Mode (`plane/utils/kanal_organisasi.py`, dipanggil dari `plane/db/jangkauan.py`):
-tambahkan orang ke departemen lain, ia ikut masuk kanalnya; cabut, ia keluar.
-Direktur dan sekretaris tidak diikutkan otomatis.
+Type `@` in the message box to mention people in that conversation. In a
+channel, the mentioned person also gets a card in their Paradise space. Every
+division and department has its own private channel, with members following the
+placement in God Mode (`plane/utils/kanal_organisasi.py`, called from
+`plane/db/jangkauan.py`): add someone to another department and they join its
+channel, remove them and they leave. Directors and secretaries are not added
+automatically.
 
-**Penempatan orang (KEP-76).** Tiap orang punya satu jenjang (Staf, Supervisor,
-Manager, Sekretaris, Direktur) dan satu daftar tempat. Semua jenjang boleh di banyak
-departemen; manager juga memimpin satu atau beberapa divisi. Sekretaris (35, KEP-101)
-menjangkau seluruh organisasi seperti direktur tanpa ditempatkan, tetapi berada satu
-anak tangga di bawahnya: tidak bisa menugaskan direktur dan bukan penyetuju tugasnya. Menambah tempat tidak
-pernah memindahkan tempat lama, dan menurunkan manager melepas divisinya saja.
-Semua tulisan penempatan lewat `plane/db/penempatan.py`. Contoh, menambah Ani ke
-departemen kedua dari God Mode:
+**People placement (KEP-76).** Each person has one rank (Staff, Supervisor,
+Manager, Secretary, Director) and one list of places. Every rank can be in
+several departments, and a manager also leads one or more divisions. The
+secretary (35, KEP-101) reaches the whole organization like a director without
+being placed, but sits one step below: can't assign work to a director and
+isn't an approver of the director's work. Adding a place never moves an old one,
+and demoting a manager only releases their divisions. All placement writes go
+through `plane/db/penempatan.py`. Example, adding Ani to a second department
+from God Mode:
 
 ```
 POST /api/instances/hierarki/
-{ "member_id": "<ani>", "departemen_id": "<dep IT-SAP>" }   # tambah satu
-{ "member_id": "<ani>", "departemen_ids": ["<IT-AI>", "<IT-SAP>"] }  # daftar penuh
-{ "member_id": "<budi>", "divisi_ids": ["<Sales>", "<HRGA>"] }       # manager 2 divisi
+{ "member_id": "<ani>", "departemen_id": "<dep IT-SAP>" }   # add one
+{ "member_id": "<ani>", "departemen_ids": ["<IT-AI>", "<IT-SAP>"] }  # full list
+{ "member_id": "<budi>", "divisi_ids": ["<Sales>", "<HRGA>"] }       # manager of 2 divisions
 ```
 
-**Email satu desain.** Semua email lewat `plane/utils/email_merek.py` dan
-`templates/emails/base.html`, logo dan foto disematkan karena server cuma ada
-di LAN. Buat ngecek tampilannya: God Mode > Email > Preview, atau kirim semua
-contoh ke kotak uji dengan `python manage.py kirim_contoh_email --kirim` (cuma
-mau ngirim ke it.ai1@itechmandiri.com).
+**One design for email.** All email goes through `plane/utils/email_merek.py`
+and `templates/emails/base.html`. The logo and photos are embedded because the
+server is only on the LAN. To check how it looks, use God Mode > Email > Preview,
+or send every sample to a test inbox with
+`python manage.py kirim_contoh_email --kirim` (it only sends to
+it.ai1@itechmandiri.com).
 
-**ACL per folder Wiki.** Pemetaan folder ke divisi, sub-halaman mewarisi dari
-induknya, admin bisa override. Sengaja nggak nambah dependency: keanggotaan
-divisi itu berubah-ubah, jadi grant statis malah gampang melenceng dari
-kenyataan.
+**Wiki folder ACL.** Folders map to divisions, sub-pages inherit from their
+parent, and admins can override. I deliberately added no dependency: division
+membership keeps changing, so a static grant drifts away from reality.
 
-**Layar hidup, tanpa F5.** Kalau tugas, komentar, atau pemberitahuan berubah,
-Django nerbitin petunjuk kecil ke Redis (`data:<slug>`, cuma id dan nama
-bidang, nggak ada isi), `apps/live` nerusin ke tab orang yang boleh ngelihat,
-lalu layar narik ulang lewat API biasa. Jadi aturan hak lihat tetap di satu
-tempat. Ada juga tombol segarkan di top nav yang nyegarin isi layar tanpa
-muat ulang halaman. Kalau soket putus, ada jam cadangan 45 detik. Rancangan
-dan jebakannya ada di vault (KEP-102).
+**Live screens, no F5.** When a work item, comment, or notification changes,
+Django publishes a small hint to Redis (`data:<slug>`, only the id and field
+names, no content), `apps/live` forwards it to the tabs of people allowed to
+see it, and the screen refetches through the normal API. That keeps the
+visibility rules in one place. There is also a refresh button in the top nav
+that refreshes the screen contents without reloading the page. If the socket
+drops, a fallback timer fires every 45 seconds. The design and its traps are in
+the vault (KEP-102).
 
-## Bagian operasionalnya
+## The operations side
 
-Ini juga saya urus sendiri, dan jujur bagian ini yang paling sering ngasih
-pelajaran:
+I run this myself too, and honestly this part teaches the most lessons:
 
-- **CI/CD**, tiap push ke `main` bikin 6 image ke GHCR. Tag-nya pakai commit
-  SHA, terus `latest` digeser pakai `imagetools create` (nyalin manifest, bukan
-  build ulang). Build-nya pakai cache layer GitHub Actions, dan Dockerfile
-  Node-nya memasang dependensi sebelum menyalin source, jadi commit yang cuma
-  mengubah kode nggak mengunduh ulang semua paket. Rilis cukup satu perintah
-  dari laptop, `paradise/bin/rilis.sh`: nunggu `latest` di GHCR geser ke
-  commit itu, backup, deploy terlepas dari SSH, lalu nyocokin versi yang
-  dilayani. `deploy.sh` gagal kalau migrasi gagal (dulu tetap bilang SEHAT).
-  Rollback tinggal `APP_RELEASE=<sha>`.
-- **Backup**, `pg_dump` terkompresi, ada retensi, hasilnya dicek nggak kosong.
-  Dan dia **nunggu** Postgres beneran siap, bukan langsung nyerah pas Docker
-  belum naik. Ini hasil dua pagi berturut-turut backup gagal.
-- **Healthcheck** buat semua layanan, plus skrip pendaftaran scheduled task yang
-  nggak butuh hak admin di Windows.
+- **CI/CD**: every push to `main` builds 6 images to GHCR. Tags use the commit
+  SHA, then `latest` is moved with `imagetools create` (it copies the manifest,
+  no rebuild). Builds use the GitHub Actions layer cache, and the Node
+  Dockerfiles install dependencies before copying source, so a commit that only
+  changes code doesn't redownload every package. A release is one command from
+  the laptop, `paradise/bin/rilis.sh`: it waits for `latest` on GHCR to move to
+  that commit, takes a backup, deploys detached from SSH, then matches the
+  version being served. `deploy.sh` fails if a migration fails (it used to still
+  report HEALTHY). Rollback is just `APP_RELEASE=<sha>`.
+- **Backup**: compressed `pg_dump`, with retention, and the output is checked to
+  be non-empty. It also **waits** for Postgres to actually be ready instead of
+  giving up when Docker isn't up yet. That came from two mornings in a row of
+  failed backups.
+- **Healthchecks** for every service, plus a scheduled-task registration script
+  that doesn't need admin rights on Windows.
 
-## Cara jalanin di lokal
+## Running it locally
 
-Panduan dari nol sampai aplikasinya kebuka. Ditulis buat Windows karena itu yang
-dipakai di sini, tapi langkah versi bash-nya sama persis di macOS dan Linux.
+A guide from zero to a running app. It's written for Windows because that's what
+is used here, but the bash steps are identical on macOS and Linux.
 
-Baca sampai habis sebelum ngetik. Tujuh langkah, dan langkah 3 sama 4 itu yang
-paling sering dilewat lalu bikin `pnpm dev` kelihatan "rusak".
+Read it all the way through before typing. There are seven steps, and steps 3
+and 4 are the ones most often skipped, which makes `pnpm dev` look "broken".
 
-### Langkah 1, pasang alatnya
+### Step 1, install the tools
 
-| Alat               | Versi minimum | Buat apa                                                                    | Unduh                                             |
-| ------------------ | ------------- | --------------------------------------------------------------------------- | ------------------------------------------------- |
-| **Docker Desktop** | terbaru       | Postgres, Redis, RabbitMQ, MinIO, dan backend Django semuanya jalan di sini | <https://www.docker.com/products/docker-desktop/> |
-| **Node.js**        | **22.18.0**   | frontend dan server kolaborasi                                              | <https://nodejs.org/en/download>                  |
-| **pnpm**           | **11.3.0**    | package manager monorepo, lihat catatan di bawah                            | <https://pnpm.io/installation>                    |
-| **Git**            | 2.40+         | Git for Windows sekalian ngasih Git Bash                                    | <https://git-scm.com/downloads>                   |
-| VS Code (opsional) | terbaru       | ekstensi yang dipakai ada di `.vscode/`                                     | <https://code.visualstudio.com/>                  |
+| Tool               | Minimum version | What for                                                              | Download                                          |
+| ------------------ | --------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| **Docker Desktop** | latest          | Postgres, Redis, RabbitMQ, MinIO, and the Django backend all run here | <https://www.docker.com/products/docker-desktop/> |
+| **Node.js**        | **22.18.0**     | frontend and the collaboration server                                 | <https://nodejs.org/en/download>                  |
+| **pnpm**           | **11.3.0**      | monorepo package manager, see the note below                          | <https://pnpm.io/installation>                    |
+| **Git**            | 2.40+           | Git for Windows also gives you Git Bash                               | <https://git-scm.com/downloads>                   |
+| VS Code (optional) | latest          | the extensions in use are listed in `.vscode/`                        | <https://code.visualstudio.com/>                  |
 
-Mesinnya butuh **RAM 12 GB** (8 GB sering gagal pas build container) dan sisa
-disk sekitar **15 GB**.
+The machine needs **12 GB of RAM** (8 GB often fails during the container build)
+and about **15 GB** of free disk.
 
-**Node 20 nggak cukup.** `package.json` minta `>=22.18.0`, dan pnpm bakal nolak
-install dengan `ERR_PNPM_UNSUPPORTED_ENGINE`. Ini beda dari dokumen lama, jadi
-cek beneran versinya, jangan diasumsikan.
+**Node 20 isn't enough.** `package.json` requires `>=22.18.0`, and pnpm will
+refuse to install with `ERR_PNPM_UNSUPPORTED_ENGINE`. This differs from the old
+docs, so check the actual version instead of assuming.
 
-**pnpm-nya jangan sembarang versi.** Versinya dikunci di `packageManager`
-(`pnpm@11.3.0`). Cara paling aman lewat corepack yang udah bawaan Node:
+**Don't use just any pnpm version.** The version is pinned in `packageManager`
+(`pnpm@11.3.0`). The safest way is through corepack, which ships with Node:
 
 ```powershell
 corepack enable pnpm
 corepack prepare pnpm@11.3.0 --activate
 ```
 
-Kalau `corepack` nggak ada di instalasi Node kamu, `npm install -g pnpm@11.3.0`
-juga cukup. Yang nggak boleh: pnpm 9 atau 10, lockfile-nya bakal ditolak.
+If `corepack` isn't in your Node install, `npm install -g pnpm@11.3.0` also
+works. What you must not use is pnpm 9 or 10, which will reject the lockfile.
 
-**Khusus Windows**, sekali seumur mesin, biar path `node_modules` yang dalam
-nggak kena batas 260 karakter:
+**Windows only**, once per machine, so deep `node_modules` paths don't hit the
+260-character limit:
 
 ```powershell
 git config --global core.longpaths true
 ```
 
-Verifikasi semuanya sebelum lanjut:
+Verify everything before moving on:
 
 ```powershell
-node --version            # harus v22.18.0 atau lebih baru
-pnpm --version            # harus 11.3.0
+node --version            # must be v22.18.0 or newer
+pnpm --version            # must be 11.3.0
 docker --version
 docker compose version
 git --version
 ```
 
-### Langkah 2, ambil kodenya
+### Step 2, get the code
 
 ```powershell
 git clone <url-repo>
 cd <folder-repo>
 ```
 
-### Langkah 3, Windows saja: benerin symlink i18n
+### Step 3, Windows only: fix the i18n symlink
 
-Repo ini punya **satu** symlink yang di-track git: `packages/i18n/locales`
-nunjuk ke `packages/i18n/src/locales`. Git di Windows nggak bikin symlink kecuali
-Developer Mode nyala, jadi yang keluar dari `git clone` itu **file teks 11 byte**
-berisi tulisan `src/locales`. Akibatnya semua terjemahan gagal dimuat.
+This repo has **one** symlink tracked by git: `packages/i18n/locales` points to
+`packages/i18n/src/locales`. Git on Windows doesn't create symlinks unless
+Developer Mode is on, so what comes out of `git clone` is an **11-byte text
+file** containing the text `src/locales`. As a result, no translations load.
 
-Gejalanya: seluruh tampilan jadi kunci mentah kayak `auth.common.email.label`,
-bukan teks.
+The symptom is that the whole UI shows raw keys like `auth.common.email.label`
+instead of text.
 
-Cek dulu:
+Check first:
 
 ```powershell
 Get-Item packages\i18n\locales | Select-Object Name, LinkType
 ```
 
-`LinkType` harus `Junction`. Kalau kosong, benerin:
+`LinkType` must be `Junction`. If it's empty, fix it:
 
 ```powershell
 Remove-Item packages\i18n\locales -Force -Recurse -ErrorAction SilentlyContinue
@@ -286,52 +288,53 @@ git update-index --skip-worktree packages/i18n/locales
 Add-Content .git\info\exclude "/packages/i18n/locales/"
 ```
 
-Baris terakhir bikin VS Code nggak nampilin 532 file bayangan. Ini lokal, sengaja
-di `.git/info/exclude` dan bukan di `.gitignore`, karena ini masalah mesin
-Windows, bukan masalah proyeknya.
+The last line stops VS Code from showing 532 shadow files. This is local, and
+deliberately in `.git/info/exclude` rather than `.gitignore`, because it's a
+problem with Windows machines, not with the project.
 
-Alternatif yang lebih bersih kalau kamu boleh: nyalain **Developer Mode** di
-Windows, terus `git config --global core.symlinks true`, lalu klon ulang. Setelah
-itu langkah ini nggak perlu selamanya.
+A cleaner alternative if you're allowed: turn on **Developer Mode** in Windows,
+then `git config --global core.symlinks true`, then clone again. After that you
+never need this step.
 
-Jangan sekali-kali "benerin" dengan nyalin isi `src/locales` ke `locales`.
-Salinannya bakal melenceng diam-diam.
+Never "fix" it by copying the contents of `src/locales` into `locales`. The copy
+will silently drift.
 
-### Langkah 4, bikin berkas `.env`, semuanya **ENAM**
+### Step 4, create the `.env` files, all **SIX**
 
-Ini penyebab nomor satu "udah pull tapi `pnpm dev` nggak jalan". Panduan lama
-cuma nyuruh bikin dua, dan dua itu nggak cukup.
+This is the number one cause of "I pulled but `pnpm dev` doesn't work". The old
+guide only said to create two, and two isn't enough.
 
-| Berkas            | Dibaca siapa                                           | Kalau nggak ada                               |
-| ----------------- | ------------------------------------------------------ | --------------------------------------------- |
-| `.env`            | `docker compose` buat Postgres, Redis, RabbitMQ, MinIO | container gagal naik, variabel kosong         |
-| `apps/api/.env`   | Django, Celery, migrator                               | API mati atau nolak semua panggilan           |
-| `apps/web/.env`   | Vite aplikasi web                                      | **web jalan tapi mati total**, lihat di bawah |
-| `apps/admin/.env` | Vite God Mode                                          | sama, God Mode nggak bisa manggil API         |
-| `apps/space/.env` | Vite halaman publik                                    | sama                                          |
-| `apps/live/.env`  | server kolaborasi                                      | **`live` langsung crash dan restart terus**   |
+| File              | Read by                                                | If it's missing                                 |
+| ----------------- | ------------------------------------------------------ | ----------------------------------------------- |
+| `.env`            | `docker compose`, for Postgres, Redis, RabbitMQ, MinIO | containers fail to start, variables are empty   |
+| `apps/api/.env`   | Django, Celery, migrator                               | API is down or rejects every call               |
+| `apps/web/.env`   | Vite, for the web app                                  | **web runs but is completely dead**, see below  |
+| `apps/admin/.env` | Vite, for God Mode                                     | same, God Mode can't call the API               |
+| `apps/space/.env` | Vite, for the public pages                             | same                                            |
+| `apps/live/.env`  | collaboration server                                   | **`live` crashes at once and restarts forever** |
 
-Dua akibat yang paling bikin bingung, dan dua-duanya nggak nyebut `.env` sama
-sekali di pesan errornya:
+The two most confusing results, and neither mentions `.env` anywhere in the
+error message:
 
-- **`apps/live/.env` nggak ada.** Perintahnya `node --env-file=.env .`, dan Node
-  itu mati kalau file-nya nggak ada. Supervisor-nya nyalain lagi, mati lagi.
-  Di output `pnpm dev` kelihatan kayak seluruh dev server-nya yang error.
-- **`apps/web/.env` nggak ada.** `VITE_API_BASE_URL` kosong, dan kode jatuh ke
-  string kosong (`packages/constants/src/endpoints.ts`). Semua panggilan API jadi
-  nyasar ke `localhost:4000` yang nggak punya backend. Halamannya kebuka, tapi
-  putih atau muter terus, dan errornya cuma 404 di tab Network.
+- **`apps/live/.env` is missing.** The command is `node --env-file=.env .`, and
+  Node exits if the file isn't there. The supervisor starts it again, it dies
+  again. In the `pnpm dev` output it looks like the whole dev server is failing.
+- **`apps/web/.env` is missing.** `VITE_API_BASE_URL` is empty, and the code
+  falls back to an empty string (`packages/constants/src/endpoints.ts`). Every
+  API call then goes astray to `localhost:4000`, which has no backend. The page
+  opens but stays blank or keeps spinning, and the only error is a 404 in the
+  Network tab.
 
-Cara cepat, lewat **Git Bash** (atau macOS/Linux):
+The quick way, through **Git Bash** (or macOS/Linux):
 
 ```bash
 bash setup.sh
 ```
 
-Skrip itu nyalin keenamnya dari `.env.example` masing-masing, **nggak nimpa yang
-udah ada**, terus ngisiin `SECRET_KEY` Django.
+The script copies all six from their `.env.example` files, **doesn't overwrite
+existing ones**, and fills in Django's `SECRET_KEY`.
 
-Manual lewat PowerShell:
+Manually through PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
@@ -346,17 +349,18 @@ $key = -join (1..50 | ForEach-Object { $chars | Get-Random })
 Add-Content apps\api\.env "SECRET_KEY=$key"
 ```
 
-⚠️ Kalau klon repo-mu **udah bawa `.env`**, lewati langkah ini seluruhnya. Jangan
-nimpa, isinya kredensial beneran.
+⚠️ If your clone of the repo **already has a `.env`**, skip this step entirely.
+Don't overwrite it, it holds real credentials.
 
-Nilai bawaannya udah bener buat dev lokal. Satu hal yang wajib kamu cocokkan
-sendiri kalau ngubah-ubah: **`LIVE_SERVER_SECRET_KEY` di `apps/api/.env` dan
-`apps/live/.env` harus sama persis.** Beda dikit, editor kolaboratif nolak semua
-sambungan dengan "Tidak berhak", padahal orangnya emang berhak.
+The defaults are right for local dev. One thing you must keep matched yourself if
+you change things: **`LIVE_SERVER_SECRET_KEY` in `apps/api/.env` and
+`apps/live/.env` must be exactly the same.** Even a small difference makes the
+collaborative editor reject every connection as unauthorized, even for people
+who are allowed in.
 
-### Langkah 5, nyalain layanan pendukungnya (Docker)
+### Step 5, start the supporting services (Docker)
 
-Docker Desktop harus **udah jalan** dulu, bukan cuma keinstal.
+Docker Desktop has to be **already running**, not just installed.
 
 PowerShell:
 
@@ -370,254 +374,263 @@ Git Bash, macOS, Linux:
 COMPOSE_FILE=docker-compose-local.yml docker compose up -d --build
 ```
 
-⚠️ Bentuk `COMPOSE_FILE=... docker compose ...` itu **sintaks bash**. Ditempel ke
-PowerShell hasilnya langsung galat `The term 'COMPOSE_FILE=...' is not recognized`.
-Di PowerShell pakai `-f`.
+⚠️ The `COMPOSE_FILE=... docker compose ...` form is **bash syntax**. Pasted into
+PowerShell it fails right away with `The term 'COMPOSE_FILE=...' is not recognized`.
+In PowerShell use `-f`.
 
-Build pertama makan **5 sampai 15 menit**, image Django-nya dibangun dari source.
+The first build takes **5 to 15 minutes**, since the Django image is built from
+source.
 
-Yang naik: `plane-db`, `plane-redis`, `plane-mq`, `plane-minio`, `api`, `worker`,
-`beat-worker`, dan `migrator`.
+What comes up: `plane-db`, `plane-redis`, `plane-mq`, `plane-minio`, `api`,
+`worker`, `beat-worker`, and `migrator`.
 
-**`migrator` berhenti sendiri dengan status `Exited (0)`, dan itu normal.** Dia
-cuma jalan sekali buat migrasi database, bukan container yang mati.
+**`migrator` stops by itself with status `Exited (0)`, and that's normal.** It
+only runs once to migrate the database. It isn't a dead container.
 
-Cek:
+Check:
 
 ```powershell
 docker compose -f docker-compose-local.yml ps
 curl.exe http://localhost:8000/api/instances/
 ```
 
-Ada pembungkus tipisnya juga: `.\paradise\bin\dev.ps1 up|down|logs|ps|rebuild`
-di Windows, atau `make dev-up` / `make dev-logs svc=api` di bash.
+There is a thin wrapper too: `.\paradise\bin\dev.ps1 up|down|logs|ps|rebuild` on
+Windows, or `make dev-up` / `make dev-logs svc=api` in bash.
 
-### Langkah 6, pasang dependensi lalu jalanin frontend
+### Step 6, install dependencies and run the frontend
 
 ```powershell
 pnpm install
 pnpm dev
 ```
 
-`pnpm install` pertama 3 sampai 8 menit. `pnpm dev` **nggak langsung ngasih
-port**: turbo bangun dulu 12 paket internal (`dev` punya `dependsOn: ["^build"]`
-di `turbo.json`), baru nyalain 4 aplikasi. Jadi wajar 1 sampai 3 menit diam
-sebelum ada alamat yang bisa dibuka. Jangan keburu di-Ctrl+C.
+The first `pnpm install` takes 3 to 8 minutes. `pnpm dev` **doesn't give you a
+port right away**: turbo first builds 12 internal packages (`dev` has
+`dependsOn: ["^build"]` in `turbo.json`), then starts the 4 apps. So 1 to 3
+minutes of silence before any address you can open is normal. Don't Ctrl+C too
+early.
 
-**Tiap habis `git pull`, jalanin `pnpm install` lagi** kalau `package.json` atau
-`pnpm-lock.yaml` ikut berubah. Ini penyebab paling sering "kemarin jalan, habis
-pull mati", dan errornya biasanya `Cannot find module`.
+**After every `git pull`, run `pnpm install` again** if `package.json` or
+`pnpm-lock.yaml` changed too. This is the most common cause of "it worked
+yesterday, broke after the pull", and the error is usually `Cannot find module`.
 
-### Langkah 7, daftarin admin pertama
+### Step 7, register the first admin
 
-1. Buka **<http://localhost:3001/god-mode/>**, daftarkan instance admin pertama.
-2. Baru buka **<http://localhost:4000>** buat aplikasinya.
+1. Open **<http://localhost:3001/god-mode/>** and register the first instance
+   admin.
+2. Only then open **<http://localhost:4000>** for the app.
 
-Urutannya nggak bisa dibalik: sebelum ada instance admin, aplikasi utamanya
-nggak punya apa-apa buat dilayanin.
+The order can't be reversed: until an instance admin exists, the main app has
+nothing to serve.
 
-### Langkah 8, isi organisasi contoh
+### Step 8, fill in a sample organization
 
-Instance yang baru daftar itu **kosong**, dan kosong artinya sebagian besar
-fiturnya nggak bisa dicoba sama sekali. Wiki paling kentara: rute `/wiki`
-nyari project ber-identifier `WIKI` pas jalan, dan kalau nggak ketemu yang
-muncul cuma layar "Wiki belum tersedia" tanpa tombol apa pun.
+A freshly registered instance is **empty**, and empty means most features can't
+be tried at all. The Wiki is the most obvious case: the `/wiki` route looks for
+a project with the identifier `WIKI` at runtime, and if it isn't found, all you
+get is a "Wiki not available yet" screen with no buttons.
 
-Satu perintah buat bikin organisasi contoh lengkap:
+One command creates a full sample organization:
 
 ```bash
-# uji kering dulu, nggak nulis apa-apa
+# dry run first, writes nothing
 docker compose -f docker-compose-local.yml exec -T api     python manage.py shell < paradise/bin/seed-demo.py
 
-# kalau hasilnya masuk akal, baru terapkan
+# if the result looks right, apply it
 docker compose -f docker-compose-local.yml exec -T api     -e SEED_DEMO_APPLY=1 python manage.py shell < paradise/bin/seed-demo.py
 ```
 
-Yang dibikin: workspace `nomaden-demo`, lima akun, tiga project divisi (OPS,
-SALES, TECH), project `WIKI` lengkap dengan governance-nya, plus tiga folder
-Wiki yang sengaja mewakili tiga keadaan izin yang beda (punya divisi pemilik,
-General terbuka buat semua, dan satu yang sengaja dibiarkan terkunci).
+What it creates: the `nomaden-demo` workspace, five accounts, three division
+projects (OPS, SALES, TECH), the `WIKI` project with its governance, plus three
+Wiki folders that deliberately represent three different permission states (one
+with an owning division, General open to everyone, and one deliberately left
+locked).
 
-Sandi semua akunnya `Demo1234!`, masuk pakai `owner@demo.local`. Bisa diganti
-lewat variabel lingkungan:
+All accounts use the password `Demo1234!`, and you sign in with
+`owner@demo.local`. It can be changed through environment variables:
 
-| Variabel              | Bawaan         |
+| Variable              | Default        |
 | --------------------- | -------------- |
 | `SEED_DEMO_WORKSPACE` | `nomaden-demo` |
 | `SEED_DEMO_NAME`      | `Nomaden Demo` |
 | `SEED_DEMO_DOMAIN`    | `demo.local`   |
 | `SEED_DEMO_PASSWORD`  | `Demo1234!`    |
 
-Aman dijalanin berkali-kali, nggak bakal numpuk. Dan dia nolak jalan kalau
-workspace tujuannya ternyata punya orang lain, biar nggak kejadian kesiram ke
-data beneran.
+It's safe to run many times, nothing piles up. And it refuses to run if the
+target workspace turns out to belong to someone else, so it can't be poured onto
+real data by accident.
 
-**Buat lokal doang.** Sandinya seragam dan ketulis di berkasnya.
+**Local only.** The password is the same for everyone and is written in the file.
 
-#### Perusahaan contoh lengkap (hierarki + work item)
+#### Full sample company (hierarchy + work items)
 
-`seed-demo.py` di atas cuma ngisi Wiki dan belum kenal hierarki (KEP-29). Biar
-aplikasinya kerasa hidup, ada command kedua yang ngisi **workspace utama**:
+The `seed-demo.py` above only fills the Wiki and doesn't know about the
+hierarchy (KEP-29). To make the app feel alive, there is a second command that
+fills the **main workspace**:
 
 ```bash
-docker compose -f docker-compose-local.yml exec api python manage.py seed_demo_data --settings=plane.settings.local          # isi
-docker compose -f docker-compose-local.yml exec api python manage.py seed_demo_data --reset --settings=plane.settings.local  # buang yang lama, isi ulang
+docker compose -f docker-compose-local.yml exec api python manage.py seed_demo_data --settings=plane.settings.local          # fill
+docker compose -f docker-compose-local.yml exec api python manage.py seed_demo_data --reset --settings=plane.settings.local  # remove the old data, fill again
 ```
 
-`--settings=plane.settings.local` wajib. Tanpa itu `manage.py` jalan dengan
-settings produksi (bawaan `manage.py`, termasuk di container lokal), dan
-command-nya menolak.
+`--settings=plane.settings.local` is required. Without it `manage.py` runs with
+the production settings (the `manage.py` default, including in the local
+container), and the command refuses.
 
-Isinya: 5 divisi, 12 departemen (tiap departemen otomatis dapat project-nya),
-56 akun berjenjang (2 direktur, 5 manager, 11 supervisor, satu di antaranya
-pegang dua departemen, dan 38 staf), label, modul, page, view tersimpan,
-sekitar 170 work item induk dan sub-tugas lengkap dengan assignee, komentar,
-aktivitas, lampiran, tautan, relasi, reaksi, dan worklog. Ada juga persetujuan
-(menunggu, disetujui, ditolak), 6 permintaan lintas divisi di intake, draft,
-dan notifikasi Inbox.
+What's in it: 5 divisions, 12 departments (each department automatically gets
+its project), 56 accounts across the ranks (2 directors, 5 managers, 11
+supervisors, one of them holding two departments, and 38 staff), labels,
+modules, pages, saved views, about 170 parent work items and sub-items with
+assignees, comments, activity, attachments, links, relations, reactions, and
+worklogs. There are also approvals (pending, approved, rejected), 6
+cross-division requests in intake, drafts, and Inbox notifications.
 
-Di luar project: Chat (kanal Umum, Pengumuman, kanal privat per divisi, DM
-atasan dan staf, lengkap dengan balasan, reaksi, lampiran, dan pesan yang
-belum dibaca), Wiki (dua sub-topik per divisi berisi materi yang diunggah
-anggota departemennya), riwayat login 14 hari buat God Mode > Logs, serta pin
-sidebar, favorit, sticky, quick link, dan Recents tiap akun.
+Outside projects: Chat (General channel, Announcements, private per-division
+channels, DMs between supervisor and staff, with replies, reactions,
+attachments, and unread messages), Wiki (two sub-topics per division holding
+material uploaded by that department's members), 14 days of login history for
+God Mode > Logs, plus each account's sidebar pins, favorites, stickies, quick
+links, and Recents.
 
-Akun Super Admin kamu (akun sungguhan, bukan demo) ikut dimasukkan: di tiap
-departemen ada tugas yang kamu buat buat staf dan tugas (plus sub-tugas) yang
-diberikan supervisor ke kamu, kamu ikut berkomentar, punya page "Catatan IT"
-di tiap project, mengunggah satu materi Wiki per divisi, punya satu draft, ada
-di kanal Umum, dan dapat DM dari direktur. Setelan pribadimu (pin sidebar,
-favorit, sticky) nggak disentuh, dan semua yang ditambahkan ikut bersih saat
-`--reset`.
+Your Super Admin account (the real account, not a demo one) is included too: in
+every department there are work items you created for staff and work items (plus
+sub-items) a supervisor assigned to you, you also commented, you have a "Catatan
+IT" page in every project, uploaded one Wiki item per division, have one draft,
+are in the General channel, and got a DM from the director. Your personal
+settings (sidebar pins, favorites, stickies) aren't touched, and everything
+added is cleaned up on `--reset`.
 
-Lampirannya berkas sungguhan (PDF, PNG, CSV, TXT) yang diunggah ke MinIO, jadi
-bisa dibuka. `--reset` ikut membuang objeknya dari MinIO. Cycles nggak dibuat
-karena modulnya sudah dicabut (KEP-53).
+The attachments are real files (PDF, PNG, CSV, TXT) uploaded to MinIO, so they
+open. `--reset` also removes the objects from MinIO. Cycles aren't created
+because the module was removed (KEP-53).
 
-Semua email pakai domain `@paradise.test`, sandinya `P@ssw0rd`. Contoh akun
-buat dicoba: `hendra.gunawan@` (direktur), `bambang.prasetyo@` (manager
-Sales), `rudi.hartono@` (supervisor), `dimas.saputra@` (staf).
+All emails use the `@paradise.test` domain, and the password is `P@ssw0rd`.
+Sample accounts to try: `hendra.gunawan@` (director), `bambang.prasetyo@` (Sales
+manager), `rudi.hartono@` (supervisor), `dimas.saputra@` (staff).
 
-Keanggotaan project nggak ditulis tangan. Semuanya lahir dari sinkron hierarki
-yang sama dengan God Mode, jadi kalau ada akses yang aneh, itu bug hierarki,
-bukan bug seed. `--reset` cuma nyapu akun `@paradise.test`, divisi dan
-departemen contohnya, plus apa pun yang bertanda `seed-demo`.
+Project membership isn't written by hand. It all comes out of the same hierarchy
+sync as God Mode, so if some access looks odd, that's a hierarchy bug, not a
+seed bug. `--reset` only sweeps the `@paradise.test` accounts, the sample
+divisions and departments, and anything tagged `seed-demo`.
 
-**Buat lokal doang, dan memang nggak bisa jalan di server.** Ini bukan data
-migration, jadi deploy nggak pernah menjalankannya. Di atas itu ada tiga pagar
-tanpa jalan pintas: settings harus `plane.settings.local`, instance dengan
-lebih dari 5 akun sungguhan ditolak, dan berkas seed-nya nggak ikut ke image
-produksi (`apps/api/.dockerignore`), jadi command-nya bahkan nggak ada di
-server.
+**Local only, and it can't run on the server.** It isn't a data migration, so a
+deploy never runs it. On top of that there are three guards with no shortcut:
+settings must be `plane.settings.local`, an instance with more than 5 real
+accounts is refused, and the seed files don't ship in the production image
+(`apps/api/.dockerignore`), so the command doesn't even exist on the server.
 
-### Tabel port
+### Port table
 
-| Layanan                | Port     | Alamat                                 |
-| ---------------------- | -------- | -------------------------------------- |
-| Web (aplikasi utama)   | **4000** | <http://localhost:4000>                |
-| Admin / God Mode       | 3001     | <http://localhost:3001/god-mode/>      |
-| Space (halaman publik) | 3002     | <http://localhost:3002/spaces/>        |
-| Live (kolaborasi)      | 3100     | <http://localhost:3100/live/health>    |
-| API (Django)           | 8000     | <http://localhost:8000/api/instances/> |
-| MinIO console          | 9090     | <http://localhost:9090>                |
-| PostgreSQL             | 5432     |                                        |
-| Redis                  | 6379     |                                        |
-| RabbitMQ               | 5672     |                                        |
+| Service              | Port     | Address                                |
+| -------------------- | -------- | -------------------------------------- |
+| Web (main app)       | **4000** | <http://localhost:4000>                |
+| Admin / God Mode     | 3001     | <http://localhost:3001/god-mode/>      |
+| Space (public pages) | 3002     | <http://localhost:3002/spaces/>        |
+| Live (collaboration) | 3100     | <http://localhost:3100/live/health>    |
+| API (Django)         | 8000     | <http://localhost:8000/api/instances/> |
+| MinIO console        | 9090     | <http://localhost:9090>                |
+| PostgreSQL           | 5432     |                                        |
+| Redis                | 6379     |                                        |
+| RabbitMQ             | 5672     |                                        |
 
-**Web-nya di 4000, bukan 3000.** Upstream pakai 3000 dan itu masih nempel di
-banyak dokumen dan tutorial di luar sana.
+**The web app is on 4000, not 3000.** Upstream uses 3000, and that still sticks
+to a lot of docs and tutorials out there.
 
-### Perintah harian
+### Daily commands
 
 ```powershell
-pnpm dev                  # nyalain semua frontend + live
-pnpm check:types          # pemeriksaan tipe
+pnpm dev                  # start all frontends + live
+pnpm check:types          # type check
 pnpm check:lint           # oxlint
 pnpm check:format         # oxfmt
-pnpm build                # build seluruh aplikasi
-pnpm fix                  # rapikan format + lint otomatis
+pnpm build                # build the whole app
+pnpm fix                  # auto-fix format + lint
 
 docker compose -f docker-compose-local.yml logs -f api
 docker compose -f docker-compose-local.yml restart api
 docker compose -f docker-compose-local.yml down
 ```
 
-Dua hal yang bakal bikin kamu bingung kalau nggak tahu:
+Two things that will confuse you if you don't know them:
 
-- Ubah kode backend? **`docker compose restart api`.** Autoreload-nya nggak
-  jalan di sini, bind-mount Windows ke container nggak nerusin event perubahan
-  file. Gejalanya endpoint balas 404 padahal kodenya udah bener.
-- Ubah `.env`? **`docker compose up -d`, bukan `restart`.** `restart` nggak baca
-  ulang `env_file`.
+- Changed backend code? **`docker compose restart api`.** Autoreload doesn't
+  work here, because the Windows bind mount into the container doesn't forward
+  file change events. The symptom is an endpoint returning 404 even though the
+  code is right.
+- Changed `.env`? **`docker compose up -d`, not `restart`.** `restart` doesn't
+  reread `env_file`.
 
-### Kalau nggak jalan
+### If it doesn't work
 
-Cari gejalanya di kolom kiri. Hampir semua yang pernah kejadian ada di sini.
+Find the symptom in the left column. Almost everything that has happened is
+here.
 
-| Gejala / pesan error                                                                               | Sebabnya                                                                       | Obatnya                                                                                                |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `ERR_PNPM_UNSUPPORTED_ENGINE`, "Unsupported engine"                                                | Node di bawah 22.18.0                                                          | pasang Node 22.18+, lalu `pnpm install` lagi                                                           |
-| `pnpm` nggak dikenal, atau versinya bukan 11.3.0                                                   | pnpm belum aktif atau salah versi                                              | `corepack enable pnpm` lalu `corepack prepare pnpm@11.3.0 --activate`                                  |
-| `ERR_PNPM_LOCKFILE_BREAKING_CHANGE` / `ERR_PNPM_OUTDATED_LOCKFILE`                                 | pnpm beda versi, atau lockfile berubah setelah pull                            | pastikan pnpm 11.3.0, lalu `pnpm install` (tanpa `--frozen-lockfile`)                                  |
-| Habis `git pull`, muncul `Cannot find module ...`                                                  | dependensi baru belum dipasang                                                 | `pnpm install`                                                                                         |
-| `live` mati lalu nyala terus, `apps/live/live-dev.log` bilang `ENOENT ... .env`                    | `apps/live/.env` nggak ada                                                     | bikin dari `apps/live/.env.example`, lihat langkah 4                                                   |
-| Halaman 4000 kebuka tapi putih atau muter terus, tab Network penuh 404 ke `localhost:4000/api/...` | `apps/web/.env` nggak ada, `VITE_API_BASE_URL` kosong                          | bikin `apps/web/.env`, lalu **matikan dan nyalain ulang** `pnpm dev` (Vite baca `.env` cuma pas start) |
-| Konsol peramban bilang **CORS**                                                                    | `CORS_ALLOWED_ORIGINS` di `apps/api/.env` nggak memuat `http://localhost:4000` | tambahin, lalu `docker compose -f docker-compose-local.yml up -d` (bukan `restart`)                    |
-| Semua teks jadi kunci mentah, contoh `auth.common.email.label`                                     | junction i18n pecah atau belum dibikin                                         | langkah 3                                                                                              |
-| `git status` tiba-tiba ratusan perubahan `packages/i18n/locales/**`                                | junction dipecah pre-commit hook                                               | **jangan di-commit**, pulihkan dulu, langkahnya di [CONTRIBUTING.md](CONTRIBUTING.md)                  |
-| `EPERM` / `ENOENT` waktu `pnpm install`, path kepanjangan                                          | batas 260 karakter Windows                                                     | `git config --global core.longpaths true`, hapus `node_modules`, install ulang                         |
-| `error during connect`, `docker daemon is not running`                                             | Docker Desktop belum nyala                                                     | nyalain Docker Desktop, tunggu ikonnya hijau                                                           |
-| `The term 'COMPOSE_FILE=...' is not recognized`                                                    | sintaks bash ditempel ke PowerShell                                            | pakai bentuk `docker compose -f docker-compose-local.yml ...`                                          |
-| `port is already allocated`, atau `EADDRINUSE` di 4000                                             | port dipakai proses lain                                                       | `netstat -ano \| findstr :4000` lalu `taskkill /PID <pid> /F`                                          |
-| `migrator` statusnya `Exited (0)`                                                                  | itu memang seharusnya                                                          | bukan error, abaikan                                                                                   |
-| Endpoint backend balas 404 padahal kodenya udah bener                                              | backend nggak autoreload                                                       | `docker compose -f docker-compose-local.yml restart api`                                               |
-| Ganti `.env` tapi nggak ngefek                                                                     | `restart` nggak baca ulang `env_file`                                          | `docker compose -f docker-compose-local.yml up -d`                                                     |
-| `pnpm dev` diam lama tanpa port                                                                    | turbo lagi build 12 paket internal dulu                                        | tunggu 1 sampai 3 menit                                                                                |
-| turbo error aneh yang nggak masuk akal                                                             | daemon turbo nyangkut                                                          | `pnpm exec turbo daemon stop`, ulangi                                                                  |
-| Lampiran dan avatar gagal dimuat                                                                   | `MINIO_PUBLIC_ENDPOINT_URL` kosong di `apps/api/.env`                          | isi `http://localhost:9000`, lalu `up -d`                                                              |
-| Editor kolaboratif nolak dengan "Tidak berhak"                                                     | `LIVE_SERVER_SECRET_KEY` beda antara api dan live                              | samakan persis, lalu `up -d` dan restart `pnpm dev`                                                    |
+| Symptom / error message                                                                                        | Cause                                                                             | Fix                                                                                            |
+| -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `ERR_PNPM_UNSUPPORTED_ENGINE`, "Unsupported engine"                                                            | Node is below 22.18.0                                                             | install Node 22.18+, then `pnpm install` again                                                 |
+| `pnpm` isn't recognized, or the version isn't 11.3.0                                                           | pnpm isn't enabled or is the wrong version                                        | `corepack enable pnpm` then `corepack prepare pnpm@11.3.0 --activate`                          |
+| `ERR_PNPM_LOCKFILE_BREAKING_CHANGE` / `ERR_PNPM_OUTDATED_LOCKFILE`                                             | pnpm version mismatch, or the lockfile changed after a pull                       | make sure it's pnpm 11.3.0, then `pnpm install` (without `--frozen-lockfile`)                  |
+| After `git pull`, `Cannot find module ...` appears                                                             | new dependencies aren't installed yet                                             | `pnpm install`                                                                                 |
+| `live` dies then restarts over and over, `apps/live/live-dev.log` says `ENOENT ... .env`                       | `apps/live/.env` is missing                                                       | create it from `apps/live/.env.example`, see step 4                                            |
+| The page on 4000 opens but stays blank or keeps spinning, Network tab full of 404s to `localhost:4000/api/...` | `apps/web/.env` is missing, `VITE_API_BASE_URL` is empty                          | create `apps/web/.env`, then **stop and restart** `pnpm dev` (Vite reads `.env` only at start) |
+| The browser console says **CORS**                                                                              | `CORS_ALLOWED_ORIGINS` in `apps/api/.env` doesn't include `http://localhost:4000` | add it, then `docker compose -f docker-compose-local.yml up -d` (not `restart`)                |
+| All text turns into raw keys, for example `auth.common.email.label`                                            | the i18n junction is broken or was never created                                  | step 3                                                                                         |
+| `git status` suddenly shows hundreds of changes in `packages/i18n/locales/**`                                  | the junction was broken by the pre-commit hook                                    | **don't commit**, restore it first, steps are in [CONTRIBUTING.md](CONTRIBUTING.md)            |
+| `EPERM` / `ENOENT` during `pnpm install`, paths too long                                                       | Windows 260-character limit                                                       | `git config --global core.longpaths true`, delete `node_modules`, install again                |
+| `error during connect`, `docker daemon is not running`                                                         | Docker Desktop isn't running                                                      | start Docker Desktop, wait for the icon to turn green                                          |
+| `The term 'COMPOSE_FILE=...' is not recognized`                                                                | bash syntax pasted into PowerShell                                                | use the `docker compose -f docker-compose-local.yml ...` form                                  |
+| `port is already allocated`, or `EADDRINUSE` on 4000                                                           | the port is used by another process                                               | `netstat -ano \| findstr :4000` then `taskkill /PID <pid> /F`                                  |
+| `migrator` status is `Exited (0)`                                                                              | that's how it's meant to be                                                       | not an error, ignore it                                                                        |
+| A backend endpoint returns 404 even though the code is right                                                   | the backend doesn't autoreload                                                    | `docker compose -f docker-compose-local.yml restart api`                                       |
+| Changed `.env` but nothing happened                                                                            | `restart` doesn't reread `env_file`                                               | `docker compose -f docker-compose-local.yml up -d`                                             |
+| `pnpm dev` is silent for a long time with no port                                                              | turbo is still building 12 internal packages                                      | wait 1 to 3 minutes                                                                            |
+| Strange turbo errors that make no sense                                                                        | the turbo daemon is stuck                                                         | `pnpm exec turbo daemon stop`, then try again                                                  |
+| Attachments and avatars fail to load                                                                           | `MINIO_PUBLIC_ENDPOINT_URL` is empty in `apps/api/.env`                           | set it to `http://localhost:9000`, then `up -d`                                                |
+| The collaborative editor rejects connections as unauthorized (close code 1008)                                 | `LIVE_SERVER_SECRET_KEY` differs between api and live                             | make them exactly the same, then `up -d` and restart `pnpm dev`                                |
 
-Kalau masih mentok, kirim **teks error persisnya** plus keluaran `node --version`,
-`pnpm --version`, dan `docker compose -f docker-compose-local.yml ps`. Tiga itu
-biasanya cukup buat nunjuk penyebabnya.
+If you're still stuck, send **the exact error text** plus the output of
+`node --version`, `pnpm --version`, and
+`docker compose -f docker-compose-local.yml ps`. Those three are usually enough
+to point at the cause.
 
-Sisanya, deploy produksi, checklist keamanan, cara sync dari upstream, ada di
-folder `paradise/`.
+The rest (production deploy, the security checklist, how to sync from upstream)
+is in the `paradise/` folder.
 
-## Dibangun pakai
+## Built with
 
-Django REST Framework, PostgreSQL, Redis, RabbitMQ + Celery, MinIO di backend.
-React + React Router, TypeScript, MobX, Tailwind di frontend. Hocuspocus (Y.js)
-buat editor kolaboratif. Semuanya dibungkus Docker Compose, di depannya Caddy.
+Django REST Framework, PostgreSQL, Redis, RabbitMQ + Celery, and MinIO on the
+backend. React + React Router, TypeScript, MobX, and Tailwind on the frontend.
+Hocuspocus (Y.js) for the collaborative editor. All of it is wrapped in Docker
+Compose, with Caddy in front.
 
-## Yang belum beres
+## What isn't done
 
-Biar jujur aja:
+To be honest about it:
 
-- **SMTP belum jalan.** Kolomnya udah keisi, tapi host-nya masih placeholder yang
-  nggak resolve dari dalam container. Jadi undangan user sama reset password
-  nggak bakal nyampe. Nunggu IP mail server dari IT.
-- **Belum ada server produksi.** Masih jalan lokal semua.
-- **Isi Wiki-nya masih kerangka.** Mesinnya udah kelar, dokumennya belum ditulis
-  , dan itu kerjaan manusia, bukan kerjaan kode.
-- **Belum pernah sync dari upstream.** Berisiko konflik, nanti dikerjain di
-  branch sendiri.
+- **SMTP doesn't work yet.** The fields are filled in, but the host is still a
+  placeholder that doesn't resolve from inside the container. So user invites and
+  password resets won't arrive. Waiting on the mail server IP from IT.
+- **There is no production server yet.** Everything still runs locally.
+- **The Wiki content is still a skeleton.** The engine is finished, but the
+  documents aren't written, and that's human work, not code work.
+- **It has never synced from upstream.** There's a risk of conflicts, so it'll
+  be done on its own branch.
 
-## Soal basis kodenya
+## About the code base
 
-Ini dibangun di atas **Plane Community Edition v0.24.0**, lisensinya
-**GNU AGPL-3.0**. Detail atribusi sama kewajiban lisensinya ada di
-[NOTICE.md](NOTICE.md) dan [LICENSE.txt](LICENSE.txt).
+This is built on **Plane Community Edition v0.24.0**, licensed under the
+**GNU AGPL-3.0**. Attribution details and license obligations are in
+[NOTICE.md](NOTICE.md) and [LICENSE.txt](LICENSE.txt).
 
-Merek produk aslinya udah saya hapus dari tampilan, sistem ini bukan produk
-vendor dan nggak dijual, jadi nampilin merek orang lain di dalamnya cuma bikin
-bingung. Tapi **atribusi hukumnya tetap**: header copyright di file sumber, teks
-lisensi, dan file NOTICE. Dua hal itu beda, dan yang kedua bukan hak saya buat
-hapus.
+I removed the original product's branding from the UI. This system isn't a
+vendor product and isn't sold, so showing someone else's brand inside it would
+only confuse people. But **the legal attribution stays**: the copyright headers
+in the source files, the license text, and the NOTICE file. Those are two
+different things, and the second one isn't mine to remove.
 
-Kalau kamu pakai ini lewat jaringan, AGPL pasal 13 tetap berlaku, mau dijual
-atau enggak.
+If you use this over a network, AGPL section 13 still applies, whether it's sold
+or not.
 
-## Lisensi
+## License
 
-GNU Affero General Public License v3.0. Lihat [LICENSE.txt](LICENSE.txt).
+GNU Affero General Public License v3.0. See [LICENSE.txt](LICENSE.txt).

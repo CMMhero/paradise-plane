@@ -1,61 +1,61 @@
 # Paradise Task Tracker
 
-Deployment internal kantor berbasis [Plane CE](https://github.com/makeplane/plane).
-Alat manajemen proyek/issue untuk tim (~100 anggota lintas divisi).
+An internal office deployment based on [Plane CE](https://github.com/makeplane/plane).
+A project and issue management tool for the team (~100 members across divisions).
 
-> Ini fork operasional, bukan tulis-ulang. Kode aplikasi = karya tim Plane
-> (AGPL-3.0). Lihat [`../NOTICE.md`](../NOTICE.md).
+> This is an operational fork, not a rewrite. The application code is the work of
+> the Plane team (AGPL-3.0). See [`../NOTICE.md`](../NOTICE.md).
 
-## Dua fase
+## Two phases
 
-| Fase                  | Tujuan                                         | Cara                                                      |
-| --------------------- | ---------------------------------------------- | --------------------------------------------------------- |
-| **1, Dev (sekarang)** | Ngoprek & sesuaikan source ke kebutuhan kantor | Build dari source via `docker-compose-local.yml`          |
-| **2, Prod (nanti)**   | Layani ~100 user, update via CI/CD             | Build image sendiri → registry → deploy compose di server |
+| Phase               | Goal                                              | How                                                            |
+| ------------------- | ------------------------------------------------- | -------------------------------------------------------------- |
+| **1, Dev (now)**    | Tinker with the source and fit it to office needs | Build from source via `docker-compose-local.yml`               |
+| **2, Prod (later)** | Serve ~100 users, update via CI/CD                | Build our own images → registry → deploy compose on the server |
 
-## Mulai cepat (Dev)
+## Quick start (Dev)
 
 ```bash
-cp paradise/.env.example .env      # lalu isi nilainya
+cp paradise/.env.example .env      # then fill in the values
 paradise/bin/dev.sh up             # Linux/macOS
 paradise\bin\dev.ps1 up            # Windows PowerShell
 ```
 
-Web default: http://localhost (proxy Caddy). God-mode admin: `/god-mode`.
+Default web: http://localhost (Caddy proxy). God Mode admin: `/god-mode`.
 
-## Peta dokumen
+## Document map
 
-- [`.env.example`](.env.example), semua variabel wajib + catatan.
-- [`DEPLOYMENT.md`](DEPLOYMENT.md), deploy produksi di server kantor.
-- [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md), **wajib** sebelum prod.
-- [`UPGRADE.md`](UPGRADE.md), cara ambil update dari upstream Plane.
-- [`ATURAN-GITHUB.md`](ATURAN-GITHUB.md), aturan repo GitHub: wajib PR, wajib
-  review, dan cara memasangnya.
-- [`../CODEBASE_INVENTORY.md`](../CODEBASE_INVENTORY.md), audit arsitektur.
+- [`.env.example`](.env.example), every required variable + notes.
+- [`DEPLOYMENT.md`](DEPLOYMENT.md), production deploy on the office server.
+- [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md), **required** before prod.
+- [`UPGRADE.md`](UPGRADE.md), how to pull updates from upstream Plane.
+- [`GITHUB-RULES.md`](GITHUB-RULES.md), GitHub repo rules: PRs required, reviews
+  required, and how to set them up.
+- [`../CODEBASE_INVENTORY.md`](../CODEBASE_INVENTORY.md), architecture audit.
 
-## Layanan (compose)
+## Services (compose)
 
 `web` · `space` · `admin` · `live` (collab) · `api` (Django) · `worker`/`beat`
 (Celery) · `proxy` (Caddy) · Postgres · Redis · RabbitMQ · MinIO.
 
-## Teks antarmuka (i18n)
+## Interface text (i18n)
 
-Semua teks yang dibaca pengguna di `apps/web` lewat `useTranslation()` dari
-`@plane/i18n`, bukan string Indonesia yang ditulis langsung di komponen.
+All user-facing text in `apps/web` goes through `useTranslation()` from
+`@plane/i18n`, not Indonesian strings written directly in components.
 
-- Teks kustom Paradise ada di namespace `paradise`
-  (`packages/i18n/src/locales/<bahasa>/paradise.json`). Kuncinya dikelompokkan
-  per fitur dengan akhiran `_ui` (`wiki_ui`, `chat_ui`, `cross_division_ui`,
-  `notification_ui`, dst). Jangan memberi kunci teratas yang sama dengan nama
-  berkas namespace (`paradise`, `wiki`, ...), `sync:check` menolaknya.
-- Semua 19 locale wajib punya kunci yang sama. `id` berisi teks Indonesia,
-  `en` bahasa Inggris, sisanya sementara menyalin `en` sampai ada terjemahannya.
-- Tombol umum (Simpan, Batal, Hapus, Tutup, Cari) memakai kunci `common`
-  (`t("save")`, `t("cancel")`), jangan ditulis ulang.
-- Modul murni yang diuji lewat `*.check.ts` (`galat-media`, `baris`, `teks`)
-  tidak memanggil hook. Mereka menerima `t` sebagai argumen, dan berkas
-  `*.check.ts` meminjam kamus `id/paradise.json`. Jalankan dari `packages/i18n`.
-- God Mode (`apps/admin`) memang tidak memakai `@plane/i18n`; kamusnya sendiri di
-  `apps/admin/app/i18n/godmode.tsx`.
+- Custom Paradise text lives in the `paradise` namespace
+  (`packages/i18n/src/locales/<language>/paradise.json`). Keys are grouped per
+  feature with a `_ui` suffix (`wiki_ui`, `chat_ui`, `cross_division_ui`,
+  `notification_ui`, and so on). Don't give a top-level key the same name as a
+  namespace file (`paradise`, `wiki`, ...), because `sync:check` rejects it.
+- All 19 locales must have the same keys. `id` holds Indonesian text, `en`
+  English, and the rest temporarily copy `en` until a translation exists.
+- Common buttons (Save, Cancel, Delete, Close, Search) use the `common` keys
+  (`t("save")`, `t("cancel")`). Don't rewrite them.
+- Pure modules tested through `*.check.ts` (`galat-media`, `baris`, `teks`)
+  don't call hooks. They receive `t` as an argument, and the `*.check.ts` files
+  borrow the `id/paradise.json` dictionary. Run them from `packages/i18n`.
+- God Mode (`apps/admin`) doesn't use `@plane/i18n` on purpose. It has its own
+  dictionary in `apps/admin/app/i18n/godmode.tsx`.
 
-Pemeriksaan: `pnpm --filter @plane/i18n sync:check`, lalu `pnpm --filter @plane/i18n generate:types`.
+Checks: `pnpm --filter @plane/i18n sync:check`, then `pnpm --filter @plane/i18n generate:types`.

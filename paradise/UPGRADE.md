@@ -1,104 +1,110 @@
-# Upgrade, sinkron dengan upstream Plane
+# Upgrade, syncing with upstream Plane
 
-Jalankan:
+Run:
 
 ```bash
-./paradise/bin/upstream-sync.sh check     # apa yang baru sejak baseline
-./paradise/bin/upstream-sync.sh apply     # terapkan
-./paradise/bin/upstream-sync.sh verify    # kustomisasi kita masih utuh?
+./paradise/bin/upstream-sync.sh check     # what's new since the baseline
+./paradise/bin/upstream-sync.sh apply     # apply it
+./paradise/bin/upstream-sync.sh verify    # are our customizations still intact?
 ```
 
-Baseline, daftar commit yang sengaja ditolak, dan daftar berkas yang harus
-selamat ada di [`upstream-sync.json`](upstream-sync.json). Baca itu dulu.
+The baseline, the list of commits that were deliberately rejected, and the list
+of files that must survive are in [`upstream-sync.json`](upstream-sync.json).
+Read that first.
 
-Sisanya di halaman ini adalah hal-hal yang tidak bisa dikerjakan skrip.
+The rest of this page covers what the script can't do.
 
-## Kenapa tidak bisa `git merge`
+## Why `git merge` doesn't work
 
-Repo ini **di-vendor, bukan di-fork**: berkasnya disalin. Tidak ada leluhur
-bersama dengan `makeplane/plane`, jadi `git merge upstream/preview` menolak
-bekerja, dan kalau dipaksa dengan `--allow-unrelated-histories`, hasilnya
-konflik di hampir setiap berkas. Yang dipakai: patch tiga arah per commit.
+This repo is **vendored, not forked**: the files were copied in. There is no
+common ancestor with `makeplane/plane`, so `git merge upstream/preview` refuses
+to run, and if forced with `--allow-unrelated-histories`, the result is
+conflicts in almost every file. What we use instead: a three-way patch per
+commit.
 
-Versi lama halaman ini menyuruh `git merge upstream/main`. Itu keliru.
+An older version of this page said to run `git merge upstream/main`. That was
+wrong.
 
-## Sync ke tag rilis, bukan ke `preview`
+## Sync to a release tag, not to `preview`
 
-`preview` adalah branch kerja mereka, berisi hal setengah jadi. Tag `v*` sudah
-lewat QA mereka. Sync ke `preview` = jadi penguji beta orang lain, di server
-yang dipakai 79 orang.
+`preview` is their working branch and contains half-finished work. `v*` tags have
+passed their QA. Syncing to `preview` means becoming someone else's beta tester,
+on a server used by 79 people.
 
-## Kustomisasi kita TIDAK terisolasi di `paradise/`
+## Our customizations are NOT isolated in `paradise/`
 
-Anggapan itu benar saat vendoring, sekarang tidak lagi. Yang tersebar di kode
-upstream:
+That assumption held while we were vendoring. It no longer does. What is spread
+through the upstream code:
 
-| Di mana                                                         | Apa                                                                                                                                    |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web/ce/` (246 berkas)                                     | Lapisan ekstensi, Time Tracking, Custom Properties, perbaikan sidebar. Mengisi stub yang upstream sediakan lewat alias `@/plane-web/*` |
-| `apps/api/plane/db/superadmin.py`                               | Super Admin tersembunyi                                                                                                                |
-| `apps/api/plane/utils/trash.py` + `app/views/paradise_trash.py` | Trashbin & TPA                                                                                                                         |
-| `apps/api/plane/license/api/views/`                             | Log audit, pemulihan, kelola member (God Mode)                                                                                         |
-| `apps/api/plane/app/views/asset/v2.py`                          | Gate lampiran Wiki, **upstream berkala mau membuang `import Page` yang jadi sandarannya**                                              |
-| `packages/i18n/src/locales/`                                    | Debranding, ~1.700 baris di 19 locale                                                                                                  |
-| `apps/web/core/components/instance/edition-badge.tsx`           | Modal ajakan upgrade dibuang (KEP-14), **upstream berkala memasangnya lagi**                                                           |
-| `apps/api/plane/authentication/utils/login.py`                  | Satu panggilan `LoginActivity.catat()` sesudah `session.save()`                                                                        |
-| `apps/api/plane/authentication/views/{app,space}/signout.py`    | Satu panggilan `LoginActivity.catat()` **sebelum** `logout()`                                                                          |
-| `apps/api/plane/settings/common.py`                             | `LastActiveMiddleware` di `MIDDLEWARE` + `login_activity_retention` di `CELERY_IMPORTS`                                                |
-| `apps/api/plane/celery.py`                                      | Jadwal `bersihkan-login-activity` (17:00 UTC = 00:00 WIB)                                                                              |
-| `apps/admin/app/routes.ts` + `hooks/use-sidebar-menu/`          | Rute & menu God Mode: Jejak audit, TPA, Member, Aktivitas                                                                              |
+| Where                                                           | What                                                                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/ce/` (246 files)                                      | Extension layer: Time Tracking, Custom Properties, sidebar fixes. Fills the stubs upstream provides through the `@/plane-web/*` alias |
+| `apps/api/plane/db/superadmin.py`                               | Hidden Super Admin                                                                                                                    |
+| `apps/api/plane/utils/trash.py` + `app/views/paradise_trash.py` | Trash bin & TPA                                                                                                                       |
+| `apps/api/plane/license/api/views/`                             | Audit log, recovery, member management (God Mode)                                                                                     |
+| `apps/api/plane/app/views/asset/v2.py`                          | Wiki attachment gate. **Upstream periodically tries to drop the `import Page` it relies on**                                          |
+| `packages/i18n/src/locales/`                                    | Debranding, ~1,700 lines across 19 locales                                                                                            |
+| `apps/web/core/components/instance/edition-badge.tsx`           | Upgrade-prompt modal removed (KEP-14). **Upstream periodically puts it back**                                                         |
+| `apps/api/plane/authentication/utils/login.py`                  | One `LoginActivity.catat()` call after `session.save()`                                                                               |
+| `apps/api/plane/authentication/views/{app,space}/signout.py`    | One `LoginActivity.catat()` call **before** `logout()`                                                                                |
+| `apps/api/plane/settings/common.py`                             | `LastActiveMiddleware` in `MIDDLEWARE` + `login_activity_retention` in `CELERY_IMPORTS`                                               |
+| `apps/api/plane/celery.py`                                      | The `bersihkan-login-activity` schedule (17:00 UTC = 00:00 WIB)                                                                       |
+| `apps/admin/app/routes.ts` + `hooks/use-sidebar-menu/`          | God Mode routes & menu: Audit log, TPA, Members, Activity                                                                             |
 
-### Jebakan pemantauan aktivitas (2026-08-07)
+### Activity monitoring traps (2026-08-07)
 
-Empat titik sambung di atas masing-masing cuma satu-dua baris, dan itu justru
-bahayanya: patch yang gagal di sana **tidak menimbulkan error apa pun**, hanya
-membuat angka di dashboard diam-diam jadi nol. Sesudah tiap sync, periksa:
+Each of the four hook points above is only one or two lines, and that is exactly
+the danger. A patch that fails there **raises no error at all**. It just quietly
+turns the dashboard numbers into zero. After every sync, check:
 
-- `LoginActivity.catat()` masih terpanggil di jalur login **dan** ketiga logout.
-  Hilang di logout saja → sesi menggantung selamanya, durasi tak terhitung.
-- `session_key` diambil **sesudah** `request.session.save()`. Django membuat ulang
-  kunci saat login; membaca lebih awal memasangkan logout ke login yang salah.
-- `LastActiveMiddleware` masih **setelah** `AuthenticationMiddleware`. Kalau
-  urutannya berubah, `request.user` belum ada dan middleware diam seribu bahasa.
-- Task retensi terdaftar di **worker**, bukan cuma beat:
+- `LoginActivity.catat()` is still called on the login path **and** all three
+  logouts. Lost on logout alone means sessions hang forever and durations are
+  never computed.
+- `session_key` is read **after** `request.session.save()`. Django regenerates
+  the key on login, and reading it earlier pairs the logout with the wrong login.
+- `LastActiveMiddleware` is still **after** `AuthenticationMiddleware`. If the
+  order changes, `request.user` doesn't exist yet and the middleware fails
+  silently.
+- The retention task is registered on the **worker**, not just beat:
   `docker compose exec worker celery -A plane inspect registered | grep login_activity`.
-  Beat saja = task dikirim, worker menjawab "unregistered", pesannya dibuang.
+  Beat alone means the task is sent, the worker answers "unregistered", and the
+  message is dropped.
 
-Selebihnya berkas milik kita sendiri (`db/models/login_activity.py`,
+The rest are our own files (`db/models/login_activity.py`,
 `middleware/last_active.py`, `bgtasks/login_activity_retention.py`,
-`license/api/views/activity.py`, `apps/admin/.../activity/`), tidak akan pernah
-bentrok dengan upstream.
+`license/api/views/activity.py`, `apps/admin/.../activity/`) and will never
+conflict with upstream.
 
-## Saat patch gagal
+## When a patch fails
 
-Skrip melaporkan yang gagal satu per satu, tidak menggugurkan sisanya.
-Kerjakan tangan, dan aturannya:
+The script reports failures one by one and doesn't abort the rest. Handle them by
+hand, using these rules:
 
-- Baris bentrok itu **kustomisasi kita** → pertahankan punya kita.
-- Baris bentrok itu **perbaikan keamanan mereka** → ambil punya mereka, lalu
-  pasang ulang kustomisasi kita di atasnya.
+- The conflicting lines are **our customization**: keep ours.
+- The conflicting lines are **their security fix**: take theirs, then reapply our
+  customization on top.
 
-Jangan pilih salah satu sisi buta-buta. Dua patch keamanan aset (Juli 2026)
-sama-sama mau membuang `import Page`, kalau diambil mentah, gate Wiki jebol
-tanpa satu pun error.
+Don't pick a side blindly. Two asset security patches (July 2026) both wanted to
+drop `import Page`. Taken raw, the Wiki gate breaks without a single error.
 
-## Yang harus ditolak selamanya
+## What must be rejected permanently
 
-`8ef78bf0c1` "store and components consolidation to core" menghapus seluruh
-`apps/web/ce/` (249 berkas jadi nol). Tiga fitur kita kehilangan antarmuka
-sementara backend-nya tetap jalan, dan pemanggilnya ikut hilang, **tidak ada
-yang gagal dengan berisik**. Pindah ke struktur `core/` itu porting, kerjakan
-terpisah, jangan dibarengkan dengan patch keamanan.
+`8ef78bf0c1` "store and components consolidation to core" deletes the whole of
+`apps/web/ce/` (249 files down to zero). Three of our features would lose their
+interface while their backend keeps running, and their callers disappear too, so
+**nothing fails loudly**. Moving to the `core/` structure is a port. Do it
+separately, not bundled with a security patch.
 
-## Setelah sync
+## After a sync
 
-1. `./paradise/bin/upstream-sync.sh verify`, wajib hijau sebelum merge ke `main`.
-2. Cek migrasi baru: `git show <commit> --stat | grep migrations/`. Kalau ada,
-   **dump DB dulu** (`paradise/bin/backup-db.sh`) sebelum merge.
+1. `./paradise/bin/upstream-sync.sh verify`, must be green before merging to `main`.
+2. Check for new migrations: `git show <commit> --stat | grep migrations/`. If
+   there are any, **dump the DB first** (`paradise/bin/backup-db.sh`) before
+   merging.
 3. `paradise/bin/healthcheck.sh`.
-4. Ulangi [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md) bila upstream menambah env baru.
+4. Repeat [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md) if upstream added new env.
 
-> Container `api`, `worker`, dan `beat-worker` bind-mount `apps/api` ke `/code`.
-> **Branch yang ter-checkout itulah yang dijalankan backend.** Selama hasil sync
-> masih nangkring di branch sendiri, `git checkout main` diam-diam mencabut
-> semua patch keamanannya.
+> The `api`, `worker`, and `beat-worker` containers bind-mount `apps/api` to
+> `/code`. **Whatever branch is checked out is what the backend runs.** While the
+> sync result is still sitting on its own branch, `git checkout main` silently
+> removes all of its security patches.

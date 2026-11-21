@@ -1,43 +1,43 @@
-### Apa yang berubah
+### What changed
 
-<!-- Satu paragraf. Apa yang sekarang berbeda dari sebelumnya. -->
+<!-- One paragraph. What is different now compared to before. -->
 
-### Kenapa
+### Why
 
-<!-- Masalah yang diselesaikan, atau permintaan yang dijawab. Kalau ada issue-nya,
-sebut di sini dengan "Closes #123" supaya issue-nya ikut tertutup saat merge. -->
+<!-- The problem this solves, or the request it answers. If there is an issue,
+mention it here with "Closes #123" so the issue closes when this merges. -->
 
-### Jenis perubahan
+### Type of change
 
-- [ ] Perbaikan bug
-- [ ] Fitur baru
-- [ ] Perbaikan tampilan atau pengalaman pakai
-- [ ] Refactor, perilaku tidak berubah
-- [ ] Performa
-- [ ] Dokumentasi
-- [ ] Infrastruktur, CI, atau skrip operasional
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Visual or user experience fix
+- [ ] Refactor, behavior unchanged
+- [ ] Performance
+- [ ] Documentation
+- [ ] Infrastructure, CI, or operations script
 
-### Cara saya mengujinya
+### How I tested it
 
-<!-- Bukan "sudah dites". Tulis yang benar-benar dijalankan, misalnya:
-     - `pnpm --filter web check:types` bersih
-     - `docker compose -f docker-compose-local.yml exec -T api python -m pytest plane/tests/x.py` lolos
-     - dibuka di localhost:4000, dicoba dengan akun staf dan akun admin
-   Kalau belum diuji sama sekali, tulis apa adanya. Itu informasi, bukan aib. -->
+<!-- Not "tested". Write what was actually run, for example:
+     - `pnpm --filter web check:types` clean
+     - `docker compose -f docker-compose-local.yml exec -T api python -m pytest plane/tests/x.py` passes
+     - opened at localhost:4000, tried with a staff account and an admin account
+   If it hasn't been tested at all, say so plainly. That is information, not a disgrace. -->
 
-### Tangkapan layar
+### Screenshots
 
-<!-- Wajib kalau menyentuh tampilan. Sebelum dan sesudah lebih baik daripada sesudah saja. -->
+<!-- Required if this touches the UI. Before and after is better than after alone. -->
 
-### Sebelum minta review
+### Before asking for review
 
-- [ ] `pnpm check` hijau di mesin saya, atau saya sebutkan bagian mana yang merah dan kenapa
-- [ ] Tidak ada rahasia yang ikut ter-commit: tidak ada `.env`, token, kata sandi, atau kunci di dalam diff
-- [ ] Menambah variabel lingkungan baru? `.env.example` yang bersangkutan ikut diperbarui
-- [ ] Menyentuh berkas locale? `git status` sudah dicek dan junction `packages/i18n/locales` masih utuh
-- [ ] Mengubah perilaku yang sudah didokumentasikan? README atau dokumen di `paradise/` ikut diperbarui
+- [ ] `pnpm check` is green on my machine, or I say which part is red and why
+- [ ] No secrets were committed: no `.env`, tokens, passwords, or keys in the diff
+- [ ] Added a new environment variable? The relevant `.env.example` is updated too
+- [ ] Touched locale files? I checked `git status` and the `packages/i18n/locales` junction is still intact
+- [ ] Changed documented behavior? The README or the docs in `paradise/` are updated too
 
-### Yang perlu diperhatikan reviewer
+### What the reviewer should look at
 
-<!-- Bagian yang kamu sendiri paling ragu, keputusan yang sengaja diambil, atau
-hal yang sengaja TIDAK dikerjakan di PR ini. Ini yang paling menghemat waktu review. -->
+<!-- The part you are least sure about, a decision you made on purpose, or
+something deliberately NOT done in this PR. This saves the most review time. -->

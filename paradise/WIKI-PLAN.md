@@ -1,107 +1,114 @@
-# Rencana Wiki, Paradise Task Tracker
+# Wiki plan, Paradise Task Tracker
 
-Status: **RENCANA** (belum dieksekusi). Disusun 2026-07-24.
+Status: **PLAN** (not yet executed). Written 2026-07-24.
 
-Target: satu Wiki perusahaan, folder per-divisi, **divisi pemilik boleh edit +
-yang lain hanya view**, upload hampir semua tipe file sampai **100 MB**.
-
----
-
-## Konsep yang diminta
-
-Dua lapis dokumentasi:
-
-| Lapis                  | Siapa lihat                             | Siapa edit                  | Isi               |
-| ---------------------- | --------------------------------------- | --------------------------- | ----------------- |
-| **Private per-divisi** | hanya divisi itu (atau yg diberi akses) | divisi itu                  | rahasia divisi    |
-| **Public**             | semua karyawan                          | hanya divisi pemilik folder | panduan umum, SOP |
-
-Di dalam Public ada "folder" per divisi. Contoh folder HR: **HR upload/edit/hapus,
-yang lain view**. File yang boleh: jpg, png, mp4, mp3, docx, xlsx, pdf, ppt, dll.
-
-Keputusan user: **1 Wiki besar dengan folder per-divisi** (bukan 1 project per
-divisi), dan **semua tipe file termasuk video, batas 100 MB**.
+Target: one company Wiki with a folder per division, where **the owning division
+can edit and everyone else can only view**, and uploads of almost any file type up
+to **100 MB**.
 
 ---
 
-## Temuan investigasi (kode nyata)
+## The requested concept
 
-- **Private per-divisi = SUDAH BISA tanpa kode.** Project private Plane (`network=0`
-  "Secret") hanya bisa dilihat anggotanya. 16 project divisi sudah private → Pages
-  di dalamnya = wiki rahasia divisi. Tidak perlu dibangun.
-- **Izin halaman melekat se-project, bukan per-folder.** `ProjectPagePermission`
-  (`apps/api/plane/app/permissions/page.py`): harus anggota project untuk akses;
-  peran Guest=view, Member=edit, Admin=hapus. Dalam satu project, semua member punya
-  hak edit sama → "folder HR cuma HR yang edit" TIDAK didukung native.
-- **Editor tidak punya node file non-gambar.** `packages/editor` cuma punya
-  `image`/`custom-image`; slash-command cuma "Image". Upload pdf/docx/mp4 ke halaman
-  = harus BANGUN node editor baru.
-- **Upload halaman = image-only (hardcoded).** `apps/api/.../asset/v2.py` baris ~342
-  (`WorkspaceFileAssetEndpoint`) & ~544 (`ProjectAssetEndpoint`): `allowed_types`
-  cuma 5 tipe gambar. Daftar lengkap `ATTACHMENT_MIME_TYPES` ADA di
-  `settings/common.py` (pdf/docx/xlsx/ppt/mp4/mp3/zip) TAPI cuma dipakai lampiran
-  Issue (`issue/attachment.py:105`), bukan halaman.
-- **Batas ukuran 5 MB.** `FILE_SIZE_LIMIT=5242880`. Proxy Caddy pakai env yang sama
-  (`apps/proxy/Caddyfile.ce`: `max_size {$FILE_SIZE_LIMIT}`) → satu tombol ikut
-  mengatur Caddy + Django `DATA_UPLOAD_MAX_MEMORY_SIZE`.
-- **Sub-halaman disembunyikan di UI.** List memfilter `parent__isnull=True`
-  (`apps/api/plane/app/views/page/base.py:97`) → pohon folder bertingkat tidak
-  tampil tanpa kerja frontend.
-- **Ada hook untuk override izin.** `page.py` menyediakan
-  `_check_access_and_get_role` & `_has_private_page_action_access` ("Override for
-  feature flag logic"), titik ekstensi resmi (dipakai edisi EE).
+Two layers of documentation:
+
+| Layer                    | Who sees it                                  | Who edits it                           | Contents             |
+| ------------------------ | -------------------------------------------- | -------------------------------------- | -------------------- |
+| **Private per division** | only that division (or those granted access) | that division                          | division secrets     |
+| **Public**               | all employees                                | only the division that owns the folder | general guides, SOPs |
+
+Inside Public there is a "folder" per division. Example, the HR folder: **HR
+uploads/edits/deletes, everyone else views**. Allowed files: jpg, png, mp4, mp3,
+docx, xlsx, pdf, ppt, and so on.
+
+The user's decision: **1 big Wiki with a folder per division** (not 1 project per
+division), and **all file types including video, 100 MB limit**.
 
 ---
 
-## Fase A, Upload file (semua tipe, 100 MB)
+## Investigation findings (real code)
 
-Dibutuhkan apa pun struktur wiki-nya. Berdiri sendiri.
-
-| #   | Kerja                            | File                                                                                                                         | Ukuran       | Risiko |
-| --- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ |
-| A1  | Buka tipe non-gambar utk halaman | `asset/v2.py` ~342 & ~544 → pakai `ATTACHMENT_MIME_TYPES` saat `entity_type=PAGE_DESCRIPTION` (jgn sentuh avatar/cover ~128) | kecil        | rendah |
-| A2  | Batas 100 MB                     | `.env`: `FILE_SIZE_LIMIT=104857600` (ikut Caddy + Django)                                                                    | sepele       | rendah |
-| A3  | **Node "File" baru di editor**   | `packages/editor/.../extensions/custom-file/` (baru) + slash-command "File"                                                  | sedang–besar | sedang |
-
-A3 = komponen upload, kartu file (ikon+nama+download), pemutar inline mp4/mp3,
-sinkron Yjs. Editor dipakai bersama Issue/Page/Comment → jangan rusak yang lain.
-**Versi malas:** kartu file + download saja dulu; preview/inline player menyusul.
-
-## Fase B, Izin per-folder (SENSITIF KEAMANAN)
-
-| #   | Kerja                 | Cara                                                                                                                                                 | Risiko     |
-| --- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| B1  | Tandai pemilik folder | Model kecil baru `page → project divisi pemilik` (pinjam 16 project divisi, bukan konsep grup baru) + migrasi                                        | rendah     |
-| B2  | Tegakkan izin         | Override `ProjectPagePermission` via hook. Edit/hapus: telusuri naik ke folder induk → cek user anggota project divisi pemilik. View = semua anggota | **tinggi** |
-| B3  | Set pemilik folder    | Endpoint kecil, admin only                                                                                                                           | rendah     |
-
-Uji wajib: non-pemilik tak bisa edit/hapus folder lain; sub-halaman mewarisi
-pemilik induk; pindah halaman antar-folder hitung ulang pemilik; buat halaman di
-bawah folder X cek pemilik folder X (bukan sekadar peran project).
-
-## Fase C, Pohon folder di UI
-
-| #   | Kerja                               | Cara                                                                      | Risiko |
-| --- | ----------------------------------- | ------------------------------------------------------------------------- | ------ |
-| C1  | Tampilkan halaman bertingkat        | Bangun endpoint anak + sidebar pohon (atasi filter `parent__isnull=True`) | sedang |
-| C2  | Edit/hapus nonaktif utk non-pemilik | Backend sudah tolak; UI tinggal tak menawarkan aksi                       | kecil  |
-| C3  | UI set pemilik folder               | admin only (pasangan B3)                                                  | kecil  |
+- **Private per division = ALREADY POSSIBLE without code.** Plane's private
+  projects (`network=0`, "Secret") can only be seen by their members. The 16
+  division projects are already private, so the Pages inside them are the
+  division's secret wiki. Nothing to build.
+- **Page permissions attach to the whole project, not per folder.**
+  `ProjectPagePermission` (`apps/api/plane/app/permissions/page.py`): you must be
+  a project member to get access; Guest=view, Member=edit, Admin=delete. Within
+  one project, every member has the same edit rights, so "the HR folder is
+  editable only by HR" is NOT supported natively.
+- **The editor has no non-image file node.** `packages/editor` only has
+  `image`/`custom-image`, and the slash command only offers "Image". Uploading
+  pdf/docx/mp4 into a page means BUILDING a new editor node.
+- **Page upload is image-only (hardcoded).** `apps/api/.../asset/v2.py` around
+  line 342 (`WorkspaceFileAssetEndpoint`) and 544 (`ProjectAssetEndpoint`):
+  `allowed_types` has only 5 image types. The full `ATTACHMENT_MIME_TYPES` list
+  EXISTS in `settings/common.py` (pdf/docx/xlsx/ppt/mp4/mp3/zip) BUT is only used
+  for Issue attachments (`issue/attachment.py:105`), not pages.
+- **The size limit is 5 MB.** `FILE_SIZE_LIMIT=5242880`. The Caddy proxy uses the
+  same env (`apps/proxy/Caddyfile.ce`: `max_size {$FILE_SIZE_LIMIT}`), so one knob
+  controls both Caddy and Django's `DATA_UPLOAD_MAX_MEMORY_SIZE`.
+- **Sub-pages are hidden in the UI.** The list filters `parent__isnull=True`
+  (`apps/api/plane/app/views/page/base.py:97`), so a nested folder tree doesn't
+  show without frontend work.
+- **There is a hook to override permissions.** `page.py` provides
+  `_check_access_and_get_role` and `_has_private_page_action_access` ("Override
+  for feature flag logic"), an official extension point (used by the EE edition).
 
 ---
 
-## Catatan penting
+## Phase A, File upload (all types, 100 MB)
 
-- **Ini fork.** Fase B & C menyimpang dari kode Plane asli → tiap upgrade Plane
-  diterapkan & diuji ulang. Dokumentasikan.
-- **Semua lewat pipeline CI** (`paradise-build` → GHCR → `deploy.sh`): tiap
-  perubahan = commit → build ~7 menit → deploy. Bukan instan.
-- **Disk:** 100 MB × banyak orang = GB cepat. Server produksi (belum ada) wajib SSD
-  lega + monitoring disk.
-- **Urutan disarankan:** Fase A dulu (berguna langsung, risiko rendah, tetap perlu
-  walau struktur berubah), baru B lalu C.
+Needed whatever the wiki structure ends up being. Stands on its own.
 
-## Penghematan yang layak ditimbang
+| #   | Work                              | File                                                                                                                        | Size         | Risk   |
+| --- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ |
+| A1  | Open non-image types for pages    | `asset/v2.py` ~342 & ~544 → use `ATTACHMENT_MIME_TYPES` when `entity_type=PAGE_DESCRIPTION` (don't touch avatar/cover ~128) | small        | low    |
+| A2  | 100 MB limit                      | `.env`: `FILE_SIZE_LIMIT=104857600` (applies to both Caddy and Django)                                                      | trivial      | low    |
+| A3  | **New "File" node in the editor** | `packages/editor/.../extensions/custom-file/` (new) + a "File" slash command                                                | medium-large | medium |
 
-Sebelum bangun node editor (A3) & ACL (B) dari nol, cek dulu apakah Plane edisi
-berbayar (EE) sudah punya keduanya untuk di-port, lebih murah & lebih teruji.
-Repo `upstream` yang ada cuma community; perlu lihat referensi EE.
+A3 = an upload component, a file card (icon + name + download), an inline
+mp4/mp3 player, and Yjs sync. The editor is shared by Issue/Page/Comment, so
+don't break the others. **Lazy version:** file card + download only for now;
+preview/inline player later.
+
+## Phase B, Per-folder permissions (SECURITY SENSITIVE)
+
+| #   | Work                  | How                                                                                                                                                                            | Risk     |
+| --- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| B1  | Mark the folder owner | A new small model `page → owning division project` (borrow the 16 division projects, no new group concept) + a migration                                                       | low      |
+| B2  | Enforce permissions   | Override `ProjectPagePermission` via the hook. Edit/delete: walk up to the parent folder, then check the user is a member of the owning division's project. View = all members | **high** |
+| B3  | Set the folder owner  | A small endpoint, admin only                                                                                                                                                   | low      |
+
+Required tests: a non-owner can't edit/delete another folder; sub-pages inherit
+their parent's owner; moving a page between folders recalculates the owner;
+creating a page under folder X checks folder X's owner (not just the project
+role).
+
+## Phase C, Folder tree in the UI
+
+| #   | Work                                | How                                                                                      | Risk   |
+| --- | ----------------------------------- | ---------------------------------------------------------------------------------------- | ------ |
+| C1  | Show nested pages                   | Build a children endpoint + a tree sidebar (get around the `parent__isnull=True` filter) | medium |
+| C2  | Edit/delete disabled for non-owners | The backend already refuses; the UI just stops offering the actions                      | small  |
+| C3  | UI to set the folder owner          | admin only (pairs with B3)                                                               | small  |
+
+---
+
+## Important notes
+
+- **This is a fork.** Phases B and C diverge from the original Plane code, so
+  every Plane upgrade has to be reapplied and retested. Document it.
+- **Everything goes through the CI pipeline** (`paradise-build` → GHCR →
+  `deploy.sh`): every change = commit → ~7 minute build → deploy. Not instant.
+- **Disk:** 100 MB × many people adds up to GBs fast. The production server (not
+  yet in place) needs roomy SSD and disk monitoring.
+- **Suggested order:** Phase A first (useful immediately, low risk, still needed
+  even if the structure changes), then B, then C.
+
+## A saving worth weighing
+
+Before building the editor node (A3) and the ACL (B) from scratch, check whether
+the paid Plane edition (EE) already has both so they can be ported, which would be
+cheaper and better tested. The `upstream` repo we have is community only, so we'd
+need to look at an EE reference.

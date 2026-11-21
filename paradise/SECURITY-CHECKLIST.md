@@ -1,34 +1,35 @@
-# Security Checklist, WAJIB sebelum produksi
+# Security checklist, REQUIRED before production
 
-Plane CE punya kesadaran keamanan bagus (mitigasi SSRF webhook, guard SECRET_KEY,
-fix TOCTOU sign-up). Tapi **default dev tidak aman untuk prod**. Tuntaskan ini:
+Plane CE has good security awareness (webhook SSRF mitigation, a SECRET_KEY
+guard, a sign-up TOCTOU fix). But **the dev defaults are not safe for prod**.
+Work through this:
 
-## Secrets, ganti SEMUA nilai default
+## Secrets, replace ALL default values
 
-- [ ] `SECRET_KEY`, generate baru: `python -c "import secrets; print(secrets.token_hex(32))"`
-- [ ] `LIVE_SERVER_SECRET_KEY`, generate baru (cara sama)
-- [ ] `POSTGRES_PASSWORD`, bukan `plane`, minimal 20 karakter acak
-- [ ] `RABBITMQ_PASSWORD`, bukan `plane`
-- [ ] `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (MinIO), bukan `access-key`/`secret-key`
-- [ ] Pastikan `.env` **tidak** ter-commit (`git status` harus bersih)
+- [ ] `SECRET_KEY`, generate a new one: `python -c "import secrets; print(secrets.token_hex(32))"`
+- [ ] `LIVE_SERVER_SECRET_KEY`, generate a new one (same way)
+- [ ] `POSTGRES_PASSWORD`, not `plane`, at least 20 random characters
+- [ ] `RABBITMQ_PASSWORD`, not `plane`
+- [ ] `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (MinIO), not `access-key`/`secret-key`
+- [ ] Make sure `.env` is **not** committed (`git status` must be clean)
 
-## Jaringan & host
+## Network and host
 
-- [ ] `ALLOWED_HOSTS` **jangan** `*` di prod, set ke `APP_DOMAIN` kantor
-- [ ] `CORS_ALLOWED_ORIGINS` = hanya origin kantor, bukan `localhost`
-- [ ] `WEB_URL` / `ADMIN_BASE_URL` / `SPACE_BASE_URL` pakai domain/IP asli
-- [ ] Kalau publik: aktifkan HTTPS (`SITE_ADDRESS`=domain + `CERT_EMAIL`)
+- [ ] `ALLOWED_HOSTS` must **not** be `*` in prod, set it to the office `APP_DOMAIN`
+- [ ] `CORS_ALLOWED_ORIGINS` = office origins only, not `localhost`
+- [ ] `WEB_URL` / `ADMIN_BASE_URL` / `SPACE_BASE_URL` use the real domain/IP
+- [ ] If public: enable HTTPS (`SITE_ADDRESS`=domain + `CERT_EMAIL`)
 
-## Akses & operasional
+## Access and operations
 
-- [ ] Batasi god-mode admin (`/god-mode`), akun kuat, jangan diumbar
-- [ ] `API_KEY_RATE_LIMIT` sesuai kebutuhan (default `60/minute`)
-- [ ] Postgres & MinIO **tidak** expose port ke publik, hanya via jaringan internal compose
-- [ ] Backup terenkripsi & diuji restore ([`DEPLOYMENT.md`](DEPLOYMENT.md))
-- [ ] Rotasi secret bila ada indikasi bocor
+- [ ] Restrict God Mode admin (`/god-mode`), strong accounts, don't hand it out freely
+- [ ] `API_KEY_RATE_LIMIT` set as needed (default `60/minute`)
+- [ ] Postgres and MinIO do **not** expose ports publicly, internal compose network only
+- [ ] Encrypted backups with a tested restore ([`DEPLOYMENT.md`](DEPLOYMENT.md))
+- [ ] Rotate secrets if there is any sign of a leak
 
-## Verifikasi cepat
+## Quick verification
 
 ```bash
-grep -R "GANTI\|=plane\"\|access-key" .env   # harus TIDAK ada hasil
+grep -R "GANTI\|=plane\"\|access-key" .env   # must return NO results
 ```

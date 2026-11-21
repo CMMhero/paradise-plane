@@ -1,124 +1,130 @@
-# Deployment Produksi, Paradise Task Tracker
+# Production deployment, Paradise Task Tracker
 
-Target: satu server kantor (Linux) melayani ~100 user. **Tidak butuh Kubernetes**,
-Docker Compose sudah cukup. K8s hanya perlu kalau butuh HA/autoscale + tim ops.
+Target: one office server (Linux) serving ~100 users. **No Kubernetes needed**,
+Docker Compose is enough. K8s is only worth it if you need HA/autoscaling and an
+ops team.
 
-## Prasyarat server
+## Server prerequisites
 
 - Docker Engine + Compose plugin
-- 4 vCPU / 8 GB RAM minimum (naik kalau editor kolaboratif ramai)
-- Disk cukup untuk Postgres + upload MinIO + backup
-- Domain atau IP LAN statis untuk `APP_DOMAIN`
+- 4 vCPU / 8 GB RAM minimum (more if the collaborative editor gets busy)
+- Enough disk for Postgres + MinIO uploads + backups
+- A domain or static LAN IP for `APP_DOMAIN`
 
-## Langkah
+## Steps
 
-1. **Clone repo ini** ke server, checkout branch `main`.
-2. **Konfigurasi env:** `cp paradise/.env.example .env` lalu isi semua `<GANTI>`.
-   Jalankan [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md), jangan skip.
-3. **Pilih compose:**
-   - **Disarankan, image hasil CI:** `./paradise/bin/deploy.sh`. Workflow
-     `paradise-build` sudah build 6 image dari kode kustom kantor tiap push ke
-     `main` dan push ke GHCR; server tinggal tarik. Server tidak perlu build
-     (hemat CPU/RAM dan tidak ada downtime lama). Lihat [CI/CD](#cicd) di bawah.
-   - Build dari source (kalau CI mati / server airgapped):
+1. **Clone this repo** onto the server and check out the `main` branch.
+2. **Configure env:** `cp paradise/.env.example .env`, then fill in every `<GANTI>`.
+   Go through [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md), don't skip it.
+3. **Pick a compose setup:**
+   - **Recommended, CI-built images:** `./paradise/bin/deploy.sh`. The
+     `paradise-build` workflow builds 6 images from the office's custom code on
+     every push to `main` and pushes them to GHCR. The server just pulls them.
+     The server doesn't need to build (saves CPU/RAM and avoids long downtime).
+     See [CI/CD](#cicd) below.
+   - Build from source (if CI is down or the server is air-gapped):
      `docker compose -f docker-compose.yml up -d --build`
-   - Atau image prebuilt upstream (lihat `deployments/cli/community/`, punya knob `*_REPLICAS`).
-4. **Migrasi & verifikasi:** container `api` menjalankan migrasi saat start.
-   Cek dengan `paradise/bin/healthcheck.sh`.
-5. **HTTPS:** set `SITE_ADDRESS=domain-kamu` + `CERT_EMAIL` → Caddy urus sertifikat
-   otomatis. Untuk LAN tanpa domain, tetap HTTP di port 80.
-6. **Alamat publik dan alamat LAN sekaligus.** Kalau server dibuka lewat domain
-   dan juga lewat IP, isi di `apps/api/.env` (yang dibaca container `api`) dan
-   di `.env` root:
+   - Or the upstream prebuilt images (see `deployments/cli/community/`, which has
+     `*_REPLICAS` knobs).
+4. **Migrations and verification:** the `api` container runs migrations on start.
+   Check with `paradise/bin/healthcheck.sh`.
+5. **HTTPS:** set `SITE_ADDRESS=your-domain` + `CERT_EMAIL` and Caddy handles the
+   certificate automatically. For a LAN without a domain, stay on HTTP at port 80.
+6. **Public address and LAN address together.** If the server is reached through
+   a domain and also through an IP, set this in `apps/api/.env` (the one the
+   `api` container reads) and in the root `.env`:
 
    ```
-   WEB_URL=https://domain-kamu
-   APP_BASE_URL=https://domain-kamu
-   ADMIN_BASE_URL=https://domain-kamu
-   SPACE_BASE_URL=https://domain-kamu
-   CORS_ALLOWED_ORIGINS=https://domain-kamu,http://IP-server
-   SITE_ADDRESS=domain-kamu, http://IP-server
+   WEB_URL=https://your-domain
+   APP_BASE_URL=https://your-domain
+   ADMIN_BASE_URL=https://your-domain
+   SPACE_BASE_URL=https://your-domain
+   CORS_ALLOWED_ORIGINS=https://your-domain,http://server-IP
+   SITE_ADDRESS=your-domain, http://server-IP
    ```
 
-   `ADMIN_BASE_URL` dan `SPACE_BASE_URL` berisi asal saja, tanpa `/god-mode`
-   atau `/spaces`. Jangan isi dengan IP: login god-mode dari domain akan
-   dialihkan ke IP, tempat cookie sesinya tidak ada. Api sekarang
-   mengarahkan login god-mode dan space balik ke alamat yang sedang dipakai
-   peramban, asalkan alamat itu terdaftar di salah satu variabel di atas, jadi
-   IP tetap jalan dari LAN. `deploy.sh` memperingatkan kalau
-   `ADMIN_BASE_URL`/`SPACE_BASE_URL` berbeda asal dengan `WEB_URL`. Perubahan
-   env baru terbaca sesudah container `api` dibuat ulang
+   `ADMIN_BASE_URL` and `SPACE_BASE_URL` hold the origin only, without
+   `/god-mode` or `/spaces`. Don't set them to an IP. A God Mode login from the
+   domain would be redirected to the IP, where the session cookie doesn't exist.
+   The API now sends God Mode and space logins back to the address the browser is
+   currently using, as long as that address is listed in one of the variables
+   above, so the IP still works from the LAN. `deploy.sh` warns if
+   `ADMIN_BASE_URL`/`SPACE_BASE_URL` have a different origin from `WEB_URL`. Env
+   changes are only picked up after the `api` container is recreated
    (`docker compose up -d api`).
 
 ## CI/CD
 
-Alurnya sengaja **push image, tarik manual**, server LAN tidak perlu membuka SSH
-ke internet, dan tidak ada restart mendadak di jam kerja.
+The flow is deliberately **push images, pull manually**. A LAN server doesn't
+need to open SSH to the internet, and nothing restarts suddenly during working
+hours.
 
-| Tahap  | Di mana                           | Apa yang terjadi                                                                                          |
-| ------ | --------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Build  | GitHub Actions (`paradise-build`) | Tiap push ke `main`: build 6 image, push ke `ghcr.io/<pemilik-repo>/plane-*`, tag = commit SHA + `latest` |
-| Deploy | Server, manual                    | `./paradise/bin/deploy.sh` → `git pull` + `compose pull` + `up -d` + healthcheck                          |
+| Stage  | Where                             | What happens                                                                                                  |
+| ------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Build  | GitHub Actions (`paradise-build`) | On every push to `main`: build 6 images, push to `ghcr.io/<repo-owner>/plane-*`, tags = commit SHA + `latest` |
+| Deploy | Server, manual                    | `./paradise/bin/deploy.sh` → `git pull` + `compose pull` + `up -d` + healthcheck                              |
 
-**Namespace GHCR mengikuti pemilik repo.** Workflow menurunkannya dari
-`GITHUB_REPOSITORY_OWNER` dan mengecilkan hurufnya, jadi tidak ada yang perlu
-disunting saat repo dipindahkan atau di-fork. Di sisi server, nilainya diambil
-dari `GHCR_OWNER` di `.env`, dan variabel itu wajib diisi, tanpa nilai bawaan.
+**The GHCR namespace follows the repo owner.** The workflow derives it from
+`GITHUB_REPOSITORY_OWNER` and lowercases it, so nothing needs editing when the
+repo is moved or forked. On the server side, the value comes from `GHCR_OWNER`
+in `.env`, and that variable is required, with no default.
 
-⚠️ **Paket GHCR TIDAK ikut pindah saat repo dipindah.** Paket dimiliki oleh
-namespace akun, bukan oleh repo. Urutan pemindahan yang benar: pindahkan repo,
-biarkan CI membangun ulang seluruh image di namespace baru, pastikan tag
-`latest` sudah ada di sana, `docker login ghcr.io` di server dengan token yang
-berhak membacanya, **baru** isi `GHCR_OWNER` di `.env` server. Terbalik berarti
-`docker compose pull` gagal dan rilisnya batal. Aplikasi yang sedang berjalan
-tidak ikut mati, `deploy.sh` memakai `set -e` sehingga ia berhenti sebelum
-menyentuh container yang sedang melayani.
+**Warning: GHCR packages do NOT move with the repo.** Packages belong to the
+account namespace, not to the repo. The correct order for a move: move the repo,
+let CI rebuild all the images in the new namespace, confirm the `latest` tag is
+there, run `docker login ghcr.io` on the server with a token that can read it,
+and **only then** set `GHCR_OWNER` in the server's `.env`. Doing it the other way
+round makes `docker compose pull` fail and the release aborts. The running app
+doesn't go down with it, because `deploy.sh` uses `set -e` and stops before
+touching the containers that are serving.
 
-**Setup sekali saja, setelah run pertama workflow:** package GHCR default-nya
-private walaupun repo public. Buka halaman `/pkgs` milik repo → tiap package →
-_Package settings_ → _Change visibility_ → **Public**. Tanpa ini `docker pull`
-di server akan gagal 401. (Alternatif: `docker login ghcr.io` di server pakai
-PAT ber-scope `read:packages`.)
+**One-time setup, after the workflow's first run:** GHCR packages are private by
+default even if the repo is public. Open the repo's `/pkgs` page → each package →
+_Package settings_ → _Change visibility_ → **Public**. Without this, `docker pull`
+on the server fails with a 401. (Alternative: `docker login ghcr.io` on the
+server with a PAT scoped `read:packages`.)
 
-**Rollback.** Tiap build punya tag commit SHA, jadi kembali ke versi lama tidak
-perlu build ulang:
+**Rollback.** Every build has a commit SHA tag, so going back to an old version
+doesn't need a rebuild:
 
 ```bash
-APP_RELEASE=<git-sha-lama> ./paradise/bin/deploy.sh
+APP_RELEASE=<old-git-sha> ./paradise/bin/deploy.sh
 ```
 
-Simpan `APP_RELEASE` di `.env` kalau mau pin permanen. Kosongkan untuk kembali
-mengikuti `latest`.
+Keep `APP_RELEASE` in `.env` to pin it permanently. Clear it to go back to
+following `latest`.
 
-**Kalau nanti mau otomatis penuh**, `deploy.sh` sudah exit != 0 saat healthcheck
-gagal, jadi tinggal dipasang di cron (mis. `0 2 * * *`) tanpa perubahan kode.
+**If you later want it fully automatic**, `deploy.sh` already exits non-zero when
+the healthcheck fails, so you can put it in cron (e.g. `0 2 * * *`) with no code
+changes.
 
-## Situs lain di proxy yang sama
+## Other sites on the same proxy
 
-Proxy juga melayani situs di luar Task Tracker (sekarang `cipl-saipem`). Berkas
-situsnya ada di `paradise/sites/*.caddy`, diimpor oleh `apps/proxy/Caddyfile.ce`,
-dan folder itu di-mount ke proxy sebagai `/etc/caddy/sites`. Cara memasangnya dan
-yang tidak boleh dilakukan ada di [`sites/README.md`](sites/README.md).
+The proxy also serves sites outside Task Tracker (currently `cipl-saipem`). The
+site files are in `paradise/sites/*.caddy`, imported by `apps/proxy/Caddyfile.ce`,
+and that folder is mounted into the proxy as `/etc/caddy/sites`. How to install
+one and what not to do are in [`sites/README.md`](sites/README.md).
 
-Hal yang perlu diingat saat deploy:
+Things to remember when deploying:
 
-- `deploy.sh` tidak menyentuh folder itu. Berkas `*.caddy` diabaikan git, jadi
-  `git pull` juga tidak.
-- Proxy tidak dibuat ulang oleh deploy biasa, jadi situs itu tidak ikut mati.
-  Satu-satunya pengecualian: deploy pertama sesudah perubahan ini, karena
-  Caddyfile dan mount-nya berubah. Itu membuat ulang SEMUA service sekali, jadi
-  lakukan di jam sepi.
-- Menempelkan `import` atau blok situs langsung ke Caddyfile di container yang
-  berjalan membuat deploy berikutnya membuat ulang proxy dan menghapus tempelan
-  itu. Selalu lewat folder.
+- `deploy.sh` doesn't touch that folder. `*.caddy` files are ignored by git, so
+  `git pull` doesn't either.
+- A regular deploy doesn't recreate the proxy, so those sites don't go down. The
+  one exception is the first deploy after this change, because the Caddyfile and
+  its mount changed. That recreates ALL services once, so do it during a quiet
+  period.
+- Pasting an `import` or a site block straight into the Caddyfile in the running
+  container makes the next deploy recreate the proxy and wipe the pasted lines.
+  Always go through the folder.
 
-## Scaling ~100 user
+## Scaling to ~100 users
 
-Naikkan replika worker/web sesuai beban (env `*_REPLICAS` pada compose community),
-dan pindahkan Postgres ke volume/disk cepat. Aktifkan read-replica hanya kalau
-query berat mulai terasa.
+Raise the worker/web replicas to match the load (the `*_REPLICAS` env on the
+community compose), and move Postgres to a fast volume/disk. Enable a read
+replica only when heavy queries start to show.
 
-## Backup & pemulihan
+## Backup and restore
 
-Jadwalkan `paradise/bin/backup-db.sh` via cron harian. Simpan juga isi bucket
-MinIO. Uji restore secara berkala, backup yang tak pernah diuji = bukan backup.
+Schedule `paradise/bin/backup-db.sh` through daily cron. Also keep the contents
+of the MinIO bucket. Test restores regularly. A backup that has never been
+tested is not a backup.

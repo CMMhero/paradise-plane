@@ -1,53 +1,53 @@
-# Kebijakan Keamanan, Paradise Task Tracker
+# Security policy, Paradise Task Tracker
 
-Sistem ini menyimpan data kerja internal PT Paradise Perkasa: work item, catatan
-waktu kerja, dokumentasi perusahaan, dan daftar karyawan beserta perannya.
+This system stores PT Paradise Perkasa's internal work data: work items, time
+logs, company documentation, and the employee list with their roles.
 
-## Melaporkan kerentanan
+## Reporting a vulnerability
 
-Laporkan temuan keamanan **langsung ke bagian IT PT Paradise Perkasa**, bukan
-lewat GitHub issue publik dan bukan ke pihak lain.
+Report security findings **directly to PT Paradise Perkasa's IT team**, not
+through a public GitHub issue and not to anyone else.
 
-> Alamat kontak IT belum diisi di berkas ini. Isi begitu ada alamat resminya.
-> Sengaja tidak dicantumkan alamat karangan, laporan keamanan yang dikirim ke
-> alamat yang tidak dibaca lebih buruk daripada tidak ada alamat sama sekali.
+> The IT contact address isn't filled in yet. Add it once there is an official
+> one. No made-up address is listed on purpose. A security report sent to an
+> address nobody reads is worse than having no address at all.
 
-Sertakan dalam laporan:
+Include in your report:
 
-- Langkah yang bisa diulang untuk memunculkan masalahnya
-- URL atau bagian sistem yang terpengaruh
-- Dampak yang kamu perkirakan
-- Akun/peran yang dipakai saat menemukannya (Admin / Member / Guest)
+- Repeatable steps that trigger the problem
+- The URL or part of the system affected
+- The impact you estimate
+- The account and role you were using when you found it (Admin / Member / Guest)
 
-## Yang diminta dari pelapor
+## What we ask of reporters
 
-- **Jangan sebarkan dulu** sebelum diperbaiki.
-- **Jangan menjalankan pemindaian otomatis** ke instance yang dipakai kerja,
-  sistem ini dipakai 79 orang setiap hari.
-- **Jangan mengeksploitasi** temuan untuk mengakses atau mengubah data orang
-  lain. Cukup buktikan bahwa celahnya ada.
-- Jangan melakukan rekayasa sosial, DDoS, atau serangan fisik.
+- **Don't disclose it** until it's fixed.
+- **Don't run automated scans** against the instance people use for work. This
+  system is used by 79 people every day.
+- **Don't exploit** a finding to access or change other people's data. Proving
+  the hole exists is enough.
+- Don't do social engineering, DDoS, or physical attacks.
 
-## Cakupan
+## Scope
 
-**Termasuk:** aplikasi web, halaman publik (space), panel admin/God Mode, API,
-server kolaborasi, dan konfigurasi deployment di `paradise/`.
+**In scope:** the web app, public pages (space), the admin panel / God Mode, the
+API, the collaboration server, and the deployment configuration in `paradise/`.
 
-**Di luar cakupan:** kerentanan yang butuh akses fisik ke perangkat pengguna
-atau posisi man-in-the-middle, spoofing email, dan ketiadaan header DNS
-(DNSSEC/CAA) selama sistem masih berjalan di jaringan internal.
+**Out of scope:** vulnerabilities that need physical access to a user's device or
+a man-in-the-middle position, email spoofing, and missing DNS headers
+(DNSSEC/CAA) while the system still runs on the internal network.
 
-## Kerentanan pada basis kode upstream
+## Vulnerabilities in the upstream codebase
 
-Sistem ini dibangun di atas Plane Community Edition (lihat [NOTICE.md](NOTICE.md)).
-Kerentanan yang berasal dari kode upstream, bukan dari modifikasi kami,
-sebaiknya **juga** dilaporkan ke proyek upstream supaya pengguna lain ikut
-terlindungi, setelah IT internal diberi tahu lebih dulu.
+This system is built on Plane Community Edition (see [NOTICE.md](NOTICE.md)).
+A vulnerability that comes from upstream code rather than from our modifications
+should **also** be reported to the upstream project so other users are
+protected too, after the internal IT team has been told first.
 
-## Catatan keadaan saat ini
+## Current state
 
-Sistem masih tahap pengembangan dan **belum berjalan di server produksi**.
-Hal-hal yang sudah diketahui dan wajib dibereskan sebelum produksi
-terdokumentasi di `paradise/`, antara lain kredensial default pada layanan
-infrastruktur internal. Jangan anggap keadaan development sebagai gambaran
-konfigurasi produksi.
+The system is still in development and **is not yet running on a production
+server**. The known issues that must be fixed before production are documented
+in `paradise/`, among them default credentials on internal infrastructure
+services. Don't treat the development setup as a picture of the production
+configuration.

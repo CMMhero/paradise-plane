@@ -1,64 +1,65 @@
 # NOTICE, Paradise Task Tracker
 
-**Paradise Task Tracker** adalah deployment internal kantor berbasis **Plane
+**Paradise Task Tracker** is an internal office deployment based on **Plane
 Community Edition**.
 
 - **Upstream:** https://github.com/makeplane/plane
-- **Lisensi:** GNU AGPL-3.0 (lihat `LICENSE.txt`, tidak dimodifikasi)
-- **Hak cipta kode aplikasi:** © Plane (makeplane) dan kontributornya.
+- **License:** GNU AGPL-3.0 (see `LICENSE.txt`, unmodified)
+- **Copyright of the application code:** © Plane (makeplane) and its contributors.
 
-## Yang ditambahkan oleh fork ini
+## What this fork adds
 
-Fork ini **tidak menulis ulang aplikasi Plane**, inti aplikasinya (work item,
-cycle, module, view, project, editor kolaboratif) tetap milik upstream.
+This fork **does not rewrite the Plane application**. The core of the app (work
+items, cycles, modules, views, projects, the collaborative editor) remains
+upstream's.
 
-Di atasnya, fork ini menambahkan **delapan kemampuan yang tidak ada di
-upstream**, dibangun dari nol: model database, migrasi, endpoint API, aturan
-izin, sampai antarmukanya.
+On top of it, this fork adds **eight capabilities that don't exist upstream**,
+built from scratch: database models, migrations, API endpoints, permission
+rules, and the interface.
 
-| #   | Kemampuan                                                                                                          | Jejak utama                                                                                                        |
-| --- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| 1   | **Time Tracking**, worklog per work item, izin edit-milik-sendiri                                                  | `IssueWorkLog`, `/work-logs/`                                                                                      |
-| 2   | **Work Item Types & Custom Properties**, 6 jenis field, validasi bertipe di server                                 | `IssueType`, `IssueProperty`, `IssuePropertyOption`, `IssuePropertyValue`                                          |
-| 3   | **Templates & Recurring Issues**, penjadwalan berulang via Celery beat                                             | `IssueTemplate`, `RecurringIssue`, `plane/bgtasks/recurring_issue_task.py`                                         |
-| 4   | **Workspace Wiki Fase A**, semua tipe lampiran s/d 100 MB + node berkas di editor dengan pratinjau                 | `asset/v2.py`, `packages/editor/.../custom-file/`                                                                  |
-| 5   | **Wiki Fase B, ACL per folder**, folder tingkat atas dimiliki divisi; ditegakkan di REST **dan** server kolaborasi | `WikiGovernedProject`, `WikiFolderAccess`, `utils/wiki_access.py`, `page/can_edit.py`, `apps/live/src/lib/auth.ts` |
-| 6   | **Wiki Fase C, pohon halaman bertingkat**                                                                          | `page/base.py` (opt-in `?sub_pages=true`)                                                                          |
-| 7   | **Dashboard Divisi + ekspor CSV laporan waktu**                                                                    | `workspace/paradise_dashboard.py`                                                                                  |
-| 8   | **Initiatives**, sasaran workspace lintas divisi dengan rollup progres                                             | `Initiative`, `InitiativeProject`                                                                                  |
+| #   | Capability                                                                                                                 | Main traces                                                                                                        |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Time Tracking**, worklog per work item, edit-own permission                                                              | `IssueWorkLog`, `/work-logs/`                                                                                      |
+| 2   | **Work Item Types & Custom Properties**, 6 field types, typed validation on the server                                     | `IssueType`, `IssueProperty`, `IssuePropertyOption`, `IssuePropertyValue`                                          |
+| 3   | **Templates & Recurring Issues**, recurring scheduling via Celery beat                                                     | `IssueTemplate`, `RecurringIssue`, `plane/bgtasks/recurring_issue_task.py`                                         |
+| 4   | **Workspace Wiki Phase A**, every attachment type up to 100 MB + file nodes in the editor with previews                    | `asset/v2.py`, `packages/editor/.../custom-file/`                                                                  |
+| 5   | **Wiki Phase B, per-folder ACL**, top-level folders owned by a division; enforced in REST **and** the collaboration server | `WikiGovernedProject`, `WikiFolderAccess`, `utils/wiki_access.py`, `page/can_edit.py`, `apps/live/src/lib/auth.ts` |
+| 6   | **Wiki Phase C, nested page tree**                                                                                         | `page/base.py` (opt-in `?sub_pages=true`)                                                                          |
+| 7   | **Division Dashboard + time report CSV export**                                                                            | `workspace/paradise_dashboard.py`                                                                                  |
+| 8   | **Initiatives**, cross-division workspace goals with progress rollup                                                       | `Initiative`, `InitiativeProject`                                                                                  |
 
-Plus **Audit Logs**: perekaman aktor pada model akses & konten, dengan API baca
-khusus admin (`workspace/audit_log.py`), memakai `django-auditlog`, lihat tabel
-library di bawah.
+Plus **Audit Logs**: actor recording on access and content models, with an
+admin-only read API (`workspace/audit_log.py`), using `django-auditlog`. See the
+library table below.
 
-Ditambah lapisan operasional kantor:
+Plus an office operations layer:
 
-- Konfigurasi & template environment untuk deployment kantor (`paradise/`)
-- Dokumentasi deploy, keamanan, dan upgrade
-- Script bantu (dev up, backup DB, healthcheck, registrasi scheduled task) di
+- Configuration and environment templates for the office deployment (`paradise/`)
+- Documentation for deploy, security, and upgrades
+- Helper scripts (dev up, DB backup, healthcheck, scheduled task registration) in
   `paradise/bin/`
-- Pipeline CI/CD ke GHCR + skrip deploy & rollback per commit SHA
-- Rebrand nama aplikasi menjadi "Paradise Task Tracker"
+- A CI/CD pipeline to GHCR + deploy and rollback scripts per commit SHA
+- A rebrand of the app name to "Paradise Task Tracker"
 
-> **Rebrand ≠ penghapusan atribusi.** Yang dibuang dari antarmuka adalah **merek
-> produk** upstream (nama, logo, tautan promosi, ajakan berlangganan tier
-> berbayar), AGPL-3.0 tidak memberi hak atas merek dagang, dan fork
-> termodifikasi yang tetap menyebut dirinya "Plane" justru lebih berisiko.
-> Yang **tetap dipertahankan** adalah atribusi hukum: header hak cipta di
-> berkas sumber, `LICENSE.txt`, dan berkas ini.
+> **Rebrand ≠ removing attribution.** What was removed from the interface is
+> upstream's **product brand** (name, logo, promotional links, calls to
+> subscribe to a paid tier). AGPL-3.0 grants no trademark rights, and a modified
+> fork that keeps calling itself "Plane" is actually riskier. What **is kept**
+> is the legal attribution: the copyright headers in source files,
+> `LICENSE.txt`, and this file.
 
-## Kewajiban AGPL-3.0
+## AGPL-3.0 obligations
 
-Karena AGPL-3.0, bila layanan ini diakses lewat jaringan oleh pengguna, source
-code (termasuk modifikasi) **wajib tetap tersedia** untuk mereka. Jangan hapus
-`LICENSE.txt` maupun berkas ini.
+Because of AGPL-3.0, when this service is accessed over a network by users, the
+source code (including modifications) **must remain available** to them. Don't
+delete `LICENSE.txt` or this file.
 
-## Library pihak ketiga yang ditambahkan fork ini
+## Third-party libraries added by this fork
 
-Fitur tambahan kantor memakai library open-source berikut. Hak cipta dan lisensi
-milik penulis masing-masing; teks lisensinya ikut terdistribusi via paket
-(`pip`) dan tidak boleh dihapus.
+The office's extra features use the open-source libraries below. Copyright and
+license belong to their respective authors. The license text is distributed with
+the package (`pip`) and must not be removed.
 
-| Library                                                        | Fitur                            | Lisensi |
-| -------------------------------------------------------------- | -------------------------------- | ------- |
-| [django-auditlog](https://github.com/jazzband/django-auditlog) | Jejak audit (siapa mengubah apa) | MIT     |
+| Library                                                        | Feature                        | License |
+| -------------------------------------------------------------- | ------------------------------ | ------- |
+| [django-auditlog](https://github.com/jazzband/django-auditlog) | Audit trail (who changed what) | MIT     |
