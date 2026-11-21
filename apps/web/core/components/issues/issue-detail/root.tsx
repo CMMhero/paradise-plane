@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { observer } from "mobx-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
@@ -16,6 +16,7 @@ import { EIssuesStoreType } from "@plane/types";
 import emptyIssue from "@/app/assets/empty-state/issue.svg?url";
 // components
 import { EmptyState } from "@/components/common/empty-state";
+import { WorkItemImageGalleryScope } from "@/components/common/image-gallery";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -65,6 +66,8 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
   const { workspaceSlug, projectId, issueId, is_archived = false } = props;
   // router
   const router = useAppRouter();
+  // refs
+  const galleryRootRef = useRef<HTMLDivElement>(null);
   // hooks
   const {
     issue: { getIssueById },
@@ -287,16 +290,18 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
         />
       ) : (
         <div className="flex h-full w-full overflow-hidden">
-          <div className="h-full w-full space-y-6 overflow-y-auto px-9 py-5">
-            <IssueMainContent
-              workspaceSlug={workspaceSlug}
-              projectId={projectId}
-              issueId={issueId}
-              issueOperations={issueOperations}
-              isEditable={isEditable}
-              isArchived={is_archived}
-            />
-          </div>
+          <WorkItemImageGalleryScope issueId={issueId} rootRef={galleryRootRef}>
+            <div ref={galleryRootRef} className="h-full w-full space-y-6 overflow-y-auto px-9 py-5">
+              <IssueMainContent
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                issueId={issueId}
+                issueOperations={issueOperations}
+                isEditable={isEditable}
+                isArchived={is_archived}
+              />
+            </div>
+          </WorkItemImageGalleryScope>
           <div
             className="fixed right-0 z-[5] h-full w-full min-w-[300px] border-l border-subtle bg-surface-1 sm:w-1/2 md:relative md:w-1/4 lg:min-w-80 xl:min-w-96"
             style={issueDetailSidebarCollapsed ? { right: `-${window?.innerWidth || 0}px` } : {}}

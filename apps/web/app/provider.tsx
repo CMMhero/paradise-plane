@@ -13,6 +13,8 @@ import { TranslationProvider } from "@plane/i18n";
 import { Toast } from "@plane/propel/toast";
 // helpers
 import { resolveGeneralTheme } from "@plane/utils";
+// components
+import { ImageGalleryI18nProvider } from "@/components/common/image-gallery/provider";
 // mobx store provider
 import { StoreProvider } from "@/lib/store-context";
 
@@ -55,13 +57,15 @@ export function AppProvider(props: IAppProvider) {
         <AppProgressBar />
         <TranslationProvider>
           <Toast theme={resolveGeneralTheme(resolvedTheme)} />
-          <StoreWrapper>
-            <InstanceWrapper>
-              <Suspense>
-                <SWRConfig value={SWR_CONFIG}>{children}</SWRConfig>
-              </Suspense>
-            </InstanceWrapper>
-          </StoreWrapper>
+          <ImageGalleryI18nProvider>
+            <StoreWrapper>
+              <InstanceWrapper>
+                <Suspense>
+                  <SWRConfig value={SWR_CONFIG}>{children}</SWRConfig>
+                </Suspense>
+              </InstanceWrapper>
+            </StoreWrapper>
+          </ImageGalleryI18nProvider>
         </TranslationProvider>
       </>
     </StoreProvider>

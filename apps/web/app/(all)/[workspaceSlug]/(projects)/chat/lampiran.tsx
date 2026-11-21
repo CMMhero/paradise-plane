@@ -5,10 +5,10 @@
  * See the LICENSE file for details.
  */
 
-import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "@plane/i18n";
 import { FileText } from "lucide-react";
 import { API_BASE_URL } from "@plane/constants";
+import { getImageGalleryItemProps, useImageGallery } from "@plane/propel/image-gallery";
 import type { TLampiran } from "@/services/chat.service";
 
 /** Ubah byte jadi angka yang bisa dibaca orang. */
@@ -20,62 +20,36 @@ export const ukuranTerbaca = (byte: number): string => {
 
 type Props = { lampiran: TLampiran[]; terang?: boolean };
 
-/** Penampil layar penuh ada di `@plane/editor`; impor statisnya menarik seluruh
- * editor (±435 KB gzip) ke bundel halaman chat. Dimuat saat gambar dibuka. */
-const ImageFullScreenModal = lazy(() => import("@plane/editor").then((m) => ({ default: m.ImageFullScreenModal })));
-
-/** Layar sentuh: tombol unduh & tab baru disembunyikan, sama seperti di work item. */
-const layarSentuh = () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-
 /**
- * Gambar lampiran yang dibuka di penampil layar penuh milik work item (zoom,
- * geser, Esc/Back untuk menutup), bukan tab baru. Satu penampil untuk seluruh
- * aplikasi, supaya cara melihat gambar tidak perlu dipelajari dua kali.
+ * Gambar lampiran yang dibuka di penampil layar penuh yang sama dengan work
+ * item (zoom, geser, Esc/Back untuk menutup), bukan tab baru. Penampil itu
+ * galeri seluruh percakapan: panah, tombol, dan usap untuk pindah ke gambar
+ * lain yang sudah termuat.
  */
 function GambarLampiran({ url, nama }: { url: string; nama: string }) {
-  const [terbuka, setTerbuka] = useState(false);
-  const [ukuran, setUkuran] = useState<{ lebar: number; rasio: number }>({ lebar: 0, rasio: 1 });
+  const galeri = useImageGallery();
 
   return (
-    <>
-      <button
-        type="button"
-        className="w-fit cursor-zoom-in rounded-item focus-visible:outline-2 focus-visible:outline-accent-strong"
-        onClick={(e) => {
-          e.stopPropagation();
-          setTerbuka(true);
-        }}
-        aria-label={nama}
-      >
-        {/* Tinggi tetap supaya ruangnya sudah tersedia sebelum gambar termuat:
-            tanpa itu tiap gambar yang selesai dimuat mendorong isi ke bawah
-            dan percakapan tidak lagi berhenti di pesan terbaru. */}
-        <img
-          src={url}
-          alt={nama}
-          className="h-48 w-auto max-w-full rounded-item object-contain"
-          loading="lazy"
-          onLoad={(e) => {
-            const { naturalWidth, naturalHeight } = e.currentTarget;
-            if (naturalWidth && naturalHeight) setUkuran({ lebar: naturalWidth, rasio: naturalWidth / naturalHeight });
-          }}
-        />
-      </button>
-      {/* Penampil merender null saat tertutup, jadi memasangnya hanya saat terbuka tidak mengubah perilaku. */}
-      {terbuka && (
-        <Suspense fallback={null}>
-          <ImageFullScreenModal
-            aspectRatio={ukuran.rasio}
-            downloadSrc={url}
-            isFullScreenEnabled={terbuka}
-            isTouchDevice={layarSentuh()}
-            src={url}
-            width={ukuran.lebar ? `${ukuran.lebar}px` : ""}
-            toggleFullScreenMode={setTerbuka}
-          />
-        </Suspense>
-      )}
-    </>
+    <button
+      type="button"
+      className="w-fit cursor-zoom-in rounded-item focus-visible:outline-2 focus-visible:outline-accent-strong"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!galeri?.open(e.currentTarget, e.currentTarget)) window.open(url, "_blank", "noopener,noreferrer");
+      }}
+      aria-label={nama}
+    >
+      {/* Tinggi tetap supaya ruangnya sudah tersedia sebelum gambar termuat:
+          tanpa itu tiap gambar yang selesai dimuat mendorong isi ke bawah
+          dan percakapan tidak lagi berhenti di pesan terbaru. */}
+      <img
+        src={url}
+        alt={nama}
+        className="h-48 w-auto max-w-full rounded-item object-contain"
+        loading="lazy"
+        {...getImageGalleryItemProps({ src: url, name: nama })}
+      />
+    </button>
   );
 }
 

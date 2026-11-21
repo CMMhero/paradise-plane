@@ -25,8 +25,15 @@ from rest_framework.response import Response
 
 # Module imports
 from . import BaseAPIView
-from plane.app.permissions import WorkspaceEntityPermission
-from plane.db.models import Departemen, JabatanOrganisasi, TINGKAT_MEMBER, TINGKAT_SUPERVISOR, Workspace
+from plane.app.permissions import ROLE, WorkspaceEntityPermission
+from plane.db.models import (
+    Departemen,
+    JabatanOrganisasi,
+    TINGKAT_MEMBER,
+    TINGKAT_SUPERVISOR,
+    Workspace,
+    WorkspaceMember,
+)
 from plane.db.penempatan import setel_penempatan
 from plane.db.superadmin import is_super_admin
 from plane.utils.hierarki import struktur_aktif
@@ -37,6 +44,11 @@ SUMBER_MANDIRI = "mandiri"
 def perlu_pilih_departemen(user, workspace_id):
     """True kalau struktur aktif dan orang ini belum punya departemen/divisi."""
     if not struktur_aktif(workspace_id) or is_super_admin(user):
+        return False
+    # Tamu tidak bisa POST (WorkspaceEntityPermission), dan tamu memang bukan staf.
+    if not WorkspaceMember.objects.filter(
+        workspace_id=workspace_id, member=user, is_active=True, role__gt=ROLE.GUEST.value
+    ).exists():
         return False
     baris = list(JabatanOrganisasi.objects.filter(workspace_id=workspace_id, member=user))
     if not baris:
