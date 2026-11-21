@@ -26,6 +26,7 @@ import {
   formatRuleValue,
   isRuleChanged,
   matchesQuery,
+  moveItem,
   needsConfirm,
   pendingChanges,
   pendingValues,
@@ -108,6 +109,7 @@ const registryRule = (key: string, group: string, over: Partial<TRegistryRule> =
   max: null,
   max_length: null,
   choices: null,
+  ordered: false,
   store: "instance",
   apply_section: null,
   ...over,
@@ -132,6 +134,7 @@ const legacyRule = (key: string, over: Partial<TLegacyRule> = {}): TLegacyRule =
   max: null,
   max_length: null,
   choices: null,
+  ordered: false,
   store: "instance",
   apply_section: null,
   ...over,
@@ -426,6 +429,47 @@ describe("All rules: pending changes", () => {
     expect(valuesEqual("list_of_keys", ["a"], ["a", "b"])).toBe(false);
     expect(valuesEqual("level", 20, "20")).toBe(true);
     expect(pendingChanges(rules, { PICKED: ["b", "a"] })).toEqual([]);
+  });
+
+  it("compares ordered lists in order", () => {
+    expect(valuesEqual("list_of_keys", ["b", "a"], ["a", "b"], true)).toBe(false);
+    expect(valuesEqual("list_of_keys", ["a", "b"], ["a", "b"], true)).toBe(true);
+    expect(valuesEqual("list_of_keys", ["a"], ["a", "b"], true)).toBe(false);
+    expect(valuesEqual("list_of_keys", [], [], true)).toBe(true);
+    // The flag defaults to unordered, as before.
+    expect(valuesEqual("list_of_keys", ["b", "a"], ["a", "b"])).toBe(true);
+  });
+
+  it("treats a reordered ordered list as a change in every caller", () => {
+    const ordered = registryRule("WIDGETS", "chat", {
+      kind: "list_of_keys",
+      ordered: true,
+      value: ["a", "b"],
+      default: ["a", "b"],
+      choices: [
+        { value: "a", label: "Alpha" },
+        { value: "b", label: "Beta" },
+      ],
+    });
+    const all: TRule[] = [ordered];
+    const draft = { WIDGETS: ["b", "a"] };
+    expect(isRuleChanged(ordered, draft)).toBe(true);
+    expect(pendingChanges(all, draft)).toEqual([ordered]);
+    expect(pruneDraft(all, draft)).toEqual(draft);
+    // Back to the saved order: no change, and the draft is dropped.
+    expect(isRuleChanged(ordered, { WIDGETS: ["a", "b"] })).toBe(false);
+    expect(pendingChanges(all, { WIDGETS: ["a", "b"] })).toEqual([]);
+    expect(pruneDraft(all, { WIDGETS: ["a", "b"] })).toEqual({});
+  });
+
+  it("moves an item one place and stops at the ends", () => {
+    expect(moveItem(["a", "b", "c"], 1, -1)).toEqual(["b", "a", "c"]);
+    expect(moveItem(["a", "b", "c"], 1, 1)).toEqual(["a", "c", "b"]);
+    const items = ["a", "b"];
+    expect(moveItem(items, 0, -1)).toBe(items);
+    expect(moveItem(items, 1, 1)).toBe(items);
+    expect(moveItem(items, 5, 1)).toBe(items);
+    expect(items).toEqual(["a", "b"]);
   });
 
   it("reads the value on screen from the draft first", () => {

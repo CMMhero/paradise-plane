@@ -8,7 +8,7 @@ di /api/instances/, plus adaptor baca-saja atas registri lama."""
 
 from plane.utils.aturan.baca import _ambil, efektif
 from plane.utils.aturan.grup import GRUP
-from plane.utils.aturan.jenis import BAGIAN_TAMPILAN, TINGGI, Rule, ke_json
+from plane.utils.aturan.jenis import TINGGI, Rule, ke_json
 
 SUMBER_REGISTRI = "registry"
 SUMBER_LAMA = "legacy"
@@ -42,9 +42,10 @@ def deskripsi(rule: Rule, baris: dict) -> dict:
         "max": rule.max,
         "max_length": rule.max_length,
         "choices": [{"value": v, "label": lbl} for v, lbl in rule.choices] or None,
+        "ordered": rule.ordered,
         "store": "member_default" if rule.disimpan_di_bawaan_member else "instance",
         # Bagian untuk POST /api/instances/members/defaults/apply/ ("Apply to existing members").
-        "apply_section": BAGIAN_TAMPILAN if rule.disimpan_di_bawaan_member else None,
+        "apply_section": rule.member_default.split(".")[0] if rule.disimpan_di_bawaan_member else None,
     }
 
 
@@ -78,6 +79,7 @@ def daftar_lama() -> list:
                 "max": d["max"],
                 "max_length": None,
                 "choices": [{"value": v, "label": str(v)} for v in d["choices"]] if d["choices"] else None,
+                "ordered": False,
                 "store": "instance",
                 "apply_section": None,
             }

@@ -36,7 +36,9 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 # Module imports
+from plane.utils import aturan
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.aturan.area_tampilan import DIVISION_REPORT_DEFAULT_PERIOD
 from plane.db.models import Issue, IssueAssignee, Workspace
 from plane.utils.ketepatan_waktu import (
     TANPA_TENGGAT,
@@ -59,7 +61,6 @@ PERIODE_30_HARI = "30d"
 PERIODE_BULAN_INI = "this_month"
 PERIODE_BULAN_LALU = "last_month"
 PERIODE_SAH = (PERIODE_7_HARI, PERIODE_30_HARI, PERIODE_BULAN_INI, PERIODE_BULAN_LALU)
-PERIODE_BAWAAN = PERIODE_7_HARI
 
 # TEPAT_WAKTU, TERLAMBAT, TANPA_TENGGAT, dan `ketepatan` tinggal di
 # `utils/ketepatan_waktu.py`; tetap bisa diimpor dari sini untuk pemanggil lama.
@@ -217,8 +218,14 @@ def daftar_selesai(user, project_ids, awal, akhir, cakupan, batas=None):
     return [_baris_tugas(t, nama) for t in tugas]
 
 
-def susun_laporan(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
+def _periode_bawaan(periode):
+    """None = bawaan God Mode (DIVISION_REPORT_DEFAULT_PERIOD)."""
+    return aturan.get_choice(DIVISION_REPORT_DEFAULT_PERIOD) if periode is None else periode
+
+
+def susun_laporan(user, slug, periode=None, sekarang=None):
     """Seluruh isi tampilan Laporan untuk `user`."""
+    periode = _periode_bawaan(periode)
     if periode not in PERIODE_SAH:
         raise ValueError(f"periode tidak dikenal: {periode}")
     sekarang = sekarang or timezone.now()
@@ -255,8 +262,9 @@ def susun_laporan(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
     }
 
 
-def baris_csv(user, slug, periode=PERIODE_BAWAAN, sekarang=None):
+def baris_csv(user, slug, periode=None, sekarang=None):
     """Header + semua tugas selesai dalam periode, untuk unduhan CSV (tanpa batas)."""
+    periode = _periode_bawaan(periode)
     sekarang = sekarang or timezone.now()
     hari_ini = sekarang.astimezone(zona_kantor()).date()
     (awal, akhir), _ = rentang_periode(periode, hari_ini)

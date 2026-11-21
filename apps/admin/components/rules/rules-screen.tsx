@@ -474,7 +474,13 @@ export function RulesScreen() {
         isOpen={applyRule !== null}
         variant="primary"
         title={applyRule ? fill(a.apply_all_name, { name: applyRule.label }) : ""}
-        content={a.apply_confirm}
+        content={
+          applyRule?.apply_section === "work_items"
+            ? a.apply_confirm_work_items
+            : applyRule?.apply_section === "tampilan"
+              ? a.apply_confirm_display
+              : a.apply_confirm
+        }
         isSubmitting={isApplying}
         primaryButtonText={{ default: a.apply_yes, loading: a.applying }}
         secondaryButtonText={s.common.cancel}

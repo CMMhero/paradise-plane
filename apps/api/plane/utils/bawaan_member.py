@@ -21,13 +21,17 @@ tiap dipakai seperti saklar KEP-40. Tiga bagian, dengan saat berlaku yang beda:
 - `navigasi`: item sidebar yang disematkan, gaya daftar project (accordion/tab),
   dan batas jumlah project di sidebar. Ditulis saat baris preferensi sidebar
   (`WorkspaceUserPreference`) atau `WorkspaceUserProperties` lahir.
-- `work_items`: tata letak daftar work item (Board, List, ...). Dibaca bawaan
-  kolom `ProjectUserProperty.display_filters`, jadi berlaku untuk setiap pasangan
-  member+project yang baru, termasuk member lama yang baru masuk project.
+- `work_items`: tata letak daftar work item (Board, List, ...) ditulis di sini;
+  pengelompokan, urutan, sub-work item, grup kosong, dan kolom yang tampil
+  dideklarasikan di registri aturan (`Rule(member_default="work_items.<kolom>")`).
+  Dibaca bawaan kolom `ProjectUserProperty.display_filters`/`display_properties`,
+  jadi berlaku untuk setiap pasangan member+project yang baru, termasuk member
+  lama yang baru masuk project.
 - `tampilan`: bawaan tampilan yang DIDEKLARASIKAN di registri aturan
   (`plane/utils/aturan`, `Rule(member_default="tampilan.<kolom>")`), bukan di
-  sini. Ditulis ke `Profile.theme` akun baru, dan ke semua akun lewat tombol
-  "Apply to existing members".
+  sini. Ditulis ke `Profile.theme` akun baru dan ke `WorkspaceHomePreference`
+  yang baru lahir (widget Home), dan ke semua akun lewat tombol "Apply to
+  existing members".
 
 Akun lama bisa disamakan sekaligus lewat `terapkan_ke_semua` (tombol "Apply to
 existing members" di God Mode), tidak pernah diam-diam.
@@ -165,20 +169,27 @@ MODE_NAVIGASI_SAH = frozenset({"ACCORDION", "TABBED"})
 BATAS_PROJECT_MAKS = 50
 # Cermin EIssueLayoutTypes di packages/types, tanpa gantt (dicabut bersama cycles).
 TATA_LETAK_SAH = frozenset({"list", "kanban", "calendar", "spreadsheet"})
+# Kolom registri yang dipakai langsung di sini (area_tampilan.py).
+KOLOM_PROPERTI = "display_properties"
+KOLOM_WIDGET_HOME = "home_widgets"
 
 
-def aturan_tampilan() -> dict:
-    """{kolom: Rule} untuk bagian `tampilan`, dari registri aturan."""
+def aturan_bagian(nama: str) -> dict:
+    """{kolom: Rule} yang dideklarasikan registri aturan untuk bagian `nama`."""
     from plane.utils.aturan import REGISTRI
-    from plane.utils.aturan.jenis import BAGIAN_TAMPILAN
 
     hasil = {}
     for rule in REGISTRI.values():
         if rule.member_default:
             bagian, kolom = rule.member_default.split(".")
-            if bagian == BAGIAN_TAMPILAN:
+            if bagian == nama:
                 hasil[kolom] = rule
     return hasil
+
+
+def aturan_tampilan() -> dict:
+    """{kolom: Rule} untuk bagian `tampilan`, dari registri aturan."""
+    return aturan_bagian("tampilan")
 
 
 PABRIK = {
@@ -204,8 +215,11 @@ PABRIK = {
         "project_mode": "TABBED",
         "project_limit": 0,
     },
-    # Board, bukan List (permintaan user 2 Nov 2026).
-    "work_items": {"layout": "kanban"},
+    # Board, bukan List (permintaan user 2 Nov 2026). Kolom lain dari registri aturan.
+    "work_items": {
+        "layout": "kanban",
+        **{kolom: rule.default for kolom, rule in aturan_bagian("work_items").items()},
+    },
     # Dibangun dari registri aturan; `default` tiap Rule = perilaku hari ini.
     "tampilan": {kolom: rule.default for kolom, rule in aturan_tampilan().items()},
 }
@@ -324,8 +338,22 @@ def periksa_navigasi(data) -> tuple[dict, str | None]:
     return baru, None
 
 
+def _periksa_registri(bagian: str, data: dict) -> tuple[dict, str | None]:
+    """Cek kolom registri aturan di `bagian` dengan validator yang sama dengan layar Rules."""
+    from plane.utils.aturan.jenis import NilaiTidakSah, ke_json, normalkan
+
+    aturan = aturan_bagian(bagian)
+    baru = {}
+    for kolom, nilai in data.items():
+        try:
+            baru[kolom] = ke_json(aturan[kolom], normalkan(aturan[kolom], nilai))
+        except NilaiTidakSah as e:
+            return {}, f"{aturan[kolom].label}: {e}"
+    return baru, None
+
+
 def periksa_work_items(data) -> tuple[dict, str | None]:
-    """Cek bagian tata letak work item. Dipakai bawaan ini DAN preferensi per member."""
+    """Cek tata letak work item. Dipakai bawaan ini DAN preferensi per member."""
     if not isinstance(data, dict) or set(data) - {"layout"}:
         return {}, "Work item defaults only accept 'layout'."
     baru = {}
@@ -336,34 +364,43 @@ def periksa_work_items(data) -> tuple[dict, str | None]:
     return baru, None
 
 
+def _periksa_work_items_bawaan(data) -> tuple[dict, str | None]:
+    """Bagian `work_items` bawaan: `layout` plus kolom registri aturan."""
+    kolom_registri = set(aturan_bagian("work_items"))
+    if not isinstance(data, dict) or set(data) - {"layout"} - kolom_registri:
+        return {}, "Unknown work item defaults."
+    baru, galat = periksa_work_items({k: v for k, v in data.items() if k == "layout"})
+    if galat:
+        return {}, galat
+    registri, galat = _periksa_registri("work_items", {k: v for k, v in data.items() if k in kolom_registri})
+    if galat:
+        return {}, galat
+    return {**baru, **registri}, None
+
+
 def periksa_tampilan(data) -> tuple[dict, str | None]:
     """Cek bagian tampilan dengan validator registri aturan yang sama dengan layar Rules."""
-    from plane.utils.aturan.jenis import NilaiTidakSah, ke_json, normalkan
-
-    aturan = aturan_tampilan()
-    if not isinstance(data, dict) or set(data) - set(aturan):
+    if not isinstance(data, dict) or set(data) - set(aturan_tampilan()):
         return {}, "Unknown display defaults."
-    baru = {}
-    for kolom, nilai in data.items():
-        try:
-            baru[kolom] = ke_json(aturan[kolom], normalkan(aturan[kolom], nilai))
-        except NilaiTidakSah as e:
-            return {}, f"{aturan[kolom].label}: {e}"
-    return baru, None
+    return _periksa_registri("tampilan", data)
 
 
-def nilai_tampilan(bawaan: dict) -> dict:
-    """{Rule: nilai kanonik} dari bawaan yang sudah dibaca. Nilai rusak = default aturannya."""
+def nilai_bagian(bawaan: dict, bagian: str) -> dict:
+    """{Rule: nilai kanonik} kolom registri `bagian` dari bawaan yang sudah dibaca. Nilai rusak = default."""
     from plane.utils.aturan.jenis import NilaiTidakSah, normalkan
 
-    isi = bawaan.get("tampilan") if isinstance(bawaan.get("tampilan"), dict) else {}
+    isi = bawaan.get(bagian) if isinstance(bawaan.get(bagian), dict) else {}
     hasil = {}
-    for kolom, rule in aturan_tampilan().items():
+    for kolom, rule in aturan_bagian(bagian).items():
         try:
             hasil[rule] = normalkan(rule, isi.get(kolom, rule.default))
         except NilaiTidakSah:
             hasil[rule] = rule.default
     return hasil
+
+
+def nilai_tampilan(bawaan: dict) -> dict:
+    return nilai_bagian(bawaan, "tampilan")
 
 
 def periksa_perubahan(data) -> tuple[dict, str | None]:
@@ -384,7 +421,7 @@ def periksa_perubahan(data) -> tuple[dict, str | None]:
         ("email", _periksa_email),
         ("keanggotaan", _periksa_keanggotaan),
         ("navigasi", periksa_navigasi),
-        ("work_items", periksa_work_items),
+        ("work_items", _periksa_work_items_bawaan),
         ("tampilan", periksa_tampilan),
     ):
         if bagian in data:
@@ -444,8 +481,37 @@ def filter_tampilan(layout: str, lama: dict | None = None) -> dict:
     return hasil
 
 
-def tata_letak_bawaan() -> str:
-    """Tata letak work item bawaan, aman dipanggil dari bawaan kolom model.
+def filter_work_items(bawaan: dict, lama: dict | None = None) -> dict:
+    """`display_filters` dari bagian `work_items`: tata letak plus kolom registri aturan."""
+    hasil = dict(lama or {})
+    for rule, nilai in nilai_bagian(bawaan, "work_items").items():
+        kolom = rule.member_default.split(".")[1]
+        if kolom == KOLOM_PROPERTI:
+            continue
+        # "none" hanya ada karena pilihan aturan harus berupa teks; display_filters menyimpannya null.
+        hasil[kolom] = None if kolom == "group_by" and nilai == "none" else nilai
+    return filter_tampilan(bawaan["work_items"]["layout"], hasil)
+
+
+def properti_work_items(bawaan: dict, lama: dict) -> dict:
+    """`display_properties` dari aturan kolom work item, di atas `lama`.
+
+    Kolom yang dipilih tapi tidak ada di `lama` dibiarkan tidak ada: web membacanya
+    tampil (getComputedDisplayProperties), jadi bawaan tetap persis seperti dulu.
+    """
+    rule = aturan_bagian("work_items")[KOLOM_PROPERTI]
+    tampil = set(nilai_bagian(bawaan, "work_items")[rule])
+    hasil = dict(lama)
+    for kunci in rule.nilai_pilihan:
+        if kunci not in tampil:
+            hasil[kunci] = False
+        elif kunci in hasil:
+            hasil[kunci] = True
+    return hasil
+
+
+def _bawaan_aman() -> dict:
+    """`baca_bawaan()` yang aman dipanggil dari bawaan kolom model.
 
     Bawaan kolom ikut terpanggil di migrasi dan `bulk_create`. Kueri yang gagal
     (tabel belum ada) di dalam transaksi Postgres meracuni seluruh transaksi, jadi
@@ -455,9 +521,34 @@ def tata_letak_bawaan() -> str:
 
     try:
         with transaction.atomic():
-            return baca_bawaan()["work_items"]["layout"]
+            return baca_bawaan()
     except DatabaseError:
-        return PABRIK["work_items"]["layout"]
+        return _gabung(PABRIK, {})
+
+
+def filter_work_items_bawaan(dasar: dict) -> dict:
+    """Bawaan kolom `ProjectUserProperty.display_filters`: `dasar` ditimpa bawaan God Mode."""
+    return filter_work_items(_bawaan_aman(), dasar)
+
+
+def properti_work_items_bawaan(dasar: dict) -> dict:
+    """Bawaan kolom `ProjectUserProperty.display_properties`: `dasar` ditimpa bawaan God Mode."""
+    return properti_work_items(_bawaan_aman(), dasar)
+
+
+def susunan_widget_home(bawaan: dict | None = None) -> list[tuple[str, bool]]:
+    """[(kunci, aktif)] widget Home dari atas ke bawah: yang dipilih sesuai urutannya, sisanya mati di bawah."""
+    rule = aturan_tampilan()[KOLOM_WIDGET_HOME]
+    dipilih = nilai_bagian(_bawaan_aman() if bawaan is None else bawaan, "tampilan")[rule]
+    return [(k, True) for k in dipilih] + [(k, False) for k in rule.nilai_pilihan if k not in dipilih]
+
+
+def nomor_urut_widget(posisi: int) -> float:
+    """`sort_order` widget Home di posisi ke-`posisi` (0 = paling atas; web mengurutkan menurun).
+
+    Angkanya sama dengan yang diberikan app/views/workspace/home.py kepada akun baru.
+    """
+    return 2000 if posisi == 0 else 999 - posisi
 
 
 def terapkan_ke_properti_workspace_baru(properti) -> None:
@@ -508,15 +599,19 @@ def terapkan_ke_semua(bagian) -> dict:
             )
             hasil["navigasi"] = jumlah
         if "work_items" in bagian:
-            layout = bawaan["work_items"]["layout"]
             berubah = []
-            for prop in ProjectUserProperty.objects.filter(user__is_bot=False).only("id", "display_filters"):
-                lama = prop.display_filters if isinstance(prop.display_filters, dict) else {}
-                baru = filter_tampilan(layout, lama)
-                if baru != lama:
-                    prop.display_filters = baru
+            for prop in ProjectUserProperty.objects.filter(user__is_bot=False).only(
+                "id", "display_filters", "display_properties"
+            ):
+                filter_lama = prop.display_filters if isinstance(prop.display_filters, dict) else {}
+                properti_lama = prop.display_properties if isinstance(prop.display_properties, dict) else {}
+                filter_baru = filter_work_items(bawaan, filter_lama)
+                properti_baru = properti_work_items(bawaan, properti_lama)
+                if filter_baru != filter_lama or properti_baru != properti_lama:
+                    prop.display_filters = filter_baru
+                    prop.display_properties = properti_baru
                     berubah.append(prop)
-            ProjectUserProperty.objects.bulk_update(berubah, ["display_filters"], batch_size=200)
+            ProjectUserProperty.objects.bulk_update(berubah, ["display_filters", "display_properties"], batch_size=200)
             hasil["work_items"] = len(berubah)
         if "tampilan" in bagian:
             tema = {
@@ -532,5 +627,25 @@ def terapkan_ke_semua(bagian) -> dict:
                     profil.theme = baru
                     berubah.append(profil)
             Profile.objects.bulk_update(berubah, ["theme"], batch_size=200)
-            hasil["tampilan"] = len(berubah)
+            hasil["tampilan"] = len(berubah) + _terapkan_widget_home(bawaan)
     return hasil
+
+
+def _terapkan_widget_home(bawaan: dict) -> int:
+    """Samakan widget Home (nyala/mati dan urutan) semua member lama. Kembalikan jumlah baris yang berubah."""
+    from plane.db.models import WorkspaceHomePreference
+
+    target = {
+        kunci: (aktif, nomor_urut_widget(posisi)) for posisi, (kunci, aktif) in enumerate(susunan_widget_home(bawaan))
+    }
+    berubah = []
+    for baris in WorkspaceHomePreference.objects.filter(user__is_bot=False, key__in=list(target)).only(
+        "id", "key", "is_enabled", "sort_order"
+    ):
+        aktif, urut = target[baris.key]
+        if baris.is_enabled != aktif or baris.sort_order != urut:
+            baris.is_enabled = aktif
+            baris.sort_order = urut
+            berubah.append(baris)
+    WorkspaceHomePreference.objects.bulk_update(berubah, ["is_enabled", "sort_order"], batch_size=200)
+    return len(berubah)

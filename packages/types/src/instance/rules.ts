@@ -40,6 +40,8 @@ export type TRegistryRule = {
   max: number | null;
   max_length: number | null;
   choices: TRuleChoice[] | null;
+  /** `list_of_keys` only: the order of the list is part of the value (for example Home widgets, top to bottom). */
+  ordered: boolean;
   /** `member_default` = stored in New member defaults; new accounts get it, `apply_section` applies it to everyone. */
   store: "instance" | "member_default";
   apply_section: string | null;
@@ -68,6 +70,7 @@ export type TLegacyRule = {
   max: number | null;
   max_length: null;
   choices: TRuleChoice[] | null;
+  ordered: false;
   store: "instance";
   apply_section: null;
 };

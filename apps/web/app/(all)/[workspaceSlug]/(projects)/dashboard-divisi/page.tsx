@@ -6,8 +6,9 @@
  *
  * Tiga mode: "Ringkas" (KEP-60) untuk pimpinan yang hanya perlu tahu bagian mana
  * yang bermasalah, "Rinci" untuk angka lengkap per departemen, "Laporan" (KEP-62)
- * untuk tugas yang selesai dalam satu periode, lengkap dengan judulnya. Semua orang
- * mulai di Ringkas; pilihan terakhir diingat per peramban.
+ * untuk tugas yang selesai dalam satu periode, lengkap dengan judulnya. Orang yang
+ * belum memilih mulai di mode bawaan aturan God Mode (Ringkas); pilihan terakhir
+ * diingat per peramban dan menang atas bawaan.
  */
 
 import { observer } from "mobx-react";
@@ -26,7 +27,9 @@ import { ReportView } from "@/components/dashboard-divisi/tampilan-laporan";
 import { DetailView } from "@/components/dashboard-divisi/tampilan-rinci";
 // hooks
 import { useUser } from "@/hooks/store/user";
+import { useAturan } from "@/hooks/use-aturan";
 import useLocalStorage from "@/hooks/use-local-storage";
+import { pilihanTersimpanAtauAturan } from "@/lib/tampilan-bawaan";
 // services
 import { WorkspaceDashboardService } from "@/services/workspace_dashboard.service";
 
@@ -60,8 +63,10 @@ function DivisionDashboardPage() {
   // Jam kerja berasal dari Time Tracking; disembunyikan bersama fiturnya.
   const isTimeTrackingEnabled = isParadiseFeatureEnabled("timeTracking");
   const { workspaceSlug } = useParams();
-  const { storedValue, setValue: setMode } = useLocalStorage<TMode>(MODE_STORAGE_KEY, "ringkas");
-  const mode: TMode = storedValue && MODES.includes(storedValue) ? storedValue : "ringkas";
+  // Nilai awal null: kosong = belum pernah memilih, jadi mode awal dari aturan God Mode.
+  const { storedValue, setValue: setMode } = useLocalStorage<TMode | null>(MODE_STORAGE_KEY, null);
+  const { get } = useAturan();
+  const mode = pilihanTersimpanAtauAturan(storedValue, MODES, get("DIVISION_DASHBOARD_DEFAULT_MODE"));
   // Gagal memuat -> `data` tetap kosong dan halaman menampilkan pesan gagal.
   const { data, isLoading, mutate } = useSWR(
     workspaceSlug ? ["DIVISION_DASHBOARD", workspaceSlug] : null,

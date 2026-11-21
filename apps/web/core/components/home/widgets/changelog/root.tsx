@@ -16,14 +16,14 @@ import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { Loader } from "@plane/ui";
+// hooks
+import { useAturan } from "@/hooks/use-aturan";
 // services
 import { ChangelogService } from "@/services/changelog.service";
 import type { TCatatanRilis, TJenisEntri } from "@/services/changelog.service";
 
 const changelogService = new ChangelogService();
 
-/** Rilis yang tampil sebelum "Lihat rilis sebelumnya" dibuka. */
-const JUMLAH_AWAL = 1;
 const URUTAN_ENTRI: TJenisEntri[] = ["Added", "Changed", "Fixed"];
 
 const GAYA_ENTRI: Record<TJenisEntri, string> = {
@@ -68,8 +68,11 @@ function KartuRilis({ catatan }: { catatan: TCatatanRilis }) {
 export const ChangelogWidget = observer(function ChangelogWidget({ workspaceSlug }: { workspaceSlug: string }) {
   const { t } = useTranslation();
   const [semua, setSemua] = useState(false);
+  // Rilis yang tampil sebelum "Lihat rilis sebelumnya" dibuka (aturan CHANGELOG_RELEASES_SHOWN).
+  const jumlahAwal = useAturan().get("CHANGELOG_RELEASES_SHOWN");
+  // 0 = widget dimatikan lewat God Mode: tidak ada yang digambar, dan tidak ada request.
   const { data, error, mutate } = useSWR(
-    `HOME_CHANGELOG_${workspaceSlug}`,
+    jumlahAwal > 0 ? `HOME_CHANGELOG_${workspaceSlug}` : null,
     () => changelogService.getCatatanRilis(workspaceSlug),
     { revalidateOnFocus: false, dedupingInterval: 60_000 }
   );
@@ -77,8 +80,9 @@ export const ChangelogWidget = observer(function ChangelogWidget({ workspaceSlug
   // Belum ada rilis tercatat: widget tidak perlu memenuhi dasar Home dengan
   // kotak kosong. Gagal memuat tetap ditunjukkan, supaya "kosong" dan "rusak" tidak sama.
   if (data && data.length === 0) return null;
+  if (jumlahAwal <= 0) return null;
 
-  const tampil = data ? (semua ? data : data.slice(0, JUMLAH_AWAL)) : [];
+  const tampil = data ? (semua ? data : data.slice(0, jumlahAwal)) : [];
 
   return (
     <section aria-labelledby="home-changelog-title" className="flex flex-col gap-3 py-4">
@@ -107,7 +111,7 @@ export const ChangelogWidget = observer(function ChangelogWidget({ workspaceSlug
           {tampil.map((catatan) => (
             <KartuRilis key={catatan.id} catatan={catatan} />
           ))}
-          {data.length > JUMLAH_AWAL ? (
+          {data.length > jumlahAwal ? (
             <div>
               <Button variant="secondary" size="base" onClick={() => setSemua((v) => !v)}>
                 {semua ? t("changelog_ui.show_less") : t("changelog_ui.show_more")}
