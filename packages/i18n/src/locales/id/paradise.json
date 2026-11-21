@@ -616,6 +616,7 @@
       "same_department": "Pilih departemen selain departemen Anda.",
       "member_of_target": "Anda anggota {name}. Buat work item langsung di sana.",
       "intake_off": "{name} mematikan Intake, jadi belum bisa menerima permintaan.",
+      "target_not_allowed": "{name} bukan departemen yang bisa menerima permintaan.",
       "invalid_description": "Keterangan berisi konten yang tidak diizinkan. Hapus lalu coba lagi.",
       "forbidden": "Anda tidak punya akses ke permintaan antar departemen."
     },

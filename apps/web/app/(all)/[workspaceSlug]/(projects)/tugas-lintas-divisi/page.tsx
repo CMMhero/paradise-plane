@@ -106,6 +106,7 @@ const KODE_GALAT = new Set([
   "same_department",
   "member_of_target",
   "intake_off",
+  "target_not_allowed",
   "invalid_description",
 ]);
 
@@ -200,7 +201,7 @@ function TabelPermintaan({ baris: daftar, workspaceSlug, tampilkanPeminta = fals
             <tr key={baris.id} className="border-b border-subtle last:border-0 hover:bg-layer-2">
               <td className="px-3 py-2">
                 <span className="font-medium text-primary">{baris.judul ?? "—"}</span>
-                {baris.catatan && <p className="text-11 text-tertiary">{baris.catatan}</p>}
+                {baris.arah === "keluar" && baris.catatan && <p className="text-11 text-tertiary">{baris.catatan}</p>}
               </td>
               {tampilkanPeminta && <td className="px-3 py-2 text-secondary">{baris.peminta ?? "—"}</td>}
               <td className="px-3 py-2 text-secondary">

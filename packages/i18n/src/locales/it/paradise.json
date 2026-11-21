@@ -616,6 +616,7 @@
       "same_department": "Pick a department other than your own.",
       "member_of_target": "You're a member of {name}. Create the work item there directly.",
       "intake_off": "{name} has turned off Intake, so it can't take requests right now.",
+      "target_not_allowed": "{name} is not a department that can take requests.",
       "invalid_description": "The description has content that isn't allowed. Remove it and try again.",
       "forbidden": "You don't have access to department requests."
     },

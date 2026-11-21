@@ -140,6 +140,7 @@ def it_project(db, workspace, it_user):
         workspace=workspace,
         default=True,
     )
+    _jadikan_departemen(workspace, project, "ITS")
     return project
 
 
@@ -158,6 +159,7 @@ def no_wadah_project(db, workspace, it_user):
     """Departemen dari God Mode sebelum perbaikan: Intake menyala, baris `Intake` tidak ada."""
     project = Project.objects.create(name="Gudang", identifier="GDG", workspace=workspace, created_by=it_user)
     ProjectMember.objects.create(project=project, member=it_user, workspace=workspace, role=20)
+    _jadikan_departemen(workspace, project, "GDG")
     return project
 
 
@@ -307,6 +309,9 @@ class TestPermintaanLintasDivisi:
 
 
 def _jadikan_departemen(workspace, project, kode):
+    ada = DepartemenProject.objects.filter(project=project).select_related("departemen__divisi").first()
+    if ada is not None:
+        return ada.departemen.divisi, ada.departemen
     divisi = Divisi.objects.create(workspace=workspace, kode=f"D{kode}", nama=f"Divisi {kode}")
     dep = Departemen.objects.create(workspace=workspace, divisi=divisi, kode=kode, nama=f"Departemen {kode}")
     DepartemenProject.objects.create(workspace=workspace, departemen=dep, project=project)
@@ -340,6 +345,22 @@ class TestPermintaanMasukAtasan:
             assert len(baris) == 1, atasan.email
             assert baris[0]["arah"] == "masuk"
             assert baris[0]["tujuan"]["id"] == str(it_project.id)
+
+    @pytest.mark.django_db
+    def test_catatan_tersembunyi_dari_atasan_tujuan_tapi_terlihat_peminta(
+        self, tender_client, workspace, tender_project, it_project
+    ):
+        _, dep = _jadikan_departemen(workspace, it_project, "ITS")
+        supervisor = _tempatkan(workspace, TINGKAT_SUPERVISOR, departemen=dep)
+        _kirim(tender_client, workspace, tender_project, it_project, catatan="Nomor tender 123/PP/2026")
+
+        masuk = _baris(_klien(supervisor).get(URL_PERMINTAAN.format(slug=workspace.slug)))
+        keluar = _baris(tender_client.get(URL_PERMINTAAN.format(slug=workspace.slug)))
+
+        assert masuk[0]["arah"] == "masuk"
+        assert "catatan" not in masuk[0]
+        assert "123/PP/2026" not in str(masuk)
+        assert keluar[0]["catatan"] == "Nomor tender 123/PP/2026"
 
     @pytest.mark.django_db
     def test_staf_tujuan_dan_orang_luar_tidak_melihat_permintaan_masuk(
@@ -425,6 +446,41 @@ class TestKontrolNegatifLintasDivisi:
         assert response.json()["params"] == {"name": intake_off_project.name}
         assert IntakeIssue.objects.filter(project=intake_off_project).count() == 0
         assert not Intake.objects.filter(project=intake_off_project).exists()
+
+    @pytest.mark.django_db
+    def test_project_wiki_bukan_tujuan_sah(self, tender_client, workspace, tender_project, it_user):
+        wiki = Project.objects.create(name="Wiki", identifier="WIKI", workspace=workspace, created_by=it_user)
+        _jadikan_departemen(workspace, wiki, "WIKI")
+
+        assert str(wiki.id) not in {r["id"] for r in tender_client.get(URL_TUJUAN.format(slug=workspace.slug)).json()}
+        response = _kirim(tender_client, workspace, tender_project, wiki)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["error_code"] == "target_not_allowed"
+        assert not IntakeIssue.objects.filter(project=wiki).exists()
+
+    @pytest.mark.django_db
+    def test_project_tanpa_pemetaan_departemen_ditolak(self, tender_client, workspace, tender_project, it_user):
+        liar = Project.objects.create(
+            name="Tanpa Departemen", identifier="LIAR", workspace=workspace, created_by=it_user
+        )
+
+        assert str(liar.id) not in {r["id"] for r in tender_client.get(URL_TUJUAN.format(slug=workspace.slug)).json()}
+        response = _kirim(tender_client, workspace, tender_project, liar)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["error_code"] == "target_not_allowed"
+        assert not IntakeIssue.objects.filter(project=liar).exists()
+        assert not Intake.objects.filter(project=liar).exists()
+
+    @pytest.mark.django_db
+    def test_tamu_tidak_bisa_melihat_daftar_tujuan(self, workspace, it_project):
+        tamu = _buat_user("tamu")
+        WorkspaceMember.objects.create(workspace=workspace, member=tamu, role=5)
+
+        response = _klien(tamu).get(URL_TUJUAN.format(slug=workspace.slug))
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     @pytest.mark.django_db
     def test_tidak_bisa_meminta_ke_divisi_sendiri(self, tender_client, workspace, tender_project):
