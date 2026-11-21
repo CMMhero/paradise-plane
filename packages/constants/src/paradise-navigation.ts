@@ -34,6 +34,8 @@ export const PARADISE_MODULES: Record<TParadiseModule, { group: TParadiseModuleG
   stickies: { group: "sidebar", defaultEnabled: true },
   drafts: { group: "sidebar", defaultEnabled: true },
   quick_links: { group: "sidebar", defaultEnabled: true },
+  // Bagian "Projects" di sidebar (daftar departemen per divisi), bukan menu berupa tautan.
+  departments: { group: "sidebar", defaultEnabled: true },
   dashboards: { group: "workspace", defaultEnabled: true },
   initiatives: { group: "workspace", defaultEnabled: false },
   views: { group: "workspace", defaultEnabled: true },
@@ -150,7 +152,8 @@ export type TParadiseNavPaletteId = NonNullable<Extract<TParadiseNavItem, { pale
  * tapi barisnya tetap ada supaya pilihan lama tidak hilang.
  */
 export const PARADISE_NAV_PREFERENCE_KEYS = {
-  personal: ["your_work", "stickies", "drafts", "quick_links"],
+  // `departments` bukan menu: barisnya menyimpan tampil/sembunyi bagian daftar departemen.
+  personal: ["your_work", "stickies", "drafts", "quick_links", "departments"],
   workspace: [
     "views",
     "analytics",

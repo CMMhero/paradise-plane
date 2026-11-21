@@ -21,6 +21,8 @@ const PAGE_OF_MODULE: Record<TParadiseModule, string | null> = {
   stickies: "/ws/stickies/",
   drafts: "/ws/drafts/",
   quick_links: "/ws/quick-links/",
+  // A sidebar section, not a page: closing it must never close the Projects page.
+  departments: null,
   dashboards: "/ws/kinerja/",
   initiatives: "/ws/initiatives/",
   views: "/ws/workspace-views/",
@@ -51,4 +53,10 @@ describe("paradise module gates", () => {
       expect(WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS[item.key]?.href).toBe(item.href);
     }
   );
+
+  it("the department list is gated by its module but leaves the Projects page open", () => {
+    expect(moduleForNavKey("departments")).toBe("departments");
+    expect(moduleForPath("/ws/projects/")).toBeUndefined();
+    expect(moduleForPath("/ws/projects/p1/issues/")).toBe("work_items");
+  });
 });

@@ -19,6 +19,7 @@ import { SidebarProjectsListItem } from "@/components/workspace/sidebar/projects
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useProject } from "@/hooks/store/use-project";
+import { useDepartmentsMenu } from "@/hooks/use-navigation-preferences";
 import type { TProject } from "@plane/types";
 import { ExtendedSidebarWrapper } from "./extended-sidebar-wrapper";
 
@@ -32,6 +33,7 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
   const { t } = useTranslation();
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar } = useAppTheme();
   const { getPartialProjectById, sidebarProjectIds: joinedProjects, updateProjectView } = useProject();
+  const { isVisible: isDepartmentsMenuVisible } = useDepartmentsMenu();
 
   const handleOnProjectDrop = (
     sourceId: string | undefined,
@@ -80,6 +82,9 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
       message: t("project_link_copied_to_clipboard"),
     });
   };
+  // The "more" button that opens this panel lives in the hidden list, so close it too.
+  if (!isDepartmentsMenuVisible) return null;
+
   return (
     <>
       <ExtendedSidebarWrapper

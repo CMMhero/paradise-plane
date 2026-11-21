@@ -1549,5 +1549,9 @@
     "forbidden": "Anda tidak punya akses ke Intake departemen ini. Minta supervisor atau admin departemen untuk menambahkan Anda.",
     "not_found": "Intake departemen ini sedang mati, atau halamannya sudah usang. Muat ulang halaman.",
     "load_failed": "Intake gagal dimuat. Coba lagi sebentar lagi. Kalau terus terjadi, beri tahu admin."
+  },
+  "departments_menu": {
+    "label": "Tampilkan daftar departemen",
+    "off_by_admin": "Dimatikan oleh administrator."
   }
 }

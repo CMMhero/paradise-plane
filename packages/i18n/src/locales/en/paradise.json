@@ -1549,5 +1549,9 @@
     "forbidden": "You don't have access to this department's Intake. Ask its supervisor or admin to add you.",
     "not_found": "Intake is off for this department, or the page is out of date. Reload the page.",
     "load_failed": "Couldn't load the Intake. Try again in a moment. If it keeps happening, tell your admin."
+  },
+  "departments_menu": {
+    "label": "Show department list",
+    "off_by_admin": "Turned off by your administrator."
   }
 }

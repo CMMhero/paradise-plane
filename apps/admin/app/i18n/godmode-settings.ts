@@ -502,6 +502,10 @@ export const settingsStrings = {
     stickies: { name: "Stickies", desc: "Personal sticky notes." },
     drafts: { name: "Drafts", desc: "Work items saved as drafts before they are created." },
     quick_links: { name: "Quick links", desc: "Personal bookmarks to pages inside and outside the app." },
+    departments: {
+      name: "Department list",
+      desc: "The sidebar section that lists departments by division. Hidden for everyone when off; departments stay reachable from the Projects page and the command palette. Members can also hide it for themselves.",
+    },
     dashboards: { name: "Dashboards", desc: "Division dashboards with progress and workload per department." },
     initiatives: { name: "Initiatives", desc: "Cross-project goals that group related work." },
     views: { name: "Views", desc: "Saved work item views, at workspace and department level." },

@@ -113,3 +113,48 @@ class TestWorkspaceUserPreferenceGet:
         assert response.data["quick_links"]["is_pinned"] is True
         # The existing row is left as the user set it.
         assert response.data["drafts"]["is_pinned"] is False
+
+
+@pytest.mark.contract
+class TestDepartmentsMenuPreference:
+    """The sidebar's department list is hidden or shown per member through a normal preference row."""
+
+    @pytest.mark.django_db
+    def test_get_seeds_departments_shown(self, session_client, create_user, workspace):
+        """No stored row (a new or old account) means the list is shown."""
+        url = reverse("workspace-user-preference", kwargs={"slug": workspace.slug})
+        response = session_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["departments"]["is_pinned"] is True
+
+    @pytest.mark.django_db
+    def test_get_adds_departments_for_existing_users(self, session_client, create_user, workspace):
+        WorkspaceUserPreference.objects.create(
+            workspace=workspace, user=create_user, key="drafts", is_pinned=False, sort_order=100
+        )
+
+        url = reverse("workspace-user-preference", kwargs={"slug": workspace.slug})
+        response = session_client.get(url)
+
+        assert response.data["departments"]["is_pinned"] is True
+        assert response.data["drafts"]["is_pinned"] is False
+
+    @pytest.mark.django_db
+    def test_hiding_persists_across_reads_and_is_personal(self, session_client, create_user, workspace):
+        other = User.objects.create(email="dept-other@plane.so", username="dept_other", first_name="O", last_name="U")
+        WorkspaceMember.objects.create(workspace=workspace, member=other, role=15)
+        WorkspaceUserPreference.objects.create(
+            workspace=workspace, user=other, key="departments", is_pinned=True, sort_order=1
+        )
+
+        url = reverse("workspace-user-preference", kwargs={"slug": workspace.slug})
+        session_client.get(url)
+        response = session_client.patch(url, [{"key": "departments", "is_pinned": False}], format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        assert session_client.get(url).data["departments"]["is_pinned"] is False
+        assert WorkspaceUserPreference.objects.get(workspace=workspace, user=other, key="departments").is_pinned is True
+
+        session_client.patch(url, [{"key": "departments", "is_pinned": True}], format="json")
+        assert session_client.get(url).data["departments"]["is_pinned"] is True
