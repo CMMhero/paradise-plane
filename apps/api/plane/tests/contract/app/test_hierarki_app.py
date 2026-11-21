@@ -1777,6 +1777,17 @@ class TestPenempatanMandiriDanWiki:
         assert "Dept 9" in [d["nama"] for d in dengan_daftar.data["departemen"]]
 
     @pytest.mark.django_db
+    def test_tamu_tidak_diminta_memilih(self, workspace, struktur):
+        # Tamu tidak boleh POST (403), jadi jangan tampilkan pemilih yang tak bisa disimpan.
+        from plane.app.views.penempatan_saya import perlu_pilih_departemen  # noqa: PLC0415
+
+        tamu = _buat_user("tamu9", workspace, peran_workspace=5)
+        assert perlu_pilih_departemen(tamu, workspace.id) is False
+        response = _klien(tamu).get(f"/api/workspaces/{workspace.slug}/penempatan-saya/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {"perlu_pilih": False, "departemen": []}
+
+    @pytest.mark.django_db
     def test_direktur_tanpa_tempat_tidak_diminta_memilih(self, workspace, direktur, struktur, jenjang):
         from plane.app.views.penempatan_saya import perlu_pilih_departemen  # noqa: PLC0415
 
