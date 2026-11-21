@@ -1,0 +1,13 @@
+{
+  "keterangan": "Pecah divisi Plant Cilegon (PC, cabang CLG) mengikuti bagan organisasi. Dipakai perintah pecah_divisi. Manager tidak ditulis di sini: berikan lewat --manager KODE=<username|email|id>. manager=false berarti kursinya kosong.",
+  "sumber": "PC",
+  "divisi": [
+    { "kode": "LOG", "nama": "Logistics", "departemen": ["LOG", "PPC"], "manager": true },
+    { "kode": "ENG", "nama": "Engineering", "departemen": ["ENG-ENG", "RND-RND"], "manager": true },
+    { "kode": "PRD", "nama": "Production", "departemen": ["PRO", "PO"], "manager": false },
+    { "kode": "QAQC", "nama": "QA QC", "departemen": ["QQ"], "manager": true },
+    { "kode": "MTC", "nama": "Maintenance", "departemen": ["MTC"], "manager": false },
+    { "kode": "GAHSE", "nama": "GA and HSE", "departemen": ["GA", "HSE"], "manager": false },
+    { "kode": "HRL", "nama": "HR and Legal", "departemen": ["HR-CLG"], "manager": true }
+  ]
+}
