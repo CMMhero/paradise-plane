@@ -19,7 +19,6 @@ import {
 } from "../workspace";
 import {
   ATURAN_WEB,
-  ATURAN_WEB,
   BIDANG_TUGAS,
   DIRECTOR_SIDEBAR_HIDDEN_KEYS,
   DIRECTOR_SIDEBAR_HIDES_CHOICES,
