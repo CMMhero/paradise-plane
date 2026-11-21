@@ -38,6 +38,10 @@ export type TPermintaanLintasDivisi = {
   alasan_tolak?: string;
   /** Peminta anggota departemen tujuan, jadi `nomor_tugas_tujuan` boleh ditautkan. */
   boleh_dibuka?: boolean;
+  /** `keluar` = saya yang meminta, `masuk` = ke departemen yang saya awasi. Server lama: tidak ada. */
+  arah?: "keluar" | "masuk";
+  /** Nama peminta. Server lama: tidak ada. */
+  peminta?: string;
 };
 
 /** Status `IntakeIssue`: 1 diterima, -1 ditolak. */

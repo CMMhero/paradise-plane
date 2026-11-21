@@ -89,9 +89,34 @@ const VARIAN_STATUS_TUGAS: Record<string, TBadgeVariant> = {
   tidak_dikerjakan: "neutral",
 };
 
-const pesanGagal = (err: unknown, fallback: string): string => {
-  const pesan = (err as { error?: string } | undefined)?.error;
-  return typeof pesan === "string" && pesan.length > 0 ? pesan : fallback;
+type TTerjemah = (key: string, params?: Record<string, unknown>) => string;
+
+// `error_code` dari API (`_galat` di views/issue/cross_division.py) yang punya
+// terjemahan di `cross_division_ui.errors`. Kode lain jatuh ke teks API atau fallback.
+const KODE_GALAT = new Set([
+  "title_required",
+  "title_too_long",
+  "unknown_priority",
+  "note_too_long",
+  "route_required",
+  "origin_not_found",
+  "not_origin_member",
+  "target_not_found",
+  "same_department",
+  "member_of_target",
+  "intake_off",
+  "invalid_description",
+]);
+
+type TGalatApi = { error?: unknown; error_code?: unknown; params?: Record<string, unknown>; detail?: unknown };
+
+const pesanGagal = (err: unknown, fallback: string, t: TTerjemah): string => {
+  const galat = (err ?? {}) as TGalatApi;
+  if (typeof galat.error_code === "string" && KODE_GALAT.has(galat.error_code))
+    return t(`cross_division_ui.errors.${galat.error_code}`, galat.params ?? {});
+  // Izin kelas DRF menjawab `detail`, bukan `error`: pemanggil tamu workspace.
+  if (typeof galat.detail === "string") return t("cross_division_ui.errors.forbidden");
+  return typeof galat.error === "string" && galat.error.length > 0 ? galat.error : fallback;
 };
 
 /**
@@ -126,8 +151,6 @@ const formatTanggal = (nilai: string, lokal: string): string => {
   return tanggal.toLocaleDateString(lokal, { day: "2-digit", month: "short", year: "numeric" });
 };
 
-type TTerjemah = (key: string) => string;
-
 const labelStatusPermintaan = (nilai: TStatusPermintaan, t: TTerjemah): string =>
   LABEL_STATUS_PERMINTAAN[nilai] ? t(LABEL_STATUS_PERMINTAAN[nilai]) : nilai;
 
@@ -149,8 +172,77 @@ function StatCard({ label, value, keterangan, icon }: TStatCard) {
   );
 }
 
-function TugasLintasDivisiPage() {
+type TTabelPermintaan = {
+  baris: TPermintaanLintasDivisi[];
+  workspaceSlug: string;
+  tampilkanPeminta?: boolean;
+};
+
+function TabelPermintaan({ baris: daftar, workspaceSlug, tampilkanPeminta = false }: TTabelPermintaan) {
   const { t, currentLocale } = useTranslation();
+  return (
+    <div className="overflow-x-auto rounded-card border border-subtle gulir-berpenanda">
+      <table className="w-full min-w-[720px] text-left text-13">
+        <thead>
+          <tr className="border-b border-subtle bg-layer-2 text-12 text-tertiary">
+            <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_title")}</th>
+            {tampilkanPeminta && <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_requester")}</th>}
+            <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_route")}</th>
+            <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_request_status")}</th>
+            <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_task_status")}</th>
+            <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_task_no")}</th>
+            <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_date")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {daftar.map((baris) => (
+            <tr key={baris.id} className="border-b border-subtle last:border-0 hover:bg-layer-2">
+              <td className="px-3 py-2">
+                <span className="font-medium text-primary">{baris.judul ?? "—"}</span>
+                {baris.catatan && <p className="text-11 text-tertiary">{baris.catatan}</p>}
+              </td>
+              {tampilkanPeminta && <td className="px-3 py-2 text-secondary">{baris.peminta ?? "—"}</td>}
+              <td className="px-3 py-2 text-secondary">
+                {baris.asal.identifier} → {baris.tujuan.identifier}
+              </td>
+              <td className="px-3 py-2">
+                <Badge variant={VARIAN_STATUS_PERMINTAAN[baris.status_permintaan] ?? "neutral"}>
+                  {labelStatusPermintaan(baris.status_permintaan, t)}
+                </Badge>
+                {baris.alasan_tolak && (
+                  <p className="mt-1 text-11 text-tertiary">
+                    {t("persetujuan_p29.decline_reason", { reason: baris.alasan_tolak })}
+                  </p>
+                )}
+              </td>
+              <td className="px-3 py-2">
+                <Badge variant={VARIAN_STATUS_TUGAS[baris.status_tugas] ?? "neutral"}>
+                  {labelStatusTugas(baris.status_tugas, t)}
+                </Badge>
+              </td>
+              <td className="px-3 py-2 text-secondary">
+                {baris.boleh_dibuka && baris.nomor_tugas_tujuan ? (
+                  <Link
+                    href={`/${workspaceSlug}/browse/${baris.nomor_tugas_tujuan}/`}
+                    className="text-accent-primary hover:underline"
+                  >
+                    {baris.nomor_tugas_tujuan}
+                  </Link>
+                ) : (
+                  (baris.nomor_tugas_tujuan ?? "—")
+                )}
+              </td>
+              <td className="px-3 py-2 text-secondary">{formatTanggal(baris.dibuat_pada, currentLocale)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TugasLintasDivisiPage() {
+  const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   // store: divisi asal = divisi tempat SAYA anggota. `joinedProjectIds`
   // menyaring `member_role` dari project store, jadi tidak perlu endpoint baru;
@@ -197,7 +289,7 @@ function TugasLintasDivisiPage() {
     } catch (err) {
       // Pesan dari API ditampilkan apa adanya; kegagalan senyap adalah kelas bug
       // termahal di proyek ini.
-      setGagalMuat(pesanGagal(err, t("cross_division_ui.load_failed")));
+      setGagalMuat(pesanGagal(err, t("cross_division_ui.load_failed"), t));
     } finally {
       setIsLoading(false);
     }
@@ -209,6 +301,9 @@ function TugasLintasDivisiPage() {
   }, [muatSemua]);
 
   const tujuanTersedia = daftarTujuan.filter((divisi) => divisi.id !== asalId);
+  // Server lama belum mengirim `arah`: semua barisnya milik pemanggil.
+  const permintaanKeluar = permintaan.filter((baris) => (baris.arah ?? "keluar") === "keluar");
+  const permintaanMasuk = permintaan.filter((baris) => baris.arah === "masuk");
 
   const keluarMenunggu = Object.values(ringkasan).reduce((total, baris) => total + baris.keluar_menunggu, 0);
   const keluarTerbuka = Object.values(ringkasan).reduce((total, baris) => total + baris.keluar_terbuka, 0);
@@ -253,7 +348,7 @@ function TugasLintasDivisiPage() {
         message: t("cross_division_ui.sent_message"),
       });
     } catch (err) {
-      const pesan = pesanGagal(err, t("cross_division_ui.send_failed_message"));
+      const pesan = pesanGagal(err, t("cross_division_ui.send_failed_message"), t);
       setGagalKirim(pesan);
       setToast({ type: TOAST_TYPE.ERROR, title: t("cross_division_ui.send_failed_title"), message: pesan });
     } finally {
@@ -314,7 +409,7 @@ function TugasLintasDivisiPage() {
                 />
                 <StatCard
                   label={t("cross_division_ui.stat_mine")}
-                  value={String(permintaan.length)}
+                  value={String(permintaanKeluar.length)}
                   keterangan={t("cross_division_ui.stat_mine_hint")}
                   icon={<ArrowLeftRight className="size-5" />}
                 />
@@ -498,69 +593,22 @@ function TugasLintasDivisiPage() {
             {/* 3. Tabel permintaan saya */}
             <section className="flex flex-col gap-3">
               <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.stat_mine")}</h2>
-              {permintaan.length === 0 ? (
+              {permintaanKeluar.length === 0 ? (
                 <p className="text-13 text-tertiary">{t("cross_division_ui.no_requests")}</p>
               ) : (
-                <div className="overflow-x-auto rounded-card border border-subtle gulir-berpenanda">
-                  <table className="w-full min-w-[720px] text-left text-13">
-                    <thead>
-                      <tr className="border-b border-subtle bg-layer-2 text-12 text-tertiary">
-                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_title")}</th>
-                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_route")}</th>
-                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_request_status")}</th>
-                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_task_status")}</th>
-                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_task_no")}</th>
-                        <th className="px-3 py-2 font-medium">{t("cross_division_ui.col_date")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {permintaan.map((baris) => (
-                        <tr key={baris.id} className="border-b border-subtle last:border-0 hover:bg-layer-2">
-                          <td className="px-3 py-2">
-                            <span className="font-medium text-primary">{baris.judul ?? "—"}</span>
-                            {baris.catatan && <p className="text-11 text-tertiary">{baris.catatan}</p>}
-                          </td>
-                          <td className="px-3 py-2 text-secondary">
-                            {baris.asal.identifier} → {baris.tujuan.identifier}
-                          </td>
-                          <td className="px-3 py-2">
-                            <Badge variant={VARIAN_STATUS_PERMINTAAN[baris.status_permintaan] ?? "neutral"}>
-                              {labelStatusPermintaan(baris.status_permintaan, t)}
-                            </Badge>
-                            {baris.alasan_tolak && (
-                              <p className="mt-1 text-11 text-tertiary">
-                                {t("persetujuan_p29.decline_reason", { reason: baris.alasan_tolak })}
-                              </p>
-                            )}
-                          </td>
-                          <td className="px-3 py-2">
-                            <Badge variant={VARIAN_STATUS_TUGAS[baris.status_tugas] ?? "neutral"}>
-                              {labelStatusTugas(baris.status_tugas, t)}
-                            </Badge>
-                          </td>
-                          <td className="px-3 py-2 text-secondary">
-                            {baris.boleh_dibuka && baris.nomor_tugas_tujuan ? (
-                              <Link
-                                href={`/${workspaceSlug}/browse/${baris.nomor_tugas_tujuan}/`}
-                                className="text-accent-primary hover:underline"
-                              >
-                                {baris.nomor_tugas_tujuan}
-                              </Link>
-                            ) : (
-                              (baris.nomor_tugas_tujuan ?? "—")
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-secondary">
-                            {formatTanggal(baris.dibuat_pada, currentLocale)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <TabelPermintaan baris={permintaanKeluar} workspaceSlug={workspaceSlug} />
               )}
               <p className="text-11 text-tertiary">{t("cross_division_ui.footer_note")}</p>
             </section>
+
+            {/* 4. Permintaan yang masuk ke departemen yang saya awasi */}
+            {permintaanMasuk.length > 0 && (
+              <section className="flex flex-col gap-3">
+                <h2 className="text-16 font-semibold text-primary">{t("cross_division_ui.incoming_title")}</h2>
+                <TabelPermintaan baris={permintaanMasuk} workspaceSlug={workspaceSlug} tampilkanPeminta />
+                <p className="text-11 text-tertiary">{t("cross_division_ui.incoming_hint")}</p>
+              </section>
+            )}
           </>
         )}
       </div>

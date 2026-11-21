@@ -577,7 +577,7 @@
     "breakdown": "{pending} menunggu · {open} terbuka",
     "request_help": "Minta bantuan divisi lain",
     "no_origin": "Kamu belum menjadi anggota divisi mana pun di workspace ini, jadi belum ada divisi asal yang bisa kamu ajukan. Minta admin menambahkanmu ke divisimu dulu.",
-    "no_targets": "Belum ada divisi yang bisa menerima permintaan. Hanya divisi yang sudah menyalakan pintu Intake yang muncul di sini, dan menyalakannya adalah keputusan divisi itu sendiri, bukan sesuatu yang bisa dinyalakan dari halaman ini. Hubungi admin divisi tujuan dan minta mereka mengaktifkan Inbox/Intake di pengaturan departemennya.",
+    "no_targets": "Belum ada departemen lain yang bisa menerima permintaan. Departemen muncul di sini selama Intake-nya menyala.",
     "origin": "Divisi asal",
     "origin_hint": "Hanya divisi tempat kamu menjadi anggota.",
     "target": "Divisi tujuan",
@@ -602,7 +602,25 @@
     "col_task_status": "Status tugas",
     "col_task_no": "No. tugas",
     "col_date": "Tanggal",
-    "footer_note": "Status tugas di divisi tujuan hanya ditampilkan kasar (terbuka / selesai / tidak dikerjakan). Siapa yang mengerjakan, tenggat, label, dan komentar tidak dibuka lewat halaman ini."
+    "footer_note": "Status tugas di divisi tujuan hanya ditampilkan kasar (terbuka / selesai / tidak dikerjakan). Siapa yang mengerjakan, tenggat, label, dan komentar tidak dibuka lewat halaman ini.",
+    "errors": {
+      "title_required": "Isi judul permintaan.",
+      "title_too_long": "Judul maksimal {max} karakter.",
+      "unknown_priority": "Pilih prioritas dari daftar.",
+      "note_too_long": "Catatan maksimal {max} karakter.",
+      "route_required": "Pilih departemen Anda dan departemen tujuan.",
+      "origin_not_found": "Departemen Anda tidak ditemukan. Mungkin sudah diarsipkan.",
+      "not_origin_member": "Anda bukan anggota {name}, jadi tidak bisa mengirim permintaan atas namanya.",
+      "target_not_found": "Departemen tujuan tidak ditemukan. Mungkin sudah diarsipkan.",
+      "same_department": "Pilih departemen selain departemen Anda.",
+      "member_of_target": "Anda anggota {name}. Buat work item langsung di sana.",
+      "intake_off": "{name} mematikan Intake, jadi belum bisa menerima permintaan.",
+      "invalid_description": "Keterangan berisi konten yang tidak diizinkan. Hapus lalu coba lagi.",
+      "forbidden": "Anda tidak punya akses ke permintaan antar departemen."
+    },
+    "incoming_title": "Permintaan ke departemen yang Anda awasi",
+    "incoming_hint": "Terima atau tolak di Intake departemen itu atau di halaman Persetujuan.",
+    "col_requester": "Peminta"
   },
   "notification_ui": {
     "action": {

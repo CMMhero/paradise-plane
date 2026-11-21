@@ -577,7 +577,7 @@
     "breakdown": "{pending} pending · {open} open",
     "request_help": "Ask another division for help",
     "no_origin": "You aren't a member of any division in this workspace, so there is no origin division you can file from. Ask an admin to add you to your division first.",
-    "no_targets": "Ни одна дивизия пока не может получать запросы. Здесь появляются только дивизии с включённым Intake, и включить его может только сама дивизия, с этой страницы это сделать нельзя. Обратитесь к администратору нужной дивизии и попросите включить Inbox/Intake в настройках её отдела.",
+    "no_targets": "No other department can take requests right now. A department shows up here while its Intake is on.",
     "origin": "Origin division",
     "origin_hint": "Only divisions you are a member of.",
     "target": "Target division",
@@ -602,7 +602,25 @@
     "col_task_status": "Task status",
     "col_task_no": "Task no.",
     "col_date": "Date",
-    "footer_note": "The task status in the target division is only shown coarsely (open / done / won't do). Who works on it, due dates, labels and comments are not exposed through this page."
+    "footer_note": "The task status in the target division is only shown coarsely (open / done / won't do). Who works on it, due dates, labels and comments are not exposed through this page.",
+    "errors": {
+      "title_required": "Enter a title for the request.",
+      "title_too_long": "The title can be at most {max} characters.",
+      "unknown_priority": "Pick a priority from the list.",
+      "note_too_long": "The note can be at most {max} characters.",
+      "route_required": "Pick your department and the target department.",
+      "origin_not_found": "Your department was not found. It may have been archived.",
+      "not_origin_member": "You're not a member of {name}, so you can't send requests for it.",
+      "target_not_found": "The target department was not found. It may have been archived.",
+      "same_department": "Pick a department other than your own.",
+      "member_of_target": "You're a member of {name}. Create the work item there directly.",
+      "intake_off": "{name} has turned off Intake, so it can't take requests right now.",
+      "invalid_description": "The description has content that isn't allowed. Remove it and try again.",
+      "forbidden": "You don't have access to department requests."
+    },
+    "incoming_title": "Requests to departments you supervise",
+    "incoming_hint": "Accept or decline them in that department's Intake or on the Approvals page.",
+    "col_requester": "Requested by"
   },
   "notification_ui": {
     "action": {
