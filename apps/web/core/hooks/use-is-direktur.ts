@@ -6,18 +6,22 @@
  */
 
 import { DIRECTOR_SIDEBAR_HIDDEN_KEYS } from "@plane/constants";
-import { isDirektur } from "@plane/services";
+import { isDirektur, menjangkauSeluruhOrganisasi } from "@plane/services";
 // hooks
 import { useMemberProfile } from "@/components/member-profile/use-member-profile";
 import { useAturan } from "@/hooks/use-aturan";
 import { useUser } from "@/hooks/store/user";
 
 /**
- * Apakah penonton adalah Direktur, dibaca dari penempatan di profilnya sendiri
+ * Apakah penonton adalah Direktur bagi aturan menu, dibaca dari penempatan di profilnya sendiri
  * (kunci SWR yang sama dengan kartu profil, jadi tidak menambah request kalau
  * profilnya sudah dimuat). `isResolved=false` selama profil belum datang; menu
  * baru disembunyikan setelah terbukti direktur, supaya yang lain tidak melihat
  * sidebar-nya bergeser.
+ *
+ * "Direktur" di sini = jenjang 40 saja, kecuali aturan God Mode
+ * DIRECTOR_MENUS_APPLY_TO = "org_wide" (35 ke atas, sekretaris ikut, sama dengan
+ * jangkauan seluruh organisasi di API).
  *
  * `hiddenNavKeys`: kunci menu sidebar yang disembunyikan dari penonton ini. Kosong
  * kecuali Direktur; untuk Direktur dari aturan God Mode DIRECTOR_SIDEBAR_HIDES
@@ -31,7 +35,10 @@ export const useIsDirektur = (workspaceSlug: string | undefined) => {
   const { data: currentUser } = useUser();
   const { profile, error } = useMemberProfile(workspaceSlug, currentUser?.id);
   const { get } = useAturan();
-  const direktur = isDirektur(profile?.penempatan);
+  const direktur =
+    get("DIRECTOR_MENUS_APPLY_TO") === "org_wide"
+      ? (profile?.penempatan ?? []).some((p) => menjangkauSeluruhOrganisasi(p.tingkat))
+      : isDirektur(profile?.penempatan);
   return {
     isDirektur: direktur,
     isResolved: Boolean(profile) || Boolean(error),
