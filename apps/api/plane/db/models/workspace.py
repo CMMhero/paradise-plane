@@ -445,6 +445,8 @@ class WorkspaceUserPreference(BaseModel):
         # Kembali ke sidebar (keputusan user 2026-11-20).
         PERSETUJUAN = "persetujuan", "Approvals"
         TUGAS_LINTAS_DIVISI = "tugas_lintas_divisi", "Department requests"
+        # Bagian daftar departemen di sidebar; pilihan tampil/sembunyi per member.
+        DEPARTMENTS = "departments", "Departments"
 
     workspace = models.ForeignKey(
         "db.Workspace",

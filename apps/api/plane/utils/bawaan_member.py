@@ -140,7 +140,8 @@ TINGKAT_BAWAAN_SAH = frozenset({None, 10, 20, 30})
 # packages/constants (paradise-navigation.test.ts mencocokkannya); kuncinya juga harus
 # ada di `WorkspaceUserPreference.UserPreferenceKeys`, kalau tidak barisnya tak
 # pernah dibuat dan saklar semat di web tidak berbuat apa-apa.
-NAV_PRIBADI = ("your_work", "stickies", "drafts", "quick_links")
+# "departments" bukan menu: barisnya menyimpan tampil/sembunyi daftar departemen.
+NAV_PRIBADI = ("your_work", "stickies", "drafts", "quick_links", "departments")
 NAV_WORKSPACE = (
     "views",
     "analytics",

@@ -55,6 +55,7 @@ export type TParadiseModule =
   | "stickies"
   | "drafts"
   | "quick_links"
+  | "departments"
   // Menu workspace
   | "dashboards"
   | "initiatives"

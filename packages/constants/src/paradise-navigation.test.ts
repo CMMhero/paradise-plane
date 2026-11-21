@@ -53,6 +53,19 @@ describe("PARADISE_MODULES", () => {
   });
 });
 
+describe("departments section", () => {
+  it("is a sidebar module that is on by default, with a per-member preference row", () => {
+    expect(PARADISE_MODULES.departments).toEqual({ group: "sidebar", defaultEnabled: true });
+    const personal: readonly string[] = PARADISE_NAV_PREFERENCE_KEYS.personal;
+    expect(personal).toContain("departments");
+  });
+
+  it("is not a menu link, so it has no nav item and no Power K command", () => {
+    const keys: string[] = PARADISE_NAV_ITEMS.flatMap((i) => [i.key, i.module]);
+    expect(keys).not.toContain("departments");
+  });
+});
+
 describe("PARADISE_NAV_PREFERENCE_KEYS", () => {
   it("sama dengan NAV_PRIBADI dan NAV_WORKSPACE di API, urutannya juga", () => {
     const sumber = baca("apps/api/plane/utils/bawaan_member.py");

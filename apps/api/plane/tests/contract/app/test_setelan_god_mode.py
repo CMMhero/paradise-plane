@@ -116,6 +116,7 @@ class TestModulAplikasi:
             "stickies": True,
             "drafts": True,
             "quick_links": True,
+            "departments": True,
             "dashboards": True,
             "initiatives": False,
             "views": True,
@@ -157,6 +158,14 @@ class TestModulAplikasi:
         assert hasil["stickies"] is False
         assert hasil["estimates"] is True
         assert hasil["work_items"] is False
+
+    @pytest.mark.django_db
+    def test_daftar_departemen_bisa_dimatikan_dan_dinyalakan_lagi(self, super_admin):
+        assert modul_aktif()["departments"] is True
+        assert _patch(super_admin, {"ENABLE_DEPARTMENTS": "0"}).status_code == status.HTTP_200_OK
+        assert modul_aktif()["departments"] is False
+        assert _patch(super_admin, {"ENABLE_DEPARTMENTS": "1"}).status_code == status.HTTP_200_OK
+        assert modul_aktif()["departments"] is True
 
     @pytest.mark.django_db
     def test_saklar_dari_god_mode_terbaca(self, super_admin):

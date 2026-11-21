@@ -81,6 +81,9 @@ _MODUL_BAWAAN = {
     "stickies": "1",
     "drafts": "1",
     "quick_links": "1",
+    # Bagian daftar departemen (project) di sidebar. Hanya menyembunyikan tampilan:
+    # akses ke project tetap lewat halaman Projects dan Power K.
+    "departments": "1",
     # Menu workspace
     "dashboards": "1",
     "initiatives": "0",
