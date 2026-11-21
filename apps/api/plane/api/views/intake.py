@@ -30,6 +30,7 @@ from plane.app.permissions import ProjectLitePermission
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import Intake, IntakeIssue, Issue, Project, ProjectMember, State, StateGroup
 from plane.utils.host import base_host
+from plane.utils.intake_bawaan import intake_project
 from plane.utils.content_validator import validate_html_content
 from plane.utils.task_access import bisa_ganti_tenggat_intake, tenggat_diubah
 from .base import BaseAPIView
@@ -64,10 +65,7 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
     use_read_replica = True
 
     def get_queryset(self):
-        intake = Intake.objects.filter(
-            workspace__slug=self.kwargs.get("slug"),
-            project_id=self.kwargs.get("project_id"),
-        ).first()
+        intake = intake_project(self.kwargs.get("slug"), self.kwargs.get("project_id"))
 
         project = Project.objects.get(workspace__slug=self.kwargs.get("slug"), pk=self.kwargs.get("project_id"))
 
@@ -155,7 +153,7 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
         if not request.data.get("issue", {}).get("name", False):
             return Response({"error": "Name is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        intake = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
+        intake = intake_project(slug, project_id)
 
         project = Project.objects.get(workspace__slug=slug, pk=project_id)
 
@@ -247,10 +245,7 @@ class IntakeIssueDetailAPIEndpoint(BaseAPIView):
     filterset_fields = ["status"]
 
     def get_queryset(self):
-        intake = Intake.objects.filter(
-            workspace__slug=self.kwargs.get("slug"),
-            project_id=self.kwargs.get("project_id"),
-        ).first()
+        intake = intake_project(self.kwargs.get("slug"), self.kwargs.get("project_id"))
 
         project = Project.objects.get(workspace__slug=self.kwargs.get("slug"), pk=self.kwargs.get("project_id"))
 
@@ -326,7 +321,7 @@ class IntakeIssueDetailAPIEndpoint(BaseAPIView):
         Modify an existing intake work item's properties or status for triage processing.
         Supports status changes like accept, reject, or mark as duplicate.
         """
-        intake = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
+        intake = intake_project(slug, project_id)
 
         project = Project.objects.get(workspace__slug=slug, pk=project_id)
 
@@ -496,7 +491,7 @@ class IntakeIssueDetailAPIEndpoint(BaseAPIView):
         Permanently remove an intake work item from the triage queue.
         Also deletes the underlying work item if it hasn't been accepted yet.
         """
-        intake = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
+        intake = intake_project(slug, project_id)
 
         project = Project.objects.get(workspace__slug=slug, pk=project_id)
 

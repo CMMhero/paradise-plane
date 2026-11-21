@@ -28,7 +28,6 @@ from plane.bgtasks.webhook_task import model_activity, webhook_activity
 from plane.db.models import (
     UserFavorite,
     DeployBoard,
-    Intake,
     Project,
     ProjectIdentifier,
     ProjectMember,
@@ -39,6 +38,7 @@ from plane.db.models import (
 )
 from plane.db.models.intake import IntakeIssueStatus
 from plane.utils.host import base_host
+from plane.utils.intake_bawaan import ensure_default_intake
 from plane.utils.izin_sumber import tolak_izin_project
 from plane.utils.saklar_instance import PERM_PROJECT_ARCHIVE, PERM_PROJECT_DELETE, PERM_PROJECT_EDIT
 from plane.utils.order_queryset import PROJECT_ORDER_BY_ALLOWLIST, sanitize_order_by
@@ -293,13 +293,7 @@ class ProjectViewSet(BaseViewSet):
         if serializer.is_valid():
             serializer.save()
             if intake_view:
-                intake = Intake.objects.filter(project=project, is_default=True).first()
-                if not intake:
-                    Intake.objects.create(
-                        name=f"{project.name} Intake",
-                        project=project,
-                        is_default=True,
-                    )
+                ensure_default_intake(project)
 
             project = self.get_queryset().filter(pk=serializer.data["id"]).first()
 
