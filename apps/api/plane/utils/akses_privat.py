@@ -53,7 +53,7 @@ def _assignee_di(user_ids, issue_ref="pk"):
     )
 
 
-def _workspace_admin_ids(user):
+def _workspace_tempat_admin(user):
     """Workspace tempat `user` admin aktif, kalau aturan membuka tugas privat untuk admin; selain itu kosong."""
     if not aturan.get_bool(PRIVATE_VISIBLE_TO_WORKSPACE_ADMINS):
         return set()
@@ -64,7 +64,7 @@ def _workspace_admin_ids(user):
     )
 
 
-def _admin_workspace_ids(workspace_id):
+def _admin_di_workspace(workspace_id):
     """Id admin aktif workspace ini, kalau aturan membuka tugas privat untuk admin; selain itu kosong."""
     if not aturan.get_bool(PRIVATE_VISIBLE_TO_WORKSPACE_ADMINS):
         return set()
@@ -113,7 +113,7 @@ def syarat_tugas_terlihat(user, prefix=""):
         return syarat
     ref = f"{prefix[:-2]}_id" if prefix else "pk"
     syarat |= Q(**{f"{prefix}created_by_id": user.id}) | Q(_assignee_di([user.id], ref))
-    admin_di = _workspace_admin_ids(user)
+    admin_di = _workspace_tempat_admin(user)
     if admin_di:
         syarat |= Q(**{f"{prefix}workspace_id__in": admin_di})
     atasan_pembuat = aturan.get_bool(PRIVATE_VISIBLE_TO_CREATOR_SUPERIOR)
@@ -144,13 +144,13 @@ def boleh_lihat_tugas(issue, user):
     )
     if user.id in assignee:
         return True
-    if str(user.id) in _admin_workspace_ids(issue.workspace_id):
+    if str(user.id) in _admin_di_workspace(issue.workspace_id):
         return True
     atasan_pembuat = issue.created_by_id is not None and aturan.get_bool(PRIVATE_VISIBLE_TO_CREATOR_SUPERIOR)
     if not assignee and not atasan_pembuat:
         return False
     bawahan = _bawahan_ids(user.id, issue.workspace_id, issue.project_id)
-    return bool(assignee & bawahan) or (atasan_pembuat and issue.created_by_id in bawahan)
+    return bool(assignee & bawahan) or (atasan_pembuat and str(issue.created_by_id) in {str(b) for b in bawahan})
 
 
 def tugas_tersembunyi_ids(issue_ids, user):
@@ -185,7 +185,7 @@ def penonton_tugas_ids(issue, kandidat_ids):
         assignee
         | {str(issue.created_by_id)}
         | {str(u) for u in super_admin_user_ids()}
-        | _admin_workspace_ids(issue.workspace_id)
+        | _admin_di_workspace(issue.workspace_id)
     )
     # Atasan pembuat dihitung lewat `bawahan` yang sama dengan atasan assignee.
     diawasi = set(assignee)
