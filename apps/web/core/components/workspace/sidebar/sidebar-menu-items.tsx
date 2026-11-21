@@ -10,10 +10,10 @@ import { Ellipsis } from "lucide-react";
 import { Disclosure, Transition } from "@headlessui/react";
 // plane imports
 import {
+  PARADISE_TOP_NAV_KEYS,
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS,
   WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS,
   WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS_LINKS,
-  WORKSPACE_SIDEBAR_STATIC_PINNED_NAVIGATION_ITEMS_LINKS,
 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { ChevronRightIcon } from "@plane/propel/icons";
@@ -29,6 +29,11 @@ import {
 } from "@/hooks/use-navigation-preferences";
 // plane-web imports
 import { SidebarItem } from "@/plane-web/components/workspace/sidebar/sidebar-item";
+
+// Chat dan Pengumuman sudah ada di grup atas, bukan di grup Workspace.
+const WORKSPACE_GROUP_ITEMS = WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS.filter(
+  (item) => !PARADISE_TOP_NAV_KEYS.includes(item.key)
+);
 
 export const SidebarMenuItems = observer(function SidebarMenuItems() {
   // routers
@@ -84,8 +89,13 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
     // Sort personal items by sort_order
     personalItems.sort((a, b) => a.sort_order - b.sort_order);
 
+    // Chat dan Pengumuman ikut grup atas (Home, Drafts, ...), di atas grup Workspace.
+    const topItems = WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS.filter((item) =>
+      PARADISE_TOP_NAV_KEYS.includes(item.key)
+    );
+
     // Merge static items with sorted personal items
-    return [...items, ...personalItems];
+    return [...items, ...personalItems, ...topItems];
   }, [personalPreferences]);
 
   const sortedNavigationItems = useMemo(
@@ -93,7 +103,7 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
       // Peringatan LAMA soal efisiensi, bukan dari perubahan ini. Gerbang oxlint memakai --deny-warnings
       // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
       // oxlint-disable-next-line no-map-spread
-      WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS.map((item) => {
+      WORKSPACE_GROUP_ITEMS.map((item) => {
         const preference = workspacePreferences.items[item.key];
         return {
           ...item,
@@ -160,12 +170,7 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
           {isWorkspaceMenuOpen && (
             <Disclosure.Panel as="div" className="flex flex-col gap-0.5" static>
               <>
-                {WORKSPACE_SIDEBAR_STATIC_PINNED_NAVIGATION_ITEMS_LINKS.map((item, _index) => (
-                  // Peringatan LAMA, bukan dari perubahan ini. Memakai indeks sebagai key memang rapuh saat daftarnya diurut ulang, tapi memperbaikinya berarti mengubah logika upstream yang bukan urusan perbaikan aria-label ini. Gerbang oxlint memakai --deny-warnings
-                  // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
-                  // oxlint-disable-next-line react/no-array-index-key
-                  <SidebarItem key={`static_${_index}`} item={item} />
-                ))}
+                {/* Item "Departments" (projects) tidak lagi di grup ini: daftar departemen di bawahnya sudah memuatnya. */}
                 {sortedNavigationItems.map((item, _index) => (
                   // Peringatan LAMA, bukan dari perubahan ini. Memakai indeks sebagai key memang rapuh saat daftarnya diurut ulang, tapi memperbaikinya berarti mengubah logika upstream yang bukan urusan perbaikan aria-label ini. Gerbang oxlint memakai --deny-warnings
                   // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.

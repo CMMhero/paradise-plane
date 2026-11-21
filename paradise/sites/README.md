@@ -1,33 +1,33 @@
-# Situs lain di proxy ini
+# Other sites on this proxy
 
-Proxy Caddy server ini juga melayani situs yang bukan Paradise Task Tracker,
-misalnya `cipl-saipem.paradiseperkasa.com`. Satu situs, satu berkas
-`<nama>.caddy` di folder ini. `apps/proxy/Caddyfile.ce` mengimpor semuanya
-lewat `import /etc/caddy/sites/*.caddy`.
+This server's Caddy proxy also serves sites that aren't Paradise Task Tracker,
+for example `cipl-saipem.paradiseperkasa.com`. One site, one `<name>.caddy` file
+in this folder. `apps/proxy/Caddyfile.ce` imports them all with
+`import /etc/caddy/sites/*.caddy`.
 
-Isi berkasnya blok situs Caddy biasa. Tidak perlu baris `tls`: opsi global
-proxy sudah memakai `acme_dns` untuk semua situs, jadi situs baru cukup punya
-CNAME `_acme-challenge.<nama>` ke akun acme-dns yang sama
-(`HTTPS & Sertifikat` di vault).
+A file holds an ordinary Caddy site block. No `tls` line is needed. The proxy's
+global options already use `acme_dns` for every site, so a new site only needs a
+`_acme-challenge.<name>` CNAME pointing to the same acme-dns account
+(`HTTPS & Sertifikat` in the vault).
 
-## Memasang atau mengubah situs
+## Installing or changing a site
 
 ```bash
 cp cipl-saipem.caddy ~/paradise-app/paradise/sites/
 docker exec proxy caddy reload --config /etc/caddy/Caddyfile
 ```
 
-`caddy reload` memeriksa seluruh konfigurasi dulu. Kalau isinya salah, reload
-ditolak dan proxy tetap memakai yang lama. Tidak ada container yang dibuat ulang
-dan tidak ada sambungan yang putus.
+`caddy reload` validates the whole configuration first. If the content is wrong,
+the reload is rejected and the proxy keeps using the old one. No container is
+recreated and no connection drops.
 
-## Yang tidak boleh
+## What not to do
 
-Jangan menempelkan baris `import` atau blok situs ke `/etc/caddy/Caddyfile` di
-container yang sedang berjalan. `paradise/bin/deploy.sh` membandingkan isi berkas
-itu dengan yang ada di image; kalau berbeda, deploy berikutnya membuat ulang
-SEMUA service dan tempelan itu hilang.
+Don't paste an `import` line or a site block into `/etc/caddy/Caddyfile` in the
+running container. `paradise/bin/deploy.sh` compares that file's content with the
+one in the image. If they differ, the next deploy recreates ALL services and the
+pasted lines are lost.
 
-Berkas `*.caddy` di sini diabaikan git (`.gitignore`), jadi `git pull` dan
-`deploy.sh` tidak menyentuhnya. Folder lain bisa dipakai dengan
-`PROXY_SITES_DIR` di `.env`.
+The `*.caddy` files here are ignored by git (`.gitignore`), so `git pull` and
+`deploy.sh` don't touch them. Another folder can be used with `PROXY_SITES_DIR`
+in `.env`.

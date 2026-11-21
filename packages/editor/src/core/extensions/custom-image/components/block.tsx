@@ -7,6 +7,7 @@
 import { NodeSelection } from "@tiptap/pm/state";
 import React, { useRef, useState, useCallback, useLayoutEffect, useEffect } from "react";
 // plane imports
+import { useImageGallery } from "@plane/propel/image-gallery";
 import { cn } from "@plane/utils";
 // local imports
 import { ECustomImageAttributeNames } from "../types";
@@ -17,6 +18,9 @@ import { ImageToolbarRoot } from "./toolbar";
 import { ImageUploadStatus } from "./upload-status";
 
 const MIN_SIZE = 100;
+
+// No app sets `storage.utility.isTouchDevice`, so ask the pointer directly.
+const isCoarsePointer = () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
 type CustomImageBlockProps = CustomImageNodeViewProps & {
   editorContainer: HTMLDivElement | null;
@@ -67,6 +71,7 @@ export function CustomImageBlock(props: CustomImageBlockProps) {
   const [hasTriedRestoringImageOnce, setHasTriedRestoringImageOnce] = useState(false);
   // extension options
   const isTouchDevice = !!(editor.storage.utility as { isTouchDevice?: boolean } | undefined)?.isTouchDevice;
+  const gallery = useImageGallery();
 
   const updateAttributesSafely = useCallback(
     (attributes: Partial<TCustomImageAttributes>, errorMessage: string) => {
@@ -135,6 +140,7 @@ export function CustomImageBlock(props: CustomImageBlockProps) {
 
   // for real time resizing
   useLayoutEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- mirrors the node attrs the editor changes (undo, collab) into the local size before paint
     setSize((prevSize) => ({
       ...prevSize,
       width: ensurePixelString(nodeWidth) ?? "35%",
@@ -198,9 +204,12 @@ export function CustomImageBlock(props: CustomImageBlockProps) {
   const handleImageMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (isTouchDevice) {
+      // A tap on a touch screen opens the image full screen (handleImageClick);
+      // selecting the node would only paint the blue highlight over it.
+      if (isTouchDevice || isCoarsePointer()) {
         e.preventDefault();
         editor.commands.blur();
+        return;
       }
       const pos = getPos();
       if (pos === undefined) return;
@@ -208,6 +217,24 @@ export function CustomImageBlock(props: CustomImageBlockProps) {
       editor.view.dispatch(editor.state.tr.setSelection(nodeSelection));
     },
     [editor, getPos, isTouchDevice]
+  );
+
+  // Same gallery the "full screen" toolbar button opens on desktop.
+  const handleImageClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isTouchDevice && !isCoarsePointer()) return;
+      // a tap on the resize handle or the toolbar keeps doing its own thing
+      if (e.target instanceof Element && e.target.closest("[data-image-gallery-src]")) return;
+      const container = containerRef.current;
+      const item = container?.querySelector("[data-image-gallery-src]");
+      if (!item) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // same fallback as the toolbar button when no gallery wraps the editor
+      if (!gallery?.open(item, container) && resolvedImageSrc)
+        window.open(resolvedImageSrc, "_blank", "noopener,noreferrer");
+    },
+    [gallery, isTouchDevice, resolvedImageSrc]
   );
 
   const isDuplicating = isImageDuplicating(status);
@@ -239,6 +266,8 @@ export function CustomImageBlock(props: CustomImageBlockProps) {
         ref={containerRef}
         className="group/image-component relative inline-block max-w-full"
         onMouseDown={handleImageMouseDown}
+        role="presentation"
+        onClick={handleImageClick}
         style={{
           width: size.width,
           ...(size.aspectRatio && { aspectRatio: size.aspectRatio }),
@@ -333,6 +362,7 @@ export function CustomImageBlock(props: CustomImageBlockProps) {
                 }
               )}
             />
+            {/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- pointer-only drag handle, resizing has no keyboard equivalent */}
             <div
               className={cn(
                 "absolute bottom-0 size-4 translate-y-1/2 rounded-full border-2 border-white bg-accent-primary transition-opacity duration-100 ease-in-out",

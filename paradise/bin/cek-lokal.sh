@@ -14,7 +14,7 @@
 # pre-push
 #   - `turbo check:format check:lint check:types --affected`, sama dengan CI.
 #   - versi di apps/api/package.json wajib punya release_notes/<versi>.json dan
-#     `### Versi <versi>` di CHANGELOG.md, persis yang ditolak rilis.sh.
+#     `### Version <versi>` di CHANGELOG.md, persis yang ditolak rilis.sh.
 #
 # Lewati sekali (darurat): PARADISE_LEWATI_CEK=1 git commit ...
 set -uo pipefail
@@ -68,7 +68,7 @@ cek_catatan_rilis() {
   versi=$(grep -m1 '"version"' apps/api/package.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
   [ -f "apps/api/plane/release_notes/$versi.json" ] ||
     merah "apps/api/plane/release_notes/$versi.json tidak ada (kanal Changelog butuh ini)"
-  grep -q "^### Versi $versi\b" CHANGELOG.md ||
+  grep -q "^### \(Versi\|Version\) $versi\b" CHANGELOG.md ||
     merah "CHANGELOG.md tidak punya '### Versi $versi'"
 }
 
