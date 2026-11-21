@@ -16,7 +16,8 @@
   departemen di cabangnya, dengan alasan yang sama dengan direktur di bawah.
 * Direktur (tanpa penempatan) tidak diikutkan otomatis: ia menjangkau semua unit,
   dan dua puluh kanal yang menyala sekaligus untuk satu orang hanya mengajarinya
-  membisukan semuanya.
+  membisukan semuanya. Super Admin bisa menyalakannya di God Mode
+  (`CHAT_LEADERS_JOIN_UNIT_CHANNELS`): Direktur dan Sekretaris lalu ikut semua kanal unit.
 
 Satu-satunya sumber kebenaran adalah `JabatanOrganisasi`, sama dengan jangkauan
 project (KEP-29). Tidak ada tombol undang/keluarkan: kanal ini `sistem=True`,
@@ -48,7 +49,9 @@ import logging
 from django.utils import timezone
 
 from plane.db.models import Cabang, Departemen, Divisi, JabatanOrganisasi, Langganan, Ruang
-from plane.db.models.hierarki import TINGKAT_MANAGER
+from plane.db.models.hierarki import TINGKAT_MANAGER, TINGKAT_SEKRETARIS
+from plane.utils import aturan
+from plane.utils.aturan.area_obrolan import CHAT_LEADERS_JOIN_UNIT_CHANNELS
 from plane.utils.kanal_sistem import _ambil_atau_buat, anggota_layak
 from plane.utils.obrolan_siaran import siarkan
 
@@ -107,6 +110,17 @@ def _anggota_per_unit(workspace_id) -> tuple:
     return per_cabang, per_divisi, per_dept
 
 
+def _pemimpin_organisasi(workspace_id) -> set:
+    """Direktur dan Sekretaris yang ikut SEMUA kanal unit, kalau God Mode menyalakannya."""
+    if not aturan.get_bool(CHAT_LEADERS_JOIN_UNIT_CHANNELS):
+        return set()
+    return set(
+        JabatanOrganisasi.objects.filter(workspace_id=workspace_id, tingkat__gte=TINGKAT_SEKRETARIS).values_list(
+            "member_id", flat=True
+        )
+    )
+
+
 def _pastikan_ruang(workspace_id, kunci, nama, topik):
     """Ruang unit ini; nama ikut diperbarui kalau unitnya diganti nama di God Mode."""
     nama = (nama or "")[:BATAS_NAMA]
@@ -156,7 +170,8 @@ def _sinkron(workspace_id, hanya_user=None) -> int:
         return 0
 
     per_cabang, per_divisi, per_dept = _anggota_per_unit(workspace_id)
-    semua = set().union(*per_cabang.values(), *per_divisi.values(), *per_dept.values())
+    pemimpin = _pemimpin_organisasi(workspace_id)
+    semua = set().union(*per_cabang.values(), *per_divisi.values(), *per_dept.values(), pemimpin)
     layak = anggota_layak(workspace_id, semua) if semua else set()
 
     berubah = 0
@@ -164,15 +179,15 @@ def _sinkron(workspace_id, hanya_user=None) -> int:
     for cab_id, nama in cabang:
         ruang = _pastikan_ruang(workspace_id, kunci_cabang(cab_id), nama, TOPIK_CABANG)
         hidup.add(ruang.id)
-        berubah += _samakan_anggota(ruang, per_cabang.get(cab_id, set()) & layak, hanya_user)
+        berubah += _samakan_anggota(ruang, (per_cabang.get(cab_id, set()) | pemimpin) & layak, hanya_user)
     for div_id, nama in divisi:
         ruang = _pastikan_ruang(workspace_id, kunci_divisi(div_id), nama, TOPIK_DIVISI)
         hidup.add(ruang.id)
-        berubah += _samakan_anggota(ruang, per_divisi.get(div_id, set()) & layak, hanya_user)
+        berubah += _samakan_anggota(ruang, (per_divisi.get(div_id, set()) | pemimpin) & layak, hanya_user)
     for dept_id, nama in departemen:
         ruang = _pastikan_ruang(workspace_id, kunci_departemen(dept_id), nama, TOPIK_DEPARTEMEN)
         hidup.add(ruang.id)
-        berubah += _samakan_anggota(ruang, per_dept.get(dept_id, set()) & layak, hanya_user)
+        berubah += _samakan_anggota(ruang, (per_dept.get(dept_id, set()) | pemimpin) & layak, hanya_user)
 
     # Unit yang sudah dihapus: kanalnya dikosongkan, riwayatnya disimpan.
     for ruang in Ruang.objects.filter(workspace_id=workspace_id, sistem=True).exclude(id__in=hidup):

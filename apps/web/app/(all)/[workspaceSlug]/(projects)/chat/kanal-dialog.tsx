@@ -18,6 +18,7 @@ import { Checkbox, EModalPosition, EModalWidth, Input, ModalCore } from "@plane/
 import { cn, renderFormattedDate } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
+import { useAturan } from "@/hooks/use-aturan";
 // services
 import { ChatService, type TRuang } from "@/services/chat.service";
 
@@ -32,8 +33,9 @@ type TDialogBuatKanalProps = {
 
 /** Dialog buat kanal. Memakai ModalCore seperti modal lain di aplikasi, jadi
  * Escape, klik di luar, dan fokus awal ke kotak nama sudah diurus Headless UI. */
-export function DialogBuatKanal({ isOpen, onClose, onBuat }: TDialogBuatKanalProps) {
+export const DialogBuatKanal = observer(function DialogBuatKanal({ isOpen, onClose, onBuat }: TDialogBuatKanalProps) {
   const { t } = useTranslation();
+  const { get } = useAturan();
   const [nama, setNama] = useState("");
   const [privat, setPrivat] = useState(false);
   const [membuat, setMembuat] = useState(false);
@@ -63,7 +65,7 @@ export function DialogBuatKanal({ isOpen, onClose, onBuat }: TDialogBuatKanalPro
             type="text"
             value={nama}
             onChange={(e) => setNama(e.target.value)}
-            maxLength={80}
+            maxLength={get("CHAT_CHANNEL_NAME_MAX")}
             placeholder={t("chat_ui.channel_name_placeholder")}
             aria-label={t("chat_ui.channel_name_placeholder")}
             className="w-full text-14"
@@ -84,7 +86,7 @@ export function DialogBuatKanal({ isOpen, onClose, onBuat }: TDialogBuatKanalPro
       </form>
     </ModalCore>
   );
-}
+});
 
 type TDialogJelajahKanalProps = {
   isOpen: boolean;

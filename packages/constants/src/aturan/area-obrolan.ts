@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Cermin aturan `web=True` di apps/api/plane/utils/aturan/area_obrolan.py. Belum ada.
+ * Cermin aturan `web=True` di apps/api/plane/utils/aturan/area_obrolan.py.
  */
 
-import type { TAturanWebDef } from "./jenis";
+import { angkaWeb } from "./jenis";
 
-export const ATURAN_WEB_OBROLAN: Record<never, TAturanWebDef<unknown, unknown>> = {};
+export const ATURAN_WEB_OBROLAN = {
+  CHAT_CHANNEL_NAME_MAX: angkaWeb(80),
+};

@@ -6,7 +6,7 @@
 """Quick link yang dipasang admin untuk semua orang atau divisi/departemen tertentu.
 
     GET    /api/workspaces/<slug>/quick-links/shared/
-    POST   /api/workspaces/<slug>/quick-links/shared/            (admin)
+    POST   /api/workspaces/<slug>/quick-links/shared/            (admin, atau jenjang di God Mode)
     PATCH  /api/workspaces/<slug>/quick-links/shared/<id>/       (admin)
     DELETE /api/workspaces/<slug>/quick-links/shared/<id>/       (admin)
 
@@ -174,7 +174,7 @@ class QuickLinkBersamaEndpoint(BaseAPIView):
     def post(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
         if not boleh_kelola_bersama(request.user, workspace.id):
-            return Response({"error": "Only workspace admins can add shared links."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "You are not allowed to add shared links."}, status=status.HTTP_403_FORBIDDEN)
         nilai, galat = self._baca(request.data, workspace.id)
         if galat:
             return Response({"error": galat}, status=status.HTTP_400_BAD_REQUEST)
@@ -193,7 +193,7 @@ class QuickLinkBersamaEndpoint(BaseAPIView):
         workspace = Workspace.objects.get(slug=slug)
         if not boleh_kelola_bersama(request.user, workspace.id):
             return Response(
-                {"error": "Only workspace admins can change shared links."}, status=status.HTTP_403_FORBIDDEN
+                {"error": "You are not allowed to change shared links."}, status=status.HTTP_403_FORBIDDEN
             )
         link = (
             QuickLinkBersama.objects.filter(workspace=workspace, pk=pk).prefetch_related("departemen", "divisi").first()
@@ -217,7 +217,7 @@ class QuickLinkBersamaEndpoint(BaseAPIView):
         workspace = Workspace.objects.get(slug=slug)
         if not boleh_kelola_bersama(request.user, workspace.id):
             return Response(
-                {"error": "Only workspace admins can remove shared links."}, status=status.HTTP_403_FORBIDDEN
+                {"error": "You are not allowed to remove shared links."}, status=status.HTTP_403_FORBIDDEN
             )
         link = QuickLinkBersama.objects.filter(workspace=workspace, pk=pk).first()
         if link is None:

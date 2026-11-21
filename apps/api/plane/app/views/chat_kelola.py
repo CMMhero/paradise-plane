@@ -35,7 +35,7 @@ from plane.utils.kanal_sistem import adalah_admin_workspace
 from plane.utils.obrolan_siaran import siarkan
 
 from .base import BaseAPIView
-from .chat import BATAS_NAMA_RUANG
+from .chat import batas_nama_ruang
 
 logger = logging.getLogger("plane.api")
 
@@ -134,9 +134,10 @@ class ChatKelolaRuangEndpoint(BaseAPIView):
             nama = (request.data.get("nama") or "").strip()
             if not nama:
                 return Response({"error": "Nama kanal wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
-            if len(nama) > BATAS_NAMA_RUANG:
+            batas_nama = batas_nama_ruang()
+            if len(nama) > batas_nama:
                 return Response(
-                    {"error": "Nama kanal maksimum %s karakter." % BATAS_NAMA_RUANG},
+                    {"error": "Nama kanal maksimum %s karakter." % batas_nama},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             kembar = (

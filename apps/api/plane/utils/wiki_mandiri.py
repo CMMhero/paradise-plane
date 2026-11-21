@@ -46,6 +46,13 @@ from django.db.models import Q
 from plane.db.models.hierarki import TINGKAT_SUPERVISOR, menjangkau_seluruh_organisasi
 from plane.utils import aturan
 from plane.utils.aturan.area_visibilitas import HALAMAN_ADMIN_WIKI, HALAMAN_PIMPINAN_DIVISI, PRIVATE_PAGE_OVERSEERS
+from plane.utils.aturan.area_obrolan import (
+    ADMIN,
+    UNGGAH_PENGELOLA,
+    WIKI_DIRECTORS_MANAGE_ALL,
+    WIKI_GENERAL_UPLOAD,
+    WIKI_UNIT_UPLOAD,
+)
 
 _MAX_DEPTH = 50
 _ROLE_MEMBER = 15
@@ -97,6 +104,8 @@ class PenilaiWiki:
         # Wilayah kelola (KEP-95). Baris divisi ditulis `setel_penempatan` hanya
         # untuk manager ke atas, tapi jenjangnya tetap diperiksa di sini supaya
         # baris lama sebelum KEP-76 tidak diam-diam memberi hak kelola.
+        # Kuasa Direktur atas semua folder unit bisa dimatikan di God Mode (WIKI_DIRECTORS_MANAGE_ALL).
+        self.direktur_kelola = self.direktur and aturan.get_bool(WIKI_DIRECTORS_MANAGE_ALL)
         self.divisi_pimpin = set()
         if self.divisi:
             from plane.db.models import JabatanOrganisasi  # noqa: PLC0415
@@ -149,7 +158,7 @@ class PenilaiWiki:
     @property
     def punya_wilayah(self):
         """Mengelola setidaknya satu folder di luar hak admin."""
-        return self.direktur or bool(self.divisi_pimpin or self.departemen_awasi or self.editor_di_mana_saja)
+        return self.direktur_kelola or bool(self.divisi_pimpin or self.departemen_awasi or self.editor_di_mana_saja)
 
     def kenali(self, folder):
         """Masukkan folder yang baru dibuat di permintaan ini ke peta induk."""
@@ -206,7 +215,7 @@ class PenilaiWiki:
         if not self.punya_wilayah:
             return False
         for simpul in self._jalur(folder_id):
-            if self.direktur and (simpul["divisi_id"] or simpul["departemen_id"]):
+            if self.direktur_kelola and (simpul["divisi_id"] or simpul["departemen_id"]):
                 return True
             if simpul["divisi_id"] and str(simpul["divisi_id"]) in self.divisi_pimpin:
                 return True
@@ -254,9 +263,12 @@ class PenilaiWiki:
         unit = self.unit(folder_id)
         if unit is None:
             return False
+        # Admin dan pengelola sudah lolos di atas; sisanya ikut pilihan God Mode (bawaan: semua anggota).
         if unit["umum"]:
-            return self.anggota
-        if self.direktur:
+            return self.anggota and aturan.get_choice(WIKI_GENERAL_UPLOAD) != ADMIN
+        if aturan.get_choice(WIKI_UNIT_UPLOAD) == UNGGAH_PENGELOLA:
+            return False
+        if self.direktur_kelola:
             return True
         if unit["departemen_id"]:
             return str(unit["departemen_id"]) in self.departemen_jangkau

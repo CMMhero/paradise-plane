@@ -32,13 +32,13 @@ import { urutkanMenurutKehadiran } from "@/lib/kehadiran";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
+import { useAturan } from "@/hooks/use-aturan";
 import { useKonfirmasi } from "@/hooks/use-konfirmasi";
 // services
 import { ChatService } from "@/services/chat.service";
 import { PenulisPengumuman } from "./penulis-pengumuman";
 
 const chatService = new ChatService();
-const BATAS_NAMA = 80;
 const BATAS_TOPIK = 255;
 /** Hasil pemilih undangan dibatasi supaya daftar 90 orang tidak menenggelamkan dialog. */
 const MAKS_CALON = 8;
@@ -71,6 +71,7 @@ export const DialogSetelanKanal = observer(function DialogSetelanKanal({
     workspace: { workspaceMemberIds, getWorkspaceMemberDetails },
   } = useMember();
   const { minta, dialog } = useKonfirmasi();
+  const { get } = useAturan();
 
   const aktif = isOpen && ruangId;
   const { data: detail, mutate: muatDetail } = useSWR(
@@ -244,7 +245,7 @@ export const DialogSetelanKanal = observer(function DialogSetelanKanal({
                   <Input
                     value={nama}
                     onChange={(e) => setNama(e.target.value)}
-                    maxLength={BATAS_NAMA}
+                    maxLength={get("CHAT_CHANNEL_NAME_MAX")}
                     className="w-full text-14"
                   />
                 </label>
