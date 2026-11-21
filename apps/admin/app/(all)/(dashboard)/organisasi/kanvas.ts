@@ -10,6 +10,8 @@
  * - Seret di mana saja (termasuk di atas kotak) untuk menggeser. Seretan baru
  *   dianggap seretan sesudah lewat AMBANG_SERET piksel, jadi klik biasa pada
  *   kotak tetap membuka detail; klik yang mengakhiri seretan ditelan.
+ * - Dua jari (layar sentuh): cubit = zoom di sekitar titik tengah, sekaligus menggeser.
+ *   Satu jari menggeser. Hanya viewport kanvas yang `touch-action: none`.
  * - Scroll biasa menggulir halaman; Ctrl/Cmd + scroll (dan pinch trackpad) = zoom ke kursor.
  * - Selama admin belum menyentuh kanvas, isi selalu dipaskan ulang saat ukuran
  *   berubah (data dimuat, panel kiri dilipat, layar penuh).
@@ -39,10 +41,39 @@ const KEPEKAAN_RODA = 0.0015;
 /** Elemen bertanda ini tidak memulai seretan (tombol menu, toolbar). */
 export const ATRIBUT_ABAIKAN = "data-kanvas-abaikan";
 
-type TTampilan = { x: number; y: number; k: number };
+export type TTampilan = { x: number; y: number; k: number };
 type TSeret = { id: number; x0: number; y0: number; tx: number; ty: number; aktif: boolean };
+type TTitik = { x: number; y: number };
+type TCubit = { awal: TTampilan; jarak: number; tengah: TTitik };
 
-const batasi = (k: number): number => Math.min(ZOOM_MAKS, Math.max(ZOOM_MIN, k));
+export const batasi = (k: number): number => Math.min(ZOOM_MAKS, Math.max(ZOOM_MIN, k));
+
+/** Zoom dengan faktor di sekitar titik (koordinat viewport); titik itu tetap diam di layar. */
+export function zoomDiTitik(t: TTampilan, faktor: number, cx: number, cy: number): TTampilan {
+  const k = batasi(t.k * faktor);
+  const r = k / t.k;
+  return { k, x: cx - (cx - t.x) * r, y: cy - (cy - t.y) * r };
+}
+
+/**
+ * Cubit dua jari: skala mengikuti perubahan jarak jari, dan titik isi yang tadinya
+ * di tengah cubitan mengikuti tengah cubitan sekarang (jadi cubit sekaligus menggeser).
+ */
+export function tampilanCubit(
+  awal: TTampilan,
+  jarakAwal: number,
+  tengahAwal: TTitik,
+  jarak: number,
+  tengah: TTitik
+): TTampilan {
+  const k = batasi(awal.k * (jarakAwal > 0 ? jarak / jarakAwal : 1));
+  const px = (tengahAwal.x - awal.x) / awal.k;
+  const py = (tengahAwal.y - awal.y) / awal.k;
+  return { k, x: tengah.x - px * k, y: tengah.y - py * k };
+}
+
+const jarakDua = (a: TTitik, b: TTitik) => Math.hypot(a.x - b.x, a.y - b.y);
+const tengahDua = (a: TTitik, b: TTitik): TTitik => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
 export function useKanvasGeser() {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -52,6 +83,13 @@ export function useKanvasGeser() {
   const seret = useRef<TSeret | null>(null);
   const telanKlik = useRef(false);
   const sudahDisentuh = useRef(false);
+  // Semua jari/kursor yang sedang menekan kanvas; dua jari = cubit zoom.
+  const titik = useRef(new Map<number, TTitik>());
+  const cubit = useRef<TCubit | null>(null);
+  const tampilanRef = useRef(tampilan);
+  useEffect(() => {
+    tampilanRef.current = tampilan;
+  }, [tampilan]);
 
   const pas = useCallback(() => {
     const vp = viewportRef.current;
@@ -72,11 +110,7 @@ export function useKanvasGeser() {
     const cx = px ?? vp.clientWidth / 2;
     const cy = py ?? vp.clientHeight / 2;
     sudahDisentuh.current = true;
-    setTampilan((t) => {
-      const k = batasi(t.k * faktor);
-      const r = k / t.k;
-      return { k, x: cx - (cx - t.x) * r, y: cy - (cy - t.y) * r };
-    });
+    setTampilan((t) => zoomDiTitik(t, faktor, cx, cy));
   }, []);
 
   const geserOleh = useCallback((dx: number, dy: number) => {
@@ -135,10 +169,39 @@ export function useKanvasGeser() {
     telanKlik.current = false;
     if (e.button !== 0) return;
     if ((e.target as HTMLElement).closest(`[${ATRIBUT_ABAIKAN}]`)) return;
+    titik.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (titik.current.size === 2) {
+      const [a, b] = [...titik.current.entries()];
+      const rect = e.currentTarget.getBoundingClientRect();
+      const tengah = tengahDua(a[1], b[1]);
+      cubit.current = {
+        awal: tampilanRef.current,
+        jarak: jarakDua(a[1], b[1]),
+        tengah: { x: tengah.x - rect.left, y: tengah.y - rect.top },
+      };
+      // Dua jari bukan klik dan bukan seretan satu jari.
+      seret.current = null;
+      sudahDisentuh.current = true;
+      setSedangSeret(true);
+      e.currentTarget.setPointerCapture(a[0]);
+      e.currentTarget.setPointerCapture(b[0]);
+      return;
+    }
+    if (titik.current.size > 2) return;
     seret.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, tx: tampilan.x, ty: tampilan.y, aktif: false };
   };
 
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (titik.current.has(e.pointerId)) titik.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const c = cubit.current;
+    if (c) {
+      const [a, b] = [...titik.current.values()];
+      if (!a || !b) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const t = tengahDua(a, b);
+      setTampilan(tampilanCubit(c.awal, c.jarak, c.tengah, jarakDua(a, b), { x: t.x - rect.left, y: t.y - rect.top }));
+      return;
+    }
     const s = seret.current;
     if (!s || s.id !== e.pointerId) return;
     const dx = e.clientX - s.x0;
@@ -154,6 +217,21 @@ export function useKanvasGeser() {
   };
 
   const akhiriSeret = (e: PointerEvent<HTMLDivElement>) => {
+    const ada = titik.current.delete(e.pointerId);
+    if (cubit.current) {
+      if (!ada || titik.current.size >= 2) return;
+      cubit.current = null;
+      telanKlik.current = true;
+      // Satu jari yang tersisa lanjut menggeser dari posisinya sekarang.
+      const [sisa] = [...titik.current.entries()];
+      if (sisa) {
+        const t = tampilanRef.current;
+        seret.current = { id: sisa[0], x0: sisa[1].x, y0: sisa[1].y, tx: t.x, ty: t.y, aktif: true };
+      } else {
+        setSedangSeret(false);
+      }
+      return;
+    }
     const s = seret.current;
     if (!s || s.id !== e.pointerId) return;
     if (s.aktif) {

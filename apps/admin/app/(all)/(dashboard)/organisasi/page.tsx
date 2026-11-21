@@ -292,7 +292,7 @@ export default function OrganisasiPage() {
     <PageWrapper header={header}>
       <MenuTabs menu="people" />
       <div className="space-y-6">
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-11">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
           <StatCard label={s.org.branch.stat} value={data.cabang.length} />
           <StatCard label={s.org.stat_division} value={data.divisi.length} />
           <StatCard label={s.org.stat_department} value={totalDepartemen} />
