@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
- * Cermin aturan `web=True` di apps/api/plane/utils/aturan/area_keputusan.py. Belum ada.
+ * Cermin aturan `web=True` di apps/api/plane/utils/aturan/area_keputusan.py.
  */
 
-import type { TAturanWebDef } from "./jenis";
+import { angkaWeb } from "./jenis";
 
-export const ATURAN_WEB_KEPUTUSAN: Record<never, TAturanWebDef<unknown, unknown>> = {};
+export const ATURAN_WEB_KEPUTUSAN = {
+  CROSS_DIVISION_NOTE_MAX: angkaWeb(2000),
+};

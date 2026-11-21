@@ -21,6 +21,7 @@ import { CustomSearchSelect, CustomSelect, Input, Loader, TextArea } from "@plan
 import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 // hooks
+import { useAturan } from "@/hooks/use-aturan";
 import { useProject } from "@/hooks/store/use-project";
 // services
 import {
@@ -246,6 +247,7 @@ function TabelPermintaan({ baris: daftar, workspaceSlug, tampilkanPeminta = fals
 function TugasLintasDivisiPage() {
   const { t } = useTranslation();
   const { workspaceSlug } = useParams();
+  const batasCatatan = useAturan().get("CROSS_DIVISION_NOTE_MAX");
   // store: divisi asal = divisi tempat SAYA anggota. `joinedProjectIds`
   // menyaring `member_role` dari project store, jadi tidak perlu endpoint baru;
   // project store sudah memuat seluruh divisi workspace beserta peran saya.
@@ -542,14 +544,14 @@ function TugasLintasDivisiPage() {
                     <span className="text-12 font-medium text-secondary">{t("cross_division_ui.note_label")}</span>
                     <TextArea
                       value={catatan}
-                      maxLength={2000}
+                      maxLength={batasCatatan}
                       rows={3}
                       onChange={(e) => setCatatan(e.target.value)}
                       placeholder={t("cross_division_ui.note_placeholder")}
                       className={`${inputClass} ${TINGGI_TIGA_BARIS}`}
                     />
                     <span className="text-11 text-tertiary">
-                      {t("cross_division_ui.char_count", { count: catatan.length, max: 2000 })}
+                      {t("cross_division_ui.char_count", { count: catatan.length, max: batasCatatan })}
                     </span>
                   </label>
 
