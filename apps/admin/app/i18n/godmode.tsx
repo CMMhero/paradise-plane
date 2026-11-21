@@ -647,6 +647,7 @@ const en = {
       stickies: "Stickies",
       drafts: "Drafts",
       quick_links: "Quick links",
+      departments: "Department list",
       views: "Views",
       analytics: "Analytics",
       dashboard_divisi: "Division dashboard",
