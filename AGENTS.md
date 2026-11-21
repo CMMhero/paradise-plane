@@ -70,7 +70,7 @@ Rules:
   minor. Never bump twice at the same level.
 - **A patch only follows a release.** `x.y.1` means `x.y.0` shipped and this
   fixes it. The first version after a big change is always `x.y.0`.
-- **Same pass:** bump, add a dated `### Versi x.y.z` entry at the top of
+- **Same pass:** bump, add a dated `### Version x.y.z` entry at the top of
   `CHANGELOG.md` explaining why that level was chosen, and call out operator
   steps for a minor. After merge, tag `pX.Y.Z` (the `p` prefix keeps our tags
   apart from upstream `vX.Y.Z`).
