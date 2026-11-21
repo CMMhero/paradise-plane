@@ -44,6 +44,8 @@ from collections import defaultdict
 from django.db.models import Q
 
 from plane.db.models.hierarki import TINGKAT_SUPERVISOR, menjangkau_seluruh_organisasi
+from plane.utils import aturan
+from plane.utils.aturan.area_visibilitas import HALAMAN_ADMIN_WIKI, HALAMAN_PIMPINAN_DIVISI, PRIVATE_PAGE_OVERSEERS
 
 _MAX_DEPTH = 50
 _ROLE_MEMBER = 15
@@ -214,14 +216,19 @@ class PenilaiWiki:
 
     def boleh_lihat_halaman_privat(self, departemen_id, divisi_id):
         """Halaman privat project departemen (KEP-95): anggota departemen itu
-        (peran apa pun), manager divisinya, direktur, dan admin (Super Admin)."""
+        (peran apa pun), manager divisinya, direktur, dan admin (Super Admin).
+        Direktur dan manager divisi mengikuti God Mode PRIVATE_PAGE_OVERSEERS."""
         if self.anonim:
             return False
-        if self.admin or self.direktur:
+        if self.admin:
+            return True
+        if self.direktur and aturan.get_choice(PRIVATE_PAGE_OVERSEERS) != HALAMAN_ADMIN_WIKI:
             return True
         if departemen_id and str(departemen_id) in self.departemen:
             return True
-        return bool(divisi_id) and str(divisi_id) in self.divisi_pimpin
+        if not divisi_id or str(divisi_id) not in self.divisi_pimpin:
+            return False
+        return aturan.get_choice(PRIVATE_PAGE_OVERSEERS) == HALAMAN_PIMPINAN_DIVISI
 
 
     def unit(self, folder_id):
@@ -288,7 +295,8 @@ def pengawas_halaman_privat(user, project_id):
     departemen biasa TIDAK ikut, karena di dalam project halaman privat tetap
     milik pemiliknya. Yang lolos hanya admin Wiki (Super Admin / admin
     workspace), direktur, dan manager divisi tempat departemen project ini.
-    Project di luar departemen mana pun: hanya admin Wiki dan direktur.
+    Project di luar departemen mana pun: hanya admin Wiki dan direktur. God Mode
+    PRIVATE_PAGE_OVERSEERS bisa menyempitkannya ke admin Wiki (+ direktur).
     """
     from plane.db.models import DepartemenProject, JabatanOrganisasi, Project  # noqa: PLC0415
     from plane.db.models.hierarki import TINGKAT_MANAGER  # noqa: PLC0415
@@ -301,9 +309,14 @@ def pengawas_halaman_privat(user, project_id):
         return False
     if is_wiki_admin(user, workspace_id):
         return True
+    pengawas = aturan.get_choice(PRIVATE_PAGE_OVERSEERS)
+    if pengawas == HALAMAN_ADMIN_WIKI:
+        return False
     tingkat, _, _ = penempatan_sekarang(workspace_id, user.id)
     if menjangkau_seluruh_organisasi(tingkat):
         return True
+    if pengawas != HALAMAN_PIMPINAN_DIVISI:
+        return False
     divisi_id = (
         DepartemenProject.objects.filter(project_id=project_id, departemen__deleted_at__isnull=True)
         .values_list("departemen__divisi_id", flat=True)

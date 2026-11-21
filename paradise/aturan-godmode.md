@@ -137,6 +137,30 @@ terkunci di kode ke God Mode > Work rules > All rules. Inventarisnya ada di
    cek per paket yang disentuh. Tidak ada migrasi untuk aturan baru (barisnya
    baru dibuat saat Super Admin mengubahnya). Tidak ada env baru (KEP-48).
 
+## Area A: yang sengaja tidak dipindah
+
+- **A1 ambang jangkauan seluruh organisasi (35 atau 40): ditunda.** Angka 35 bukan
+  satu perbandingan, melainkan bentuk data. `db/direktur.py` menjadikan setiap orang
+  jenjang 35 ke atas anggota role 20 di SEMUA project (tidak pernah dicabut),
+  `db/penempatan.py` dan editor God Mode (`menjangkauSeluruhOrganisasi` di
+  apps/admin) menolak memberi sekretaris tempat. Pilihan 40 akan membuat sekretaris
+  tetap admin di semua project, tanpa wewenang mengawasi dan tanpa cara
+  menempatkannya: pelebaran yang menyamar sebagai penyempitan. Butuh keputusan
+  pemilik soal nasib keanggotaan itu (cabut? biarkan?) dan perubahan editor dulu.
+- **A2 cakupan pengawasan per jenjang: ditunda.** `divisi_diawasi` sudah datang dari
+  penempatan (departemen, divisi, cabang); satu-satunya tuas jenjang yang punya
+  alternatif nyata adalah A1 (di atas) dan jenjang penyetuju (APPROVER_MIN_LEVEL,
+  area B). Pilihan bernama lain akan berupa no-op atau memberi wewenang lintas unit
+  yang tidak ada di data. Resolver ini juga milik gerbang area B.
+- **A8 "direktur" di web = 40, di API = 35 ke atas:** dua definisi tetap ada.
+  Teks bantuan setiap aturan menyebut jenjangnya dengan angka, dan
+  DIRECTOR_MENUS_APPLY_TO memilih apakah aturan menu juga berlaku untuk sekretaris.
+- **A11** mengikuti aturan penyetuju (tanpa kunci sendiri), **A12** proyeksi
+  permintaan lintas divisi tetap di kode (batas kebocoran data, KEP-02), **A14**
+  sudah ada di Rules > Projects.
+- **A7** hanya tab: endpoint Analytics dan Division dashboard tetap melayani anggota
+  mana pun. Kalau pemilik ingin itu jadi kontrol akses, API harus menjaganya dulu.
+
 ## Yang belum dipindah
 
 Registri lama (`SAKLAR_BAWAAN`/`_MODUL_BAWAAN`, `SETELAN_ANGKA`/`SETELAN_PILIHAN`,

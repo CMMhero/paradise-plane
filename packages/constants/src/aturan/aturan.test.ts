@@ -17,7 +17,13 @@ import {
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS,
   WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS,
 } from "../workspace";
-import { ATURAN_WEB, DIRECTOR_SIDEBAR_HIDDEN_KEYS, DIRECTOR_SIDEBAR_HIDES_CHOICES, nilaiAturanWeb } from "./index";
+import {
+  ATURAN_WEB,
+  DIRECTOR_SIDEBAR_HIDDEN_KEYS,
+  DIRECTOR_SIDEBAR_HIDES_CHOICES,
+  kpiExtraTabsDitutup,
+  nilaiAturanWeb,
+} from "./index";
 import type { TKunciAturanWeb } from "./index";
 
 const ROOT = new URL("../../../../", import.meta.url);
@@ -129,5 +135,23 @@ describe("DIRECTOR_SIDEBAR_HIDES", () => {
       for (const kunci of DIRECTOR_SIDEBAR_HIDDEN_KEYS[pilihan])
         expect(kunciMenu, `${pilihan}: ${kunci}`).toContain(kunci);
     }
+  });
+});
+
+describe("KPI_EXTRA_TABS", () => {
+  it("bawaan = perilaku sebelum aturannya ada: ditutup hanya untuk Direktur", () => {
+    expect(kpiExtraTabsDitutup(ATURAN_WEB.KPI_EXTRA_TABS.default, true)).toBe(true);
+    expect(kpiExtraTabsDitutup(ATURAN_WEB.KPI_EXTRA_TABS.default, false)).toBe(false);
+  });
+
+  it("pilihan lain membuka untuk Direktur atau menutup untuk semua", () => {
+    expect(kpiExtraTabsDitutup("admins", true)).toBe(false);
+    expect(kpiExtraTabsDitutup("nobody", false)).toBe(true);
+  });
+});
+
+describe("DIRECTOR_MENUS_APPLY_TO", () => {
+  it("bawaan = Direktur (40) saja, sekretaris tidak ikut", () => {
+    expect(ATURAN_WEB.DIRECTOR_MENUS_APPLY_TO.default).toBe("director");
   });
 });
