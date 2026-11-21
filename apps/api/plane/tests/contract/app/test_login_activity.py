@@ -25,7 +25,6 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from plane.authentication.utils.login import user_login
 from plane.bgtasks.login_activity_retention import (
-    AMBANG_PERINGATAN_HARI,
     bersihkan_login_activity,
     hitung_peringatan,
 )
@@ -236,7 +235,7 @@ def test_peringatan_menyala_sebelum_data_hilang(anggota):
     aman = hitung_peringatan()
     assert aman["perlu_peringatan"] is False
 
-    _peristiwa(anggota, RETENSI_HARI - AMBANG_PERINGATAN_HARI + 1)
+    _peristiwa(anggota, RETENSI_HARI - 7 + 1)
     k = hitung_peringatan()
     assert k["perlu_peringatan"] is True
     assert k["akan_dibuang"] == 1

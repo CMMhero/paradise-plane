@@ -23,9 +23,12 @@ from plane.db.models import (
     IssueComment,
     IssueActivity,
     ProjectMember,
+    TINGKAT_MEMBER,
 )
 from django.db import transaction
 from django.db.models import Subquery
+from plane.utils import aturan
+from plane.utils.aturan.area_notifikasi import ALL_MENTION_MIN_LEVEL
 from plane.utils.exception_logger import log_exception
 from plane.utils.preferensi_email import saklar_untuk
 
@@ -180,6 +183,21 @@ def sebut_semua_baru_di_deskripsi(requested_instance, current_instance) -> bool:
 def sebut_semua_baru_di_komentar(new_value, old_value) -> bool:
     """@all muncul di komentar baru/hasil sunting dan belum ada di versi lamanya."""
     return ada_sebut_semua(new_value) and not ada_sebut_semua(old_value)
+
+
+def boleh_sebut_semua(project_id, actor_id) -> bool:
+    """Penulis boleh memberi tahu semua anggota dengan @all (God Mode, ALL_MENTION_MIN_LEVEL).
+
+    Bawaan 10 = siapa pun. Di bawah ambang, @all tetap tertulis tapi tidak ada yang
+    dikabari. Jenjang belum diisi dihitung staf (`tingkat_efektif`).
+    """
+    ambang = aturan.get_int(ALL_MENTION_MIN_LEVEL)
+    if ambang <= TINGKAT_MEMBER:
+        return True
+    from plane.utils.hierarki import tingkat_efektif  # noqa: PLC0415
+
+    workspace_id = Project.objects.filter(pk=project_id).values_list("workspace_id", flat=True).first()
+    return tingkat_efektif(actor_id, workspace_id) >= ambang
 
 
 def get_new_comment_mentions(new_value, old_value):
@@ -339,7 +357,9 @@ def notifications(
             semua_anggota = [str(member) for member in project_members]
             # Hanya yang disebut BERNAMA yang dicatat sebagai IssueMention.
             sebut_tersurat = list(new_mentions)
-            if sebut_semua_baru_di_deskripsi(requested_data, current_instance):
+            if sebut_semua_baru_di_deskripsi(requested_data, current_instance) and boleh_sebut_semua(
+                project_id, actor_id
+            ):
                 new_mentions = list(dict.fromkeys(new_mentions + semua_anggota))
 
             comment_mentions = []
@@ -365,7 +385,9 @@ def notifications(
                         new_value=issue_comment_new_value,
                     )
                     comment_mentions = comment_mentions + new_comment_mentions
-                    if sebut_semua_baru_di_komentar(issue_comment_new_value, issue_comment_old_value):
+                    if sebut_semua_baru_di_komentar(
+                        issue_comment_new_value, issue_comment_old_value
+                    ) and boleh_sebut_semua(project_id, actor_id):
                         comment_mentions = comment_mentions + semua_anggota
                     comment_mentions = saring_sebutan(project_id, comment_mentions)
 
