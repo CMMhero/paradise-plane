@@ -15,7 +15,7 @@ import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useWorkspaceNavigationPreferences } from "@/hooks/use-navigation-preferences";
 import { useInstance } from "@/hooks/store/use-instance";
-import { DIRECTOR_HIDDEN_NAV_KEYS, useIsDirektur } from "@/hooks/use-is-direktur";
+import { useIsDirektur } from "@/hooks/use-is-direktur";
 import { isNavKeyEnabled } from "@/lib/paradise-modules";
 // plane-web imports
 import { ExtendedSidebarItem } from "@/plane-web/components/workspace/sidebar/extended-sidebar-item";
@@ -65,7 +65,7 @@ export const ExtendedAppSidebar = observer(function ExtendedAppSidebar() {
   const { isExtendedSidebarOpened, toggleExtendedSidebar } = useAppTheme();
   const { allowPermissions } = useUserPermissions();
   const { config: instanceConfig } = useInstance();
-  const { isDirektur } = useIsDirektur(workspaceSlug?.toString());
+  const { hiddenNavKeys } = useIsDirektur(workspaceSlug?.toString());
   const { preferences: workspacePreferences, updateWorkspaceItemSortOrder } = useWorkspaceNavigationPreferences();
 
   // derived values
@@ -80,11 +80,7 @@ export const ExtendedAppSidebar = observer(function ExtendedAppSidebar() {
         const hasPermission = allowPermissions(item.access, EUserPermissionsLevel.WORKSPACE, slug);
 
         // Modul yang dimatikan di God Mode > Features tidak ditawarkan untuk dipin.
-        return (
-          hasPermission &&
-          isNavKeyEnabled(instanceConfig, item.key) &&
-          !(isDirektur && DIRECTOR_HIDDEN_NAV_KEYS.includes(item.key))
-        );
+        return hasPermission && isNavKeyEnabled(instanceConfig, item.key) && !hiddenNavKeys.includes(item.key);
       })
         .map((item) => {
           const preference = currentWorkspaceNavigationPreferences?.[item.key];
@@ -103,7 +99,7 @@ export const ExtendedAppSidebar = observer(function ExtendedAppSidebar() {
           return a.sort_order - b.sort_order;
         })
     );
-  }, [workspaceSlug, currentWorkspaceNavigationPreferences, allowPermissions, instanceConfig, isDirektur]);
+  }, [workspaceSlug, currentWorkspaceNavigationPreferences, allowPermissions, instanceConfig, hiddenNavKeys]);
 
   const sortedNavigationItemsKeys = sortedNavigationItems.map((item) => item.key);
 
