@@ -124,6 +124,8 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
   return (
     <div
       className={cn({ "sticky bottom-0 z-[4] bg-surface-1 sm:static": !parentId })}
+      // a draft is not part of the work item yet: keep its images out of the gallery
+      data-image-gallery-ignore
       role="presentation"
       onKeyDown={(e) => {
         if (
