@@ -31,6 +31,9 @@ from rest_framework.response import Response
 
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.db.models import JenisPesan, Langganan, PesanLangsung, Ruang
+from plane.utils import aturan
+from plane.utils.aturan.area_obrolan import CHAT_CALLS_WHO
+from plane.utils.jenjang_aturan import lolos_jenjang
 from plane.utils.obrolan_siaran import siarkan
 
 from .base import BaseAPIView
@@ -100,6 +103,9 @@ class ChatPanggilanLogEndpoint(BaseAPIView):
         ).order_by("-created_at")
 
         if peristiwa == "mulai":
+            # Memulai panggilan: God Mode, CHAT_CALLS_WHO (bawaan: semua anggota ruang).
+            if not lolos_jenjang(request.user, ruang.workspace_id, aturan.get_choice(CHAT_CALLS_WHO)):
+                return Response({"error": "Kamu tidak boleh memulai panggilan."}, status=status.HTTP_403_FORBIDDEN)
             for lama in berlangsung:
                 tutup_log(lama, sekarang)
             muatan = {

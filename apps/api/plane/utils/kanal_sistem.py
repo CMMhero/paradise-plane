@@ -13,7 +13,8 @@ Satu tempat untuk tiga aturan yang harus sama di setiap jalur:
   terakhir itu jaring untuk jalur `bulk_create` (terima undangan) yang tidak
   memancarkan signal.
 * Siapa yang boleh menulis: Changelog hanya sistem, Announcements hanya Super
-  Admin, admin workspace, dan penulis yang mereka izinkan (`PenulisKanal`).
+  Admin, admin workspace, penulis yang mereka izinkan (`PenulisKanal`), dan
+  jenjang yang dipilih di God Mode (`CHAT_ANNOUNCE_POSTERS`, bawaan: tidak ada).
 * Pesan sistem ditulis lewat `kirim_pesan_sistem`, yang juga menggeser
   `pesan_terakhir_pada` dan menyiarkan ke soket, sama seperti jalur kirim biasa.
 
@@ -35,6 +36,9 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.db.models.akun_terhapus import DOMAIN_AKUN_TERHAPUS
+from plane.utils import aturan
+from plane.utils.aturan.area_obrolan import CHAT_ANNOUNCE_POSTERS
+from plane.utils.jenjang_aturan import lolos_jenjang
 from plane.utils.obrolan_siaran import siarkan
 from plane.utils.penulis_kanal import penulis_diizinkan
 
@@ -173,7 +177,11 @@ def boleh_kirim(ruang, user, admin=None) -> bool:
     if ruang.kunci_sistem == KUNCI_PENGUMUMAN:
         if admin is None:
             admin = adalah_admin_workspace(user, ruang.workspace_id)
-        return admin or penulis_diizinkan(user.id, ruang)
+        return (
+            admin
+            or penulis_diizinkan(user.id, ruang)
+            or lolos_jenjang(user, ruang.workspace_id, aturan.get_choice(CHAT_ANNOUNCE_POSTERS), admin=admin)
+        )
     # Kanal divisi/departemen: obrolan biasa antar anggotanya. Yang dikunci cuma
     # keanggotaannya (ikut God Mode), bukan hak menulisnya.
     kunci = ruang.kunci_sistem or ""
