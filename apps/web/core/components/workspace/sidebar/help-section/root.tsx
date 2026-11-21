@@ -48,6 +48,7 @@ export const HelpMenuRoot = observer(function HelpMenuRoot() {
           />
         }
         ariaLabel={t("aria_labels.projects_sidebar.open_help_menu")}
+        customButtonClassName="grid place-items-center sentuh:size-10"
         menuButtonOnClick={() => !isNeedHelpOpen && setIsNeedHelpOpen(true)}
         onMenuClose={() => setIsNeedHelpOpen(false)}
         placement="bottom-end"

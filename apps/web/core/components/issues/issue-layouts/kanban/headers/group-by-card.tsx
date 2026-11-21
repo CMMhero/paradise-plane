@@ -147,7 +147,7 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           <button
             type="button"
             // size-6 (bukan 20px): sasaran klik 24px, WCAG 2.5.8
-            className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover"
+            className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover sentuh:size-10"
             onClick={() => handleCollapsedGroups("group_by", column_id)}
             aria-label={title}
             aria-pressed={verticalAlignPosition}
@@ -164,7 +164,7 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           (renderExistingIssueModal ? (
             <CustomMenu
               customButton={
-                <span className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover">
+                <span className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover sentuh:size-10">
                   <PlusIcon height={14} width={14} strokeWidth={2} />
                 </span>
               }
@@ -189,7 +189,7 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           ) : (
             <button
               type="button"
-              className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover"
+              className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-sm bg-layer-transparent transition-all hover:bg-layer-transparent-hover sentuh:size-10"
               onClick={() => {
                 setIsOpen(true);
               }}

@@ -226,7 +226,7 @@ export const TopNavPowerK = observer(() => {
         type="button"
         onClick={() => togglePowerKModal(true)}
         aria-label="Search commands"
-        className="grid size-8 place-items-center rounded-md text-secondary hover:bg-layer-1-hover md:hidden"
+        className="grid size-8 place-items-center rounded-md text-secondary hover:bg-layer-1-hover md:hidden sentuh:size-10"
       >
         <SearchIcon className="size-4" />
       </button>

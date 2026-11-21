@@ -36,7 +36,7 @@ export function BerkasTertunda(props: TBerkasTertundaProps) {
           <button
             type="button"
             onClick={() => onHapus(file)}
-            className="grid size-5 shrink-0 place-items-center rounded-sm hover:bg-layer-2 sentuh:size-9"
+            className="grid size-5 shrink-0 place-items-center rounded-sm hover:bg-layer-2 sentuh:size-10"
             aria-label={t("navigasi_lampiran_ui.dismiss")}
           >
             <X className="size-3.5" />

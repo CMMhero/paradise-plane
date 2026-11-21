@@ -246,7 +246,7 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
                 <button
                   type="button"
                   aria-label={t("copy_link")}
-                  className="flex h-6 w-6 items-center justify-center rounded-sm bg-white/10"
+                  className="flex h-6 w-6 items-center justify-center rounded-sm bg-white/10 sentuh:size-10"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -258,7 +258,7 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
                 {shouldRenderFavorite && (
                   <FavoriteStar
                     ariaLabel={t("favorites")}
-                    buttonClassName="m-0 h-6 w-6 bg-white/10 rounded-sm"
+                    buttonClassName="m-0 h-6 w-6 bg-white/10 rounded-sm sentuh:size-10"
                     iconClassName={cn("h-3 w-3", {
                       "text-on-color": !project.is_favorite,
                     })}
@@ -356,7 +356,7 @@ export const ProjectCard = observer(function ProjectCard(props: Props) {
                     <Link
                       // p-[5px]: 24x24 (WCAG 2.5.8); nama dari aria-label karena isinya ikon saja
                       aria-label={t("settings")}
-                      className="flex items-center justify-center rounded-sm p-[5px] text-placeholder hover:bg-layer-1 hover:text-secondary"
+                      className="sasaran-sentuh flex items-center justify-center rounded-sm p-[5px] text-placeholder hover:bg-layer-1 hover:text-secondary"
                       onClick={(e) => {
                         e.stopPropagation();
                       }}

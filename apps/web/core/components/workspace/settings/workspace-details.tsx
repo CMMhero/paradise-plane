@@ -175,14 +175,14 @@ export const WorkspaceDetails = observer(function WorkspaceDetails() {
               type="button"
               onClick={handleCopyUrl}
               // min-h-6: sasaran klik 24px (WCAG 2.5.8)
-              className="min-h-6 text-left text-body-xs-regular tracking-tight"
+              className="min-h-6 text-left text-body-xs-regular tracking-tight sentuh:min-h-10"
             >{`${
               typeof window !== "undefined" && window.location.origin.replace("http://", "").replace("https://", "")
             }/${currentWorkspace.slug}`}</button>
             {isAdmin && (
               <button
                 type="button"
-                className="flex min-h-6 items-center gap-1.5 text-left text-caption-sm-medium text-accent-primary"
+                className="flex min-h-6 items-center gap-1.5 text-left text-caption-sm-medium text-accent-primary sentuh:min-h-10"
                 onClick={() => setIsImageUploadModalOpen(true)}
               >
                 {workspaceLogo && workspaceLogo !== "" ? (

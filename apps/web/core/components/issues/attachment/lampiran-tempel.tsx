@@ -158,7 +158,7 @@ export const StatusLampiranTempel = observer(function StatusLampiranTempel(props
           <button
             type="button"
             onClick={() => onTutupGagal(item.id)}
-            className="grid size-6 shrink-0 place-items-center rounded-sm hover:bg-danger-subtle sentuh:size-9"
+            className="grid size-6 shrink-0 place-items-center rounded-sm hover:bg-danger-subtle sentuh:size-10"
             aria-label={t("navigasi_lampiran_ui.dismiss")}
           >
             <X className="size-3.5" />

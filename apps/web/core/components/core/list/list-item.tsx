@@ -77,7 +77,7 @@ export function ListItem(props: IListItemProps) {
         <div className={cn("relative flex w-full items-center justify-between gap-3 truncate", itemClassName)}>
           <ControlLink
             id={id}
-            className="relative flex w-full items-center gap-3 overflow-hidden"
+            className="relative flex w-full items-center gap-3 overflow-hidden sentuh:min-h-10"
             href={itemLink}
             target="_self"
             onClick={handleControlLinkClick}
@@ -94,7 +94,7 @@ export function ListItem(props: IListItemProps) {
               <span className={cn("flex flex-shrink-0 items-center", rightElementClassName)}>{appendTitleElement}</span>
             )}
           </ControlLink>
-          {quickActionElement && quickActionElement}
+          {quickActionElement}
         </div>
         {actionableItems && (
           <div

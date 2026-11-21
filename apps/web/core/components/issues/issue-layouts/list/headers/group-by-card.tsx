@@ -116,22 +116,23 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           {icon ?? <CircleDashed className="size-3.5" strokeWidth={2} />}
         </div>
 
-        <div
-          className="relative flex w-full cursor-pointer flex-row items-center gap-1 overflow-hidden"
+        <button
+          type="button"
+          className="relative flex w-full cursor-pointer flex-row items-center gap-1 overflow-hidden text-left"
           onClick={() => handleCollapsedGroups(groupID)}
         >
-          <div className="line-clamp-1 inline-block truncate font-medium text-primary">{title}</div>
-          <div className="pl-2 text-13 font-medium text-tertiary">{count || 0}</div>
-          <div className="px-2.5">
+          <span className="line-clamp-1 inline-block truncate font-medium text-primary">{title}</span>
+          <span className="pl-2 text-13 font-medium text-tertiary">{count || 0}</span>
+          <span className="px-2.5">
             <WorkFlowGroupTree groupBy={groupBy} groupId={groupID} />
-          </div>
-        </div>
+          </span>
+        </button>
 
         {!disableIssueCreation &&
           (renderExistingIssueModal ? (
             <CustomMenu
               customButton={
-                <span className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1">
+                <span className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1 sentuh:size-10">
                   <PlusIcon className="h-3.5 w-3.5" strokeWidth={2} />
                 </span>
               }
@@ -155,7 +156,7 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           ) : (
             <button
               type="button"
-              className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1"
+              className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xs transition-all hover:bg-layer-1 sentuh:size-10"
               onClick={() => {
                 setIsOpen(true);
               }}

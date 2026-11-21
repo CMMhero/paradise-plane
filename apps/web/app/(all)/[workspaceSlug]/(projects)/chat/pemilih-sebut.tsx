@@ -188,7 +188,7 @@ export function DaftarSebut({ cocok, sorot, onSorot, onPilih }: TDaftarProps) {
                 onPilih(orang);
               }}
               onMouseEnter={() => onSorot(i)}
-              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-13 text-primary ${
+              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-13 text-primary sentuh:min-h-11 ${
                 i === sorot ? "bg-layer-1-selected" : "hover:bg-layer-1"
               }`}
             >

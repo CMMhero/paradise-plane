@@ -966,7 +966,7 @@ function ChatPage() {
                       key={r.id}
                       type="button"
                       onClick={() => setSearchParams({ ruang: r.id })}
-                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-layer-1 ${
+                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-layer-1 sentuh:min-h-11 ${
                         r.id === ruangParam ? "bg-layer-1-selected" : ""
                       }`}
                     >
@@ -1174,7 +1174,7 @@ function ChatPage() {
               <button
                 type="button"
                 onClick={() => setSearchParams({})}
-                className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-button text-secondary hover:bg-layer-1 hover:text-primary lg:hidden"
+                className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-button text-secondary hover:bg-layer-1 hover:text-primary lg:hidden sentuh:size-10"
                 aria-label={t("chat_ui.back_to_list")}
               >
                 <ChevronLeft className="size-5" />

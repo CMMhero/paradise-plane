@@ -174,7 +174,7 @@ export const FiltersRow = observer(function FiltersRow<K extends TFilterProperty
   return <RowTransition show={filter.isVisible}>{variant === "modal" ? ModalVariant : HeaderVariant}</RowTransition>;
 });
 
-const COMMON_OPERATION_BUTTON_CLASSNAME = "sentuh:h-9";
+const COMMON_OPERATION_BUTTON_CLASSNAME = "sentuh:h-10";
 
 type TElementTransitionProps = {
   children: React.ReactNode;

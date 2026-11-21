@@ -181,7 +181,7 @@ function AttentionGroup({ group, workspaceSlug, viewAllHref, lookaheadDays, onAc
         <div className="flex items-center justify-between gap-2 border-t border-subtle px-4 py-2 text-12 text-tertiary">
           <span>{hidden > 0 ? t("attention_ui.more", { count: hidden }) : ""}</span>
           {viewAllHref && (
-            <Link href={viewAllHref} className="font-medium text-accent-primary hover:underline">
+            <Link href={viewAllHref} className="sasaran-sentuh font-medium text-accent-primary hover:underline">
               {t("attention_ui.view_all")}
             </Link>
           )}
