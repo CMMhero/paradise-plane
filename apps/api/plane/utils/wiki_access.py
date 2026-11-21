@@ -151,7 +151,8 @@ _WORKSPACE_ADMIN = 20
 
 
 def is_wiki_admin(user, workspace_id=None, workspace_slug=None):
-    """Satu-satunya yang boleh MENGUBAH/mengelola Wiki: Super Admin atau admin workspace.
+    """Satu-satunya yang boleh MENGUBAH/mengelola Wiki: Super Admin atau admin workspace
+    (God Mode, WIKI_ADMIN_WHO, bisa mempersempitnya ke Super Admin).
 
     Admin project Wiki yang bukan admin workspace TIDAK termasuk. Anggota
     departemen boleh mengunggah (`can_edit_wiki_page`) dan pengunggah boleh
@@ -159,11 +160,16 @@ def is_wiki_admin(user, workspace_id=None, workspace_slug=None):
     (folder, sub-topik) hanya untuk yang lolos fungsi ini.
     """
     from plane.db.models import WorkspaceMember
+    from plane.utils import aturan
+    from plane.utils.aturan.area_obrolan import WIKI_ADMIN_SUPER, WIKI_ADMIN_WHO
 
     if user is None or getattr(user, "is_anonymous", True):
         return False
     if is_super_admin(user):
         return True
+    # God Mode (WIKI_ADMIN_WHO) bisa membatasi admin Wiki ke Super Admin saja.
+    if aturan.get_choice(WIKI_ADMIN_WHO) == WIKI_ADMIN_SUPER:
+        return False
     filters = {"member": user, "role": _WORKSPACE_ADMIN, "is_active": True, "deleted_at__isnull": True}
     if workspace_id is not None:
         filters["workspace_id"] = workspace_id
