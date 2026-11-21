@@ -119,7 +119,7 @@ export const PARADISE_NAV_ITEMS = [
     labelTranslationKey: "pengumuman_ui.nav",
     href: "/pengumuman/",
     access: ANGGOTA,
-    palette: { id: "nav_pengumuman", titleKey: "pengumuman_ui.nav" },
+    palette: { id: "nav_pengumuman" },
   },
   // href statis: halaman itu meresolusi project ber-identifier WIKI.
   {
