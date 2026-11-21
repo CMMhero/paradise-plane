@@ -8,6 +8,7 @@ from plane.db.models.workspace import WorkspaceHomePreference
 from plane.app.permissions import allow_permission, ROLE
 from plane.db.models import Workspace
 from plane.app.serializers.workspace import WorkspaceHomePreferenceSerializer
+from plane.utils.bawaan_member import susunan_widget_home
 
 # Third party imports
 from rest_framework.response import Response
@@ -24,39 +25,31 @@ class WorkspaceHomePreferenceViewSet(BaseAPIView):
     def get(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
 
-        get_preference = WorkspaceHomePreference.objects.filter(user=request.user, workspace_id=workspace.id)
+        ada = set(
+            WorkspaceHomePreference.objects.filter(user=request.user, workspace_id=workspace.id).values_list(
+                "key", flat=True
+            )
+        )
 
-        create_preference_keys = []
-
-        keys = [
-            key
-            for key, _ in WorkspaceHomePreference.HomeWidgetKeys.choices
-            if key not in ["quick_tutorial", "new_at_plane"]
-        ]
-
-        sort_order_counter = 1
-
-        for preference in keys:
-            if preference not in get_preference.values_list("key", flat=True):
-                create_preference_keys.append(preference)
-
-                sort_order = 1000 - sort_order_counter
-
-                preference = WorkspaceHomePreference.objects.bulk_create(
-                    [
-                        WorkspaceHomePreference(
-                            key=key,
-                            user=request.user,
-                            workspace=workspace,
-                            # Paradise: "Needs attention" selalu di atas widget lain.
-                            sort_order=2000 if key == "needs_attention" else sort_order,
-                        )
-                        for key in create_preference_keys
-                    ],
-                    batch_size=10,
-                    ignore_conflicts=True,
+        # Paradise: widget yang nyala dan urutannya dari God Mode (aturan HOME_WIDGETS,
+        # bawaan per akun). Hanya baris yang BELUM ada yang dibuat, jadi pilihan
+        # orangnya tidak pernah tertimpa. Widget teratas selalu 2000; sisanya diberi
+        # nomor menurun seperti upstream (yang hanya menghitung baris baru).
+        baru = []
+        for posisi, (key, aktif) in enumerate(susunan_widget_home()):
+            if key in ada:
+                continue
+            baru.append(
+                WorkspaceHomePreference(
+                    key=key,
+                    user=request.user,
+                    workspace=workspace,
+                    is_enabled=aktif,
+                    sort_order=2000 if posisi == 0 else 1000 - (len(baru) + 1),
                 )
-                sort_order_counter += 1
+            )
+        if baru:
+            WorkspaceHomePreference.objects.bulk_create(baru, batch_size=10, ignore_conflicts=True)
 
         preference = WorkspaceHomePreference.objects.filter(user=request.user, workspace_id=workspace.id)
 

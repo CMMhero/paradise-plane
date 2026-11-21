@@ -83,7 +83,9 @@ from plane.db.models import (
     WorkspaceMember,
     menjangkau_seluruh_organisasi,
 )
+from plane.utils import aturan
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.aturan.area_tampilan import KPI_DEFAULT_PERIOD, KPI_LIST_SIZE
 from plane.utils.hierarki import _bawahan_ids, adalah_admin_penuh, divisi_diawasi
 from plane.utils.ketepatan_waktu import anotasi_ketepatan, ketepatan, q_tepat_waktu, q_terlambat
 from plane.utils.menunggu_persetujuan import q_bisa_terlambat
@@ -111,12 +113,10 @@ PERIODE_30_HARI = "30d"
 PERIODE_KUARTAL_INI = "this_quarter"
 PERIODE_KHUSUS = "custom"
 PERIODE_SAH = (PERIODE_PEKAN_INI, PERIODE_BULAN_INI, PERIODE_30_HARI, PERIODE_KUARTAL_INI, PERIODE_KHUSUS)
-PERIODE_BAWAAN = PERIODE_BULAN_INI
 RENTANG_KHUSUS_MAKS = 366
 
 # Rentang sampai sepanjang ini digambar per hari, lebih panjang per pekan.
 TREN_HARIAN_MAKS = 31
-BATAS_DAFTAR = 20
 
 _SELESAI = "completed"
 _BATAL = "cancelled"
@@ -703,9 +703,10 @@ def _daftar(penonton, qs, jendela, hari_ini):
         Q(target_date__lt=batas_terlambat(hari_ini)) & _BELUM_TUNTAS & q_bisa_terlambat()
     ).order_by("target_date", "sequence_id")
     selesai = terlihat.filter(_q_selesai(*jendela)).order_by("-completed_at", "-sequence_id")
+    batas = aturan.get_int(KPI_LIST_SIZE)
     return {
-        "overdue": [_baris_tugas(t) for t in terlambat[:BATAS_DAFTAR]],
-        "completed": [_baris_tugas(t) for t in selesai[:BATAS_DAFTAR]],
+        "overdue": [_baris_tugas(t) for t in terlambat[:batas]],
+        "completed": [_baris_tugas(t) for t in selesai[:batas]],
     }
 
 
@@ -756,8 +757,13 @@ def _rincian_unit(sasaran, lingkup, semua_tugas, workspace_id, persetujuan, kerj
     return {"kind": jenis, "rows": sorted(baris, key=lambda b: b["name"].lower())}
 
 
-def hitung_kinerja(user, workspace_id, jenis, id_=None, periode=PERIODE_BAWAAN, mulai=None, sampai=None, sekarang=None):
-    """Seluruh isi halaman KPI untuk satu lingkup. Melempar `LingkupDitolak` / `PermintaanSalah`."""
+def hitung_kinerja(user, workspace_id, jenis, id_=None, periode=None, mulai=None, sampai=None, sekarang=None):
+    """Seluruh isi halaman KPI untuk satu lingkup. Melempar `LingkupDitolak` / `PermintaanSalah`.
+
+    `periode` None = bawaan God Mode (KPI_DEFAULT_PERIOD).
+    """
+    if periode is None:
+        periode = aturan.get_choice(KPI_DEFAULT_PERIOD)
     sekarang = sekarang or timezone.now()
     hari_ini = hari_ini_kantor(sekarang)
     jendela, jendela_lalu = rentang_periode(periode, hari_ini, mulai, sampai)

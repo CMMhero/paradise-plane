@@ -17,7 +17,9 @@ from rest_framework import status
 
 # Module imports
 from .. import BaseAPIView
+from plane.utils import aturan
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.aturan.area_tampilan import DIVISION_REPORT_DEFAULT_PERIOD
 from plane.app.permissions import WorkspaceEntityPermission
 from plane.db.models import IssueWorkLog, Workspace
 from plane.utils.kinerja import (
@@ -27,8 +29,7 @@ from plane.utils.kinerja import (
     hitung_kinerja,
     pilihan_lingkup,
 )
-from plane.utils.kinerja import PERIODE_BAWAAN as PERIODE_KINERJA_BAWAAN
-from plane.utils.laporan_selesai import PERIODE_BAWAAN, PERIODE_SAH, baris_csv, susun_laporan
+from plane.utils.laporan_selesai import PERIODE_SAH, baris_csv, susun_laporan
 from plane.utils.ringkasan_divisi import hitung_ringkasan, project_terjangkau
 
 
@@ -53,7 +54,7 @@ class CompletedReportEndpoint(BaseAPIView):
     permission_classes = [WorkspaceEntityPermission]
 
     def get(self, request, slug):
-        periode = request.query_params.get("periode", PERIODE_BAWAAN)
+        periode = request.query_params.get("periode", aturan.get_choice(DIVISION_REPORT_DEFAULT_PERIOD))
         if periode not in PERIODE_SAH:
             return Response(
                 {"error": f"periode harus salah satu dari: {', '.join(PERIODE_SAH)}"},
@@ -137,7 +138,7 @@ class KinerjaEndpoint(BaseAPIView):
                 workspace.id,
                 q.get("lingkup", LINGKUP_SAYA),
                 q.get("id"),
-                q.get("periode", PERIODE_KINERJA_BAWAAN),
+                q.get("periode"),
                 _tanggal(q.get("mulai")),
                 _tanggal(q.get("sampai")),
             )
