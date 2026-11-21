@@ -2,16 +2,21 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-# Django imports
-from django.conf import settings
-
 # Third party imports
 from rest_framework.throttling import SimpleRateThrottle
+
+# Module imports
+from plane.utils import aturan
+from plane.utils.aturan.area_keamanan import API_KEY_REQUESTS_PER_MINUTE
 
 
 class ApiKeyRateThrottle(SimpleRateThrottle):
     scope = "api_key"
-    rate = settings.API_KEY_RATE_LIMIT
+
+    def get_rate(self):
+        # Paradise: God Mode API_KEY_REQUESTS_PER_MINUTE (seeded from the old
+        # API_KEY_RATE_LIMIT env), read per request because no class `rate` is set.
+        return f"{aturan.get_int(API_KEY_REQUESTS_PER_MINUTE)}/minute"
 
     def get_cache_key(self, request, view):
         # Retrieve the API key from the request header

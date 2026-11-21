@@ -26,7 +26,6 @@ from django.db.models import (
 )
 
 from django.utils import timezone
-from django.conf import settings
 
 # Third party imports
 from rest_framework import status
@@ -85,6 +84,7 @@ from plane.db.models import (
     Workspace,
 )
 from plane.settings.storage import S3Storage
+from plane.utils.tipe_unggahan import tipe_lampiran_diizinkan
 from plane.utils.path_validator import sanitize_filename
 from plane.utils.plan_limits import batas_ukuran_unggahan
 from plane.utils.kunci_selesai import galat_induk_selesai, galat_tugas_selesai
@@ -1999,7 +1999,7 @@ class IssueAttachmentListCreateAPIEndpoint(BaseAPIView):
         # ditangani DRF sendiri, jadi tidak ada try/except yang bisa terlupa.
         size_limit = batas_ukuran_unggahan(slug, size)
 
-        if not type or type not in settings.ATTACHMENT_MIME_TYPES:
+        if not type or type not in tipe_lampiran_diizinkan():
             return Response(
                 {"error": "Invalid file type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,

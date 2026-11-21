@@ -26,7 +26,7 @@ from plane.utils.wiki_access import can_edit_wiki_page, is_wiki_governed
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
-from plane.utils.tipe_unggahan import rapikan_tipe_unggahan
+from plane.utils.tipe_unggahan import rapikan_tipe_unggahan, tipe_lampiran_diizinkan
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.throttles.asset import AssetRateThrottle
 
@@ -39,7 +39,8 @@ def allowed_mime_types(entity_type):
     """Tipe berkas yang boleh diunggah untuk `entity_type`.
 
     Kustomisasi Paradise: isi halaman Wiki boleh menerima semua tipe
-    lampiran (pdf/docx/xlsx/mp4/zip dst, lihat settings.ATTACHMENT_MIME_TYPES),
+    lampiran (pdf/docx/xlsx/mp4/zip dst, lihat tipe_unggahan.TIPE_LAMPIRAN, dikurangi
+    yang dicoret di God Mode, UPLOAD_BLOCKED_FILE_TYPES),
     bukan cuma gambar. Entity lain tidak berubah.
 
     Satu fungsi dipakai ketiga endpoint unggah supaya daftarnya tidak bercabang,
@@ -53,7 +54,7 @@ def allowed_mime_types(entity_type):
         FileAsset.EntityTypeContext.WIKI_MATERIAL,
         FileAsset.EntityTypeContext.WIKI_MATERIAL_PREVIEW,
     ):
-        return settings.ATTACHMENT_MIME_TYPES
+        return tipe_lampiran_diizinkan()
     return IMAGE_MIME_TYPES
 
 

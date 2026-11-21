@@ -16,12 +16,10 @@ from plane.utils.url_security import pinned_fetch_following_redirects
 # Django imports
 from django.utils import timezone
 
-# Third party imports
-from zxcvbn import zxcvbn
-
 from plane.bgtasks.user_activation_email_task import user_activation_email
 
 # Module imports
+from plane.authentication.utils.kata_sandi import sandi_cukup_kuat
 from plane.db.models import FileAsset, Profile, User, WorkspaceMemberInvite
 from plane.license.utils.instance_value import get_configuration_value
 from plane.settings.storage import S3Storage
@@ -89,8 +87,7 @@ class Adapter:
 
     def validate_password(self, email):
         """Validate password strength"""
-        results = zxcvbn(self.code)
-        if results["score"] < 3:
+        if not sandi_cukup_kuat(self.code):
             self.logger.warning("Password is not strong enough")
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["PASSWORD_TOO_WEAK"],

@@ -2,9 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-# Python imports
-import os
-
 # Third party imports
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework import status
@@ -15,13 +12,18 @@ from plane.authentication.adapter.error import (
     AuthenticationException,
     AUTHENTICATION_ERROR_CODES,
 )
+from plane.utils import aturan
+from plane.utils.aturan.area_keamanan import EMAIL_CHANGE_CODES_PER_HOUR, LOGIN_ATTEMPTS_PER_MINUTE
 
 
 class AuthenticationThrottle(AnonRateThrottle):
-    # Rate is configurable per-deployment via the AUTHENTICATION_RATE_LIMIT
-    # env var (DRF format: "<num>/<period>" where period is second/minute/hour/day).
-    rate = os.environ.get("AUTHENTICATION_RATE_LIMIT", "10/minute")
+    # Paradise: rate comes from God Mode (LOGIN_ATTEMPTS_PER_MINUTE, seeded from
+    # the old AUTHENTICATION_RATE_LIMIT env). DRF builds a throttle per request
+    # and calls get_rate() because no class `rate` is set, so a change applies live.
     scope = "authentication"
+
+    def get_rate(self):
+        return f"{aturan.get_int(LOGIN_ATTEMPTS_PER_MINUTE)}/minute"
 
     def throttle_failure_view(self, request, *args, **kwargs):
         try:
@@ -51,12 +53,14 @@ def authentication_throttle_allows(request):
 
 class EmailVerificationThrottle(UserRateThrottle):
     """
-    Throttle for email verification code generation.
-    Limits to 3 requests per hour per user to prevent abuse.
+    Throttle for email verification code generation, per user.
+    Paradise: the hourly budget is EMAIL_CHANGE_CODES_PER_HOUR in God Mode.
     """
 
-    rate = "3/hour"
     scope = "email_verification"
+
+    def get_rate(self):
+        return f"{aturan.get_int(EMAIL_CHANGE_CODES_PER_HOUR)}/hour"
 
     def throttle_failure_view(self, request, *args, **kwargs):
         try:

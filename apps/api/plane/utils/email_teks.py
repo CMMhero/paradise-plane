@@ -21,13 +21,13 @@ TEKS = {
         "id": {
             "subjek": "Kode masuk {merek}: {kode}",
             "judul": "Kode masuk Anda",
-            "intro": "Masukkan kode ini di halaman masuk {merek}. Kode berlaku 10 menit.",
+            "intro": "Masukkan kode ini di halaman masuk {merek}. Kode berlaku {menit} menit.",
             "abaikan": "Kalau Anda tidak sedang mencoba masuk, abaikan email ini. Akun Anda tetap aman.",
         },
         "en": {
             "subjek": "Your {merek} sign-in code: {kode}",
             "judul": "Your sign-in code",
-            "intro": "Enter this code on the {merek} sign-in page. It is valid for 10 minutes.",
+            "intro": "Enter this code on the {merek} sign-in page. It is valid for {menit} minutes.",
             "abaikan": "If you weren't trying to sign in, ignore this email. Your account is still safe.",
         },
     },
@@ -35,13 +35,13 @@ TEKS = {
         "id": {
             "subjek": "Verifikasi alamat email baru Anda di {merek}",
             "judul": "Verifikasi email baru",
-            "intro": "Masukkan kode ini untuk memastikan alamat ini milik Anda. Kode berlaku 10 menit.",
+            "intro": "Masukkan kode ini untuk memastikan alamat ini milik Anda. Kode berlaku {menit} menit.",
             "abaikan": "Kalau Anda tidak sedang mengganti alamat email, abaikan email ini.",
         },
         "en": {
             "subjek": "Verify your new email address on {merek}",
             "judul": "Verify your new email",
-            "intro": "Enter this code to confirm this address belongs to you. It is valid for 10 minutes.",
+            "intro": "Enter this code to confirm this address belongs to you. It is valid for {menit} minutes.",
             "abaikan": "If you aren't changing your email address, ignore this email.",
         },
     },

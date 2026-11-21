@@ -40,11 +40,14 @@ def user_login(request, user, is_app=False, is_admin=False, is_space=False):
 
     # If is admin cookie set the custom age
     if is_admin:
-        request.session.set_expiry(settings.ADMIN_SESSION_COOKIE_AGE)
+        # Paradise: God Mode GOD_MODE_SESSION_MINUTES (benih env ADMIN_SESSION_COOKIE_AGE).
+        from plane.utils import aturan  # noqa: PLC0415
+        from plane.utils.aturan.area_keamanan import GOD_MODE_SESSION_MINUTES  # noqa: PLC0415
+
+        request.session.set_expiry(aturan.get_int(GOD_MODE_SESSION_MINUTES) * 60)
     else:
         # Paradise (KEP-83): umur sesi aplikasi & space dari God Mode (SESSION_DAYS).
         # Hanya dipasang saat login, jadi sesi yang sudah ada tetap pada umurnya.
-        # Sesi God Mode tetap diatur env ADMIN_SESSION_COOKIE_AGE di atas.
         request.session.set_expiry(umur_sesi_detik())
 
     device_info = {

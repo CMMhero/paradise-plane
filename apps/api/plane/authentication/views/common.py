@@ -10,9 +10,9 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from zxcvbn import zxcvbn
 
 ## Module imports
+from plane.authentication.utils.kata_sandi import sandi_cukup_kuat
 from plane.app.serializers import UserSerializer
 from plane.authentication.utils.login import user_login
 from plane.db.models import User
@@ -80,8 +80,7 @@ class ChangePasswordEndpoint(APIView):
             return Response(exc.get_error_dict(), status=status.HTTP_400_BAD_REQUEST)
 
         # check the password score
-        results = zxcvbn(new_password)
-        if results["score"] < 3:
+        if not sandi_cukup_kuat(new_password):
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["PASSWORD_TOO_WEAK"],
                 error_message="PASSWORD_TOO_WEAK",
@@ -119,8 +118,7 @@ class SetUserPasswordEndpoint(APIView):
             )
             return Response(exc.get_error_dict(), status=status.HTTP_400_BAD_REQUEST)
 
-        results = zxcvbn(password)
-        if results["score"] < 3:
+        if not sandi_cukup_kuat(password):
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["INVALID_PASSWORD"],
                 error_message="INVALID_PASSWORD",
