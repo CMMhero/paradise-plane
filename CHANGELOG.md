@@ -6,6 +6,18 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ---
 
+## 2026-11-22
+
+### Version 2.12.2
+
+- **2.12.1 to 2.12.2, patch.** One display change in God Mode. No migration and
+  no operator step.
+- **Org chart.** Department boxes used to show only "N supervisors, M staff".
+  They now list each supervisor by name with an avatar, the same way division
+  boxes list their managers. The count line stays below the names.
+
+---
+
 ## 2026-11-21
 
 ### Version 2.12.1
