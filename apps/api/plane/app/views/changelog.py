@@ -20,7 +20,7 @@ from plane.db.models import KUNCI_CHANGELOG, JenisPesan, PesanLangsung
 from plane.utils.catatan_rilis import JENIS_ENTRI, urai_versi
 
 BATAS_BAWAAN = 10
-BATAS_MAKS = 50
+BATAS_MAKS = 1000
 
 
 def _entri(muatan) -> list:

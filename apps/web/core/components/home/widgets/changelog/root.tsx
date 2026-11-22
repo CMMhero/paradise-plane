@@ -1,12 +1,13 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: widget Changelog di dasar Home
+ * Kustomisasi Paradise Task Tracker: widget Changelog di Home
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  *
  * Dulunya catatan rilis hidup sebagai kanal "Changelogs" di Obrolan. Sekarang
- * ia tampil di sini, di dasar Home, dan tidak lagi bisa diatur lewat "Manage
- * widgets": ia bukan pekerjaan orang, jadi tidak perlu dimatikan satu per satu.
+ * ia widget Home biasa: bisa dimatikan dan diurut lewat "Manage widgets". Awalnya
+ * hanya rilis terbaru yang dimuat; "Lihat rilis sebelumnya" memuat seluruhnya
+ * sampai rilis tertua.
  */
 
 import { useState } from "react";
@@ -21,8 +22,11 @@ import { useAturan } from "@/hooks/use-aturan";
 // services
 import { ChangelogService } from "@/services/changelog.service";
 import type { TCatatanRilis, TJenisEntri } from "@/services/changelog.service";
+import type { THomeWidgetProps } from "@plane/types";
 
 const changelogService = new ChangelogService();
+/** Sama dengan `BATAS_MAKS` di views/changelog.py: seluruh riwayat dalam satu permintaan. */
+const BATAS_SEMUA = 1000;
 
 const URUTAN_ENTRI: TJenisEntri[] = ["Added", "Changed", "Fixed"];
 
@@ -65,27 +69,30 @@ function KartuRilis({ catatan }: { catatan: TCatatanRilis }) {
   );
 }
 
-export const ChangelogWidget = observer(function ChangelogWidget({ workspaceSlug }: { workspaceSlug: string }) {
+export const ChangelogWidget = observer(function ChangelogWidget({ workspaceSlug }: THomeWidgetProps) {
   const { t } = useTranslation();
   const [semua, setSemua] = useState(false);
   // Rilis yang tampil sebelum "Lihat rilis sebelumnya" dibuka (aturan CHANGELOG_RELEASES_SHOWN).
   const jumlahAwal = useAturan().get("CHANGELOG_RELEASES_SHOWN");
+  // Satu lebih banyak dari yang tampil, hanya untuk tahu masih ada rilis lama atau tidak.
+  // Sesudah dibuka, seluruh riwayat dimuat; datanya bertahan selama permintaan baru berjalan.
   // 0 = widget dimatikan lewat God Mode: tidak ada yang digambar, dan tidak ada request.
-  const { data, error, mutate } = useSWR(
-    jumlahAwal > 0 ? `HOME_CHANGELOG_${workspaceSlug}` : null,
-    () => changelogService.getCatatanRilis(workspaceSlug),
-    { revalidateOnFocus: false, dedupingInterval: 60_000 }
+  const { data, error, mutate, isValidating } = useSWR(
+    jumlahAwal > 0 ? `HOME_CHANGELOG_${workspaceSlug}_${semua ? "semua" : jumlahAwal}` : null,
+    () => changelogService.getCatatanRilis(workspaceSlug, semua ? BATAS_SEMUA : jumlahAwal + 1),
+    { revalidateOnFocus: false, dedupingInterval: 60_000, keepPreviousData: true }
   );
 
-  // Belum ada rilis tercatat: widget tidak perlu memenuhi dasar Home dengan
+  // Belum ada rilis tercatat: widget tidak perlu memenuhi Home dengan
   // kotak kosong. Gagal memuat tetap ditunjukkan, supaya "kosong" dan "rusak" tidak sama.
   if (data && data.length === 0) return null;
   if (jumlahAwal <= 0) return null;
 
   const tampil = data ? (semua ? data : data.slice(0, jumlahAwal)) : [];
+  const adaLebihLama = !!data && data.length > jumlahAwal;
 
   return (
-    <section aria-labelledby="home-changelog-title" className="flex flex-col gap-3 py-4">
+    <section aria-labelledby="home-changelog-title" className="flex flex-col gap-3">
       <h2 id="home-changelog-title" className="text-14 font-semibold text-primary">
         {t("changelog_ui.title")}
       </h2>
@@ -111,9 +118,14 @@ export const ChangelogWidget = observer(function ChangelogWidget({ workspaceSlug
           {tampil.map((catatan) => (
             <KartuRilis key={catatan.id} catatan={catatan} />
           ))}
-          {data.length > jumlahAwal ? (
+          {adaLebihLama ? (
             <div>
-              <Button variant="secondary" size="base" onClick={() => setSemua((v) => !v)}>
+              <Button
+                variant="secondary"
+                size="base"
+                onClick={() => setSemua((v) => !v)}
+                loading={semua && isValidating}
+              >
                 {semua ? t("changelog_ui.show_less") : t("changelog_ui.show_more")}
               </Button>
             </div>

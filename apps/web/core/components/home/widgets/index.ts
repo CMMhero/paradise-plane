@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+export * from "./announcements";
 export * from "./attention";
 export * from "./changelog";
 export * from "./empty-states";

@@ -14,7 +14,9 @@ export type THomeWidgetKeys =
   | "recents"
   | "my_stickies"
   | "quick_tutorial"
-  | "new_at_plane";
+  | "new_at_plane"
+  | "announcements"
+  | "changelog";
 
 export type THomeWidgetProps = {
   workspaceSlug: string;

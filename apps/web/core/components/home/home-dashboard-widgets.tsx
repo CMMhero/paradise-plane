@@ -22,7 +22,14 @@ import { useProject } from "@/hooks/store/use-project";
 import { HomePageHeader } from "@/plane-web/components/home/header";
 // local imports
 import { StickiesWidget } from "../stickies/widget";
-import { AttentionWidget, ChangelogWidget, HomeLoader, NoProjectsEmptyState, RecentActivityWidget } from "./widgets";
+import {
+  AnnouncementsWidget,
+  AttentionWidget,
+  ChangelogWidget,
+  HomeLoader,
+  NoProjectsEmptyState,
+  RecentActivityWidget,
+} from "./widgets";
 import { DashboardQuickLinks } from "./widgets/links";
 import { ManageWidgetsModal } from "./widgets/manage";
 
@@ -52,6 +59,16 @@ export const HOME_WIDGETS_LIST: {
     component: StickiesWidget,
     fullWidth: false,
     title: "stickies.title",
+  },
+  announcements: {
+    component: AnnouncementsWidget,
+    fullWidth: true,
+    title: "pengumuman_ui.title",
+  },
+  changelog: {
+    component: ChangelogWidget,
+    fullWidth: true,
+    title: "changelog_ui.title",
   },
   new_at_plane: {
     component: null,
@@ -118,8 +135,6 @@ export const DashboardWidgets = observer(function DashboardWidgets() {
           />
         </div>
       )}
-      {/* Paling bawah, di luar daftar widget: catatan rilis tidak bisa diatur lewat Manage widgets. Admin mematikannya lewat aturan God Mode CHANGELOG_RELEASES_SHOWN = 0. */}
-      <ChangelogWidget workspaceSlug={workspaceSlug.toString()} />
     </div>
   );
 });
