@@ -1,0 +1,14 @@
+{
+  "version": "2.13.1",
+  "date": "2026-11-22",
+  "entries": [
+    {
+      "type": "Fixed",
+      "text": "The Announcements page no longer gets stuck: opening Chat, Quick links or any other sidebar page from it now works. The write box also has the same padding as the comment box."
+    },
+    {
+      "type": "Fixed",
+      "text": "On Home, the Changelog widget now lands at the very bottom by default, below Announcements and the older widgets, for members who already had Home widgets."
+    }
+  ]
+}

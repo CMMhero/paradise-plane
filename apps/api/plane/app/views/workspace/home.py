@@ -15,6 +15,11 @@ from rest_framework.response import Response
 from rest_framework import status
 
 
+# Widget yang baru ada sejak 2.13, berurutan dari atas ke bawah. Untuk akun yang sudah
+# punya baris widget lain, keduanya masuk paling bawah dan Changelog (What's new) terakhir.
+WIDGET_BARU_DI_BAWAH = ("announcements", "changelog")
+
+
 class WorkspaceHomePreferenceViewSet(BaseAPIView):
     model = WorkspaceHomePreference
 
@@ -25,19 +30,29 @@ class WorkspaceHomePreferenceViewSet(BaseAPIView):
     def get(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
 
-        ada = set(
+        urutan_ada = dict(
             WorkspaceHomePreference.objects.filter(user=request.user, workspace_id=workspace.id).values_list(
-                "key", flat=True
+                "key", "sort_order"
             )
         )
+        ada = set(urutan_ada)
 
         # Paradise: widget yang nyala dan urutannya dari God Mode (aturan HOME_WIDGETS,
         # bawaan per akun). Hanya baris yang BELUM ada yang dibuat, jadi pilihan
         # orangnya tidak pernah tertimpa. Widget teratas selalu 2000; sisanya diberi
         # nomor menurun seperti upstream (yang hanya menghitung baris baru).
+        # Widget yang ditambahkan sesudah akun itu punya baris (Pengumuman dan Changelog,
+        # 2.13) masuk di BAWAH widget yang sudah ada, bukan di nomor upstream yang
+        # bisa jatuh di antara widget lama.
         baru = []
-        for posisi, (key, aktif) in enumerate(susunan_widget_home()):
+        susunan = susunan_widget_home()
+        batas_bawah = min(urutan_ada.values(), default=None)
+        di_bawah = []
+        for posisi, (key, aktif) in enumerate(susunan):
             if key in ada:
+                continue
+            if batas_bawah is not None and key in WIDGET_BARU_DI_BAWAH:
+                di_bawah.append((key, aktif))
                 continue
             baru.append(
                 WorkspaceHomePreference(
@@ -46,6 +61,16 @@ class WorkspaceHomePreferenceViewSet(BaseAPIView):
                     workspace=workspace,
                     is_enabled=aktif,
                     sort_order=2000 if posisi == 0 else 1000 - (len(baru) + 1),
+                )
+            )
+        if di_bawah:
+            # Di bawah SEMUA yang ada sekarang, termasuk baris yang baru dibuat di atas.
+            batas_bawah = min([batas_bawah, *(b.sort_order for b in baru)])
+        for key, aktif in sorted(di_bawah, key=lambda ka: WIDGET_BARU_DI_BAWAH.index(ka[0])):
+            batas_bawah -= 1
+            baru.append(
+                WorkspaceHomePreference(
+                    key=key, user=request.user, workspace=workspace, is_enabled=aktif, sort_order=batas_bawah
                 )
             )
         if baru:

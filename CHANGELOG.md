@@ -6,6 +6,24 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ---
 
+### Version 2.13.1
+
+- **2.13.0 to 2.13.1, patch.** Two fixes to what 2.13.0 shipped. No migration and
+  no operator step.
+- **Announcements page.** Leaving the page through a sidebar link changed the
+  URL but kept the page on screen. The format buttons kept their state in the
+  editor's parent, so every editor transaction re-rendered the whole editor.
+  They now live in their own component and skip updates that change nothing.
+  The write box also keeps the comment box padding (a bordered editor inside
+  the card) instead of stripping it. Not reproduced in a browser: found by
+  reading the code.
+- **Home widget order.** New widget rows for members who already had Home
+  widgets were numbered like fresh accounts, so Announcements landed above older
+  widgets and Changelog tied with Quick links. They now go below every existing
+  widget, Changelog last.
+
+---
+
 ## 2026-11-22
 
 ### Version 2.13.0
