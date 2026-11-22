@@ -472,7 +472,7 @@ class InstanceHierarkiEndpoint(BaseAPIView):
             or (tingkat == "tidak-diubah" and tingkat_lama is not None and tingkat_lama > TINGKAT_CABANG)
         ):
             return Response(
-                {"error": "Only a Branch Director can lead a branch. Pick Branch Director as the level."},
+                {"error": "Only a Branch Manager can lead a branch. Pick Branch Manager as the level."},
                 status=400,
             )
 

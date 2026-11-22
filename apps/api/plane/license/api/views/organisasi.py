@@ -377,7 +377,7 @@ class InstanceCabangEndpoint(BaseAPIView):
         if Divisi.objects.filter(cabang=cabang).exists():
             return Response({"error": "Move its divisions to head office or another branch first."}, status=409)
         if JabatanOrganisasi.objects.filter(cabang=cabang).exists():
-            return Response({"error": "A Branch Director is still placed in this branch."}, status=409)
+            return Response({"error": "A Branch Manager is still placed in this branch."}, status=409)
         workspace = cabang.workspace
         cabang.delete()
         sinkronkan_kanal_organisasi(workspace.id)

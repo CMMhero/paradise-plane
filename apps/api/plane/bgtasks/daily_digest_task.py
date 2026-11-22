@@ -91,7 +91,7 @@ NAMA_PERAN = {
     TINGKAT_LEADER: "Leader",
     TINGKAT_SUPERVISOR: "Supervisor",
     TINGKAT_MANAGER: "Manager",
-    TINGKAT_CABANG: "Direktur Cabang",
+    TINGKAT_CABANG: "Manajer Cabang",
     TINGKAT_SEKRETARIS: "Sekretaris",
     TINGKAT_DIREKTUR: "Direktur",
 }

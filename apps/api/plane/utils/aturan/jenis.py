@@ -48,7 +48,7 @@ NAMA_TINGKAT = {
     12: "Leader",
     20: "Supervisor",
     30: "Manager",
-    33: "Branch director",
+    33: "Branch manager",
     35: "Secretary",
     40: "Director",
 }
