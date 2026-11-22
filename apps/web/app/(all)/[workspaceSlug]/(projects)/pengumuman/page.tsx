@@ -7,8 +7,9 @@
  * Pengumuman tetap tersimpan di kanal sistem "Announcements" (`kunci_sistem =
  * pengumuman`), jadi daftar, hak menulis, dan email ke seluruh anggota memakai
  * jalur Obrolan yang sama. Halaman ini hanya muka lain untuk kanal itu: daftar
- * baca-saja yang rapi, dan kotak tulis bagi yang boleh. Hak menulis tidak
- * diatur di sini; server menolak 403 untuk yang tidak berhak (`boleh_kirim`).
+ * baca-saja yang rapi, dan penyunting kaya bagi yang boleh (Markdown + lampiran,
+ * lihat penyunting.tsx). Hak menulis tidak diatur di sini; server menolak 403
+ * untuk yang tidak berhak (`boleh_kirim`).
  */
 
 import { useMemo, useState } from "react";
@@ -20,43 +21,24 @@ import { MessageSquare } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { Avatar, Loader, TextArea } from "@plane/ui";
+import { Avatar, Loader } from "@plane/ui";
 import { getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
 import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
+import { IsiMarkdown } from "@/components/pengumuman/isi-markdown";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 // services
 import { ChatService, KUNCI_BELUM_DIBACA } from "@/services/chat.service";
 import type { TPesan } from "@/services/chat.service";
 // local imports
-import { potongTautan } from "../chat/tautan";
+import { DaftarLampiran } from "../chat/lampiran";
+import { PenyuntingPengumuman } from "./penyunting";
 
 const chatService = new ChatService();
 /** Ukuran satu halaman dari server (`JUMLAH_PESAN` di chat.py). */
 const UKURAN_HALAMAN = 100;
-
-const denganTautan = (teks: string) =>
-  potongTautan(teks).map((potongan, i) =>
-    potongan.jenis === "teks" ? (
-      potongan.isi
-    ) : (
-      // Potongan lahir dari memecah satu teks yang tidak berubah sebagian.
-      // oxlint-disable-next-line no-array-index-key
-      <span key={`tautan-${i}`}>
-        <a
-          href={potongan.alamat}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-accent-primary underline underline-offset-2 hover:opacity-80"
-        >
-          {potongan.alamat}
-        </a>
-        {potongan.ekor}
-      </span>
-    )
-  );
 
 function PengumumanPage() {
   const { t } = useTranslation();
@@ -65,8 +47,6 @@ function PengumumanPage() {
   const {
     workspace: { getWorkspaceMemberDetails },
   } = useMember();
-  const [draf, setDraf] = useState("");
-  const [mengirim, setMengirim] = useState(false);
   const [lebihLama, setLebihLama] = useState<TPesan[]>([]);
   const [habis, setHabis] = useState(false);
   const [memuatLama, setMemuatLama] = useState(false);
@@ -117,24 +97,20 @@ function PengumumanPage() {
     }
   };
 
-  const terbitkan = async () => {
-    const isi = draf.trim();
-    if (!slug || !kanal || !isi || mengirim) return;
-    setMengirim(true);
+  const terbitkan = async (isi: string, lampiran: string[]) => {
+    if (!slug || !kanal) return;
     try {
-      await chatService.kirimPesanRuang(slug, kanal.id, isi);
-      setDraf("");
-      await mutate();
-      void mutateGlobal(`CHAT_PERCAKAPAN_${slug}`);
-      void mutateGlobal(KUNCI_BELUM_DIBACA);
+      await chatService.kirimPesanRuang(slug, kanal.id, isi, lampiran);
     } catch (galat) {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: (galat as { error?: string })?.error ?? t("pengumuman_ui.send_failed"),
       });
-    } finally {
-      setMengirim(false);
+      throw galat;
     }
+    await mutate();
+    void mutateGlobal(`CHAT_PERCAKAPAN_${slug}`);
+    void mutateGlobal(KUNCI_BELUM_DIBACA);
   };
 
   if (!slug) return <></>;
@@ -144,27 +120,7 @@ function PengumumanPage() {
       <PageHead title={t("pengumuman_ui.title")} />
       <PageShell>
         <PageShell.Header title={t("pengumuman_ui.title")} />
-        {kanal?.boleh_kirim ? (
-          <div className="flex flex-col gap-2 rounded-card border border-subtle bg-surface-1 p-3">
-            <TextArea
-              value={draf}
-              onChange={(e) => setDraf(e.target.value)}
-              placeholder={t("pengumuman_ui.placeholder")}
-              rows={3}
-              className="w-full"
-            />
-            <div className="flex justify-end">
-              <Button
-                variant="primary"
-                size="base"
-                onClick={() => void terbitkan()}
-                disabled={!draf.trim() || mengirim}
-              >
-                {t("pengumuman_ui.send")}
-              </Button>
-            </div>
-          </div>
-        ) : null}
+        {kanal?.boleh_kirim ? <PenyuntingPengumuman slug={slug} onTerbit={terbitkan} /> : null}
 
         {galatKanal || galatPesan ? (
           <div role="alert" className="rounded-card border border-subtle px-4 py-3 text-13 text-tertiary">
@@ -183,7 +139,7 @@ function PengumumanPage() {
             {daftar.map((p) => {
               const penulis = p.pengirim ? getWorkspaceMemberDetails(p.pengirim)?.member : undefined;
               return (
-                <li key={p.id} className="flex flex-col gap-2 rounded-card border border-subtle bg-surface-1 p-4">
+                <li key={p.id} className="flex flex-col gap-2 rounded-card border border-subtle bg-layer-1 p-4">
                   <div className="flex items-center gap-2">
                     <Avatar name={nama(p.pengirim)} src={getFileURL(penulis?.avatar_url ?? "")} size="sm" />
                     <p className="min-w-0 truncate text-13 font-medium text-primary">{nama(p.pengirim)}</p>
@@ -191,9 +147,8 @@ function PengumumanPage() {
                       {renderFormattedDate(p.created_at)} {renderFormattedTime(p.created_at)}
                     </p>
                   </div>
-                  <p className="text-13 [overflow-wrap:anywhere] whitespace-pre-wrap text-secondary">
-                    {denganTautan(p.isi)}
-                  </p>
+                  {p.isi ? <IsiMarkdown teks={p.isi} /> : null}
+                  <DaftarLampiran lampiran={p.lampiran ?? []} />
                 </li>
               );
             })}

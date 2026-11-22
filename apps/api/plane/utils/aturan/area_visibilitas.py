@@ -147,7 +147,7 @@ ATURAN = (
         label="Lowest level that sees team KPI",
         help=(
             "From this level up, people see the KPI of the departments they lead and of the people below them "
-            "there. Below it, people see only their own KPI. Managers (30) and branch directors (33) always see "
+            "there. Below it, people see only their own KPI. Managers (30) and branch managers (33) always see "
             "their division or branch; secretaries (35) and directors (40) always see the whole organisation."
         ),
         risk=TINGGI,
@@ -204,14 +204,14 @@ ATURAN = (
         choices=(
             ("wiki_admins", "Wiki admins only"),
             ("org_wide", "Wiki admins, secretaries, and directors"),
-            ("division_leaders", "Wiki admins, secretaries, directors, and the division's manager or branch director"),
+            ("division_leaders", "Wiki admins, secretaries, directors, and the division's manager or branch manager"),
         ),
         group="wiki",
         label="Who sees other people's private pages",
         help=(
             "Private pages in a department project are always seen by their owner. Wiki admins are Super Admins "
             "and workspace admins. Secretaries are level 35, directors 40. The division's manager (30) and its "
-            "branch director (33) see private pages in that division only. Department members keep seeing their own "
+            "branch manager (33) see private pages in that division only. Department members keep seeing their own "
             "department's pages in the Wiki tree."
         ),
         risk=TINGGI,

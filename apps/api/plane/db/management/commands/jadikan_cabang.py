@@ -38,7 +38,7 @@ SUMBER = "jadikan-cabang"
 
 
 class Command(BaseCommand):
-    help = "Turn a division into a branch: create the branch, move the division into it, place Branch Directors."
+    help = "Turn a division into a branch: create the branch, move the division into it, place Branch Managers."
 
     def add_arguments(self, parser):
         parser.add_argument("--divisi", required=True, help="Code of the division to move, e.g. PC.")
@@ -50,7 +50,7 @@ class Command(BaseCommand):
             action="append",
             default=[],
             metavar="EMAIL",
-            help="Place this person as Branch Director. Repeat for more than one.",
+            help="Place this person as Branch Manager. Repeat for more than one.",
         )
         parser.add_argument("--dry-run", action="store_true", help="Print the steps without changing anything.")
 
@@ -82,7 +82,7 @@ class Command(BaseCommand):
                 raise CommandError(f"{email} is not an active member of {workspace.slug}.")
             tingkat, _, _ = penempatan_sekarang(workspace.id, user.id)
             if tingkat is not None and tingkat > TINGKAT_CABANG:
-                raise CommandError(f"{email} is above Branch Director. Change their level in God Mode first.")
+                raise CommandError(f"{email} is above Branch Manager. Change their level in God Mode first.")
             direktur.append(user)
 
         self._ringkasan(divisi)
@@ -102,7 +102,7 @@ class Command(BaseCommand):
             or str(cabang.id) not in cabang_sekarang(workspace.id, u.id)
         ]
         for u in promosi:
-            langkah.append(f"Place {u.display_name} <{u.email}> as Branch Director of {kode}.")
+            langkah.append(f"Place {u.display_name} <{u.email}> as Branch Manager of {kode}.")
 
         if not langkah:
             self.stdout.write(self.style.SUCCESS("Nothing to change."))

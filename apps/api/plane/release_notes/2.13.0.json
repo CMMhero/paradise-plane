@@ -1,0 +1,38 @@
+{
+  "version": "2.13.0",
+  "date": "2026-11-22",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Announcements have a full editor, the same one as comments: Markdown shortcuts, headings, lists, quotes, code and links, plus file and image attachments by button, paste or drag and drop. Announcements already posted look the same as before, with links still clickable."
+    },
+    {
+      "type": "Added",
+      "text": "Home has two new widgets, Announcements and Changelog. Both show up in Manage widgets, where you can turn them on or off and drag them into the order you like. Announcements shows the three latest posts with a link to all of them."
+    },
+    {
+      "type": "Changed",
+      "text": "The Changelog widget can now load every release back to the oldest. Press Show more to see them all."
+    },
+    {
+      "type": "Changed",
+      "text": "Plant Cilegon is now split into seven divisions (Logistics, Engineering, Production, QA QC, Maintenance, GA and HSE, HR and Legal). Departments keep their boards, work items and people."
+    },
+    {
+      "type": "Changed",
+      "text": "The sidebar is simpler. The Workspace group always shows every menu you can use, so there is no pinning and no More button. The department list always shows every department."
+    },
+    {
+      "type": "Changed",
+      "text": "The Branch Director role is now called Branch Manager."
+    },
+    {
+      "type": "Changed",
+      "text": "The God Mode org chart lists each department's supervisors by name, like division boxes list their managers. Announcement cards now match the card style of the other pages."
+    },
+    {
+      "type": "Fixed",
+      "text": "When a work item is sent for approval as Done, it now waits in In Progress. A new item moved straight to Done used to sit in Backlog while it waited."
+    }
+  ]
+}

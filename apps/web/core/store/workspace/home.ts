@@ -23,6 +23,8 @@ import { WorkspaceLinkStore } from "./link.store";
 const MODUL_PER_WIDGET: Partial<Record<THomeWidgetKeys, TParadiseModule>> = {
   my_stickies: "stickies",
   quick_links: "quick_links",
+  // Pengumuman adalah kanal sistem Obrolan, jadi ikut modul Chat.
+  announcements: "chat",
 };
 
 const isHomeWidgetAvailable = (key: THomeWidgetKeys): boolean => {

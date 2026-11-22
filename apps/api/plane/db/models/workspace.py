@@ -384,6 +384,8 @@ class WorkspaceHomePreference(BaseModel):
         MY_STICKIES = "my_stickies", "My Stickies"
         NEW_AT_PLANE = "new_at_plane", "New at Plane"
         QUICK_TUTORIAL = "quick_tutorial", "Quick Tutorial"
+        ANNOUNCEMENTS = "announcements", "Announcements"
+        CHANGELOG = "changelog", "Changelog"
 
     workspace = models.ForeignKey(
         "db.Workspace",

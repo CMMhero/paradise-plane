@@ -73,9 +73,9 @@ ATURAN = (
         default=KELOMPOK_PIMPINAN,
         choices=_PILIHAN_KELOMPOK,
         group="notifications",
-        label="Branch directors follow which notification column",
+        label="Branch managers follow which notification column",
         help=(
-            "Which column of Notifications > Roles gives Branch directors their default notifications. "
+            "Which column of Notifications > Roles gives Branch managers their default notifications. "
             f"The directors column is also a hard limit. {_AKHIR_BAGIAN}"
         ),
         risk=SEDANG,
@@ -113,7 +113,7 @@ ATURAN = (
         key=DIRECTOR_REPORT_RECIPIENTS,
         kind=KEY_LIST,
         default=("35", "40"),
-        choices=(("33", "Branch directors"), ("35", "Secretaries"), ("40", "Directors")),
+        choices=(("33", "Branch managers"), ("35", "Secretaries"), ("40", "Directors")),
         group="notifications",
         label="Who gets the director report",
         help=(

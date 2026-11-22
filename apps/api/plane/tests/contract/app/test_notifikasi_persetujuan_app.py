@@ -413,6 +413,45 @@ class TestSelesaiDitahanJadiPengajuan:
         assert body["state_id"] != str(selesai.id)
 
     @pytest.mark.django_db
+    def test_diajukan_selesai_ditahan_di_in_progress_bukan_backlog(self, workspace, staf, bos, divisi, monkeypatch):
+        """Tugas baru dibuat (Backlog) lalu langsung digeser ke Done: selagi menunggu ia di In Progress."""
+        from plane.db.models import DEFAULT_STATES, Issue, State
+
+        monkeypatch.setenv(FLAG_GERBANG, "1")
+        for d in DEFAULT_STATES:
+            State.objects.get_or_create(
+                project=divisi,
+                workspace=workspace,
+                name=d["name"],
+                defaults={
+                    "color": d["color"],
+                    "sequence": d["sequence"],
+                    "group": d["group"],
+                    "default": d.get("default", False),
+                },
+            )
+        res = _klien(staf).post(
+            URL_ISSUES.format(slug=workspace.slug, project_id=divisi.id),
+            {"name": "Tugas baru", "assignee_ids": [str(staf.id)]},
+            format="json",
+        )
+        awal = Issue.objects.select_related("state").get(pk=res.json()["id"])
+        assert awal.state.group in ("backlog", "unstarted")
+        selesai = State.objects.filter(project=divisi, group="completed").first()
+        patch = _klien(staf).patch(
+            URL_ISSUES.format(slug=workspace.slug, project_id=divisi.id) + res.json()["id"] + "/",
+            {"state": str(selesai.id)},
+            format="json",
+        )
+        assert patch.status_code == status.HTTP_200_OK, getattr(patch, "data", None)
+        body = patch.json()
+        assert body["approval_requested"] is True
+        akhir = Issue.objects.select_related("state").get(pk=res.json()["id"])
+        assert akhir.state.group == "started"
+        assert body["state_id"] == str(akhir.state_id)
+        assert PersetujuanPenugasan.objects.filter(issue=akhir, status="menunggu").count() == 1
+
+    @pytest.mark.django_db
     def test_geser_ke_selesai_lagi_selagi_menunggu_tidak_menggandakan(self, workspace, staf, bos, divisi, monkeypatch):
         from plane.db.models import State
 

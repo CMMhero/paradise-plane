@@ -285,6 +285,8 @@ class TestWidgetHome:
             "quick_links": (True, 998),
             "recents": (True, 997),
             "my_stickies": (True, 996),
+            "announcements": (True, 995),
+            "changelog": (True, 994),
         }
 
     @pytest.mark.django_db
@@ -306,6 +308,8 @@ class TestWidgetHome:
             "needs_attention": (True, 998),
             "quick_links": (False, 997),
             "my_stickies": (False, 996),
+            "announcements": (False, 995),
+            "changelog": (False, 994),
         }
         assert _widget_home(staf, ws) == sebelum
 
@@ -321,6 +325,8 @@ class TestWidgetHome:
             "needs_attention": (False, 998),
             "quick_links": (False, 997),
             "recents": (False, 996),
+            "announcements": (False, 995),
+            "changelog": (False, 994),
         }
 
 

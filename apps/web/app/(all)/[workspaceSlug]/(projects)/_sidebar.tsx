@@ -16,19 +16,11 @@ import { ResizableSidebar } from "@/components/sidebar/resizable-sidebar";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useAppRailVisibility } from "@/lib/app-rail";
 // local imports
-import { ExtendedAppSidebar } from "./extended-sidebar";
 import { AppSidebar } from "./sidebar";
 
 export const ProjectAppSidebar = observer(function ProjectAppSidebar() {
   // store hooks
-  const {
-    sidebarCollapsed,
-    toggleSidebar,
-    sidebarPeek,
-    toggleSidebarPeek,
-    isExtendedSidebarOpened,
-    isAnySidebarDropdownOpen,
-  } = useAppTheme();
+  const { sidebarCollapsed, toggleSidebar, sidebarPeek, toggleSidebarPeek, isAnySidebarDropdownOpen } = useAppTheme();
   const { shouldRenderAppRail } = useAppRailVisibility();
   const { storedValue, setValue } = useLocalStorage("sidebarWidth", SIDEBAR_WIDTH);
   // states
@@ -36,9 +28,6 @@ export const ProjectAppSidebar = observer(function ProjectAppSidebar() {
   // routes
   const { workspaceSlug } = useParams();
   const pathname = usePathname();
-  // derived values
-  const isAnyExtendedSidebarOpen = isExtendedSidebarOpened;
-
   const isNotificationsPath = pathname.includes(`/${workspaceSlug}/notifications`);
 
   // handlers
@@ -64,12 +53,6 @@ export const ProjectAppSidebar = observer(function ProjectAppSidebar() {
         isCollapsed={sidebarCollapsed}
         toggleCollapsed={toggleSidebar}
         togglePeek={toggleSidebarPeek}
-        extendedSidebar={
-          <>
-            <ExtendedAppSidebar />
-          </>
-        }
-        isAnyExtendedSidebarExpanded={isAnyExtendedSidebarOpen}
         isAnySidebarDropdownOpen={isAnySidebarDropdownOpen}
       >
         <AppSidebar />

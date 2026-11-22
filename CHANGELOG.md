@@ -6,6 +6,63 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ---
 
+## 2026-11-22
+
+### Version 2.13.0
+
+- **2.12.1 to 2.13.0, minor.** A substantial new feature (the announcement
+  editor), a data reshaping on production, and a role rename. Old accounts keep
+  working. No Django migration. Operator step, already done on `space` on
+  2026-11-22 before this release: `pecah_divisi` ran with
+  `paradise/rencana/pecah-plant-cilegon.json`, with every manager seat left
+  vacant. LOG, ENG, QAQC and HRL still need a manager: re-run the command with
+  the original plan and `--manager KODE=<user>`.
+- **Announcements.** The write box is now the comment editor: Markdown
+  shortcuts, toolbar (bold, italic, underline, strikethrough, lists, quote,
+  code), links and mentions. Enter starts a new paragraph, Ctrl or Cmd plus
+  Enter publishes. Files and images are attached through the Attach file
+  button, paste, or drag and drop, and travel as chat attachments (same count,
+  size and type limits as chat, images open in the full screen viewer). The
+  text is stored as Markdown in the message body, so Chat and email still read
+  it as plain text. Old announcements are rendered the same way, with single
+  line breaks and bare links preserved. Inline images are not supported.
+  Announcement cards use the same card style as the other pages.
+- **Home widgets.** Changelog is now a normal widget in Manage widgets (it used
+  to be pinned under the list), and there is a new Announcements widget that
+  shows the three latest announcements with a link to the page. Both can be
+  switched off and reordered per person. They are new `WorkspaceHomePreference`
+  keys (`announcements`, `changelog`) created on the next Home load, at the
+  bottom, enabled by default; the God Mode rule "Home widgets and their order"
+  lists them too. Show more in the Changelog widget now loads every release back
+  to the oldest (the endpoint cap went from 50 to 1000). The Announcements
+  widget follows the Chat module switch.
+- **Sidebar.** "Show department list" and "Show limited departments" are gone
+  from Customize navigation: the list always shows every department, and only
+  the Super Admin's switch in God Mode can hide it. Pinning and unpinning
+  Workspace group items is gone: every menu the person is allowed to use
+  shows, and Customize navigation only reorders them. The "More" button and the
+  panel behind it are removed (the Workspace extended sidebar was dead code
+  after that; the project extended sidebar stays).
+- **Branch Manager.** The Branch Director level (33) is renamed Branch Manager
+  in God Mode, notification and visibility settings, API messages, the
+  `jadikan_cabang` command and email. The stored level number and the
+  `Direktur Cabang` choice label in the model are unchanged, so there is no
+  migration.
+- **Approval hold.** When staff move a work item to Done and it goes to
+  approval, the item now waits in the In Progress group (the group set by the
+  "return rejected work items to" rule, first state of that group) instead of
+  staying in its old state. A new item created in Backlog and moved straight to
+  Done used to sit in Backlog while waiting. An item already in a started state,
+  for example In Review, stays where it is. Reject still returns to In Progress.
+- **Org chart.** Department boxes in the God Mode chart list each supervisor by
+  name with an avatar, the same way division boxes list their managers.
+- **Plant Cilegon.** Division `PC` is split into Logistics (LOG, PPC),
+  Engineering (ENG-ENG, RND-RND), Production (PRO, PO), QA QC (QQ), Maintenance
+  (MTC), GA and HSE (GA, HSE) and HR and Legal (HR-CLG). 11 departments, 11
+  boards and 295 work items kept their ids.
+
+---
+
 ## 2026-11-21
 
 ### Version 2.12.1

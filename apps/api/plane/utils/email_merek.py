@@ -284,7 +284,7 @@ def tanggal(nilai, bahasa="id", pendek=False) -> str:
 _DATA_EN = {
     "Staf": "Staff",
     "Sekretaris": "Secretary",
-    "Direktur Cabang": "Branch Director",
+    "Manajer Cabang": "Branch Manager",
     "Direktur": "Director",
     "Cabang Anda": "Your branch",
     "Seluruh divisi": "All divisions",
