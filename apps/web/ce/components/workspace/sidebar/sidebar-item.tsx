@@ -5,7 +5,6 @@
  */
 
 import { useParams } from "next/navigation";
-import { PARADISE_NAV_ITEMS } from "@plane/constants";
 import type { IWorkspaceSidebarNavigationItem } from "@plane/constants";
 import { getNumberCount } from "@plane/utils";
 import { CountChip } from "@/components/common/count-chip";
@@ -18,12 +17,7 @@ type Props = {
   item: IWorkspaceSidebarNavigationItem;
 };
 
-// SidebarItemBase menyembunyikan item nav dinamis yang tidak ter-pin, dan orang
-// tidak akan mem-pin fitur yang belum ia tahu ada. Menu Paradise (registri
-// `PARADISE_NAV_ITEMS`) karena itu selalu tampil bagi yang lolos izin dan
-// modulnya menyala; pin hanya mengatur urutannya.
 // Persetujuan hanya bagi yang punya wewenang memutuskan (`useNavPersetujuanTerlihat`).
-const PARADISE_ALWAYS_VISIBLE_ITEMS: string[] = PARADISE_NAV_ITEMS.map((item) => item.key);
 
 /**
  * Menu Persetujuan hanya untuk yang punya wewenang memutuskan; staf tidak
@@ -59,11 +53,5 @@ export function SidebarItem({ item }: Props) {
     item.key === "persetujuan" ? workspaceSlug?.toString() : undefined
   );
   if (item.key === "persetujuan" && !persetujuanTerlihat) return null;
-  return (
-    <SidebarItemBase
-      item={item}
-      additionalStaticItems={PARADISE_ALWAYS_VISIBLE_ITEMS}
-      additionalRender={renderTambahan}
-    />
-  );
+  return <SidebarItemBase item={item} additionalRender={renderTambahan} />;
 }

@@ -116,42 +116,15 @@ export const usePersonalNavigationPreferences = () => {
   };
 };
 
-/** Key of the `WorkspaceUserPreference` row that stores the member's choice for the department list. */
-const DEPARTMENTS_PREFERENCE_KEY = "departments";
-
 /**
- * The sidebar's department list (divisions > departments). Two switches: the
- * Super Admin's (God Mode > Visibility, module `departments`) and the member's own
- * (Customize navigation). The admin switch wins: a member's choice never turns on
- * what the instance turned off. Hiding is presentation only, access is unchanged.
- * No stored row (not loaded yet, or an old account) counts as shown.
+ * Whether the sidebar's department list (divisions > departments) shows. Only the
+ * Super Admin's switch (God Mode > Visibility, module `departments`) decides: members
+ * no longer have their own switch, so an old stored choice is ignored. Hiding is
+ * presentation only, access is unchanged.
  */
 export const useDepartmentsMenu = () => {
-  const { workspaceSlug } = useParams();
   const { config } = useInstance();
-  const { getNavigationPreferences, updateBulkSidebarPreferences } = useWorkspace();
-
-  const stored = getNavigationPreferences(workspaceSlug?.toString() || "")?.[DEPARTMENTS_PREFERENCE_KEY];
-  const isAllowedByInstance = isParadiseModuleEnabled(config, "departments");
-  const isChosenByMember = stored?.is_pinned ?? true;
-
-  const setChosenByMember = useCallback(
-    async (show: boolean) => {
-      if (!workspaceSlug) return;
-      await updateBulkSidebarPreferences(workspaceSlug.toString(), [
-        { key: DEPARTMENTS_PREFERENCE_KEY, is_pinned: show, sort_order: stored?.sort_order ?? 0 },
-      ]);
-    },
-    [workspaceSlug, stored?.sort_order, updateBulkSidebarPreferences]
-  );
-
-  return {
-    /** What the sidebar renders. */
-    isVisible: isAllowedByInstance && isChosenByMember,
-    isAllowedByInstance,
-    isChosenByMember,
-    setChosenByMember,
-  };
+  return { isVisible: isParadiseModuleEnabled(config, "departments") };
 };
 
 export const useProjectNavigationPreferences = () => {
@@ -162,26 +135,17 @@ export const useProjectNavigationPreferences = () => {
   // Get preferences from the store
   const storePreferences = getProjectNavigationPreferences(workspaceSlug?.toString() || "");
 
-  // Computed preferences with fallback logic: API → defaults
-  const storedPreferences: TProjectNavigationPreferences = useMemo(() => {
-    // 1. Try API data first
-    if (
-      storePreferences &&
-      (storePreferences.navigation_control_preference || storePreferences.navigation_project_limit !== undefined)
-    ) {
-      // Missing limit = show every project (0), never a silent limit of 10.
-      const limit = storePreferences.navigation_project_limit ?? 0;
-
-      return {
-        navigationMode: storePreferences.navigation_control_preference || DEFAULT_PROJECT_PREFERENCES.navigationMode,
-        limitedProjectsCount: limit > 0 ? limit : DEFAULT_PROJECT_PREFERENCES.limitedProjectsCount,
-        showLimitedProjects: limit > 0, // Derived: 0 = false, >0 = true
-      };
-    }
-
-    // 2. Fall back to defaults
-    return DEFAULT_PROJECT_PREFERENCES;
-  }, [storePreferences]);
+  // The member's saved mode, falling back to the default.
+  const storedPreferences: TProjectNavigationPreferences = useMemo(
+    () => ({
+      ...DEFAULT_PROJECT_PREFERENCES,
+      navigationMode: storePreferences?.navigation_control_preference || DEFAULT_PROJECT_PREFERENCES.navigationMode,
+      // Members can't cap the department list anymore: it always shows every department,
+      // even when an old preference stored a limit.
+      showLimitedProjects: false,
+    }),
+    [storePreferences?.navigation_control_preference]
+  );
 
   // Accordion mode puts a department's tabs inside the sidebar list. With the list
   // hidden there is nowhere to show them, so the tabs fall back to the horizontal bar.
@@ -202,40 +166,11 @@ export const useProjectNavigationPreferences = () => {
     [workspaceSlug, updateProjectNavigationPreferences]
   );
 
-  // Update show limited projects
-  const updateShowLimitedProjects = useCallback(
-    async (show: boolean) => {
-      if (!workspaceSlug) return;
-
-      // When toggling off, set to 0; when toggling on, use current count or default
-      const newLimit = show ? preferences.limitedProjectsCount || DEFAULT_PROJECT_PREFERENCES.limitedProjectsCount : 0;
-
-      await updateProjectNavigationPreferences(workspaceSlug.toString(), {
-        navigation_project_limit: newLimit,
-      });
-    },
-    [workspaceSlug, updateProjectNavigationPreferences, preferences.limitedProjectsCount]
-  );
-
-  // Update limited projects count
-  const updateLimitedProjectsCount = useCallback(
-    async (count: number) => {
-      if (!workspaceSlug) return;
-
-      await updateProjectNavigationPreferences(workspaceSlug.toString(), {
-        navigation_project_limit: count,
-      });
-    },
-    [workspaceSlug, updateProjectNavigationPreferences]
-  );
-
   return {
     preferences,
     /** The member's saved mode, even while the department list is hidden. */
     storedNavigationMode: storedPreferences.navigationMode,
     updateNavigationMode,
-    updateShowLimitedProjects,
-    updateLimitedProjectsCount,
   };
 };
 
@@ -256,23 +191,6 @@ export const useWorkspaceNavigationPreferences = () => {
       items: storePreferences,
     };
   }, [storePreferences]);
-
-  const toggleWorkspaceItem = useCallback(
-    async (key: string, isPinned: boolean) => {
-      if (!workspaceSlug) return;
-
-      const currentItem = preferences.items[key] || { is_pinned: false, sort_order: 0 };
-
-      await updateBulkSidebarPreferences(workspaceSlug.toString(), [
-        {
-          key,
-          is_pinned: isPinned,
-          sort_order: currentItem.sort_order,
-        },
-      ]);
-    },
-    [workspaceSlug, preferences, updateBulkSidebarPreferences]
-  );
 
   const updateWorkspaceItemOrder = useCallback(
     async (items: Array<{ key: string; sortOrder: number }>) => {
@@ -297,14 +215,6 @@ export const useWorkspaceNavigationPreferences = () => {
     [preferences]
   );
 
-  const isWorkspaceItemPinned = useCallback(
-    (key: string): boolean => {
-      const state = getWorkspaceItemState(key);
-      return state.is_pinned;
-    },
-    [getWorkspaceItemState]
-  );
-
   const updateWorkspaceItemSortOrder = useCallback(
     async (key: string, sortOrder: number) => {
       if (!workspaceSlug) return;
@@ -324,11 +234,9 @@ export const useWorkspaceNavigationPreferences = () => {
 
   return {
     preferences,
-    toggleWorkspaceItem,
     updateWorkspaceItemOrder,
     updateWorkspaceItemSortOrder,
     getWorkspaceItemState,
-    isWorkspaceItemPinned,
   };
 };
 
