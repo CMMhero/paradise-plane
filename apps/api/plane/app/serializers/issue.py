@@ -292,8 +292,9 @@ class IssueCreateSerializer(BaseSerializer):
             ):
                 # KEP-55 (2 Nov 2026, menggantikan "tetap selesai" 26 Okt): staf
                 # tidak bisa memindahkan tugasnya ke selesai. Perpindahannya
-                # DITAHAN (state dibuang, tugas tetap di status semula) dan yang
-                # terjadi hanyalah pengajuan persetujuan. Atasan yang menyetujui
+                # DITAHAN (state dibuang) dan yang terjadi hanyalah pengajuan
+                # persetujuan; selagi menunggu, tugas berada di In Progress
+                # (`tahan_di_progres`, bukan Backlog bawaan tugas baru). Atasan yang menyetujui
                 # memindahkannya ke selesai; menolak mengembalikannya ke In Progress.
                 self._ajukan_selesai = True
                 self._state_sebelumnya_id = self.instance.state_id if self.instance is not None else None
@@ -432,7 +433,13 @@ class IssueCreateSerializer(BaseSerializer):
         if getattr(self, "_ajukan_selesai", False):
             from plane.utils.hierarki import aktor_dari_context, catat_persetujuan  # noqa: PLC0415
 
-            catat_persetujuan(issue, actor=aktor_dari_context(self.context))
+            aktor = aktor_dari_context(self.context)
+            if catat_persetujuan(issue, actor=aktor) is not None:
+                # Tugas yang baru dibuat langsung "selesai" masih di status bawaan (Backlog);
+                # selama menunggu atasan ia ditahan di In Progress.
+                from plane.app.views.issue.persetujuan import tahan_di_progres  # noqa: PLC0415
+
+                tahan_di_progres(aktor, issue)
 
         # Assignee anak ikut jadi assignee induknya (KEP-98).
         from plane.utils.hierarki import aktor_dari_context  # noqa: PLC0415
@@ -505,11 +512,19 @@ class IssueCreateSerializer(BaseSerializer):
         if getattr(self, "_ajukan_selesai", False):
             from plane.utils.hierarki import aktor_dari_context, catat_persetujuan  # noqa: PLC0415
 
-            catat_persetujuan(
-                tugas,
-                actor=aktor_dari_context(self.context),
-                state_sebelumnya_id=getattr(self, "_state_sebelumnya_id", None),
-            )
+            aktor = aktor_dari_context(self.context)
+            if (
+                catat_persetujuan(
+                    tugas,
+                    actor=aktor,
+                    state_sebelumnya_id=getattr(self, "_state_sebelumnya_id", None),
+                )
+                is not None
+            ):
+                # Menunggu atasan = In Progress, bukan status semula (mis. Backlog).
+                from plane.app.views.issue.persetujuan import tahan_di_progres  # noqa: PLC0415
+
+                tahan_di_progres(aktor, tugas, getattr(self, "_state_sebelumnya_id", None))
         elif getattr(self, "_keluar_dari_selesai", False):
             from plane.utils.hierarki import batalkan_pengajuan_menunggu  # noqa: PLC0415
 

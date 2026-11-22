@@ -278,6 +278,42 @@ def _pindahkan_tugas(aktor, issue, tujuan, catat=True):
     )
 
 
+def status_tujuan_progres(issue, state_sebelumnya_id=None):
+    """Status In Progress yang dituju tugas yang ditolak atau yang selesainya sedang diajukan.
+
+    Tujuannya status pertama grup REJECT_TARGET_STATE_GROUP (God Mode, bawaan
+    `started`), apa pun status asalnya. Kalau project tidak punya status grup itu,
+    jatuh ke `state_sebelumnya_id`, lalu status bawaan. None = tidak perlu pindah:
+    tugas sudah di grup itu, dibatalkan, atau tidak ada tujuan.
+    """
+    from plane.db.models import State  # noqa: PLC0415
+    from plane.utils import aturan  # noqa: PLC0415
+    from plane.utils.aturan.area_tugas import REJECT_TARGET_STATE_GROUP  # noqa: PLC0415
+
+    grup = aturan.get_choice(REJECT_TARGET_STATE_GROUP)
+    if issue is None or (issue.state is not None and issue.state.group in (grup, "cancelled")):
+        return None
+    dasar = State.objects.filter(project_id=issue.project_id)
+    tujuan = (
+        dasar.filter(group=grup).order_by("sequence").first()
+        or dasar.filter(pk=state_sebelumnya_id).exclude(group="completed").first()
+        or dasar.exclude(group__in=["completed", "cancelled"]).filter(default=True).first()
+    )
+    return None if tujuan is None or tujuan.id == issue.state_id else tujuan
+
+
+def tahan_di_progres(aktor, issue, state_sebelumnya_id=None):
+    """Staf mengajukan selesai: selama menunggu atasan, tugasnya berada di In Progress.
+
+    Perpindahan ke selesai ditahan serializer, jadi tugas tinggal di status
+    semulanya. Untuk tugas yang baru dibuat itu Backlog, padahal ia sedang
+    diajukan selesai. Tugas yang sudah di grup In Progress (mis. In Review)
+    dibiarkan di tempatnya.
+    """
+    tujuan = status_tujuan_progres(issue, state_sebelumnya_id)
+    if tujuan is not None:
+        _pindahkan_tugas(aktor, issue, tujuan)
+
 class PenggunaBisaDitugaskanEndpoint(BaseAPIView):
     """`GET` siapa saja yang boleh saya assign di project ini.
 
@@ -689,23 +725,12 @@ class PersetujuanPenugasanEndpoint(BaseAPIView):
         itu, jatuh ke `state_sebelumnya`, lalu status bawaan. Tugas yang sudah di
         grup itu atau dibatalkan dibiarkan.
         """
-        from plane.db.models import Issue, State  # noqa: PLC0415
-        from plane.utils import aturan  # noqa: PLC0415
-        from plane.utils.aturan.area_tugas import REJECT_TARGET_STATE_GROUP  # noqa: PLC0415
+        from plane.db.models import Issue  # noqa: PLC0415
 
-        grup = aturan.get_choice(REJECT_TARGET_STATE_GROUP)
         issue = Issue.objects.filter(pk=baris.issue_id).select_related("state").first()
-        if issue is None or (issue.state is not None and issue.state.group in (grup, "cancelled")):
-            return
-        dasar = State.objects.filter(project_id=baris.project_id)
-        tujuan = (
-            dasar.filter(group=grup).order_by("sequence").first()
-            or dasar.filter(pk=baris.state_sebelumnya_id).exclude(group="completed").first()
-            or dasar.exclude(group__in=["completed", "cancelled"]).filter(default=True).first()
-        )
-        if tujuan is None or tujuan.id == issue.state_id:
-            return
-        _pindahkan_tugas(request.user, issue, tujuan)
+        tujuan = status_tujuan_progres(issue, baris.state_sebelumnya_id)
+        if tujuan is not None:
+            _pindahkan_tugas(request.user, issue, tujuan)
 
     @transaction.atomic
     def ajukan_ulang(self, request, slug, project_id, pk=None):
