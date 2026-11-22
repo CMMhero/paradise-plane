@@ -296,6 +296,17 @@ class TestWidgetHome:
         assert _widget_home(staf, ws)["quick_links"] == (True, 999)
 
     @pytest.mark.django_db
+    def test_widget_baru_masuk_di_bawah_widget_lama_changelog_terakhir(self, ruang):
+        ws, staf, _ = ruang
+        # Akun lama: hanya empat widget sebelum 2.13, nomor seperti dulu.
+        for key, nomor in (("needs_attention", 2000), ("quick_links", 998), ("recents", 997), ("my_stickies", 996)):
+            WorkspaceHomePreference.objects.create(user=staf, workspace=ws, key=key, sort_order=nomor)
+        hasil = _widget_home(staf, ws)
+        assert hasil["announcements"] == (True, 995)
+        assert hasil["changelog"] == (True, 994)
+        assert min(nomor for _, nomor in hasil.values()) == hasil["changelog"][1]
+
+    @pytest.mark.django_db
     def test_nilai_lain_untuk_akun_baru_saja(self, super_admin, ruang):
         ws, staf, _ = ruang
         sebelum = _widget_home(staf, ws)
