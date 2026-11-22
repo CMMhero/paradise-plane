@@ -13,11 +13,12 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { observer } from "mobx-react";
 import { Paperclip, X } from "lucide-react";
 // plane imports
 import { TOOLBAR_ITEMS } from "@plane/editor";
-import type { EditorRefApi, ToolbarMenuItem } from "@plane/editor";
+import type { EditorRefApi, ToolbarMenuItem, TExtensions } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -45,12 +46,73 @@ const KELOMPOK_TOMBOL: ToolbarMenuItem[][] = [
   TOOLBAR_ITEMS.lite.userAction,
 ];
 
-// Gambar sebaris dimatikan, dan Enter dibiarkan membuat paragraf.
-const EKSTENSI_MATI = ["image", "enter-key"] as const;
+// Gambar sebaris dimatikan, dan Enter dibiarkan membuat paragraf. Konstanta di luar
+// komponen supaya identitasnya tetap.
+const EKSTENSI_MATI: TExtensions[] = ["image", "enter-key"];
+const TAMPILAN_EDITOR = { fontSize: "small-font" } as const;
 
 const tolakUnggahSebaris = async (): Promise<never> => {
   throw new Error("inline uploads are disabled in announcements");
 };
+
+/**
+ * Bilah tombol format. Hidup di komponennya sendiri: status tombol berubah di tiap
+ * transaksi editor, dan kalau disimpan di penyunting induk ia merender ulang
+ * LiteTextEditor tiap transaksi, yang memicu transaksi berikutnya (putaran render
+ * tak berujung yang membuat halaman macet). Sama seperti IssueCommentToolbar.
+ */
+function BilahTombol({ editorRef, siap }: { editorRef: RefObject<EditorRefApi | null>; siap: boolean }) {
+  const [aktif, setAktif] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!siap || !editor) return;
+    const perbarui = () => {
+      const baru: Record<string, boolean> = {};
+      for (const item of KELOMPOK_TOMBOL.flat()) {
+        // @ts-expect-error type mismatch between toolbar item variants, same as the comment toolbar
+        baru[item.renderKey] = editor.isMenuItemActive({ itemKey: item.itemKey, ...item.extraProps });
+      }
+      // Tanpa perubahan: jangan merender ulang.
+      setAktif((lama) =>
+        KELOMPOK_TOMBOL.flat().every((item) => lama[item.renderKey] === baru[item.renderKey]) ? lama : baru
+      );
+    };
+    const lepas = editor.onStateChange(perbarui);
+    perbarui();
+    return () => lepas();
+  }, [editorRef, siap]);
+
+  return (
+    <div className="flex flex-wrap items-center gap-0.5 rounded-sm border-[0.5px] border-subtle bg-surface-2 p-1">
+      {KELOMPOK_TOMBOL.map((kelompok, i) => (
+        <div
+          key={kelompok[0]?.renderKey ?? "kelompok"}
+          className={cn("flex items-center gap-0.5", i > 0 && "border-l border-subtle pl-1.5")}
+        >
+          {kelompok.map((item) => (
+            <button
+              key={item.renderKey}
+              type="button"
+              aria-label={item.name}
+              aria-pressed={!!aktif[item.renderKey]}
+              onClick={() =>
+                // @ts-expect-error type mismatch between toolbar item variants, same as the comment toolbar
+                editorRef.current?.executeMenuItemCommand({ itemKey: item.itemKey, ...item.extraProps })
+              }
+              className={cn(
+                "grid aspect-square place-items-center rounded-xs p-1 text-placeholder hover:bg-layer-1 sentuh:p-1.5",
+                aktif[item.renderKey] && "bg-layer-1 text-primary"
+              )}
+            >
+              <item.icon className="size-3.5" strokeWidth={2.5} />
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slug, onTerbit }: Props) {
   const { t } = useTranslation();
@@ -58,8 +120,8 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
   const berkasRef = useRef<HTMLInputElement>(null);
   const [kosong, setKosong] = useState(true);
   const [mengirim, setMengirim] = useState(false);
-  const [aktif, setAktif] = useState<EditorRefApi | null>(null);
-  const [tombolAktif, setTombolAktif] = useState<Record<string, boolean>>({});
+  // Boolean, bukan objek editornya: nilai yang sama tidak merender ulang penyunting.
+  const [editorSiap, setEditorSiap] = useState(false);
   const workspaceId = useWorkspace().getWorkspaceBySlug(slug)?.id as string;
   const describeUploadFailure = useUploadFailureText();
 
@@ -85,22 +147,6 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
       });
     },
   });
-
-  // Tombol yang sedang menyala (tebal, miring, ...) mengikuti kursor.
-  useEffect(() => {
-    if (!aktif) return;
-    const perbarui = () => {
-      const keadaan: Record<string, boolean> = {};
-      for (const item of KELOMPOK_TOMBOL.flat()) {
-        // @ts-expect-error type mismatch between toolbar item variants, same as the comment toolbar
-        keadaan[item.renderKey] = aktif.isMenuItemActive({ itemKey: item.itemKey, ...item.extraProps });
-      }
-      setTombolAktif(keadaan);
-    };
-    const lepas = aktif.onStateChange(perbarui);
-    perbarui();
-    return () => lepas();
-  }, [aktif]);
 
   const bisaTerbit = (!kosong || siap.length > 0) && !mengirim && !mengunggah;
 
@@ -132,7 +178,7 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
 
   return (
     <div
-      className="flex flex-col gap-3 rounded-card border border-subtle bg-layer-1 p-4"
+      className="flex flex-col gap-3 rounded-card border border-subtle bg-layer-1 p-3"
       // Tempel dan seret berkas = lampiran, termasuk gambar. Fase tangkap supaya
       // penyunting tidak memasangnya sebaris.
       role="presentation"
@@ -161,33 +207,7 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
         }
       }}
     >
-      <div className="flex flex-wrap items-center gap-0.5 rounded-sm border-[0.5px] border-subtle bg-surface-2 p-1">
-        {KELOMPOK_TOMBOL.map((kelompok, i) => (
-          <div
-            key={kelompok[0]?.renderKey ?? i}
-            className={cn("flex items-center gap-0.5", i > 0 && "border-l border-subtle pl-1.5")}
-          >
-            {kelompok.map((item) => (
-              <button
-                key={item.renderKey}
-                type="button"
-                aria-label={item.name}
-                aria-pressed={!!tombolAktif[item.renderKey]}
-                onClick={() =>
-                  // @ts-expect-error type mismatch between toolbar item variants, same as the comment toolbar
-                  editorRef.current?.executeMenuItemCommand({ itemKey: item.itemKey, ...item.extraProps })
-                }
-                className={cn(
-                  "grid aspect-square place-items-center rounded-xs p-1 text-placeholder hover:bg-layer-1 sentuh:p-1.5",
-                  tombolAktif[item.renderKey] && "bg-layer-1 text-primary"
-                )}
-              >
-                <item.icon className="size-3.5" strokeWidth={2.5} />
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
+      <BilahTombol editorRef={editorRef} siap={editorSiap} />
 
       <LiteTextEditor
         editable
@@ -196,18 +216,18 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
         workspaceSlug={slug}
         id={`pengumuman_${slug}`}
         ref={editorRef}
-        handleEditorReady={(siapDipakai) => setAktif(siapDipakai ? editorRef.current : null)}
+        handleEditorReady={setEditorSiap}
         value="<p></p>"
         initialValue="<p></p>"
         isEmpty={kosong}
-        disabledExtensions={[...EKSTENSI_MATI]}
+        disabledExtensions={EKSTENSI_MATI}
         placeholder={t("pengumuman_ui.placeholder")}
         containerClassName="min-h-24"
-        parentClassName="border-0 p-0"
+        parentClassName="p-2"
         onChange={(_json, html) => setKosong(isCommentEmpty(html))}
         uploadFile={tolakUnggahSebaris}
         duplicateFile={tolakUnggahSebaris}
-        displayConfig={{ fontSize: "small-font" }}
+        displayConfig={TAMPILAN_EDITOR}
       />
 
       {siap.length > 0 || naik.length > 0 ? (
