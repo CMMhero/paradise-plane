@@ -110,7 +110,8 @@ function KotakDepartemen({
   onKelola: TKelola;
 }) {
   const { s, fill } = useGodmodeStrings();
-  const sup = d.anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR).length;
+  const supervisor = d.anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR);
+  const sup = supervisor.length;
   return (
     <KotakBagan
       onClick={() => onBuka(divisiId, d.id)}
@@ -122,6 +123,16 @@ function KotakDepartemen({
         </>
       }
     >
+      {sup > 0 && (
+        <div className="mt-1.5 space-y-1">
+          {supervisor.map((a) => (
+            <div key={a.id} className="flex items-center gap-1.5 text-12 text-secondary" title={a.email}>
+              <PersonAvatar name={a.nama} size="sm" />
+              <span className="truncate">{a.nama}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="mt-1 text-10 text-tertiary">{fill(s.org.sup_staff, { sup, staff: d.anggota.length - sup })}</div>
       {!d.projects[0] && <div className="mt-1 text-10 text-warning-primary">{s.org.project_none}</div>}
     </KotakBagan>
