@@ -47,7 +47,7 @@ export function PratinjauTeks({ text, truncated, className }: TPropsIsi) {
 
 // Di luar komponen supaya identitasnya tetap: komponen yang dibuat ulang tiap
 // render membuat seluruh dokumen Markdown dipasang ulang.
-const KOMPONEN_MARKDOWN: Components = {
+export const KOMPONEN_MARKDOWN: Components = {
   h1: ({ children }) => <h1 className="mt-6 mb-2 text-20 font-semibold text-primary">{children}</h1>,
   h2: ({ children }) => <h2 className="mt-5 mb-2 text-16 font-semibold text-primary">{children}</h2>,
   h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-14 font-semibold text-primary">{children}</h3>,
