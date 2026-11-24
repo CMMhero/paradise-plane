@@ -32,6 +32,12 @@ ANNOUNCEMENT_EMAIL = "ANNOUNCEMENT_EMAIL"
 ANNOUNCEMENT_EMAIL_ACTIVE_ONLY = "ANNOUNCEMENT_EMAIL_ACTIVE_ONLY"
 ALL_MENTION_MIN_LEVEL = "ALL_MENTION_MIN_LEVEL"
 LOGIN_RETENTION_WARNING_DAYS = "LOGIN_RETENTION_WARNING_DAYS"
+# Pembersihan harian inbox (bgtasks/notifikasi_retensi.py).
+NOTIFICATION_CLEANUP_DAYS = "NOTIFICATION_CLEANUP_DAYS"
+NOTIFICATION_CLEANUP_ACTION = "NOTIFICATION_CLEANUP_ACTION"
+# Nilai pilihan yang dibaca task. Teks sama persis dengan `choices` di bawah.
+PEMBERSIHAN_ARSIP = "archive"
+PEMBERSIHAN_HAPUS = "delete"
 
 # Nama kelompok = baris tabel di God Mode > Notifications > Roles (`KELOMPOK_JABATAN`).
 KELOMPOK_STAF, KELOMPOK_PIMPINAN, KELOMPOK_DIREKTUR = "staf", "pimpinan", "direktur"
@@ -260,5 +266,38 @@ ATURAN = (
             "change how long records are kept."
         ),
         risk=RENDAH,
+    ),
+    Rule(
+        key=NOTIFICATION_CLEANUP_DAYS,
+        kind=INT,
+        default=7,
+        min=0,
+        max=365,
+        group="notifications",
+        label="Clean up inbox notifications older than (days)",
+        help=(
+            "Once a day, notifications that arrived more than this many days ago are archived or deleted, "
+            "whichever is chosen below. Read or unread makes no difference. Snoozed notifications wait until "
+            "the snooze ends. 0 turns the cleanup off."
+        ),
+        risk=SEDANG,
+        applies=NEXT_RUN,
+    ),
+    Rule(
+        key=NOTIFICATION_CLEANUP_ACTION,
+        kind=CHOICE,
+        default=PEMBERSIHAN_ARSIP,
+        choices=(
+            (PEMBERSIHAN_ARSIP, "Archive them (people can still find them under Archived)"),
+            (PEMBERSIHAN_HAPUS, "Delete them"),
+        ),
+        group="notifications",
+        label="What the inbox cleanup does",
+        help=(
+            "Archive keeps old notifications under the Archived filter of the inbox. Delete removes them for "
+            "good from everyone's inbox. Only matters while the cleanup above is not 0."
+        ),
+        risk=SEDANG,
+        applies=NEXT_RUN,
     ),
 )
