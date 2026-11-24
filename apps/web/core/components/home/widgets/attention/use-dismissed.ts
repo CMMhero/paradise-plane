@@ -46,9 +46,8 @@ export const useAttentionDismissed = (workspaceSlug: string, userId: string | un
     [peta]
   );
 
-  const dismiss = useCallback(
-    (group: TAttentionGroupKey, item: TAttentionItem) => {
-      const baru = { ...peta, [kunciKartu(group, item)]: { sig: tandaTangan(item), at: Date.now() } };
+  const simpan = useCallback(
+    (baru: TPeta) => {
       setPeta(baru);
       try {
         window.localStorage.setItem(kunci, JSON.stringify(baru));
@@ -56,8 +55,25 @@ export const useAttentionDismissed = (workspaceSlug: string, userId: string | un
         // Penyimpanan penuh atau diblokir: kartu tetap tersembunyi sampai muat ulang.
       }
     },
-    [kunci, peta]
+    [kunci]
   );
 
-  return { isDismissed, dismiss };
+  const dismissMany = useCallback(
+    (targets: { group: TAttentionGroupKey; item: TAttentionItem }[]) => {
+      if (targets.length === 0) return;
+      const at = Date.now();
+      const tambahan = Object.fromEntries(
+        targets.map(({ group, item }) => [kunciKartu(group, item), { sig: tandaTangan(item), at }])
+      );
+      simpan({ ...peta, ...tambahan });
+    },
+    [peta, simpan]
+  );
+
+  const dismiss = useCallback(
+    (group: TAttentionGroupKey, item: TAttentionItem) => dismissMany([{ group, item }]),
+    [dismissMany]
+  );
+
+  return { isDismissed, dismiss, dismissMany };
 };

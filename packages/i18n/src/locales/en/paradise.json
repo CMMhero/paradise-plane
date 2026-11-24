@@ -1189,7 +1189,9 @@
     "group_due_soon": "Due in the next {days} days",
     "group_waiting_mine": "Awaiting approval",
     "group_mentioned": "Recently mentioned",
-    "load_failed": "Couldn't load this summary."
+    "load_failed": "Couldn't load this summary.",
+    "dismiss_all": "Dismiss all",
+    "dismiss_all_group": "Dismiss all in {group}"
   },
   "quick_links_ui": {
     "shared_title": "From your organization",
