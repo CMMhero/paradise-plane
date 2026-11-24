@@ -77,6 +77,13 @@ Rules:
 - Mark breaking commits with `!` (`feat(api)!: ...`) so the next bump can be read
   straight off `git log --oneline <last-release>..HEAD`.
 
+## Deploying
+
+Shipping a version to production ("yeet and deploy", "rilis", "deploy to space")
+follows the runbook in [`paradise/DEPLOYMENT.md`](paradise/DEPLOYMENT.md),
+section "Releasing a version to production". It covers the release gate, checks,
+PR, merge, `paradise/bin/rilis.sh`, proof, and when to stop and ask.
+
 ## Commands
 
 - `pnpm dev` - Start all dev servers (web:3000, admin:3001)
