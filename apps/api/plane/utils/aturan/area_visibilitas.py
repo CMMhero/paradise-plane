@@ -37,6 +37,9 @@ KPI_WORKSPACE_ADMINS_SEE_ALL = "KPI_WORKSPACE_ADMINS_SEE_ALL"
 # Angka pimpinan seluruh organisasi hanya dari tugas buatan Supervisor ke atas
 # (utils/statistik_pimpinan.py, keputusan 2026-11-20).
 ORG_VIEW_LEADER_CREATED_ONLY = "ORG_VIEW_LEADER_CREATED_ONLY"
+# Kelompok "team_overdue" di widget Needs attention untuk jangkauan seluruh
+# organisasi (utils/perhatian.py, utils/statistik_pimpinan.py `cakupan_perhatian`).
+ATTENTION_ORG_MIN_CREATOR_LEVEL = "ATTENTION_ORG_MIN_CREATOR_LEVEL"
 # Siapa yang dikabari saat disebut (@) di work item (utils/jangkauan_sebutan.py).
 MENTION_NOTIFY_REACH = "MENTION_NOTIFY_REACH"
 # Halaman privat orang lain di project departemen (utils/wiki_mandiri.py, KEP-95).
@@ -176,6 +179,22 @@ ATURAN = (
             "For people with organisation-wide reach (secretaries 35 and directors 40): overdue counts, statistics, "
             "dashboards, and the director report leave out work items created by staff and leaders. Off: they count "
             "every work item. Supervisors and managers always see their full team numbers."
+        ),
+        risk=SEDANG,
+    ),
+    Rule(
+        key=ATTENTION_ORG_MIN_CREATOR_LEVEL,
+        kind=LEVEL,
+        default=30,
+        choices=(10, 20, 30),
+        group="visibility",
+        label="Needs attention for directors: lowest creator level",
+        help=(
+            "For people with organisation-wide reach (secretaries 35 and directors 40): the overdue team work "
+            "in Needs attention only lists work items created by someone at this level or above. Manager (30) "
+            "skips work created by supervisors, leaders, and staff. Member (10) lists every work item. "
+            "Supervisors and managers always see their full team. Approvals waiting for a director follow "
+            "Work rules > Approvals instead."
         ),
         risk=SEDANG,
     ),

@@ -17,6 +17,7 @@ import useSWR from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { THomeWidgetProps } from "@plane/types";
 import { Loader } from "@plane/ui";
 import { cn } from "@plane/utils";
@@ -27,8 +28,10 @@ import { AttentionService } from "@/services/attention.service";
 import type { TAttention, TAttentionGroup } from "@/services/attention.service";
 // local
 import type { TOnAct } from "./actions";
+import { tandaiDibaca } from "./actions";
 import { AttentionCard, ALERT_GROUPS } from "./card";
 import type { TAttentionPatch } from "./data";
+import { removeItems } from "./data";
 import { useAttentionDismissed } from "./use-dismissed";
 
 const attentionService = new AttentionService();
@@ -56,7 +59,7 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
 
   // Belum ada data: kerangka setinggi widget supaya Home tidak melompat saat datanya tiba.
   // Gagal memuat: satu baris pesan dengan tombol coba lagi, bukan widget yang menghilang.
-  const { isDismissed, dismiss } = useAttentionDismissed(workspaceSlug, currentUser?.id);
+  const { isDismissed, dismiss, dismissMany } = useAttentionDismissed(workspaceSlug, currentUser?.id);
   // Kartu yang saya sembunyikan keluar dari daftar dan dari jumlahnya; yang
   // tidak terkirim (lewat batas lima) tetap dihitung server.
   const groups = (data?.groups ?? []).flatMap((group) => {
@@ -89,6 +92,25 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
     return berhasil;
   };
 
+  // "Dismiss all": kartu sebutan menutup notifikasinya (ditandai dibaca di server,
+  // dengan pembaruan optimistis); kartu lain disembunyikan di perangkat ini. Hanya
+  // kartu yang tampil: sisanya (di luar batas baris) muncul setelah daftar dimuat ulang.
+  const handleDismissAll = (target: TAttentionGroup[]) => {
+    const entries = target.flatMap((group) => group.items.map((item) => ({ group: group.key, item })));
+    const lokal = entries.filter((e) => !e.item.notification_id);
+    const server = entries.filter((e) => e.item.notification_id);
+    dismissMany(lokal);
+    if (server.length === 0) return;
+    void handleAct(removeItems(server.map((e) => ({ group: e.group, key: e.item.key }))), async () => {
+      const hasil = await Promise.allSettled(server.map((e) => tandaiDibaca(workspaceSlug, e.item.notification_id)));
+      if (hasil.some((h) => h.status === "rejected")) {
+        setToast({ type: TOAST_TYPE.ERROR, title: t("perhatian_aksi.failed") });
+        return false;
+      }
+      return true;
+    });
+  };
+
   const viewAllHref = (group: TAttentionGroup): string | null => {
     if (group.key === "decide")
       return group.top_project_id ? `/${workspaceSlug}/projects/${group.top_project_id}/persetujuan` : null;
@@ -99,9 +121,16 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
 
   return (
     <section aria-labelledby="home-attention-title" className="flex flex-col gap-3">
-      <h2 id="home-attention-title" className="text-14 font-semibold text-primary">
-        {t("attention_ui.title")}
-      </h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="home-attention-title" className="text-14 font-semibold text-primary">
+          {t("attention_ui.title")}
+        </h2>
+        {groups.some((group) => group.items.length > 1) && (
+          <Button variant="ghost" size="sm" onClick={() => handleDismissAll(groups)}>
+            {t("attention_ui.dismiss_all")}
+          </Button>
+        )}
+      </div>
       {!data ? (
         error ? (
           <div
@@ -133,6 +162,7 @@ export const AttentionWidget = observer(function AttentionWidget(props: THomeWid
               lookaheadDays={data?.lookahead_days ?? DEFAULT_LOOKAHEAD_DAYS}
               onAct={handleAct}
               onDismiss={dismiss}
+              onDismissAll={() => handleDismissAll([group])}
             />
           ))}
         </div>
@@ -148,9 +178,18 @@ type TGroupProps = {
   lookaheadDays: number;
   onAct: TOnAct;
   onDismiss: ReturnType<typeof useAttentionDismissed>["dismiss"];
+  onDismissAll: () => void;
 };
 
-function AttentionGroup({ group, workspaceSlug, viewAllHref, lookaheadDays, onAct, onDismiss }: TGroupProps) {
+function AttentionGroup({
+  group,
+  workspaceSlug,
+  viewAllHref,
+  lookaheadDays,
+  onAct,
+  onDismiss,
+  onDismissAll,
+}: TGroupProps) {
   const { t } = useTranslation();
   const isAlert = ALERT_GROUPS.has(group.key);
   const hidden = group.count - group.items.length;
@@ -161,9 +200,23 @@ function AttentionGroup({ group, workspaceSlug, viewAllHref, lookaheadDays, onAc
         <h3 className="min-w-0 truncate text-13 font-semibold text-primary">
           {t(`attention_ui.group_${group.key}`, { days: lookaheadDays })}
         </h3>
-        <span className={cn("text-13 font-semibold", isAlert ? "text-danger-primary" : "text-secondary")}>
-          {group.count}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          {group.items.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDismissAll}
+              aria-label={t("attention_ui.dismiss_all_group", {
+                group: t(`attention_ui.group_${group.key}`, { days: lookaheadDays }),
+              })}
+            >
+              {t("attention_ui.dismiss_all")}
+            </Button>
+          )}
+          <span className={cn("text-13 font-semibold", isAlert ? "text-danger-primary" : "text-secondary")}>
+            {group.count}
+          </span>
+        </div>
       </div>
       <ul className="divide-y divide-subtle border-t border-subtle">
         {group.items.map((item) => (

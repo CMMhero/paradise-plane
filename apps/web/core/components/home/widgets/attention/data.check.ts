@@ -15,7 +15,7 @@
 
 import assert from "node:assert/strict";
 import type { TAttention, TAttentionItem } from "@/services/attention.service";
-import { removeItem, updateItem } from "./data";
+import { removeItem, removeItems, updateItem } from "./data";
 
 const item = (key: string): TAttentionItem => ({
   key,
@@ -58,5 +58,18 @@ assert.equal(data.groups[0].items.length, 2);
 const pindah = updateItem("mentioned", "a", { state_id: "s2", state_name: "Doing" })(data);
 assert.equal(pindah.groups[1].items[0].state_name, "Doing");
 assert.equal(pindah.groups[0].items[0].state_name, "Todo");
+
+// Banyak kartu sekaligus: kunci yang sama di kelompok lain tidak ikut hilang.
+const semua = removeItems([
+  { group: "decide", key: "a" },
+  { group: "decide", key: "b" },
+])(data);
+assert.equal(semua.groups[0].items.length, 0);
+assert.equal(semua.groups[0].count, 0);
+assert.equal(semua.groups[1].items.length, 1);
+assert.equal(semua.total, 1);
+// Kunci yang tidak ada tidak mengubah apa pun, dan data asli tetap utuh.
+assert.equal(removeItems([{ group: "decide", key: "zzz" }])(data).total, 3);
+assert.equal(data.groups[0].items.length, 2);
 
 console.log("data.check.ts: ok");

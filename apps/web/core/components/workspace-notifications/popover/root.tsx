@@ -31,6 +31,7 @@ import { NotificationOptionsMenu } from "../sidebar/header/options/options-menu"
 import { NotificationsLoader } from "../sidebar/loader";
 import { NotificationItem } from "../sidebar/notification-card/item";
 import { NotificationTabs } from "../sidebar/tabs";
+import { useAutoReadOnOpen } from "../use-auto-read-on-open";
 
 /** Baris yang dirender di popover. Sisanya lewat "Lihat semua" (tampilan penuh memuat 300). */
 const POPOVER_ITEM_LIMIT = 40;
@@ -127,6 +128,9 @@ const NotificationsPopoverContent = observer(function NotificationsPopoverConten
   const { getWorkspaceBySlug } = useWorkspace();
   const { loader, getNotifications, notificationIdsByWorkspaceId, currentNotificationTab, paginationInfo } =
     useWorkspaceNotifications();
+
+  // Kustomisasi Paradise: panel hanya terpasang selama terbuka, jadi membukanya menandai dibaca.
+  useAutoReadOnOpen(workspaceSlug);
 
   const workspace = getWorkspaceBySlug(workspaceSlug);
   const notificationIds = workspace ? notificationIdsByWorkspaceId(workspace.id) : undefined;

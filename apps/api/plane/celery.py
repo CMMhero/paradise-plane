@@ -76,6 +76,12 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.login_activity_retention.bersihkan_login_activity",
         "schedule": crontab(hour=17, minute=0),
     },
+    # Paradise: arsipkan/hapus notifikasi inbox yang lewat N hari (God Mode,
+    # NOTIFICATION_CLEANUP_DAYS). 02:00 UTC = 09:00 WIB, di antara tugas harian lain.
+    "bersihkan-notifikasi-lama": {
+        "task": "plane.bgtasks.notifikasi_retensi.bersihkan_notifikasi_lama",
+        "schedule": crontab(hour=2, minute=0),
+    },
     # Paradise (KEP-83): pengingat tenggat, ringkasan pagi/sore, dan laporan
     # direktur. Jam, hari, dan zona waktunya diatur di God Mode (OFFICE_TIMEZONE,
     # DEADLINE_REMINDER_TIME, DIGEST_*_TIME, DIRECTOR_DIGEST_TIME, DIGEST_WEEKDAYS),

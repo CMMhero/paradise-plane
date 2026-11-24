@@ -6,6 +6,39 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ---
 
+### Version 2.14.0
+
+- **2.13.1 to 2.14.0, minor.** Notification housekeeping: a new daily job
+  that touches existing inbox rows (it archives everything older than 7 days on
+  its first run) and a changed default for what directors see in Needs
+  attention. Old accounts keep working. No Django migration, no operator step.
+  To keep every old notification, set God Mode > Work rules > Notifications >
+  "Clean up inbox notifications older than" to 0 before the first 02:00 UTC run.
+- **Dismiss all.** Needs attention has a Dismiss all button on the widget and on
+  every group with more than one card. Mention cards are marked read in the
+  inbox, the rest are hidden on this device like the single Dismiss. Only the
+  cards on screen are dismissed; more cards behind the "+N more" line appear
+  after the next refresh.
+- **Directors in Needs attention.** The overdue team list of secretaries and
+  directors now only holds work items created by managers and above, so work
+  created by supervisors, leaders and staff is skipped. New rule in God Mode >
+  Work rules > What each level sees: "Needs attention for directors: lowest
+  creator level" (Manager by default, Supervisor gives the old list, Member
+  lists everything). Supervisors and managers still see their whole team, and
+  dashboards and the director report keep their own rule
+  (`ORG_VIEW_LEADER_CREATED_ONLY`).
+- **Inbox reads itself.** Opening the inbox, in the full view or the bell
+  popover, marks the notifications of the current tab and filters as read after
+  2.5 seconds. Closing it sooner cancels that. Mentions that become read leave
+  Needs attention, as they always did.
+- **Inbox cleanup.** A daily job (02:00 UTC) archives, or deletes, notifications
+  older than N days, read or not. Snoozed ones wait for the snooze to end. Two
+  new rules under God Mode > Work rules > Notifications and digests:
+  "Clean up inbox notifications older than (days)" (7, 0 turns it off) and
+  "What the inbox cleanup does" (Archive by default, Delete removes the rows).
+
+---
+
 ### Version 2.13.1
 
 - **2.13.0 to 2.13.1, patch.** Two fixes to what 2.13.0 shipped. No migration and

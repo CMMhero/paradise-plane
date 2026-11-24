@@ -1189,7 +1189,9 @@
     "group_due_soon": "Jatuh tempo {days} hari ke depan",
     "group_waiting_mine": "Menunggu persetujuan atasan",
     "group_mentioned": "Anda disebut baru-baru ini",
-    "load_failed": "Ringkasan ini gagal dimuat."
+    "load_failed": "Ringkasan ini gagal dimuat.",
+    "dismiss_all": "Sembunyikan semua",
+    "dismiss_all_group": "Sembunyikan semua di {group}"
   },
   "quick_links_ui": {
     "shared_title": "Dari organisasi",

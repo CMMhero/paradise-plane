@@ -23,6 +23,21 @@ export const removeItem =
     ),
   });
 
+/** Banyak kartu hilang sekaligus ("Dismiss all"); jumlah kelompok dan total ikut turun. */
+export const removeItems =
+  (targets: { group: TAttentionGroupKey; key: string }[]): TAttentionPatch =>
+  (data) => {
+    const dibuang = new Set(targets.map((t) => `${t.group}:${t.key}`));
+    let berkurang = 0;
+    const groups = data.groups.map((g) => {
+      const items = g.items.filter((i) => !dibuang.has(`${g.key}:${i.key}`));
+      const hilang = g.items.length - items.length;
+      berkurang += hilang;
+      return hilang ? { ...g, count: Math.max(0, g.count - hilang), items } : g;
+    });
+    return { ...data, total: Math.max(0, data.total - berkurang), groups };
+  };
+
 export const updateItem =
   (groupKey: TAttentionGroupKey, key: string, changes: Partial<TAttentionItem>): TAttentionPatch =>
   (data) => ({

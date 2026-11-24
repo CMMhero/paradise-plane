@@ -22,6 +22,7 @@ import { useWorkspaceIssueProperties } from "@/hooks/use-workspace-issue-propert
 import { useNotificationPreview } from "@/hooks/use-notification-preview";
 // local imports
 import { InboxContentRoot } from "../inbox/content";
+import { useAutoReadOnOpen } from "./use-auto-read-on-open";
 
 type NotificationsRootProps = {
   workspaceSlug?: string;
@@ -46,6 +47,9 @@ export const NotificationsRoot = observer(function NotificationsRoot({ workspace
 
   // fetching workspace work item properties
   useWorkspaceIssueProperties(workspaceSlug);
+
+  // Kustomisasi Paradise: membuka Inbox menandai notifikasinya dibaca.
+  useAutoReadOnOpen(workspaceSlug);
 
   // fetch workspace notifications
   const notificationMutation =

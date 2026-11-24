@@ -1,0 +1,22 @@
+{
+  "version": "2.14.0",
+  "date": "2026-11-24",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Needs attention on Home has a Dismiss all button, on the widget and on each group, to clear several cards at once."
+    },
+    {
+      "type": "Changed",
+      "text": "For directors and secretaries, the overdue team list in Needs attention now only holds work created by managers and above. A Super Admin can change that level in God Mode."
+    },
+    {
+      "type": "Changed",
+      "text": "Opening the inbox now marks its notifications as read after a couple of seconds."
+    },
+    {
+      "type": "Added",
+      "text": "Inbox notifications older than 7 days are archived automatically every day. A Super Admin can change the number of days, switch to deleting them, or turn the cleanup off in God Mode."
+    }
+  ]
+}
