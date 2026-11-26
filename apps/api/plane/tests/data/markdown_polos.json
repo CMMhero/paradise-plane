@@ -1,0 +1,50 @@
+[
+  { "nama": "teks biasa dua baris", "markdown": "halo semua\nbesok libur", "polos": "halo semua\nbesok libur" },
+  { "nama": "dua paragraf", "markdown": "satu\n\n\ndua", "polos": "satu\n\ndua" },
+  {
+    "nama": "tebal, miring, coret, kode",
+    "markdown": "**tebal** _miring_ *juga* ~~coret~~ `kode *mentah*`",
+    "polos": "tebal miring juga coret kode *mentah*"
+  },
+  { "nama": "tilde tunggal tetap teks", "markdown": "sekitar ~10 sampai ~20", "polos": "sekitar ~10 sampai ~20" },
+  { "nama": "judul", "markdown": "## Rapat bulanan\nJam 9", "polos": "Rapat bulanan\n\nJam 9" },
+  { "nama": "nomor tugas bukan judul", "markdown": "#GDG-12 sudah beres", "polos": "#GDG-12 sudah beres" },
+  { "nama": "daftar butir", "markdown": "Bawa:\n\n* KTP\n* **NPWP**", "polos": "Bawa:\n\n• KTP\n• NPWP" },
+  { "nama": "daftar longgar", "markdown": "- satu\n\n- dua", "polos": "• satu\n• dua" },
+  { "nama": "daftar bernomor mulai tiga", "markdown": "3. tiga\n4. empat", "polos": "3. tiga\n4. empat" },
+  { "nama": "daftar bersarang", "markdown": "- induk\n  - anak", "polos": "• induk\n  • anak" },
+  { "nama": "daftar centang", "markdown": "- [ ] belum\n- [x] sudah", "polos": "• ☐ belum\n• ☑ sudah" },
+  {
+    "nama": "sebutan dan tautan",
+    "markdown": "Selamat [@Budi Santoso](https://x.id/ws/profile/6b1f0c2e-1111-4222-8333-944444444444), lihat [berkas](https://x.id/a)",
+    "polos": "Selamat @Budi Santoso, lihat berkas"
+  },
+  { "nama": "sebutan rusak lama", "markdown": "Halo [@]() semua", "polos": "Halo @ semua" },
+  {
+    "nama": "alamat telanjang utuh",
+    "markdown": "buka https://x.id/a_b_c.",
+    "polos": "buka https://x.id/a_b_c."
+  },
+  {
+    "nama": "garis bawah ganda di dalam alamat",
+    "markdown": "cek https://x.id/__init__.py dan **https://x.id/a**",
+    "polos": "cek https://x.id/__init__.py dan https://x.id/a"
+  },
+  { "nama": "gambar jadi teks alt", "markdown": "![denah](https://x.id/d.png)", "polos": "denah" },
+  {
+    "nama": "html tetap teks",
+    "markdown": "Tutup <jam 12> & <b>x</b> &amp; selesai",
+    "polos": "Tutup <jam 12> & <b>x</b> &amp; selesai"
+  },
+  { "nama": "blok html tetap teks", "markdown": "<div>\nhai\n</div>", "polos": "<div>\nhai\n</div>" },
+  { "nama": "kurung siku bertitik dua", "markdown": "[URGENT]: segera", "polos": "[URGENT]: segera" },
+  { "nama": "menjorok bukan kode", "markdown": "    menjorok", "polos": "menjorok" },
+  { "nama": "garis bukan judul", "markdown": "Judul\n---", "polos": "Judul\n\n---" },
+  { "nama": "kutipan", "markdown": "> kata dia\n> lagi", "polos": "kata dia\nlagi" },
+  { "nama": "blok kode", "markdown": "```\n**apa adanya**\n```", "polos": "**apa adanya**" },
+  { "nama": "baris paksa", "markdown": "a\\\nb", "polos": "a\nb" },
+  { "nama": "escape", "markdown": "2 \\* 3", "polos": "2 * 3" },
+  { "nama": "tabel", "markdown": "| a | b |\n| - | - |\n| 1 | 2 |", "polos": "a | b\n1 | 2" },
+  { "nama": "hanya pagar tidak jadi kosong", "markdown": "#", "polos": "#" },
+  { "nama": "kosong", "markdown": "", "polos": "" }
+]
