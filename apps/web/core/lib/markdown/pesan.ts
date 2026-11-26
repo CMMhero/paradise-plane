@@ -73,15 +73,43 @@ const pengurai = unified().use(remarkParse).use(PLUGIN_DIALEK).freeze();
 // Kode dan alamat dibiarkan apa adanya; di luar keduanya `*` di antara angka bukan penanda miring.
 const APA_ADANYA = /(```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)|`[^`\n]*`|https?:\/\/[^\s<>]+)/;
 
-/** `10*20*30` itu ukuran, bukan miring. Pasangannya di server: `_lindungi_kali`. */
-export const lindungiKali = (teks: string): string =>
-  teks
+const BUTIR = /^\s*(?:[-*+]|\d{1,9}[.)])(?:\s|$)/;
+const KUTIPAN = /^ {0,3}>/;
+const PAGAR = /^ {0,3}(?:```|~~~)/;
+
+/** Baris biasa sesudah butir daftar atau kutipan berdiri sendiri, tidak menempel ke butirnya. */
+const lepasBarisLanjutan = (teks: string): string => {
+  const hasil: string[] = [];
+  let blok: "daftar" | "kutipan" | null = null;
+  let pagar = false;
+  for (const baris of teks.split("\n")) {
+    if (PAGAR.test(baris)) pagar = !pagar;
+    if (!pagar) {
+      if (BUTIR.test(baris)) blok = "daftar";
+      else if (KUTIPAN.test(baris)) blok = "kutipan";
+      else if (!baris.trim()) blok = null;
+      else if (!(blok === "daftar" && /^\s/.test(baris))) {
+        if (blok) hasil.push("");
+        blok = null;
+      }
+    }
+    hasil.push(baris);
+  }
+  return hasil.join("\n");
+};
+
+/**
+ * Penyesuaian sebelum diurai; pasangannya di server: `_siapkan`.
+ * `10*20*30` itu ukuran, bukan miring.
+ */
+export const siapkanMarkdown = (teks: string): string =>
+  lepasBarisLanjutan(teks)
     .split(APA_ADANYA)
     .map((bagian, i) => (i % 2 ? bagian : bagian.replace(/(?<=\d)\*(?=\d)/g, "\\*")))
     .join("");
 
 export const uraiMarkdown = (teks: string): Root => {
-  const sumber = lindungiKali(teks);
+  const sumber = siapkanMarkdown(teks);
   return pengurai.runSync(pengurai.parse(sumber), sumber) as Root;
 };
 

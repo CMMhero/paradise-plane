@@ -35,6 +35,9 @@ _CENTANG = re.compile(r"^\[([ xX])\][ \t]+")
 # Kode dan alamat dibiarkan apa adanya; di luar keduanya `*` di antara angka bukan penanda miring.
 _APA_ADANYA = re.compile(r"(```.*?(?:```|\Z)|~~~.*?(?:~~~|\Z)|`[^`\n]*`|https?://[^\s<>]+)", re.S)
 _TANDA_KALI = re.compile(r"(?<=\d)\*(?=\d)")
+_BUTIR = re.compile(r"^\s*(?:[-*+]|\d{1,9}[.)])(?:\s|$)")
+_KUTIPAN = re.compile(r"^ {0,3}>")
+_PAGAR = re.compile(r"^ {0,3}(?:```|~~~)")
 
 
 def _alamat_telanjang(state, silent) -> bool:
@@ -79,9 +82,33 @@ def _pengurai() -> MarkdownIt:
 _MD = _pengurai()
 
 
-def _lindungi_kali(sumber: str) -> str:
-    """`10*20*30` itu ukuran, bukan miring. Pasangannya: `lindungiKali` (lib/markdown/pesan.ts)."""
-    bagian = _APA_ADANYA.split(sumber)
+def _lepas_baris_lanjutan(sumber: str) -> str:
+    """Baris biasa sesudah butir daftar atau kutipan berdiri sendiri, tidak menempel ke butirnya."""
+    hasil, blok, pagar = [], None, False
+    for baris in sumber.split("\n"):
+        if _PAGAR.match(baris):
+            pagar = not pagar
+        if not pagar:
+            if _BUTIR.match(baris):
+                blok = "daftar"
+            elif _KUTIPAN.match(baris):
+                blok = "kutipan"
+            elif not baris.strip() or (blok == "daftar" and baris[0].isspace()):
+                blok = blok if baris.strip() else None
+            else:
+                if blok:
+                    hasil.append("")
+                blok = None
+        hasil.append(baris)
+    return "\n".join(hasil)
+
+
+def _siapkan(sumber: str) -> str:
+    """Penyesuaian sebelum diurai. Pasangannya: `siapkanMarkdown` (lib/markdown/pesan.ts).
+
+    `10*20*30` itu ukuran, bukan miring.
+    """
+    bagian = _APA_ADANYA.split(_lepas_baris_lanjutan(sumber))
     bagian[::2] = [_TANDA_KALI.sub(r"\\*", teks) for teks in bagian[::2]]
     return "".join(bagian)
 
@@ -138,7 +165,7 @@ def teks_dari_markdown(isi) -> str:
     if not sumber:
         return ""
     # Tidak pernah mengosongkan pesan yang ada isinya (mis. hanya "#").
-    return _blok(SyntaxTreeNode(_MD.parse(_lindungi_kali(sumber)))).strip() or sumber
+    return _blok(SyntaxTreeNode(_MD.parse(_siapkan(sumber)))).strip() or sumber
 
 
 # ---------------------------------------------------------------- HTML email
@@ -226,7 +253,7 @@ def html_email_dari_markdown(isi) -> str:
     sumber = (isi or "").strip()
     if not sumber:
         return ""
-    tokens = _MD_HTML.parse(_lindungi_kali(sumber))
+    tokens = _MD_HTML.parse(_siapkan(sumber))
     for token in tokens:
         _beri_gaya(token)
         if token.type == "inline":

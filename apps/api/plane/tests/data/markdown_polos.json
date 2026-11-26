@@ -58,5 +58,12 @@
     "nama": "alamat dengan penampung",
     "markdown": "buka http://<ip>:8080 sekarang",
     "polos": "buka http://<ip>:8080 sekarang"
-  }
+  },
+  {
+    "nama": "baris biasa sesudah daftar keluar dari daftar",
+    "markdown": "- satu\n- dua\nterima kasih",
+    "polos": "• satu\n• dua\n\nterima kasih"
+  },
+  { "nama": "baris menjorok tetap bagian butir", "markdown": "- satu\n  lanjutan", "polos": "• satu\n  lanjutan" },
+  { "nama": "balasan sesudah kutipan", "markdown": "> jam 9?\nbisa", "polos": "jam 9?\n\nbisa" }
 ]
