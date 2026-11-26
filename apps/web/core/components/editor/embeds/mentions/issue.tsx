@@ -11,6 +11,8 @@ import { useTranslation } from "@plane/i18n";
 import { HoverCard } from "@plane/propel/popover";
 // components
 import { TugasPreviewCard } from "@/components/rujukan-preview";
+// hooks
+import { useClosePeekOnFollow } from "@/hooks/use-close-peek-on-follow";
 // local imports
 import { useInfoTugas } from "./use-info-rujukan";
 
@@ -22,6 +24,7 @@ type Props = {
 export function EditorIssueMention({ id }: Props) {
   const { t } = useTranslation();
   const { slug, info, isLoading } = useInfoTugas(id);
+  const closePeek = useClosePeekOnFollow();
 
   if (isLoading || !info) {
     return <span className="not-prose inline rounded-sm bg-layer-1 px-1 py-0.5 text-tertiary">#…</span>;
@@ -42,6 +45,7 @@ export function EditorIssueMention({ id }: Props) {
     <HoverCard content={<TugasPreviewCard id={id} />}>
       <Link
         to={`/${slug}/browse/${info.nomor}/`}
+        onClick={closePeek}
         className="not-prose inline rounded-sm bg-accent-subtle-active px-1 py-0.5 text-accent-primary no-underline"
       >
         <span className="font-medium hover:underline">{info.nomor}</span>
