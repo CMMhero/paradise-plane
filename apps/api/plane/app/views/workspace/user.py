@@ -3,7 +3,6 @@
 # See the LICENSE file for details.
 
 # Python imports
-import copy
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
@@ -30,6 +29,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.daftar_tugas import DaftarTugas
 from plane.app.permissions import WorkspaceEntityPermission, WorkspaceViewerPermission
 
 # Module imports
@@ -133,10 +133,10 @@ class WorkspaceUserProfileIssuesEndpoint(BaseAPIView):
             .prefetch_related("assignees", "labels", "issue_module__module")
         )
 
-    def get(self, request, slug, user_id):
+    def susun_daftar(self, request, slug, user_id):
+        """Scope, filters, and order of the profile list, shared with the Excel export."""
         filters = issue_filters(request.query_params, "GET")
 
-        order_by_param = request.GET.get("order_by", "-created_at")
         issue_queryset = saring_tugas_privat(
             Issue.issue_objects.filter(
                 id__in=Issue.issue_objects.filter(
@@ -156,23 +156,24 @@ class WorkspaceUserProfileIssuesEndpoint(BaseAPIView):
         # Apply legacy filters
         issue_queryset = issue_queryset.filter(**filters)
 
-        # Total count queryset
-        total_issue_queryset = copy.deepcopy(issue_queryset)
-
-        # Apply annotations to the issue queryset
-        issue_queryset = self.apply_annotations(issue_queryset)
-
-        # Issue queryset
-        issue_queryset, order_by_param = order_issue_queryset(
-            issue_queryset=issue_queryset, order_by_param=order_by_param
+        # Apply annotations and ordering to the issue queryset
+        ordered_queryset, order_by_param = order_issue_queryset(
+            issue_queryset=self.apply_annotations(issue_queryset),
+            order_by_param=request.GET.get("order_by", "-created_at"),
         )
+        return DaftarTugas(tersaring=issue_queryset, terurut=ordered_queryset, urutan=order_by_param, filters=filters)
+
+    def get(self, request, slug, user_id):
+        daftar = self.susun_daftar(request, slug, user_id)
+        filters, order_by_param = daftar.filters, daftar.urutan
+        total_issue_queryset = daftar.tersaring
 
         # Group by
         group_by = request.GET.get("group_by", False)
         sub_group_by = request.GET.get("sub_group_by", False)
 
         # issue queryset
-        issue_queryset = issue_queryset_grouper(queryset=issue_queryset, group_by=group_by, sub_group_by=sub_group_by)
+        issue_queryset = issue_queryset_grouper(queryset=daftar.terurut, group_by=group_by, sub_group_by=sub_group_by)
 
         if group_by:
             if sub_group_by:

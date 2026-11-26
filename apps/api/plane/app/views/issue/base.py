@@ -51,6 +51,7 @@ from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.sinyal_data import siarkan_tugas
 from plane.utils.kunci_selesai import galat_induk_selesai, galat_tugas_selesai
 from plane.utils.akses_privat import boleh_lihat_tugas, galat_ubah_privat, saring_tugas_privat
+from plane.utils.daftar_tugas import DaftarTugas
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity
@@ -295,9 +296,8 @@ class IssueViewSet(BaseViewSet):
 
         return issues
 
-    @method_decorator(gzip_page)
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
-    def list(self, request, slug, project_id):
+    def susun_daftar(self, request, slug, project_id):
+        """Scope, filters, and order of the department list, shared with the Excel export."""
         extra_filters = {}
         if request.GET.get("updated_at__gt", None) is not None:
             extra_filters = {"updated_at__gt": request.GET.get("updated_at__gt")}
@@ -306,7 +306,6 @@ class IssueViewSet(BaseViewSet):
         query_params = request.query_params.copy()
 
         filters = issue_filters(query_params, "GET")
-        order_by_param = request.GET.get("order_by", "-created_at")
 
         issue_queryset = self.get_queryset()
 
@@ -316,31 +315,6 @@ class IssueViewSet(BaseViewSet):
         # Apply legacy filters
         issue_queryset = issue_queryset.filter(**filters, **extra_filters)
 
-        # Keeping a copy of the queryset before applying annotations
-        filtered_issue_queryset = copy.deepcopy(issue_queryset)
-
-        # Applying annotations to the issue queryset
-        issue_queryset = self.apply_annotations(issue_queryset)
-
-        # Issue queryset
-        issue_queryset, order_by_param = order_issue_queryset(
-            issue_queryset=issue_queryset, order_by_param=order_by_param
-        )
-
-        # Group by
-        group_by = request.GET.get("group_by", False)
-        sub_group_by = request.GET.get("sub_group_by", False)
-
-        # issue queryset
-        issue_queryset = issue_queryset_grouper(queryset=issue_queryset, group_by=group_by, sub_group_by=sub_group_by)
-
-        recent_visited_task.delay(
-            slug=slug,
-            project_id=project_id,
-            entity_name="project",
-            entity_identifier=project_id,
-            user_id=request.user.id,
-        )
         if (
             ProjectMember.objects.filter(
                 workspace__slug=slug,
@@ -352,7 +326,35 @@ class IssueViewSet(BaseViewSet):
             and not project.guest_view_all_features
         ):
             issue_queryset = issue_queryset.filter(created_by=request.user)
-            filtered_issue_queryset = filtered_issue_queryset.filter(created_by=request.user)
+
+        # Applying annotations and ordering to the issue queryset
+        ordered_queryset, order_by_param = order_issue_queryset(
+            issue_queryset=self.apply_annotations(issue_queryset),
+            order_by_param=request.GET.get("order_by", "-created_at"),
+        )
+        return DaftarTugas(tersaring=issue_queryset, terurut=ordered_queryset, urutan=order_by_param, filters=filters)
+
+    @method_decorator(gzip_page)
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def list(self, request, slug, project_id):
+        daftar = self.susun_daftar(request, slug, project_id)
+        filters, order_by_param = daftar.filters, daftar.urutan
+        filtered_issue_queryset = daftar.tersaring
+
+        # Group by
+        group_by = request.GET.get("group_by", False)
+        sub_group_by = request.GET.get("sub_group_by", False)
+
+        # issue queryset
+        issue_queryset = issue_queryset_grouper(queryset=daftar.terurut, group_by=group_by, sub_group_by=sub_group_by)
+
+        recent_visited_task.delay(
+            slug=slug,
+            project_id=project_id,
+            entity_name="project",
+            entity_identifier=project_id,
+            user_id=request.user.id,
+        )
 
         if group_by:
             if sub_group_by:
