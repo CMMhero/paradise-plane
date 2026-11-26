@@ -15,6 +15,12 @@ export type TCoreCustomComponentsMetaData = {
     display_name: string;
     url: string;
   }[];
+  /** Paradise (KEP-91): #kanal dan #work item yang labelnya diketahui (tanpa `#`). */
+  reference_mentions?: {
+    id: string;
+    label: string;
+    url: string;
+  }[];
 };
 
 export type TExtendedCustomComponentsMetaData = unknown;

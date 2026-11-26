@@ -284,9 +284,22 @@ export const useParseEditorContent = (args: TArgs) => {
         }
       });
 
+      // Paradise (KEP-91): label #kanal dan #work item untuk keluaran Markdown.
+      const referenceMentions: NonNullable<TCustomComponentsMetaData["reference_mentions"]> = [];
+      mentionComponents.forEach((element) => {
+        const id = element.getAttribute("entity_identifier");
+        const entityName = element.getAttribute("entity_name");
+        if (!id || (entityName !== "channel_mention" && entityName !== "issue_mention")) return;
+        const label = getRujukanLabel(entityName, id);
+        if (!label) return;
+        const path = entityName === "channel_mention" ? `chat/?ruang=${id}` : `browse/${label}/`;
+        referenceMentions.push({ id, label, url: `${window.location.origin}/${workspaceSlug}/${path}` });
+      });
+
       return {
         file_assets: filesMetaData,
         user_mentions: userMentions,
+        reference_mentions: referenceMentions,
       };
     },
     [getUserDetails, projectId, workspaceSlug]

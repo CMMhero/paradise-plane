@@ -18,6 +18,15 @@ export const parseCustomComponents = (args: TArgs): Record<string, Handle> => {
 
   const getFileAssetDetails = (id: string) => metaData.file_assets.find((asset) => asset.id === id);
 
+  // Paradise (KEP-91): @all, #kanal, dan #work item. Dulu ketiganya keluar sebagai `[@]()`.
+  const rujukanMarkdown = (jenis: string, id: string): string | undefined => {
+    if (jenis === "everyone_mention") return "@all";
+    if (jenis !== "channel_mention" && jenis !== "issue_mention") return undefined;
+    const rujukan = metaData.reference_mentions?.find((r) => r.id === id);
+    // Tanpa label: id apa adanya, sama dengan yang ditampilkan penyunting.
+    return rujukan ? `[#${rujukan.label}](${rujukan.url})` : `#${id}`;
+  };
+
   return {
     "image-component": (_state, node) => {
       const properties = node.properties || {};
@@ -36,6 +45,8 @@ export const parseCustomComponents = (args: TArgs): Record<string, Handle> => {
     "mention-component": (_state, node) => {
       const properties = node.properties || {};
       const mentionType = String(properties.entity_name);
+      const rujukan = rujukanMarkdown(mentionType, String(properties.entity_identifier));
+      if (rujukan) return createTextNode(`${rujukan} `);
 
       let url: string = "";
       let tag: string = "@";
