@@ -14,6 +14,9 @@ email pengumuman) dan ANNOUNCEMENT_EMAIL_ACTIVE_ONLY (bawaan mati; hidup = hanya
 membuka aplikasi dalam EMAIL_ACTIVE_DAYS terakhir).
 
 Sekali kirim per pesan. Menyunting atau menghapus pengumuman tidak mengirim ulang.
+
+Isi pengumuman adalah Markdown: HTML email merendernya (`html_email_dari_markdown`),
+sedangkan subjek, pratinjau, dan versi teks memakai teks tanpa sintaksnya.
 """
 
 import logging
@@ -22,10 +25,12 @@ from zoneinfo import ZoneInfo
 
 from celery import shared_task
 from django.utils import timezone
+from django.utils.html import escape
 
 from plane.db.models import KUNCI_PENGUMUMAN, FileAsset, PesanLangsung, User
 from plane.license.utils.instance_value import email_aktif, get_email_configuration
 from plane.utils.email_merek import (
+    GAYA,
     avatar_untuk,
     bahasa_penerima,
     base_url,
@@ -42,6 +47,7 @@ from plane.utils import aturan
 from plane.utils.aturan.area_notifikasi import ANNOUNCEMENT_EMAIL, ANNOUNCEMENT_EMAIL_ACTIVE_ONLY
 from plane.utils.exception_logger import log_exception
 from plane.utils.kanal_sistem import anggota_layak
+from plane.utils.markdown_pesan import html_email_dari_markdown, teks_dari_markdown
 from plane.utils.penerima_aktif import aktif_sejak
 from plane.utils.preferensi_email import penyaring
 from plane.utils.saklar_instance import EMAIL_ACTIVE_DAYS, setelan_angka
@@ -87,27 +93,36 @@ def _cuplikan(teks) -> str:
 
 
 def susun_email_pengumuman(penerima, pesan, isi, jumlah_lampiran, bahasa="id", gambar=None):
-    """(subjek, teks, html). `isi` = teks pengumuman yang sudah disamarkan."""
+    """(subjek, teks, html). `isi` = Markdown pengumuman yang sudah disamarkan."""
     s = TEKS.get(bahasa, TEKS["id"])
     nama = _nama(pesan.pengirim)
-    subjek = s["subjek"].format(nama=nama, cuplikan=_cuplikan(isi) or s["judul"])
+    polos = teks_dari_markdown(isi)
+    subjek = s["subjek"].format(nama=nama, cuplikan=_cuplikan(polos) or s["judul"])
     url = base_url()
-    tautan = f"{url}/{pesan.workspace.slug}/chat?ruang={pesan.ruang_id}" if url else ""
+    tautan = f"{url}/{pesan.workspace.slug}/pengumuman" if url else ""
     waktu = timezone.localtime(pesan.created_at, _zona(penerima)).strftime("%d/%m/%Y %H:%M")
     catatan_lampiran = s["lampiran"].format(n=jumlah_lampiran) if jumlah_lampiran else ""
 
     av, _ = avatar_untuk(pesan.pengirim, gambar=gambar)
-    badan = "\n".join(b for b in (isi, catatan_lampiran) if b)
-    html_isi = judul_html(s["judul"]) + baris_orang(av, waktu) + kotak(badan) + tombol(s["tombol"], tautan)
+    badan_html = html_email_dari_markdown(isi)
+    if catatan_lampiran:
+        badan_html += f'<p style="margin:8px 0 0;{GAYA["meta"]}">{escape(catatan_lampiran)}</p>'
+    html_isi = (
+        judul_html(s["judul"])
+        + baris_orang(av, waktu)
+        + kotak(isi_html=badan_html)  # aman: keluaran nh3 dan paragraf ber-escape
+        + tombol(s["tombol"], tautan)
+    )
     html = bungkus(
         html_isi,
         bahasa=bahasa,
         judul=subjek,
-        pratajuk=_cuplikan(isi),
+        pratajuk=_cuplikan(polos),
         alasan=s["alasan"],
         url_preferensi=url_preferensi(pesan.workspace.slug),
         email_penerima=penerima.email,
     )
+    badan = "\n".join(b for b in (polos, catatan_lampiran) if b)
     teks = [s["judul"], "", f"{nama} · {waktu}", "", badan, ""]
     if tautan:
         teks.append(s["buka_teks"].format(url=tautan))
