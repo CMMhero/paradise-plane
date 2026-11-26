@@ -22,6 +22,7 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 from plane.bgtasks.direktur_digest_task import DataWorkspace, susun_laporan
 from plane.db.models import (
     Departemen,
+    Divisi,
     Issue,
     JabatanOrganisasi,
     PersetujuanPenugasan,
@@ -121,7 +122,16 @@ class TestPenempatan:
     @pytest.mark.django_db
     def test_manager_di_departemen_baru_tetap_supervisor(self, org):
         """Batas peran departemen naik ke 25, tapi bawaan manager di departemen lain tidak ikut naik."""
-        hr = Departemen.objects.create(workspace=org.ws, kode="HR", nama="HR")
+        hrga = Divisi.objects.create(workspace=org.ws, kode="HRGA", nama="HRGA")
+        hr = Departemen.objects.create(workspace=org.ws, divisi=hrga, kode="HR", nama="HR")
+        setel_penempatan(org.ws, org.manager, TINGKAT_MANAGER, [hr.id], [org.sales.id])
+        assert JabatanOrganisasi.objects.get(member=org.manager, departemen=hr).tingkat == TINGKAT_SUPERVISOR
+
+    @pytest.mark.django_db
+    def test_baris_lama_manager_departemen_jadi_supervisor(self, org):
+        hrga = Divisi.objects.create(workspace=org.ws, kode="HRGA", nama="HRGA")
+        hr = Departemen.objects.create(workspace=org.ws, divisi=hrga, kode="HR", nama="HR")
+        JabatanOrganisasi.objects.create(workspace=org.ws, member=org.manager, tingkat=TINGKAT_MANAGER, departemen=hr)
         setel_penempatan(org.ws, org.manager, TINGKAT_MANAGER, [hr.id], [org.sales.id])
         assert JabatanOrganisasi.objects.get(member=org.manager, departemen=hr).tingkat == TINGKAT_SUPERVISOR
 
