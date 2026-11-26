@@ -53,6 +53,7 @@ from plane.utils.obrolan_siaran import siarkan
 from plane.utils.sinyal_data import siarkan_notifikasi
 from plane.bgtasks.pengumuman_email_task import kirim_email_pengumuman
 from plane.utils.kanal_sistem import adalah_admin_workspace, boleh_kirim, ikutkan_jika_belum
+from plane.utils.markdown_pesan import teks_dari_markdown
 from plane.utils.rujukan_obrolan import kanal_privat_milik, samarkan, saring_kanal, saring_tugas
 from plane.utils.saklar_instance import (
     CHAT_ATTACHMENTS_MAX,
@@ -142,6 +143,13 @@ def _peta_reaksi(pesan_ids):
     }
 
 
+def _cuplikan_polos(isi, jenis, batas) -> str:
+    """Cuplikan untuk kutipan dan bilah sematan. Markdown dibuang SEBELUM dipotong,
+    supaya potongannya tidak menyisakan sintaks setengah (`**selamat berga`)."""
+    teks = teks_dari_markdown(isi) if jenis == "teks" else (isi or "")
+    return teks[:batas]
+
+
 def _peta_kutipan(pesan_list, saya_id=None):
     """Cuplikan pesan yang dibalas, satu kueri untuk semuanya.
 
@@ -153,7 +161,9 @@ def _peta_kutipan(pesan_list, saya_id=None):
         return {}
     # all_objects: kutipan ke pesan yang sudah dihapus tetap ada, isinya dikosongkan.
     induk = list(
-        PesanLangsung.all_objects.filter(id__in=induk_ids).values("id", "isi", "muatan", "pengirim_id", "deleted_at")
+        PesanLangsung.all_objects.filter(id__in=induk_ids).values(
+            "id", "isi", "jenis", "muatan", "pengirim_id", "deleted_at"
+        )
     )
     privat = kanal_privat_milik([saya_id], [i["muatan"] for i in induk]).get(str(saya_id), set())
     return {
@@ -162,7 +172,9 @@ def _peta_kutipan(pesan_list, saya_id=None):
             "pengirim": str(i["pengirim_id"]) if i["pengirim_id"] else "",
             # Dipotong di server: yang dibutuhkan UI cuma cuplikan, dan
             # mengirim pesan panjang dua kali membengkakkan tiap muatan.
-            "isi": "" if i["deleted_at"] else (samarkan(i["isi"], i["muatan"], saya_id, boleh=privat)[0] or "")[:120],
+            "isi": ""
+            if i["deleted_at"]
+            else _cuplikan_polos(samarkan(i["isi"], i["muatan"], saya_id, boleh=privat)[0], i["jenis"], 120),
             "dihapus": i["deleted_at"] is not None,
         }
         for i in induk
@@ -677,7 +689,7 @@ def _bentuk_sematan(pesan, saya_id=None):
         "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
         # Dipotong seperti kutipan balasan: bilah cuma menampilkan cuplikan.
         # KEP-91: disamarkan dulu, baru dipotong.
-        "isi": (samarkan(pesan.isi, pesan.muatan, saya_id)[0] or "")[:200],
+        "isi": _cuplikan_polos(samarkan(pesan.isi, pesan.muatan, saya_id)[0], pesan.jenis, 200),
         "jenis": pesan.jenis,
         "created_at": pesan.created_at,
         "disematkan_pada": pesan.disematkan_pada,

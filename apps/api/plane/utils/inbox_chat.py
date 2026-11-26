@@ -48,11 +48,12 @@ def catat_pesan_dm(pesan) -> None:
         penerima_id = pesan.penerima_id
         if penerima_id is None or penerima_id == pesan.pengirim_id or not boleh(penerima_id, "inbox_chat"):
             return
+        from plane.utils.markdown_pesan import teks_dari_markdown  # noqa: PLC0415
         from plane.utils.rujukan_obrolan import samarkan  # noqa: PLC0415
 
         # KEP-91: #kanal-privat yang tidak diikuti penerima disamarkan.
         teks, _ = samarkan(pesan.isi, pesan.muatan, penerima_id)
-        cuplikan = _cuplikan(teks) or "📎"
+        cuplikan = _cuplikan(teks_dari_markdown(teks)) or "📎"
         terbuka = Notification.objects.filter(
             receiver_id=penerima_id,
             entity_name=ENTITY_CHAT,
