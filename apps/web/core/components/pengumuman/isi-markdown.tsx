@@ -24,7 +24,7 @@ import { cn } from "@plane/utils";
 import { MemberProfileTrigger } from "@/components/member-profile";
 import { KOMPONEN_MARKDOWN } from "@/components/wiki/pratinjau/teks";
 // lib
-import { PLUGIN_DIALEK, bolehDiklik, remarkBarisBaru } from "@/lib/markdown/pesan";
+import { PLUGIN_DIALEK, bolehDiklik, lindungiKali, remarkBarisBaru } from "@/lib/markdown/pesan";
 // pages
 import { remarkRujukan } from "@/app/(all)/[workspaceSlug]/(projects)/chat/rujukan-markdown";
 import type { TPil } from "@/app/(all)/[workspaceSlug]/(projects)/chat/rujukan-markdown";
@@ -166,10 +166,12 @@ type TProps = {
 };
 
 export const IsiMarkdown = memo(function IsiMarkdown({ teks, nada = "kartu", sumber, renderPil }: TProps) {
-  const plugin = useMemo(
-    () => [...PLUGIN_DIALEK, [remarkRujukan, sumber] as [typeof remarkRujukan, TSumberRujukan?], remarkBarisBaru],
-    [sumber]
-  );
+  const plugin = useMemo(() => {
+    // Tautan profil baru jadi pil bila menunjuk aplikasi ini; dari situs lain tetap tautan biasa.
+    const asal = typeof window === "undefined" ? undefined : window.location.origin;
+    const rujukan = [remarkRujukan, { ...sumber, asal }] as [typeof remarkRujukan, TSumberRujukan?];
+    return [...PLUGIN_DIALEK, rujukan, remarkBarisBaru];
+  }, [sumber]);
   return (
     <div
       className={cn(
@@ -179,7 +181,7 @@ export const IsiMarkdown = memo(function IsiMarkdown({ teks, nada = "kartu", sum
     >
       <KonteksPil.Provider value={renderPil ?? pilBawaan}>
         <ReactMarkdown remarkPlugins={plugin} components={KOMPONEN[nada]}>
-          {teks}
+          {lindungiKali(teks)}
         </ReactMarkdown>
       </KonteksPil.Provider>
     </div>

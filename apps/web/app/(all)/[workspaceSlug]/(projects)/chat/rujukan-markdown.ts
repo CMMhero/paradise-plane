@@ -40,7 +40,7 @@ const teksSimpul = (simpul: Nodes): string =>
 
 const pilDariTautan = (tautan: Link, sumber: TSumberRujukan): TPil | undefined => {
   const orang = idProfil(tautan.url);
-  if (orang) {
+  if (orang && (!sumber.asal || tautan.url.startsWith(`${sumber.asal}/`))) {
     const nama = teksSimpul(tautan);
     return { jenis: "sebut", id: orang, isi: nama.startsWith("@") ? nama : `@${nama}` };
   }

@@ -88,6 +88,13 @@ describe("sebutan dan rujukan di dalam Markdown", () => {
     expect(html).not.toContain("<a ");
   });
 
+  it("tautan profil dari situs lain tidak menyamar sebagai sebutan", () => {
+    const teks = `[@Direktur](https://lain.example/ws/profile/${ORANG}) [@Siti](https://x.id/ws/profile/${ORANG})`;
+    const html = render(teks, { asal: "https://x.id" });
+    expect(html).toContain(`<a href="https://lain.example/ws/profile/${ORANG}">@Direktur</a>`);
+    expect(html).toContain(pil("sebut", ORANG, "@Siti"));
+  });
+
   it("tautan biasa dan alamat telanjang tetap tautan, teks di dalamnya tidak disorot", () => {
     const html = render("lihat https://a.id/x. dan (lihat:http://b.id) dan [#umum](https://c.id)");
     expect(html).toContain('<a href="https://a.id/x">https://a.id/x</a>.');

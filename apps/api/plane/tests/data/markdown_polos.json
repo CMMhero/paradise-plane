@@ -46,5 +46,17 @@
   { "nama": "escape", "markdown": "2 \\* 3", "polos": "2 * 3" },
   { "nama": "tabel", "markdown": "| a | b |\n| - | - |\n| 1 | 2 |", "polos": "a | b\n1 | 2" },
   { "nama": "hanya pagar tidak jadi kosong", "markdown": "#", "polos": "#" },
-  { "nama": "kosong", "markdown": "", "polos": "" }
+  { "nama": "kosong", "markdown": "", "polos": "" },
+  { "nama": "kali di antara angka tetap bintang", "markdown": "ukuran 10*20*30 cm", "polos": "ukuran 10*20*30 cm" },
+  { "nama": "bintang di dalam kode apa adanya", "markdown": "`2*3*4` benar", "polos": "2*3*4 benar" },
+  {
+    "nama": "skema tanpa alamat",
+    "markdown": "alamat harus diawali https://",
+    "polos": "alamat harus diawali https://"
+  },
+  {
+    "nama": "alamat dengan penampung",
+    "markdown": "buka http://<ip>:8080 sekarang",
+    "polos": "buka http://<ip>:8080 sekarang"
+  }
 ]

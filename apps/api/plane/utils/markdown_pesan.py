@@ -32,6 +32,9 @@ _ALAMAT = re.compile(r"://[^\s<>\"'`]+")
 _SKEMA_WEB = re.compile(r"(?<![A-Za-z])https?$", re.IGNORECASE)
 _EKOR = re.compile(r"[.,;:!?)\]}*_~]+$")
 _CENTANG = re.compile(r"^\[([ xX])\][ \t]+")
+# Kode dan alamat dibiarkan apa adanya; di luar keduanya `*` di antara angka bukan penanda miring.
+_APA_ADANYA = re.compile(r"(```.*?(?:```|\Z)|~~~.*?(?:~~~|\Z)|`[^`\n]*`|https?://[^\s<>]+)", re.S)
+_TANDA_KALI = re.compile(r"(?<=\d)\*(?=\d)")
 
 
 def _alamat_telanjang(state, silent) -> bool:
@@ -45,7 +48,11 @@ def _alamat_telanjang(state, silent) -> bool:
     skema = _SKEMA_WEB.search(state.pending)
     if not skema:
         return False
-    ekor = _EKOR.sub("", _ALAMAT.match(state.src[: state.posMax], state.pos).group(0))
+    cocok = _ALAMAT.match(state.src[: state.posMax], state.pos)
+    # "alamat diawali https://" atau "http://<ip>": skema tanpa alamat, biarkan jadi teks.
+    if not cocok:
+        return False
+    ekor = _EKOR.sub("", cocok.group(0))
     if len(ekor) <= 3:
         return False
     if not silent:
@@ -70,6 +77,13 @@ def _pengurai() -> MarkdownIt:
 
 
 _MD = _pengurai()
+
+
+def _lindungi_kali(sumber: str) -> str:
+    """`10*20*30` itu ukuran, bukan miring. Pasangannya: `lindungiKali` (lib/markdown/pesan.ts)."""
+    bagian = _APA_ADANYA.split(sumber)
+    bagian[::2] = [_TANDA_KALI.sub(r"\\*", teks) for teks in bagian[::2]]
+    return "".join(bagian)
 
 
 # ---------------------------------------------------------------- teks polos
@@ -124,7 +138,7 @@ def teks_dari_markdown(isi) -> str:
     if not sumber:
         return ""
     # Tidak pernah mengosongkan pesan yang ada isinya (mis. hanya "#").
-    return _blok(SyntaxTreeNode(_MD.parse(sumber))).strip() or sumber
+    return _blok(SyntaxTreeNode(_MD.parse(_lindungi_kali(sumber)))).strip() or sumber
 
 
 # ---------------------------------------------------------------- HTML email
@@ -212,7 +226,7 @@ def html_email_dari_markdown(isi) -> str:
     sumber = (isi or "").strip()
     if not sumber:
         return ""
-    tokens = _MD_HTML.parse(sumber)
+    tokens = _MD_HTML.parse(_lindungi_kali(sumber))
     for token in tokens:
         _beri_gaya(token)
         if token.type == "inline":

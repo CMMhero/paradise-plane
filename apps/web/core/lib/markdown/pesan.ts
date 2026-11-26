@@ -70,7 +70,20 @@ export const remarkBarisBaru: Plugin<[], Root> = () => pecahBaris;
 
 const pengurai = unified().use(remarkParse).use(PLUGIN_DIALEK).freeze();
 
-export const uraiMarkdown = (teks: string): Root => pengurai.runSync(pengurai.parse(teks)) as Root;
+// Kode dan alamat dibiarkan apa adanya; di luar keduanya `*` di antara angka bukan penanda miring.
+const APA_ADANYA = /(```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)|`[^`\n]*`|https?:\/\/[^\s<>]+)/;
+
+/** `10*20*30` itu ukuran, bukan miring. Pasangannya di server: `_lindungi_kali`. */
+export const lindungiKali = (teks: string): string =>
+  teks
+    .split(APA_ADANYA)
+    .map((bagian, i) => (i % 2 ? bagian : bagian.replace(/(?<=\d)\*(?=\d)/g, "\\*")))
+    .join("");
+
+export const uraiMarkdown = (teks: string): Root => {
+  const sumber = lindungiKali(teks);
+  return pengurai.runSync(pengurai.parse(sumber), sumber) as Root;
+};
 
 // --- teks polos ---------------------------------------------------------------
 
