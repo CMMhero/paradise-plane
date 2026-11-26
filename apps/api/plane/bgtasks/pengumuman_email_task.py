@@ -67,7 +67,7 @@ TEKS = {
     "en": {
         "subjek": "[Announcement] {nama}: {cuplikan}",
         "judul": "New announcement",
-        "lampiran": "{n} attachments, open the app to see them.",
+        "lampiran": "Attachments: {n}. Open the app to see them.",
         "tombol": "Open Announcements",
         "buka_teks": "Open: {url}",
         "alasan": "You received this email because announcement emails are turned on for you.",
