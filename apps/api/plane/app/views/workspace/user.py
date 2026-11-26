@@ -30,7 +30,8 @@ from rest_framework.response import Response
 
 from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.daftar_tugas import DaftarTugas
-from plane.app.permissions import WorkspaceEntityPermission, WorkspaceViewerPermission
+from plane.utils.ekspor_tugas import unduh_xlsx
+from plane.app.permissions import ROLE, WorkspaceEntityPermission, WorkspaceViewerPermission, allow_permission
 
 # Module imports
 from plane.app.serializers import (
@@ -252,6 +253,14 @@ class WorkspaceUserProfileIssuesEndpoint(BaseAPIView):
                 total_count_queryset=total_issue_queryset,
                 on_results=lambda issues: issue_on_results(group_by=group_by, issues=issues, sub_group_by=sub_group_by),
             )
+
+
+class WorkspaceUserProfileIssuesExportEndpoint(WorkspaceUserProfileIssuesEndpoint):
+    """The profile list as an .xlsx file."""
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
+    def get(self, request, slug, user_id):
+        return unduh_xlsx(request, slug, self.susun_daftar(request, slug, user_id))
 
 
 class WorkspaceUserPropertiesEndpoint(BaseAPIView):

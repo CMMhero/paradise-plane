@@ -23,6 +23,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.utils.akses_privat import saring_tugas_privat
 from plane.utils.daftar_tugas import DaftarTugas
+from plane.utils.ekspor_tugas import unduh_xlsx
 from plane.app.permissions import allow_permission, ROLE
 from plane.app.serializers import IssueViewSerializer, ViewIssueListSerializer
 from plane.app.serializers.view import lampirkan_status_persetujuan
@@ -320,6 +321,10 @@ class WorkspaceViewIssuesViewSet(BaseViewSet):
             urutan=order_by_param,
             filters=filters,
         )
+
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
+    def export_xlsx(self, request, slug):
+        return unduh_xlsx(request, slug, self.susun_daftar(request, slug))
 
     @method_decorator(gzip_page)
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")

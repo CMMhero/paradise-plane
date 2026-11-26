@@ -52,6 +52,7 @@ from plane.utils.sinyal_data import siarkan_tugas
 from plane.utils.kunci_selesai import galat_induk_selesai, galat_tugas_selesai
 from plane.utils.akses_privat import boleh_lihat_tugas, galat_ubah_privat, saring_tugas_privat
 from plane.utils.daftar_tugas import DaftarTugas
+from plane.utils.ekspor_tugas import unduh_xlsx
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity
@@ -333,6 +334,11 @@ class IssueViewSet(BaseViewSet):
             order_by_param=request.GET.get("order_by", "-created_at"),
         )
         return DaftarTugas(tersaring=issue_queryset, terurut=ordered_queryset, urutan=order_by_param, filters=filters)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def export_xlsx(self, request, slug, project_id):
+        return unduh_xlsx(request, slug, self.susun_daftar(request, slug, project_id))
 
     @method_decorator(gzip_page)
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])

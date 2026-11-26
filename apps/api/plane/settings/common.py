@@ -201,6 +201,8 @@ TEMPLATES = [
 
 # CORS Settings
 CORS_ALLOW_CREDENTIALS = True
+# The web app reads the file name of an Excel download, also when the API is on another origin.
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 cors_origins_raw = os.environ.get("CORS_ALLOWED_ORIGINS", "")
 # filter out empty strings
 cors_allowed_origins = [origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()]

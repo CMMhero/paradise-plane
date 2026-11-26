@@ -61,6 +61,11 @@ urlpatterns = [
         name="global-view-issues",
     ),
     path(
+        "workspaces/<str:slug>/issues/export-xlsx/",
+        WorkspaceViewIssuesViewSet.as_view({"get": "export_xlsx"}),
+        name="global-view-issues-export",
+    ),
+    path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/user-favorite-views/",
         IssueViewFavoriteViewSet.as_view({"get": "list", "post": "create"}),
         name="user-favorite-view",
