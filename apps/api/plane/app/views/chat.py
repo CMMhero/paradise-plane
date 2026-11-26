@@ -608,14 +608,16 @@ class ChatPesanEndpoint(BaseAPIView):
             )
         return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
 
-    def _batas_jam(self, pesan, saklar) -> int:
+    def _batas_jam(self, pesan, saklar, user) -> int:
         """Batas umur (jam) untuk mengubah pesan ini, 0 = tanpa batas.
 
         Pengumuman milik sendiri tidak kena batas (halaman Pengumuman): ia dokumen
-        yang tetap dibaca, jadi penulisnya harus bisa membetulkannya kapan pun.
+        yang tetap dibaca, jadi penulisnya harus bisa membetulkannya kapan pun,
+        selama ia masih berhak menulis di kanal itu.
         Cermin di peramban: `batasHapusRuang` (chat/batas-hapus.ts).
         """
-        if pesan.ruang is not None and pesan.ruang.kunci_sistem == KUNCI_PENGUMUMAN:
+        ruang = pesan.ruang
+        if ruang is not None and ruang.kunci_sistem == KUNCI_PENGUMUMAN and boleh_kirim(ruang, user):
             return 0
         return setelan_angka(saklar)
 
@@ -625,7 +627,7 @@ class ChatPesanEndpoint(BaseAPIView):
             return self._bukan_milik_saya(request, slug, pesan_id)
         # Jendela sunting dari God Mode (KEP-83), 0 = tanpa batas (perilaku lama).
         # Pola sama dengan jendela hapus di bawah.
-        batas_jam = self._batas_jam(pesan, CHAT_EDIT_WINDOW_HOURS)
+        batas_jam = self._batas_jam(pesan, CHAT_EDIT_WINDOW_HOURS, request.user)
         if batas_jam and pesan.created_at < timezone.now() - timedelta(hours=batas_jam):
             return Response(
                 {"error": f"Pesan yang lebih lama dari {batas_jam} jam tidak bisa disunting."},
@@ -659,7 +661,7 @@ class ChatPesanEndpoint(BaseAPIView):
             return self._bukan_milik_saya(request, slug, pesan_id)
         # Pesan lama sudah dibaca dan ditanggapi orang; menghapusnya merobek
         # percakapan. Batasnya dari God Mode > Features, 0 = tanpa batas.
-        batas_jam = self._batas_jam(pesan, CHAT_DELETE_WINDOW_HOURS)
+        batas_jam = self._batas_jam(pesan, CHAT_DELETE_WINDOW_HOURS, request.user)
         if batas_jam and pesan.created_at < timezone.now() - timedelta(hours=batas_jam):
             return Response(
                 {"error": f"Pesan yang lebih lama dari {batas_jam} jam tidak bisa dihapus."},

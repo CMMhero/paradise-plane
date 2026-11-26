@@ -1416,7 +1416,11 @@ function ChatPage() {
                               onBalas={balasPesan}
                               onSunting={suntingPesan}
                               onHapus={hapusPesan}
-                              batasHapusJam={batasHapusRuang(batasHapusJam, kanalAktif?.kunci_sistem)}
+                              batasHapusJam={batasHapusRuang(
+                                batasHapusJam,
+                                kanalAktif?.kunci_sistem,
+                                kanalAktif?.boleh_kirim
+                              )}
                               onReaksi={reaksiPesan}
                               onSematkan={bolehSematkan ? sematkanPesan : undefined}
                               onTelepon={teleponDariKartu}

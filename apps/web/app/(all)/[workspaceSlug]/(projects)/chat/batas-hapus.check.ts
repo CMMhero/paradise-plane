@@ -24,9 +24,14 @@ assert.equal(bolehDihapus(jamLalu(25), 24, sekarang), false, "lewat batas tidak 
 assert.equal(bolehDihapus(jamLalu(24 * 365), 0, sekarang), true, "0 = tanpa batas");
 assert.equal(bolehDihapus(jamLalu(24 * 365), undefined, sekarang), true, "server lama tanpa setelan = tanpa batas");
 
-assert.equal(bolehDihapus(jamLalu(999), batasHapusRuang(24, "pengumuman"), sekarang), true, "pengumuman tanpa batas");
-assert.equal(batasHapusRuang(24, "divisi:1"), 24, "kanal sistem lain tetap dibatasi");
-assert.equal(batasHapusRuang(24, null), 24, "kanal biasa tetap dibatasi");
-assert.equal(batasHapusRuang(24, undefined), 24, "DM tetap dibatasi");
+assert.equal(
+  bolehDihapus(jamLalu(999), batasHapusRuang(24, "pengumuman", true), sekarang),
+  true,
+  "pengumuman tanpa batas"
+);
+assert.equal(batasHapusRuang(24, "pengumuman", false), 24, "izin menulis dicabut: dibatasi lagi");
+assert.equal(batasHapusRuang(24, "divisi:1", true), 24, "kanal sistem lain tetap dibatasi");
+assert.equal(batasHapusRuang(24, null, true), 24, "kanal biasa tetap dibatasi");
+assert.equal(batasHapusRuang(24, undefined, true), 24, "DM tetap dibatasi");
 
 console.log("batas-hapus: semua pemeriksaan lolos");

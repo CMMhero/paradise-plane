@@ -191,7 +191,9 @@ function PengumumanPage() {
             {daftar.map((p) => {
               const penulis = p.pengirim ? getWorkspaceMemberDetails(p.pengirim)?.member : undefined;
               // Hanya penulisnya; kartu sistem bukan tulisan yang bisa diubah.
-              const milikSaya = !!saya?.id && p.pengirim === saya.id && (p.jenis ?? "teks") === "teks";
+              // Penulis yang sudah tidak berhak menulis kena batas waktu obrolan lagi (server).
+              const milikSaya =
+                !!kanal?.boleh_kirim && !!saya?.id && p.pengirim === saya.id && (p.jenis ?? "teks") === "teks";
               return (
                 <li key={p.id} className="flex flex-col gap-2 rounded-card border border-subtle bg-layer-1 p-4">
                   <div className="flex items-center gap-2">

@@ -16,6 +16,7 @@ from rest_framework.test import APIClient
 from plane.db.models import (
     KUNCI_PENGUMUMAN,
     Langganan,
+    PenulisKanal,
     PesanLangsung,
     Ruang,
     User,
@@ -46,6 +47,7 @@ def kantor(db):
         WorkspaceMember.objects.create(workspace=ws, member=orang, role=peran)
     ikutkan_ke_kanal_sistem(ws.id)
     pengumuman = Ruang.objects.get(workspace=ws, kunci_sistem=KUNCI_PENGUMUMAN)
+    PenulisKanal.objects.create(workspace=ws, ruang=pengumuman, user=penulis)
     umum = Ruang.objects.create(workspace=ws, tipe=Ruang.Tipe.KANAL, nama="umum")
     Langganan.objects.bulk_create([Langganan(ruang=umum, user=u) for u in (admin, penulis, pembaca)])
     return {
@@ -98,6 +100,16 @@ class TestPenulisPengumuman:
     def test_orang_lain_termasuk_admin_dapat_403(self, kantor, siapa):
         k = kantor
         klien = _klien(k[siapa])
+        assert klien.patch(_url(k, k["pengumuman"]), {"isi": "diubah"}, format="json").status_code == 403
+        assert klien.delete(_url(k, k["pengumuman"])).status_code == 403
+        k["pengumuman"].refresh_from_db()
+        assert k["pengumuman"].isi == "**Rapat** jam 9" and k["pengumuman"].deleted_at is None
+
+    @pytest.mark.django_db
+    def test_penulis_yang_izinnya_dicabut_kembali_kena_batas_waktu(self, kantor):
+        k = kantor
+        PenulisKanal.all_objects.filter(user=k["penulis"]).delete()
+        klien = _klien(k["penulis"])
         assert klien.patch(_url(k, k["pengumuman"]), {"isi": "diubah"}, format="json").status_code == 403
         assert klien.delete(_url(k, k["pengumuman"])).status_code == 403
         k["pengumuman"].refresh_from_db()
