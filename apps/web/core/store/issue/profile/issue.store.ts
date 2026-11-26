@@ -14,6 +14,7 @@ import type {
   ViewFlags,
   TBulkOperationsPayload,
   TProfileViews,
+  TIssueParams,
 } from "@plane/types";
 import { UserService } from "@/services/user.service";
 
@@ -24,12 +25,24 @@ import { BaseIssuesStore } from "../helpers/base-issues.store";
 import type { IIssueRootStore } from "../root.store";
 import type { IProfileIssuesFilter } from "./filter.store";
 
+/** The list param that selects the work items of each profile tab. */
+const PROFILE_VIEW_PARAMS = {
+  assigned: "assignees",
+  created: "created_by",
+  subscribed: "subscriber",
+} as const satisfies Record<TProfileViews, TIssueParams>;
+
 export interface IProfileIssues extends IBaseIssuesStore {
   // observable
   currentView: TProfileViews;
   viewFlags: ViewFlags;
   // actions
   setViewId: (viewId: TProfileViews) => void;
+  // helpers
+  getViewParams: (
+    params: Partial<Record<TIssueParams, string | boolean>> | undefined,
+    userId: string
+  ) => Partial<Record<TIssueParams, string | boolean | undefined>>;
   // action
   fetchIssues: (
     workspaceSlug: string,
@@ -105,6 +118,15 @@ export class ProfileIssues extends BaseIssuesStore implements IProfileIssues {
     this.currentView = viewId;
   }
 
+  /** The params of the open tab. The tab replaces any user filter on the same three keys. */
+  getViewParams: IProfileIssues["getViewParams"] = (params, userId) => ({
+    ...params,
+    assignees: undefined,
+    created_by: undefined,
+    subscriber: undefined,
+    [PROFILE_VIEW_PARAMS[this.currentView]]: userId,
+  });
+
   fetchParentStats = () => {};
 
   /** */
@@ -138,18 +160,11 @@ export class ProfileIssues extends BaseIssuesStore implements IProfileIssues {
       // set ViewId
       this.setViewId(view);
 
-      // get params from pagination options
-      let params = this.issueFilterStore?.getFilterParams(options, userId, undefined, undefined, undefined);
-      params = {
-        ...params,
-        assignees: undefined,
-        created_by: undefined,
-        subscriber: undefined,
-      };
-      // modify params based on view
-      if (this.currentView === "assigned") params = { ...params, assignees: userId };
-      else if (this.currentView === "created") params = { ...params, created_by: userId };
-      else if (this.currentView === "subscribed") params = { ...params, subscriber: userId };
+      // get params from pagination options, narrowed to the open tab
+      const params = this.getViewParams(
+        this.issueFilterStore?.getFilterParams(options, userId, undefined, undefined, undefined),
+        userId
+      );
 
       // call the fetch issues API with the params
       signal = this.controller.signal;
@@ -188,23 +203,17 @@ export class ProfileIssues extends BaseIssuesStore implements IProfileIssues {
       // set Loader
       this.setLoader("pagination", groupId, subGroupId);
 
-      // get params from stored pagination options
-      let params = this.issueFilterStore?.getFilterParams(
-        this.paginationOptions,
-        userId,
-        this.getNextCursor(groupId, subGroupId),
-        groupId,
-        subGroupId
+      // get params from stored pagination options, narrowed to the open tab
+      const params = this.getViewParams(
+        this.issueFilterStore?.getFilterParams(
+          this.paginationOptions,
+          userId,
+          this.getNextCursor(groupId, subGroupId),
+          groupId,
+          subGroupId
+        ),
+        userId
       );
-      params = {
-        ...params,
-        assignees: undefined,
-        created_by: undefined,
-        subscriber: undefined,
-      };
-      if (this.currentView === "assigned") params = { ...params, assignees: userId };
-      else if (this.currentView === "created") params = { ...params, created_by: userId };
-      else if (this.currentView === "subscribed") params = { ...params, subscriber: userId };
 
       // call the fetch issues API with the params for next page in issues
       const response = await this.userService.getUserProfileIssues(workspaceSlug, userId, params);
