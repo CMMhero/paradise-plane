@@ -18,6 +18,22 @@ const isOurEntry = (id: string | null): boolean => {
 };
 
 /**
+ * Call before closing an overlay in order to go to another page. The current
+ * history entry stops belonging to the overlay, so closing no longer runs
+ * `history.back()`, which would cancel a navigation that is still loading.
+ * Returns true when it did: navigate with `replace`, taking that spare entry.
+ */
+export const releaseOverlayEntry = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const state = window.history.state as Record<string, unknown> | null;
+  if (!state?.[STATE_KEY]) return false;
+  const rest = { ...state };
+  delete rest[STATE_KEY];
+  window.history.replaceState(rest, "");
+  return true;
+};
+
+/**
  * Makes the browser (and Android hardware) Back button close an overlay
  * instead of leaving the page behind it.
  *
@@ -61,12 +77,13 @@ export const useCloseOnBack = (isOpen: boolean, onClose: () => void): void => {
     }
 
     const id = entryIdRef.current;
-    let closedByBack = false;
+    // an object, so the popstate handler can mark it after render
+    const closed = { byBack: false };
 
     const handlePopState = () => {
       // our entry is gone from the top of the stack: the user pressed Back
       if (isOurEntry(id)) return;
-      closedByBack = true;
+      closed.byBack = true;
       entryIdRef.current = null;
       onCloseRef.current();
     };
@@ -74,7 +91,7 @@ export const useCloseOnBack = (isOpen: boolean, onClose: () => void): void => {
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
-      if (closedByBack) return;
+      if (closed.byBack) return;
       pendingBackRef.current = setTimeout(() => {
         pendingBackRef.current = null;
         if (isOurEntry(id)) window.history.back();
