@@ -6,7 +6,42 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ---
 
-### Version 2.14.0
+## 2026-11-26
+
+### Version 2.15.0
+
+- **2.14.0 to 2.15.0, minor.** A new position level, a new export feature, one
+  choices-only migration (`0187_tingkat_asisten_manager`) and one new API
+  dependency (`markdown-it-py==4.2.0`, so the API image must be rebuilt). No
+  data is rewritten. Operator step, only if wanted: give people the new position
+  in God Mode > Members or Organization.
+- **Assistant manager.** Level 25, between Supervisor (20) and Manager (30). It
+  is placed in departments like a supervisor and outranks supervisors there.
+  Rule defaults did not change, so an assistant manager's finished work still
+  waits for approval (`APPROVAL_REQUIRED_BELOW_LEVEL` is 30), and directors'
+  Needs attention does not list their items. God Mode rules that offered
+  Supervisor and Manager now also offer Assistant manager.
+- **Export to Excel.** Project, workspace view, Your work, module and project
+  view lists download an `.xlsx` with the list's filters and order. List and
+  export share one scoping function, so the export never holds rows the list
+  would not show. Workspace guests cannot export. Above 10,000 rows the export
+  is refused with a message.
+- **Announcements.** Authors edit and delete their own posts on the
+  Announcements page. The 24 hour chat window no longer applies to an author who
+  may still post there. Admins cannot change other people's posts.
+- **Announcement email.** The body was sent as raw Markdown. It is now rendered,
+  the button opens `/pengumuman`, and God Mode > Email > Preview has a sample.
+  The author still receives no copy.
+- **Markdown in chat.** All text messages render Markdown. Mentions, references
+  and bare links keep working. Previews, reply quotes and notification text show
+  plain text. A `*` between digits stays an asterisk, and a plain line after a
+  list leaves the list.
+- **File cards.** Non-image files in descriptions and comments are cards. The
+  sanitizer keeps a card only when it points at this app's own files. The
+  attachment endpoint serves safe types inline for previews.
+- **Mentions.** Cards inside the work item panel no longer close it, work item
+  and channel chips open their target, and a mention added in a follow-up
+  autosave of a description now creates its notification (the task crashed).
 
 - **2.13.1 to 2.14.0, minor.** Notification housekeeping: a new daily job
   that touches existing inbox rows (it archives everything older than 7 days on

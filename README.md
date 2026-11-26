@@ -129,6 +129,20 @@ a single person and for the staff and leadership defaults. The list of toggles
 is written only once on each side (`preferensi_email.py` and
 `notification-preferences.ts`), so those three screens can't drift apart.
 
+**Export to Excel.** Project, workspace view, Your work, module and project view
+lists have an Export to Excel button. The file follows the filters and order on
+screen. Both the list and the export read one scoping function
+(`plane/utils/daftar_tugas.py`), so permissions can't drift apart. Columns live
+in one registry in `plane/utils/ekspor_tugas.py`. To try it:
+
+```
+GET /api/workspaces/<slug>/projects/<project-id>/issues/export-xlsx/?order_by=-created_at&export_name=gudang
+```
+
+**File cards.** A file dropped or pasted into a description or comment becomes a
+card with a type icon, size, preview and download. A card may only point at this
+app's own files, both in the sanitizer and in the preview.
+
 **Chat as the news hub.** Every workspace has the system channels Announcements
 and Changelog, and everyone is added automatically. The Changelog fills itself on
 every deploy from `apps/api/plane/release_notes/<versi>.json`: write the new
@@ -138,6 +152,12 @@ changes) arrive as cards with buttons in the private "Paradise" space, and
 Approve/Reject works right from the card. There is also a call log, online
 indicators, channel management, and paste/drag-and-drop attachments.
 
+Messages and announcements are Markdown. The browser renderer
+(`apps/web/core/lib/markdown/`) and the server one
+(`plane/utils/markdown_pesan.py`) share one fixture file,
+`plane/tests/data/markdown_polos.json`. An announcement's author edits or deletes
+it on the Announcements page.
+
 Type `@` in the message box to mention people in that conversation. In a
 channel, the mentioned person also gets a card in their Paradise space. Every
 division and department has its own private channel, with members following the
@@ -146,8 +166,8 @@ placement in God Mode (`plane/utils/kanal_organisasi.py`, called from
 channel, remove them and they leave. Directors and secretaries are not added
 automatically.
 
-**People placement (KEP-76).** Each person has one rank (Staff, Supervisor,
-Manager, Secretary, Director) and one list of places. Every rank can be in
+**People placement (KEP-76).** Each person has one rank (Staff, Leader,
+Supervisor, Assistant manager, Manager, Branch Manager, Secretary, Director) and one list of places. Every rank can be in
 several departments, and a manager also leads one or more divisions. The
 secretary (35, KEP-101) reaches the whole organization like a director without
 being placed, but sits one step below: can't assign work to a director and
