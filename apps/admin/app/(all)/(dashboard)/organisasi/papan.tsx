@@ -30,6 +30,7 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { Button } from "@plane/propel/button";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_LEADER,
   TINGKAT_MEMBER,
   TINGKAT_SUPERVISOR,
@@ -57,6 +58,7 @@ import {
   bacaTujuan,
   LAJUR_JENJANG,
   namaJenjang,
+  peranBawaan,
   rencanaCabut,
   rencanakan,
   tombolSalin,
@@ -283,10 +285,9 @@ function KartuDepartemen({
   const mode = useTujuanLepas(ref, { jenis: "departemen", id: dep.id }, false);
   const anggota = tampilOrang(dep.anggota);
   // KEP-93: tidak ada "manager departemen". Tingkat di sini = peran orang itu DI
-  // departemen ini (Staf/Leader/Supervisor); baris lama yang masih Manager ikut Supervisor.
-  const supervisor = anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR);
-  const leader = anggota.filter((a) => a.tingkat >= TINGKAT_LEADER && a.tingkat < TINGKAT_SUPERVISOR);
-  const staf = anggota.filter((a) => a.tingkat < TINGKAT_LEADER);
+  // departemen ini (Staf sampai Asisten Manager); baris lama yang masih Manager ikut Supervisor.
+  const lajur = (peran: number) => anggota.filter((a) => peranBawaan(a.tingkat) === peran);
+  const staf = anggota.filter((a) => peranBawaan(a.tingkat) < TINGKAT_LEADER);
 
   return (
     <div
@@ -312,8 +313,19 @@ function KartuDepartemen({
           {s.org.project_none}
         </div>
       )}
-      <LajurDepartemen dep={dep} tingkat={TINGKAT_SUPERVISOR} judul={s.org.supervisors} orang={supervisor} />
-      <LajurDepartemen dep={dep} tingkat={TINGKAT_LEADER} judul={s.org.leaders} orang={leader} />
+      <LajurDepartemen
+        dep={dep}
+        tingkat={TINGKAT_ASISTEN_MANAGER}
+        judul={s.org.assistant_managers}
+        orang={lajur(TINGKAT_ASISTEN_MANAGER)}
+      />
+      <LajurDepartemen
+        dep={dep}
+        tingkat={TINGKAT_SUPERVISOR}
+        judul={s.org.supervisors}
+        orang={lajur(TINGKAT_SUPERVISOR)}
+      />
+      <LajurDepartemen dep={dep} tingkat={TINGKAT_LEADER} judul={s.org.leaders} orang={lajur(TINGKAT_LEADER)} />
       <LajurDepartemen dep={dep} tingkat={TINGKAT_MEMBER} judul={s.org.staff} orang={staf} />
       <div className="flex justify-end pt-1">
         <PemilihOrang

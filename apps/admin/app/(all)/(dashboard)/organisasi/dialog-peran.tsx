@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  *
  * KEP-93 (5 Nov 2026): tidak ada "manager departemen". Manager yang diseret ke
- * departemen di divisi LAIN duduk di sana sebagai Staf atau Supervisor, dan
+ * departemen di divisi LAIN duduk di sana sebagai Staf sampai Asisten Manager, dan
  * jenjang Manager-nya tetap. Dialog ini menanyakan perannya sebelum disimpan
  * (permintaan user: "when we add/drag, ask me for confirmation").
  */
@@ -13,7 +13,7 @@
 import { useState } from "react";
 // plane imports
 import { Button } from "@plane/propel/button";
-import { TINGKAT_LEADER, TINGKAT_SUPERVISOR } from "@plane/services";
+import { TINGKAT_ASISTEN_MANAGER, TINGKAT_LEADER, TINGKAT_MEMBER, TINGKAT_SUPERVISOR } from "@plane/services";
 import { cn } from "@plane/utils";
 // local
 import { EModalWidth, ParadiseModal } from "@/components/common/paradise-ui";
@@ -40,6 +40,12 @@ function IsiDialogPeran({ tawaran, onTutup }: { tawaran: TTawaranPeran; onTutup:
   const [peran, setPeran] = useState(tawaran.bawaan);
   const [sibuk, setSibuk] = useState(false);
   const isi = { name: tawaran.nama, place: tawaran.tempat };
+  const petunjuk: Record<(typeof PERAN_DEPARTEMEN)[number], string> = {
+    [TINGKAT_ASISTEN_MANAGER]: s.org.board.role_assistant_manager_hint,
+    [TINGKAT_SUPERVISOR]: s.org.board.role_supervisor_hint,
+    [TINGKAT_LEADER]: s.org.board.role_leader_hint,
+    [TINGKAT_MEMBER]: s.org.board.role_staff_hint,
+  };
 
   const kirim = async () => {
     setSibuk(true);
@@ -93,13 +99,7 @@ function IsiDialogPeran({ tawaran, onTutup }: { tawaran: TTawaranPeran; onTutup:
               />
               <span>
                 <span className="block text-13 font-medium text-primary">{namaJenjang(t, s)}</span>
-                <span className="block text-11 text-tertiary">
-                  {t === TINGKAT_SUPERVISOR
-                    ? s.org.board.role_supervisor_hint
-                    : t === TINGKAT_LEADER
-                      ? s.org.board.role_leader_hint
-                      : s.org.board.role_staff_hint}
-                </span>
+                <span className="block text-11 text-tertiary">{petunjuk[t]}</span>
               </span>
             </label>
           );

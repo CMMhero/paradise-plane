@@ -40,8 +40,11 @@ const LABELS = {
 };
 const LEVEL_LABELS: Record<number, string> = {
   10: "Staff",
+  12: "Leader",
   20: "Supervisor",
+  25: "Assistant Manager",
   30: "Manager",
+  33: "Branch Manager",
   35: "Secretary",
   40: "Director",
 };

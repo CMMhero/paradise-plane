@@ -23,11 +23,12 @@
  *
  * KEP-93 (peran per tempat): tidak ada "manager departemen". Manager yang
  * diseret ke departemen di divisi yang ia pimpin = ditolak (`divisi-sendiri`);
- * ke departemen divisi lain = minta konfirmasi peran di sana (`peran`: Staf atau
- * Supervisor). Jenjang Manager-nya tidak berubah.
+ * ke departemen divisi lain = minta konfirmasi peran di sana (`peran`: Staf sampai
+ * Asisten Manager). Jenjang Manager-nya tidak berubah.
  */
 
 import {
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
   TINGKAT_LEADER,
@@ -48,6 +49,7 @@ export const LAJUR_JENJANG = [
   TINGKAT_MEMBER,
   TINGKAT_LEADER,
   TINGKAT_SUPERVISOR,
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_MANAGER,
   TINGKAT_CABANG,
   TINGKAT_SEKRETARIS,
@@ -55,8 +57,14 @@ export const LAJUR_JENJANG = [
 ] as const;
 
 /** Peran yang bisa dipegang di satu departemen, dari yang tertinggi (cermin `PERAN_DEPARTEMEN_SAH`). */
-export const PERAN_DEPARTEMEN = [TINGKAT_SUPERVISOR, TINGKAT_LEADER, TINGKAT_MEMBER] as const;
+export const PERAN_DEPARTEMEN = [TINGKAT_ASISTEN_MANAGER, TINGKAT_SUPERVISOR, TINGKAT_LEADER, TINGKAT_MEMBER] as const;
 const peranDepartemen = (t: number | undefined): number | undefined => PERAN_DEPARTEMEN.find((p) => p === t);
+
+/**
+ * Peran departemen untuk jenjang `tingkat`, cermin `peran_departemen_dari`: di bawah
+ * Manager jenjangnya sendiri, Manager ke atas (juga baris lama "manager departemen") Supervisor.
+ */
+export const peranBawaan = (tingkat: number): number => (tingkat < TINGKAT_MANAGER ? tingkat : TINGKAT_SUPERVISOR);
 
 /** Akun terhapus (KEP-50) tidak boleh muncul atau diseret. */
 export const akunTerhapus = (email: string): boolean => email.toLowerCase().endsWith("@deleted.local");
@@ -94,15 +102,14 @@ export type TPosisi = {
   tingkat: number;
   departemen_ids: string[];
   divisi_ids: string[];
-  /** KEP-93: peran per departemen (Staf/Leader/Supervisor). Di bawah Manager = jenjangnya. */
+  /** KEP-93: peran per departemen (Staf sampai Asisten Manager). Di bawah Manager = jenjangnya. */
   peran_departemen: Record<string, number>;
 };
 
-/** Peran di departemen untuk jenjang `tingkat` (cermin `setel_penempatan`). */
 /**
  * Peran per departemen, cermin `setel_penempatan` (KEP-93): yang diminta, lalu
  * (jenjang dipilih eksplisit di bawah Manager = `seragam`) jenjangnya, lalu peran
- * lama, lalu jenjangnya. Selalu Staf, Leader, atau Supervisor, tidak pernah Manager.
+ * lama, lalu `peranBawaan`. Selalu Staf sampai Asisten Manager, tidak pernah Manager.
  */
 const susunPeran = (
   tingkat: number,
@@ -114,7 +121,7 @@ const susunPeran = (
   Object.fromEntries(
     deps.map((d) => {
       const nilai = diminta[d] ?? (seragam && tingkat < TINGKAT_MANAGER ? tingkat : (lama[d] ?? tingkat));
-      return [d, Math.min(nilai, TINGKAT_SUPERVISOR)];
+      return [d, peranBawaan(nilai)];
     })
   );
 
@@ -466,7 +473,7 @@ export function terapkanKePohon(pohon: TPohonOrganisasi, o: TAnggotaHierarki, p:
       ],
       departemen: v.departemen.map((d) => {
         // KEP-93: di departemen ia tampil dengan perannya di sana, bukan jenjangnya.
-        const peran = p.peran_departemen[d.id] ?? Math.min(p.tingkat, TINGKAT_SUPERVISOR);
+        const peran = p.peran_departemen[d.id] ?? peranBawaan(p.tingkat);
         const anggota = [
           ...d.anggota.filter((a) => a.id !== o.id),
           ...(p.departemen_ids.includes(d.id) ? [{ ...entri, tingkat: peran }] : []),
@@ -477,21 +484,20 @@ export function terapkanKePohon(pohon: TPohonOrganisasi, o: TAnggotaHierarki, p:
   };
 }
 
+/** Ambang tiap nama jenjang, dari yang tertinggi. Di bawah semuanya = Staf. */
+const NAMA_JENJANG = [
+  [TINGKAT_DIREKTUR, "level_director"],
+  [TINGKAT_SEKRETARIS, "level_secretary"],
+  [TINGKAT_CABANG, "level_branch_director"],
+  [TINGKAT_MANAGER, "level_manager"],
+  [TINGKAT_ASISTEN_MANAGER, "level_assistant_manager"],
+  [TINGKAT_SUPERVISOR, "level_supervisor"],
+  [TINGKAT_LEADER, "level_leader"],
+] as const satisfies readonly (readonly [number, keyof TGodmodeStrings["members"]])[];
+
 /** Nama jenjang. Fungsi biasa (bukan hook): dipanggil di dalam map. */
 export const namaJenjang = (t: number, s: TGodmodeStrings): string =>
-  t >= TINGKAT_DIREKTUR
-    ? s.members.level_director
-    : t >= TINGKAT_SEKRETARIS
-      ? s.members.level_secretary
-      : t >= TINGKAT_CABANG
-        ? s.members.level_branch_director
-        : t >= TINGKAT_MANAGER
-          ? s.members.level_manager
-          : t >= TINGKAT_SUPERVISOR
-            ? s.members.level_supervisor
-            : t >= TINGKAT_LEADER
-              ? s.members.level_leader
-              : s.members.level_staff;
+  s.members[NAMA_JENJANG.find(([batas]) => t >= batas)?.[1] ?? "level_staff"];
 
 /** Orang tanpa departemen dan tanpa divisi (di bawah Direktur). */
 export const belumDitempatkan = (o: TAnggotaHierarki): boolean => {

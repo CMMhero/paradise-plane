@@ -659,7 +659,7 @@ export function KelolaOrganisasi({
         <ModalTambahOrang
           key={kunci}
           judul={fill(s.org.add_member_title, { name: dep.nama })}
-          catatan={`${s.org.supervisors}: ${s.org.supervisors_note} ${s.org.staff}: ${s.org.staff_note}`}
+          catatan={`${s.org.assistant_managers} & ${s.org.supervisors}: ${s.org.supervisors_note} ${s.org.staff}: ${s.org.staff_note}`}
           calon={calonAnggota(orang, dep)}
           keterangan={keterangan}
           onTambah={(o) => aksi.tambahKeDepartemen(o, dep.id)}

@@ -192,16 +192,19 @@ export type TMemberWorkItemDefaults = {
 };
 
 /** Setelan akun baru di God Mode (KEP-44). Cermin `PABRIK` di plane/utils/bawaan_member.py. */
+/** Jenjang yang boleh jadi bawaan akun baru (cermin `TINGKAT_BAWAAN_SAH`): Staf, Supervisor, Asisten Manager, Manager. */
+export type TTingkatBawaan = 10 | 20 | 25 | 30;
+
 export type TMemberDefaults = {
   /** Ditulis sekali saat akun lahir; akun lama tidak berubah. */
   profile: TMemberPreferences["profile"];
   /** Berlaku seketika untuk semua yang masih ikut bawaan jabatan. */
   /**
-   * `pimpinan` = leader (supervisor, manager). `direktur` juga batas atas untuk setiap direktur.
+   * `pimpinan` = leader (supervisor, asisten manager, manager). `direktur` juga batas atas untuk setiap direktur.
    */
   email: { staf: TSaklarEmail; pimpinan: TSaklarEmail; direktur: TSaklarEmail };
   /** Dipakai saat akun dibuat dari God Mode. `tingkat: null` = jabatan belum diisi. */
-  keanggotaan: { workspace_role: 5 | 15; tingkat: 10 | 20 | 30 | null };
+  keanggotaan: { workspace_role: 5 | 15; tingkat: TTingkatBawaan | null };
   /** Ditulis saat baris preferensi sidebar orangnya lahir. */
   navigasi: TMemberNavigation;
   /** Bawaan daftar work item per project; berlaku untuk tiap member+project baru. */

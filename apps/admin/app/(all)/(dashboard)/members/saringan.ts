@@ -26,6 +26,7 @@ import {
   Wifi,
 } from "lucide-react";
 import {
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
   TINGKAT_LEADER,
@@ -44,6 +45,7 @@ export type TLevel =
   | "secretary"
   | "branch_director"
   | "manager"
+  | "assistant_manager"
   | "supervisor"
   | "leader"
   | "staff"
@@ -67,6 +69,7 @@ export const levelDari = (h: TAnggotaHierarki | undefined): TLevel => {
   if (h.tingkat >= TINGKAT_SEKRETARIS) return "secretary";
   if (h.tingkat >= TINGKAT_CABANG) return "branch_director";
   if (h.tingkat >= TINGKAT_MANAGER) return "manager";
+  if (h.tingkat >= TINGKAT_ASISTEN_MANAGER) return "assistant_manager";
   if (h.tingkat >= TINGKAT_SUPERVISOR) return "supervisor";
   if (h.tingkat >= TINGKAT_LEADER) return "leader";
   return "staff";
@@ -78,11 +81,12 @@ export const URUTAN_LEVEL: Record<TLevel, number> = {
   secretary: 1,
   branch_director: 2,
   manager: 3,
-  supervisor: 4,
-  leader: 5,
-  staff: 6,
-  unset: 7,
-  outside: 8,
+  assistant_manager: 4,
+  supervisor: 5,
+  leader: 6,
+  staff: 7,
+  unset: 8,
+  outside: 9,
 };
 
 const URUTAN_SESI: Record<TSesi, number> = { in_use: 0, signed_in: 1, signed_out: 2 };
@@ -135,6 +139,7 @@ export const labelLevel = (level: TLevel, s: TGodmodeStrings): string =>
     secretary: s.members.level_secretary,
     branch_director: s.members.level_branch_director,
     manager: s.members.level_manager,
+    assistant_manager: s.members.level_assistant_manager,
     supervisor: s.members.level_supervisor,
     leader: s.members.level_leader,
     staff: s.members.level_staff,

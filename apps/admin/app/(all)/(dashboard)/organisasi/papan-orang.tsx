@@ -26,7 +26,6 @@ import {
   TINGKAT_DIREKTUR,
   TINGKAT_MEMBER,
   TINGKAT_SEKRETARIS,
-  TINGKAT_SUPERVISOR,
   menjangkauSeluruhOrganisasi,
   type TPohonOrganisasi,
 } from "@plane/services";
@@ -46,6 +45,7 @@ import {
   modeLepas,
   namaJenjang,
   PERAN_DEPARTEMEN,
+  peranBawaan,
   tombolSalin,
   type TAsal,
   type TTujuan,
@@ -138,7 +138,7 @@ function MenuOrang({ orangId, nama, asal, tingkat }: { orangId: string; nama: st
           Jenjang umum hanya Sekretaris dan Direktur (jenjang tanpa tempat). */}
       {asal?.jenis === "departemen" &&
         !menjangkauSeluruhOrganisasi(tingkat) &&
-        PERAN_DEPARTEMEN.filter((peran) => peran !== Math.min(tingkat, TINGKAT_SUPERVISOR)).map((peran) => (
+        PERAN_DEPARTEMEN.filter((peran) => peran !== peranBawaan(tingkat)).map((peran) => (
           <CustomMenu.MenuItem
             key={peran}
             onClick={() => void eksekusi(orangId, asal, { jenis: "departemen", id: asal.id, tingkat: peran }, false)}

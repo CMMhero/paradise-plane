@@ -12,6 +12,7 @@
  */
 
 import type { ReactNode } from "react";
+import { sortBy } from "lodash-es";
 import { Building2, Crown, Factory, Plus } from "lucide-react";
 // plane imports
 import {
@@ -110,7 +111,11 @@ function KotakDepartemen({
   onKelola: TKelola;
 }) {
   const { s, fill } = useGodmodeStrings();
-  const supervisor = d.anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR);
+  // Asisten manager di atas supervisor (P215): atasan dulu, urutan nama dipertahankan.
+  const supervisor = sortBy(
+    d.anggota.filter((a) => a.tingkat >= TINGKAT_SUPERVISOR),
+    (a) => -a.tingkat
+  );
   const sup = supervisor.length;
   return (
     <KotakBagan
