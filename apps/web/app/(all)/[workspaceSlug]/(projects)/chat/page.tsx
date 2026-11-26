@@ -56,6 +56,8 @@ import {
   type TPesan,
   type TRujukanKirim,
 } from "@/services/chat.service";
+// lib
+import { teksTanpaMarkdown } from "@/lib/markdown/pesan";
 // local imports
 import { susunBaris } from "./baris";
 import { KerangkaDaftar } from "./kerangka-daftar";
@@ -1049,7 +1051,7 @@ function ChatPage() {
                     </span>
                     <span className="line-clamp-2 text-12 text-secondary">
                       {h.dari_saya ? t("chat_ui.you_prefix") : ""}
-                      {h.isi}
+                      {teksTanpaMarkdown(h.isi)}
                     </span>
                   </button>
                 );
@@ -1106,7 +1108,7 @@ function ChatPage() {
                     <div className="mt-0.5 flex items-center justify-between gap-2">
                       <p className={`truncate text-12 ${adaBaru ? "font-medium text-secondary" : "text-tertiary"}`}>
                         {terakhir
-                          ? `${terakhir.dari_saya && !diriSendiri ? t("chat_ui.you_prefix") : ""}${terakhir.isi || t("chat_ui.sent_attachment")}`
+                          ? `${terakhir.dari_saya && !diriSendiri ? t("chat_ui.you_prefix") : ""}${teksTanpaMarkdown(terakhir.isi) || t("chat_ui.sent_attachment")}`
                           : diriSendiri
                             ? t("chat_ui.notes_to_self")
                             : t("chat_ui.no_messages")}
@@ -1474,7 +1476,11 @@ function ChatPage() {
                           ? getWorkspaceMemberDetails(membalas.pengirim)?.member?.display_name
                           : null) ?? t("chat_ui.member"))
                   }
-                  isi={membalas.dihapus ? t("chat_ui.message_deleted") : membalas.isi || t("chat_ui.attachment")}
+                  isi={
+                    membalas.dihapus
+                      ? t("chat_ui.message_deleted")
+                      : teksTanpaMarkdown(membalas.isi) || t("chat_ui.attachment")
+                  }
                   miring={!!membalas.dihapus}
                   labelBatal={t("cancel")}
                   onBatal={() => setMembalas(null)}
@@ -1484,7 +1490,7 @@ function ChatPage() {
                 <KutipanBalasan
                   nama={t("chat_ui.editing_message")}
                   ikon={<Pencil className="size-3 shrink-0" />}
-                  isi={menyunting.isi || t("chat_ui.attachment")}
+                  isi={teksTanpaMarkdown(menyunting.isi) || t("chat_ui.attachment")}
                   labelBatal={t("cancel")}
                   onBatal={() => {
                     // Batal menyunting mengembalikan kotak tulis ke kosong,

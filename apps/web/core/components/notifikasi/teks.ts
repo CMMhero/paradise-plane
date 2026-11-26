@@ -19,6 +19,8 @@
  * beralias berkas ini bisa dijalankan langsung oleh tsx lewat `teks.check.ts`.
  */
 
+import { teksTanpaMarkdown } from "../../lib/markdown/pesan";
+
 export type TTerjemah = (key: string, params?: Record<string, unknown>) => string;
 
 export type TRingkasan = {
@@ -255,7 +257,7 @@ export const ringkasPercakapan = (
   // Pesannya dipotong lebih dulu supaya ekornya SELALU muat. Kalau keduanya
   // dipotong bersama, justru "(+3 percakapan lain)" yang hilang setiap kali
   // pesannya panjang, padahal itu bagian yang tidak bisa ditebak sendiri.
-  const pesan = potong(teksPolos(terbaru.isi) || t("notification_ui.sent_attachment"), BATAS_ISI - ekor.length);
+  const pesan = potong(teksTanpaMarkdown(terbaru.isi) || t("notification_ui.sent_attachment"), BATAS_ISI - ekor.length);
 
   return {
     judul: potong(judul, 90),
