@@ -52,6 +52,7 @@ from plane.bgtasks.daily_digest_email import (
 from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI, hari_ini_kantor
 from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
+    TINGKAT_ASISTEN_MANAGER,
     TINGKAT_DIREKTUR,
     TINGKAT_MANAGER,
     TINGKAT_SEKRETARIS,
@@ -90,6 +91,7 @@ logger = logging.getLogger("plane")
 NAMA_PERAN = {
     TINGKAT_LEADER: "Leader",
     TINGKAT_SUPERVISOR: "Supervisor",
+    TINGKAT_ASISTEN_MANAGER: "Asisten Manager",
     TINGKAT_MANAGER: "Manager",
     TINGKAT_CABANG: "Manajer Cabang",
     TINGKAT_SEKRETARIS: "Sekretaris",

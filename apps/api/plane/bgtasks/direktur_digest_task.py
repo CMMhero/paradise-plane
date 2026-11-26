@@ -41,6 +41,7 @@ from plane.bgtasks.deadline_reminder_task import GRUP_SELESAI, hari_ini_kantor
 from plane.bgtasks.direktur_digest_email import Angka, DivisiLaporan, Laporan, Unit, susun_email
 from plane.utils.email_merek import bahasa_penerima, buat_pesan
 from plane.db.models import (
+    TINGKAT_ASISTEN_MANAGER,
     TINGKAT_MANAGER,
     TINGKAT_SUPERVISOR,
     DepartemenProject,
@@ -149,16 +150,17 @@ class DataWorkspace:
         ).select_related("departemen", "departemen__divisi__cabang"):
             self.tempat[dp.project_id] = (dp.departemen.divisi, dp.departemen)
 
+        # Pimpinan departemen: asisten manager (P215) lalu supervisor, masing-masing urut nama.
         self.manager, self.supervisor = defaultdict(list), defaultdict(list)
         for j in JabatanOrganisasi.objects.filter(
             workspace_id=workspace_id,
-            tingkat__in=[TINGKAT_SUPERVISOR, TINGKAT_MANAGER],
+            tingkat__in=[TINGKAT_SUPERVISOR, TINGKAT_ASISTEN_MANAGER, TINGKAT_MANAGER],
             member__is_active=True,
         ).select_related("member"):
             if j.tingkat == TINGKAT_MANAGER and j.divisi_id:
                 self.manager[j.divisi_id].append(_nama(j.member))
-            elif j.tingkat == TINGKAT_SUPERVISOR and j.departemen_id:
-                self.supervisor[j.departemen_id].append(_nama(j.member))
+            elif j.tingkat < TINGKAT_MANAGER and j.departemen_id:
+                self.supervisor[j.departemen_id].append((-j.tingkat, _nama(j.member)))
 
 
 def susun_laporan(data, pids, jendela):
@@ -180,7 +182,7 @@ def susun_laporan(data, pids, jendela):
         per_divisi[kunci].unit.append(
             Unit(
                 nama=dept.nama if dept else data.nama_project[pid],
-                pimpinan=sorted(data.supervisor.get(dept.id, [])) if dept else [],
+                pimpinan=[n for _, n in sorted(data.supervisor.get(dept.id, []))] if dept else [],
                 angka=data.angka.get(pid, Angka()),
             )
         )

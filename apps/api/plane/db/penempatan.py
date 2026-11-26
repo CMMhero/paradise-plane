@@ -33,6 +33,7 @@ memanggil `sinkronkan_satu` sesudahnya (akses project ikut).
 # Module imports
 from plane.db.models import (
     JabatanOrganisasi,
+    TINGKAT_ASISTEN_MANAGER,
     TINGKAT_CABANG,
     TINGKAT_LEADER,
     TINGKAT_MANAGER,
@@ -126,7 +127,14 @@ def peran_departemen_sekarang(workspace_id, user_id):
 
 
 # Peran yang boleh dipegang di satu departemen (KEP-93): tidak ada "manager departemen".
-PERAN_DEPARTEMEN_SAH = (TINGKAT_MEMBER, TINGKAT_LEADER, TINGKAT_SUPERVISOR)
+# Asisten Manager (P215) adalah peran departemen tertinggi.
+PERAN_DEPARTEMEN_SAH = (TINGKAT_MEMBER, TINGKAT_LEADER, TINGKAT_SUPERVISOR, TINGKAT_ASISTEN_MANAGER)
+
+
+def peran_departemen_dari(tingkat):
+    """Peran departemen untuk jenjang `tingkat`: di bawah Manager jenjangnya sendiri,
+    Manager ke atas Supervisor (baris lama "manager departemen" juga dibaca begitu)."""
+    return tingkat if tingkat < TINGKAT_MANAGER else TINGKAT_SUPERVISOR
 
 
 def setel_penempatan(
@@ -154,9 +162,10 @@ def setel_penempatan(
     Peran per tempat (KEP-93, 5 Nov 2026): `tingkat` adalah jenjang ORANGNYA,
     baris departemen membawa peran orang itu DI departemen tersebut:
 
-    - Peran di satu departemen selalu Staf atau Supervisor, tidak pernah Manager:
-      `peran_departemen` kalau dikirim, lalu peran lama, lalu min(jenjang, Supervisor)
-      untuk departemen baru. Orang bisa Supervisor di X sekaligus Staf di Y.
+    - Peran di satu departemen selalu Staf sampai Asisten Manager, tidak pernah Manager:
+      `peran_departemen` kalau dikirim, lalu peran lama, lalu jenjangnya sendiri untuk
+      departemen baru (manager ke atas: Supervisor, seperti sebelum P215). Orang bisa
+      Supervisor di X sekaligus Staf di Y.
     - `seragam=True` (jenjang dipilih eksplisit, mis. halaman Members): di bawah
       Manager semua departemen ikut jenjang itu, seperti sebelum KEP-93.
     - Di bawah Manager jenjang orangnya DITURUNKAN dari perannya: peran tertinggi.
@@ -202,10 +211,10 @@ def setel_penempatan(
 
     def peran(dep_id):
         if dep_id in diminta:
-            return min(diminta[dep_id], TINGKAT_SUPERVISOR)
+            return peran_departemen_dari(diminta[dep_id])
         if seragam and tingkat < TINGKAT_MANAGER:
             return tingkat
-        return min(peran_lama.get(dep_id, tingkat), TINGKAT_SUPERVISOR)
+        return peran_departemen_dari(peran_lama.get(dep_id, tingkat))
 
     peran_dep = {d: peran(d) for d in deps}
     if tingkat < TINGKAT_MANAGER and peran_dep:

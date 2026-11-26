@@ -98,6 +98,7 @@ class TestTangga:
             10: "Member",
             12: "Leader",
             20: "Supervisor",
+            25: "Asisten Manager",
             30: "Manager",
             33: "Direktur Cabang",
             35: "Sekretaris",

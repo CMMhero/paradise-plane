@@ -115,6 +115,7 @@ from .persetujuan_penugasan import (
 from .hierarki import (
     JabatanOrganisasi,
     PengawasanDivisi,
+    TINGKAT_ASISTEN_MANAGER,
     TINGKAT_CABANG,
     TINGKAT_CHOICES,
     TINGKAT_DIREKTUR,

@@ -92,12 +92,13 @@ ATURAN = (
         key=APPROVER_MIN_LEVEL,
         kind=LEVEL,
         default=20,
-        choices=(20, 30),
+        choices=(20, 25, 30),
         group="approvals",
         label="Lowest level that can approve",
         help=(
             "Finished work waits for someone at this level or above who oversees the department and sits above "
-            "the person who finished it. Raising it to Manager takes approvals away from supervisors."
+            "the person who finished it. Raising it to Manager takes approvals away from supervisors and "
+            "assistant managers."
         ),
         risk=TINGGI,
         kep="P29",
@@ -250,7 +251,7 @@ ATURAN = (
         key=REOPEN_MIN_LEVEL,
         kind=LEVEL,
         default=20,
-        choices=(20, 30, 40),
+        choices=(20, 25, 30, 40),
         group="assignment",
         label="Lowest level that can reopen finished work",
         help=(
@@ -312,7 +313,7 @@ ATURAN = (
         key=PROJECT_CREATE_MIN_LEVEL,
         kind=LEVEL,
         default=20,
-        choices=(10, 12, 20, 30, 40),
+        choices=(10, 12, 20, 25, 30, 40),
         group="projects",
         label="Lowest level that can create projects",
         help=(

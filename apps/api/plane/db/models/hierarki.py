@@ -51,6 +51,10 @@ TINGKAT_MEMBER = 10
 # 12, bukan 15: 15 adalah ROLE project (Member) dan ditolak `_SALAH_KAPAL`.
 TINGKAT_LEADER = 12
 TINGKAT_SUPERVISOR = 20
+# Asisten Manager (P215): ditempatkan di departemen seperti supervisor (satu atau
+# beberapa, tidak pernah divisi), satu anak tangga di atas supervisor dan di bawah
+# manager. Aturan `>= SUPERVISOR` ikut berlaku, `>= MANAGER` tidak.
+TINGKAT_ASISTEN_MANAGER = 25
 TINGKAT_MANAGER = 30
 # Direktur Cabang (P29): memimpin semua divisi satu cabang, di atas manager, di bawah
 # sekretaris. Jangkauannya hanya cabangnya; kantor pusat dan cabang lain tidak.
@@ -65,6 +69,7 @@ TINGKAT_CHOICES = (
     (TINGKAT_MEMBER, "Member"),
     (TINGKAT_LEADER, "Leader"),
     (TINGKAT_SUPERVISOR, "Supervisor"),
+    (TINGKAT_ASISTEN_MANAGER, "Asisten Manager"),
     (TINGKAT_MANAGER, "Manager"),
     (TINGKAT_CABANG, "Direktur Cabang"),
     (TINGKAT_SEKRETARIS, "Sekretaris"),

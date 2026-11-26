@@ -47,9 +47,9 @@ class TestValidator:
 
     def test_pilihan_hanya_dari_daftar(self):
         assert st.jenis(si.APPROVAL_REQUIRED_BELOW_LEVEL) == st.JENIS_PILIHAN
-        assert st.normalkan(si.APPROVAL_REQUIRED_BELOW_LEVEL, "30") == "30"
+        assert st.normalkan(si.APPROVAL_REQUIRED_BELOW_LEVEL, "25") == "25"
         with pytest.raises(st.NilaiTidakSah):
-            st.normalkan(si.APPROVAL_REQUIRED_BELOW_LEVEL, "25")
+            st.normalkan(si.APPROVAL_REQUIRED_BELOW_LEVEL, "26")
         with pytest.raises(st.NilaiTidakSah):
             st.normalkan(si.TASK_DELETE_RULE, 3)
 
@@ -217,7 +217,7 @@ class TestPembaca:
         assert kunci == st.semua_kunci()
         assert len(kunci) == len(set(kunci))
         peta = {d["key"]: d for d in daftar}
-        assert peta[si.APPROVAL_REQUIRED_BELOW_LEVEL]["choices"] == [20, 30, 40]
+        assert peta[si.APPROVAL_REQUIRED_BELOW_LEVEL]["choices"] == [20, 25, 30, 40]
         assert peta[si.STUCK_AFTER_DAYS] | {"value": None} == {
             "key": si.STUCK_AFTER_DAYS,
             "kind": "number",
