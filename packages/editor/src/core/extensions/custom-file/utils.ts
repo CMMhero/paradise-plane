@@ -71,14 +71,9 @@ export const resolveFileMimeType = (type: string | null, name: string | null): s
  *
  * Jangan diganti kembali jadi `startsWith("text/")`, itu justru asal masalahnya.
  */
-const FRAMEABLE_TEXT_MIME_TYPES = new Set([
-  "text/plain",
-  "text/css",
-  "text/javascript",
-  "text/xml",
-  "application/xml",
-  "application/json",
-]);
+// Also limited to what the server agrees to serve inline (utils/tipe_unggahan.py
+// disposisi_sajian): CSS, JavaScript and XML always come back as downloads.
+const FRAMEABLE_TEXT_MIME_TYPES = new Set(["text/plain", "application/json"]);
 
 export const getFilePreviewKind = (mimeType: string): TFilePreviewKind => {
   // Matroska lolos `video/` tapi tidak ada peramban yang memutarnya. Tanpa
