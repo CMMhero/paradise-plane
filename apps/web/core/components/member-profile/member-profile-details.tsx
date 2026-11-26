@@ -20,6 +20,7 @@ import { MemberProfileFields, MemberProfileSkeleton } from "@plane/propel/member
 import type { TMemberProfilePlacement } from "@plane/propel/member-profile-card";
 import { useTranslation } from "@plane/i18n";
 import {
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
   TINGKAT_LEADER,
@@ -40,6 +41,7 @@ const TINGKAT_DIKENAL = new Set<number>([
   TINGKAT_MEMBER,
   TINGKAT_LEADER,
   TINGKAT_SUPERVISOR,
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_MANAGER,
   TINGKAT_CABANG,
   TINGKAT_SEKRETARIS,
