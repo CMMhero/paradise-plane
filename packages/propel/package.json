@@ -30,6 +30,7 @@
     "./emoji-reaction": "./dist/emoji-reaction/index.js",
     "./empty-state": "./dist/empty-state/index.js",
     "./icon-button": "./dist/icon-button/index.js",
+    "./file-type": "./dist/file-type/index.js",
     "./icons": "./dist/icons/index.js",
     "./image-gallery": "./dist/image-gallery/index.js",
     "./input": "./dist/input/index.js",
