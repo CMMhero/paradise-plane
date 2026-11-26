@@ -16,6 +16,7 @@ import { EIssuesStoreType } from "@plane/types";
 import { CustomMenu } from "@plane/ui";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
+import { ExportExcelButton } from "@/components/issues/export-excel-button";
 import { DisplayFiltersSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 import { IssueLayoutIcon } from "@/components/issues/issue-layouts/layout-icon";
 import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
@@ -134,6 +135,18 @@ export const ModuleIssuesMobileHeader = observer(function ModuleIssuesMobileHead
             />
           </FiltersDropdown>
         </div>
+
+        {moduleId && projectId && (
+          <ExportExcelButton
+            target={{
+              storeType: EIssuesStoreType.MODULE,
+              entityId: moduleId.toString(),
+              projectId: projectId.toString(),
+            }}
+            exportName={moduleDetails?.name}
+            appearance="bar"
+          />
+        )}
 
         {isModuleEnabled("analytics") && (
           <button

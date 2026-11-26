@@ -29,6 +29,7 @@ import { cn } from "@plane/utils";
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { SwitcherLabel } from "@/components/common/switcher-label";
+import { ExportExcelButton } from "@/components/issues/export-excel-button";
 import {
   DisplayFiltersSelection,
   FiltersDropdown,
@@ -228,6 +229,12 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
                 moduleViewDisabled={!currentProjectDetails?.module_view}
               />
             </FiltersDropdown>
+            {moduleId && projectId && (
+              <ExportExcelButton
+                target={{ storeType: EIssuesStoreType.MODULE, entityId: moduleId, projectId: projectId.toString() }}
+                exportName={moduleDetails?.name}
+              />
+            )}
           </div>
 
           {canUserCreateIssue ? (

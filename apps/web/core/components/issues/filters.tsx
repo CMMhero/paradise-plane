@@ -27,6 +27,7 @@ import {
   LayoutSelection,
   MobileLayoutSelection,
 } from "./issue-layouts/filters";
+import { ExportExcelButton } from "./export-excel-button";
 
 type Props = {
   currentProjectDetails: TProject | undefined;
@@ -143,6 +144,9 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
         </Button>
       ) : (
         <></>
+      )}
+      {storeType === EIssuesStoreType.PROJECT && (
+        <ExportExcelButton target={{ storeType, entityId: projectId }} exportName={currentProjectDetails?.name} />
       )}
     </>
   );

@@ -508,5 +508,12 @@
       "label": "Epic-Titel",
       "required": "Ein Titel für das Epic ist erforderlich."
     }
+  },
+  "work_item_export": {
+    "button": "Excel exportieren",
+    "exporting": "Wird exportiert…",
+    "failed_title": "Export fehlgeschlagen",
+    "failed_message": "Die Excel-Datei konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "too_large": "Diese Liste enthält mehr als {limit} Arbeitselemente. Grenzen Sie sie mit Filtern ein und exportieren Sie erneut."
   }
 }

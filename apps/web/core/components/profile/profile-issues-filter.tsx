@@ -15,10 +15,12 @@ import { useTranslation } from "@plane/i18n";
 import type { IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
 import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
 // components
+import { ExportExcelButton } from "@/components/issues/export-excel-button";
 import { DisplayFiltersSelection, FiltersDropdown, LayoutSelection } from "@/components/issues/issue-layouts/filters";
 import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
+import { useMember } from "@/hooks/store/use-member";
 
 export const ProfileIssuesFilter = observer(function ProfileIssuesFilter() {
   // i18n
@@ -30,6 +32,7 @@ export const ProfileIssuesFilter = observer(function ProfileIssuesFilter() {
   const {
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.PROFILE);
+  const { getUserDetails } = useMember();
   // derived values
   const activeLayout = issueFilters?.displayFilters?.layout;
 
@@ -82,6 +85,12 @@ export const ProfileIssuesFilter = observer(function ProfileIssuesFilter() {
           handleDisplayPropertiesUpdate={handleDisplayProperties}
         />
       </FiltersDropdown>
+      {userId && (
+        <ExportExcelButton
+          target={{ storeType: EIssuesStoreType.PROFILE, entityId: userId }}
+          exportName={getUserDetails(userId)?.display_name}
+        />
+      )}
     </div>
   );
 });

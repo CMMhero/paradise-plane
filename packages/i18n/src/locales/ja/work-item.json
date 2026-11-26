@@ -508,5 +508,12 @@
       "label": "エピックのタイトル",
       "required": "エピックのタイトルは必須です。"
     }
+  },
+  "work_item_export": {
+    "button": "Excelに出力",
+    "exporting": "出力中…",
+    "failed_title": "出力に失敗しました",
+    "failed_message": "Excelファイルを作成できませんでした。もう一度お試しください。",
+    "too_large": "このリストの作業項目は{limit}件を超えています。フィルターで絞り込んでから、もう一度出力してください。"
   }
 }

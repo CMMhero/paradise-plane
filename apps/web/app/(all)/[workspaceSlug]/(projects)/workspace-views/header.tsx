@@ -23,6 +23,7 @@ import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown } from "@plane/
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { SwitcherLabel } from "@/components/common/switcher-label";
+import { ExportExcelButton } from "@/components/issues/export-excel-button";
 import { DisplayFiltersSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
 import { DefaultWorkspaceViewQuickActions } from "@/components/workspace/views/default-view-quick-action";
@@ -246,6 +247,12 @@ const GlobalViewIssuesHeader = observer(function GlobalViewIssuesHeader() {
                 handleDisplayPropertiesUpdate={handleDisplayProperties}
               />
             </FiltersDropdown>
+          )}
+          {globalViewId && (
+            <ExportExcelButton
+              target={{ storeType: EIssuesStoreType.GLOBAL, entityId: globalViewId }}
+              exportName={viewDetails?.name ?? t(defaultViewDetails?.i18n_label ?? "")}
+            />
           )}
           <AddViewButton onClick={() => setCreateViewModal(true)} />
           <div className="hidden md:block">

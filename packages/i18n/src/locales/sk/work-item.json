@@ -508,5 +508,12 @@
       "label": "Názov epiky",
       "required": "Názov epiky je povinný."
     }
+  },
+  "work_item_export": {
+    "button": "Exportovať do Excelu",
+    "exporting": "Exportuje sa…",
+    "failed_title": "Export zlyhal",
+    "failed_message": "Súbor Excel sa nepodarilo vytvoriť. Skúste to prosím znova.",
+    "too_large": "Tento zoznam obsahuje viac ako {limit} pracovných položiek. Zúžte ho pomocou filtrov a exportujte znova."
   }
 }

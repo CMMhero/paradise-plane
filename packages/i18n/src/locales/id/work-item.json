@@ -508,5 +508,12 @@
       "label": "Judul Epik",
       "required": "Judul epik wajib diisi."
     }
+  },
+  "work_item_export": {
+    "button": "Ekspor Excel",
+    "exporting": "Mengekspor…",
+    "failed_title": "Ekspor gagal",
+    "failed_message": "File Excel tidak bisa dibuat. Coba lagi.",
+    "too_large": "Daftar ini berisi lebih dari {limit} item kerja. Persempit dengan filter, lalu ekspor lagi."
   }
 }
