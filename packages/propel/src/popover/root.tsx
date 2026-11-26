@@ -137,6 +137,8 @@ const HoverCard = memo(function HoverCard({
         <BasePreviewCard.Positioner side={side} align={align} sideOffset={6} className="z-40">
           <BasePreviewCard.Popup
             data-slot="hover-card-content"
+            // Portaled to <body>: keeps the work item peek from closing on a press inside the card.
+            data-prevent-outside-click
             className={className ?? HOVER_CARD_CLASS}
             onClick={(e) => e.stopPropagation()}
           >
