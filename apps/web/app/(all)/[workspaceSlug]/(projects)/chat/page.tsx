@@ -37,6 +37,7 @@ import { Avatar, Input } from "@plane/ui";
 import { cn, getFileURL, getNumberCount, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
 import { CountChip } from "@/components/common/count-chip";
+import { segarkanPengumuman } from "@/components/pengumuman/cache";
 import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 // hooks
@@ -60,6 +61,7 @@ import {
 import { teksTanpaMarkdown } from "@/lib/markdown/pesan";
 // local imports
 import { susunBaris } from "./baris";
+import { batasHapusRuang } from "./batas-hapus";
 import { KerangkaDaftar } from "./kerangka-daftar";
 import { urutkanDaftar } from "./urutan-daftar";
 import { BilahSematan } from "./bilah-sematan";
@@ -646,16 +648,23 @@ function ChatPage() {
     return () => clearTimeout(jeda);
   }, [disorot]);
 
+  /** Pengumuman juga tampil di halaman Pengumuman dan widget Home; cache keduanya ikut. */
+  const segarkanBilaPengumuman = (pesanId: string, hasil: TPesan | "dihapus") => {
+    if (slug && ruangParam && kanalAktif?.kunci_sistem === "pengumuman")
+      segarkanPengumuman(slug, ruangParam, pesanId, hasil);
+  };
+
   /** `isi` sudah di-trim oleh KotakTulis, pemilik draf. */
   const simpanSuntingan = async (isi: string) => {
     if (!slug || !menyunting || !isi) return;
     tandaiAksiLokal(aksiLokalRef);
     setMengirim(true);
     try {
-      await chatService.suntingPesan(slug, menyunting.id, isi);
+      const hasil = await chatService.suntingPesan(slug, menyunting.id, isi);
+      segarkanBilaPengumuman(menyunting.id, hasil);
       setMenyunting(null);
       setDraf("");
-      await Promise.all([muatPesan(), muatPercakapan()]);
+      await Promise.all([muatPesan(), muatPercakapan(), muatSematan()]);
     } catch (galat) {
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -672,6 +681,7 @@ function ChatPage() {
     tandaiAksiLokal(aksiLokalRef);
     try {
       await chatService.hapusPesan(slug, p.id);
+      segarkanBilaPengumuman(p.id, "dihapus");
       // Riwayat lama disimpan terpisah dari SWR, jadi ikut dijadikan batu nisan
       // (pesan tetap di tempatnya, isinya diganti "Pesan dihapus").
       setLama((sebelumnya) =>
@@ -679,7 +689,8 @@ function ChatPage() {
           x.id === p.id ? { ...x, dihapus: true, isi: "", lampiran: [], reaksi: [], balasan_ke: null } : x
         )
       );
-      await Promise.all([muatPesan(), muatPercakapan()]);
+      // Sematan ikut ditarik: pesan yang dihapus tidak boleh tertinggal di bilahnya.
+      await Promise.all([muatPesan(), muatPercakapan(), muatSematan()]);
     } catch (galat) {
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -1405,7 +1416,7 @@ function ChatPage() {
                               onBalas={balasPesan}
                               onSunting={suntingPesan}
                               onHapus={hapusPesan}
-                              batasHapusJam={batasHapusJam}
+                              batasHapusJam={batasHapusRuang(batasHapusJam, kanalAktif?.kunci_sistem)}
                               onReaksi={reaksiPesan}
                               onSematkan={bolehSematkan ? sematkanPesan : undefined}
                               onTelepon={teleponDariKartu}

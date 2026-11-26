@@ -5,15 +5,18 @@
  * See the LICENSE file for details.
  *
  * Penyunting yang sama dengan kotak komentar (LiteTextEditor: pintasan
- * Markdown, daftar, kutipan, kode, tautan, sebutan), ditambah lampiran berkas.
- * Isinya disimpan sebagai Markdown di pesan kanal Announcements; berkas dan
- * gambar naik sebagai lampiran Obrolan (batas jumlah, ukuran, dan tipe dijaga
- * server), jadi tidak ada gambar sebaris. Enter = paragraf baru, Ctrl/Cmd+Enter
- * = terbitkan: pengumuman biasanya lebih dari satu baris.
+ * Markdown, daftar, kutipan, kode, tautan, sebutan). Isinya disimpan sebagai
+ * Markdown di pesan kanal Announcements. Enter = paragraf baru, Ctrl/Cmd+Enter
+ * = terbitkan atau simpan: pengumuman biasanya lebih dari satu baris.
+ *
+ * `PenyuntingPengumuman` menulis yang baru, ditambah lampiran: berkas dan gambar
+ * naik sebagai lampiran Obrolan (batas jumlah, ukuran, dan tipe dijaga server),
+ * jadi tidak ada gambar sebaris. `SuntingPengumuman` mengubah teks yang sudah
+ * terbit; lampirannya tetap.
  */
 
 import { useEffect, useRef, useState } from "react";
-import type { RefObject } from "react";
+import type { KeyboardEvent, RefObject } from "react";
 import { observer } from "mobx-react";
 import { Paperclip, X } from "lucide-react";
 // plane imports
@@ -28,14 +31,21 @@ import { LiteTextEditor } from "@/components/editor/lite-text";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUploadFailureText } from "@/hooks/use-upload-error-reporter";
+// lib
+import { htmlPenyunting, setaraMarkdown } from "@/lib/markdown/penyunting";
+// services
+import type { TRujukanKirim } from "@/services/chat.service";
 // local imports
 import { ukuranTerbaca } from "../chat/lampiran";
 import { berkasDariTempel, seretBerkas, useUnggahLampiran } from "../chat/unggah-lampiran";
 
+/** #kanal dan #work item yang dirujuk, supaya server bisa menyamarkan nama kanal privat. */
+type TRujukan = Pick<TRujukanKirim, "kanal" | "tugas">;
+
 type Props = {
   slug: string;
   /** Lempar galat bila gagal; penyunting tetap berisi supaya tulisan tidak hilang. */
-  onTerbit: (isi: string, lampiran: string[]) => Promise<void>;
+  onTerbit: (isi: string, lampiran: string[], rujukan: TRujukan) => Promise<void>;
 };
 
 // Tanpa perataan teks dan tanpa gambar sebaris: Markdown tidak punya perataan, dan
@@ -114,15 +124,78 @@ function BilahTombol({ editorRef, siap }: { editorRef: RefObject<EditorRefApi | 
   );
 }
 
+const rujukanDariEditor = (editor: EditorRefApi | null): TRujukan => {
+  const dok = new DOMParser().parseFromString(editor?.getDocument().html ?? "", "text/html");
+  const ids = (jenis: string) =>
+    Array.from(dok.querySelectorAll(`mention-component[entity_name="${jenis}"]`), (el) =>
+      el.getAttribute("entity_identifier")
+    ).filter((id): id is string => !!id);
+  return { kanal: ids("channel_mention"), tugas: ids("issue_mention") };
+};
+
+/** Ctrl/Cmd+Enter menjalankan aksi utama. */
+const saatCtrlEnter = (aksi: () => void) => (e: KeyboardEvent) => {
+  if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault();
+  aksi();
+};
+
+type TEditorProps = {
+  slug: string;
+  id: string;
+  editorRef: RefObject<EditorRefApi>;
+  /** HTML isi awal; tetap selama penyunting terpasang. */
+  awal: string;
+  kosong: boolean;
+  onKosong: (kosong: boolean) => void;
+  onSiap?: () => void;
+};
+
+/** Bilah tombol dan penyunting kaya, dipakai menulis baru dan menyunting. */
+const EditorPengumuman = observer(function EditorPengumuman(props: TEditorProps) {
+  const { slug, id, editorRef, awal, kosong, onKosong, onSiap } = props;
+  const { t } = useTranslation();
+  // Boolean, bukan objek editornya: nilai yang sama tidak merender ulang penyunting.
+  const [editorSiap, setEditorSiap] = useState(false);
+  const workspaceId = useWorkspace().getWorkspaceBySlug(slug)?.id as string;
+
+  return (
+    <>
+      <BilahTombol editorRef={editorRef} siap={editorSiap} />
+
+      <LiteTextEditor
+        editable
+        variant="none"
+        workspaceId={workspaceId}
+        workspaceSlug={slug}
+        id={id}
+        ref={editorRef}
+        handleEditorReady={(siap) => {
+          setEditorSiap(siap);
+          if (siap) onSiap?.();
+        }}
+        value={awal}
+        initialValue={awal}
+        isEmpty={kosong}
+        disabledExtensions={EKSTENSI_MATI}
+        placeholder={t("pengumuman_ui.placeholder")}
+        containerClassName="min-h-24"
+        parentClassName="p-2"
+        onChange={(_json, html) => onKosong(isCommentEmpty(html))}
+        uploadFile={tolakUnggahSebaris}
+        duplicateFile={tolakUnggahSebaris}
+        displayConfig={TAMPILAN_EDITOR}
+      />
+    </>
+  );
+});
+
 export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slug, onTerbit }: Props) {
   const { t } = useTranslation();
   const editorRef = useRef<EditorRefApi>(null);
   const berkasRef = useRef<HTMLInputElement>(null);
   const [kosong, setKosong] = useState(true);
   const [mengirim, setMengirim] = useState(false);
-  // Boolean, bukan objek editornya: nilai yang sama tidak merender ulang penyunting.
-  const [editorSiap, setEditorSiap] = useState(false);
-  const workspaceId = useWorkspace().getWorkspaceBySlug(slug)?.id as string;
   const describeUploadFailure = useUploadFailureText();
 
   const { siap, naik, mengunggah, tambah, buang, kosongkan, maksJumlah } = useUnggahLampiran({
@@ -157,7 +230,8 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
     try {
       await onTerbit(
         isi,
-        siap.map((l) => l.id)
+        siap.map((l) => l.id),
+        rujukanDariEditor(editorRef.current)
       );
       editorRef.current?.clearEditor();
       setKosong(true);
@@ -200,34 +274,15 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
         e.stopPropagation();
         void tambah(e.dataTransfer.files);
       }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-          e.preventDefault();
-          void terbitkan();
-        }
-      }}
+      onKeyDown={saatCtrlEnter(() => void terbitkan())}
     >
-      <BilahTombol editorRef={editorRef} siap={editorSiap} />
-
-      <LiteTextEditor
-        editable
-        variant="none"
-        workspaceId={workspaceId}
-        workspaceSlug={slug}
+      <EditorPengumuman
+        slug={slug}
         id={`pengumuman_${slug}`}
-        ref={editorRef}
-        handleEditorReady={setEditorSiap}
-        value="<p></p>"
-        initialValue="<p></p>"
-        isEmpty={kosong}
-        disabledExtensions={EKSTENSI_MATI}
-        placeholder={t("pengumuman_ui.placeholder")}
-        containerClassName="min-h-24"
-        parentClassName="p-2"
-        onChange={(_json, html) => setKosong(isCommentEmpty(html))}
-        uploadFile={tolakUnggahSebaris}
-        duplicateFile={tolakUnggahSebaris}
-        displayConfig={TAMPILAN_EDITOR}
+        editorRef={editorRef}
+        awal="<p></p>"
+        kosong={kosong}
+        onKosong={setKosong}
       />
 
       {siap.length > 0 || naik.length > 0 ? (
@@ -293,6 +348,108 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
           loading={mengirim}
         >
           {t("pengumuman_ui.send")}
+        </Button>
+      </div>
+    </div>
+  );
+});
+
+type TSuntingProps = {
+  slug: string;
+  pesanId: string;
+  /** Markdown yang sekarang terbit. */
+  isi: string;
+  /** Lempar galat bila gagal; penyunting tetap terbuka. */
+  onSimpan: (isi: string, rujukan: TRujukan) => Promise<void>;
+  onBatal: () => void;
+};
+
+/**
+ * `memeriksa` = penyunting kaya sedang memuat isinya; `kaya` = selamat lewat
+ * penyunting; `sumber` = tidak selamat, jadi yang disunting Markdown aslinya.
+ */
+type TCara = "memeriksa" | "kaya" | "sumber";
+
+export const SuntingPengumuman = observer(function SuntingPengumuman(props: TSuntingProps) {
+  const { slug, pesanId, onSimpan, onBatal } = props;
+  const { t } = useTranslation();
+  const editorRef = useRef<EditorRefApi>(null);
+  // Dibekukan saat dibuka: penarikan ulang di latar tidak boleh mengganti tulisan yang sedang disunting.
+  const [asli] = useState(props.isi);
+  const [awalHtml] = useState(() => htmlPenyunting(props.isi));
+  const [siap, setSiap] = useState(false);
+  const [cara, setCara] = useState<TCara>("memeriksa");
+  const [draf, setDraf] = useState(props.isi);
+  const [kosong, setKosong] = useState(!props.isi.trim());
+  const [menyimpan, setMenyimpan] = useState(false);
+  /** Markdown keluaran penyunting sebelum diubah, pembanding "tidak ada perubahan". */
+  const dasarRef = useRef("");
+
+  useEffect(() => {
+    if (!siap) return;
+    // Satu putaran sesudah siap, supaya pegangan penyunting sudah memegang editornya.
+    const jeda = setTimeout(() => {
+      const hasil = editorRef.current?.getMarkDown() ?? "";
+      dasarRef.current = hasil.trim();
+      setCara(setaraMarkdown(asli, hasil) ? "kaya" : "sumber");
+    }, 0);
+    return () => clearTimeout(jeda);
+  }, [siap, asli]);
+
+  const takBerisi = cara === "sumber" ? !draf.trim() : kosong;
+  const bisaSimpan = cara !== "memeriksa" && !takBerisi && !menyimpan;
+
+  const simpan = async () => {
+    if (!bisaSimpan) return;
+    const isi = (cara === "sumber" ? draf : (editorRef.current?.getMarkDown() ?? "")).trim();
+    // Tanpa perubahan tidak disimpan, supaya tidak berlabel "disunting".
+    if (isi === (cara === "sumber" ? asli.trim() : dasarRef.current)) return onBatal();
+    setMenyimpan(true);
+    try {
+      await onSimpan(isi, cara === "sumber" ? {} : rujukanDariEditor(editorRef.current));
+    } catch {
+      // Pemanggil sudah menampilkan galatnya; tulisannya tetap ada.
+      setMenyimpan(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3" role="presentation" onKeyDown={saatCtrlEnter(() => void simpan())}>
+      {cara === "sumber" ? (
+        <>
+          <p className="text-12 text-tertiary">{t("pengumuman_ui.source_notice")}</p>
+          <textarea
+            value={draf}
+            onChange={(e) => setDraf(e.target.value)}
+            rows={Math.min(Math.max(draf.split("\n").length + 1, 6), 20)}
+            aria-label={t("pengumuman_ui.source_label")}
+            className="w-full rounded-field border border-subtle bg-transparent px-3 py-2 font-mono text-12 text-primary outline-none focus:border-accent-strong"
+          />
+        </>
+      ) : (
+        <EditorPengumuman
+          slug={slug}
+          id={`pengumuman_sunting_${pesanId}`}
+          editorRef={editorRef}
+          awal={awalHtml}
+          kosong={kosong}
+          onKosong={setKosong}
+          onSiap={() => setSiap(true)}
+        />
+      )}
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="secondary" size="base" onClick={onBatal} disabled={menyimpan}>
+          {t("cancel")}
+        </Button>
+        <Button
+          type="button"
+          variant="primary"
+          size="base"
+          onClick={() => void simpan()}
+          disabled={!bisaSimpan}
+          loading={menyimpan}
+        >
+          {t("save_changes")}
         </Button>
       </div>
     </div>

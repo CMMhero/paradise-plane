@@ -377,7 +377,13 @@
     "send": "Publicar",
     "send_failed": "No se pudo publicar el anuncio.",
     "load_failed": "No se pudieron cargar los anuncios.",
-    "open_in_chat": "Comentar en el chat"
+    "open_in_chat": "Comentar en el chat",
+    "edit_failed": "Could not save the announcement.",
+    "delete_failed": "Could not delete the announcement.",
+    "confirm_delete_title": "Delete this announcement?",
+    "confirm_delete_body": "It disappears from this page, Home, and the Announcements channel. Emails that were already sent are not recalled.",
+    "source_label": "Announcement text in Markdown",
+    "source_notice": "This announcement uses formatting the editor cannot keep, so you are editing its Markdown text."
   },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
