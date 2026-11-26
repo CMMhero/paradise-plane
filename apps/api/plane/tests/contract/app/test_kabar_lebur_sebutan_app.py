@@ -265,3 +265,20 @@ class TestSebutanLintasDepartemen:
         assert peta[org.cici.id] is True
         assert peta[org.luar.id] is False
         assert peta[org.sekre.id] is True
+
+
+@pytest.mark.django_db
+def test_sebutan_di_simpanan_lanjutan_deskripsi_tetap_dikabarkan(org):
+    """Penyunting menyimpan otomatis. Simpanan lanjutan tidak membuat baris aktivitas baru
+    (yang lama hanya diperbarui), jadi tugas notifikasi menerima daftar aktivitas kosong."""
+    _aktivitas(org, org.bob, "description")
+    _jalankan(
+        org,
+        org.bob,
+        [],
+        requested={"description_html": f"<p>{_mention(org.cici)}</p>"},
+        current={"description_html": "<p></p>"},
+    )
+    assert Notification.objects.filter(receiver=org.cici, sender=SEBUT).count() == 1
+    assert EmailNotificationLog.objects.filter(receiver=org.cici).count() == 1
+
