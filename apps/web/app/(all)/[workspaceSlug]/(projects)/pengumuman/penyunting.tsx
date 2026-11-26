@@ -20,6 +20,7 @@ import type { KeyboardEvent, RefObject } from "react";
 import { observer } from "mobx-react";
 import { Paperclip, X } from "lucide-react";
 // plane imports
+import { FileTypeIcon } from "@plane/propel/file-type";
 import { TOOLBAR_ITEMS } from "@plane/editor";
 import type { EditorRefApi, ToolbarMenuItem, TExtensions } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
@@ -292,6 +293,7 @@ export const PenyuntingPengumuman = observer(function PenyuntingPengumuman({ slu
               key={l.id}
               className="flex items-center gap-1.5 rounded-control border border-subtle px-2 py-1 text-12 text-secondary"
             >
+              <FileTypeIcon name={l.nama} size="sm" className="-my-0.5 -ml-1 size-5 [&>svg]:size-3" />
               <span className="max-w-40 truncate">{l.nama}</span>
               <span className="text-tertiary">{ukuranTerbaca(l.ukuran)}</span>
               <button
