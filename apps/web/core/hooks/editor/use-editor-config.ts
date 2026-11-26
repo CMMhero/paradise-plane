@@ -7,7 +7,7 @@
 import { useCallback } from "react";
 // plane imports
 import type { TFileHandler } from "@plane/editor";
-import { getEditorAssetDownloadSrc, getEditorAssetSrc } from "@plane/utils";
+import { getEditorAssetDownloadSrc, getEditorAssetSrc, getFileURL } from "@plane/utils";
 // hooks
 import { useEditorAsset } from "@/hooks/store/use-editor-asset";
 // plane web hooks
@@ -17,6 +17,12 @@ import { useUploadErrorReporter } from "@/hooks/use-upload-error-reporter";
 // services
 import { FileService } from "@/services/file.service";
 const fileService = new FileService();
+
+/**
+ * Full URLs and API paths (work item attachments) pass through; anything else is an editor asset id.
+ * `//host` and `/\host` are protocol-relative to browsers, so they would load from another site.
+ */
+const isUrlOrPath = (path: string) => /^https?:\/\//i.test(path) || /^\/(?![/\\])/.test(path);
 
 type TArgs = {
   projectId?: string;
@@ -62,8 +68,8 @@ export const useEditorConfig = () => {
         },
         getAssetDownloadSrc: async (path) => {
           if (!path) return "";
-          if (path?.startsWith("http")) {
-            return path;
+          if (isUrlOrPath(path)) {
+            return getFileURL(path) ?? "";
           } else {
             return (
               getEditorAssetDownloadSrc({
@@ -76,8 +82,8 @@ export const useEditorConfig = () => {
         },
         getAssetSrc: async (path) => {
           if (!path) return "";
-          if (path?.startsWith("http")) {
-            return path;
+          if (isUrlOrPath(path)) {
+            return getFileURL(path) ?? "";
           } else {
             return (
               getEditorAssetSrc({
