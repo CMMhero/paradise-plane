@@ -12,7 +12,7 @@ import { LinkIcon } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
 import { PratinjauTautanService } from "@/services/pratinjau-tautan.service";
 import type { TPratinjauTautan } from "@/services/pratinjau-tautan.service";
-import { alamatDariHtml, alamatDariTeks } from "./alamat";
+import { alamatDariHtml, alamatDariMarkdown } from "./alamat";
 
 const layanan = new PratinjauTautanService();
 /** Server meng-cache 24 jam; di peramban cukup satu ambil per sesi per alamat. */
@@ -132,14 +132,14 @@ const JEDA_DRAF_MS = 600;
 export function PratinjauTautanDraf({ teks, className }: { teks: string; className?: string }) {
   const [alamat, setAlamat] = useState<string | undefined>(undefined);
   useEffect(() => {
-    const jeda = setTimeout(() => setAlamat(alamatDariTeks(teks, 1)[0]), JEDA_DRAF_MS);
+    const jeda = setTimeout(() => setAlamat(alamatDariMarkdown(teks, 1)[0]), JEDA_DRAF_MS);
     return () => clearTimeout(jeda);
   }, [teks]);
   if (!alamat || !teks.includes(alamat)) return null;
   return <KartuPratinjauTautan key={alamat} url={alamat} className={className} />;
 }
 
-/** Kartu untuk tautan di teks biasa (chat). Chat cukup satu kartu, seperti aplikasi pesan. */
+/** Kartu untuk tautan di pesan chat (Markdown). Chat cukup satu kartu, seperti aplikasi pesan. */
 export function PratinjauTautanTeks({
   teks,
   maks = 1,
@@ -151,5 +151,5 @@ export function PratinjauTautanTeks({
   terang?: boolean;
   className?: string;
 }) {
-  return <DaftarKartu daftar={alamatDariTeks(teks, maks)} terang={terang} className={className} />;
+  return <DaftarKartu daftar={alamatDariMarkdown(teks, maks)} terang={terang} className={className} />;
 }

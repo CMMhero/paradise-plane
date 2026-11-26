@@ -5,6 +5,8 @@
  * See the LICENSE file for details.
  */
 
+import { idProfil, tautanDalamMarkdown } from "../../lib/markdown/pesan";
+
 /** Batas kartu per blok teks: lebih dari ini, deskripsi berubah jadi galeri tautan. */
 export const MAKS_KARTU = 3;
 
@@ -15,6 +17,8 @@ const layak = (alamat: string): boolean => {
   try {
     const url = new URL(alamat);
     if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    // Sebutan (`[@Nama](.../profile/<id>)`) bukan tautan yang dibagikan orang.
+    if (idProfil(url.pathname)) return false;
     // Tautan ke aplikasi ini sendiri (work item, aset) sudah punya tampilannya sendiri.
     return typeof window === "undefined" || url.origin !== window.location.origin;
   } catch {
@@ -30,6 +34,9 @@ export const alamatDariTeks = (teks: string, maks = MAKS_KARTU): string[] =>
     (teks.match(POLA_TEKS) ?? []).map((a) => a.replace(EKOR, "")),
     maks
   );
+
+/** Alamat dari Markdown pesan chat: hanya yang benar-benar jadi tautan (di dalam kode tidak). */
+export const alamatDariMarkdown = (teks: string, maks = MAKS_KARTU): string[] => unik(tautanDalamMarkdown(teks), maks);
 
 /** Alamat dari `<a href>` di HTML editor (deskripsi, komentar). */
 export const alamatDariHtml = (html: string | null | undefined, maks = MAKS_KARTU): string[] => {
