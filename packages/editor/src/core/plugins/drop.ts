@@ -6,6 +6,7 @@
 
 import type { Editor, JSONContent } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { v4 as uuidv4 } from "uuid";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
 import { ACCEPTED_ATTACHMENT_MIME_TYPES, ACCEPTED_IMAGE_MIME_TYPES } from "@/constants/config";
@@ -61,9 +62,19 @@ const routeFiles = (files: File[], fileHandler?: TFileHandler, disabledExtension
   };
 };
 
-const buildAttachmentLinks = (editor: Editor, attached: TAttachedFile[]): JSONContent[] => {
+/**
+ * A file card per attachment where the editor has the file node (every editor
+ * built from the core extensions), a link per attachment otherwise.
+ */
+const buildAttachmentContent = (editor: Editor, attached: TAttachedFile[]): JSONContent[] => {
+  if (editor.schema.nodes[CORE_EXTENSIONS.CUSTOM_FILE]) {
+    return attached.map((file) => ({
+      type: CORE_EXTENSIONS.CUSTOM_FILE,
+      attrs: { id: uuidv4(), src: file.url, name: file.name, size: file.size, type: file.type },
+    }));
+  }
   const hasLinkMark = !!editor.schema.marks[CORE_EXTENSIONS.CUSTOM_LINK];
-  return attached.flatMap((file, index) => [
+  const links = attached.flatMap((file, index) => [
     ...(index > 0 ? [{ type: "text", text: " " }] : []),
     {
       type: "text",
@@ -73,13 +84,14 @@ const buildAttachmentLinks = (editor: Editor, attached: TAttachedFile[]): JSONCo
         : {}),
     },
   ]);
+  return [...links, { type: "text", text: " " }];
 };
 
 /**
- * Hands files to the host and, once they are attached, drops a link to each
- * one into the text. The position is clamped because the user keeps typing
- * while the upload runs. If the editor is gone (comment already sent) the
- * attachments still exist on the work item, only the links are skipped.
+ * Hands files to the host and, once they are attached, drops a card (or link)
+ * for each one into the text. The position is clamped because the user keeps
+ * typing while the upload runs. If the editor is gone (comment already sent)
+ * the attachments still exist on the work item, only the cards are skipped.
  */
 const attachFilesThroughHost = async (editor: Editor, fileHandler: TFileHandler, files: File[], pos: number) => {
   if (!fileHandler.attachFiles || files.length === 0) return;
@@ -93,10 +105,7 @@ const attachFilesThroughHost = async (editor: Editor, fileHandler: TFileHandler,
   }
   if (attached.length === 0 || editor.isDestroyed || !editor.isEditable) return;
   const safePos = Math.min(pos, editor.state.doc.content.size);
-  editor
-    .chain()
-    .insertContentAt(safePos, [...buildAttachmentLinks(editor, attached), { type: "text", text: " " }])
-    .run();
+  editor.chain().insertContentAt(safePos, buildAttachmentContent(editor, attached)).run();
 };
 
 const handleFiles = (args: {

@@ -46,6 +46,10 @@ export type TFileHandler = {
 export type TAttachedFile = {
   name: string;
   url: string;
+  /** bytes; null when the host does not know */
+  size: number | null;
+  /** MIME type; null when the host does not know */
+  type: string | null;
 };
 
 export type TFileCardLabels = {

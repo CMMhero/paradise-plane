@@ -14,6 +14,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TBaseIssue, TIssue } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
+import { getFileURL } from "@plane/utils";
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
 import { useCycle } from "@/hooks/store/use-cycle";
@@ -29,6 +30,7 @@ import { useUploadFailureText } from "@/hooks/use-upload-error-reporter";
 import { FileService } from "@/services/file.service";
 const fileService = new FileService();
 // local imports
+import { attachmentCardHtml } from "../attachment/tautan-lampiran";
 import { CreateIssueToastActionItems } from "../create-issue-toast-action-items";
 import { DraftIssueLayout } from "./draft-issue-layout";
 import { IssueFormRoot } from "./form";
@@ -261,6 +263,32 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
               message: describeUploadFailure(h.reason, { name: lampiranTertunda.berkas[i].name }).message,
             });
         });
+        // Berkas yang ditempel ke deskripsi tampil sebagai kartu di akhir deskripsi,
+        // sama seperti bila ditempel ke work item yang sudah ada.
+        const kartu = hasil.flatMap((h, i) => {
+          if (h.status !== "fulfilled") return [];
+          const url = getFileURL(h.value.asset_url ?? "");
+          if (!url) return [];
+          const file = lampiranTertunda.berkas[i];
+          const { attributes } = h.value;
+          return [
+            attachmentCardHtml({
+              url,
+              name: attributes?.name || file.name,
+              size: attributes?.size ?? file.size,
+              type: attributes?.type || file.type || null,
+            }),
+          ];
+        });
+        if (kartu.length > 0 && updateIssue) {
+          const deskripsi = response.description_html ?? payload.description_html ?? "";
+          try {
+            await updateIssue(projectBaruId, issueBaruId, { description_html: `${deskripsi}${kartu.join("")}` });
+          } catch (error) {
+            // lampirannya sudah ada di daftar Attachments; hanya kartunya yang tidak tersisip
+            console.error("Error adding file cards to the description:", error);
+          }
+        }
         lampiranTertunda.kosongkan();
       }
 
