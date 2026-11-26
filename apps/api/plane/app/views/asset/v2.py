@@ -26,7 +26,7 @@ from plane.utils.wiki_access import can_edit_wiki_page, is_wiki_governed
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
-from plane.utils.tipe_unggahan import rapikan_tipe_unggahan, tipe_lampiran_diizinkan
+from plane.utils.tipe_unggahan import disposisi_sajian, rapikan_tipe_unggahan, tipe_lampiran_diizinkan
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.throttles.asset import AssetRateThrottle
 
@@ -732,9 +732,9 @@ class ProjectAssetEndpoint(BaseAPIView):
         # Pratinjau di halaman butuh disposition=inline: sebuah PDF di dalam
         # <iframe> akan MEMICU UNDUHAN, bukan ditampilkan, kalau disposition-nya
         # attachment. (<img>/<video>/<audio> mengabaikan header ini, jadi hanya
-        # jalur iframe yang terpengaruh.) Default tetap attachment supaya
-        # perilaku pemanggil lama tidak berubah.
-        disposition = "inline" if request.query_params.get("disposition") == "inline" else "attachment"
+        # jalur iframe yang terpengaruh.) Default tetap attachment, dan tipe yang
+        # bisa menjalankan skrip (SVG, HTML) tetap diunduh walau diminta inline.
+        disposition = disposisi_sajian(asset.attributes.get("type"), request.query_params.get("disposition"))
 
         # Get the presigned URL
         storage = S3Storage(request=request)

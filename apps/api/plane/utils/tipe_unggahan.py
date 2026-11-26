@@ -31,6 +31,8 @@ God Mode hanya bisa MENCORET tipe dari daftar ini, tidak pernah menambah.
 import mimetypes
 import posixpath
 
+from django.conf import settings
+
 OCTET_STREAM = "application/octet-stream"
 
 # Plafon tipe lampiran (Wiki, Obrolan, isi halaman, lampiran task, API publik).
@@ -244,3 +246,24 @@ def rapikan_tipe_unggahan(nama, tipe, diizinkan):
     if OCTET_STREAM in diizinkan:
         return OCTET_STREAM
     return bersih
+
+
+# Tipe yang boleh disajikan `inline` (pratinjau di <iframe>, <img>, <video>).
+# Daftar positif, bukan daftar larangan: tipe yang tak disebut di sini selalu
+# jadi unduhan, jadi tipe baru yang bisa menjalankan skrip (HTML, SVG, XML apa
+# pun yang memuat XHTML) tidak pernah lolos hanya karena lupa dicoret.
+_PREFIKS_INLINE = ("image/", "video/", "audio/")
+_TIPE_INLINE = frozenset({"application/pdf", "text/plain", "application/json"})
+
+
+def disposisi_sajian(tipe, diminta):
+    """"inline" hanya bila diminta DAN tipenya aman ditampilkan; selain itu "attachment"."""
+    if diminta != "inline":
+        return "attachment"
+    bersih = _bersihkan(tipe)
+    if bersih in settings.SCRIPT_CAPABLE_MIME_TYPES:
+        return "attachment"
+    if bersih in _TIPE_INLINE or bersih.startswith(_PREFIKS_INLINE):
+        return "inline"
+    return "attachment"
+

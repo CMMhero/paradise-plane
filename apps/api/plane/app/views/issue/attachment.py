@@ -25,7 +25,7 @@ from plane.bgtasks.issue_activities_task import issue_activity
 from plane.app.permissions import allow_permission, ROLE
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
-from plane.utils.tipe_unggahan import rapikan_tipe_unggahan, tipe_lampiran_diizinkan
+from plane.utils.tipe_unggahan import disposisi_sajian, rapikan_tipe_unggahan, tipe_lampiran_diizinkan
 from plane.utils.plan_limits import batas_ukuran_unggahan, batas_unggah_byte
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.utils.host import base_host
@@ -196,10 +196,12 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            # Kartu berkas di deskripsi meminta ?disposition=inline untuk pratinjau
+            # PDF/teks di <iframe>; tipe yang bisa menjalankan skrip tetap diunduh.
             storage = S3Storage(request=request)
             presigned_url = storage.generate_presigned_url(
                 object_name=asset.asset.name,
-                disposition="attachment",
+                disposition=disposisi_sajian(asset.attributes.get("type"), request.query_params.get("disposition")),
                 filename=asset.attributes.get("name"),
             )
             return HttpResponseRedirect(presigned_url)
