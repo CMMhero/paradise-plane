@@ -75,6 +75,8 @@ CUSTOM_TAGS = {
     "label",
     "input",
     "image-component",
+    # Paradise: kartu berkas (PDF, dokumen, video) di deskripsi dan komentar
+    "file-component",
 }
 ALLOWED_TAGS = nh3.ALLOWED_TAGS | CUSTOM_TAGS
 
@@ -134,6 +136,8 @@ ATTRIBUTES = {
         "title",
     },
     "mention-component": {"id", "entity_identifier", "entity_name"},
+    # `src` ikut disaring url_schemes: javascript:/data: dibuang, jalur relatif tetap.
+    "file-component": {"id", "src", "name", "size", "type"},
     "th": {
         "colspan",
         "rowspan",
