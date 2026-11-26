@@ -27,7 +27,8 @@ export const resolveAttachmentLink = (href: string, origins: { apiBaseUrl: strin
   const apiOrigin = origins.apiBaseUrl ? new URL(origins.apiBaseUrl, origins.pageOrigin).origin : origins.pageOrigin;
   if (url.origin !== apiOrigin && url.origin !== origins.pageOrigin) return null;
   if (url.search || url.hash || !ATTACHMENT_PATH.test(url.pathname)) return null;
-  return `${origins.apiBaseUrl}${url.pathname}`;
+  // relative, as the server keeps it: the editor adds the API base when it loads the file
+  return url.pathname;
 };
 
 const escapeHtml = (value: string) =>

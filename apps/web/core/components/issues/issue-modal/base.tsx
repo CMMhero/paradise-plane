@@ -14,7 +14,6 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TBaseIssue, TIssue } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
-import { getFileURL } from "@plane/utils";
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
 import { useCycle } from "@/hooks/store/use-cycle";
@@ -267,7 +266,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
         // sama seperti bila ditempel ke work item yang sudah ada.
         const kartu = hasil.flatMap((h, i) => {
           if (h.status !== "fulfilled") return [];
-          const url = getFileURL(h.value.asset_url ?? "");
+          const url = h.value.asset_url;
           if (!url) return [];
           const file = lampiranTertunda.berkas[i];
           const { attributes } = h.value;

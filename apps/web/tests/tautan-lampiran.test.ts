@@ -17,7 +17,7 @@ const PROD = { apiBaseUrl: "", pageOrigin: "https://tasks.example.co.id" };
 
 describe("resolveAttachmentLink", () => {
   it("accepts an attachment link on the API origin", () => {
-    expect(resolveAttachmentLink(`http://localhost:8100${PATH}`, DEV)).toBe(`http://localhost:8100${PATH}`);
+    expect(resolveAttachmentLink(`http://localhost:8100${PATH}`, DEV)).toBe(PATH);
   });
 
   it("accepts a same-origin or relative link when the API shares the page's host", () => {

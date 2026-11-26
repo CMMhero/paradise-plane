@@ -92,6 +92,15 @@ export const getFilePreviewKind = (mimeType: string): TFilePreviewKind => {
   return "none";
 };
 
+const APP_FILE_SOURCE =
+  /^(?:\/api\/assets\/v2\/[\w/-]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+/**
+ * Hanya berkas aplikasi ini (id aset atau jalur API aset) yang dipratinjau.
+ * Alamat lain tidak pernah dimuat sendiri di bingkai, video, atau gambar.
+ */
+export const isAppFileSource = (src: string): boolean => APP_FILE_SOURCE.test(src);
+
 /**
  * URL untuk DITAMPILKAN, bukan diunduh. Endpoint aset default membalas
  * Content-Disposition: attachment; pada <iframe> itu memicu unduhan alih-alih

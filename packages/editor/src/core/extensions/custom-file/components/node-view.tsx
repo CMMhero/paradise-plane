@@ -27,6 +27,7 @@ import {
   getFileComponentFileMap,
   getFileComponentMaxFileSize,
   getFilePreviewKind,
+  isAppFileSource,
   resolveFileMimeType,
   toInlineSrc,
 } from "../utils";
@@ -200,7 +201,7 @@ export function CustomFileNodeView(props: CustomFileNodeViewProps) {
     const { labels } = extension.options;
     const mimeType = resolveFileMimeType(type, name);
     const previewKind = getFilePreviewKind(mimeType);
-    const canPreview = previewKind !== "none" && !!viewSrc && !hasFailed;
+    const canPreview = previewKind !== "none" && !!viewSrc && !hasFailed && isAppFileSource(src ?? "");
     // iframe memuat lewat navigasi, jadi ia butuh disposition=inline; <video>,
     // <audio> dan <img> mengabaikan header itu dan boleh pakai URL apa adanya
     const inlineSrc = viewSrc ? toInlineSrc(viewSrc) : undefined;

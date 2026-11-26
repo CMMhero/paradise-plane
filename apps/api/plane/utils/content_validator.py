@@ -3,6 +3,7 @@
 # See the LICENSE file for details.
 
 # Python imports
+import re
 import base64
 import nh3
 from plane.utils.exception_logger import log_exception
@@ -136,7 +137,7 @@ ATTRIBUTES = {
         "title",
     },
     "mention-component": {"id", "entity_identifier", "entity_name"},
-    # `src` ikut disaring url_schemes: javascript:/data: dibuang, jalur relatif tetap.
+    # `src` disaring lagi di `_saring_atribut`: hanya berkas aplikasi ini.
     "file-component": {"id", "src", "name", "size", "type"},
     "th": {
         "colspan",
@@ -161,6 +162,18 @@ ATTRIBUTES = {
 }
 
 SAFE_PROTOCOLS = {"http", "https", "mailto", "tel"}
+
+# Kartu berkas dipratinjau di bingkai tanpa sandbox, jadi sumbernya hanya boleh id
+# aset penyunting atau jalur API aset aplikasi ini. Tanpa titik: `..` tidak lolos.
+_SUMBER_KARTU = re.compile(
+    r"/api/assets/v2/[A-Za-z0-9_/-]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.IGNORECASE
+)
+
+
+def _saring_atribut(tag: str, atribut: str, nilai: str):
+    if tag == "file-component" and atribut == "src" and not _SUMBER_KARTU.fullmatch(nilai):
+        return None
+    return nilai
 
 
 def _compute_html_sanitization_diff(before_html: str, after_html: str):
@@ -229,6 +242,7 @@ def validate_html_content(html_content: str):
             html_content,
             tags=ALLOWED_TAGS,
             attributes=ATTRIBUTES,
+            attribute_filter=_saring_atribut,
             url_schemes=SAFE_PROTOCOLS,
         )
         # Report removals to logger (Sentry) if anything was stripped

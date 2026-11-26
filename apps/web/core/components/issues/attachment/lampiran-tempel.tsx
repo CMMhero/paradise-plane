@@ -11,7 +11,6 @@ import { Loader2, Paperclip, X } from "lucide-react";
 import type { TAttachedFile } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { getFileURL } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useFileSize } from "@/hooks/use-file-size";
@@ -71,7 +70,8 @@ export const useLampiranTempel = (workspaceSlug: string, projectId: string, issu
           setMenunggu((sebelumnya) => [...sebelumnya, file]);
           try {
             const lampiran = await createAttachment(workspaceSlug, projectId, issueId, file);
-            const url = getFileURL(lampiran?.asset_url ?? "");
+            // relative API path: a file card keeps only this app's own paths
+            const url = lampiran?.asset_url;
             if (!url) return null;
             return {
               name: lampiran.attributes?.name || file.name,

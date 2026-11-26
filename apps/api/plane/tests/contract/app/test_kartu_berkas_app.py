@@ -35,6 +35,25 @@ class TestSanitasiKartuBerkas:
         assert "src=" not in hasil
         assert 'name="a.pdf"' in hasil
 
+    @pytest.mark.parametrize(
+        "src",
+        [
+            "https://evil.example/login",
+            "//evil.example/x.pdf",
+            "/\\evil.example/x.pdf",
+            "/api/users/me/",
+            "/api/assets/v2/../../users/me/",
+            "berkas.pdf",
+        ],
+    )
+    def test_src_di_luar_aset_aplikasi_dibuang(self, src):
+        hasil = _bersih(f'<file-component src="{src}" name="a.pdf"></file-component>')
+        assert "src=" not in hasil
+
+    def test_src_id_aset_penyunting_bertahan(self):
+        html = '<file-component src="5d475ee9-3ed8-4b45-9e3c-6aa0b5f9f5d7" name="a.pdf"></file-component>'
+        assert _bersih(html) == html
+
     def test_atribut_tak_dikenal_dibuang(self):
         hasil = _bersih('<file-component name="a.pdf" onclick="alert(1)"></file-component>')
         assert "onclick" not in hasil
