@@ -20,7 +20,7 @@ import { CustomFileNodeView } from "./components/node-view";
 import { CustomFileExtensionConfig } from "./extension-config";
 import type { CustomFileExtensionOptions, CustomFileExtensionStorage } from "./types";
 import { ECustomFileAttributeNames } from "./types";
-import { getFileComponentFileMap } from "./utils";
+import { DEFAULT_FILE_CARD_LABELS, getFileComponentFileMap } from "./utils";
 
 type Props = {
   fileHandler: TFileHandler;
@@ -30,7 +30,7 @@ type Props = {
 export function CustomFileExtension(props: Props) {
   const { fileHandler, isEditable } = props;
   // derived values
-  const { getAssetDownloadSrc, getAssetSrc } = fileHandler;
+  const { getAssetDownloadSrc, getAssetSrc, fileCardLabels } = fileHandler;
 
   return CustomFileExtensionConfig.extend<CustomFileExtensionOptions, CustomFileExtensionStorage>({
     selectable: isEditable,
@@ -43,6 +43,7 @@ export function CustomFileExtension(props: Props) {
         getFileDownloadSource: getAssetDownloadSrc,
         getFileSource: getAssetSrc,
         uploadFile: upload,
+        labels: fileCardLabels ?? DEFAULT_FILE_CARD_LABELS,
       };
     },
 

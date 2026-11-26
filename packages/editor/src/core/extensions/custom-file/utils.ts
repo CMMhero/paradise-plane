@@ -8,6 +8,8 @@
 import type { Editor } from "@tiptap/core";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
+// types
+import type { TFileCardLabels } from "@/types";
 // local imports
 import type { CustomFileExtensionStorage } from "./types";
 
@@ -114,4 +116,14 @@ export const formatFileSize = (bytes: number | null): string => {
   // byte selalu bulat; satuan lebih besar cukup satu desimal
   const rounded = unitIndex === 0 ? String(size) : size.toFixed(1);
   return `${rounded} ${FILE_SIZE_UNITS[unitIndex]}`;
+};
+
+export const DEFAULT_FILE_CARD_LABELS: TFileCardLabels = {
+  download: "Download",
+  showPreview: "Show preview",
+  hidePreview: "Hide preview",
+  expand: "Expand preview",
+  collapse: "Shrink preview",
+  noPreview: "No preview in the browser",
+  untitled: "Untitled file",
 };

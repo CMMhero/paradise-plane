@@ -61,5 +61,14 @@
       "use_this": "이것 사용",
       "refine": "정제"
     }
+  },
+  "file_card": {
+    "download": "Download",
+    "show_preview": "Show preview",
+    "hide_preview": "Hide preview",
+    "expand": "Expand preview",
+    "collapse": "Shrink preview",
+    "no_preview": "No preview in the browser",
+    "untitled": "Untitled file"
   }
 }

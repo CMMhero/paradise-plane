@@ -61,5 +61,14 @@
       "use_this": "Gunakan ini",
       "refine": "Perbaiki"
     }
+  },
+  "file_card": {
+    "download": "Unduh",
+    "show_preview": "Tampilkan pratinjau",
+    "hide_preview": "Sembunyikan pratinjau",
+    "expand": "Perbesar pratinjau",
+    "collapse": "Perkecil pratinjau",
+    "no_preview": "Tidak bisa dipratinjau di peramban",
+    "untitled": "Berkas tanpa nama"
   }
 }

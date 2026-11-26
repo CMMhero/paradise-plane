@@ -39,11 +39,23 @@ export type TFileHandler = {
    * editor. Without it the editor can only log, which is how failed uploads used to vanish silently.
    */
   onUploadFailure?: (error: unknown, file: File) => void;
+  /** Paradise: translated text for the file card. English when absent. */
+  fileCardLabels?: TFileCardLabels;
 } & TExtendedFileHandler;
 
 export type TAttachedFile = {
   name: string;
   url: string;
+};
+
+export type TFileCardLabels = {
+  download: string;
+  showPreview: string;
+  hidePreview: string;
+  expand: string;
+  collapse: string;
+  noPreview: string;
+  untitled: string;
 };
 
 export type TEditorFontStyle = "sans-serif" | "serif" | "monospace";

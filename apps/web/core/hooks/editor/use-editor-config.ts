@@ -4,9 +4,10 @@
  * See the LICENSE file for details.
  */
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 // plane imports
-import type { TFileHandler } from "@plane/editor";
+import type { TFileCardLabels, TFileHandler } from "@plane/editor";
+import { useTranslation } from "@plane/i18n";
 import { getEditorAssetDownloadSrc, getEditorAssetSrc, getFileURL } from "@plane/utils";
 // hooks
 import { useEditorAsset } from "@/hooks/store/use-editor-asset";
@@ -41,6 +42,19 @@ export const useEditorConfig = () => {
   const { maxFileSize } = useFileSize();
   const reportUploadError = useUploadErrorReporter();
   const { getExtendedEditorFileHandlers } = useExtendedEditorConfig();
+  const { t } = useTranslation();
+  const fileCardLabels = useMemo<TFileCardLabels>(
+    () => ({
+      download: t("file_card.download"),
+      showPreview: t("file_card.show_preview"),
+      hidePreview: t("file_card.hide_preview"),
+      expand: t("file_card.expand"),
+      collapse: t("file_card.collapse"),
+      noPreview: t("file_card.no_preview"),
+      untitled: t("file_card.untitled"),
+    }),
+    [t]
+  );
 
   const getEditorFileHandlers = useCallback(
     (args: TArgs): TFileHandler => {
@@ -109,10 +123,11 @@ export const useEditorConfig = () => {
         validation: {
           maxFileSize,
         },
+        fileCardLabels,
         ...getExtendedEditorFileHandlers({ projectId, workspaceSlug }),
       };
     },
-    [assetsUploadPercentage, getExtendedEditorFileHandlers, maxFileSize, reportUploadError]
+    [assetsUploadPercentage, fileCardLabels, getExtendedEditorFileHandlers, maxFileSize, reportUploadError]
   );
 
   return {
