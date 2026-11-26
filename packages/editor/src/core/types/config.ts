@@ -39,6 +39,12 @@ export type TFileHandler = {
    * editor. Without it the editor can only log, which is how failed uploads used to vanish silently.
    */
   onUploadFailure?: (error: unknown, file: File) => void;
+  /**
+   * Paradise: returns the card `src` when `href` points at one of this app's work item
+   * attachments, else null. A link that sits alone in its paragraph and passes this
+   * check renders as a file card. Without it, links stay links.
+   */
+  resolveAttachmentLink?: (href: string) => string | null;
   /** Paradise: translated text for the file card. English when absent. */
   fileCardLabels?: TFileCardLabels;
 } & TExtendedFileHandler;

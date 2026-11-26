@@ -6,9 +6,12 @@
 
 import { useCallback, useMemo } from "react";
 // plane imports
+import { API_BASE_URL } from "@plane/constants";
 import type { TFileCardLabels, TFileHandler } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { getEditorAssetDownloadSrc, getEditorAssetSrc, getFileURL } from "@plane/utils";
+// components
+import { resolveAttachmentLink } from "@/components/issues/attachment/tautan-lampiran";
 // hooks
 import { useEditorAsset } from "@/hooks/store/use-editor-asset";
 // plane web hooks
@@ -24,6 +27,9 @@ const fileService = new FileService();
  * `//host` and `/\host` are protocol-relative to browsers, so they would load from another site.
  */
 const isUrlOrPath = (path: string) => /^https?:\/\//i.test(path) || /^\/(?![/\\])/.test(path);
+
+const resolveAttachmentLinkHere = (href: string) =>
+  resolveAttachmentLink(href, { apiBaseUrl: API_BASE_URL, pageOrigin: window.location.origin });
 
 type TArgs = {
   projectId?: string;
@@ -123,6 +129,7 @@ export const useEditorConfig = () => {
         validation: {
           maxFileSize,
         },
+        resolveAttachmentLink: resolveAttachmentLinkHere,
         fileCardLabels,
         ...getExtendedEditorFileHandlers({ projectId, workspaceSlug }),
       };

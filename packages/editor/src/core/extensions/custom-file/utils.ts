@@ -9,9 +9,9 @@ import type { Editor } from "@tiptap/core";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
 // types
-import type { TFileCardLabels } from "@/types";
+import type { TFileCardLabels, TFileHandler } from "@/types";
 // local imports
-import type { CustomFileExtensionStorage } from "./types";
+import type { CustomFileExtensionStorage, TCustomFileAttributes } from "./types";
 
 export const getFileComponentFileMap = (editor: Editor): CustomFileExtensionStorage["fileMap"] | undefined =>
   editor.storage[CORE_EXTENSIONS.CUSTOM_FILE]?.fileMap;
@@ -126,4 +126,29 @@ export const DEFAULT_FILE_CARD_LABELS: TFileCardLabels = {
   collapse: "Shrink preview",
   noPreview: "No preview in the browser",
   untitled: "Untitled file",
+};
+
+const isBlank = (node: ChildNode) =>
+  (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) || node.nodeName === "BR";
+
+/**
+ * Attributes for a card when `paragraph` holds nothing but one link to a work
+ * item attachment, the shape older pastes left behind. A link inside a sentence,
+ * or to anything `resolveAttachmentLink` does not vouch for, stays a link.
+ */
+export const getLoneAttachmentLinkAttrs = (
+  paragraph: HTMLElement,
+  resolveAttachmentLink: NonNullable<TFileHandler["resolveAttachmentLink"]>
+): TCustomFileAttributes | null => {
+  // Top level only: a card in a list item or table cell would make the parser
+  // invent an empty paragraph before it, which then gets saved on the next edit.
+  const parent = paragraph.parentElement;
+  if (parent && parent.nodeName !== "BODY" && parent.parentElement) return null;
+  const content = Array.from(paragraph.childNodes).filter((node) => !isBlank(node));
+  const [link] = content;
+  if (content.length !== 1 || link.nodeName !== "A") return null;
+  const href = (link as HTMLAnchorElement).getAttribute("href");
+  const src = href ? resolveAttachmentLink(href) : null;
+  if (!src) return null;
+  return { id: null, src, name: link.textContent?.trim() || null, size: null, type: null };
 };
