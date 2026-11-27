@@ -7,7 +7,6 @@
 
 import { useMemo } from "react";
 // plane imports
-import { E_PASSWORD_STRENGTH } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 
 /**
@@ -29,18 +28,8 @@ export function usePasswordLabels() {
         hideLabel: t("onboarding_ui.pw_hide"),
       },
       indicator: {
-        messages: {
-          [E_PASSWORD_STRENGTH.EMPTY]: t("auth.common.password.errors.empty"),
-          [E_PASSWORD_STRENGTH.LENGTH_NOT_VALID]: t("onboarding_ui.pw_too_short"),
-          [E_PASSWORD_STRENGTH.STRENGTH_NOT_VALID]: t("auth.common.password.errors.strength.weak"),
-          [E_PASSWORD_STRENGTH.STRENGTH_VALID]: t("auth.common.password.errors.strength.strong"),
-        },
         criteriaLabels: {
           length: t("onboarding_ui.pw_min_length"),
-          uppercase: t("onboarding_ui.pw_upper"),
-          lowercase: t("onboarding_ui.pw_lower"),
-          number: t("onboarding_ui.pw_number"),
-          special: t("onboarding_ui.pw_special"),
         },
       },
     }),

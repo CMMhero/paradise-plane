@@ -8,82 +8,35 @@ import { CircleCheck } from "lucide-react";
 import React from "react";
 import { E_PASSWORD_STRENGTH } from "@plane/constants";
 import { cn, getPasswordStrength, getPasswordCriteria } from "@plane/utils";
-import { getStrengthInfo, getFragmentColor } from "./helper";
 
 export interface PasswordStrengthIndicatorProps {
   password: string;
-  showCriteria?: boolean;
   isFocused?: boolean;
-  /** Translated strength messages; the English defaults apply when omitted. */
-  messages?: Partial<Record<E_PASSWORD_STRENGTH, string>>;
-  /** Translated criteria labels keyed by criterion key (length, uppercase, ...). */
+  /** Translated criteria labels keyed by criterion key (length). */
   criteriaLabels?: Partial<Record<string, string>>;
 }
 
+/** Password requirements. Hidden once they are met and the field loses focus. */
 export function PasswordStrengthIndicator({
   password,
-  showCriteria = true,
   isFocused = false,
-  messages,
   criteriaLabels,
 }: PasswordStrengthIndicatorProps) {
-  const strength = getPasswordStrength(password);
-  const criteria = getPasswordCriteria(password);
-  const strengthInfo = getStrengthInfo(strength);
-  const strengthMessage = messages?.[strength] ?? strengthInfo.message;
-
-  // oxlint-disable-next-line eslint/no-unneeded-ternary -- kept as is: restructuring it is out of scope for this release
-  const isPasswordMeterVisible = isFocused ? true : strength === E_PASSWORD_STRENGTH.STRENGTH_VALID ? false : true;
-
-  if ((!password && !showCriteria) || !isPasswordMeterVisible) {
-    return null;
-  }
+  if (!isFocused && getPasswordStrength(password) === E_PASSWORD_STRENGTH.STRENGTH_VALID) return null;
 
   return (
-    <div className={cn("space-y-3")}>
-      {/* Strength Indicator */}
-      <div className="space-y-2">
-        <div className="flex w-full gap-1 transition-all duration-300 ease-linear">
-          {[0, 1, 2].map((fragmentIndex) => (
-            <div
-              key={fragmentIndex}
-              className={cn(
-                "h-1 flex-1 rounded-xs transition-all duration-300 ease-in-out",
-                getFragmentColor(fragmentIndex, strengthInfo.activeFragments)
-              )}
-            />
-          ))}
-        </div>
-
-        {/* Strength Message */}
-        {password && <p className={cn("!text-13 font-medium", strengthInfo.textColor)}>{strengthMessage}</p>}
-      </div>
-
-      {/* Criteria list */}
-      {showCriteria && (
-        <div className="flex flex-wrap gap-2">
-          {criteria.map((criterion) => (
-            <div key={criterion.key} className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center p-0.5">
-                <CircleCheck
-                  className={cn("h-3 w-3 flex-shrink-0", {
-                    "text-success-primary": criterion.isValid,
-                    "text-primary": !criterion.isValid,
-                  })}
-                />
-              </div>
-              <span
-                className={cn("!text-11", {
-                  "text-success-primary": criterion.isValid,
-                  "text-primary": !criterion.isValid,
-                })}
-              >
-                {criteriaLabels?.[criterion.key] ?? criterion.label}
-              </span>
+    <div className="flex flex-wrap gap-2">
+      {getPasswordCriteria(password).map((criterion) => {
+        const textColor = criterion.isValid ? "text-success-primary" : "text-primary";
+        return (
+          <div key={criterion.key} className="flex items-center gap-1.5">
+            <div className="flex items-center justify-center p-0.5">
+              <CircleCheck className={cn("h-3 w-3 flex-shrink-0", textColor)} />
             </div>
-          ))}
-        </div>
-      )}
+            <span className={cn("!text-11", textColor)}>{criteriaLabels?.[criterion.key] ?? criterion.label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
