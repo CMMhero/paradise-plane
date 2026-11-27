@@ -44,6 +44,7 @@ const PERM_CONTENT_CHOICES: Record<number, string> = {
 };
 const PERM_STRUCTURE_CHOICES: Record<number, string> = {
   20: "Supervisor and above, in their departments",
+  25: "Assistant manager and above, in their departments",
   30: "Manager and above, in their divisions",
   40: "Directors only",
   90: "Admins only",
@@ -537,7 +538,8 @@ export const settingsStrings = {
     ...permissionChoices,
     APPROVAL_REQUIRED_BELOW_LEVEL: {
       20: "Staff and leaders",
-      30: "Staff, leaders and supervisors",
+      25: "Staff, leaders and supervisors",
+      30: "Staff, leaders, supervisors and assistant managers",
       40: "Everyone below director",
     },
     TASK_DELETE_RULE: {

@@ -508,5 +508,12 @@
       "label": "Titlu sarcină majoră",
       "required": "Titlul sarcinii majore este obligatoriu."
     }
+  },
+  "work_item_export": {
+    "button": "Exportă în Excel",
+    "exporting": "Se exportă…",
+    "failed_title": "Exportul a eșuat",
+    "failed_message": "Fișierul Excel nu a putut fi creat. Te rugăm să încerci din nou.",
+    "too_large": "Această listă conține peste {limit} activități. Restrânge-o cu filtre, apoi exportă din nou."
   }
 }

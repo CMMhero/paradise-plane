@@ -262,4 +262,13 @@ assert.equal(ringkasPercakapan([], namaOrang), null);
   assert.equal(hasil?.isi, "Mengirim lampiran");
 }
 
+{
+  // Isi obrolan Markdown: sintaksnya dibuang, teks mirip HTML tetap tampil.
+  const hasil = ringkasPercakapan(
+    [{ id: "r1", lawan_bicara: "u-1", belum_dibaca: 1, isi: "**Rapat** <jam 12>\n[@budi](https://x.id/w/profile/1)" }],
+    namaOrang
+  );
+  assert.equal(hasil?.isi, "Rapat <jam 12> @budi");
+}
+
 console.log("teks pemberitahuan: semua pemeriksaan lolos");

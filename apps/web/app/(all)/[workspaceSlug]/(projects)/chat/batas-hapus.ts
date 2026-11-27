@@ -16,3 +16,14 @@ const MS_PER_JAM = 60 * 60 * 1000;
  */
 export const bolehDihapus = (dikirim: string, batasJam: number | undefined, sekarang = Date.now()): boolean =>
   !batasJam || sekarang - new Date(dikirim).getTime() <= batasJam * MS_PER_JAM;
+
+/**
+ * Batas yang berlaku di satu ruang: di kanal Announcements tidak ada selama
+ * penulis masih berhak menulis di sana (`ChatPesanEndpoint._batas_jam`).
+ * Hapus dan sunting tetap hanya ditawarkan untuk pesan sendiri.
+ */
+export const batasHapusRuang = (
+  batasJam: number | undefined,
+  kunciSistem: string | null | undefined,
+  bolehKirim: boolean | undefined
+): number | undefined => (kunciSistem === "pengumuman" && bolehKirim ? 0 : batasJam);

@@ -113,6 +113,8 @@ export type TSumberRujukan = {
   tugas?: { id: string; nomor: string }[];
   /** Pesan ini memang menyapa semua orang (`muatan.semua`). */
   semua?: boolean;
+  /** Origin aplikasi: tautan profil dari origin lain tidak digambar sebagai sebutan. */
+  asal?: string;
 };
 
 /**

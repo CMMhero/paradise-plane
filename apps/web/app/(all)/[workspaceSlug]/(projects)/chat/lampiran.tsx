@@ -6,8 +6,8 @@
  */
 
 import { useTranslation } from "@plane/i18n";
-import { FileText } from "lucide-react";
 import { API_BASE_URL } from "@plane/constants";
+import { FileTypeIcon } from "@plane/propel/file-type";
 import { getImageGalleryItemProps, useImageGallery } from "@plane/propel/image-gallery";
 import type { TLampiran } from "@/services/chat.service";
 
@@ -91,7 +91,7 @@ export function DaftarLampiran({ lampiran, terang }: Props) {
             rel="noopener noreferrer"
             className={`flex items-center gap-2 rounded-item border px-2.5 py-2 ${warnaKotak}`}
           >
-            <FileText className="size-4 shrink-0" />
+            <FileTypeIcon name={l.nama} type={l.tipe} size="sm" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-12 font-medium">{l.nama || t("chat_ui.file")}</span>
               <span className={`text-12 ${warnaTeks}`}>{ukuranTerbaca(l.ukuran)}</span>

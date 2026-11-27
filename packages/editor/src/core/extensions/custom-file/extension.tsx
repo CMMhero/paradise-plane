@@ -20,7 +20,7 @@ import { CustomFileNodeView } from "./components/node-view";
 import { CustomFileExtensionConfig } from "./extension-config";
 import type { CustomFileExtensionOptions, CustomFileExtensionStorage } from "./types";
 import { ECustomFileAttributeNames } from "./types";
-import { getFileComponentFileMap } from "./utils";
+import { DEFAULT_FILE_CARD_LABELS, getFileComponentFileMap, getLoneAttachmentLinkAttrs } from "./utils";
 
 type Props = {
   fileHandler: TFileHandler;
@@ -30,7 +30,7 @@ type Props = {
 export function CustomFileExtension(props: Props) {
   const { fileHandler, isEditable } = props;
   // derived values
-  const { getAssetDownloadSrc, getAssetSrc } = fileHandler;
+  const { getAssetDownloadSrc, getAssetSrc, resolveAttachmentLink, fileCardLabels } = fileHandler;
 
   return CustomFileExtensionConfig.extend<CustomFileExtensionOptions, CustomFileExtensionStorage>({
     selectable: isEditable,
@@ -43,7 +43,23 @@ export function CustomFileExtension(props: Props) {
         getFileDownloadSource: getAssetDownloadSrc,
         getFileSource: getAssetSrc,
         uploadFile: upload,
+        labels: fileCardLabels ?? DEFAULT_FILE_CARD_LABELS,
       };
+    },
+
+    parseHTML() {
+      const rules = this.parent?.() ?? [];
+      if (!resolveAttachmentLink) return rules;
+      // Read-time only: the stored HTML keeps its link until the user edits and saves.
+      return [
+        ...rules,
+        {
+          tag: "p",
+          // above the paragraph rule (50), which takes over whenever this one declines
+          priority: 60,
+          getAttrs: (element) => getLoneAttachmentLinkAttrs(element, resolveAttachmentLink) ?? false,
+        },
+      ];
     },
 
     addStorage() {

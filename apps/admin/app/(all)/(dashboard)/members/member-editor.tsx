@@ -28,6 +28,7 @@ import {
   InstanceHierarkiService,
   InstanceMemberService,
   InstanceWorkspaceService,
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
   TINGKAT_LEADER,
@@ -48,7 +49,7 @@ import { EModalWidth, Field, Panel, ParadiseModal, PersonAvatar } from "@/compon
 import { UnsavedIndicator, useUnsavedChanges } from "@/components/common/unsaved-changes";
 // local
 import { cocokKonfirmasiGrant, useGodmodeStrings, type TGodmodeStrings } from "@/app/i18n/godmode";
-import { namaJenjang } from "../organisasi/papan-logika";
+import { namaJenjang, peranBawaan } from "../organisasi/papan-logika";
 import { PERAN_DEFAULT } from "./constants";
 import { PreferensiMember, useMemberPreferences } from "./preferensi";
 
@@ -61,6 +62,7 @@ const pilihanTingkat = (s: TGodmodeStrings): { value: string; label: string }[] 
   { value: String(TINGKAT_MEMBER), label: s.editor.position_member },
   { value: String(TINGKAT_LEADER), label: s.editor.position_leader },
   { value: String(TINGKAT_SUPERVISOR), label: s.editor.position_supervisor },
+  { value: String(TINGKAT_ASISTEN_MANAGER), label: s.editor.position_assistant_manager },
   { value: String(TINGKAT_MANAGER), label: s.editor.position_manager },
   { value: String(TINGKAT_CABANG), label: s.editor.position_branch_director },
   { value: String(TINGKAT_SEKRETARIS), label: s.editor.position_secretary },
@@ -544,7 +546,7 @@ function PenempatanBaca({
       id: `dep:${id}`,
       tempat: depById[id]?.nama ?? "",
       induk: namaDivisi[depById[id]?.divisi_id ?? ""],
-      peran: namaJenjang(peran[id] ?? Math.min(hierarki.tingkat ?? TINGKAT_MEMBER, TINGKAT_SUPERVISOR), s),
+      peran: namaJenjang(peran[id] ?? peranBawaan(hierarki.tingkat ?? TINGKAT_MEMBER), s),
     })),
   ];
   return (

@@ -29,6 +29,7 @@ from plane.utils.email_merek import (
     tombol,
     url_preferensi,
 )
+from plane.utils.markdown_pesan import teks_dari_markdown
 
 FONT_SEL = f"font-family:{FONT};"
 
@@ -66,7 +67,7 @@ TEKS = {
 
 
 def _cuplik(teks: str) -> str:
-    satu_baris = " ".join((teks or "").split())
+    satu_baris = " ".join(teks_dari_markdown(teks).split())
     if len(satu_baris) <= PANJANG_CUPLIKAN:
         return satu_baris
     return satu_baris[: PANJANG_CUPLIKAN - 1] + "…"

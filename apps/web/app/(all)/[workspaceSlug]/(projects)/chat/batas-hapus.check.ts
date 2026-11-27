@@ -13,7 +13,7 @@
  */
 
 import assert from "node:assert/strict";
-import { bolehDihapus } from "./batas-hapus";
+import { batasHapusRuang, bolehDihapus } from "./batas-hapus";
 
 const sekarang = Date.parse("2026-11-03T12:00:00Z");
 const jamLalu = (n: number) => new Date(sekarang - n * 60 * 60 * 1000).toISOString();
@@ -23,5 +23,15 @@ assert.equal(bolehDihapus(jamLalu(24), 24, sekarang), true, "tepat di batas masi
 assert.equal(bolehDihapus(jamLalu(25), 24, sekarang), false, "lewat batas tidak boleh");
 assert.equal(bolehDihapus(jamLalu(24 * 365), 0, sekarang), true, "0 = tanpa batas");
 assert.equal(bolehDihapus(jamLalu(24 * 365), undefined, sekarang), true, "server lama tanpa setelan = tanpa batas");
+
+assert.equal(
+  bolehDihapus(jamLalu(999), batasHapusRuang(24, "pengumuman", true), sekarang),
+  true,
+  "pengumuman tanpa batas"
+);
+assert.equal(batasHapusRuang(24, "pengumuman", false), 24, "izin menulis dicabut: dibatasi lagi");
+assert.equal(batasHapusRuang(24, "divisi:1", true), 24, "kanal sistem lain tetap dibatasi");
+assert.equal(batasHapusRuang(24, null, true), 24, "kanal biasa tetap dibatasi");
+assert.equal(batasHapusRuang(24, undefined, true), 24, "DM tetap dibatasi");
 
 console.log("batas-hapus: semua pemeriksaan lolos");

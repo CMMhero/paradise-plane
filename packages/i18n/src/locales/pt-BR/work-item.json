@@ -508,5 +508,12 @@
       "label": "Título do Épico",
       "required": "O título do épico é obrigatório."
     }
+  },
+  "work_item_export": {
+    "button": "Exportar para Excel",
+    "exporting": "Exportando…",
+    "failed_title": "Falha na exportação",
+    "failed_message": "Não foi possível criar o arquivo Excel. Por favor, tente novamente.",
+    "too_large": "Esta lista tem mais de {limit} itens de trabalho. Restrinja-a com filtros e exporte novamente."
   }
 }

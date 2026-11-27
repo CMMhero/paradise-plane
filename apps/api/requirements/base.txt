@@ -79,3 +79,5 @@ opentelemetry-exporter-otlp-proto-grpc==1.28.1
 drf-spectacular==0.29.0
 # html sanitizer
 nh3==0.2.18
+# markdown parser (CommonMark) for chat and announcement text; pulls only mdurl; MIT
+markdown-it-py==4.2.0

@@ -508,5 +508,12 @@
       "label": "Tiêu đề sử thi",
       "required": "Tiêu đề sử thi là bắt buộc"
     }
+  },
+  "work_item_export": {
+    "button": "Xuất Excel",
+    "exporting": "Đang xuất…",
+    "failed_title": "Xuất thất bại",
+    "failed_message": "Không thể tạo tệp Excel. Vui lòng thử lại.",
+    "too_large": "Danh sách này có hơn {limit} mục công việc. Hãy thu hẹp bằng bộ lọc rồi xuất lại."
   }
 }

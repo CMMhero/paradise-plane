@@ -53,6 +53,7 @@ from plane.utils.obrolan_siaran import siarkan
 from plane.utils.sinyal_data import siarkan_notifikasi
 from plane.bgtasks.pengumuman_email_task import kirim_email_pengumuman
 from plane.utils.kanal_sistem import adalah_admin_workspace, boleh_kirim, ikutkan_jika_belum
+from plane.utils.markdown_pesan import teks_dari_markdown
 from plane.utils.rujukan_obrolan import kanal_privat_milik, samarkan, saring_kanal, saring_tugas
 from plane.utils.saklar_instance import (
     CHAT_ATTACHMENTS_MAX,
@@ -142,6 +143,13 @@ def _peta_reaksi(pesan_ids):
     }
 
 
+def _cuplikan_polos(isi, jenis, batas) -> str:
+    """Cuplikan untuk kutipan dan bilah sematan. Markdown dibuang SEBELUM dipotong,
+    supaya potongannya tidak menyisakan sintaks setengah (`**selamat berga`)."""
+    teks = teks_dari_markdown(isi) if jenis == "teks" else (isi or "")
+    return teks[:batas]
+
+
 def _peta_kutipan(pesan_list, saya_id=None):
     """Cuplikan pesan yang dibalas, satu kueri untuk semuanya.
 
@@ -153,7 +161,9 @@ def _peta_kutipan(pesan_list, saya_id=None):
         return {}
     # all_objects: kutipan ke pesan yang sudah dihapus tetap ada, isinya dikosongkan.
     induk = list(
-        PesanLangsung.all_objects.filter(id__in=induk_ids).values("id", "isi", "muatan", "pengirim_id", "deleted_at")
+        PesanLangsung.all_objects.filter(id__in=induk_ids).values(
+            "id", "isi", "jenis", "muatan", "pengirim_id", "deleted_at"
+        )
     )
     privat = kanal_privat_milik([saya_id], [i["muatan"] for i in induk]).get(str(saya_id), set())
     return {
@@ -162,7 +172,9 @@ def _peta_kutipan(pesan_list, saya_id=None):
             "pengirim": str(i["pengirim_id"]) if i["pengirim_id"] else "",
             # Dipotong di server: yang dibutuhkan UI cuma cuplikan, dan
             # mengirim pesan panjang dua kali membengkakkan tiap muatan.
-            "isi": "" if i["deleted_at"] else (samarkan(i["isi"], i["muatan"], saya_id, boleh=privat)[0] or "")[:120],
+            "isi": ""
+            if i["deleted_at"]
+            else _cuplikan_polos(samarkan(i["isi"], i["muatan"], saya_id, boleh=privat)[0], i["jenis"], 120),
             "dihapus": i["deleted_at"] is not None,
         }
         for i in induk
@@ -541,6 +553,21 @@ class ChatUnreadEndpoint(BaseAPIView):
         return Response({"jumlah": jumlah}, status=status.HTTP_200_OK)
 
 
+def _gabung_rujukan(request, pesan) -> dict:
+    """`muatan` pesan yang disunting, ditambah #kanal dan #work item yang baru dirujuk.
+
+    Hanya menambah: rujukan lama tidak pernah dibuang, supaya nama kanal privat yang
+    sudah tercatat tetap tersamar walau pengirim suntingan tidak mengirim daftarnya.
+    """
+    muatan = dict(pesan.muatan or {})
+    for kunci, saring in (("kanal", saring_kanal), ("tugas", saring_tugas)):
+        baru = saring(request.user, pesan.workspace_id, request.data.get(kunci))
+        if baru:
+            peta = {str(x.get("id")): x for x in [*(muatan.get(kunci) or []), *baru]}
+            muatan[kunci] = list(peta.values())
+    return muatan
+
+
 class ChatPesanEndpoint(BaseAPIView):
     """Sunting, hapus, dan reaksi pada SATU pesan."""
 
@@ -555,17 +582,52 @@ class ChatPesanEndpoint(BaseAPIView):
         """
         # Kartu (log panggilan, kartu tugas) bukan tulisan orang: tidak bisa
         # disunting atau dihapus lewat sini.
-        return PesanLangsung.objects.filter(
-            id=pesan_id, workspace__slug=slug, pengirim=request.user, jenis="teks"
-        ).first()
+        return (
+            PesanLangsung.objects.filter(id=pesan_id, workspace__slug=slug, pengirim=request.user, jenis="teks")
+            .select_related("ruang")
+            .first()
+        )
+
+    def _bukan_milik_saya(self, request, slug, pesan_id):
+        """Jawaban untuk yang bukan penulisnya.
+
+        Umumnya 404, supaya id pesan orang lain tidak bisa dipastikan ada. Pengumuman
+        memang terbaca semua anggota kanalnya, jadi bagi mereka dijawab 403 yang jujur.
+        """
+        pengumuman = PesanLangsung.objects.filter(
+            id=pesan_id,
+            workspace__slug=slug,
+            jenis="teks",
+            ruang__kunci_sistem=KUNCI_PENGUMUMAN,
+            ruang__langganan__user=request.user,
+            ruang__langganan__deleted_at__isnull=True,
+        )
+        if pengumuman.exists():
+            return Response(
+                {"error": "Hanya penulisnya yang bisa mengubah pengumuman ini."}, status=status.HTTP_403_FORBIDDEN
+            )
+        return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
+
+    def _batas_jam(self, pesan, saklar, user) -> int:
+        """Batas umur (jam) untuk mengubah pesan ini, 0 = tanpa batas.
+
+        Pengumuman milik sendiri tidak kena batas (halaman Pengumuman): ia dokumen
+        yang tetap dibaca, jadi penulisnya harus bisa membetulkannya kapan pun,
+        selama ia masih berhak menulis di kanal itu.
+        Cermin di peramban: `batasHapusRuang` (chat/batas-hapus.ts).
+        """
+        ruang = pesan.ruang
+        if ruang is not None and ruang.kunci_sistem == KUNCI_PENGUMUMAN and boleh_kirim(ruang, user):
+            return 0
+        return setelan_angka(saklar)
 
     def patch(self, request, slug, pesan_id):
         pesan = self._pesan_saya(request, slug, pesan_id)
         if pesan is None:
-            return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
+            return self._bukan_milik_saya(request, slug, pesan_id)
         # Jendela sunting dari God Mode (KEP-83), 0 = tanpa batas (perilaku lama).
         # Pola sama dengan jendela hapus di bawah.
-        batas_jam = setelan_angka(CHAT_EDIT_WINDOW_HOURS)
+        batas_jam = self._batas_jam(pesan, CHAT_EDIT_WINDOW_HOURS, request.user)
         if batas_jam and pesan.created_at < timezone.now() - timedelta(hours=batas_jam):
             return Response(
                 {"error": f"Pesan yang lebih lama dari {batas_jam} jam tidak bisa disunting."},
@@ -583,8 +645,9 @@ class ChatPesanEndpoint(BaseAPIView):
             )
 
         pesan.isi = isi
+        pesan.muatan = _gabung_rujukan(request, pesan)
         pesan.disunting_pada = timezone.now()
-        pesan.save(update_fields=["isi", "disunting_pada", "updated_at"])
+        pesan.save(update_fields=["isi", "muatan", "disunting_pada", "updated_at"])
         siarkan(pesan.ruang_id, "sunting", request.user.id)
         peta = _peta_lampiran([pesan.id], slug)
         return Response(
@@ -595,10 +658,10 @@ class ChatPesanEndpoint(BaseAPIView):
     def delete(self, request, slug, pesan_id):
         pesan = self._pesan_saya(request, slug, pesan_id)
         if pesan is None:
-            return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
+            return self._bukan_milik_saya(request, slug, pesan_id)
         # Pesan lama sudah dibaca dan ditanggapi orang; menghapusnya merobek
         # percakapan. Batasnya dari God Mode > Features, 0 = tanpa batas.
-        batas_jam = setelan_angka(CHAT_DELETE_WINDOW_HOURS)
+        batas_jam = self._batas_jam(pesan, CHAT_DELETE_WINDOW_HOURS, request.user)
         if batas_jam and pesan.created_at < timezone.now() - timedelta(hours=batas_jam):
             return Response(
                 {"error": f"Pesan yang lebih lama dari {batas_jam} jam tidak bisa dihapus."},
@@ -677,7 +740,7 @@ def _bentuk_sematan(pesan, saya_id=None):
         "pengirim": str(pesan.pengirim_id) if pesan.pengirim_id else None,
         # Dipotong seperti kutipan balasan: bilah cuma menampilkan cuplikan.
         # KEP-91: disamarkan dulu, baru dipotong.
-        "isi": (samarkan(pesan.isi, pesan.muatan, saya_id)[0] or "")[:200],
+        "isi": _cuplikan_polos(samarkan(pesan.isi, pesan.muatan, saya_id)[0], pesan.jenis, 200),
         "jenis": pesan.jenis,
         "created_at": pesan.created_at,
         "disematkan_pada": pesan.disematkan_pada,

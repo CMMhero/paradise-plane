@@ -123,6 +123,18 @@ export const MemberProfileTrigger = observer(function MemberProfileTrigger({
     [clearHoverTimer]
   );
   useEffect(() => clearHoverTimer, [clearHoverTimer]);
+  // Base UI's trigger toggles on click, but with openOnHover the card is usually
+  // already open by the time the pointer presses it, so a toggle would close the
+  // card the user just reached for. A press only opens; Escape, an outside press
+  // or leaving the card close it.
+  const onOpenChange = useCallback(
+    (next: boolean, details: { reason: string }) => {
+      clearHoverTimer();
+      if (!next && openOnHover && details.reason === "trigger-press") return;
+      setIsOpen(next);
+    },
+    [clearHoverTimer, openOnHover]
+  );
 
   const user = userId ? getUserDetails(userId) : undefined;
   const slug = workspaceSlug?.toString();
@@ -131,7 +143,7 @@ export const MemberProfileTrigger = observer(function MemberProfileTrigger({
   return (
     <MemberProfilePopover
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={onOpenChange}
       ariaLabel={t("profil_ui.open_profile", { name: user.display_name })}
       triggerClassName={className}
       side={side}

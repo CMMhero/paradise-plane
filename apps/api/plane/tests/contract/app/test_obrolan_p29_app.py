@@ -140,7 +140,45 @@ class TestPenulisPengumuman:
         assert "Kantor tutup <jam 12> & buka lusa." in surat.body
         html = surat.alternatives[0][0]
         assert "&lt;jam 12&gt; &amp; buka lusa." in html
-        assert f"chat?ruang={k['pengumuman'].id}" in html
+        assert f"/{k['ws'].slug}/pengumuman" in html and "chat?ruang=" not in html
+
+    @pytest.mark.django_db
+    def test_markdown_dirender_di_html_dan_bersih_di_subjek_serta_teks(self, kantor, antrean, settings):
+        settings.APP_BASE_URL = "https://space.test"
+        k = kantor
+        isi = (
+            "Dengan ini **selamat bergabung** untuk [@Staf](https://space.test/kantor-p29/profile/1).\n"
+            "Mulai _Selasa_.\n\n* satu\n* dua\n\n[klik](javascript:alert(1))"
+        )
+        assert _klien(k["admin"]).post(_url(k), {"isi": isi}, format="json").status_code == 201
+        mail.outbox.clear()
+        assert kirim_email_pengumuman(antrean[-1])["terkirim"] > 0
+        surat = mail.outbox[0]
+        html = surat.alternatives[0][0]
+        assert ">selamat bergabung</strong>" in html and "Selasa</em>" in html and "<li " in html
+        assert 'href="https://space.test/kantor-p29/profile/1"' in html
+        assert 'href="javascript' not in html
+        assert 'href="https://space.test/kantor-p29/pengumuman"' in html
+        assert surat.subject.startswith("[") and "Dengan ini selamat bergabung untuk @Staf." in surat.subject
+        for mentah in ("**", "](https", "_Selasa_"):
+            assert mentah not in surat.body and mentah not in surat.subject and mentah not in html
+        assert "Dengan ini selamat bergabung untuk @Staf.\nMulai Selasa.\n\n• satu\n• dua" in surat.body
+        assert "https://space.test/kantor-p29/pengumuman" in surat.body
+
+    @pytest.mark.django_db
+    def test_kanal_privat_tetap_disamarkan_di_email_markdown(self, kantor, antrean):
+        k = kantor
+        rahasia = Ruang.objects.create(workspace=k["ws"], tipe=Ruang.Tipe.PRIVAT, nama="akuisisi")
+        Langganan.objects.create(ruang=rahasia, user=k["admin"])
+        isi = f"Bahas di [#akuisisi](https://space.test/kantor-p29/chat/?ruang={rahasia.id}) dan **#akuisisi**."
+        kirim = _klien(k["admin"]).post(_url(k), {"isi": isi, "kanal": [str(rahasia.id)]}, format="json")
+        assert kirim.status_code == 201
+        mail.outbox.clear()
+        kirim_email_pengumuman(antrean[-1])
+        surat = mail.outbox[0]
+        for bagian in (surat.subject, surat.body, surat.alternatives[0][0]):
+            assert "akuisisi" not in bagian
+        assert "#private-channel" in surat.body
 
     @pytest.mark.django_db
     def test_suntingan_tidak_mengirim_ulang(self, kantor, antrean):

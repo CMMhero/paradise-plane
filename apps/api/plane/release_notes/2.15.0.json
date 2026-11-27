@@ -1,0 +1,38 @@
+{
+  "version": "2.15.0",
+  "date": "2026-11-26",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Export to Excel on work item lists (project, workspace views, Your work, module and department views). The file has the rows you see, with the same filters and order."
+    },
+    {
+      "type": "Added",
+      "text": "A new position, Assistant manager, between Supervisor and Manager. A Super Admin assigns it in God Mode."
+    },
+    {
+      "type": "Added",
+      "text": "You can edit and delete your own announcements on the Announcements page."
+    },
+    {
+      "type": "Added",
+      "text": "Chat messages and announcements show Markdown: bold, italic, lists, links, quotes, tables and code."
+    },
+    {
+      "type": "Changed",
+      "text": "Files dropped or pasted into a description or comment appear as cards with an icon, size, preview and download. Older attachment links on their own line look the same."
+    },
+    {
+      "type": "Fixed",
+      "text": "Announcement emails show formatting instead of symbols, and their button opens the Announcements page."
+    },
+    {
+      "type": "Fixed",
+      "text": "Mention cards inside a work item panel stay open when you click them, and work item mentions open the work item."
+    },
+    {
+      "type": "Fixed",
+      "text": "A mention added to a description now notifies the person even when it is saved a moment later."
+    }
+  ]
+}

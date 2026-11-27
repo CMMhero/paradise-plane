@@ -37,6 +37,7 @@ import { Avatar, Input } from "@plane/ui";
 import { cn, getFileURL, getNumberCount, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
 import { CountChip } from "@/components/common/count-chip";
+import { segarkanPengumuman } from "@/components/pengumuman/cache";
 import { PageShell } from "@/components/common/page-shell";
 import { PageHead } from "@/components/core/page-title";
 // hooks
@@ -56,8 +57,11 @@ import {
   type TPesan,
   type TRujukanKirim,
 } from "@/services/chat.service";
+// lib
+import { teksTanpaMarkdown } from "@/lib/markdown/pesan";
 // local imports
 import { susunBaris } from "./baris";
+import { batasHapusRuang } from "./batas-hapus";
 import { KerangkaDaftar } from "./kerangka-daftar";
 import { urutkanDaftar } from "./urutan-daftar";
 import { BilahSematan } from "./bilah-sematan";
@@ -644,16 +648,23 @@ function ChatPage() {
     return () => clearTimeout(jeda);
   }, [disorot]);
 
+  /** Pengumuman juga tampil di halaman Pengumuman dan widget Home; cache keduanya ikut. */
+  const segarkanBilaPengumuman = (pesanId: string, hasil: TPesan | "dihapus") => {
+    if (slug && ruangParam && kanalAktif?.kunci_sistem === "pengumuman")
+      segarkanPengumuman(slug, ruangParam, pesanId, hasil);
+  };
+
   /** `isi` sudah di-trim oleh KotakTulis, pemilik draf. */
   const simpanSuntingan = async (isi: string) => {
     if (!slug || !menyunting || !isi) return;
     tandaiAksiLokal(aksiLokalRef);
     setMengirim(true);
     try {
-      await chatService.suntingPesan(slug, menyunting.id, isi);
+      const hasil = await chatService.suntingPesan(slug, menyunting.id, isi);
+      segarkanBilaPengumuman(menyunting.id, hasil);
       setMenyunting(null);
       setDraf("");
-      await Promise.all([muatPesan(), muatPercakapan()]);
+      await Promise.all([muatPesan(), muatPercakapan(), muatSematan()]);
     } catch (galat) {
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -670,6 +681,7 @@ function ChatPage() {
     tandaiAksiLokal(aksiLokalRef);
     try {
       await chatService.hapusPesan(slug, p.id);
+      segarkanBilaPengumuman(p.id, "dihapus");
       // Riwayat lama disimpan terpisah dari SWR, jadi ikut dijadikan batu nisan
       // (pesan tetap di tempatnya, isinya diganti "Pesan dihapus").
       setLama((sebelumnya) =>
@@ -677,7 +689,8 @@ function ChatPage() {
           x.id === p.id ? { ...x, dihapus: true, isi: "", lampiran: [], reaksi: [], balasan_ke: null } : x
         )
       );
-      await Promise.all([muatPesan(), muatPercakapan()]);
+      // Sematan ikut ditarik: pesan yang dihapus tidak boleh tertinggal di bilahnya.
+      await Promise.all([muatPesan(), muatPercakapan(), muatSematan()]);
     } catch (galat) {
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -1049,7 +1062,7 @@ function ChatPage() {
                     </span>
                     <span className="line-clamp-2 text-12 text-secondary">
                       {h.dari_saya ? t("chat_ui.you_prefix") : ""}
-                      {h.isi}
+                      {teksTanpaMarkdown(h.isi)}
                     </span>
                   </button>
                 );
@@ -1106,7 +1119,7 @@ function ChatPage() {
                     <div className="mt-0.5 flex items-center justify-between gap-2">
                       <p className={`truncate text-12 ${adaBaru ? "font-medium text-secondary" : "text-tertiary"}`}>
                         {terakhir
-                          ? `${terakhir.dari_saya && !diriSendiri ? t("chat_ui.you_prefix") : ""}${terakhir.isi || t("chat_ui.sent_attachment")}`
+                          ? `${terakhir.dari_saya && !diriSendiri ? t("chat_ui.you_prefix") : ""}${teksTanpaMarkdown(terakhir.isi) || t("chat_ui.sent_attachment")}`
                           : diriSendiri
                             ? t("chat_ui.notes_to_self")
                             : t("chat_ui.no_messages")}
@@ -1403,7 +1416,11 @@ function ChatPage() {
                               onBalas={balasPesan}
                               onSunting={suntingPesan}
                               onHapus={hapusPesan}
-                              batasHapusJam={batasHapusJam}
+                              batasHapusJam={batasHapusRuang(
+                                batasHapusJam,
+                                kanalAktif?.kunci_sistem,
+                                kanalAktif?.boleh_kirim
+                              )}
                               onReaksi={reaksiPesan}
                               onSematkan={bolehSematkan ? sematkanPesan : undefined}
                               onTelepon={teleponDariKartu}
@@ -1474,7 +1491,11 @@ function ChatPage() {
                           ? getWorkspaceMemberDetails(membalas.pengirim)?.member?.display_name
                           : null) ?? t("chat_ui.member"))
                   }
-                  isi={membalas.dihapus ? t("chat_ui.message_deleted") : membalas.isi || t("chat_ui.attachment")}
+                  isi={
+                    membalas.dihapus
+                      ? t("chat_ui.message_deleted")
+                      : teksTanpaMarkdown(membalas.isi) || t("chat_ui.attachment")
+                  }
                   miring={!!membalas.dihapus}
                   labelBatal={t("cancel")}
                   onBatal={() => setMembalas(null)}
@@ -1484,7 +1505,7 @@ function ChatPage() {
                 <KutipanBalasan
                   nama={t("chat_ui.editing_message")}
                   ikon={<Pencil className="size-3 shrink-0" />}
-                  isi={menyunting.isi || t("chat_ui.attachment")}
+                  isi={teksTanpaMarkdown(menyunting.isi) || t("chat_ui.attachment")}
                   labelBatal={t("cancel")}
                   onBatal={() => {
                     // Batal menyunting mengembalikan kotak tulis ke kosong,

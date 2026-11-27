@@ -508,5 +508,12 @@
       "label": "Título del Epic",
       "required": "El título del epic es obligatorio."
     }
+  },
+  "work_item_export": {
+    "button": "Exportar a Excel",
+    "exporting": "Exportando…",
+    "failed_title": "Error al exportar",
+    "failed_message": "No se pudo crear el archivo de Excel. Por favor, inténtalo de nuevo.",
+    "too_large": "Esta lista tiene más de {limit} elementos de trabajo. Acótala con filtros y vuelve a exportar."
   }
 }

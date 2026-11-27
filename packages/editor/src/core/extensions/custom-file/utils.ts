@@ -8,8 +8,10 @@
 import type { Editor } from "@tiptap/core";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
+// types
+import type { TFileCardLabels, TFileHandler } from "@/types";
 // local imports
-import type { CustomFileExtensionStorage } from "./types";
+import type { CustomFileExtensionStorage, TCustomFileAttributes } from "./types";
 
 export const getFileComponentFileMap = (editor: Editor): CustomFileExtensionStorage["fileMap"] | undefined =>
   editor.storage[CORE_EXTENSIONS.CUSTOM_FILE]?.fileMap;
@@ -71,14 +73,9 @@ export const resolveFileMimeType = (type: string | null, name: string | null): s
  *
  * Jangan diganti kembali jadi `startsWith("text/")`, itu justru asal masalahnya.
  */
-const FRAMEABLE_TEXT_MIME_TYPES = new Set([
-  "text/plain",
-  "text/css",
-  "text/javascript",
-  "text/xml",
-  "application/xml",
-  "application/json",
-]);
+// Also limited to what the server agrees to serve inline (utils/tipe_unggahan.py
+// disposisi_sajian): CSS, JavaScript and XML always come back as downloads.
+const FRAMEABLE_TEXT_MIME_TYPES = new Set(["text/plain", "application/json"]);
 
 export const getFilePreviewKind = (mimeType: string): TFilePreviewKind => {
   // Matroska lolos `video/` tapi tidak ada peramban yang memutarnya. Tanpa
@@ -94,6 +91,15 @@ export const getFilePreviewKind = (mimeType: string): TFilePreviewKind => {
   // -> kartu unduh saja, dengan keterangan terus terang di kartunya
   return "none";
 };
+
+const APP_FILE_SOURCE =
+  /^(?:\/api\/assets\/v2\/[\w/-]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+/**
+ * Hanya berkas aplikasi ini (id aset atau jalur API aset) yang dipratinjau.
+ * Alamat lain tidak pernah dimuat sendiri di bingkai, video, atau gambar.
+ */
+export const isAppFileSource = (src: string): boolean => APP_FILE_SOURCE.test(src);
 
 /**
  * URL untuk DITAMPILKAN, bukan diunduh. Endpoint aset default membalas
@@ -119,4 +125,39 @@ export const formatFileSize = (bytes: number | null): string => {
   // byte selalu bulat; satuan lebih besar cukup satu desimal
   const rounded = unitIndex === 0 ? String(size) : size.toFixed(1);
   return `${rounded} ${FILE_SIZE_UNITS[unitIndex]}`;
+};
+
+export const DEFAULT_FILE_CARD_LABELS: TFileCardLabels = {
+  download: "Download",
+  showPreview: "Show preview",
+  hidePreview: "Hide preview",
+  expand: "Expand preview",
+  collapse: "Shrink preview",
+  noPreview: "No preview in the browser",
+  untitled: "Untitled file",
+};
+
+const isBlank = (node: ChildNode) =>
+  (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) || node.nodeName === "BR";
+
+/**
+ * Attributes for a card when `paragraph` holds nothing but one link to a work
+ * item attachment, the shape older pastes left behind. A link inside a sentence,
+ * or to anything `resolveAttachmentLink` does not vouch for, stays a link.
+ */
+export const getLoneAttachmentLinkAttrs = (
+  paragraph: HTMLElement,
+  resolveAttachmentLink: NonNullable<TFileHandler["resolveAttachmentLink"]>
+): TCustomFileAttributes | null => {
+  // Top level only: a card in a list item or table cell would make the parser
+  // invent an empty paragraph before it, which then gets saved on the next edit.
+  const parent = paragraph.parentElement;
+  if (parent && parent.nodeName !== "BODY" && parent.parentElement) return null;
+  const content = Array.from(paragraph.childNodes).filter((node) => !isBlank(node));
+  const [link] = content;
+  if (content.length !== 1 || link.nodeName !== "A") return null;
+  const href = (link as HTMLAnchorElement).getAttribute("href");
+  const src = href ? resolveAttachmentLink(href) : null;
+  if (!src) return null;
+  return { id: null, src, name: link.textContent?.trim() || null, size: null, type: null };
 };

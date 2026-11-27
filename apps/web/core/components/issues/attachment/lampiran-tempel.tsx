@@ -11,7 +11,6 @@ import { Loader2, Paperclip, X } from "lucide-react";
 import type { TAttachedFile } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { getFileURL } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useFileSize } from "@/hooks/use-file-size";
@@ -24,7 +23,7 @@ type TLampiranGagal = { id: string; pesan: string };
 /**
  * Berkas non-gambar yang ditempel atau diseret ke kotak komentar atau deskripsi diunggah
  * sebagai LAMPIRAN WORK ITEM (layanan & batas ukuran yang sama dengan bagian
- * Attachments), lalu editor menyisipkan tautan ke tiap berkas di teksnya.
+ * Attachments), lalu editor menyisipkan kartu berkas untuk tiap berkas di teksnya.
  *
  * Kenapa bukan aset editor: backend hanya menerima GAMBAR untuk
  * COMMENT_DESCRIPTION dan ISSUE_DESCRIPTION, jadi PDF yang ditempel dulu jadi
@@ -71,8 +70,16 @@ export const useLampiranTempel = (workspaceSlug: string, projectId: string, issu
           setMenunggu((sebelumnya) => [...sebelumnya, file]);
           try {
             const lampiran = await createAttachment(workspaceSlug, projectId, issueId, file);
-            const url = getFileURL(lampiran?.asset_url ?? "");
-            return url ? { name: file.name, url } : null;
+            // relative API path: a file card keeps only this app's own paths
+            const url = lampiran?.asset_url;
+            if (!url) return null;
+            return {
+              name: lampiran.attributes?.name || file.name,
+              url,
+              size: lampiran.attributes?.size ?? file.size,
+              // the server's type: it may have guessed one from the extension when the browser sent none
+              type: lampiran.attributes?.type || file.type || null,
+            };
           } catch (error) {
             // say WHY (offline, type, server...) instead of one fixed sentence
             const alasan = describeUploadFailure(error, { name: file.name });

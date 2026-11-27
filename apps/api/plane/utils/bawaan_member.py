@@ -142,7 +142,7 @@ PERAN_BAWAAN_SAH = frozenset({5, 15})
 # None = jabatan belum diisi (tetap dihitung staf oleh `tingkat_efektif`).
 # Sekretaris dan direktur sengaja tidak bisa jadi bawaan (KEP-101): tanpa penempatan mereka menjangkau
 # seluruh perusahaan, jadi harus diberikan dengan sadar per orang.
-TINGKAT_BAWAAN_SAH = frozenset({None, 10, 20, 30})
+TINGKAT_BAWAAN_SAH = frozenset({None, 10, 20, 25, 30})
 
 # Item sidebar yang bisa disematkan. Cermin `PARADISE_NAV_PREFERENCE_KEYS` di
 # packages/constants (paradise-navigation.test.ts mencocokkannya); kuncinya juga harus
@@ -309,7 +309,9 @@ def _periksa_keanggotaan(data) -> tuple[dict, str | None]:
     if "tingkat" in data:
         tingkat = data["tingkat"]
         if isinstance(tingkat, bool) or tingkat not in TINGKAT_BAWAAN_SAH:
-            return {}, "Default level must be empty, Member (10), Supervisor (20), or Manager (30)."
+            return {}, (
+                "Default level must be empty, Member (10), Supervisor (20), Assistant Manager (25), or Manager (30)."
+            )
         baru["tingkat"] = tingkat
     return baru, None
 

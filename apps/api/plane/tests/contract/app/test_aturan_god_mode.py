@@ -123,7 +123,11 @@ class TestDaftar:
             "min": None,
             "max": None,
             "max_length": None,
-            "choices": [{"value": 20, "label": "Supervisor (20)"}, {"value": 30, "label": "Manager (30)"}],
+            "choices": [
+                {"value": 20, "label": "Supervisor (20)"},
+                {"value": 25, "label": "Assistant manager (25)"},
+                {"value": 30, "label": "Manager (30)"},
+            ],
             "ordered": False,
             "store": "instance",
             "apply_section": None,

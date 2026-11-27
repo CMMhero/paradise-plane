@@ -377,7 +377,13 @@
     "send": "게시",
     "send_failed": "공지사항을 게시하지 못했습니다.",
     "load_failed": "공지사항을 불러오지 못했습니다.",
-    "open_in_chat": "채팅에서 논의하기"
+    "open_in_chat": "채팅에서 논의하기",
+    "edit_failed": "Could not save the announcement.",
+    "delete_failed": "Could not delete the announcement.",
+    "confirm_delete_title": "Delete this announcement?",
+    "confirm_delete_body": "It disappears from this page, Home, and the Announcements channel. Emails that were already sent are not recalled.",
+    "source_label": "Announcement text in Markdown",
+    "source_notice": "This announcement uses formatting the editor cannot keep, so you are editing its Markdown text."
   },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
@@ -1155,6 +1161,7 @@
     "level_10": "Staff",
     "level_12": "Leader",
     "level_20": "Supervisor",
+    "level_25": "Assistant Manager",
     "level_30": "Manager",
     "level_33": "Branch Director",
     "level_35": "비서",

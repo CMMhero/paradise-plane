@@ -508,5 +508,12 @@
       "label": "Epik Başlığı",
       "required": "Epik başlığı gereklidir."
     }
+  },
+  "work_item_export": {
+    "button": "Excel'e aktar",
+    "exporting": "Aktarılıyor…",
+    "failed_title": "Dışa aktarma başarısız",
+    "failed_message": "Excel dosyası oluşturulamadı. Lütfen tekrar deneyin.",
+    "too_large": "Bu listede {limit} sayısından fazla iş öğesi var. Filtrelerle daraltın ve yeniden dışa aktarın."
   }
 }

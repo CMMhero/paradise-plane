@@ -26,6 +26,7 @@ import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import {
   InstanceHierarkiService,
   InstanceOrganisasiService,
+  TINGKAT_ASISTEN_MANAGER,
   TINGKAT_CABANG,
   TINGKAT_DIREKTUR,
   TINGKAT_LEADER,
@@ -276,8 +277,11 @@ export default function OrganisasiPage() {
     (o) => o.tingkat !== null && o.tingkat >= TINGKAT_CABANG && o.tingkat < TINGKAT_SEKRETARIS
   );
   const manager = orang.filter((o) => o.tingkat !== null && o.tingkat >= TINGKAT_MANAGER && o.tingkat < TINGKAT_CABANG);
+  const asistenManager = orang.filter(
+    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_ASISTEN_MANAGER && o.tingkat < TINGKAT_MANAGER
+  );
   const supervisor = orang.filter(
-    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_SUPERVISOR && o.tingkat < TINGKAT_MANAGER
+    (o) => o.tingkat !== null && o.tingkat >= TINGKAT_SUPERVISOR && o.tingkat < TINGKAT_ASISTEN_MANAGER
   );
   const leader = orang.filter(
     (o) => o.tingkat !== null && o.tingkat >= TINGKAT_LEADER && o.tingkat < TINGKAT_SUPERVISOR
@@ -301,6 +305,7 @@ export default function OrganisasiPage() {
           <StatCard label={s.org.stat_secretary} value={sekretaris.length} />
           <StatCard label={s.org.stat_branch_director} value={direkturCabang.length} />
           <StatCard label={s.org.stat_manager} value={manager.length} />
+          <StatCard label={s.org.stat_assistant_manager} value={asistenManager.length} />
           <StatCard label={s.org.stat_supervisor} value={supervisor.length} />
           <StatCard label={s.org.stat_leader} value={leader.length} />
           <StatCard

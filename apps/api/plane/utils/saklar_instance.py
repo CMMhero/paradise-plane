@@ -250,13 +250,15 @@ WIKI_PREVIEW_MAX_MB = "WIKI_PREVIEW_MAX_MB"
 # APPROVAL_REQUIRED_BELOW_LEVEL: pemegang jenjang DI BAWAH angka ini yang
 # menyelesaikan tugasnya sendiri harus menunggu persetujuan atasan. Angkanya
 # jenjang di db/models/hierarki.py (10 member, 12 leader, 20 supervisor,
-# 30 manager, 33 direktur cabang, 35 sekretaris, 40 direktur); jenjang kosong
-# selalu dihitung staf.
+# 25 asisten manager, 30 manager, 33 direktur cabang, 35 sekretaris, 40 direktur);
+# jenjang kosong selalu dihitung staf.
 #   20 = staf dan leader - perilaku hari ini
-#   30 = staf dan supervisor
+#   25 = staf sampai supervisor
+#   30 = staf sampai asisten manager
 #   40 = semua kecuali direktur
 APPROVAL_REQUIRED_BELOW_LEVEL = "APPROVAL_REQUIRED_BELOW_LEVEL"
 APPROVAL_DI_BAWAH_SUPERVISOR = 20
+APPROVAL_DI_BAWAH_ASISTEN_MANAGER = 25
 APPROVAL_DI_BAWAH_MANAGER = 30
 APPROVAL_DI_BAWAH_DIREKTUR = 40
 # TASK_DELETE_RULE: siapa boleh menghapus/mengarsipkan tugas (utils/task_access.py).
@@ -330,10 +332,12 @@ IZIN_ISI = (
 # boleh, dan hanya di project yang ia awasi (`divisi_diawasi`): supervisor =
 # project departemennya, manager = divisinya, direktur = semua.
 #   20 = supervisor ke atas (bawaan, pilihan user 4 Nov 2026)
+#   25 = asisten manager ke atas
 #   30 = manager ke atas
 #   40 = direktur
 #   90 = hanya admin (Super Admin dan admin workspace)
 STRUKTUR_SUPERVISOR = 20
+STRUKTUR_ASISTEN_MANAGER = 25
 STRUKTUR_MANAGER = 30
 STRUKTUR_DIREKTUR = 40
 STRUKTUR_ADMIN_SAJA = 90
@@ -355,7 +359,13 @@ IZIN_STRUKTUR = (
     PERM_TRASH_PURGE,
 )
 _PILIHAN_ISI = (IZIN_PEMILIK_ATASAN, IZIN_PEMILIK_SAJA, IZIN_SEMUA_ANGGOTA)
-_PILIHAN_STRUKTUR = (STRUKTUR_SUPERVISOR, STRUKTUR_MANAGER, STRUKTUR_DIREKTUR, STRUKTUR_ADMIN_SAJA)
+_PILIHAN_STRUKTUR = (
+    STRUKTUR_SUPERVISOR,
+    STRUKTUR_ASISTEN_MANAGER,
+    STRUKTUR_MANAGER,
+    STRUKTUR_DIREKTUR,
+    STRUKTUR_ADMIN_SAJA,
+)
 
 _MIB = 1024 * 1024
 
@@ -433,6 +443,7 @@ SETELAN_PILIHAN = {
     DUE_DATE_ON_EARLY_DONE: (DUE_DATE_SIMPAN_RENCANA, DUE_DATE_MAJU_KE_SELESAI),
     APPROVAL_REQUIRED_BELOW_LEVEL: (
         APPROVAL_DI_BAWAH_SUPERVISOR,
+        APPROVAL_DI_BAWAH_ASISTEN_MANAGER,
         APPROVAL_DI_BAWAH_MANAGER,
         APPROVAL_DI_BAWAH_DIREKTUR,
     ),

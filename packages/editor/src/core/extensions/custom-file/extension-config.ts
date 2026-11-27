@@ -69,7 +69,9 @@ export const CustomFileExtensionConfig: CustomFileExtensionType = Node.create<
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
-    return ["file-component", mergeAttributes(HTMLAttributes)];
+  // The file name doubles as text content, so description_stripped, search and
+  // notification emails built from the HTML still say which file it is.
+  renderHTML({ node, HTMLAttributes }) {
+    return ["file-component", mergeAttributes(HTMLAttributes), (node.attrs as TCustomFileAttributes).name ?? ""];
   },
 });

@@ -16,6 +16,7 @@ import type { IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane
 import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
+import { ExportExcelButton } from "@/components/issues/export-excel-button";
 import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
 import {
   DisplayFiltersSelection,
@@ -114,6 +115,11 @@ export const ProjectIssuesMobileHeader = observer(function ProjectIssuesMobileHe
             <ChartNoAxesColumn className="size-3.5" aria-hidden="true" />
           </Button>
         )}
+        <ExportExcelButton
+          target={{ storeType: EIssuesStoreType.PROJECT, entityId: projectId?.toString() ?? "" }}
+          exportName={currentProjectDetails?.name}
+          appearance="icon"
+        />
       </div>
     </>
   );

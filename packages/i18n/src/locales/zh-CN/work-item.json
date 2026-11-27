@@ -508,5 +508,12 @@
       "label": "史诗标题",
       "required": "史诗标题为必填项"
     }
+  },
+  "work_item_export": {
+    "button": "导出 Excel",
+    "exporting": "正在导出…",
+    "failed_title": "导出失败",
+    "failed_message": "无法创建 Excel 文件。请重试。",
+    "too_large": "此列表包含超过 {limit} 个工作项。请使用筛选条件缩小范围后再导出。"
   }
 }

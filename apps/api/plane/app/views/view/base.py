@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-import copy
-
 # Django imports
 from django.db.models import (
     Exists,
@@ -24,6 +22,8 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.utils.akses_privat import saring_tugas_privat
+from plane.utils.daftar_tugas import DaftarTugas
+from plane.utils.ekspor_tugas import unduh_xlsx
 from plane.app.permissions import allow_permission, ROLE
 from plane.app.serializers import IssueViewSerializer, ViewIssueListSerializer
 from plane.app.serializers.view import lampirkan_status_persetujuan
@@ -293,15 +293,12 @@ class WorkspaceViewIssuesViewSet(BaseViewSet):
             Issue.issue_objects.filter(workspace__slug=self.kwargs.get("slug")), self.request.user
         )
 
-    @method_decorator(gzip_page)
-    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
-    def list(self, request, slug):
+    def susun_daftar(self, request, slug):
+        """Scope, filters, and order of the workspace views list, shared with the Excel export."""
         issue_queryset = self.get_queryset()
 
         # Apply filtering from filterset
         issue_queryset = self.filter_queryset(issue_queryset)
-
-        order_by_param = request.GET.get("order_by", "-created_at")
 
         # Apply legacy filters
         filters = issue_filters(request.query_params, "GET")
@@ -312,25 +309,35 @@ class WorkspaceViewIssuesViewSet(BaseViewSet):
         # Apply project permission filters to the issue queryset
         issue_queryset = issue_queryset.filter(permission_filters)
 
-        # Base query for the counts
-        total_issue_count_queryset = copy.deepcopy(issue_queryset)
-        total_issue_count_queryset = total_issue_count_queryset.only("id")
-
-        # Apply annotations to the issue queryset
-        issue_queryset = self.apply_annotations(issue_queryset)
-
-        # Issue queryset
-        issue_queryset, order_by_param = order_issue_queryset(
-            issue_queryset=issue_queryset, order_by_param=order_by_param
+        # Apply annotations and ordering to the issue queryset
+        ordered_queryset, order_by_param = order_issue_queryset(
+            issue_queryset=self.apply_annotations(issue_queryset),
+            order_by_param=request.GET.get("order_by", "-created_at"),
         )
+        return DaftarTugas(
+            # Base query for the counts
+            tersaring=issue_queryset.only("id"),
+            terurut=ordered_queryset,
+            urutan=order_by_param,
+            filters=filters,
+        )
+
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
+    def export_xlsx(self, request, slug):
+        return unduh_xlsx(request, slug, self.susun_daftar(request, slug))
+
+    @method_decorator(gzip_page)
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    def list(self, request, slug):
+        daftar = self.susun_daftar(request, slug)
 
         # List Paginate
         return self.paginate(
-            order_by=order_by_param,
+            order_by=daftar.urutan,
             request=request,
-            queryset=issue_queryset,
+            queryset=daftar.terurut,
             on_results=lambda issues: ViewIssueListSerializer(lampirkan_status_persetujuan(issues), many=True).data,
-            total_count_queryset=total_issue_count_queryset,
+            total_count_queryset=daftar.tersaring,
         )
 
 

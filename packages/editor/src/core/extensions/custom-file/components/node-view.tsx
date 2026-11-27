@@ -7,10 +7,11 @@
 
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
-import { ChevronDown, ChevronRight, Download, Paperclip } from "lucide-react";
+import { Download, Eye, EyeOff, Maximize2, Minimize2, Paperclip } from "lucide-react";
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // plane imports
+import { FileTypeIcon } from "@plane/propel/file-type";
 import { cn } from "@plane/utils";
 // constants
 import { ACCEPTED_ATTACHMENT_MIME_TYPES } from "@/constants/config";
@@ -26,6 +27,7 @@ import {
   getFileComponentFileMap,
   getFileComponentMaxFileSize,
   getFilePreviewKind,
+  isAppFileSource,
   resolveFileMimeType,
   toInlineSrc,
 } from "../utils";
@@ -196,68 +198,73 @@ export function CustomFileNodeView(props: CustomFileNodeViewProps) {
 
   // ---- uploaded state: card header + in-place preview ----
   if (isUploaded) {
+    const { labels } = extension.options;
     const mimeType = resolveFileMimeType(type, name);
     const previewKind = getFilePreviewKind(mimeType);
-    const canPreview = previewKind !== "none" && !!viewSrc && !hasFailed;
+    const canPreview = previewKind !== "none" && !!viewSrc && !hasFailed && isAppFileSource(src ?? "");
     // iframe memuat lewat navigasi, jadi ia butuh disposition=inline; <video>,
     // <audio> dan <img> mengabaikan header itu dan boleh pakai URL apa adanya
     const inlineSrc = viewSrc ? toInlineSrc(viewSrc) : undefined;
     const isFramed = previewKind === "pdf" || previewKind === "text";
-    const frameTitle = name || "Pratinjau berkas";
+    const displayName = name || labels.untitled;
+    // dikatakan terus terang, bukan dibiarkan jadi kartu kosong yang bikin orang
+    // mengira pratinjaunya rusak; ukuran disembunyikan bila tidak diketahui
+    const meta = [formatFileSize(size), previewKind === "none" ? labels.noPreview : ""].filter(Boolean).join(" · ");
+    const previewToggleLabel = isPreviewOpen ? labels.hidePreview : labels.showPreview;
+    const frameToggleLabel = isFrameExpanded ? labels.collapse : labels.expand;
+    const iconButtonClass =
+      "grid size-7 shrink-0 place-items-center rounded-md text-secondary hover:bg-layer-3-hover hover:text-primary sentuh:size-10";
 
     return (
       <NodeViewWrapper>
         <div
-          className={cn("file-component my-2 overflow-hidden rounded-lg border border-subtle bg-layer-2", {
+          className={cn("file-component not-prose my-2 overflow-hidden rounded-lg border border-subtle bg-layer-2", {
             "border-accent-strong": selected,
             "border-danger-strong bg-danger-subtle": hasFailed,
           })}
           contentEditable={false}
         >
-          {/* baris judul */}
           <div className="flex items-center gap-3 px-3 py-2.5">
-            {canPreview ? (
+            <FileTypeIcon name={name} type={type} />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-14 font-medium text-primary" title={displayName}>
+                {displayName}
+              </span>
+              {meta && <span className="truncate text-11 text-tertiary">{meta}</span>}
+            </div>
+            {canPreview && (
               <button
                 type="button"
                 onClick={() => setIsPreviewOpen((prev) => !prev)}
-                className="grid size-4 shrink-0 place-items-center rounded text-tertiary hover:text-secondary"
+                className={iconButtonClass}
                 aria-expanded={isPreviewOpen}
-                aria-label={isPreviewOpen ? "Sembunyikan pratinjau" : "Tampilkan pratinjau"}
+                aria-label={previewToggleLabel}
+                title={previewToggleLabel}
               >
-                {isPreviewOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                {isPreviewOpen ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
-            ) : (
-              <Paperclip className="size-4 shrink-0 text-tertiary" />
             )}
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-14 font-medium text-primary" title={name ?? undefined}>
-                {name || "Untitled file"}
-              </span>
-              <span className="text-11 text-tertiary">
-                {size !== null && formatFileSize(size)}
-                {/* dikatakan terus terang, bukan dibiarkan jadi kartu kosong
-                    yang bikin orang mengira pratinjaunya rusak */}
-                {previewKind === "none" && " · tidak bisa dipratinjau di web"}
-              </span>
-            </div>
-            {isFramed && isPreviewOpen && (
+            {canPreview && isFramed && isPreviewOpen && (
               <button
                 type="button"
                 onClick={() => setIsFrameExpanded((prev) => !prev)}
-                className="shrink-0 rounded-md px-2 py-1 text-12 font-medium text-secondary hover:bg-layer-3-hover hover:text-primary"
+                className={cn(iconButtonClass, "max-sm:hidden")}
+                aria-label={frameToggleLabel}
+                title={frameToggleLabel}
               >
-                {isFrameExpanded ? "Perkecil" : "Perbesar"}
+                {isFrameExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
               </button>
             )}
             <button
               type="button"
               onClick={handleDownload}
               disabled={!downloadSrc}
-              className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-12 font-medium text-secondary transition-all duration-200 ease-in-out hover:bg-layer-3-hover hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label={`Download ${name || "file"}`}
+              className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-12 font-medium text-secondary transition-colors hover:bg-layer-3-hover hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 sentuh:min-h-10"
+              aria-label={`${labels.download} ${displayName}`}
+              title={labels.download}
             >
               <Download className="size-3.5" />
-              <span>Download</span>
+              <span className="max-sm:hidden">{labels.download}</span>
             </button>
           </div>
 
@@ -277,12 +284,12 @@ export function CustomFileNodeView(props: CustomFileNodeViewProps) {
               {/* oxlint-disable-next-line jsx-a11y/media-has-caption -- lihat alasan di atas */}
               {previewKind === "audio" && <audio src={viewSrc} controls preload="metadata" className="w-full p-3" />}
               {previewKind === "image" && (
-                <img src={viewSrc} alt={name ?? "Lampiran"} className="max-h-[480px] w-full object-contain" />
+                <img src={viewSrc} alt={displayName} className="max-h-[480px] w-full object-contain" />
               )}
               {isFramed && (
                 <iframe
                   src={inlineSrc}
-                  title={frameTitle}
+                  title={displayName}
                   // Chrome MENOLAK memuat viewer PDF bawaannya di iframe
                   // ber-sandbox, token apa pun - diuji bertiga (allow-same-origin,
                   // allow-scripts, dan keduanya): semuanya membalas ikon dokumen

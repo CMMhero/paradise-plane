@@ -27,6 +27,7 @@ import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown } from "@plane/
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label";
+import { ExportExcelButton } from "@/components/issues/export-excel-button";
 import { DisplayFiltersSelection, FiltersDropdown, LayoutSelection } from "@/components/issues/issue-layouts/filters";
 import { ViewQuickActions } from "@/components/views/quick-actions";
 import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
@@ -211,6 +212,12 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
                 moduleViewDisabled={!currentProjectDetails?.module_view}
               />
             </FiltersDropdown>
+          )}
+          {viewId && projectId && (
+            <ExportExcelButton
+              target={{ storeType: EIssuesStoreType.PROJECT_VIEW, entityId: viewId, projectId: projectId.toString() }}
+              exportName={viewName}
+            />
           )}
         </>
         {canUserCreateIssue && (

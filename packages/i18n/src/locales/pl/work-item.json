@@ -508,5 +508,12 @@
       "label": "Tytuł epiku",
       "required": "Tytuł epiku jest wymagany."
     }
+  },
+  "work_item_export": {
+    "button": "Eksportuj do Excela",
+    "exporting": "Eksportowanie…",
+    "failed_title": "Eksport nie powiódł się",
+    "failed_message": "Nie udało się utworzyć pliku Excel. Spróbuj ponownie.",
+    "too_large": "Ta lista zawiera ponad {limit} elementów pracy. Zawęź ją filtrami i wyeksportuj ponownie."
   }
 }

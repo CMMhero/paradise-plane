@@ -285,6 +285,7 @@ _DATA_EN = {
     "Staf": "Staff",
     "Sekretaris": "Secretary",
     "Manajer Cabang": "Branch Manager",
+    "Asisten Manager": "Assistant Manager",
     "Direktur": "Director",
     "Cabang Anda": "Your branch",
     "Seluruh divisi": "All divisions",

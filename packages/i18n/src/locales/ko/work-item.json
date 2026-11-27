@@ -508,5 +508,12 @@
       "label": "에픽 제목",
       "required": "에픽 제목이 필요합니다."
     }
+  },
+  "work_item_export": {
+    "button": "Excel 내보내기",
+    "exporting": "내보내는 중…",
+    "failed_title": "내보내기 실패",
+    "failed_message": "Excel 파일을 만들 수 없습니다. 다시 시도해주세요.",
+    "too_large": "이 목록의 작업 항목이 {limit}개를 넘습니다. 필터로 범위를 좁힌 다음 다시 내보내세요."
   }
 }

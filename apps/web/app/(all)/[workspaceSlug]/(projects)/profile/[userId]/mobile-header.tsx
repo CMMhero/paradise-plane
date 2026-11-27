@@ -24,10 +24,12 @@ import { EIssuesStoreType } from "@plane/types";
 // ui
 import { CustomMenu } from "@plane/ui";
 // components
+import { ExportExcelButton } from "@/components/issues/export-excel-button";
 import { DisplayFiltersSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 import { IssueLayoutIcon } from "@/components/issues/issue-layouts/layout-icon";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
+import { useMember } from "@/hooks/store/use-member";
 
 export const ProfileIssuesMobileHeader = observer(function ProfileIssuesMobileHeader() {
   // plane i18n
@@ -38,6 +40,7 @@ export const ProfileIssuesMobileHeader = observer(function ProfileIssuesMobileHe
   const {
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.PROFILE);
+  const { getUserDetails } = useMember();
   // derived values
   const activeLayout = issueFilters?.displayFilters?.layout;
 
@@ -102,7 +105,7 @@ export const ProfileIssuesMobileHeader = observer(function ProfileIssuesMobileHe
           if (layout.key === "spreadsheet" || layout.key === "gantt_chart" || layout.key === "calendar") return;
           return (
             <CustomMenu.MenuItem
-              key={index}
+              key={layout.key}
               onClick={() => {
                 handleLayoutChange(ISSUE_LAYOUTS[index].key);
               }}
@@ -136,6 +139,13 @@ export const ProfileIssuesMobileHeader = observer(function ProfileIssuesMobileHe
           />
         </FiltersDropdown>
       </div>
+      {userId && (
+        <ExportExcelButton
+          target={{ storeType: EIssuesStoreType.PROFILE, entityId: userId.toString() }}
+          exportName={getUserDetails(userId.toString())?.display_name}
+          appearance="bar"
+        />
+      )}
     </div>
   );
 });

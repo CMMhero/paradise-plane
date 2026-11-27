@@ -7,7 +7,7 @@
 
 import type { Node } from "@tiptap/core";
 // types
-import type { TFileHandler } from "@/types";
+import type { TFileCardLabels, TFileHandler } from "@/types";
 
 /**
  * Sengaja TIDAK ada atribut `status`. Node gambar punya satu karena ia melacak
@@ -50,6 +50,7 @@ export type CustomFileExtensionOptions = {
   /** URL untuk ditampilkan di halaman - dipakai pemutar & pratinjau */
   getFileSource: TFileHandler["getAssetSrc"];
   uploadFile?: TFileHandler["upload"];
+  labels: TFileCardLabels;
 };
 
 export type CustomFileExtensionStorage = {

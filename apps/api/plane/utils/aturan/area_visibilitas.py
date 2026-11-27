@@ -145,7 +145,7 @@ ATURAN = (
         key=KPI_TEAM_MIN_LEVEL,
         kind=LEVEL,
         default=12,
-        choices=(12, 20, 30),
+        choices=(12, 20, 25, 30),
         group="visibility",
         label="Lowest level that sees team KPI",
         help=(
@@ -186,15 +186,15 @@ ATURAN = (
         key=ATTENTION_ORG_MIN_CREATOR_LEVEL,
         kind=LEVEL,
         default=30,
-        choices=(10, 20, 30),
+        choices=(10, 20, 25, 30),
         group="visibility",
         label="Needs attention for directors: lowest creator level",
         help=(
             "For people with organisation-wide reach (secretaries 35 and directors 40): the overdue team work "
             "in Needs attention only lists work items created by someone at this level or above. Manager (30) "
-            "skips work created by supervisors, leaders, and staff. Member (10) lists every work item. "
-            "Supervisors and managers always see their full team. Approvals waiting for a director follow "
-            "Work rules > Approvals instead."
+            "skips work created by assistant managers, supervisors, leaders, and staff. Member (10) lists every "
+            "work item. Supervisors, assistant managers, and managers always see their full team. Approvals "
+            "waiting for a director follow Work rules > Approvals instead."
         ),
         risk=SEDANG,
     ),

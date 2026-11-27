@@ -122,6 +122,15 @@ class OffsetPaginator:
         self.on_results = on_results
         self.total_count_queryset = total_count_queryset
 
+    def ordered_queryset(self):
+        """The rows in the order a flat list shows them. Excel export uses this too."""
+        if not self.key:
+            return self.queryset
+        return self.queryset.order_by(
+            (F(*self.key).desc(nulls_last=True) if self.desc else F(*self.key).asc(nulls_last=True)),
+            "-created_at",
+        )
+
     def get_result(self, limit=1000, cursor=None):
         # offset is page #
         # value is page limit
@@ -132,12 +141,7 @@ class OffsetPaginator:
         limit = min(limit, self.max_limit)
 
         # queryset
-        queryset = self.queryset
-        if self.key:
-            queryset = queryset.order_by(
-                (F(*self.key).desc(nulls_last=True) if self.desc else F(*self.key).asc(nulls_last=True)),
-                "-created_at",
-            )
+        queryset = self.ordered_queryset()
         # The current page
         page = cursor.offset
         # The offset - use limit instead of cursor.value for consistent pagination

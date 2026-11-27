@@ -32,6 +32,7 @@ import { HoverCard } from "@plane/propel/popover";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { cn, renderFormattedTime } from "@plane/utils";
 import { MemberProfileTrigger } from "@/components/member-profile";
+import { IsiMarkdown } from "@/components/pengumuman/isi-markdown";
 import { KanalPreviewCard, TugasPreviewCard } from "@/components/rujukan-preview";
 import { PratinjauTautanTeks } from "@/components/pratinjau-tautan/kartu";
 import { ChatService } from "@/services/chat.service";
@@ -40,47 +41,9 @@ import { KartuPesan, adalahKartu } from "./kartu/kartu-pesan";
 import { bolehDihapus } from "./batas-hapus";
 import { KutipanBalasan } from "./kutipan-balasan";
 import { DaftarLampiran } from "./lampiran";
-import { potongRujukan } from "./sebut";
+import type { TPil } from "./rujukan-markdown";
 import { salinTeks } from "./salin";
 import { alihkanReaksi, buatPenyaringGanda } from "./reaksi";
-import { potongTautan } from "./tautan";
-
-/**
- * Teks pesan dengan alamat yang bisa diklik.
- *
- * Dibuat karena penugasan sekarang otomatis masuk ke DM berikut tautan ke
- * tugasnya. Tautan yang harus disalin-tempel dulu adalah tautan yang tidak
- * dipakai, dan tugas yang tidak dibuka sama saja dengan tugas yang tidak
- * dikabarkan.
- *
- * Potongan bukan-alamat tetap teks React, tidak pernah lewat
- * `dangerouslySetInnerHTML`. Aturan alamat mana yang boleh jadi tautan, berikut
- * alasan keamanannya, ada di `tautan.ts`.
- */
-const denganTautan = (teks: string) =>
-  potongTautan(teks).map((potongan, i) =>
-    potongan.jenis === "teks" ? (
-      potongan.isi
-    ) : (
-      // Kunci dari posisi, dan di sini itu memang benar: potongannya lahir dari
-      // memecah satu teks yang tidak pernah berubah sebagian. Seluruh daftar
-      // dibuat ulang kalau isinya berganti, tidak ada yang bisa disisipkan atau
-      // diurut ulang, dan anak-anaknya tidak menyimpan state apa pun.
-      // oxlint-disable-next-line no-array-index-key
-      <span key={`tautan-${i}`}>
-        <a
-          href={potongan.alamat}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="underline underline-offset-2 hover:opacity-80"
-        >
-          {potongan.alamat}
-        </a>
-        {potongan.ekor}
-      </span>
-    )
-  );
 
 /** ID yang disebut di pesan ini (`muatan.sebut`), dibaca tanpa percaya bentuknya. */
 const idSebutan = (pesan: TPesan): string[] => {
@@ -105,7 +68,7 @@ const chatService = new ChatService();
 
 const KELAS_PIL_RUJUKAN = "rounded-sm px-1 font-semibold hover:opacity-85";
 const gayaRujukan = (terang: boolean) =>
-  cn(KELAS_PIL_RUJUKAN, terang ? "bg-white/25 text-on-color" : "bg-layer-1 text-accent-primary");
+  cn(KELAS_PIL_RUJUKAN, terang ? "bg-black/20 text-on-color" : "bg-layer-1 text-accent-primary");
 
 /** Pil `#kanal`. Kanal privat yang tidak bisa dibuka penonton: gembok, tanpa tautan. */
 function PilKanal({ kanal, slug, terang }: { kanal: TKanalDirujuk; slug: string | undefined; terang: boolean }) {
@@ -173,81 +136,60 @@ function PilTugas({
 }
 
 /**
- * Teks pesan dengan `@nama`, `@all`, `#kanal`, dan `#PRJ-12` yang disorot, lalu
- * tautan di potongan sisanya.
+ * Pil `@nama`, `@all`, `#kanal`, dan `#PRJ-12` di dalam teks pesan (potongannya dari
+ * `remarkRujukan`).
  *
  * Yang disorot HANYA yang memang tercatat di muatan pesan (sudah disaring server
- * ke anggota ruang dan ke yang boleh dilihat). Mengetik `@siapa` tanpa memilih dari
- * daftar tetap teks biasa, supaya sorotan tidak menjanjikan pemberitahuan yang
- * tidak pernah dikirim.
+ * ke anggota ruang dan ke yang boleh dilihat), plus tautan profil yang ditulis
+ * penyunting pengumuman. Mengetik `@siapa` tanpa memilih dari daftar tetap teks
+ * biasa, supaya sorotan tidak menjanjikan pemberitahuan yang tidak pernah dikirim.
  */
-const denganRujukan = (
-  teks: string,
+const gambarPil = (
+  pil: TPil,
   ctx: {
-    orang: { id: string; nama: string }[];
     rujukan: TRujukanPesan;
     sayaId: string | undefined;
     terang: boolean;
     slug: string | undefined;
     infoTugas: Record<string, { boleh: boolean; judul?: string }> | undefined;
   }
-) =>
-  potongRujukan(teks, {
-    orang: ctx.orang,
-    kanal: ctx.rujukan.kanal,
-    tugas: ctx.rujukan.tugas,
-    semua: ctx.rujukan.semua,
-  }).map((potongan, i) => {
-    // oxlint-disable-next-line no-array-index-key -- potongan dari satu teks yang tidak pernah diurut ulang
-    const kunci = `${potongan.jenis}-${i}`;
-    switch (potongan.jenis) {
-      case "teks":
-        return <span key={kunci}>{denganTautan(potongan.isi)}</span>;
-      case "sebut":
-        return (
-          <MemberProfileTrigger key={kunci} userId={potongan.id} className="align-baseline" openOnHover>
-            <span className={gayaSebutan(ctx.terang, !!ctx.sayaId && potongan.id === ctx.sayaId)}>{potongan.isi}</span>
-          </MemberProfileTrigger>
-        );
-      case "semua":
-        // @all juga memberi tahu saya, jadi rupanya sama dengan sebutan ke saya.
-        return (
-          <span key={kunci} className={gayaSebutan(ctx.terang, true)}>
-            {potongan.isi}
-          </span>
-        );
-      case "kanal": {
-        const kanal = ctx.rujukan.kanal.find((k) => k.id === potongan.id);
-        return kanal ? <PilKanal key={kunci} kanal={kanal} slug={ctx.slug} terang={ctx.terang} /> : null;
-      }
-      case "tugas": {
-        const tugas = ctx.rujukan.tugas.find((w) => w.id === potongan.id);
-        const info = ctx.infoTugas?.[potongan.id];
-        return tugas ? (
-          <PilTugas
-            key={kunci}
-            tugas={tugas}
-            slug={ctx.slug}
-            judul={info?.judul}
-            boleh={info?.boleh !== false}
-            terang={ctx.terang}
-          />
-        ) : null;
-      }
+) => {
+  switch (pil.jenis) {
+    case "sebut":
+      return (
+        <MemberProfileTrigger userId={pil.id} className="align-baseline" openOnHover>
+          <span className={gayaSebutan(ctx.terang, !!ctx.sayaId && pil.id === ctx.sayaId)}>{pil.isi}</span>
+        </MemberProfileTrigger>
+      );
+    case "semua":
+      // @all juga memberi tahu saya, jadi rupanya sama dengan sebutan ke saya.
+      return <span className={gayaSebutan(ctx.terang, true)}>{pil.isi}</span>;
+    case "kanal": {
+      const kanal = ctx.rujukan.kanal.find((k) => k.id === pil.id);
+      return kanal ? <PilKanal kanal={kanal} slug={ctx.slug} terang={ctx.terang} /> : null;
     }
-  });
+    case "tugas": {
+      const tugas = ctx.rujukan.tugas.find((w) => w.id === pil.id);
+      const info = ctx.infoTugas?.[pil.id];
+      return tugas ? (
+        <PilTugas tugas={tugas} slug={ctx.slug} judul={info?.judul} boleh={info?.boleh !== false} terang={ctx.terang} />
+      ) : null;
+    }
+  }
+};
 
 /**
  * Tiga rupa sebutan, sengaja beda jelas satu sama lain:
  * - saya disebut orang lain: pil amber pekat, paling mencolok;
- * - saya menyebut orang (gelembung keluar): pil putih transparan di atas aksen;
+ * - saya menyebut orang (gelembung keluar): pil gelap transparan di atas aksen
+ *   (putih transparan hanya 3,8:1 dengan teks putih);
  * - orang lain disebut di pesan masuk: pil aksen lembut.
  */
 const gayaSebutan = (terang: boolean, sayaDisebut: boolean) =>
   cn(
     "rounded-sm px-1 font-semibold hover:opacity-85",
     terang
-      ? "bg-white/25 text-on-color"
+      ? "bg-black/20 text-on-color"
       : sayaDisebut
         ? "bg-warning-primary text-on-color"
         : "bg-accent-subtle text-accent-primary"
@@ -349,7 +291,6 @@ export const Gelembung = memo(function Gelembung(props: Props) {
     slug && idTugas.length > 0 ? () => chatService.infoRujukan(slug, [], idTugas) : null,
     { revalidateOnFocus: false }
   );
-  const adaRujukan = disebut.length > 0 || rujukan.semua || rujukan.kanal.length > 0 || rujukan.tugas.length > 0;
   // Pesan masuk yang menyebut saya diberi bingkai amber supaya tertangkap mata
   // saat menggulir, bukan hanya sebutannya yang berwarna.
   const sayaDisebut = !dariSaya && !kartu && !!sayaId && (rujukan.semua || disebut.some((o) => o.id === sayaId));
@@ -424,11 +365,12 @@ export const Gelembung = memo(function Gelembung(props: Props) {
       ) : kartu ? (
         <KartuPesan pesan={pesan} namaOrang={namaOrang} onTelepon={props.onTelepon} terang={terang} sayaId={sayaId} />
       ) : pesan.isi ? (
-        <p className="text-13 [overflow-wrap:anywhere] whitespace-pre-wrap">
-          {adaRujukan
-            ? denganRujukan(pesan.isi, { orang: disebut, rujukan, sayaId, terang, slug, infoTugas: infoRujukan?.tugas })
-            : denganTautan(pesan.isi)}
-        </p>
+        <IsiMarkdown
+          teks={pesan.isi}
+          nada={terang ? "terang" : "gelembung"}
+          sumber={{ orang: disebut, kanal: rujukan.kanal, tugas: rujukan.tugas, semua: rujukan.semua }}
+          renderPil={(pil) => gambarPil(pil, { rujukan, sayaId, terang, slug, infoTugas: infoRujukan?.tugas })}
+        />
       ) : null}
       {!dihapus && !kartu && pesan.isi ? (
         // Margin bawah 6px + py-1.5 gelembung = 12px di bawah kartu, sama dengan

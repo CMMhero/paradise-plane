@@ -15,6 +15,8 @@ export const TINGKAT_MEMBER = 10;
 /** Leader (P29): memimpin Staf satu departemen, tidak menyetujui. */
 export const TINGKAT_LEADER = 12;
 export const TINGKAT_SUPERVISOR = 20;
+/** Asisten Manager (P215): peran departemen tertinggi, di atas supervisor, di bawah manager. */
+export const TINGKAT_ASISTEN_MANAGER = 25;
 export const TINGKAT_MANAGER = 30;
 /** Direktur Cabang (P29): memimpin semua divisi satu cabang, di bawah sekretaris. */
 export const TINGKAT_CABANG = 33;
@@ -26,6 +28,7 @@ export type TTingkat =
   | typeof TINGKAT_MEMBER
   | typeof TINGKAT_LEADER
   | typeof TINGKAT_SUPERVISOR
+  | typeof TINGKAT_ASISTEN_MANAGER
   | typeof TINGKAT_MANAGER
   | typeof TINGKAT_CABANG
   | typeof TINGKAT_SEKRETARIS

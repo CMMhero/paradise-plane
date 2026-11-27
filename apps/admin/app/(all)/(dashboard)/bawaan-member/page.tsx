@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { setPromiseToast } from "@plane/propel/toast";
-import { InstanceMemberService, type TMemberDefaults } from "@plane/services";
+import { InstanceMemberService, type TMemberDefaults, type TTingkatBawaan } from "@plane/services";
 import { CustomSelect, Loader, ToggleSwitch } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
@@ -104,9 +104,10 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
     }
   };
 
-  const tingkatPilihan: { value: 10 | 20 | 30; label: string }[] = [
+  const tingkatPilihan: { value: TTingkatBawaan; label: string }[] = [
     { value: 10, label: s.editor.position_member },
     { value: 20, label: s.editor.position_supervisor },
+    { value: 25, label: s.editor.position_assistant_manager },
     { value: 30, label: s.editor.position_manager },
   ];
 
@@ -157,7 +158,7 @@ function BawaanMemberPage(_props: Route.ComponentProps) {
                 <CustomSelect
                   value={tingkatTerpilih}
                   label={tingkatPilihan.find((p) => p.value === tingkatTerpilih)?.label}
-                  onChange={(v: number) => ubahKeanggotaan({ tingkat: Number(v) as 10 | 20 | 30 })}
+                  onChange={(v: number) => ubahKeanggotaan({ tingkat: Number(v) as TTingkatBawaan })}
                   buttonClassName="w-full"
                   className="w-full"
                   input

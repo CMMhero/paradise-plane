@@ -508,5 +508,12 @@
       "label": "Epic 標題",
       "required": "Epic 標題為必填。"
     }
+  },
+  "work_item_export": {
+    "button": "匯出 Excel",
+    "exporting": "正在匯出…",
+    "failed_title": "匯出失敗",
+    "failed_message": "無法建立 Excel 檔案。請再試一次。",
+    "too_large": "此清單包含超過 {limit} 個工作事項。請使用篩選條件縮小範圍後再匯出。"
   }
 }

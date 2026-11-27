@@ -20,6 +20,7 @@ import type { THomeWidgetProps } from "@plane/types";
 import { Avatar, Loader } from "@plane/ui";
 import { getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
+import { kunciPengumuman } from "@/components/pengumuman/cache";
 import { IsiMarkdown } from "@/components/pengumuman/isi-markdown";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
@@ -51,7 +52,7 @@ export const AnnouncementsWidget = observer(function AnnouncementsWidget({ works
     error: galatPesan,
     mutate,
   } = useSWR(
-    kanal ? `PENGUMUMAN_${workspaceSlug}_${kanal.id}` : null,
+    kanal ? kunciPengumuman(workspaceSlug, kanal.id) : null,
     kanal ? () => chatService.getPesanRuang(workspaceSlug, kanal.id) : null,
     { revalidateOnFocus: false, dedupingInterval: 60_000 }
   );
@@ -104,6 +105,7 @@ export const AnnouncementsWidget = observer(function AnnouncementsWidget({ works
                   <p className="min-w-0 truncate text-13 font-medium text-primary">{namaPenulis}</p>
                   <p className="ml-auto shrink-0 text-12 text-tertiary">
                     {renderFormattedDate(p.created_at)} {renderFormattedTime(p.created_at)}
+                    {p.disunting ? ` · ${t("chat_ui.edited")}` : null}
                   </p>
                 </div>
                 {p.isi ? <IsiMarkdown teks={p.isi} /> : null}

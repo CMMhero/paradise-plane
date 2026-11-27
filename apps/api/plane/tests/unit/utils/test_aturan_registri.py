@@ -115,6 +115,15 @@ class TestDeklarasi:
     def test_nama_tingkat_cermin_model(self):
         assert {t: n for t, n in TINGKAT_CHOICES}.keys() == jenis.NAMA_TINGKAT.keys()
 
+    def test_level_supervisor_dan_manager_juga_asisten_manager(self):
+        """P215: ambang yang bisa disetel ke 20 dan 30 juga bisa disetel ke 25."""
+        kurang = [
+            r.key
+            for r in SEMUA
+            if r.kind == jenis.LEVEL and {20, 30} <= set(r.nilai_pilihan) and 25 not in r.nilai_pilihan
+        ]
+        assert kurang == []
+
     def test_bawaan_member_tampilan_dibangun_dari_registri(self):
         from plane.utils.bawaan_member import PABRIK, aturan_tampilan
 

@@ -60,6 +60,8 @@ The office's extra features use the open-source libraries below. Copyright and
 license belong to their respective authors. The license text is distributed with
 the package (`pip`) and must not be removed.
 
-| Library                                                        | Feature                        | License |
-| -------------------------------------------------------------- | ------------------------------ | ------- |
-| [django-auditlog](https://github.com/jazzband/django-auditlog) | Audit trail (who changed what) | MIT     |
+| Library                                                                  | Feature                                       | License |
+| ------------------------------------------------------------------------ | --------------------------------------------- | ------- |
+| [django-auditlog](https://github.com/jazzband/django-auditlog)           | Audit trail (who changed what)                | MIT     |
+| [markdown-it-py](https://github.com/executablebooks/markdown-it-py)      | Markdown in announcement and chat text/emails | MIT     |
+| [mdurl](https://github.com/executablebooks/mdurl) (needed by the parser) | URL handling for markdown-it-py               | MIT     |

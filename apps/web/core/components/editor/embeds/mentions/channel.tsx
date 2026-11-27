@@ -11,6 +11,8 @@ import { useTranslation } from "@plane/i18n";
 import { HoverCard } from "@plane/propel/popover";
 // components
 import { KanalPreviewCard } from "@/components/rujukan-preview";
+// hooks
+import { useFollowFromPeek } from "@/hooks/use-follow-from-peek";
 // local imports
 import { useInfoKanal } from "./use-info-rujukan";
 
@@ -24,6 +26,7 @@ type Props = {
 export function EditorChannelMention({ id }: Props) {
   const { t } = useTranslation();
   const { slug, info, isLoading } = useInfoKanal(id);
+  const followFromPeek = useFollowFromPeek();
 
   if (isLoading || !info) {
     return <span className="not-prose inline rounded-sm bg-layer-1 px-1 py-0.5 text-tertiary">#…</span>;
@@ -40,9 +43,15 @@ export function EditorChannelMention({ id }: Props) {
     );
   }
 
+  const href = `/${slug}/chat/?ruang=${id}`;
   return (
     <HoverCard content={<KanalPreviewCard id={id} />}>
-      <Link to={`/${slug}/chat/?ruang=${id}`} className={CHIP_CLASS} aria-label={t("rujukan_ui.open_channel")}>
+      <Link
+        to={href}
+        onClick={(event) => followFromPeek(event, href)}
+        className={CHIP_CLASS}
+        aria-label={t("rujukan_ui.open_channel")}
+      >
         <Hash className="mr-0.5 inline size-3 align-[-1px]" />
         <span className="hover:underline">{info.nama}</span>
       </Link>

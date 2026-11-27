@@ -281,8 +281,14 @@ export class ChatService extends APIService {
       });
   }
 
-  async suntingPesan(workspaceSlug: string, pesanId: string, isi: string): Promise<TPesan> {
-    return this.patch(`/api/workspaces/${workspaceSlug}/chat/pesan/${pesanId}/`, { isi })
+  /** `rujukan` = #kanal dan #work item yang baru dirujuk; server hanya menambahkannya. */
+  async suntingPesan(
+    workspaceSlug: string,
+    pesanId: string,
+    isi: string,
+    rujukan: Pick<TRujukanKirim, "kanal" | "tugas"> = {}
+  ): Promise<TPesan> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/chat/pesan/${pesanId}/`, { isi, ...rujukan })
       .then((res) => res?.data)
       .catch((e) => {
         throw e?.response?.data;

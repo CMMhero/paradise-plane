@@ -150,6 +150,7 @@ const en = {
     level_secretary: "Secretary",
     level_branch_director: "Branch Manager",
     level_manager: "Manager",
+    level_assistant_manager: "Assistant Manager",
     level_supervisor: "Supervisor",
     level_leader: "Leader",
     level_staff: "Staff",
@@ -200,6 +201,7 @@ const en = {
     position_member: "Staff",
     position_leader: "Leader",
     position_supervisor: "Supervisor",
+    position_assistant_manager: "Assistant Manager",
     position_manager: "Manager",
     position_branch_director: "Branch Manager",
     branch: "Branch",
@@ -212,7 +214,7 @@ const en = {
     not_placed: "Not placed yet",
     not_workspace_member: "Not a workspace member, so position and divisions cannot be set.",
     password_note:
-      "Changing the password or email ends all of their sessions and they must sign in again. Managers and supervisors automatically become Admin in their divisions; members become regular Members. No email is sent, so hand the new password over directly.",
+      "Changing the password or email ends all of their sessions and they must sign in again. Supervisors and above automatically become Admin in their divisions; members become regular Members. No email is sent, so hand the new password over directly.",
     prefs: {
       title: "Personal settings & preferences",
       loading: "Loading preferences…",
@@ -267,13 +269,13 @@ const en = {
       digest_hari_ini: "Due today",
       digest_depan: "Next 7 days",
       digest_diberikan: "Work they assigned",
-      digest_tim: "Their team (supervisor, manager)",
+      digest_tim: "Their team (supervisor, assistant manager, manager)",
       daily_digest: "Send the start-of-day summary (08:30 WIB)",
       daily_digest_sore: "Send the end-of-day summary (17:30 WIB)",
       pengumuman: "Email each new post in Announcements",
       ikut_bawaan_jabatan: "Follow role defaults",
       ikut_bawaan_jabatan_note:
-        "The staff, leader (supervisor, manager), and director defaults are set in the New member defaults menu. Changing any switch here stops this person following them.",
+        "The staff, leader (supervisor, assistant manager, manager), and director defaults are set in the New member defaults menu. Changing any switch here stops this person following them.",
       locked_note: "Greyed switches are off for every director by the director policy in New member defaults.",
     },
     superadmin_badge: "Super Admin: full access to every department.",
@@ -349,7 +351,7 @@ const en = {
   org: {
     title: "Organization structure",
     description:
-      "Divisions hold departments, departments hold work boards and people. Staff & supervisors see their department's work boards, managers see every department in their division, directors see everything.",
+      "Divisions hold departments, departments hold work boards and people. Staff, supervisors and assistant managers see their department's work boards, managers see every department in their division, directors see everything.",
     new_division: "New division",
     division_created: "Division {kode} created",
     division_saved: "Division {kode} saved",
@@ -398,6 +400,7 @@ const en = {
     stat_secretary: "Secretaries",
     stat_branch_director: "Branch Managers",
     stat_manager: "Managers",
+    stat_assistant_manager: "Assistant Managers",
     stat_supervisor: "Supervisors",
     stat_leader: "Leaders",
     stat_staff: "Staff",
@@ -408,6 +411,7 @@ const en = {
     search_person: "Search people (name/email)…",
     assign_target: "Pick a destination…",
     managers: "Managers",
+    assistant_managers: "Assistant Managers",
     supervisors: "Supervisors",
     leaders: "Leaders",
     staff: "Staff",
@@ -432,7 +436,7 @@ const en = {
     chart_hide: "Hide chart",
     company: "Company",
     no_directors: "No directors or secretaries yet.",
-    sup_staff: "{sup} supervisors · {staff} staff",
+    sup_staff: "{sup} in charge · {staff} staff",
     canvas_label: "Organization chart. Drag or use the arrow keys to move, + and - to zoom, 0 to fit.",
     zoom_in: "Zoom in",
     zoom_out: "Zoom out",
@@ -560,6 +564,7 @@ const en = {
         "{name} stays Manager of their own division. In {place} they work as a regular member of the department. Pick their role there.",
       role_label: "Role in {place}",
       role_staff_hint: "Sees the department, edits only their own work.",
+      role_assistant_manager_hint: "Leads the department's supervisors and approves their work.",
       role_supervisor_hint: "Oversees and approves the department's staff.",
       role_leader_hint:
         "Assigns and edits the department's staff work. Does not approve; their own work still needs a supervisor.",
@@ -599,7 +604,7 @@ const en = {
     email_note:
       "In-app inbox and email per event, plus the daily summary parts. Staff and leader columns are copied to each account when it is created; changing them does not touch existing accounts. The director column applies to every director immediately.",
     col_staf: "Staff (or no position)",
-    col_pimpinan: "Leaders (supervisor, manager)",
+    col_pimpinan: "Leaders (supervisor, assistant manager, manager)",
     col_direktur: "Directors and secretaries",
     direktur_note:
       "Also a hard limit: anything off here is off for every director and secretary right away, whatever their own settings. Keep it to mentions, chat, and summaries.",

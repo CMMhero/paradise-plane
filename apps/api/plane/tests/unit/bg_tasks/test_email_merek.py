@@ -33,7 +33,7 @@ from plane.utils.email_merek import (
 )
 from plane.utils.email_teks import KOLOM, PRIORITAS, TEKS
 
-JUMLAH_CONTOH = 26
+JUMLAH_CONTOH = 27
 # Placeholder str.format yang tertinggal, mis. "{aktor}". Kurung kurawal CSS di <style>
 # dibuang dulu sebelum diperiksa.
 SISA_PLACEHOLDER = re.compile(r"\{[a-z_]+\}")
@@ -81,6 +81,18 @@ class TestSemuaEmailDirender:
         for nama in ("17-tugas-baru", "20-ringkasan-pagi-staf", "23-laporan-direktur", "18-pengingat-h3"):
             en = (contoh / f"{nama}-en.html").read_text(encoding="utf-8")
             assert "Anda" not in en and "Tenggat" not in en, nama
+
+    @pytest.mark.parametrize("bahasa", ["id", "en"])
+    def test_contoh_pengumuman_merender_markdown(self, contoh, bahasa):
+        html = (contoh / f"27-pengumuman-{bahasa}.html").read_text(encoding="utf-8")
+        teks = (contoh / f"27-pengumuman-{bahasa}.txt").read_text(encoding="utf-8")
+        assert "<strong>" in html and "<li " in html and "<blockquote " in html
+        assert "/profile/contoh" in html
+        assert 'href="https://space.paradiseperkasa.com/pt-paradise-perkasa/pengumuman"' in html
+        for sintaks in ("**", "](", "\n> "):
+            assert sintaks not in teks, sintaks
+            assert sintaks not in html, sintaks
+        assert "@Budi Santoso" in teks and "• " in teks
 
     def test_logo_dan_avatar_sisip_lampiran_di_luar_related(self, contoh):
         struktur = baca_eml(contoh / "17-tugas-baru-id.eml")

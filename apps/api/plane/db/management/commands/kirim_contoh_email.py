@@ -70,6 +70,29 @@ def _orang(nama, foto=False):
     )
 
 
+# Markdown seperti yang disimpan penyunting pengumuman: baris baru, tebal, daftar, sebutan, tautan.
+_PENGUMUMAN = {
+    "id": (
+        "Dengan ini kami menyampaikan **selamat bergabung kepada Bapak Rudi sebagai Plant Manager**.\n\n"
+        "Terhitung mulai **Selasa, 1 Desember 2026**, beliau memimpin operasional pabrik.\n"
+        "Mohon dukungan [@Budi Santoso]({url}/{slug}/profile/contoh) dan seluruh tim:\n\n"
+        "* Serah terima area produksi, _paling lambat Jumat_\n"
+        "* Perkenalan di rapat mingguan\n\n"
+        "> Selamat bekerja, Pak Rudi.\n\n"
+        "Jadwal lengkap ada di [halaman Pengumuman]({url}/{slug}/pengumuman)."
+    ),
+    "en": (
+        "We are pleased to **welcome Mr. Rudi as our new Plant Manager**.\n\n"
+        "Starting **Tuesday, 1 December 2026**, he leads plant operations.\n"
+        "Please support [@Budi Santoso]({url}/{slug}/profile/contoh) and the whole team:\n\n"
+        "* Production area handover, _by Friday at the latest_\n"
+        "* Introduction at the weekly meeting\n\n"
+        "> Welcome aboard, Rudi.\n\n"
+        "The full schedule is on the [Announcements page]({url}/{slug}/pengumuman)."
+    ),
+}
+
+
 def _tugas(kode, nama_project, seq, judul, selisih, hari_ini, **lain):
     return NS(
         id=uuid4(),
@@ -257,6 +280,7 @@ class Command(BaseCommand):
         from plane.bgtasks.forgot_password_task import susun_lupa_sandi
         from plane.bgtasks.login_activity_retention import susun_peringatan_retensi
         from plane.bgtasks.magic_link_code_task import susun_magic_link
+        from plane.bgtasks.pengumuman_email_task import susun_email_pengumuman
         from plane.bgtasks.penugasan_email import susun_email_penugasan
         from plane.bgtasks.project_add_user_email_task import susun_tambah_project
         from plane.bgtasks.project_invitation_task import susun_undangan_project
@@ -394,6 +418,13 @@ class Command(BaseCommand):
             s, polos, html = susun_email_pesan(andi, SLUG, r, b, g)
             return s, html, polos, g, []
 
+        def pengumuman(b):
+            g = []
+            pesan = NS(pengirim=sari, workspace=NS(slug=SLUG), created_at=timezone.now(), ruang_id=uuid4())
+            isi = _PENGUMUMAN[b].format(url=URL, slug=SLUG)
+            s, polos, html = susun_email_pengumuman(andi, pesan, isi, 1, b, g)
+            return s, html, polos, g, []
+
         def tidur(b):
             s, polos, html = susun_peringatan_tidur("Proyek Lama", "proyek-lama", 60, 30, b, ke)
             return s, html, polos, [], []
@@ -456,6 +487,7 @@ class Command(BaseCommand):
             ("24-obrolan", obrolan),
             ("25-workspace-tidur", tidur),
             ("26-retensi-login", retensi),
+            ("27-pengumuman", pengumuman),
         ]  # fmt: skip
 
 

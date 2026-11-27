@@ -377,7 +377,13 @@
     "send": "發布",
     "send_failed": "無法發布公告。",
     "load_failed": "無法載入公告。",
-    "open_in_chat": "在聊天中討論"
+    "open_in_chat": "在聊天中討論",
+    "edit_failed": "Could not save the announcement.",
+    "delete_failed": "Could not delete the announcement.",
+    "confirm_delete_title": "Delete this announcement?",
+    "confirm_delete_body": "It disappears from this page, Home, and the Announcements channel. Emails that were already sent are not recalled.",
+    "source_label": "Announcement text in Markdown",
+    "source_notice": "This announcement uses formatting the editor cannot keep, so you are editing its Markdown text."
   },
   "chat_ui": {
     "try_again_shortly": "Try again in a moment.",
@@ -1155,6 +1161,7 @@
     "level_10": "Staff",
     "level_12": "Leader",
     "level_20": "Supervisor",
+    "level_25": "Assistant Manager",
     "level_30": "Manager",
     "level_33": "Branch Director",
     "level_35": "秘書",

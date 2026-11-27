@@ -377,7 +377,13 @@
     "send": "Terbitkan",
     "send_failed": "Pengumuman gagal diterbitkan.",
     "load_failed": "Pengumuman gagal dimuat.",
-    "open_in_chat": "Diskusikan di Obrolan"
+    "open_in_chat": "Diskusikan di Obrolan",
+    "edit_failed": "Pengumuman gagal disimpan.",
+    "delete_failed": "Pengumuman gagal dihapus.",
+    "confirm_delete_title": "Hapus pengumuman ini?",
+    "confirm_delete_body": "Pengumuman hilang dari halaman ini, Home, dan kanal Announcements. Email yang sudah terkirim tidak bisa ditarik.",
+    "source_label": "Teks pengumuman dalam Markdown",
+    "source_notice": "Pengumuman ini memakai format yang tidak bisa dipertahankan penyunting, jadi yang disunting teks Markdown-nya."
   },
   "chat_ui": {
     "try_again_shortly": "Coba lagi sebentar.",
@@ -1155,6 +1161,7 @@
     "level_10": "Staf",
     "level_12": "Leader",
     "level_20": "Supervisor",
+    "level_25": "Asisten Manager",
     "level_30": "Manager",
     "level_33": "Direktur Cabang",
     "level_35": "Sekretaris",

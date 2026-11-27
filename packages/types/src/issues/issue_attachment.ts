@@ -11,6 +11,8 @@ export type TIssueAttachment = {
   attributes: {
     name: string;
     size: number;
+    /** MIME type the server stored (guessed from the extension when the browser sent none). */
+    type?: string;
   };
   asset_url: string;
   issue_id: string;

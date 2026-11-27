@@ -36,8 +36,8 @@ function addSpacesToCheckboxes() {
           child &&
           child.type === "element" &&
           child.tagName === "li" &&
-          child.properties &&
-          child.properties["data-type"] === "taskItem"
+          // hast menamai `data-type` sebagai `dataType`.
+          child.properties?.dataType === "taskItem"
         ) {
           const liElement = child;
 
@@ -60,16 +60,16 @@ function addSpacesToCheckboxes() {
               // Extract text content from the div, unwrapping any paragraph tags
               const textContent: ElementContent[] = [];
               if (contentDiv.children) {
-                for (const child of contentDiv.children) {
-                  if (child.type === "element" && child.tagName === "p") {
+                for (const content of contentDiv.children) {
+                  if (content.type === "element" && content.tagName === "p") {
                     // Unwrap paragraph - add its children directly
-                    const pElement = child;
+                    const pElement = content;
                     if (pElement.children) {
                       textContent.push(...pElement.children);
                     }
                   } else {
                     // Keep other elements as-is
-                    textContent.push(child);
+                    textContent.push(content);
                   }
                 }
               }
@@ -88,6 +88,53 @@ function addSpacesToCheckboxes() {
       }
     };
 
+    helper(tree);
+  };
+}
+
+// Paradise: garis pemisah penyunting bukan <hr> melainkan <div data-type="horizontalRule">,
+// jadi tanpa ini ia hilang dari Markdown.
+function restoreHorizontalRules() {
+  return (tree: HASTParent) => {
+    const helper = (node: HASTParent): void => {
+      node.children = node.children.map((child) => {
+        if (child.type !== "element") return child;
+        if (child.properties?.dataType === "horizontalRule")
+          return { type: "element", tagName: "hr", properties: {}, children: [] };
+        helper(child);
+        return child;
+      });
+    };
+    helper(tree);
+  };
+}
+
+const INLINE_MARKS = new Set(["strong", "b", "em", "i", "s", "del", "strike"]);
+
+// Paradise: `**tebal **` bukan tebal di Markdown. Spasi di tepi format dipindah ke luar;
+// penyunting menghasilkannya setiap kali dua format bersinggungan.
+function hoistMarkWhitespace() {
+  return (tree: HASTParent) => {
+    const helper = (node: HASTParent): void => {
+      node.children = node.children.flatMap((child) => {
+        if (child.type !== "element") return [child];
+        helper(child);
+        if (!INLINE_MARKS.has(child.tagName)) return [child];
+        const edges: [HASTParent["children"], HASTParent["children"]] = [[], []];
+        const first = child.children[0];
+        if (first?.type === "text" && /^\s/.test(first.value)) {
+          edges[0].push({ type: "text", value: " " });
+          first.value = first.value.trimStart();
+        }
+        const last = child.children[child.children.length - 1];
+        if (last?.type === "text" && /\s$/.test(last.value)) {
+          edges[1].push({ type: "text", value: " " });
+          last.value = last.value.trimEnd();
+        }
+        const empty = child.children.every((c) => c.type === "text" && !c.value);
+        return [...edges[0], ...(empty ? [] : [child]), ...edges[1]];
+      });
+    };
     helper(tree);
   };
 }
@@ -124,6 +171,8 @@ export function convertHTMLToMarkdown(args: TArgs): string {
   const result = unified()
     .use(rehypeParse, { fragment: true })
     .use(addSpacesToCheckboxes)
+    .use(restoreHorizontalRules)
+    .use(hoistMarkWhitespace)
     .use(rehypeRemark, {
       handlers: {
         ...parseCustomComponents({
@@ -134,6 +183,8 @@ export function convertHTMLToMarkdown(args: TArgs): string {
     })
     .use(remarkGfm)
     .use(remarkStringify, {
+      // `*` juga berlaku di tengah kata, `_` tidak.
+      emphasis: "*",
       handlers: {
         text: (node: { value: string }): string => node.value,
       },

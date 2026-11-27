@@ -233,7 +233,8 @@ export function MemberProfilePopover({
   /** Pointer masuk/keluar pemicu DAN kartu; dipakai untuk membuka kartu saat hover. */
   hoverHandlers?: { onMouseEnter: () => void; onMouseLeave: () => void };
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** `reason` comes from Base UI, e.g. "trigger-press", "outside-press", "escape-key". */
+  onOpenChange: (open: boolean, details: { reason: string }) => void;
   ariaLabel: string;
   triggerClassName?: string;
   side?: "top" | "bottom" | "left" | "right";
@@ -274,6 +275,10 @@ export function MemberProfilePopover({
         // di popup: dengan z di popup, kartu tertutup peek overview work item (z-25).
         positionerClassName="z-40"
         className={POPOVER_PANEL_CLASS}
+        // The panel is portaled to <body>. Without this marker the work item peek
+        // treats a press inside the card as an outside click and closes itself
+        // before the card's buttons receive the click.
+        data-prevent-outside-click
         onMouseEnter={hoverHandlers?.onMouseEnter}
         onMouseLeave={hoverHandlers?.onMouseLeave}
         onClick={(e) => e.stopPropagation()}
