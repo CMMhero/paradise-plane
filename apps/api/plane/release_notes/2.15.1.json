@@ -1,0 +1,10 @@
+{
+  "version": "2.15.1",
+  "date": "2026-11-27",
+  "entries": [
+    {
+      "type": "Added",
+      "text": "Export to Excel now includes each work item's description, plus a Comments sheet and an Activity sheet with its change history."
+    }
+  ]
+}
