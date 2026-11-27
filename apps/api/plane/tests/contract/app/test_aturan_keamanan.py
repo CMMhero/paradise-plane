@@ -132,11 +132,11 @@ class TestDeklarasi:
         assert batas[f.PASSWORD_RESET_LINK_MINUTES] == (10, 1440)
         assert batas[f.GOD_MODE_SESSION_MINUTES] == (5, 480)
 
-    def test_sandi_tidak_pernah_di_bawah_skor_hari_ini(self):
+    def test_kekuatan_sandi_bawaan_panjang_saja(self):
         rule = aturan.REGISTRI[f.PASSWORD_MIN_STRENGTH]
-        assert rule.default == 3
-        assert min(rule.nilai_pilihan) == 3
-        for lemah in (0, 1, 2, "2"):
+        assert rule.default == 0
+        assert rule.nilai_pilihan == (0, 3, 4)
+        for lemah in (1, 2, "2"):
             with pytest.raises(NilaiTidakSah):
                 normalkan(rule, lemah)
 
@@ -201,7 +201,7 @@ class TestPagarEndpoint:
             (f.PASSWORD_RESET_LINK_MINUTES, 100000, "Must be between 10 and 1440."),
             (f.GOD_MODE_SESSION_MINUTES, 0, "Must be between 5 and 480."),
             (f.EXPORT_FILE_KEEP_DAYS, 0, "Must be between 1 and 30."),
-            (f.PASSWORD_MIN_STRENGTH, 2, "Must be one of: Strong, Very strong."),
+            (f.PASSWORD_MIN_STRENGTH, 2, "Must be one of: Length only, Strong, Very strong."),
             (f.UPLOAD_BLOCKED_FILE_TYPES, ["text/html"], "Unknown items: text/html."),
         ],
     )
@@ -223,7 +223,7 @@ class TestPagarEndpoint:
             (f.SIGN_IN_CODE_MINUTES, "100000"),
             (f.PASSWORD_RESET_LINK_MINUTES, "525600"),
             (f.GOD_MODE_SESSION_MINUTES, "0"),
-            (f.PASSWORD_MIN_STRENGTH, "0"),
+            (f.PASSWORD_MIN_STRENGTH, "1"),
             (f.APP_SESSION_SLIDING, "mungkin"),
             (f.UPLOAD_BLOCKED_FILE_TYPES, "text/html,application/pdf"),
         ],
@@ -238,7 +238,7 @@ class TestPagarEndpoint:
         _setel(f.PASSWORD_MIN_STRENGTH, "1")
         assert AuthenticationThrottle().rate == f"{aturan.REGISTRI[f.LOGIN_ATTEMPTS_PER_MINUTE].default}/minute"
         assert ApiKeyRateThrottle().rate == f"{aturan.REGISTRI[f.API_KEY_REQUESTS_PER_MINUTE].default}/minute"
-        assert not sandi_cukup_kuat("password123")
+        assert sandi_cukup_kuat("password123")
 
     def test_perubahan_tercatat_di_audit(self, super_admin):
         from auditlog.models import LogEntry
@@ -299,7 +299,16 @@ class TestBatasLaju:
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestSandi:
-    def test_bawaan_skor_tiga_seperti_hari_ini(self):
+    @pytest.mark.parametrize("sandi", ["12345678", "password", "kucing123"])
+    def test_bawaan_menerima_delapan_karakter_apa_saja(self, sandi):
+        assert sandi_cukup_kuat(sandi)
+
+    @pytest.mark.parametrize("sandi", ["", "1234567", "Ab#1", None, 12345678])
+    def test_bawaan_menolak_yang_pendek_atau_bukan_teks(self, sandi):
+        assert not sandi_cukup_kuat(sandi)
+
+    def test_strong_menolak_yang_mudah_ditebak(self):
+        _setel(f.PASSWORD_MIN_STRENGTH, 3)
         assert sandi_cukup_kuat(SANDI_SKOR_3)
         assert not sandi_cukup_kuat("password123")
 
@@ -316,6 +325,15 @@ class TestSandi:
         res = session_client.post(url, {"old_password": "lama-Sekali#123", "new_password": SANDI_SKOR_3}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
         assert res.data["error_code"] == AUTHENTICATION_ERROR_CODES["PASSWORD_TOO_WEAK"]
+
+    @pytest.mark.parametrize("baru,kode", [("kucing123", 200), ("kucing1", 400)])
+    def test_endpoint_ganti_sandi_bawaan(self, session_client, create_user, baru, kode):
+        create_user.set_password("lama-Sekali#123")
+        create_user.save()
+        res = session_client.post(
+            "/auth/change-password/", {"old_password": "lama-Sekali#123", "new_password": baru}, format="json"
+        )
+        assert res.status_code == kode
 
     def _token_pada(self, menit_lalu, user):
         awal = datetime(2026, 11, 1, 8, 0, 0)

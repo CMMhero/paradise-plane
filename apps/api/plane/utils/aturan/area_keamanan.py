@@ -10,7 +10,7 @@ Area paling berbahaya: nilai yang salah bisa membuka sistem. Karena itu:
 - Semua aturan di sini `risk=high` (frasa konfirmasi + audit), dan setiap angka
   punya lantai dan plafon (`min`/`max`) sehingga suntingan God Mode tidak pernah
   bisa mematikan perlindungannya (batas laju tidak bisa 0 atau tak terbatas,
-  sandi tidak bisa lebih lemah dari hari ini, daftar tipe unggahan hanya bisa
+  sandi tidak bisa lebih pendek dari 8 karakter, daftar tipe unggahan hanya bisa
   dicoret, tidak pernah ditambah).
 - Semua dibaca per permintaan (`applies=live`), tidak ada yang dibaca saat
   proses mulai. Throttle DRF dibuat ulang per permintaan, jadi lajunya cukup
@@ -101,13 +101,15 @@ ATURAN = (
     Rule(
         key=PASSWORD_MIN_STRENGTH,
         kind=CHOICE,
-        default=3,
-        choices=((3, "Strong"), (4, "Very strong")),
+        default=0,
+        choices=((0, "Length only"), (3, "Strong"), (4, "Very strong")),
         group="security",
         label="Minimum password strength",
         help=(
             "Checked when someone signs up, sets, changes, or resets a password, Super Admins included. "
-            "Existing passwords keep working. It can never go below Strong."
+            "Existing passwords keep working. Every password needs at least 8 characters. Length only accepts "
+            "any such password, including easy ones like 12345678. Strong and Very strong also refuse "
+            "guessable passwords."
         ),
         risk=TINGGI,
     ),
