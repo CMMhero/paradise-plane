@@ -41,6 +41,12 @@ projects follow Workspaces > New project defaults (visibility, time zone,
 auto-archive/auto-close, guest access), and the creator can still change them in
 the form.
 
+**Passwords.** A new password needs at least 8 characters, with no required mix
+of letters, numbers or symbols. To be stricter, set God Mode > Security >
+"Minimum password strength" to Strong or Very strong, which also refuses
+guessable passwords. The default, Length only, accepts easy ones such as
+`12345678`.
+
 **Design system (KEP-64).** Every color, radius, font, and motion value is a
 token in `packages/tailwind-config/paradise-tampilan.css`. Components use token
 classes and component props (`variant`, `size`) and don't write their own

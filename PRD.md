@@ -54,6 +54,13 @@ places they hold.
 | Descriptions, comments, history      | Description column plus Comments and Activity sheets, one row per entry, only for exported work items |
 | Export never shows more than the app | Entries from departments the user is not in are left out; unseen work items are never named           |
 
+## Requirements added in 2.15.2
+
+| Requirement                 | Acceptance                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------ |
+| Easy-to-remember passwords  | Any 8 or more characters are accepted on sign-up, set, change and reset; no character mix needed |
+| Strictness stays adjustable | God Mode can require Strong or Very strong; nothing below 8 characters is ever accepted          |
+
 ## Architecture
 
 - `apps/web` React Router app, `apps/admin` God Mode, `apps/live` collaborative
@@ -61,6 +68,14 @@ places they hold.
 - PostgreSQL, Redis, RabbitMQ, MinIO, Caddy. Docker Compose.
 - Work rules live in `plane/utils/aturan`. Positions and placement live in
   `plane/db/models/hierarki.py` and `plane/db/penempatan.py`.
+
+## Implementation notes for 2.15.2
+
+- The server check is `sandi_cukup_kuat` in
+  `plane/authentication/utils/kata_sandi.py`. Screens check only the length
+  (`getPasswordStrength` in `packages/utils`), so a password refused by a
+  stricter God Mode setting is reported after submit.
+- Login rate limits are unchanged.
 
 ## Implementation notes for 2.15.1
 
