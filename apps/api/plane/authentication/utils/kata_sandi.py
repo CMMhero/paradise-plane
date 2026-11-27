@@ -5,10 +5,10 @@
 
 """Dua aturan sandi area F, satu tempat untuk setiap pemeriksa.
 
-- `sandi_cukup_kuat`: skor zxcvbn minimal PASSWORD_MIN_STRENGTH (3 atau 4; tidak
-  pernah di bawah 3, pilihannya memang hanya itu). Dipakai daftar, atur sandi,
-  ganti sandi, reset sandi (app dan space), sandi Super Admin, dan perintah
-  `reset_password`.
+- `sandi_cukup_kuat`: selalu minimal PANJANG_SANDI_MIN karakter. Di atas itu
+  PASSWORD_MIN_STRENGTH: 0 (bawaan) berarti panjang saja, 3 atau 4 menambah skor
+  zxcvbn minimal. Dipakai daftar, atur sandi, ganti sandi, reset sandi (app dan
+  space), sandi Super Admin, dan perintah `reset_password`.
 - `TokenResetSandi`: token reset sandi Django dengan umur PASSWORD_RESET_LINK_MINUTES.
 """
 
@@ -22,8 +22,15 @@ from plane.utils import aturan
 from plane.utils.aturan.area_keamanan import PASSWORD_MIN_STRENGTH, PASSWORD_RESET_LINK_MINUTES
 
 
+# Cermin PASSWORD_MIN_LENGTH di packages/constants/src/auth/index.ts.
+PANJANG_SANDI_MIN = 8
+
+
 def sandi_cukup_kuat(sandi: str) -> bool:
-    return zxcvbn(sandi)["score"] >= int(aturan.get_choice(PASSWORD_MIN_STRENGTH))
+    if not isinstance(sandi, str) or len(sandi) < PANJANG_SANDI_MIN:
+        return False
+    skor_min = int(aturan.get_choice(PASSWORD_MIN_STRENGTH))
+    return skor_min == 0 or zxcvbn(sandi)["score"] >= skor_min
 
 
 class TokenResetSandi(PasswordResetTokenGenerator):

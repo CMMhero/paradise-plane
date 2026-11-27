@@ -1,0 +1,10 @@
+{
+  "version": "2.15.2",
+  "date": "2026-11-27",
+  "entries": [
+    {
+      "type": "Changed",
+      "text": "Passwords are easier to choose: any password of 8 or more characters is accepted. Uppercase letters, numbers and symbols are no longer required. Your current password keeps working."
+    }
+  ]
+}

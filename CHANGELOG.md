@@ -8,6 +8,21 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ## 2026-11-27
 
+### Version 2.15.2
+
+- **2.15.1 to 2.15.2, patch.** A looser default for one security rule. No
+  migration, no new dependency. No operator step, unless "Minimum password
+  strength" was saved before in God Mode: a saved value stays, so set it to
+  Length only.
+- **Simpler passwords.** Any password of 8 or more characters is accepted.
+  Uppercase, lowercase, number and symbol are no longer required, and guessable
+  passwords such as `12345678` are no longer refused. Existing passwords keep
+  working.
+- **Still adjustable.** God Mode can still require Strong or Very strong.
+  Sign-in rate limits are unchanged.
+- **Screens.** Password fields show only the 8 character requirement; the
+  three-bar strength meter is gone.
+
 ### Version 2.15.1
 
 - **2.15.0 to 2.15.1, patch.** A small addition to the Excel export. No

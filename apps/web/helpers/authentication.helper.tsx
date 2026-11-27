@@ -152,7 +152,7 @@ const errorCodeMessages: {
   },
   [EAuthenticationErrorCodes.PASSWORD_TOO_WEAK]: {
     title: `Password too weak`,
-    message: () => `Please use a stronger password.`,
+    message: () => `Please use a longer or harder to guess password.`,
   },
   [EAuthenticationErrorCodes.SMTP_NOT_CONFIGURED]: {
     title: `SMTP not configured`,

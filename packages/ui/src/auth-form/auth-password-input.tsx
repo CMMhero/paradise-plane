@@ -74,9 +74,7 @@ export function AuthPasswordInput({
         onBlur={handleBlur}
         autoComplete="off"
       />
-      {showPasswordStrength && value && isFocused && (
-        <PasswordStrengthIndicator password={value as string} showCriteria />
-      )}
+      {showPasswordStrength && value && isFocused && <PasswordStrengthIndicator password={value as string} />}
     </div>
   );
 }

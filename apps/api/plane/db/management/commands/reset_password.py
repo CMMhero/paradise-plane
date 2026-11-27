@@ -52,7 +52,7 @@ class Command(BaseCommand):
             return
 
         if not sandi_cukup_kuat(password):
-            raise CommandError("Password is too common please set a complex password")
+            raise CommandError("Password needs at least 8 characters and must meet the God Mode password strength rule")
 
         # Set user password
         user.set_password(password)
