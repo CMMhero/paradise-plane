@@ -4,6 +4,9 @@
 
 """Contract tests for the Excel export of work item lists.
 
+The workbook has three sheets: the work items, their comments, and their
+history. The last two only ever cover rows of the first.
+
 Three routes cover every list page: the department list (also used by the module
 and department view pages), the workspace views list, and the profile list. The
 promise: the file holds the rows the list shows, in the same order, and never a
@@ -27,8 +30,11 @@ from rest_framework.test import APIClient
 from plane.db.models import (
     Estimate,
     EstimatePoint,
+    FileAsset,
     Issue,
+    IssueActivity,
     IssueAssignee,
+    IssueComment,
     IssueLabel,
     IssueSubscriber,
     Label,
@@ -38,10 +44,12 @@ from plane.db.models import (
     Profile,
     Project,
     ProjectMember,
+    Ruang,
     State,
     User,
     WorkspaceMember,
 )
+from plane.bgtasks.issue_activities_task import delete_issue_relation_activity
 from plane.utils import ekspor_tugas
 from plane.utils.aturan import segarkan
 from plane.utils.order_queryset import ISSUE_ORDER_BY_ALLOWLIST
@@ -74,6 +82,7 @@ HEADERS_EN = [
     "Estimate",
     "Created",
     "Updated",
+    "Description",
 ]
 
 
@@ -135,6 +144,40 @@ def _rows(response):
     """One dict per data row, keyed by the English header."""
     values = list(_sheet(response).iter_rows(values_only=True))
     return [dict(zip(values[0], row)) for row in values[1:]]
+
+
+def _extra_rows(response, name):
+    """Data rows of a second or third sheet, as lists."""
+    assert response.status_code == 200, getattr(response, "data", response.content[:300])
+    sheet = load_workbook(BytesIO(response.content))[name]
+    return [list(row) for row in sheet.iter_rows(min_row=2, values_only=True)]
+
+
+def _mention(target, kind="user_mention"):
+    return f'<mention-component entity_identifier="{target.id}" entity_name="{kind}"></mention-component>'
+
+
+def _comment(issue, author, html, **extra):
+    return IssueComment.objects.create(
+        issue=issue, actor=author, comment_html=html, project=issue.project, workspace=issue.workspace, **extra
+    )
+
+
+def _activity(issue, actor, field, old=None, new=None, verb="updated", at=None, **extra):
+    row = IssueActivity.objects.create(
+        issue=issue,
+        actor=actor,
+        field=field,
+        verb=verb,
+        old_value=old,
+        new_value=new,
+        project=issue.project,
+        workspace=issue.workspace,
+        **extra,
+    )
+    if at:
+        IssueActivity.objects.filter(pk=row.pk).update(created_at=at)
+    return row
 
 
 def _keys(response):
@@ -220,7 +263,7 @@ class TestWorkbook:
         sheet = _sheet(response)
         assert [c.value for c in sheet[1]] == HEADERS_EN
         assert sheet.freeze_panes == "A2"
-        assert sheet.auto_filter.ref == "A1:T4"
+        assert sheet.auto_filter.ref == "A1:U4"
         row = next(r for r in _rows(response) if r["Title"] == "Full row")
         assert row["Key"] == _key(issue)
         assert row["Department"] == "Project EXP"
@@ -250,6 +293,8 @@ class TestWorkbook:
 
         row = _rows(response)[0]
         assert list(row)[:3] == ["Kode", "Judul", "Departemen"]
+        assert list(row)[-1] == "Deskripsi"
+        assert load_workbook(BytesIO(response.content)).sheetnames == ["Item kerja", "Komentar", "Aktivitas"]
         assert (row["Prioritas"], row["Grup status"]) == ("Mendesak", "Belum dimulai")
 
     @pytest.mark.parametrize(
@@ -568,6 +613,219 @@ class TestWhoMayExport:
 
 @pytest.mark.contract
 @pytest.mark.django_db
+class TestDescriptionAndComments:
+    def test_description_reads_as_text(self, workspace, owner, project):
+        budi = _user("budi", workspace)
+        other = _issue(project, owner, "Other")
+        room = Ruang.objects.create(workspace=workspace, tipe=Ruang.Tipe.KANAL, nama="gudang")
+        secret_room = Ruang.objects.create(workspace=workspace, tipe=Ruang.Tipe.PRIVAT, nama="akuisisi")
+        html = (
+            f"<h2>Plan</h2><p>Ask {_mention(budi)} about {_mention(other, 'issue_mention')}<br>"
+            f"in {_mention(room, 'channel_mention')}, not {_mention(secret_room, 'channel_mention')}.</p>"
+            "<ul><li><p>one</p><ul><li><p>nested</p></li></ul></li></ul>"
+            '<ul data-type="taskList">'
+            '<li data-type="taskItem" data-checked="true"><label><input type="checkbox"><span></span></label>'
+            "<div><p>done</p></div></li>"
+            '<li data-type="taskItem" data-checked="false"><div><p>open</p></div></li></ul>'
+            "<table><tbody><tr><th><p>Item</p></th><th><p>Qty</p></th></tr>"
+            "<tr><td><p>Box</p></td><td><p>4</p></td></tr></tbody></table>"
+            '<p><a href="https://example.com/sop">the SOP</a> &amp; '
+            '<span data-type="emoji" data-name="smile">😄</span></p>'
+            '<image-component src="abc"></image-component>'
+            '<file-component src="abc" name="rekap.pdf"></file-component><p>end</p>'
+        )
+        _issue(project, owner, "Doc", description_html=html)
+        _issue(project, owner, "Empty")
+
+        response = _client(owner).get(PROJECT_EXPORT.format(slug=workspace.slug, project=project.id))
+
+        text = {r["Title"]: r["Description"] for r in _rows(response)}
+        assert text["Doc"].split("\n") == [
+            "Plan",
+            f"Ask @budi about {_key(other)}",
+            "in #gudang, not #private-channel.",
+            "- one",
+            "- nested",
+            "[x] done",
+            "[ ] open",
+            "Item | Qty",
+            "Box | 4",
+            "the SOP (https://example.com/sop) & 😄",
+            "[image]",
+            "[file: rekap.pdf]",
+            "end",
+        ]
+        assert not text["Empty"]
+        cell = _sheet(response).cell(row=2, column=len(HEADERS_EN))
+        assert cell.alignment.wrap_text and cell.alignment.vertical == "top"
+
+    def test_broken_stored_html_does_not_break_the_file(self, workspace, owner, project):
+        # The API accepts HTML the editor would never write.
+        nested = (
+            f'<image-component src="x"><img src="y">{_mention(owner)}</image-component>'
+            f'<mention-component entity_identifier="{owner.id}" entity_name="user_mention">'
+            f'<mention-component entity_identifier="not-a-uuid">'
+            "<table><tr><td><table><tr><td>deep</td></tr></table></td></tr></table><p>tail\x07"
+        )
+        issue = _issue(project, owner, description_html=nested)
+        _comment(issue, owner, "<ul><li>unclosed <file-component name='a.pdf'><a href='http://x.test'>")
+
+        response = _client(owner).get(PROJECT_EXPORT.format(slug=workspace.slug, project=project.id))
+
+        assert "[image]" in _rows(response)[0]["Description"]
+        assert "[file: a.pdf]" in _extra_rows(response, "Comments")[0][4]
+
+    def test_comments_follow_the_row_order_then_time(self, workspace, owner, project):
+        budi = _user("budi", workspace)
+        _join(project, budi)
+        first = _issue(project, owner, "first")
+        second = _issue(project, owner, "second")
+        late = _comment(second, owner, "<p>on second</p>")
+        newer = _comment(first, budi, f"<p>newer {_mention(owner)}</p>")
+        older = _comment(first, None, "<p>=1+1</p>")
+        gone = _comment(first, budi, "<p>deleted</p>")
+        IssueComment.objects.filter(pk=gone.pk).update(deleted_at=timezone.now())
+        for comment, hour in ((late, 1), (newer, 3), (older, 2)):
+            IssueComment.objects.filter(pk=comment.pk).update(created_at=datetime(2026, 11, 1, hour, tzinfo=tz.utc))
+
+        response = _client(owner).get(
+            PROJECT_EXPORT.format(slug=workspace.slug, project=project.id), {"order_by": "sequence_id"}
+        )
+
+        assert _extra_rows(response, "Comments") == [
+            [_key(first), "first", "System", datetime(2026, 11, 1, 9), "=1+1"],
+            [_key(first), "first", "budi", datetime(2026, 11, 1, 10), f"newer @{owner.display_name}"],
+            [_key(second), "second", owner.display_name, datetime(2026, 11, 1, 8), "on second"],
+        ]
+        formula = load_workbook(BytesIO(response.content))["Comments"]["E2"]
+        assert formula.data_type == "s" and formula.quotePrefix
+
+    def test_history_reads_like_the_app(self, workspace, owner, project):
+        issue = _issue(project, owner, "tracked")
+        other = _issue(project, owner, "other")
+        asset = FileAsset.objects.create(
+            attributes={"name": "rekap.pdf"},
+            asset="ws/raw-storage-key",
+            issue=issue,
+            project=project,
+            workspace=workspace,
+            entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
+        )
+        steps = [
+            (None, {"verb": "created"}),
+            ("state", {"old": "Todo", "new": "Doing"}),
+            ("priority", {"old": "none", "new": "high"}),
+            ("description", {"old": "<p>secret old text</p>", "new": "<p>secret new text</p>"}),
+            ("assignees", {"old": "", "new": "budi"}),
+            ("target_date", {"old": "", "new": "2026-12-01"}),
+            ("approval", {"verb": "rejected", "new": "numbers are off"}),
+            ("approval", {"verb": "requested"}),
+            ("attachment", {"verb": "created", "new": "ws/raw-storage-key", "new_identifier": asset.pk}),
+            ("attachment", {"verb": "deleted"}),
+            ("is_private", {"old": "false", "new": "true"}),
+            ("archived_at", {"new": "manual_archive"}),
+            ("archived_at", {"old": "archive", "new": "restore"}),
+            ("parent", {"old": "", "new": _key(other), "new_identifier": other.pk}),
+            ("blocked_by", {"old": "", "new": _key(other), "old_identifier": other.pk}),
+            ("relates_to", {"old": _key(other), "new": "", "old_identifier": other.pk, "verb": "deleted"}),
+            ("estimate_points", {"old": "3", "new": "5"}),
+        ]
+        for hidden in ("comment", "reaction", "vote", "draft"):
+            _activity(issue, owner, hidden, new="never shown")
+        for minute, (field, extra) in enumerate(steps):
+            _activity(issue, owner, field, at=datetime(2026, 11, 1, 1, minute, tzinfo=tz.utc), **extra)
+
+        response = _client(owner).get(PROJECT_EXPORT.format(slug=workspace.slug, project=project.id))
+
+        rows = [r for r in _extra_rows(response, "Activity") if r[0] == _key(issue)]
+        assert [tuple(r[4:]) for r in rows] == [
+            ("Work item created", None, None),
+            ("State", "Todo", "Doing"),
+            ("Priority", "None", "High"),
+            ("Description", None, "Changed"),
+            ("Assignee", None, "budi"),
+            ("Due date", None, "2026-12-01"),
+            ("Approval", None, "Rejected: numbers are off"),
+            ("Approval", None, "Requested"),
+            ("Attachment", None, "rekap.pdf"),
+            ("Attachment", None, "Removed"),
+            ("Private", "No", "Yes"),
+            ("Archive", None, "Archived"),
+            ("Archive", None, "Restored"),
+            ("Parent", None, _key(other)),
+            ("Blocked by", None, _key(other)),
+            ("Related to", _key(other), None),
+            ("Estimate", "3", "5"),
+        ]
+        assert rows[0][1:4] == ["tracked", owner.display_name, datetime(2026, 11, 1, 8, 0)]
+        with zipfile.ZipFile(BytesIO(response.content)) as archive:
+            xml = b"".join(archive.read(name) for name in archive.namelist())
+        assert b"secret" not in xml and b"never shown" not in xml and b"raw-storage-key" not in xml
+
+    @pytest.mark.parametrize("url", [PROJECT_EXPORT, WORKSPACE_EXPORT, PROFILE_EXPORT])
+    def test_nothing_about_work_items_the_reader_cannot_see(self, workspace, owner, project, url):
+        peer = _user("peer", workspace)
+        _join(project, peer)
+        far = _project(workspace, owner, "FAR")
+        secret = _issue(project, owner, "secret title", is_private=True)
+        foreign = _issue(far, owner, "foreign title")
+        shown = _issue(project, owner, "shown")
+        _assign(shown, peer)
+        _comment(secret, owner, "<p>hidden remark</p>")
+        _activity(secret, owner, "state", old="Todo", new="hidden state")
+        _comment(foreign, owner, "<p>far remark</p>")
+        for target in (secret, foreign):
+            _activity(shown, owner, "relates_to", old="", new=_key(target), old_identifier=target.pk)
+            _activity(shown, owner, "parent", old=_key(target), new="", old_identifier=target.pk)
+        # Removing a relation, as the app records it: the row it writes on `shown` names `secret`
+        # but carries the id of `shown`.
+        written = []
+        delete_issue_relation_activity(
+            requested_data=json.dumps({"related_issue": str(shown.id), "relation_type": "relates_to"}),
+            current_instance=None,
+            issue_id=str(secret.id),
+            project_id=str(project.id),
+            workspace_id=str(workspace.id),
+            actor_id=str(owner.id),
+            issue_activities=written,
+            epoch=0,
+        )
+        IssueActivity.objects.bulk_create(written)
+        mentions = f"<p>see {_mention(secret, 'issue_mention')} and {_mention(foreign, 'issue_mention')}</p>"
+        _comment(shown, owner, mentions)
+        Issue.objects.filter(pk=shown.pk).update(description_html=mentions)
+
+        response = _client(peer).get(url.format(slug=workspace.slug, project=project.id, user=peer.id))
+
+        assert [r["Description"] for r in _rows(response)] == ["see #work-item and #work-item"]
+        assert [r[4] for r in _extra_rows(response, "Comments")] == ["see #work-item and #work-item"]
+        history = [tuple(r[4:]) for r in _extra_rows(response, "Activity")]
+        expected = [("Related to", None, "Another work item"), ("Parent", "Another work item", None)] * 2
+        expected.append(("Related to", "Another work item", None))
+        assert sorted(history, key=str) == sorted(expected, key=str)
+        with zipfile.ZipFile(BytesIO(response.content)) as archive:
+            xml = b"".join(archive.read(name) for name in archive.namelist()).decode()
+        for leaked in (_key(secret), _key(foreign), "secret title", "hidden remark", "hidden state", "far remark"):
+            assert leaked not in xml, leaked
+
+    def test_history_words_follow_the_users_language(self, workspace, owner, project):
+        Profile.objects.filter(user=owner).update(language="id")
+        issue = _issue(project, owner, description_html='<image-component src="abc"></image-component>')
+        _activity(issue, owner, "approval", verb="approved")
+        _activity(issue, owner, "priority", old="low", new="urgent")
+        reader = User.objects.get(pk=owner.pk)
+
+        response = _client(reader).get(PROJECT_EXPORT.format(slug=workspace.slug, project=project.id))
+
+        assert _rows(response)[0]["Deskripsi"] == "[gambar]"
+        assert sorted(tuple(r[4:]) for r in _extra_rows(response, "Aktivitas")) == [
+            ("Persetujuan", None, "Disetujui"),
+            ("Prioritas", "Rendah", "Mendesak"),
+        ]
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
 class TestSize:
     def _bulk(self, project, author, count, start=1):
         state = _state(project, "Todo")
@@ -614,7 +872,7 @@ class TestSize:
         def populate(count, start):
             """Rows that exercise every column that reads another table."""
             self._bulk(project, owner, count, start)
-            new = list(Issue.objects.filter(project=project, sequence_id__gte=start))
+            new = list(Issue.objects.filter(project=project, sequence_id__gte=start).order_by("sequence_id"))
             shared = {"project": project, "workspace": workspace}
             IssueAssignee.objects.bulk_create([IssueAssignee(issue=i, assignee=owner, **shared) for i in new])
             IssueLabel.objects.bulk_create([IssueLabel(issue=i, label=label, **shared) for i in new])
@@ -629,6 +887,18 @@ class TestSize:
                 estimate_point=point,
             )
             Issue.objects.filter(pk__in=[i.pk for i in new[1:]]).update(parent=new[0])
+            html = f"<p>hai {_mention(owner)} soal {_mention(new[0], 'issue_mention')}</p>"
+            Issue.objects.filter(pk__in=[i.pk for i in new]).update(description_html=html)
+            IssueComment.objects.bulk_create(
+                [IssueComment(issue=i, actor=owner, comment_html=html, **shared) for i in new]
+            )
+            IssueActivity.objects.bulk_create(
+                [
+                    IssueActivity(issue=i, actor=owner, field=field, new_value="x", new_identifier=ref, **shared)
+                    for i in new
+                    for field, ref in (("parent", new[0].pk), ("attachment", uuid4()))
+                ]
+            )
 
         def count_queries(expected_rows):
             segarkan()  # the God Mode rule snapshot is per process: start every run cold
@@ -647,4 +917,5 @@ class TestSize:
 
         assert [r["Key"] for r in rows] == [f"EXP-{n}" for n in range(1, 1006)]
         assert (rows[-1]["Labels"], rows[-1]["Modules"], rows[-1]["Estimate"]) == ("tag", "Mod", "5")
+        assert rows[-1]["Description"] == f"hai @{owner.display_name} soal EXP-4"
         assert large == small
