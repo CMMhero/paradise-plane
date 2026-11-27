@@ -47,6 +47,13 @@ places they hold.
 | File cards                      | Icon, name, size, preview, download; only this app's files are previewed or kept                         |
 | Usable mentions                 | Cards and chips work inside the work item panel; description mentions notify                             |
 
+## Requirements added in 2.15.1
+
+| Requirement                          | Acceptance                                                                                            |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Descriptions, comments, history      | Description column plus Comments and Activity sheets, one row per entry, only for exported work items |
+| Export never shows more than the app | Entries from departments the user is not in are left out; unseen work items are never named           |
+
 ## Architecture
 
 - `apps/web` React Router app, `apps/admin` God Mode, `apps/live` collaborative
@@ -54,6 +61,14 @@ places they hold.
 - PostgreSQL, Redis, RabbitMQ, MinIO, Caddy. Docker Compose.
 - Work rules live in `plane/utils/aturan`. Positions and placement live in
   `plane/db/models/hierarki.py` and `plane/db/penempatan.py`.
+
+## Implementation notes for 2.15.1
+
+- Comments and history are loaded with a fixed number of queries. Mentions are
+  resolved in one pass (`sebutan_massal` in `plane/utils/teks_html.py`).
+- The history leaves out comment, reaction, vote and draft rows, as the app does.
+- Excel cuts a cell at 32,767 characters. There is no separate limit on the
+  number of comment or activity rows.
 
 ## Implementation notes for 2.15.0
 

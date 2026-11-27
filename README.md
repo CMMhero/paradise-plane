@@ -132,8 +132,14 @@ is written only once on each side (`preferensi_email.py` and
 **Export to Excel.** Project, workspace view, Your work, module and project view
 lists have an Export to Excel button. The file follows the filters and order on
 screen. Both the list and the export read one scoping function
-(`plane/utils/daftar_tugas.py`), so permissions can't drift apart. Columns live
-in one registry in `plane/utils/ekspor_tugas.py`. To try it:
+(`plane/utils/daftar_tugas.py`), so permissions can't drift apart.
+
+The file has three sheets. **Work items** has one row each, with the description
+in the last column. **Comments** and **Activity** have one row per comment and
+per change, in the same item order, oldest first. Text is plain: mentions become
+names, images and files become a label, and a description change is listed
+without its text. Columns live in `plane/utils/ekspor_tugas.py`, history wording
+in `plane/utils/ekspor_riwayat.py`. To try it:
 
 ```
 GET /api/workspaces/<slug>/projects/<project-id>/issues/export-xlsx/?order_by=-created_at&export_name=gudang

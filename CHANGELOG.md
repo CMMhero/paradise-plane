@@ -6,6 +6,21 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ---
 
+## 2026-11-27
+
+### Version 2.15.1
+
+- **2.15.0 to 2.15.1, patch.** A small addition to the Excel export. No
+  migration, no new dependency, no operator step.
+- **Descriptions, comments and history in the export.** The work items sheet ends
+  with a Description column. A Comments sheet and an Activity sheet hold one row
+  per comment and per change, for the exported work items only. Words follow the
+  user's language.
+- **Same visibility as the app.** Comments and history come only from
+  departments the user belongs to. A history row or mention that names a work
+  item the user cannot see reads "Another work item" or `#work-item`. A change
+  to a description is listed without its old and new text.
+
 ## 2026-11-26
 
 ### Version 2.15.0
