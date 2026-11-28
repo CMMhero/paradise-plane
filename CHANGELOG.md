@@ -6,6 +6,21 @@ Date format: YYYY-MM-DD. Commit references point to this repository.
 
 ---
 
+## 2026-11-28
+
+### Version 2.15.3
+
+- **2.15.2 to 2.15.3, patch.** A bug fix. No migration, no new dependency, no
+  operator step.
+- **Inbox cleanup now runs.** The daily job added in 2.14.0 was never loaded by
+  the worker, so it never ran. Its first run archives every notification older
+  than the configured number of days (7 by default), read or unread. Archived
+  notifications stay under the Archived filter. God Mode > Notifications can
+  change the number of days, switch to Delete, or turn the cleanup off with 0.
+- **Guard.** The test for unregistered scheduled tasks now runs in a fresh
+  Python process. Inside pytest, other test files had already imported the
+  module, so it passed while production did not load the task.
+
 ## 2026-11-27
 
 ### Version 2.15.2

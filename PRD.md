@@ -61,6 +61,13 @@ places they hold.
 | Easy-to-remember passwords  | Any 8 or more characters are accepted on sign-up, set, change and reset; no character mix needed |
 | Strictness stays adjustable | God Mode can require Strong or Very strong; nothing below 8 characters is ever accepted          |
 
+## Requirements added in 2.15.3
+
+| Requirement             | Acceptance                                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| Inbox cleanup runs      | The worker registers the task; once a day, older notifications are archived or deleted as set   |
+| No silent dead schedule | The test suite fails when any scheduled task is not registered in a freshly started interpreter |
+
 ## Architecture
 
 - `apps/web` React Router app, `apps/admin` God Mode, `apps/live` collaborative
@@ -68,6 +75,13 @@ places they hold.
 - PostgreSQL, Redis, RabbitMQ, MinIO, Caddy. Docker Compose.
 - Work rules live in `plane/utils/aturan`. Positions and placement live in
   `plane/db/models/hierarki.py` and `plane/db/penempatan.py`.
+
+## Implementation notes for 2.15.3
+
+- Task modules under `plane/bgtasks` are not discovered automatically. A new
+  scheduled task goes into `CELERY_IMPORTS` in `plane/settings/common.py`.
+- Archiving sets `archived_at` to one timestamp per run, so a run can be undone
+  by clearing the rows that carry it.
 
 ## Implementation notes for 2.15.2
 
