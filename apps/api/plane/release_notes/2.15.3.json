@@ -1,0 +1,10 @@
+{
+  "version": "2.15.3",
+  "date": "2026-11-28",
+  "entries": [
+    {
+      "type": "Fixed",
+      "text": "The daily inbox cleanup now runs. Every day at 09:00 WIB, notifications older than 7 days move to Archived, whether read or not. You can still find them under the Archived filter in your inbox."
+    }
+  ]
+}

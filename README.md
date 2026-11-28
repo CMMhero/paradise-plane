@@ -135,6 +135,11 @@ a single person and for the staff and leadership defaults. The list of toggles
 is written only once on each side (`preferensi_email.py` and
 `notification-preferences.ts`), so those three screens can't drift apart.
 
+**Inbox cleanup.** Every day at 09:00 WIB, notifications older than 7 days move
+to the Archived filter of the inbox, read or unread. Snoozed ones wait until the
+snooze ends. God Mode > Notifications sets the number of days (0 turns it off)
+and whether old notifications are archived or deleted.
+
 **Export to Excel.** Project, workspace view, Your work, module and project view
 lists have an Export to Excel button. The file follows the filters and order on
 screen. Both the list and the export read one scoping function
