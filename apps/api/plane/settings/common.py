@@ -369,6 +369,7 @@ CELERY_IMPORTS = (
     "plane.bgtasks.email_antrean",
     "plane.bgtasks.cleanup_task",
     "plane.bgtasks.login_activity_retention",
+    "plane.bgtasks.notifikasi_retensi",
     "plane.bgtasks.deadline_reminder_task",
     "plane.bgtasks.daily_digest_task",
     "plane.bgtasks.direktur_digest_task",
